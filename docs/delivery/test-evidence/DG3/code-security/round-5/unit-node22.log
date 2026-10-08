@@ -1,0 +1,855 @@
+# command: pnpm test --reporter=verbose
+# node: v22.22.2  commit: 40c84e8d5487ce5d2ec811e9b37ddbb90aa94c9a  LANG=<unset> LC_ALL=<unset> LC_CTYPE=C.UTF-8  started: 2026-10-08T17:21:48Z
+
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.XYReux/claude-0/review-p5
+> vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen --reporter=verbose
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.XYReux/claude-0/review-p5
+
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 15365ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  1674ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  1055ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  1072ms
+   ✓ after create (F-DG1-004) > treats a 403 for the just-created record the same way  897ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  458ms
+   ✓ audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout  353ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated  511ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name  713ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  1195ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  2119ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  2509ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  1419ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  765ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (125 tests) 239ms
+ ✓ |unit-web| src/auth/session-bound.test.tsx (34 tests) 25572ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  1718ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record  1579ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  623ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  467ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  1744ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > a user create whose identity changes between its awaits: B is not navigated to A's new user  1089ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: the organization and user creates under one identity still navigate to the new record  864ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates  416ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer  770ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state  740ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header  380ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  769ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > writes neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token  416ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  964ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record  1167ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  577ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  634ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  680ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > a user create whose identity changes between its awaits: B is not navigated to A's new user  1712ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > sanity: the organization and user creates under one identity still navigate to the new record  879ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > N0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header  390ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  363ms
+   ✓ the convention: no raw navigate or cache write in app code (T-DG2-FE15) > the ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page  5216ms
+ ✓ |unit-web| src/auth/session-generation.test.tsx (26 tests) 21105ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  1627ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  875ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache  1593ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B  1474ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B  1243ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  785ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A  707ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates  688ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  1030ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  627ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data  485ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  1171ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  1352ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache  674ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B  722ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B  891ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  973ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a language save retried after a 409 is never written for the identity that replaced A  555ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates  1504ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  929ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  383ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data  744ms
+ ✓ |unit-web| src/pages/portfolio/portfolio.test.tsx (32 tests) 41383ms
+   ✓ Portfolio (en) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  2754ms
+   ✓ Portfolio (en) > the proposed rank is Unknown (never 0) when the prioritization view is unavailable  1316ms
+   ✓ Portfolio (en) > filters by status and wave on the server  1703ms
+   ✓ Portfolio (en) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  2666ms
+   ✓ Portfolio (en) > the read-only auditor sees the list with no enabled write control  1168ms
+   ✓ Portfolio (en) > outcome hierarchy: five levels, an Unknown target is Unknown (never 0)  536ms
+   ✓ Portfolio (ar) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  827ms
+   ✓ Portfolio (ar) > the proposed rank is Unknown (never 0) when the prioritization view is unavailable  529ms
+   ✓ Portfolio (ar) > filters by status and wave on the server  1601ms
+   ✓ Portfolio (ar) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  2626ms
+   ✓ Portfolio (ar) > the read-only auditor sees the list with no enabled write control  411ms
+   ✓ Portfolio (ar) > outcome hierarchy: five levels, an Unknown target is Unknown (never 0)  356ms
+   ✓ Initiative Card (en) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  649ms
+   ✓ Initiative Card (en) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  1153ms
+   ✓ Initiative Card (en) > submit refused: 'Outcome before activity…' (validation at /outcomeContributions) is translated  1053ms
+   ✓ Initiative Card (en) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  1497ms
+   ✓ Initiative Card (en) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  965ms
+   ✓ Initiative Card (en) > a 409 shows the conflict banner and reloads  1532ms
+   ✓ Initiative Card (en) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  1492ms
+   ✓ Initiative Card (en) > an outcome contribution needs an outcome; the KPI is optional and labelled so  1691ms
+   ✓ Initiative Card (en) > the read-only auditor sees the card with no enabled write control  1063ms
+   ✓ Initiative Card (en) > a cancelled initiative is read-only even for the lead  1181ms
+   ✓ Initiative Card (ar) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  823ms
+   ✓ Initiative Card (ar) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  784ms
+   ✓ Initiative Card (ar) > submit refused: 'Outcome before activity…' (validation at /outcomeContributions) is translated  659ms
+   ✓ Initiative Card (ar) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  2005ms
+   ✓ Initiative Card (ar) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  1083ms
+   ✓ Initiative Card (ar) > a 409 shows the conflict banner and reloads  1062ms
+   ✓ Initiative Card (ar) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  1694ms
+   ✓ Initiative Card (ar) > an outcome contribution needs an outcome; the KPI is optional and labelled so  1539ms
+   ✓ Initiative Card (ar) > the read-only auditor sees the card with no enabled write control  1479ms
+   ✓ Initiative Card (ar) > a cancelled initiative is read-only even for the lead  1476ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 72885ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  2874ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  1537ms
+   ✓ Diagnose > renders the six workstreams with their key questions  2093ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  2061ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  2949ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  2696ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  2316ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  1709ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  1607ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  1900ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  2712ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  2592ms
+   ✓ Diagnose > Arabic: RTL with Arabic labels and the unquantified label  867ms
+   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  693ms
+   ✓ Define > requires a target date on a T02 row before sending anything  1048ms
+   ✓ Define > sets the North Star with one sentence and no If-Match the first time  774ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  1100ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  2521ms
+   ✓ Define: KPI activation (F-DG2-201) > an active KPI shows Active and offers no Activate  1192ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  760ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  2660ms
+   ✓ Charter > thesis: an empty part is Incomplete and no sentence is composed (F-DG2-203)  767ms
+   ✓ Charter > thesis: a part the API flags incomplete is never shown as answered  593ms
+   ✓ Charter > thesis: the four parts compose the B0037 sentence (EN and AR)  688ms
+   ✓ Charter > North Star (field 5): the current statement; a superseded link is flagged Stale (F-DG2-204)  321ms
+   ✓ Charter > North Star (field 5): a superseded statement is never shown as the current one  504ms
+   ✓ Charter > compares a version with the previous one  985ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('en')  1689ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('ar')  1140ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  1002ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  1454ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  1083ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  1031ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  909ms
+   ✓ Charter > offers to create the charter when none exists  428ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  1852ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  3731ms
+   ✓ Decisions (T04) > creates a design decision with inline options and an idempotency key  1620ms
+   ✓ Gates (business approval) > lists G1-G6 as business approvals with live readiness, and never mentions the engineering gates  474ms
+   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  612ms
+   ✓ Gates (business approval) > lists outcomes failing the good outcome test at G2  305ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  2742ms
+   ✓ Gates (business approval) > gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)  998ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  739ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  1222ms
+   ✓ Evidence > never offers review to the creator; a filename reference can only be rejected  1684ms
+   ✓ read-only auditor (AUD) > diagnose: no write control and a read-only note  991ms
+   ✓ read-only auditor (AUD) > charter: no write control and a read-only note  460ms
+   ✓ read-only auditor (AUD) > define: no write control and a read-only note  1144ms
+   ✓ read-only auditor (AUD) > design: no write control and a read-only note  931ms
+   ✓ read-only auditor (AUD) > decisions: no write control and a read-only note  444ms
+   ✓ read-only auditor (AUD) > gates: no write control and a read-only note  557ms
+   ✓ read-only auditor (AUD) > team: no write control and a read-only note  572ms
+ ✓ |unit-web| src/pages/team/team.test.tsx (10 tests) 19328ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  2117ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  2061ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  1685ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  1271ms
+   ✓ Team: read-only auditor (AUD) > sees the roles, accountabilities and members, a read-only note, and no assign control  1262ms
+   ✓ Team (Arabic RTL) > shows Arabic role names and the provisional Arabic accountability text  1403ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  1285ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  1694ms
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  3749ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  2790ms
+ ✓ |unit-web| src/pages/render-time-language.test.tsx (28 tests) 44653ms
+   ✓ sign-in (dev form), 'en' → 'ar' > an invalid user name: the inline message follows the switch  871ms
+   ✓ sign-in (dev form), 'en' → 'ar' > a refused sign-in: the server's problem follows the switch  428ms
+   ✓ sign-in (dev form), 'ar' → 'en' > an invalid user name: the inline message follows the switch  1265ms
+   ✓ sign-in (dev form), 'ar' → 'en' > a refused sign-in: the server's problem follows the switch  493ms
+   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  3433ms
+   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  3313ms
+   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  1609ms
+   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  2848ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation note's 'required' follows the switch  3950ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation choice's 'required' follows the switch  2060ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the archive reason's 'too short' follows the switch  2322ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation note's 'required' follows the switch  2014ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation choice's 'required' follows the switch  2832ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the archive reason's 'too short' follows the switch  2101ms
+   ✓ gate dialogs, 'en' → 'ar' > the submission note's field error follows the switch  947ms
+   ✓ gate dialogs, 'en' → 'ar' > the decision rationale's field error follows the switch  1370ms
+   ✓ gate dialogs, 'ar' → 'en' > the submission note's field error follows the switch  1403ms
+   ✓ gate dialogs, 'ar' → 'en' > the decision rationale's field error follows the switch  1560ms
+   ✓ North Star statement, 'en' → 'ar' > the statement's field error follows the switch  1863ms
+   ✓ North Star statement, 'ar' → 'en' > the statement's field error follows the switch  1140ms
+   ✓ evidence dialogs, 'en' → 'ar' > upload without a file: 'required' follows the switch  1498ms
+   ✓ evidence dialogs, 'en' → 'ar' > a link without a record type or record: both 'required' messages follow the switch  1362ms
+   ✓ evidence dialogs, 'ar' → 'en' > upload without a file: 'required' follows the switch  1493ms
+   ✓ evidence dialogs, 'ar' → 'en' > a link without a record type or record: both 'required' messages follow the switch  1860ms
+ ✓ |unit-web| src/auth/session-identity.test.tsx (18 tests) 18604ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  2412ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  1961ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts  1793ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft  1064ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > the same identity re-probed (window refocus) keeps the cache and the page state  881ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > signing out here clears everything; B signing in afterwards never sees A's records  2623ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > a 403 is never a session end: the phase, the identity and the cache are kept  393ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  1569ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  1329ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts  831ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft  738ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > the same identity re-probed (window refocus) keeps the cache and the page state  830ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > signing out here clears everything; B signing in afterwards never sees A's records  1348ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > a 403 is never a session end: the phase, the identity and the cache are kept  701ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 88376ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  4380ms
+   ✓ gate submission note (en) > a invisible-only note is refused inline and nothing is sent  1871ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  1752ms
+   ✓ gate submission note (ar) > a whitespace-only note is refused inline and nothing is sent  1416ms
+   ✓ gate submission note (ar) > a invisible-only note is refused inline and nothing is sent  1621ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  964ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  1140ms
+   ✓ gate decision rationale and comments (en) > a invisible-only rationale is refused inline and nothing is sent  2957ms
+   ✓ gate decision rationale and comments (en) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  2421ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  2750ms
+   ✓ gate decision rationale and comments (en) > a invisible-only comment is refused inline (focus on it) and nothing is sent  1206ms
+   ✓ gate decision rationale and comments (en) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  2137ms
+   ✓ gate decision rationale and comments (en) > a server 400 validation.blank on /rationale lands on the field  1707ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only rationale is refused inline and nothing is sent  1495ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only rationale is refused inline and nothing is sent  850ms
+   ✓ gate decision rationale and comments (ar) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  1234ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  1761ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only comment is refused inline (focus on it) and nothing is sent  1484ms
+   ✓ gate decision rationale and comments (ar) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  790ms
+   ✓ gate decision rationale and comments (ar) > a server 400 validation.blank on /rationale lands on the field  750ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  3682ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  3630ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  1116ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  2621ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  1600ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  1999ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  1528ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  2852ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  1387ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  1793ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  1645ms
+   ✓ Finance validation note and archive reason (en) > reason: a whitespace-only reason is refused inline and nothing is archived  1750ms
+   ✓ Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived  1472ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  1985ms
+   ✓ Finance validation note and archive reason (en) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  2179ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message  2252ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  1026ms
+   ✓ Finance validation note and archive reason (ar) > note: a whitespace-only note is refused inline and nothing is sent  1199ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  1308ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  942ms
+   ✓ Finance validation note and archive reason (ar) > reason: a whitespace-only reason is refused inline and nothing is archived  1836ms
+   ✓ Finance validation note and archive reason (ar) > reason: a invisible-only reason is refused inline and nothing is archived  2600ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  898ms
+   ✓ Finance validation note and archive reason (ar) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  1613ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message  1074ms
+   ✓ Finance validation note and archive reason (ar) > reason: empty keeps 'too short'; visible text is sent verbatim  1959ms
+   ✓ North Star statement (en) > a whitespace-only statement is refused inline and nothing is sent  1372ms
+   ✓ North Star statement (en) > a invisible-only statement is refused inline and nothing is sent  853ms
+   ✓ North Star statement (ar) > a whitespace-only statement is refused inline and nothing is sent  924ms
+   ✓ North Star statement (ar) > a invisible-only statement is refused inline and nothing is sent  1379ms
+   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  648ms
+   ✓ P1 transformation edit: server validation.blank on /name (ar) > is the localized field message, not only a generic failure  552ms
+ ✓ |unit-web| src/pages/benefit-formulas/benefit-formulas.test.tsx (18 tests) 25522ms
+   ✓ T09 benefit formulas (en) > register: the six T09 columns with confidence H/M/L; examples marked illustrative with 100000 and 500000 SAR per year  2968ms
+   ✓ T09 benefit formulas (en) > builder: an undefined variable shows translated, with its position, before saving; nothing is sent  1811ms
+   ✓ T09 benefit formulas (en) > builder: monthly ARPU × annual customers is a period mismatch, translated, before saving  873ms
+   ✓ T09 benefit formulas (en) > builder: a fraction is entered as percent and stored as a fraction; a version is saved with If-Match  1940ms
+   ✓ T09 benefit formulas (en) > builder: a fraction difference shows percentage points (translated suffix), never %  1076ms
+   ✓ T09 benefit formulas (en) > builder: a 409 shows the standard conflict panel; nothing was saved  2873ms
+   ✓ T09 benefit formulas (en) > Finance validation of a version: a business approval by FIN; the author cannot; translated refusal  1863ms
+   ✓ T09 benefit formulas (en) > Finance validation: the version's author sees the separation-of-duties note and no action  564ms
+   ✓ T09 benefit formulas (en) > read-only auditor: no builder, no write control, the read-only note; a validated version reads Validated  513ms
+   ✓ T09 benefit formulas (ar) > register: the six T09 columns with confidence H/M/L; examples marked illustrative with 100000 and 500000 SAR per year  1913ms
+   ✓ T09 benefit formulas (ar) > builder: an undefined variable shows translated, with its position, before saving; nothing is sent  1516ms
+   ✓ T09 benefit formulas (ar) > builder: monthly ARPU × annual customers is a period mismatch, translated, before saving  940ms
+   ✓ T09 benefit formulas (ar) > builder: a fraction is entered as percent and stored as a fraction; a version is saved with If-Match  2988ms
+   ✓ T09 benefit formulas (ar) > builder: a fraction difference shows percentage points (translated suffix), never %  587ms
+   ✓ T09 benefit formulas (ar) > builder: a 409 shows the standard conflict panel; nothing was saved  1178ms
+   ✓ T09 benefit formulas (ar) > Finance validation of a version: a business approval by FIN; the author cannot; translated refusal  998ms
+   ✓ T09 benefit formulas (ar) > Finance validation: the version's author sees the separation-of-duties note and no action  603ms
+   ✓ T09 benefit formulas (ar) > read-only auditor: no builder, no write control, the read-only note; a validated version reads Validated  312ms
+ ✓ |unit-web| src/pages/portfolio/fe-e.test.tsx (18 tests) 30443ms
+   ✓ Funding decisions (en) > is a labelled business approval with no 'on behalf of' control; rationale required; POST with an Idempotency-Key  2430ms
+   ✓ Funding decisions (en) > the BE-E 422s are the dialog's one translated alert; funding.amount_invalid is also inline at /amount  1896ms
+   ✓ Funding decisions (en) > the history shows a missing amount as Unknown (never 0); a re-selected initiative explains the deselect rule  1051ms
+   ✓ Funding decisions (en) > an exact decimal amount is shown with its currency; the auditor sees no record control  1273ms
+   ✓ Funding decisions (ar) > is a labelled business approval with no 'on behalf of' control; rationale required; POST with an Idempotency-Key  3235ms
+   ✓ Funding decisions (ar) > the BE-E 422s are the dialog's one translated alert; funding.amount_invalid is also inline at /amount  2296ms
+   ✓ Funding decisions (ar) > the history shows a missing amount as Unknown (never 0); a re-selected initiative explains the deselect rule  426ms
+   ✓ Funding decisions (ar) > an exact decimal amount is shown with its currency; the auditor sees no record control  719ms
+   ✓ Deliverables and milestones on the card (en) > creates (Idempotency-Key), edits (If-Match) and archives (reason, If-Match) a deliverable  2226ms
+   ✓ Deliverables and milestones on the card (en) > creates a milestone with its wave and forecast, and edits it with If-Match  1480ms
+   ✓ Deliverables and milestones on the card (en) > 422 initiative.read_only (a closure raced the edit) is translated as the dialog's one alert  1951ms
+   ✓ Deliverables and milestones on the card (en) > a cancelled initiative shows deliverables, milestones and funding with no write control  957ms
+   ✓ Deliverables and milestones on the card (en) > the card edit form translates initiative.planned_range specifically (RecordDialog namespaces)  2218ms
+   ✓ Deliverables and milestones on the card (ar) > creates (Idempotency-Key), edits (If-Match) and archives (reason, If-Match) a deliverable  2129ms
+   ✓ Deliverables and milestones on the card (ar) > creates a milestone with its wave and forecast, and edits it with If-Match  1473ms
+   ✓ Deliverables and milestones on the card (ar) > 422 initiative.read_only (a closure raced the edit) is translated as the dialog's one alert  1468ms
+   ✓ Deliverables and milestones on the card (ar) > a cancelled initiative shows deliverables, milestones and funding with no write control  913ms
+   ✓ Deliverables and milestones on the card (ar) > the card edit form translates initiative.planned_range specifically (RecordDialog namespaces)  2294ms
+ ✓ |unit-web| src/pages/business-cases/business-cases.test.tsx (18 tests) 35020ms
+   ✓ business cases (en) > register: levels, Finance baseline states with text (Stale is never green) and drafts  1962ms
+   ✓ business cases (en) > detail: all ten sections, totals with gross / cost / net apart, net Unknown (never 0), roll-up by reference  2421ms
+   ✓ business cases (en) > totals: a partial total says how many Unknown lines it leaves out  1437ms
+   ✓ business cases (en) > sections: saves only the changed section with If-Match; blank text is refused inline and nothing is sent  3633ms
+   ✓ business cases (en) > sections: a 409 shows the standard conflict panel (nothing saved) with the current values  3243ms
+   ✓ business cases (en) > lines: exactly one class from one select; the value basis follows the class; a 422 is translated  3364ms
+   ✓ business cases (en) > Finance validation: a business approval for FIN who did not author the case; If-Match; translated 403  2507ms
+   ✓ business cases (en) > Finance validation: the case author sees no validate action, only the separation-of-duties note  1381ms
+   ✓ business cases (en) > read-only auditor: the ten sections as text, no enabled write control, the read-only note  518ms
+   ✓ business cases (ar) > register: levels, Finance baseline states with text (Stale is never green) and drafts  1065ms
+   ✓ business cases (ar) > detail: all ten sections, totals with gross / cost / net apart, net Unknown (never 0), roll-up by reference  1325ms
+   ✓ business cases (ar) > totals: a partial total says how many Unknown lines it leaves out  1220ms
+   ✓ business cases (ar) > sections: saves only the changed section with If-Match; blank text is refused inline and nothing is sent  2997ms
+   ✓ business cases (ar) > sections: a 409 shows the standard conflict panel (nothing saved) with the current values  1778ms
+   ✓ business cases (ar) > lines: exactly one class from one select; the value basis follows the class; a 422 is translated  2163ms
+   ✓ business cases (ar) > Finance validation: a business approval for FIN who did not author the case; If-Match; translated 403  2355ms
+   ✓ business cases (ar) > Finance validation: the case author sees no validate action, only the separation-of-duties note  1019ms
+   ✓ business cases (ar) > read-only auditor: the ten sections as text, no enabled write control, the read-only note  627ms
+ ✓ |unit-web| src/pages/gates/g4.test.tsx (16 tests) 18488ms
+   ✓ G4 refusal item by item (en) > two initiatives without owners: two separate translated 'Owners' items, never the joined English message  3136ms
+   ✓ G4 refusal item by item (en) > without a usable gate view: one translated line per refused criterion, never the English message  1787ms
+   ✓ G4 refusal item by item (ar) > two initiatives without owners: two separate translated 'Owners' items, never the joined English message  1986ms
+   ✓ G4 refusal item by item (ar) > without a usable gate view: one translated line per refused criterion, never the English message  1146ms
+   ✓ G4 view (en) > lists the eight G4 criteria with their missing items: 'Owners', 'Finance validation' and the initiative  654ms
+   ✓ G4 view (en) > a refused submission shows the 422 list with the initiative names, translated  1529ms
+   ✓ G4 view (en) > the decision's 403 urn:mth:problem:forbidden is translated  1669ms
+   ✓ G4 view (en) > the decision's 403 urn:mth:problem:forbidden is translated  1448ms
+   ✓ G4 view (en) > the decision's 409 urn:mth:problem:version-conflict is translated  1137ms
+   ✓ G4 view (ar) > lists the eight G4 criteria with their missing items: 'Owners', 'Finance validation' and the initiative  599ms
+   ✓ G4 view (ar) > a refused submission shows the 422 list with the initiative names, translated  819ms
+   ✓ G4 view (ar) > the decision's 403 urn:mth:problem:forbidden is translated  987ms
+   ✓ G4 view (ar) > the decision's 403 urn:mth:problem:forbidden is translated  892ms
+   ✓ G4 view (ar) > the decision's 409 urn:mth:problem:version-conflict is translated  694ms
+ ✓ |unit-web| src/app/app.test.tsx (17 tests) 7737ms
+   ✓ bilingual shell > renders Arabic RTL by default with the provisional wordmark  335ms
+   ✓ bilingual shell > switches to English LTR and persists the preference with If-Match  737ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  818ms
+   ✓ bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission  747ms
+   ✓ bilingual shell > marks planned areas as planned instead of pretending they work  455ms
+   ✓ bilingual shell > a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned  980ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  1380ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  883ms
+   ✓ transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version  591ms
+ ✓ |unit-web| src/pages/prioritization/prioritization.test.tsx (20 tests) 34675ms
+   ✓ prioritization (en) > ranked table: an incomplete score is 'incomplete' (never a number), 3.30 complete; 0–100 shows 57.5 with its label  4358ms
+   ✓ prioritization (en) > scorecard: 6 is refused inline and nothing is sent; 4 is POSTed as the integer; the weighted score is read-only 'incomplete'  5102ms
+   ✓ prioritization (en) > weight sets: the live total refuses 95% and 105%; 100% is accepted and POSTed as decimal strings  1780ms
+   ✓ prioritization (en) > weight sets: the proposer is never offered approval; another approver's approval is a business approval with If-Match; 403 SoD is translated  2717ms
+   ✓ prioritization (en) > weight set approval: a 409 shows the conflict banner and reloads  1841ms
+   ✓ prioritization (en) > ranking history: causes are translated from codes, including 'weight version 2', score change and the override reason  653ms
+   ✓ prioritization (en) > overrides: a reason is required (missing and invisible-only are refused, nothing sent); with a reason it is POSTed  1562ms
+   ✓ prioritization (en) > the read-only auditor sees the data and no enabled write control  1304ms
+   ✓ prioritization (en) > a portfolio above 500 eligible initiatives is the translated 422 state, not an empty table  370ms
+   ✓ prioritization (en) > never mentions a delivery gate (DG0–DG7)  1514ms
+   ✓ prioritization (ar) > ranked table: an incomplete score is 'incomplete' (never a number), 3.30 complete; 0–100 shows 57.5 with its label  2145ms
+   ✓ prioritization (ar) > scorecard: 6 is refused inline and nothing is sent; 4 is POSTed as the integer; the weighted score is read-only 'incomplete'  2499ms
+   ✓ prioritization (ar) > weight sets: the live total refuses 95% and 105%; 100% is accepted and POSTed as decimal strings  1192ms
+   ✓ prioritization (ar) > weight sets: the proposer is never offered approval; another approver's approval is a business approval with If-Match; 403 SoD is translated  2264ms
+   ✓ prioritization (ar) > weight set approval: a 409 shows the conflict banner and reloads  1091ms
+   ✓ prioritization (ar) > ranking history: causes are translated from codes, including 'weight version 2', score change and the override reason  541ms
+   ✓ prioritization (ar) > overrides: a reason is required (missing and invisible-only are refused, nothing sent); with a reason it is POSTed  1169ms
+   ✓ prioritization (ar) > the read-only auditor sees the data and no enabled write control  2094ms
+ ✓ |unit-web| src/auth/session-end.test.tsx (12 tests) 14100ms
+   ✓ session end while the app is open (en) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  3048ms
+   ✓ session end while the app is open (en) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  1404ms
+   ✓ session end while the app is open (en) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  625ms
+   ✓ session end while the app is open (en) > a 403 (forbidden) is never treated as a session end  810ms
+   ✓ session end while the app is open (ar) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  1308ms
+   ✓ session end while the app is open (ar) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  2441ms
+   ✓ session end while the app is open (ar) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  890ms
+   ✓ session end while the app is open (ar) > a 403 (forbidden) is never treated as a session end  1144ms
+   ✓ session end under <StrictMode> (as in production) > still lands exactly once on sign-in  1092ms
+   ✓ sign-in page and the cached identity > decides 'already signed in' only from a fresh /me, never from a stale cache  630ms
+   ✓ sign-in page and the cached identity > signing out here shows 'signed out', not 'session ended', and no /me loop  631ms
+ ✓ |unit-web| src/pages/dispensations/dispensations.test.tsx (12 tests) 15626ms
+   ✓ Dispensations (en) > lists waivers and inherited approvals; unverified evidence is shown as unverified; recorder cannot decide  1466ms
+   ✓ Dispensations (en) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  1847ms
+   ✓ Dispensations (en) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  1462ms
+   ✓ Dispensations (en) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  1918ms
+   ✓ Dispensations (en) > revoking an accepted dispensation needs a reason and is a business approval  504ms
+   ✓ Dispensations (en) > the read-only auditor sees the register with no enabled write control  778ms
+   ✓ Dispensations (ar) > lists waivers and inherited approvals; unverified evidence is shown as unverified; recorder cannot decide  606ms
+   ✓ Dispensations (ar) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  1799ms
+   ✓ Dispensations (ar) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  1993ms
+   ✓ Dispensations (ar) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  1326ms
+   ✓ Dispensations (ar) > revoking an accepted dispensation needs a reason and is a business approval  1014ms
+   ✓ Dispensations (ar) > the read-only auditor sees the register with no enabled write control  905ms
+ ✓ |unit-web| src/pages/capacity/fe-e.test.tsx (13 tests) 17807ms
+   ✓ capacity editing (en) > creates a role; a taken code (409) is the form's translated alert; then the role is created  2707ms
+   ✓ capacity editing (en) > edits a role's labels and archives it, each with If-Match  1534ms
+   ✓ capacity editing (en) > creates a capacity row with a decimal FTE string; a duplicate (409) is translated  1310ms
+   ✓ capacity editing (en) > creates a demand; after the save the plan is re-read and the conflict with its shortfall appears; Unknown stays Unknown  1511ms
+   ✓ capacity editing (en) > edits a planned demand with If-Match; 422 resource_demand.not_planned is translated  788ms
+   ✓ capacity editing (en) > the read-only auditor sees roles and capacity rows with no editing control  643ms
+   ✓ capacity editing (ar) > creates a role; a taken code (409) is the form's translated alert; then the role is created  659ms
+   ✓ capacity editing (ar) > edits a role's labels and archives it, each with If-Match  1449ms
+   ✓ capacity editing (ar) > creates a capacity row with a decimal FTE string; a duplicate (409) is translated  1803ms
+   ✓ capacity editing (ar) > creates a demand; after the save the plan is re-read and the conflict with its shortfall appears; Unknown stays Unknown  2420ms
+   ✓ capacity editing (ar) > edits a planned demand with If-Match; 422 resource_demand.not_planned is translated  2092ms
+   ✓ capacity editing (ar) > the read-only auditor sees roles and capacity rows with no editing control  830ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 143ms
+ ✓ |unit-web| src/pages/gates/g1-agreements.test.tsx (10 tests) 14436ms
+   ✓ G1 agreements step (en) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  3560ms
+   ✓ G1 agreements step (en) > a non-approve outcome on G1 sends no agreements (even after ticking them)  1248ms
+   ✓ G1 agreements step (en) > approving another gate (G2) shows no confirmations and sends no agreements  1064ms
+   ✓ G1 agreements step (en) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  856ms
+   ✓ G1 agreements step (en) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  928ms
+   ✓ G1 agreements step (ar) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  1464ms
+   ✓ G1 agreements step (ar) > a non-approve outcome on G1 sends no agreements (even after ticking them)  1315ms
+   ✓ G1 agreements step (ar) > approving another gate (G2) shows no confirmations and sends no agreements  1453ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  1377ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  1170ms
+ ✓ |unit-web| src/app/p3-seams.test.tsx (10 tests) 5373ms
+   ✓ P3 routes > workspace tabs (en) > the workspace tabs include the P3 tabs, labelled from their own namespaces  2002ms
+   ✓ P3 routes > workspace tabs (ar) > the workspace tabs include the P3 tabs, labelled from their own namespaces  693ms
+   ✓ P3 navigation areas > en /initiatives-roadmaps leads into the Initiatives and Roadmaps tab of each transformation  1145ms
+   ✓ P3 navigation areas > ar /initiatives-roadmaps leads into the المبادرات وخرائط الطريق tab of each transformation  555ms
+   ✓ P3 navigation areas > en /benefits-finance leads into the Benefits and Finance tab of each transformation  475ms
+   ✓ P3 navigation areas > ar /benefits-finance leads into the المنافع والمالية tab of each transformation  483ms
+ ✓ |unit-web| src/pages/roadmap/roadmap.test.tsx (14 tests) 16227ms
+   ✓ roadmap (en) > shows the four source waves verbatim (English source also shown in Arabic) with overlapping horizons  2060ms
+   ✓ roadmap (en) > moving a milestone PATCHes the forecast with If-Match and the timeline, table and board all show the new date from one refetch  2183ms
+   ✓ roadmap (en) > a 409 on moving a milestone shows the conflict notice and reloads the roadmap  1793ms
+   ✓ roadmap (en) > re-approving a date requires a reason; then it is POSTed with If-Match  1017ms
+   ✓ roadmap (en) > deliverable acceptance sends the AcceptanceDecision with If-Match (no 'on behalf of' control)  1162ms
+   ✓ roadmap (en) > an Unknown schedule flag is shown as Unknown; missing dates are Unknown, never blank  668ms
+   ✓ roadmap (en) > the read-only auditor sees no write control  1046ms
+   ✓ roadmap (ar) > shows the four source waves verbatim (English source also shown in Arabic) with overlapping horizons  508ms
+   ✓ roadmap (ar) > moving a milestone PATCHes the forecast with If-Match and the timeline, table and board all show the new date from one refetch  1384ms
+   ✓ roadmap (ar) > a 409 on moving a milestone shows the conflict notice and reloads the roadmap  1289ms
+   ✓ roadmap (ar) > re-approving a date requires a reason; then it is POSTed with If-Match  1179ms
+   ✓ roadmap (ar) > deliverable acceptance sends the AcceptanceDecision with If-Match (no 'on behalf of' control)  1183ms
+   ✓ roadmap (ar) > an Unknown schedule flag is shown as Unknown; missing dates are Unknown, never blank  336ms
+   ✓ roadmap (ar) > the read-only auditor sees no write control  415ms
+ ✓ |unit-web| src/components/LanguageSwitch.test.tsx (10 tests) 7634ms
+   ✓ a refused language save, 'en' → other ('403 csrf') > keeps ar on screen and says, in ar, that it was not saved  1408ms
+   ✓ a refused language save, 'ar' → other ('403 csrf') > keeps en on screen and says, in en, that it was not saved  824ms
+   ✓ a refused language save, 'en' → other ('403 forbidden') > keeps ar on screen and says, in ar, that it was not saved  1072ms
+   ✓ a refused language save, 'ar' → other ('503') > keeps en on screen and says, in en, that it was not saved  809ms
+   ✓ the live region and the persisted preference > switching back clears the notice; the region stays in the DOM, empty  1299ms
+   ✓ the live region and the persisted preference > a successful save never flips back to the previous language while the PUT is in flight  611ms
+   ✓ the live region and the persisted preference > if the persisted preference changes later and is re-applied, the notice says so in that language  632ms
+   ✓ the live region and the persisted preference > en: the notice is a warning banner below the header, not inside it  481ms
+   ✓ the live region and the persisted preference > ar: the notice is a warning banner below the header, not inside it  408ms
+ ✓ |unit-web| src/pages/dependencies/dependencies.test.tsx (12 tests) 13985ms
+   ✓ dependencies (en) > shows the seven T08 columns, an External source, the type label and the needed-by conflict flag  1981ms
+   ✓ dependencies (en) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  1714ms
+   ✓ dependencies (en) > an External source is sent as {kind: external, label}  1685ms
+   ✓ dependencies (en) > dependency types: system types are undeletable; an administrator may retire a custom type  1456ms
+   ✓ dependencies (en) > a system type's 422 dependency_type.system_undeletable is translated  1301ms
+   ✓ dependencies (en) > the read-only auditor sees the map and no write control  607ms
+   ✓ dependencies (ar) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  1131ms
+   ✓ dependencies (ar) > an External source is sent as {kind: external, label}  1184ms
+   ✓ dependencies (ar) > dependency types: system types are undeletable; an administrator may retire a custom type  1256ms
+   ✓ dependencies (ar) > a system type's 422 dependency_type.system_undeletable is translated  895ms
+   ✓ dependencies (ar) > the read-only auditor sees the map and no write control  520ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 5803ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  3467ms
+   ✓ New transformation: mode guidance (English LTR) > Modular requires an entry phase before anything is sent  760ms
+   ✓ New transformation: mode guidance (English LTR) > a server validation error on the entry phase is shown on that field  633ms
+   ✓ New transformation: mode guidance (Arabic RTL) > shows the Arabic rendering, marked provisional, with the English source text alongside  939ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 163ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 135ms
+ ✓ |unit-web| src/pages/gates/inherited-approval.test.tsx (16 tests) 12726ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 pending_verification (counts false) is a badge next to 'Not submitted'  1164ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 accepted (counts true) is a badge next to 'Not submitted'  830ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 accepted (counts false) is a badge next to 'Not submitted'  427ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 rejected (counts false) is a badge next to 'Not submitted'  423ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 revoked (counts false) is a badge next to 'Not submitted'  751ms
+   ✓ inherited-approval annotation (en) > Gates list: no inherited approval, no badge  797ms
+   ✓ inherited-approval annotation (en) > gate view: an accepted inherited approval is a labelled row beside the 'Not submitted' status  1097ms
+   ✓ inherited-approval annotation (en) > gate view: without an inherited approval there is no row  1112ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 pending_verification (counts false) is a badge next to 'Not submitted'  537ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 accepted (counts true) is a badge next to 'Not submitted'  781ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 accepted (counts false) is a badge next to 'Not submitted'  1335ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 rejected (counts false) is a badge next to 'Not submitted'  666ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 revoked (counts false) is a badge next to 'Not submitted'  477ms
+   ✓ inherited-approval annotation (ar) > Gates list: no inherited approval, no badge  625ms
+   ✓ inherited-approval annotation (ar) > gate view: an accepted inherited approval is a labelled row beside the 'Not submitted' status  1096ms
+   ✓ inherited-approval annotation (ar) > gate view: without an inherited approval there is no row  608ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 5280ms
+   ✓ record form: one alert per distinct form error (en) > dialog > a 400 whose only field error has pointer "" says its message once, in one live region  1495ms
+   ✓ record form: one alert per distinct form error (en) > inline-sections > the same pointer-"" code twice is still said once  328ms
+   ✓ record form: one alert per distinct form error (en) > inline-sections > two distinct form-level messages: each is said exactly once, one live region each  312ms
+   ✓ record form: one alert per distinct form error (ar) > dialog > a 400 whose only field error has pointer "" says its message once, in one live region  382ms
+   ✓ record form: one alert per distinct form error (ar) > dialog > the same pointer-"" code twice is still said once  434ms
+   ✓ record form: one alert per distinct form error (ar) > inline-sections > a field-pointer error stays on its field; the generic banner is said once  359ms
+ ✓ |unit-web| src/pages/readiness/readiness.test.tsx (4 tests) 3890ms
+   ✓ Readiness (en) > lists the missing diagnostic areas by name, the gates and the translated sequencing blockers  1607ms
+   ✓ Readiness (ar) > lists the missing diagnostic areas by name, the gates and the translated sequencing blockers  884ms
+   ✓ Readiness (ar) > an accepted, verified inherited approval counts, and the gate itself still is not approved  1126ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 1818ms
+   ✓ explicit states in en > loading is a polite live region with a text label  392ms
+ ✓ |unit-web| src/pages/roadmap/fe-e.test.tsx (8 tests) 14617ms
+   ✓ wave editing (en) > edits planned dates (overlap accepted) with If-Match; the source text is read-only and never sent  3072ms
+   ✓ wave editing (en) > 422 roadmap_wave.planned_range is inline at the planned end and translated  1252ms
+   ✓ wave editing (en) > adds a non-source wave with its bilingual texts (POST, Idempotency-Key)  2786ms
+   ✓ wave editing (en) > the read-only auditor gets no wave control  960ms
+   ✓ wave editing (ar) > edits planned dates (overlap accepted) with If-Match; the source text is read-only and never sent  1560ms
+   ✓ wave editing (ar) > 422 roadmap_wave.planned_range is inline at the planned end and translated  1025ms
+   ✓ wave editing (ar) > adds a non-source wave with its bilingual texts (POST, Idempotency-Key)  3291ms
+   ✓ wave editing (ar) > the read-only auditor gets no wave control  667ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 179ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 40ms
+ ✓ |unit-web| src/pages/business-cases/problem-codes.test.ts (4 tests) 34ms
+ ✓ |unit-web| src/pages/capacity/capacity.test.tsx (6 tests) 7262ms
+   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  1241ms
+   ✓ capacity (en) > committing a demand POSTs with If-Match; a 409 shows the conflict notice and reloads  1277ms
+   ✓ capacity (en) > the read-only auditor sees the grid and no commit or release control  911ms
+   ✓ capacity (ar) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  1174ms
+   ✓ capacity (ar) > committing a demand POSTs with If-Match; a 409 shows the conflict notice and reloads  1671ms
+   ✓ capacity (ar) > the read-only auditor sees the grid and no commit or release control  986ms
+ ✓ |unit-web| src/test/harness-config.test.ts (2 tests) 10ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts (140 tests) 740ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 1175ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 700ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 620ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 239ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 3075ms
+   ✓ workflows module (P2) > registers its routes, each declaring access; every mutation declares a write permission  332ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  2635ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (136 tests) 31692ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  18185ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P16 constructor as an object key, fed to a keyed reader (was an allowed form) is a violation (round-4 lint: 'missed')  309ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end  419ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1003ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  2101ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  6872ms
+ ✓ |unit-node| apps/api/src/modules/kpi/totals.test.ts (20 tests) 53ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts (36 tests) 2031ms
+   ✓ property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation > stored value, 2-digit display and 0–100 view all match for 3125 combinations  1845ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 857ms
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow)  651ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (71 tests) 37803ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  7584ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  8047ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  16283ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  5816ms
+ ✓ |unit-node| apps/api/src/modules/kpi/formulas.test.ts (10 tests) 71ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/schedule.test.ts (14 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 2039ms
+   ✓ evidence module (P2) > its declared boundary holds  1831ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (25 tests) 4462ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  4241ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 33ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 328ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (10 tests) 70ms
+ ✓ |unit-node| apps/api/src/modules/workflows/g4.test.ts (5 tests) 40ms
+ ✓ |unit-node| apps/api/src/modules/kpi/p3-gate-facts.test.ts (9 tests) 54ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 28ms
+ ✓ |unit-node| packages/config/src/load.test.ts (17 tests) 290ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 292ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 161ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/sequencing.test.ts (9 tests) 43ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 26ms
+(node:1757) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 119ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 174ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 2262ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  957ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  814ms
+ ✓ |unit-node| packages/shared/src/schemas/roadmap.test.ts (6 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 57ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 21ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 338ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 30ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 284ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 15ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 662ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  600ms
+ ✓ |unit-node| apps/api/src/modules/workflows/t08-cycle-problem.test.ts (2 tests) 3ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 104ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/capacity.test.ts (4 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 7ms
+
+ Test Files  81 passed (81)
+      Tests  1614 passed (1614)
+   Start at  17:21:50
+   Duration  385.33s (transform 12.60s, setup 24.46s, collect 164.85s, tests 747.76s, environment 91.48s, prepare 33.55s)
+
+
+ RUN  v3.2.4 /var/tmp/mth-run.XYReux/claude-0/review-p5
+
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 10ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > ../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a" 15ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a + b" 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a+b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a - b - c" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a * b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a / b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a ÷ b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "-a" 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a - -b" 14ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a * -b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "-(a + b)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "(a)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "(((a)))" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "  a  " 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "\ta\t*\tb" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "12.50 * a" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "0.1 + 0.2" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "007" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "0" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "123456789012345678901234" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "0000000000000000000000000001" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a_1_b2 * 2" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "min(a, b)" 5ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "min (a,b)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "max(a, b, c)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "abs(a)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "abs(-a)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "abs(min(a, b) - max(b, c))" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "to_period(m, year)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "to_period( m , quarter )" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "" with formula.syntax at offset 0 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "   " with formula.syntax at offset 3 11ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a ** b" with formula.syntax at offset 3 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a; b" with formula.syntax at offset 1 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "'a'" with formula.syntax at offset 0 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "\"a\"" with formula.syntax at offset 0 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "`a`" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a\nb" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a\r\nb" with formula.syntax at offset 1 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "foo(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "sqrt(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "exp(a)" with formula.syntax at offset 0 9ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1e3" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1E3" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1.5e-3" with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects ".5" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1." with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1..2" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a +" with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "(a" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a)" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "[a]" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "{a}" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "A" with formula.syntax at offset 0 12ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "aB" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a.b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a, b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "min(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "max()" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs(a, b)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs()" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(a, b)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(a, year, month)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(year, a)" with formula.syntax at offset 10 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "year * 2" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "min(a, year)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs" with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs + 1" with formula.syntax at offset 4 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "--a" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "- -a" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "2a" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a $ b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a % b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a ^ b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a == b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a = b" with formula.syntax at offset 2 13ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a || b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "x => x" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "this.constructor" with formula.syntax at offset 4 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "process.exit()" with formula.syntax at offset 7 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "constructor.constructor('return process')()" with formula.syntax at offset 11 9ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "−a" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a⋅b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "１" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a # comment" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1,000" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1234567890123456789012345" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "_a" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "été" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "😀 + a" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a + 😀" with formula.syntax at offset 4 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a + b" with formula.syntax at offset 1 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a\u0000" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > names over 48 characters and literals over 24 significant digits are refused 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 8ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > a non-string expression is a syntax error, never an exception 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > length: 2000 characters accepted, 2001 refused (code points) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > nodes: 200 accepted, 201 refused 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > depth: 32 levels accepted, 33 refused (no stack exhaustion at 1000) 18ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > variables: 30 accepted, 31 refused 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > undefined variable → formula.undefined_variable 'Undefined variable: {name}', each name once 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 26ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period inverse conversion divides (year → month ÷12) and records the inexact rounding 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period month → quarter: 3 → 9 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period month → year: 3 → 36 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period quarter → year: 3 → 12 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period quarter → month: 3 → 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period year → quarter: 3 → 0.75 21ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period year → month: 3 → 0.25 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period year → year: 3 → 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period needs a value with a period 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > + and − need the same period; a period against no period is refused 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > fraction − fraction → fraction_delta; fraction ± fraction_delta → fraction 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > ÷ rules: X ÷ number → X; currency ÷ currency → number; currency ÷ count → currency; else kind_mismatch 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > currencies: one currency per formula (formula.currency_mismatch), no FX 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > min/max need the same kind; abs keeps the type 5ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > independent problems are all reported in one call 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > variable declarations are checked (defensive; the API schema refuses them first) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year 83ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > cost example: 200000 × (12.50 − 10.00) → exactly 500000.00 SAR per year 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > 0.1 + 0.2 = 0.3 exactly (never a binary float) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > division by zero → Unknown (null) with formula.division_by_zero, never 0 or Infinity 16ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > missing input → Unknown (null) with formula.missing_input listing every missing name; inputs override values 5ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > result outside numeric(24,6) → formula.result_out_of_range, null 12ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > rounds once at storage to 6 decimals, half-up (away from zero for negatives) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > an invalid formula evaluates to ok:false with the validation errors and no result type 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > evaluateAst reuses a validated formula without re-parsing 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > is deterministic: the same inputs always give the same lineage 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > display by kind (ADR-0024 §6 table) > fraction 0.02 → '2%' but fraction_delta 0.02 → '2 pp' (percentage points) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > display by kind (ADR-0024 §6 table) > Unknown stays Unknown: null in, null out (never 0) 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > validateFormula: a TypeError is a formula.syntax 'internal' problem; an EvalError is rethrown 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateFormula: a TypeError is an 'internal' problem with a null result; an EvalError is rethrown 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateAst: a TypeError while walking is an 'internal' problem; an EvalError is rethrown 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > ../value.ts formatDecimal: a TypeError is null (Unknown); an EvalError is rethrown 8ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 3345ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates 2161ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 4659ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 28ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 7ms
+ ↓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+__F("return 1") as Function identifier 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+global["ev" + "al"]!("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+self["ev" + "al"]!("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try {
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (err) { if (err instanceof EvalError) throw err; } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch ({ message }) { b(message); } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for (;;) { try { a(); } finally { break; } } as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } finally { throw new RangeError(); } as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const EvalError = RangeError; as EvalError outside instanceof 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags async function f(): Promise<void> {} as async 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags await a(); as await 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags queueMicrotask(a); as Promise 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags p.finally(a); as .then/.catch/.finally 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags p["then"](a); as .then/.catch/.finally 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export { "weightedScore" as zzX } from "../scoring.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { 'x' as y } from 'node:vm'; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * as "ns" from "../scoring.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 0ms
+
+ Test Files  3 passed (3)
+      Tests  220 passed | 1 skipped (221)
+   Start at  17:28:17
+   Duration  12.21s (transform 1.06s, setup 0ms, collect 2.35s, tests 10.63s, environment 1ms, prepare 863ms)
+
+# exit_status: 0  finished: 2026-10-08T17:28:30Z

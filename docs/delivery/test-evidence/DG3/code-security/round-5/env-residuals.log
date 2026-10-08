@@ -1,0 +1,27 @@
+# env residuals 2026-10-08T17:25:29Z clone 40c84e8d5487ce5d2ec811e9b37ddbb90aa94c9a node v22.22.2
+## registry: offline frozen install (install1.log exit 0); manifests/lockfile changed by the repair 171a0b57..21e2742? (expect empty)
+  (end)
+## CI: node deploy/scripts/check-ci-needs.mjs
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+  exit=0
+## CI: node --test deploy/scripts/tests/check-ci-needs.test.mjs (tail)
+1..46
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11344.790679
+  exit=0; 'not ok' lines: 0
+## .github / deploy changed by the repair? (expect empty)
+  (end)
+## ci.yml runs pnpm test and pnpm test:integration:
+66:      - run: pnpm test
+101:      - run: pnpm test:integration
+## Keycloak: oidc test count is taken from the integration logs (record)

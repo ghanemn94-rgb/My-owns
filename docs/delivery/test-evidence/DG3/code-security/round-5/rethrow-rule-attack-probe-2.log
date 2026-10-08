@@ -1,0 +1,119 @@
+# round-5 rethrow-rule-attack-probe-2.mjs A1 A2 F1 F2 H3 H4 (sha256 76c25713644d4cf8d9ee5d152ad4b1ec2103e04f92b698fa0327fb7fcb82670b); node v22.22.2; clone /var/tmp/mth-run.XYReux/claude-0/review-p3 at 40c84e8d5487ce5d2ec811e9b37ddbb90aa94c9a, git status ''; started 2026-10-08T17:37:13Z
+
+=== A1: Array.fromAsync promise + destructured then; reaction generates code; rejection handled by a 2nd then
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=0  Tests  2 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=0  Tests  220 passed | 1 skipped (221)    EvalError lines=0  unhandled=false
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  211 passed (211)  unhandled=false
+  ==> PASSES ALL THREE LAYERS
+
+=== A2: (control) A1 without the rejection handler: unhandled rejection
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=0  Tests  2 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  220 passed | 1 skipped (221)  Errors  7656 errors  EvalError lines=7656  unhandled=true
+      ⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+      ⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+      EvalError: Code generation from strings disallowed for this context
+      ⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+      EvalError: Code generation from strings disallowed for this context
+      ⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+  RUN-only failures (fail under the flag, pass without it): 0 + unhandled error only under the flag
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  211 passed (211)  unhandled=false
+  ==> REFUSED BY: run-time
+
+=== F1: mirror: finally { const s = "}"; return; } (no-unsafe-finally vs the scan's brace matcher)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=1  1 error line(s)
+      153:5  error  Unsafe usage of ReturnStatement  no-unsafe-finally
+  SCAN exit=0  Tests  2 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=0  Tests  220 passed | 1 skipped (221)    EvalError lines=0  unhandled=false
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  211 passed (211)  unhandled=false
+  ==> REFUSED BY: lint
+
+=== F2: mirror: required catch with a type annotation, catch (e: unknown)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+      → formula/tokenize.ts: expected [ 'catch without EvalError rethrow' ] to deeply equal []
+      AssertionError: formula/tokenize.ts: expected [ 'catch without EvalError rethrow' ] to deeply equal []
+      [31m+   "catch without EvalError rethrow",[39m
+  RUN (unit-formula-nocodegen) exit=1  Tests  4 failed | 216 passed | 1 skipped (221)    EvalError lines=23  unhandled=false
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      × grammar table (ADR-0024 §6 EBNF) > rejects "été" with formula.syntax at offset 0 15ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 6ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 2ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 2ms
+      ✓ evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year 40ms
+  RUN-only failures (fail under the flag, pass without it): 3
+      packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "été" with formula.syntax at offset 0
+      packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+      packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/tokenize.ts: expected [ 'catch without EvalError rethrow' ] to deeply equal []
+  ==> REFUSED BY: scan + run-time
+
+=== H3: required catch shape; Error[Symbol.hasInstance] hijacked (exact name) via Object["defineProperty"] (literal key)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+      → formula/tokenize.ts: expected [ 'prototype reflection' ] to deeply equal []
+      AssertionError: formula/tokenize.ts: expected [ 'prototype reflection' ] to deeply equal []
+      [31m+   "prototype reflection",[39m
+  RUN (unit-formula-nocodegen) exit=1  Tests  13 failed | 207 passed | 1 skipped (221)    EvalError lines=57  unhandled=false
+      × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 8ms
+      → expected error to be instance of EvalError
+      × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 1ms
+      → expected error to be instance of EvalError
+      × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 1ms
+      → expected error to be instance of EvalError
+  RUN-only failures (fail under the flag, pass without it): 8
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect)
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  5 failed | 206 passed (211)  unhandled=false
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 1ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+  ==> REFUSED BY: scan + run-time
+
+=== H4: required catch shape; Error[Symbol.hasInstance] hijacked (exact name) via a run-time-assembled key (Q class)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=0  Tests  2 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  12 failed | 208 passed | 1 skipped (221)    EvalError lines=49  unhandled=false
+      × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 9ms
+      → expected error to be instance of EvalError
+      × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 3ms
+      → expected error to be instance of EvalError
+      × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 1ms
+      → expected error to be instance of EvalError
+  RUN-only failures (fail under the flag, pass without it): 8
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect)
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  4 failed | 207 passed (211)  unhandled=false
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 8ms
+  ==> REFUSED BY: run-time
+
+# files restored; git status --porcelain: ''
+
+# SUMMARY (refused at run time = a test fails, or an unhandled error is reported, in unit-formula-nocodegen but not in the unit-node control)
+A1   lint=0 scan=0 run=0 ctrl=0 run-only-fails=0  PASSES ALL THREE LAYERS  (Array.fromAsync promise + destructured then; reaction generates code; rejection handled by a 2nd then)
+A2   lint=0 scan=0 run=1 ctrl=0 run-only-fails=0+unhandled  REFUSED BY: run-time  ((control) A1 without the rejection handler: unhandled rejection)
+F1   lint=1 scan=0 run=0 ctrl=0 run-only-fails=0  REFUSED BY: lint  (mirror: finally { const s = "}"; return; } (no-unsafe-finally vs the scan's brace matcher))
+F2   lint=0 scan=1 run=1 ctrl=1 run-only-fails=3  REFUSED BY: scan + run-time  (mirror: required catch with a type annotation, catch (e: unknown))
+H3   lint=0 scan=1 run=1 ctrl=1 run-only-fails=8  REFUSED BY: scan + run-time  (required catch shape; Error[Symbol.hasInstance] hijacked (exact name) via Object["defineProperty"] (literal key))
+H4   lint=0 scan=0 run=1 ctrl=1 run-only-fails=8  REFUSED BY: run-time  (required catch shape; Error[Symbol.hasInstance] hijacked (exact name) via a run-time-assembled key (Q class))
+# exit_status: 0  finished 2026-10-08T17:39:07Z

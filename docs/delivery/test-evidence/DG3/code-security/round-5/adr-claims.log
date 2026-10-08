@@ -1,0 +1,42 @@
+# ADR-0024 §6 statement checks, clone 40c84e8d5487ce5d2ec811e9b37ddbb90aa94c9a, 2026-10-08T17:43:50Z
+## C1 'five catch clauses', each binding e with the rethrow first (lint enforces; shown here)
+  packages/shared/src/formula/evaluate.ts:256:  } catch (e) {
+  packages/shared/src/formula/evaluate.ts:257-    // ADR-0024 §6 (F-DG3-100 rounds 4–5): a refused code generation is rethrown, never converted (see index.ts
+  packages/shared/src/formula/evaluate.ts:258:    // internalProblem). It is the first statement of the catch, as lint and the scan require; an EvalFailure is a
+  packages/shared/src/formula/evaluate.ts:259-    // separate class, never an EvalError, so the order changes nothing.
+  packages/shared/src/formula/index.ts:102:  } catch (e) {
+  packages/shared/src/formula/index.ts:103-    if (e instanceof EvalError) throw e; // ADR-0024 §6: a refused code generation is never a formula problem
+  packages/shared/src/formula/index.ts:--
+  packages/shared/src/formula/index.ts:134:  } catch (e) {
+  packages/shared/src/formula/index.ts:135-    if (e instanceof EvalError) throw e; // ADR-0024 §6: see internalProblem
+  packages/shared/src/formula/index.ts:--
+  packages/shared/src/formula/index.ts:157: * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine's import closure
+  packages/shared/src/formula/index.ts:158- * (here, in evaluateAst, in parseFormula and in ../value.ts formatDecimal) therefore RETHROWS EvalError as its first
+  packages/shared/src/formula/parse.ts:67:  } catch (e) {
+  packages/shared/src/formula/parse.ts:68:    // ADR-0024 §6 (F-DG3-100 round 5): the first statement of every catch in the engine's import closure (lint and scan
+  packages/shared/src/formula/parse.ts:69-    // enforce it). It changes nothing here: anything that is not a ParseFailure was already rethrown.
+  packages/shared/src/value.ts:154:  } catch (e) {
+  packages/shared/src/value.ts:155-    // ADR-0024 §6 (F-DG3-100 round 4): this module is in the formula engine's import closure, and the engine rethrows a
+## C2 web: error boundary / errorElement in apps/web/src (expect none)
+  (end)
+## C3 web: evaluateFormula called while rendering
+  apps/web/src/pages/benefit-formulas/FormulaBuilder.tsx:15:import { useId, useMemo, useRef, useState } from "react";
+  apps/web/src/pages/benefit-formulas/FormulaBuilder.tsx:66:  return useMemo(() => {
+  apps/web/src/pages/benefit-formulas/FormulaBuilder.tsx:68:    return { variables, evaluation: evaluateFormula(expression, variables) };
+  apps/web/src/pages/benefit-formulas/BenefitFormulasPage.tsx:264:  const preview = evaluateFormula(example.expression, example.variables);
+## C4 React Router 7.9.0 default error element text
+  node_modules/.pnpm/react-router@7.9.0_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/dist/production/chunk-HDA5IKPB.js:0
+  node_modules/.pnpm/react-router@7.9.0_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/dist/production/chunk-VNPMQDPD.js:1
+  node_modules/.pnpm/react-router@7.9.0_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/dist/production/dom-export.js:0
+  node_modules/.pnpm/react-router@7.9.0_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/dist/production/index-react-server-client.js:0
+  node_modules/.pnpm/react-router@7.9.0_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/dist/production/index-react-server.js:0
+  node_modules/.pnpm/react-router@7.9.0_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/dist/production/index.js:0
+## C5 rules present in eslint.config.js engine-source block: generators / yield / destructured then (expect none: no rule)
+  84:      "MemberExpression[property.name='constructor'], ObjectPattern > Property[key.name='constructor'], ObjectPattern > Property[key.value='constructor']",
+  (end)
+## C6 scan: generator / yield / destructured then patterns in fuzz.test.ts FORBIDDEN or rethrowRuleHits (expect none)
+  (end)
+## C7 the residual paragraph and the layer-3 'No swallowing' bullet, verbatim
+  128:     - no `finally { … }` block may contain `return`, `throw`, `break` or `continue`. This is stricter than `no-unsafe-finally`, because it also counts one inside a nested function;
+  146:       - **No swallowing.** No `finally` in the closure discards an exception, and the closure has no asynchronous code. So the exception reaches the test on the exercising test's call stack.
+  164:  - **Its own handler.** It cannot handle its own refusal. A catch that does not rethrow first, a `finally` that returns, throws, breaks or continues, and a promise reaction (`.then`, `.catch`, `.finally`, `async`/`await`) are refused by lint and the scan (round 5; the reviewer's W1, W2 and W4).

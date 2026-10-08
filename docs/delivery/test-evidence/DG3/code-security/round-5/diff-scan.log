@@ -1,0 +1,90 @@
+# diff-scan 2026-10-08T17:22:56Z base 171a0b57f9b8d2112891d1284adda6f0384da090 source 21e2742e4b0f6800e379a4d935d5592a873b1c59 clone HEAD 40c84e8d5487ce5d2ec811e9b37ddbb90aa94c9a
+## D0 freeze commit vs source commit: files differing (expect delivery metadata only)
+  docs/delivery/assignments/DG3/round-5/code-security-reviewer.md
+  docs/delivery/assignments/DG3/round-5/domain-reviewer.md
+  docs/delivery/assignments/DG3/round-5/qa-verifier.md
+  docs/delivery/candidates/DG3/dfedd62f05412fd7.manifest.json
+  docs/delivery/progress.md
+  docs/delivery/stages.json
+## D1 files changed by the repair outside docs/delivery:
+  docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+  docs/architecture/p3-work-split.md
+  eslint.config.js
+  packages/shared/src/formula/evaluate.ts
+  packages/shared/src/formula/fuzz.test.ts
+  packages/shared/src/formula/index.ts
+  packages/shared/src/formula/parse.ts
+## D2 changed files under apps/ packages/db migrations openapi vitest config package.json lockfile .github deploy (expect none):
+  (exit 0; nothing listed = none)
+## D3 non-test product source changed (expect evaluate.ts index.ts parse.ts):
+  packages/shared/src/formula/evaluate.ts
+  packages/shared/src/formula/index.ts
+  packages/shared/src/formula/parse.ts
+## D4 repair commits and authors
+  10472b4 Claude T-DG3-KBE-G: repair F-DG3-100, fourth pass (EvalError-rethrow rule enforced statically)
+## D5 full non-comment code diff of engine sources (expect only the two rethrow statements; parse.ts added, evaluate.ts reordered)
+  -    if (e instanceof EvalFailure) return fail([e.problem], inexact);
+  +    if (e instanceof EvalFailure) return fail([e.problem], inexact);
+  +    if (e instanceof EvalError) throw e;
+## D6 every try/catch/finally/yield/function*/Promise/then/EventTarget/addEventListener/hasInstance in the 7-file closure
+  packages/shared/src/formula/evaluate.ts:254:  try {
+  packages/shared/src/formula/evaluate.ts:256:  } catch (e) {
+  packages/shared/src/formula/index.ts:67:  try {
+  packages/shared/src/formula/index.ts:102:  } catch (e) {
+  packages/shared/src/formula/index.ts:109: * Validates, then evaluates (ADR-0024 §6 "Evaluation"). Values come from `variables[].value`, overridden by `inputs`.
+  packages/shared/src/formula/index.ts:132:  try {
+  packages/shared/src/formula/index.ts:134:  } catch (e) {
+  packages/shared/src/formula/index.ts:157: * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine's import closure
+  packages/shared/src/formula/parse.ts:52:  try {
+  packages/shared/src/formula/parse.ts:67:  } catch (e) {
+  packages/shared/src/value.ts:152:  try {
+  packages/shared/src/value.ts:154:  } catch (e) {
+## D7 decimal.js 10.6.0 sources: eval( / Function( / try / catch / finally / Promise / async / yield / function* counts
+  decimal.js: eval\(=0 Function\(=0 \btry\b=0 \bcatch\b=0 \bfinally\b=0 \bPromise\b=0 \basync\b=0 \byield\b=0 function\s*\*=0
+  decimal.mjs: eval\(=0 Function\(=0 \btry\b=0 \bcatch\b=0 \bfinally\b=0 \bPromise\b=0 \basync\b=0 \byield\b=0 function\s*\*=0
+## D8 engine-source lint config: rules present for each closure file (calculateConfigForFile via --print-config)
+  packages/shared/src/formula/evaluate.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+  packages/shared/src/formula/index.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+  packages/shared/src/formula/parse.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+  packages/shared/src/formula/tokenize.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+  packages/shared/src/formula/typecheck.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+  packages/shared/src/formula/types.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+  packages/shared/src/value.ts: no-unsafe-finally=[2] catchSelector=true evalErrorSelector=true asyncSelector=true generatorSelector=false
+## D9 secrets / CDN sweep on added product lines (expect none)
+  secrets: none
+## D10 eslint-disable comments added by the repair in engine sources (expect none)
+  (end)
+## D11 fuzz.test.ts diff: removed assertions (lines starting '-' with expect/it/test)
+  (end)
+## L1 advisory-lock keys 7302xx in source (expect 730219-730223, each defined once):
+  apps/api/src/modules/platform/advisory-locks.ts:6:// one write wait for an unrelated one (T-DG3-ARCH-03: prioritization and dependency-type creation both used 730222).
+  apps/api/src/modules/platform/advisory-locks.ts:18:  businessUnitHierarchy: 730219,
+  apps/api/src/modules/platform/advisory-locks.ts:20:  outcomeTree: 730220,
+  apps/api/src/modules/platform/advisory-locks.ts:22:  dependencyGraph: 730221,
+  apps/api/src/modules/platform/advisory-locks.ts:24:  prioritization: 730222,
+  apps/api/src/modules/platform/advisory-locks.ts:26:  dependencyType: 730223,
+  packages/db/migrations/0009_business_unit_hierarchy_guard.sql:44:  hierarchy_lock_class CONSTANT integer := 730219;
+  packages/db/migrations/0013_p2_direction_charter.sql:92:  outcome_lock_class CONSTANT integer := 730220;
+  packages/db/migrations/0022_p3_dependency_capacity_funding.sql:85:--  1. SERIALIZE per transformation with the transaction-scoped advisory lock (730221, hashtext(transformation_id)); the
+  packages/db/migrations/0022_p3_dependency_capacity_funding.sql:95:  graph_lock_class CONSTANT integer := 730221;
+## M1 migrations 0020-0027 present; changed since round 3 (ce988e20f7ea2752cd3283995fbf7ed05b704485) or by the repair (expect none)
+  0020_p3_portfolio_roadmap.sql
+  0021_p3_prioritization.sql
+  0022_p3_dependency_capacity_funding.sql
+  0023_p3_business_case_formula.sql
+  0024_p3_gates_access_instantiation.sql
+  0025_p3_g1_agreement_guard.sql
+  0026_p3_enable_g4.sql
+  0027_p3_calculation_rounding.sql
+  (end)
+## C1 p3-pending lists (expect every list empty: 0 entries)
+  apps/api/test/support/p3-pending-be-a.ts: 0
+  apps/api/test/support/p3-pending-be-b.ts: 0
+  apps/api/test/support/p3-pending-be-c.ts: 0
+  apps/api/test/support/p3-pending-be-d.ts: 0
+  apps/api/test/support/p3-pending-be-e.ts: 0
+  apps/api/test/support/p3-pending-kbe-b.ts: 0
+  apps/api/test/support/p3-pending-kbe-c.ts: 0
+## C2 OpenAPI operationIds
+270
+# end
