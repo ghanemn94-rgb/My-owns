@@ -1,0 +1,526 @@
+# run-spellings-r7.sh; node v22.22.2; clone /var/tmp/mth-run.fCu0N4/claude-0/review-p3 at d22938fc8b0bbb53097e16ac307fee86c00b7d5c; git status ''; 31c34207f7633376ad507e82c6a54c67440c49d59d5f22e7dc6bb6c18804cd4e spellings-r6.append.ts; 2026-10-08T22:17:57Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.fCu0N4/claude-0/review-p3
+
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 1176ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates 1121ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 2207ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing 2ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 12ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 1ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js) 868ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 1ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+__F("return 1") as Function identifier 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+global["ev" + "al"]!("6*7") as host global 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+self["ev" + "al"]!("6*7") as host global 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try {
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (err) { if (err instanceof EvalError) throw err; } as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); } as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } } as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; } as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch ({ message }) { b(message); } as catch without EvalError rethrow 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for (;;) { try { a(); } finally { break; } } as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } finally { throw new RangeError(); } as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const EvalError = RangeError; as EvalError outside instanceof 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags async function f(): Promise<void> {} as async 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags await a(); as await 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags queueMicrotask(a); as Promise 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags p.finally(a); as .then/.catch/.finally 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags p["then"](a); as .then/.catch/.finally 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export { "weightedScore" as zzX } from "../scoring.ts"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { 'x' as y } from 'node:vm'; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * as "ns" from "../scoring.ts"; as non-allowlisted import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* __g(): Generator<number> {
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  void __g().next();
+} as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* __g(): Generator<number> {
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  const it = __g();
+  it.next();
+  it.return(0);
+} as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as fromAsync/asyncIterator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+} as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    const s = "}";
+    void s;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const s = '}';
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const s = `}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const s = `${"}"}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const r = /}/;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* g() {} as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const g = function* () {}; as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  *g() {}
+} as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { a: 1, *g() {} }; as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  static *g() {}
+} as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { *[k]() {} }; as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { async *g() {} }; as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* g() {
+  const x = yield 1;
+} as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags x = yield 1; as generator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { then: t } = p; as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { then } = p; as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { ["then"]: t } = p; as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { then() {} }; as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "then"; as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { catch: c } = p; as catch outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { finally: f } = p; as finally outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { catch: 1, finally: 2 }; as catch outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { catch: 1, finally: 2 }; as finally outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  m() {}
+  catch(e) {
+    if (e instanceof EvalError) throw e;
+  }
+} as catch outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  m() {}
+  finally() {}
+} as finally outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = `catch`; as catch outside a try statement 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags void Array.fromAsync([0]); as fromAsync/asyncIterator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const i = o[Symbol.asyncIterator]; as fromAsync/asyncIterator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for await (const x of xs) a(x); as await 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  #then() {}
+} as then 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  #fromAsync = 0;
+} as fromAsync/asyncIterator 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const s = "unclosed; as unbalanced braces, quotes or templates 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f() { as unbalanced braces, quotes or templates 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > excludes from the ESLint test only the named probe rows that are not valid modules 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 335ms
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch ({ message }) { void message; }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch (err) { if (err instanceof EvalError) throw err; }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch (e) { void 0; if (e instanceof EvalError) throw e; }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch (e) { if (e instanceof RangeError) throw e; }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch (e) { if (e instanceof EvalError) throw new Error(); }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L1 "try { a(); } catch { b(); }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L2 "const EvalError = RangeError; void EvalError;" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L2 "export const x = EvalError;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L3 "export function f(): void { try { a(); } finally { return; } }" rules=["no-unsafe-finally"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L3 "for (;;) { try { a(); } finally { break; } }" rules=["no-unsafe-finally"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L3 "for (;;) { try { a(); } finally { continue; } }" rules=["no-unsafe-finally"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L3 "l: { try { a(); } finally { break l; } }" rules=["no-unsafe-finally"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L3 "try { a(); } finally { throw new Error(); }" rules=["no-unsafe-finally"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export function* g(): Generator<number> {}" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export const o = { *g() {} };" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export class C { private *g() {} }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export class C { static *#g() {} }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export const g = function* () {};" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export class C { *[k]() {} }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L4 "export async function* g() {}" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L5 "export const f = async () => 0;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L5 "export class C { async m() {} }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L5 "export const p = Promise;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L5 "queueMicrotask(a);" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L5 "export async function f() { for await (const x of y) void x; }" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "p.then(a);" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "p?.then(a);" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "p[\"then\"](a);" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "p[`then`](a);" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "const { then } = p; void then;" rules=["no-restricted-syntax","no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "const { [\"then\"]: t } = p; void t;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export const o = { then() {} };" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export const o = { \"then\": 1 };" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export class C { #then = 1; m() { return this.#then; } }" rules=["no-restricted-syntax","no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export class C { then() {} }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export const then = 1;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export function f(then: number) { return then; }" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "p.catch(a);" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "p.finally(a);" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "const { catch: c } = p; void c;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export const s = \"finally\";" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export interface I { then(): void }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export type T = { then: number };" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "export enum E { then }" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L6 "then: for (;;) break then;" rules=["no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L7 "Array.fromAsync(x);" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L7 "const { fromAsync } = Array; void fromAsync;" rules=["no-restricted-syntax","no-restricted-syntax","no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L7 "export const s = Symbol.asyncIterator;" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L7 "export const o = { [Symbol.asyncIterator]() {} };" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L7 "x[\"fromAsync\"](y);" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT REFUSED L7 "export const k = \"asyncIterator\";" rules=["no-restricted-syntax"]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT ALLOWED-CHECK "export function f(a: () => void): void {\n  try {\n    a();\n  } catch (e) {\n    if (e instanceof EvalError) throw e;\n  }\n}\n" handler-rules=[]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT ALLOWED-CHECK "export function f(a: () => void): void {\n  try {\n    a();\n  } finally {\n    a();\n  }\n}\n" handler-rules=[]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT ALLOWED-CHECK "export function f(a: () => void): void {\n  try {\n    a();\n  } catch (e) {\n    if (e instanceof EvalError) throw e;\n    return;\n  } finally {\n    a();\n  }\n}\n" handler-rules=[]
+
+stdout | packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean
+R6-LINT ALLOWED-CHECK "export const s = \"thenable\";\n" handler-rules=[]
+
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 1ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch ({ message }) { void message; } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch (err) { if (err instanceof EvalError) throw err; } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch (e) { void 0; if (e instanceof EvalError) throw e; } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch (e) { if (e instanceof RangeError) throw e; } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch (e) { if (e instanceof EvalError) throw new Error(); } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L1 try { a(); } catch { b(); } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L2 const EvalError = RangeError; void EvalError; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L2 export const x = EvalError; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L3 export function f(): void { try { a(); } finally { return; } } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L3 for (;;) { try { a(); } finally { break; } } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L3 for (;;) { try { a(); } finally { continue; } } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L3 l: { try { a(); } finally { break l; } } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L3 try { a(); } finally { throw new Error(); } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export function* g(): Generator<number> {} is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export const o = { *g() {} }; is a hit 0ms
+ × |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export class C { private *g() {} } is a hit 6ms
+   → export class C { private *g() {} }: expected 0 to be greater than 0
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export class C { static *#g() {} } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export const g = function* () {}; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export class C { *[k]() {} } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export async function* g() {} is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L5 export const f = async () => 0; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L5 export class C { async m() {} } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L5 export const p = Promise; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L5 queueMicrotask(a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L5 export async function f() { for await (const x of y) void x; } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 p.then(a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 p?.then(a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 p["then"](a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 p[`then`](a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 const { then } = p; void then; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 const { ["then"]: t } = p; void t; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export const o = { then() {} }; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export const o = { "then": 1 }; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export class C { #then = 1; m() { return this.#then; } } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export class C { then() {} } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export const then = 1; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export function f(then: number) { return then; } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 p.catch(a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 p.finally(a); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 const { catch: c } = p; void c; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export const s = "finally"; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export interface I { then(): void } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export type T = { then: number }; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 export enum E { then } is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L6 then: for (;;) break then; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L7 Array.fromAsync(x); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L7 const { fromAsync } = Array; void fromAsync; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L7 export const s = Symbol.asyncIterator; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L7 export const o = { [Symbol.asyncIterator]() {} }; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L7 x["fromAsync"](y); is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L7 export const k = "asyncIterator"; is a hit 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: allowed export function f(a: () => void): void {
+  try {
+    a();
+  } catch (e) {
+    if (e instanceof EvalError) throw e;
+  }
+}
+ is clean 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: allowed export function f(a: () => void): void {
+  try {
+    a();
+  } finally {
+    a();
+  }
+}
+ is clean 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: allowed export function f(a: () => void): void {
+  try {
+    a();
+  } catch (e) {
+    if (e instanceof EvalError) throw e;
+    return;
+  } finally {
+    a();
+  }
+}
+ is clean 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: allowed export const s = "thenable";
+ is clean 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > lint: every refused spelling is refused by a rule; allowed shapes are clean 153ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > code-security-reviewer r6: independent L1-L7 spellings > scan: L4 export class C { private *g() {} } is a hit
+AssertionError: export class C { private *g() {} }: expected 0 to be greater than 0
+ ❯ packages/shared/src/formula/fuzz.test.ts:980:43
+    978| describe("code-security-reviewer r6: independent L1-L7 spellings", () …
+    979|   it.each(R6_REFUSED)("scan: %s %s is a hit", (_l, text) => {
+    980|     expect(scanSource(text).length, text).toBeGreaterThan(0);
+       |                                           ^
+    981|   });
+    982|   it.each(R6_ALLOWED)("scan: allowed %s is clean", (text) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 168 passed (169)
+   Start at  22:17:58
+   Duration  6.64s (transform 221ms, setup 0ms, collect 377ms, tests 5.90s, environment 0ms, prepare 57ms)
+
+# exit_status: 1; restored; git status ''; 2026-10-08T22:18:05Z

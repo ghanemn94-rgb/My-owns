@@ -1,0 +1,89 @@
+# requirement acceptance 2026-10-08T22:13:47Z
+# integration-run1-lang-unset.log: ✓=793 ×=0 ↓=0 FAIL-lines=0
+# integration-run2-lang-c-utf8.log: ✓=793 ×=0 ↓=0 FAIL-lines=0
+# unit-node22.log: ✓=773 ×=9 ↓=2 FAIL-lines=0
+# unit-node24.log: ✓=709 ×=7 ↓=2 FAIL-lines=0
+REQ-S16-016 | each P3 entity created+read through the API with authz (contract seams) | int-run1=23 int-run2=23 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > health 7ms
+       ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > auth + me 328ms
+REQ-S16-016 | ERD/migrations: entities with PKs, owner, status | int-run1=0 int-run2=0 unit-n22=1 unit-n24=1 | OK
+REQ-S09-008 | A->B->C->A rejected naming the cycle | int-run1=1 int-run2=1 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > cycles (REQ-S09-008, REQ-PB-051) > A→B→C→A is 422 naming the cycle exactly (ADR-0023 §5); nothing written 292ms
+REQ-S09-008 | late predecessor flagged | int-run1=8 int-run2=8 unit-n22=66 unit-n24=52 | OK
+       ✓ |integration| apps/api/test/integration/registers.test.ts > T01 / T03 template rules and record-level rules > T01: confidence outside H/M/L is 400; amount without currency 422; seeded rows cannot be archived 77ms
+       ✓ |integration| apps/api/test/integration/registers.test.ts > T01 / T03 template rules and record-level rules > T03: a gap without a TOM dimension is 422 (pointer /dimensionCode); the design decision must be T04 of this transformation 17
+REQ-DLV-035 | 5,4,3,2,1 gives 3.30 | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > 5,4,3,2,1 under v1 -> stored 3.3000, shown 3.30, 0-100 view 57.5 with its label; appended with its cause; audited
+REQ-DLV-035 | weights totalling 95% rejected | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > 95% and 105% -> 422 prioritization.weights_total, nothing written; 0 -> 422 weight_range; bad pattern -> 400 305ms
+REQ-DLV-035 | G4 approval end to end | int-run1=2 int-run2=2 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/gates/g4.test.ts > G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > TL submits; FIN validates and funds; the capacity owner commits; 403/403/409 hold; SP approves -> p
+       ✓ |integration| apps/api/test/integration/gates/g4.test.ts > G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > the submitter cannot decide G4, even holding the approver role (403 gate.submitter_cannot_decide) 8
+REQ-S08-007 | monthly ARPU x annual population rejected | int-run1=1 int-run2=1 unit-n22=2 unit-n24=1 | OK
+       ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > the two seeded B0087 examples (REQ-PB-057, REQ-S08-007) > changing arpu to period = month while eligible_customers stays year -> 422 formula.period_mismatch 302ms
+REQ-S08-007 | 100000 SAR exactly | int-run1=1 int-run2=1 unit-n22=3 unit-n24=3 | OK
+       ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > the two seeded B0087 examples (REQ-PB-057, REQ-S08-007) > instantiating revenue_uplift and previewing gives exactly 100000 SAR per year; cost_reduction 500000 433ms
+REQ-PB-004 | E2E launch 422 North Star…; succeeds after G2+G3 | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts > launch (funded -> launched) > REQ-PB-004 (acceptance): End-to-End launch -> 422 'North Star, outcomes and target state not yet approved'; after G2 and G3 approval 
+REQ-PB-007 | pre-G1 cannot leave Draft (422) | int-run1=5 int-run2=5 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts > submit (draft -> submitted) > REQ-PB-007/REQ-PB-022: before G1 -> 422 invalid-transition with the exact G1 text; errors[] lists every failing precondition; nothing
+       ✓ |integration| apps/api/test/integration/portfolio/readiness.test.ts > GET /transformations/{id}/readiness (REQ-PB-007) > a fresh transformation: every B0012 area missing, both blockers with the exact §3 texts, gates G1-G4 draft 158ms
+REQ-PB-007 | readiness lists missing diagnostic dimensions | int-run1=15 int-run2=15 unit-n22=1 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/blank-text.test.ts > defense in depth: blank text already in the database is never 'present' (G1 readiness, pre-checks, thesis) > blank In scope, Case for change, thesis part and T01 texts read a
+       ✓ |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations 680ms
+REQ-PB-022 | G1 approval without three agreements rejected | int-run1=5 int-run2=5 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/g1-agreements.test.ts > G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > approve without agreements -> 422 gate.g1_agreements_required with the three pointers; n
+       ✓ |integration| apps/api/test/integration/portfolio/g1-agreements.test.ts > G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > partial or false confirmations -> 422 naming only the missing ones; nothing written 338m
+REQ-PB-022 | pre-G1 add to portfolio 422 | int-run1=3 int-run2=3 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts > submit (draft -> submitted) > REQ-PB-007/REQ-PB-022: before G1 -> 422 invalid-transition with the exact G1 text; errors[] lists every failing precondition; nothing
+       ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts > launch (funded -> launched) > a draft launched before G1 reports G1 first (precondition 1) 255ms
+REQ-S04-006 | G4 submission names missing funding/capacity | int-run1=2 int-run2=2 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/gates/g4.test.ts > G4 submission refused with the missing items named (ADR-0021 §7) > 422 gate_criteria_incomplete names 'Owners', 'Finance validation', the initiative without a gap link, the mi
+       ✓ |integration| apps/api/test/integration/gates/g4.test.ts > G4 submission refused with the missing items named (ADR-0021 §7) > an empty portfolio is 'Initiative cards' (g4.portfolio_empty); a capacity over-allocation and Unknown are co
+REQ-S04-006 | 403 non-approver / submitter, 409 superseded | int-run1=3 int-run2=3 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/gates/g4.test.ts > G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > TL submits; FIN validates and funds; the capacity owner commits; 403/403/409 hold; SP approves -> p
+       ✓ |integration| apps/api/test/integration/gates/g4.test.ts > G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > the submitter cannot decide G4, even holding the approver role (403 gate.submitter_cannot_decide) 8
+REQ-PB-048 | 5,4,3,2,1 -> 3.30 | int-run1=1 int-run2=1 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > 5,4,3,2,1 under v1 -> stored 3.3000, shown 3.30, 0-100 view 57.5 with its label; appended with its cause; audited
+REQ-PB-048 | score 6 rejected | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/worker/test/integration/outbox.test.ts > pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 1ms
+REQ-PB-048 | missing score 'incomplete' | int-run1=7 int-run2=7 unit-n22=6 unit-n24=6 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > a missing score -> 'incomplete' with weightedScore null (never a number, never 0) 330ms
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > PATCH: If-Match 428/409; clearing (null) makes it incomplete again; duplicate POST 409; AUD 403 on POST and PATCH
+REQ-PB-049 | 95%/105% rejected | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > 95% and 105% -> 422 prioritization.weights_total, nothing written; 0 -> 422 weight_range; bad pattern -> 400 305ms
+REQ-PB-049 | v2 accepted; rescoring uses it; v1 scores keep v1 | int-run1=3 int-run2=4 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > v2 with risk_compliance 10 and strategic fit 15 is accepted as version 2; the proposer cannot approve; the Sponsor does; AUD 403; If-
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > weight sets (REQ-PB-049) > the v2 set is used for rescoring; v1 results keep v1; a set is immutable (DB guard) 401ms
+REQ-PB-049 | ranking history names weight version | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts > rankings and history (REQ-S09-005, REQ-S09-003) > snapshot: deterministic tie-break, incomplete unranked, submitted -> ranked with audit; v2 activation -> histo
+REQ-PB-051 | T08 persists 7 columns | int-run1=1 int-run2=1 unit-n22=1 unit-n24=1 | OK
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > T08 columns, From external, types > the seven T08 columns round-trip; version 1, ETag and Location; audited; listed and read 446ms
+REQ-PB-051 | From accepts initiative or External | int-run1=4 int-run2=4 unit-n22=2 unit-n24=1 | OK
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > T08 columns, From external, types > the seven T08 columns round-trip; version 1, ETag and Location; audited; listed and read 446ms
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > T08 columns, From external, types > From `external` with a label is accepted (no edge); a label-less external From is 400 278ms
+REQ-PB-051 | cycle A->B->A reported | int-run1=1 int-run2=1 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > cycles (REQ-S09-008, REQ-PB-051) > A→B→A is reported the same way ('INI-01 → INI-02 → INI-01'); an archived edge no longer counts 284ms
+REQ-PB-052 | source types present, undeletable | int-run1=1 int-run2=1 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > dependency types (REQ-PB-052) > the five system types are listed; a system type DELETE is 422 and changes nothing 276ms
+REQ-PB-052 | unknown type rejected | int-run1=4 int-run2=4 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > dependency types (REQ-PB-052) > the five system types are listed; a system type DELETE is 422 and changes nothing 276ms
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > dependency types (REQ-PB-052) > add, relabel, retire a custom type: configure only (AUD and TL 403), If-Match 428/409, audited, duplicate 409 420ms
+REQ-PB-055 | G4 refused listing Finance validation | int-run1=3 int-run2=3 unit-n22=32 unit-n24=30 | OK
+       ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > Finance validation of the benefit logic (REQ-PB-055) > FIN validates or rejects with a note; the author gets 403; final once recorded; If-Match 428/409 985ms
+       ✓ |integration| apps/api/test/integration/kpi/business-cases.test.ts > Finance validation of the baseline (REQ-PB-055 part) > FIN validates; the author is refused 403; the hash is stored; a baseline change shows Stale 704ms
+REQ-PB-056 | T09 persists 6 columns | int-run1=1 int-run2=1 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > T09 register (REQ-PB-056) > the six T09 columns persist; BF-nn codes; the formula is the current version's expression 737ms
+REQ-PB-056 | confidence outside H/M/L rejected | int-run1=2 int-run2=2 unit-n22=0 unit-n24=0 | OK
+       ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > T09 register (REQ-PB-056) > confidence outside H/M/L -> 400 (create and PATCH), nothing written; the DB CHECK refuses it too 464ms
+       ✓ |integration| apps/api/test/integration/registers.test.ts > T01 / T03 template rules and record-level rules > T01: confidence outside H/M/L is 400; amount without currency 422; seeded rows cannot be archived 77ms
+REQ-PB-056 | undefined variable rejected | int-run1=1 int-run2=1 unit-n22=3 unit-n24=3 | OK
+       ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > T09 register (REQ-PB-056) > an undefined variable -> 422 'Undefined variable: {name}'; an invalid expression writes nothing 309ms
+REQ-S09-003 | 'Selected - unfunded' cannot launch | int-run1=5 int-run2=5 unit-n22=2 unit-n24=2 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts > selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ranking never selects; select writes a portfolio_selection ro
+       ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts > launch (funded -> launched) > direction is checked BEFORE funding: a selected-unfunded End-to-End initiative gets the sequencing reason, errors[] lists both 353ms
+REQ-S09-006 | milestone move (If-Match), concurrent conflict 409 | int-run1=6 int-run2=6 unit-n22=26 unit-n24=20 | OK
+       ✓ |integration| apps/api/test/integration/portfolio/roadmap.test.ts > milestones: approved vs forecast (ADR-0023 §2-§3, REQ-S09-006) > moving the forecast: If-Match 428, stale 409 with currentVersion, AUD 403, achieved needs an actual 
+       ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts > schedule flags on T08 (ADR-0023 §5) > missing dates are schedule.unknown, never an empty (no conflict) list 477ms
+# clauses MISSING in an integration run and in unit-node22: 0
+# exit_status: 0

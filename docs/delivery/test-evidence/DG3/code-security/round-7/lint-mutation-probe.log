@@ -1,0 +1,47 @@
+12a852a98f83f7c30d7a8f1907d74473acd72a7094f281abb2c79c4fda7268dc  /home/user/My-owns/docs/delivery/test-evidence/DG3/code-security/round-7/probes/lint-mutation-probe.mjs
+# lint-mutation-probe; node v22.22.2; root /var/tmp/mth-run.fCu0N4/claude-0/review-p3; head d22938fc8b0bbb53097e16ac307fee86c00b7d5c
+control (candidate config, candidate test)	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+M1 (no ForOfStatement[await=true]), candidate test	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	for await (const x of xs) a(x); (await): expected [] to not deeply equal []
+M2 (no PrivateIdentifier part), candidate test	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	class C {
+control-pre (candidate config, PRE-REPAIR test c40232b0)	exit=0	PASS(survived)	Tests  1 passed | 107 skipped (108)
+M1-pre (no ForOfStatement[await=true]), PRE-REPAIR test	exit=0	PASS(survived)	Tests  1 passed | 107 skipped (108)
+M2-pre (no PrivateIdentifier part), PRE-REPAIR test	exit=0	PASS(survived)	Tests  1 passed | 107 skipped (108)
+ABL-1	CallExpression[callee.name='parseFloat']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-2	ImportExpression	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	import("node:fs") (dynamic import): expected [] to not deeply equal []
+ABL-3	WithStatement	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-4	CallExpression[callee.name=/^(setTimeout|setInterval|setImmediate|execScript)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	setTimeout("x()", 0) (timers): expected [] to not deeply equal []
+ABL-5	CallExpression[callee.property.name=/^(setTimeout|setInterval|setImmediate|execScript)$/]	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-6	CallExpression[callee.property.name='constructor']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-7	NewExpression[callee.property.name='constructor']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-8	Identifier[name='Function']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-9	MemberExpression[computed=true][property.value=/^(constructor|Function)$/]	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-10	MemberExpression[computed=true][property.type='TemplateLiteral'][property.quasis.0.value.cooked=/^(constructor	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-11	MemberExpression[property.name='constructor']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-12	ObjectPattern > Property[key.name='constructor']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-13	ObjectPattern > Property[key.value='constructor']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-14	CallExpression[callee.name=/^(require|createRequire)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	const fs = require("fs") (require(): expected [] to not deeply equal []
+ABL-15	CallExpression[callee.property.name=/^(require|createRequire)$/]	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-16	Identifier[name='createRequire']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-17	MemberExpression[object.name='Reflect']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-18	Literal[value='constructor']	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	const k = "\x63onstructor"; (escape sequence): expected [] to not deeply equal []
+ABL-19	TemplateElement[value.cooked='constructor']	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-20	Identifier[name='constructor']:not(MethodDefinition[kind='constructor'] > Identifier.key)	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-21	Identifier[name=/^(getPrototypeOf|setPrototypeOf|getOwnPropertyDescriptors?|defineProperty|defineProperties|__	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-22	MemberExpression[computed=true] > BinaryExpression.property Literal[raw=/^[\	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)
+ABL-23	MetaProperty[meta.name='import']	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	import.meta.resolve("node:vm") (import.meta): expected [] to not deeply equal []
+ABL-24	Identifier[name='EvalError']:not(BinaryExpression[operator='instanceof'] > Identifier.right)	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	const EvalError = RangeError; (EvalError outside instanceof): expected [] to not deeply equal []
+ABL-25	Identifier[name=/^(Promise|queueMicrotask)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	queueMicrotask(a); (Promise): expected [] to not deeply equal []
+ABL-26	:function[async=true]	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-27	AwaitExpression	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	await a(); (await): expected [] to not deeply equal []
+ABL-28	ForOfStatement[await=true]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	for await (const x of xs) a(x); (await): expected [] to not deeply equal []
+ABL-29	MemberExpression[property.name=/^(then|catch|finally)$/]	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-30	MemberExpression[computed=true][property.value=/^(then|catch|finally)$/]	exit=0	PASS(survived)	Tests  1 passed | 110 skipped (111)
+ABL-31	:function[generator=true]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	function* g() {} (generator): expected [] to not deeply equal []
+ABL-32	YieldExpression	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	x = yield 1; (generator): expected [] to not deeply equal []
+ABL-33	Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	A1: expected [] to include 'no-restricted-syntax'
+ABL-34	PrivateIdentifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	class C {
+ABL-35	Literal[value=/^(then|catch|finally|fromAsync|asyncIterator)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	const { ["then"]: t } = p; (then): expected [] to not deeply equal []
+ABL-36	TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]	exit=1	FAIL(caught)	Tests  1 failed | 110 skipped (111)	const k = `catch`; (catch outside a try statement): expected [] to not deeply equal []
+# restored; git status --porcelain: ''
+# VERDICT core: AS EXPECTED (control green, M1/M2 caught by the repaired test, survived the pre-repair test)
+# exit_status: 0  finished 2026-10-08T21:57:28Z

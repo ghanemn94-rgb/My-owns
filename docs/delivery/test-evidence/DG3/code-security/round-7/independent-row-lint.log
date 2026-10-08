@@ -1,0 +1,105 @@
+# node v22.22.2; ESLint cwd = clone /var/tmp/mth-run.fCu0N4/claude-0/rev at d22938fc8b0bbb53097e16ac307fee86c00b7d5c (unmodified; git status ''); 51a8add20ae4d7df7923bfec2c72e7e4992e88b412bf7a35505198fbe3f8f918 independent-row-lint.mjs; a79cd45d6482d0899f1cdfaf25dac30aad324f2a5668f2226673f520a33dc3b3 probes-table-runtime-dump.json
+  1	GUARD	no-restricted-globals,no-restricted-syntax	-	[Reflect.construct]	"Reflect.construct(Function, [\"return 1\"])"
+  2	GUARD	no-restricted-globals,no-restricted-syntax	-	[Reflect.apply]	"Reflect.apply(Function, null, [\"return 1\"])"
+  3	GUARD	no-restricted-globals,no-restricted-syntax	-	[Function identifier]	"const F = Function; F(\"return 1\")"
+  4	GUARD	no-restricted-globals,no-restricted-syntax	-	[Function identifier]	"const __F = Function;\n__F(\"return 1\")"
+  5	GUARD	no-restricted-syntax	-	[["constructor"]]	"Object.getPrototypeOf(function* () {})[\"constructor\"](\"yield 1\")"
+  6	GUARD	no-restricted-syntax	-	[["constructor"]]	"Object.getPrototypeOf(function* () {})['constructor']('yield 1')"
+  7	GUARD	no-restricted-syntax	-	[.constructor access]	"const C = (async () => {}).constructor; C('return 1')"
+  8	GUARD	no-restricted-syntax	-	[constructor key]	"const { constructor: D } = function* () {}; D('yield 1')"
+  9	GUARD	no-restricted-imports,no-restricted-syntax	@typescript-eslint/no-unused-vars	[createRequire]	"import { createRequire } from \"node:module\""
+ 10	GUARD	no-restricted-imports,no-restricted-syntax	@typescript-eslint/no-unused-vars	[node:module]	"import { createRequire } from \"node:module\""
+ 11	GUARD	no-restricted-syntax	-	[createRequire]	"createRequire(import.meta.url)(\"vm\")"
+ 12	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars,@typescript-eslint/no-require-imports	[require(]	"const fs = require(\"fs\")"
+ 13	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[node:module]	"import m from \"module\""
+ 14	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[worker_threads/child_process]	"import { Worker } from \"node:worker_threads\""
+ 15	GUARD	no-restricted-globals,no-eval	-	[eval(]	"eval(\"1\")"
+ 16	GUARD	no-new-func,no-restricted-globals,no-restricted-syntax	-	[new Function]	"new Function(\"return 1\")"
+ 17	GUARD	no-restricted-syntax	-	[dynamic import]	"import(\"node:fs\")"
+ 18	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[vm import]	"import vm from \"node:vm\""
+ 19	GUARD	no-restricted-syntax	-	[timers]	"setTimeout(\"x()\", 0)"
+ 20	GUARD	no-restricted-globals,no-restricted-syntax	-	[globalThis]	"globalThis.x = 1"
+ 21	GUARD	no-restricted-globals,no-restricted-syntax	-	[globalThis]	"(globalThis as unknown as Record<string, (s: string) => unknown>)[\"ev\" + \"al\"]!(\"1\"
+ 22	GUARD	no-restricted-globals,no-restricted-syntax	-	[string-assembled key]	"(globalThis as unknown as Record<string, (s: string) => unknown>)[\"ev\" + \"al\"]!(\"1\"
+ 23	GUARD	no-restricted-syntax	-	[constructor word]	"const __k1 = \"constructor\";\n((() => 0) as R)[__k1]!(\"return 6*7\")()"
+ 24	GUARD	no-restricted-syntax	-	[string-assembled key]	"((() => 0) as R)[\"con\" + \"structor\"]!(\"return 6*7\")()"
+ 25	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-expressions	[prototype reflection]	"Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), \"constructor\")!.value"
+ 26	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-expressions	[constructor word]	"Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), \"constructor\")!.value"
+ 27	GUARD	no-restricted-syntax	-	[constructor word]	"const __k4 = \"constructor\";\nconst { [__k4]: __C4 } = Object.getPrototypeOf(function* (
+ 28	GUARD	no-restricted-syntax	-	[prototype reflection]	"const __k5 = [\"con\", \"structor\"].join(\"\");\n(Object.getPrototypeOf(async () => 0) a
+ 29	GUARD	no-restricted-syntax	-	[constructor word]	"const __k6 = \"constructor\";\n((() => 0) as R)[__k6]!`return 6*7`()"
+ 30	GUARD	no-restricted-syntax	-	[host global]	"declare const global: Record<string, (s: string) => unknown>;\nglobal[\"ev\" + \"al\"]!(\
+ 31	GUARD	no-restricted-syntax	-	[host global]	"declare const self: Record<string, (s: string) => unknown>;\nself[\"ev\" + \"al\"]!(\"6*7
+ 32	GUARD	no-restricted-globals,no-restricted-syntax	-	[host global]	"process.getBuiltinModule(\"node:vm\").runInThisContext(\"6*7\")"
+ 33	GUARD	no-restricted-imports	-	[non-allowlisted import]	"import { Session } from \"node:inspector\";\nnew Session().post(\"Runtime.evaluate\", { e
+ 34	GUARD	no-restricted-imports	-	[non-allowlisted import]	"import * as __repl from \"node:repl\";"
+ 35	GUARD	no-restricted-syntax	-	[import.meta]	"import.meta.resolve(\"node:vm\")"
+ 36	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[non-allowlisted import]	"import { readFileSync } from \"node:fs\";"
+ 37	GUARD	no-restricted-imports	-	[non-allowlisted import]	"export * from \"@mth/shared\";"
+ 38	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[non-allowlisted import]	"import type { X } from \"../../db/index.ts\";"
+ 39	GUARD	no-restricted-imports	-	[non-allowlisted import]	"import \"./side-effect.js\";"
+ 40	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[non-allowlisted import]	"import {\n  a,\n  type B,\n} from \"zod\";"
+ 41	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[escape sequence]	"const k = \"\\x63onstructor\";"
+ 42	GUARD	no-restricted-globals,no-restricted-syntax	@typescript-eslint/no-unused-expressions	[host global]	"window.eval"
+ 43	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"function __w(): void {\n  try {\n    codegen();\n  } catch {\n    // refused: carry on\n 
+ 44	GUARD	no-unsafe-finally	-	[finally with return/throw/break/continue]	"function __w(): void {\n  try {\n    codegen();\n  } finally {\n    // no-unsafe-finally 
+ 45	GUARD	no-restricted-syntax	-	[Promise]	"function __w(): void {\n  void Promise.resolve()\n    .then(() => {\n      codegen();\n  
+ 46	GUARD	no-restricted-syntax	-	[.then/.catch/.finally]	"function __w(): void {\n  void Promise.resolve()\n    .then(() => {\n      codegen();\n  
+ 47	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"try {\n  codegen();\n} catch (e) {\n  throw new Error(\"wrapped\", { cause: e });\n}"
+ 48	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"try { a(); } catch (err) { if (err instanceof EvalError) throw err; }"
+ 49	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); }"
+ 50	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } }"
+ 51	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; }"
+ 52	GUARD	no-restricted-syntax	-	[catch without EvalError rethrow]	"try { a(); } catch ({ message }) { b(message); }"
+ 53	GUARD	no-unsafe-finally	-	[finally with return/throw/break/continue]	"for (;;) { try { a(); } finally { break; } }"
+ 54	GUARD	no-unsafe-finally	-	[finally with return/throw/break/continue]	"try { a(); } finally { throw new RangeError(); }"
+ 55	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[EvalError outside instanceof]	"const EvalError = RangeError;"
+ 56	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[async]	"async function f(): Promise<void> {}"
+ 57	GUARD	no-restricted-syntax	-	[await]	"await a();"
+ 58	GUARD	no-restricted-syntax	-	[Promise]	"queueMicrotask(a);"
+ 59	GUARD	no-restricted-syntax	-	[.then/.catch/.finally]	"p.finally(a);"
+ 60	GUARD	no-restricted-syntax	-	[.then/.catch/.finally]	"p[\"then\"](a);"
+ 61	GUARD	no-restricted-imports	-	[non-allowlisted import]	"export { \"weightedScore\" as zzX } from \"../scoring.ts\";"
+ 62	GUARD	no-restricted-imports	@typescript-eslint/no-unused-vars	[non-allowlisted import]	"import { 'x' as y } from 'node:vm';"
+ 63	GUARD	no-restricted-imports	-	[non-allowlisted import]	"export * as \"ns\" from \"../scoring.ts\";"
+ 64	GUARD	no-restricted-syntax	-	[generator]	"function* __g(): Generator<number> {\n  try {\n    void (__w as unknown as Record<string,
+ 65	GUARD	no-restricted-syntax	-	[generator]	"function* __g(): Generator<number> {\n  try {\n    void (__w as unknown as Record<string,
+ 66	GUARD	no-restricted-syntax	-	[then]	"function __w(): void {\n  const p = Array.fromAsync([0]) as unknown as { then: (this: unk
+ 67	GUARD	no-restricted-syntax	-	[fromAsync/asyncIterator]	"function __w(): void {\n  const p = Array.fromAsync([0]) as unknown as { then: (this: unk
+ 68	GUARD	no-restricted-syntax	-	[then]	"function __w(): void {\n  const p = Array.fromAsync([0]) as unknown as { then: (this: unk
+ 69	GUARD	no-unsafe-finally	-	[finally with return/throw/break/continue]	"function __w(): void {\n  try {\n    void (__w as unknown as Record<string, (s: string) =
+ 70	GUARD	no-unsafe-finally	@typescript-eslint/no-unused-vars	[finally with return/throw/break/continue]	"function f(): void {\n  try {\n    a();\n  } finally {\n    const s = '}';\n    return;\n
+ 71	GUARD	no-unsafe-finally	@typescript-eslint/no-unused-vars	[finally with return/throw/break/continue]	"function f(): void {\n  try {\n    a();\n  } finally {\n    const s = `}`;\n    return;\n
+ 72	GUARD	no-unsafe-finally	@typescript-eslint/no-unused-vars	[finally with return/throw/break/continue]	"function f(): void {\n  try {\n    a();\n  } finally {\n    const s = `${\"}\"}`;\n    re
+ 73	GUARD	no-unsafe-finally	@typescript-eslint/no-unused-vars	[finally with return/throw/break/continue]	"function f(): void {\n  try {\n    a();\n  } finally {\n    const r = /}/;\n    return;\n
+ 74	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"function* g() {}"
+ 75	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"const g = function* () {};"
+ 76	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"class C {\n  *g() {}\n}"
+ 77	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"const o = { a: 1, *g() {} };"
+ 78	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"class C {\n  static *g() {}\n}"
+ 79	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"const o = { *[k]() {} };"
+ 80	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"const o = { async *g() {} };"
+ 81	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[generator]	"function* g() {\n  const x = yield 1;\n}"
+ 82	GUARD	no-restricted-syntax	-	[generator]	"x = yield 1;"
+ 83	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[then]	"const { then: t } = p;"
+ 84	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[then]	"const { then } = p;"
+ 85	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[then]	"const { [\"then\"]: t } = p;"
+ 86	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[then]	"const o = { then() {} };"
+ 87	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[then]	"const k = \"then\";"
+ 88	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[catch outside a try statement]	"const { catch: c } = p;"
+ 89	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[finally outside a try statement]	"const { finally: f } = p;"
+ 90	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[catch outside a try statement]	"const o = { catch: 1, finally: 2 };"
+ 91	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[finally outside a try statement]	"const o = { catch: 1, finally: 2 };"
+ 92	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[catch outside a try statement]	"class C {\n  m() {}\n  catch(e) {\n    if (e instanceof EvalError) throw e;\n  }\n}"
+ 93	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[finally outside a try statement]	"class C {\n  m() {}\n  finally() {}\n}"
+ 94	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[catch outside a try statement]	"const k = `catch`;"
+ 95	GUARD	no-restricted-syntax	-	[fromAsync/asyncIterator]	"void Array.fromAsync([0]);"
+ 96	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[fromAsync/asyncIterator]	"const i = o[Symbol.asyncIterator];"
+ 97	GUARD	no-restricted-syntax	-	[await]	"for await (const x of xs) a(x);"
+ 98	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[then]	"class C {\n  #then() {}\n}"
+ 99	GUARD	no-restricted-syntax	@typescript-eslint/no-unused-vars	[fromAsync/asyncIterator]	"class C {\n  #fromAsync = 0;\n}"
+100	FATAL	-	-	[unbalanced braces, quotes or templates]	"const s = \"unclosed;"
+101	FATAL	-	-	[unbalanced braces, quotes or templates]	"function f() {"
+# rows 101; fatal 2 ["const s = \"unclosed;","function f() {"]; refused by a guard rule 99; unguarded 0 []
+# VERDICT: ADR-0024 §6 'Pinned by tests' row claim holds (101 rows: 99 guard-refused, 2 unbalanced rows fatal)
+# exit_status: 0
