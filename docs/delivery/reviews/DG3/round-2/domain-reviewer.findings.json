@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG3-170",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-004",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Inherited-approval badge does not wrap: it overflows the G1 card on the Gates list (EN and AR, every width) and makes the gate view scroll horizontally; in EN its '(does not approve this gate)' disclaimer is clipped",
+      "reproduction": "Disposable stack (docs/delivery/test-evidence/DG3/domain/round-2/with-stack.sh), probe dg3-ui-overflow.mjs (PROBES=dg3-ui-overflow run-all.sh). Create a Modular transformation, record an inherited_approval of G1 with verified evidence, and have the synthetic Sponsor accept it. Sign in as dev.lead in EN and in AR at viewport widths 1024, 1366 and 1920. Open /transformations/{id}/gates and /transformations/{id}/gates/G1, then measure the [data-inherited-approval] box against its card and the document scrollWidth against the viewport. Cause: apps/web/src/styles/app.css .status-chip { white-space: nowrap } applies to the ~80-character label 'Inherited approval: accepted, counts for sequencing (does not approve this gate)'.",
+      "expected": "The badge (ADR-0021 §5, F-DG3-120 repair) stays inside its card or row and wraps, so its full text is visible, including the '(does not approve this gate)' / '(لا يعتمد هذه البوابة)' safeguard. The page never scrolls horizontally at common desktop widths in either direction.",
+      "actual": "Gates list: the EN badge is 518 px wide inside a ~335 px G1 card at 1024, 1366 and 1920 (box [310,828] vs card [297,632] at 1366). On screen it reads 'Inherited approval: accepted, counts for sequencing (' and is clipped, so the disclaimer is not visible. The AR badge (353 px) spills out of the card's left edge and overlaps the G2 card's approver line. Gate view: the badge spills out of its row and the document scrolls horizontally (EN scrollWidth 1604 at a 1366 viewport and 1170 at 1024; AR 1439 at 1366, where the badge starts at x=-73). It fits only at 1920 on the gate view. No approval is fabricated: G1 still shows the neutral 'Not submitted' chip, the badge is grey with an info icon, and the sentence below says 'recorded as evidence, not as a decision on this gate'. So this is a presentation/readability defect of the new safeguard text, not an integrity failure. The jsdom unit test (inherited-approval.test.tsx) cannot see layout, so it passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-overflow.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-overflow.log",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-overflow-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-overflow-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-overflow-1366-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-overflow-1366-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gate-view.png",
+        "apps/web/src/styles/app.css",
+        "apps/web/src/pages/gates/GatesPage.tsx"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG3/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T09:35:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG3 round 2 while verifying F-DG3-120. Medium, non-mandatory layout defect; not blocking (no approval is fabricated or implied: the gate status chip, neutral styling and the evidence sentence stay visible)."
+        }
+      ]
+    }
+  ]
+}

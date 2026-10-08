@@ -1,0 +1,32 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG3-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:58ef3f4777967f7f5791565d6075c3ec28b45c3a42a58903057b81b522540f31 (source f49ca160, freeze f20bdef), live on a disposable PostgreSQL 16 + API stack built from a complete clone, with synthetic data (Node 24.21.0, Chromium). API (dg3-api-extra.mjs 33/33): on a Modular transformation (entry phase mobilize) G1.inheritedApproval is null until a dispensation exists. An inherited_approval for G1 with VERIFIED evidence gives {dispensationId, status pending_verification, counts false, approvingBody, approvedOn 2026-01-15}, and submit is still 422 initiative.g1_not_approved. The recorder's self-accept is 403 and a delegated accept is 422. Once the synthetic Sponsor accepts: accepted, counts true, canSubmitInitiatives true, and submit fails only on outcome_before_activity. Evidence re-reviewed 'rejected': accepted, counts false, canSubmitInitiatives false. Re-verified: counts true. Revoked by the SP (the lead's revoke is 403): revoked, counts false, canSubmitInitiatives false. A second Modular transformation: unverified evidence cannot be accepted (422 evidence_not_verified), and the rejected dispensation shows rejected, counts false. At EVERY step: G1 status draft in the list and the view, approvedAt null, latestSubmissionNo 0, 0 gate_submission and 0 gate_decision rows (psql), list annotation == gate-view annotation, the other five gates null, readiness G1 draft. End-to-End: all six gates carry inheritedApproval null, an inherited_approval is refused (422 inherited_requires_modular), and a waiver never appears as an annotation. UI (dg3-ui-inherited.mjs 94/94): in EN (LTR) and AR (RTL), for none/pending/accepted/accepted-unverified/revoked/rejected, the Gates list keeps G1's 'Not submitted' / 'لم تُقدَّم' chip and shows the translated badge beside it ('Inherited approval: … (does not approve this gate)' / 'اعتماد موروث: … (لا يعتمد هذه البوابة)'). The badge is a neutral grey chip (status-chip--unknown) with an info icon and no check icon, and its computed colours differ from the approved gate chip's. No approved chip appears. The source line names the approving body and date 'recorded as evidence, not as a decision on this gate'. The gate view has a labelled row and a link to the Dispensations page. Readiness and Dispensations agree, and the Arabic reads naturally. ADR-0021 §5, the OpenAPI GateInheritedApproval and the zod mirror state the field. The targeted integration suites (incl. the new dispensations tests) pass 156/156. 'Captured, never fabricated' (B0009 Modular entry, B0011, B0012, B0032 G1; ADR-0021 §5) holds on the gate list, gate view, readiness, Dispensations page and sequencing. Residual layout defect, raised separately as F-DG3-170 (Medium, not blocking): the badge does not wrap. It overflows the G1 card on the Gates list, and makes the gate view scroll horizontally at 1024/1366 px. In EN the '(does not approve this gate)' tail is clipped on the list. The annotation itself is correct, and the gate still reads 'Not submitted' with the neutral chip and the evidence sentence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-api-extra.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-inherited.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-inherited.log",
+        "docs/delivery/test-evidence/DG3/domain/round-2/integration-targeted.log",
+        "docs/delivery/test-evidence/DG3/domain/round-2/stack-run-2.log",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-pending-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-pending-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-revoked-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-revoked-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-rejected-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-rejected-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-readiness.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-readiness.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-pending-dispensations.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-pending-dispensations.png"
+      ]
+    }
+  ]
+}
