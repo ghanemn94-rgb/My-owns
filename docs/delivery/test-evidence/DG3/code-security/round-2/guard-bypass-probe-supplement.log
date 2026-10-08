@@ -1,0 +1,66 @@
+# command: node /home/user/My-owns/docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe-supplement.mjs $TMPDIR/review-p2   (node v22.22.2; clone commit f20bdefb8574d92891dff3237249e487c82fa0b7; started 2026-10-08T09:32:20Z)
+
+=== X1: plain destructuring { constructor } of a generator prototype
+--- snippet:
+const { constructor: __X1 } = Object.getPrototypeOf(function* () {}) as { constructor: (s: string) => () => Iterator<unknown> };
+export const __x1 = (): unknown => __X1("yield 1")().next().value;
+  eslint exit=1
+      296:9  error  No .constructor access in the formula engine: that reaches the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 14ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'constructor key' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "constructor key",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== X2: Object.getOwnPropertyDescriptors(fnProto).constructor.value
+--- snippet:
+export const __x2 = (): unknown =>
+  (Object.getOwnPropertyDescriptors(Object.getPrototypeOf(() => 0)) as unknown as Record<string, { value: (s: string) => () => unknown }>).constructor!.value("return 1")();
+  eslint exit=1
+      297:3  error  No .constructor access in the formula engine: that reaches the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 11ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ '.constructor access' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   ".constructor access",[39m
+  tsc (informational) exit=2
+      packages/shared/src/formula/evaluate.ts(297,153): error TS2339: Property 'value' does not exist on type 'Function'.
+  ==> BLOCKED BY BOTH
+
+=== X3: globalThis.Function
+--- snippet:
+export const __x3 = (): unknown => (globalThis as unknown as Record<string, (s: string) => () => unknown>).Function!("return 1")();
+  eslint exit=1
+      296:108  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)  no-restricted-syntax
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 12ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'Function identifier', 'globalThis' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+      [31m+   "globalThis",[39m
+  tsc (informational) exit=2
+      packages/shared/src/formula/evaluate.ts(296,108): error TS4111: Property 'Function' comes from an index signature, so it must be accessed with ['Function'].
+  ==> BLOCKED BY BOTH
+
+# evaluate.ts restored; git status packages/shared: ''
+
+# SUMMARY
+X1   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (plain destructuring { constructor } of a generator prototype)
+X2   eslint=1 scan=1 tsc=2  BLOCKED BY BOTH  (Object.getOwnPropertyDescriptors(fnProto).constructor.value)
+X3   eslint=1 scan=1 tsc=2  BLOCKED BY BOTH  (globalThis.Function)
+# exit_status: 0  finished: 2026-10-08T09:32:39Z

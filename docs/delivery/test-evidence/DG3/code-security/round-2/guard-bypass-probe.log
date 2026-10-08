@@ -1,0 +1,308 @@
+# command: node /home/user/My-owns/docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe.mjs $TMPDIR/review-p2   (node v22.22.2; clone commit f20bdefb8574d92891dff3237249e487c82fa0b7; started 2026-10-08T09:16:01Z)
+
+=== O1: Reflect.construct(Function, …)
+--- snippet:
+export const __o1 = (): unknown => Reflect.construct(Function, ["return 1"]);
+  eslint exit=1
+      296:36  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)  no-restricted-globals
+      296:36  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                               no-restricted-syntax
+      296:54  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                            no-restricted-globals
+      296:54  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                               no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 12ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'Function identifier', …(2) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+      [31m+   "Reflect.construct",[39m
+      [31m+   "Reflect",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O2: globalThis['ev'+'al']
+--- snippet:
+export const __o2 = (): unknown => (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1");
+  eslint exit=0
+
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 12ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'globalThis' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "globalThis",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY ONE
+
+=== O3: createRequire(import.meta.url)('vm')
+--- snippet:
+import { createRequire } from "node:module";
+export const __o3 = (): unknown => createRequire(import.meta.url)("vm");
+  eslint exit=1
+      296:1   error  'node:module' import is restricted from being used. No module loader in the formula engine (ADR-0024 §6)  no-restricted-imports
+      296:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                         no-restricted-syntax
+      296:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                         no-restricted-syntax
+      297:36  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                         no-restricted-syntax
+      297:36  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                         no-restricted-syntax
+      ✖ 5 problems (5 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 13ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'createRequire', 'node:module' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "createRequire",[39m
+      [31m+   "node:module",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O4: Reflect.apply(Function, …)
+--- snippet:
+export const __o4 = (): unknown => Reflect.apply(Function, null, ["return 1"]);
+  eslint exit=1
+      296:36  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)  no-restricted-globals
+      296:36  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                               no-restricted-syntax
+      296:50  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                            no-restricted-globals
+      296:50  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                               no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 15ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'Function identifier', …(2) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+      [31m+   "Reflect.apply",[39m
+      [31m+   "Reflect",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O5: computed ['constructor'] on a generator prototype
+--- snippet:
+export const __o5 = (): unknown => (Object.getPrototypeOf(function* () {}) as Record<string, (s: string) => unknown>)["constructor"]!("yield 1");
+  eslint exit=1
+      296:36  error  No ["constructor"] or ["Function"] member in the formula engine: that is the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 28ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ '["constructor"]' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "[\"constructor\"]",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O6: alias F = Function
+--- snippet:
+const __F = Function;
+export const __o6 = (): unknown => __F("return 1");
+  eslint exit=1
+      296:13  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)  no-restricted-globals
+      296:13  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)     no-restricted-syntax
+      ✖ 2 problems (2 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 37ms
+      Tests  1 failed | 25 skipped (26)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+      AssertionError: evaluate.ts: expected [ 'Function identifier' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N1: computed member with an identifier key: f[k] where k = 'constructor'
+--- snippet:
+const __k1 = "constructor";
+export const __n1 = (): unknown => ((() => 0) as unknown as Record<string, (s: string) => () => unknown>)[__k1]!("return 6*7")();
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 7ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N2: computed member with a concatenated key: f['con' + 'structor']
+--- snippet:
+export const __n2 = (): unknown => ((() => 0) as unknown as Record<string, (s: string) => () => unknown>)["con" + "structor"]!("return 6*7")();
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 6ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N3: Object.getOwnPropertyDescriptor(fnProto, 'constructor').value
+--- snippet:
+export const __n3 = (): unknown =>
+  (Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as (s: string) => () => unknown)("return 6*7")();
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 7ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N4: destructuring with a computed identifier key: const { [k]: C } = generator prototype
+--- snippet:
+const __k4 = "constructor";
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as Record<string, (s: string) => () => Iterator<unknown>>;
+export const __n4 = (): unknown => __C4!("yield 6*7")().next().value;
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 11ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N5: AsyncFunction through the prototype, key built with join
+--- snippet:
+const __k5 = ["con", "structor"].join("");
+export const __n5 = (): unknown => (Object.getPrototypeOf(async () => 0) as Record<string, (s: string) => () => Promise<unknown>>)[__k5]!("return 6*7")();
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 6ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N6: tagged template on the constructor reached by an identifier key
+--- snippet:
+const __k6 = "constructor";
+export const __n6 = (): unknown => ((() => 0) as unknown as Record<string, (s: TemplateStringsArray) => () => unknown>)[__k6]!`return 6*7`();
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 6ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N7: Node 'global' indexing: global['ev'+'al']
+--- snippet:
+declare const global: Record<string, (s: string) => unknown>;
+export const __n7 = (): unknown => global["ev" + "al"]!("6*7");
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 10ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N8: browser 'self' indexing: self['ev'+'al']
+--- snippet:
+declare const self: Record<string, (s: string) => unknown>;
+export const __n8 = (): unknown => self["ev" + "al"]!("6*7");
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 7ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N9: process.getBuiltinModule('node:vm').runInThisContext
+--- snippet:
+declare const process: { getBuiltinModule(id: string): { runInThisContext(code: string): unknown } };
+export const __n9 = (): unknown => process.getBuiltinModule("node:vm").runInThisContext("6*7");
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 6ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N10: static import of node:inspector, Runtime.evaluate
+--- snippet:
+import { Session } from "node:inspector";
+export const __n10 = (): void => {
+  const s = new Session();
+  s.connect();
+  s.post("Runtime.evaluate", { expression: "6*7" }, () => undefined);
+};
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 21ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N11: static import of node:repl
+--- snippet:
+import * as __repl from "node:repl";
+export const __n11 = (): unknown => __repl.start;
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 9ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+=== N12: import.meta.resolve (resolves a specifier; loads and runs nothing)
+--- snippet:
+export const __n12 = (): unknown => import.meta.resolve("node:vm");
+  eslint exit=0
+
+  source-scan exit=0
+      ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (26 tests | 25 skipped) 6ms
+      Tests  1 passed | 25 skipped (26)
+  tsc (informational) exit=0
+
+  ==> PASSES BOTH GUARDS
+
+# evaluate.ts restored; git status packages/shared: ''
+
+# SUMMARY
+O1   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (Reflect.construct(Function, …))
+O2   eslint=0 scan=1 tsc=0  BLOCKED BY ONE  (globalThis['ev'+'al'])
+O3   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (createRequire(import.meta.url)('vm'))
+O4   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (Reflect.apply(Function, …))
+O5   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (computed ['constructor'] on a generator prototype)
+O6   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (alias F = Function)
+N1   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (computed member with an identifier key: f[k] where k = 'constructor')
+N2   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (computed member with a concatenated key: f['con' + 'structor'])
+N3   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (Object.getOwnPropertyDescriptor(fnProto, 'constructor').value)
+N4   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (destructuring with a computed identifier key: const { [k]: C } = generator prototype)
+N5   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (AsyncFunction through the prototype, key built with join)
+N6   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (tagged template on the constructor reached by an identifier key)
+N7   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (Node 'global' indexing: global['ev'+'al'])
+N8   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (browser 'self' indexing: self['ev'+'al'])
+N9   eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (process.getBuiltinModule('node:vm').runInThisContext)
+N10  eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (static import of node:inspector, Runtime.evaluate)
+N11  eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (static import of node:repl)
+N12  eslint=0 scan=0 tsc=0  PASSES BOTH GUARDS  (import.meta.resolve (resolves a specifier; loads and runs nothing))
+# exit_status: 0  finished: 2026-10-08T09:19:50Z
