@@ -234,3 +234,29 @@ Recorded from the BE-B, BE-C, BE-D and KBE-B handbacks. Wave 3 (BE-E, KBE-C, FE-
     - ADR-0022 §8: BE-D's codes and texts; "ranked but now incomplete keeps `ranked`"; scoring a draft is allowed; the prioritization lock.
     - ADR-0023 §8: `GET /dependency-types` is `authenticated`; `varianceDays` stays in calendar days, and the working-day slip of REQ-S09-007 waits for the business calendar.
     - ADR-0024 §9: KBE-B's interpretations and texts.
+
+### Amendments after wave 4 (T-DG3-ARCH-04, 2026-10-08)
+
+Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 in `367fa53`) and the T-DG3-FE-A, FE-B and FE-C handbacks. Wave 5 (FE-E) builds on them.
+
+16. **BE-E's edits outside its "Owns" list are accepted as BE-E's** (BE-E handback §3, §6). Each was checked against the merge commit `f85eb45`:
+    - **`workflows/gates.ts` (BE-A):** the already-injected `gateFacts` provider is passed to `loadGateFacts(…, gateFacts)` at its four call sites (gates list, gate GET, gate PATCH view, submit), and no other line changed. Without it the G4 evaluators never see the portfolio or kpi facts, because `workflows` must not import `portfolio`. G1–G3 are unchanged: their evaluators ignore the G4 facts, and their snapshots do not include them. The 422 shape is unchanged too (ADR-0021 §7, "The refusal shape").
+    - **`workflows/workflows.test.ts` (BE-A):** "one evaluator per seeded criterion" now expects the 16 G1–G3 keys plus the eight `g4.*` keys. This follows directly from registering the G4 evaluators.
+    - **`portfolio/repository.ts` (BE-B):** in addition to the single presenter call that item 13 names, it adds the optional `precomputedFlags` parameter of `presentInitiatives` (so the prioritization view keeps its injected flag sources) and the helper `assertInitiativeEditable()`.
+    - **The item-13 and item-14 work, done by BE-E as those items assigned:** the presenter consolidation in `portfolio/roadmap.ts` and `portfolio/prioritization.ts`; the closed-initiative guard lines in `portfolio/scores.ts` (BE-D) and in `portfolio/deliverables.ts` and `milestones.ts` (BE-C). Item 14's open point is therefore **closed**: scores, deliverables and milestones on a cancelled or completed initiative answer 422 `initiative.read_only`.
+    - **`platform/db-errors.ts` and `.test.ts`:** the `initiative_contribution_kpi_matches_outcome` → `/outcomeKpiId` mapping and its case (BE-B handback §7 item 1).
+    - **`contract.test.ts`:** only the two pinned counts, `[150, 149, 1]` and `>= 270`. The orchestrator owns them. T-DG3-ARCH-04 changes neither: `BenefitCalculation.rounding` and `FormulaRounding` are additive schema changes, and no operation is added.
+
+    Later edits to these files by other tasks are only those named in this file.
+17. **BE-E's interpretations are recorded in the ADRs.** The deselect rule, `g4.initiative_card_incomplete`, the G4 roadmap reading and Unknown capacity as a G4 conflict are in ADR-0021 §11. Commit authority, the new codes and texts, the cycle-path order, the approve-date reason and the read-only board are in ADR-0023 §9. The G4 422 shape (one entry per incomplete criterion, with the per-item list in the gate view) is in ADR-0021 §7.
+18. **The rounding record is on the lineage row.** Migration `0027_p3_calculation_rounding.sql` (solution-architect) adds `benefit_calculation.rounding`, and `kpi/calculations.ts` writes and returns it (ADR-0024 §6 item 11, §10). There is no backfill: pre-0027 rows keep NULL and return `rounding: null`. This touched KBE-C's `kpi/calculations.ts` and its integration test `test/integration/kpi/benefit-formulas.test.ts`.
+19. **Shared roadmap, T08 and capacity mirrors** (FE-B handback §4.2, FE-A §5.4): `packages/shared/src/schemas/roadmap.ts`, exported by `@mth/shared/schemas`.
+    - The response mirrors moved out of BE-C's `portfolio/waves.ts`, `workflows/t08-dependencies.ts` and `workflows/dependency-types.ts`, and BE-E's `portfolio/capacity.ts` and `resource-demands.ts`. Those files re-export them under the old names and keep their request schemas.
+    - `p3-exercises-be-c.ts` uses the shared `roadmapView` instead of its local copy.
+    - **FE-E and later web tasks import from there.** The web's hand-typed views (`pages/{roadmap,dependencies,capacity}/api.ts`, the `RoadmapWave` interface in `api/types.ts`) are not changed by T-DG3-ARCH-04 (D-004: FE-E owns `apps/web/**`). They switch in a web task.
+20. **Unpaged lists refuse `limit`** (FE-A §5.3; ADR-0021 §11 item 6). This is the contract's intent, and `test/integration/portfolio/unpaged-lists.test.ts` pins it. `fetchAllPages` is for `*Page` operations only.
+21. **FE seam notes, as built:**
+    - **Problem translations** (FE-A §5.2, FE-B §4.3, FE-C §4.2) live in per-page namespaces, with a fallback to `problems.*`. Moving them into `problems.json`, or giving `RecordDialog`/`ReasonDialog` a message hook, is web-internal and is the web tasks' choice. The API codes are fixed by the ADR tables.
+    - **The lineage override marker** (FE-C §4.3) is now documented in the contract (ADR-0024 §10).
+    - **There is no single-line business-case GET** (FE-C §4.4), by intent (ADR-0024 §10).
+    - **The anticipated BE-E audit action names** (FE-A §5.5) match what BE-E writes: `funding_decision.create` (with `decision.create`), `resource_role.create`, `.update` and `.archive`, `capacity.create`, `.update` and `.archive`, and `resource_demand.create`, `.update`, `.archive`, `.commit` and `.release`. FE-E owns their labels.

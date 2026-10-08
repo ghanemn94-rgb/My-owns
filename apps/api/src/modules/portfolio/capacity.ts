@@ -17,7 +17,24 @@
 // never through Number(). G4 uses committed demand only (workflows/g4.ts).
 import type { CapacityTable, DbOrTx, ResourceRoleTable, Tx } from "@mth/db";
 import { sql } from "@mth/db";
-import { businessDate, freeText, uuid, type ScheduleFlag } from "@mth/shared/schemas";
+import {
+  businessDate,
+  CAPACITY_FLAGS,
+  capacity,
+  capacityPage,
+  capacityPlan,
+  capacityPlanCell,
+  freeText,
+  fte,
+  periodMonth,
+  resourceRole,
+  resourceRoleList,
+  uuid,
+  type Capacity,
+  type CapacityPlanCell,
+  type ResourceRole,
+  type ScheduleFlag,
+} from "@mth/shared/schemas";
 import { Decimal } from "decimal.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Selectable } from "kysely";
@@ -49,33 +66,27 @@ export type CapacityRow = Selectable<CapacityTable>;
 
 // ------------------------------------------------------------------------------------------------ zod mirrors
 
-/** Fte (docs/api/openapi.yaml): numeric(6,2) as a decimal string, e.g. "1.50". Never a float. */
-export const fte = z.string().regex(/^[0-9]{1,4}(\.[0-9]{1,2})?$/, "validation.fte");
-/** PeriodMonth: the first day of a month, YYYY-MM-01. */
-export const periodMonth = z.string().regex(/^[0-9]{4}-(0[1-9]|1[0-2])-01$/, "validation.period_month");
-const roleCodeText = z.string().regex(/^[a-z][a-z0-9_]{0,47}$/, "validation.code");
-const stamps = {
-  version: z.number().int().min(1),
-  createdAt: z.string(),
-  createdBy: uuid,
-  updatedAt: z.string(),
-  updatedBy: uuid,
+// The response mirrors (Fte, PeriodMonth, ResourceRole(+List), Capacity(+Page), CapacityPlanCell, CapacityPlan and the
+// capacity flags) live in `@mth/shared/schemas` (roadmap.ts, T-DG3-ARCH-04) so the web uses the same definitions. They
+// are re-exported here under their old names; the request schemas stay with the routes.
+export {
+  CAPACITY_FLAGS,
+  capacity,
+  capacityPage,
+  capacityPlan,
+  capacityPlanCell,
+  fte,
+  periodMonth,
+  resourceRole,
+  resourceRoleList,
+  type Capacity,
+  type CapacityPlanCell,
+  type ResourceRole,
 };
+const roleCodeText = z.string().regex(/^[a-z][a-z0-9_]{0,47}$/, "validation.code");
 const atLeastOne = <T extends z.ZodRawShape>(shape: T) =>
   z.strictObject(shape).refine((v) => Object.keys(v).length >= 1, "validation.min_properties");
 
-export const resourceRole = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  code: roleCodeText,
-  labelEn: z.string().min(1).max(200),
-  labelAr: z.string().min(1).max(200),
-  status: z.enum(["active", "archived"]),
-  ...stamps,
-});
-export type ResourceRole = z.infer<typeof resourceRole>;
-export const resourceRoleList = z.strictObject({ items: z.array(resourceRole) });
 export const resourceRoleCreate = z.strictObject({
   code: roleCodeText,
   labelEn: freeText(1, 200),
@@ -87,20 +98,6 @@ export const resourceRoleUpdate = atLeastOne({
   status: z.enum(["active", "archived"]).optional(),
 });
 
-export const capacity = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  resourceRoleId: uuid,
-  periodMonth,
-  availableFte: fte,
-  ownerUserId: uuid.nullable(),
-  note: z.string().min(1).max(2000).nullable(),
-  status: z.enum(["active", "archived"]),
-  ...stamps,
-});
-export type Capacity = z.infer<typeof capacity>;
-export const capacityPage = z.strictObject({ items: z.array(capacity), nextCursor: z.string().nullable() });
 export const capacityCreate = z.strictObject({
   transformationId: uuid,
   resourceRoleId: uuid,
@@ -114,23 +111,6 @@ export const capacityUpdate = atLeastOne({
   ownerUserId: uuid.nullable().optional(),
   note: freeText(1, 2000).nullable().optional(),
   status: z.enum(["active", "archived"]).optional(),
-});
-
-export const CAPACITY_FLAGS = { overAllocated: "capacity.over_allocated", unknown: "capacity.unknown" } as const;
-export const capacityPlanCell = z.strictObject({
-  resourceRoleId: uuid,
-  periodMonth,
-  availableFte: fte.nullable(),
-  demandFte: fte,
-  committedDemandFte: fte,
-  shortfallFte: fte.nullable(),
-  flag: z.enum([CAPACITY_FLAGS.overAllocated, CAPACITY_FLAGS.unknown]).nullable(),
-});
-export type CapacityPlanCell = z.infer<typeof capacityPlanCell>;
-export const capacityPlan = z.strictObject({
-  transformationId: uuid,
-  roles: z.array(resourceRole),
-  cells: z.array(capacityPlanCell),
 });
 
 // ------------------------------------------------------------------------------------------------ presenters

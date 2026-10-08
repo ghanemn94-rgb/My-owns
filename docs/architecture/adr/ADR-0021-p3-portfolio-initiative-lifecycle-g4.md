@@ -162,16 +162,27 @@ G4 reuses the ADR-0015 engine unchanged: `gate_instance`, versioned `gate_submis
 
 | Key | Ordinal | Complete when … | `missing[]` item (code → English label) |
 |---|---|---|---|
-| `g4.initiative_cards` | 1 | ≥ 1 initiative in scope; each has name, objective, scope in, ≥ 1 active gap link (REQ-PB-046) and ≥ 1 outcome contribution with a KPI (REQ-PB-006) | `g4.portfolio_empty` → 'Initiative cards'; `g4.initiative_gap_missing` → 'Gap link missing: {code} {name}'; `g4.initiative_outcome_missing` → 'Outcome/KPI link missing: {code} {name}' |
+| `g4.initiative_cards` | 1 | ≥ 1 initiative in scope; each has name, objective, scope in, ≥ 1 active gap link (REQ-PB-046) and ≥ 1 outcome contribution with a KPI (REQ-PB-006) | `g4.portfolio_empty` → 'Initiative cards'; `g4.initiative_card_incomplete` → 'Initiative card incomplete: {code} {name} ({fields})', where {fields} lists the missing ones of `name`, `objective`, `scopeIn`, comma-separated (§11); `g4.initiative_gap_missing` → 'Gap link missing: {code} {name}'; `g4.initiative_outcome_missing` → 'Outcome/KPI link missing: {code} {name}' |
 | `g4.business_cases` | 2 | a transformation-level business case exists and is not archived; every in-scope initiative has an initiative case linked to it; the transformation case fills all ten sections and each initiative case the lighter set (ADR-0024 §1) | `g4.business_case_missing` → 'Business cases'; `g4.initiative_case_missing` → 'Business case missing: {code} {name}'; `g4.business_case_section_missing` → 'Business case section missing: {section}' |
 | `g4.finance_validation` | 3 | every in-scope case (and the transformation case) has a current Finance-validated baseline, and every benefit line's formula version is Finance-validated and current (REQ-PB-055) | `g4.finance_validation_missing` → **'Finance validation'**, with `pointer` naming the case or formula version |
 | `g4.prioritization` | 4 | a current proposed ranking exists under the active weight set and every in-scope initiative has a complete score in it | `g4.prioritization_missing` → 'Prioritization'; `g4.score_incomplete` → 'Score incomplete: {code} {name}' |
-| `g4.roadmap` | 5 | every in-scope initiative has a wave, planned dates and ≥ 1 milestone with an approved date; no dependency cycle; no unresolved dependency whose predecessor finishes after the successor's needed-by date is left without a mitigation | `g4.roadmap_missing` → 'Roadmap: {code} {name}'; `g4.schedule_conflict` → 'Schedule conflict: {dependency code}' |
+| `g4.roadmap` | 5 | every in-scope initiative has a wave, planned dates and ≥ 1 milestone with an approved date; no dependency cycle; no unresolved dependency whose predecessor finishes after the successor's needed-by date is left without a mitigation | `g4.roadmap_missing` → 'Roadmap: {code} {name}'; `g4.schedule_conflict` → 'Schedule conflict: {dependency code}' (how this is read: §11) |
 | `g4.owners` | 6 | every in-scope initiative has an executive owner **and** a workstream lead (REQ-PB-019, REQ-PB-059) | `g4.owner_missing` → **'Owners'**, one item per initiative without owners, `message` 'Owners: {code} {name}' |
 | `g4.funding` | 7 | every in-scope initiative has a current approved funding decision (REQ-S04-006) | `g4.funding_missing` → 'Funding decision missing: {code} {name}' |
-| `g4.capacity` | 8 | every in-scope initiative has ≥ 1 `committed` resource demand, and no committed demand exceeds the role's available capacity in its period (REQ-S04-006, REQ-PB-059) | `g4.capacity_commitment_missing` → 'Capacity commitment missing: {code} {name}'; `g4.capacity_conflict` → 'Capacity conflict: {role} {period}' |
+| `g4.capacity` | 8 | every in-scope initiative has ≥ 1 `committed` resource demand, and no committed demand exceeds the role's available capacity in its period (REQ-S04-006, REQ-PB-059) | `g4.capacity_commitment_missing` → 'Capacity commitment missing: {code} {name}'; `g4.capacity_conflict` → 'Capacity conflict: {role} {period}' ({period} is `YYYY-MM`; a role and month with committed demand and **no** capacity row is Unknown and counts as a conflict, §11) |
 
-A G4 submission with any incomplete criterion is refused with the existing **422 `gate_criteria_incomplete`**: `errors[]` has one entry per missing item, `pointer = /criteria/<key>`, `code` from the table, `message` the English label (so 'Owners', 'Finance validation' and the initiative names appear literally in the response). Nothing is written.
+A G4 submission with any incomplete criterion is refused with the existing **422 `gate_criteria_incomplete`**, the shape the DG2-approved `submitGate` (ADR-0015) emits for every gate. Nothing is written.
+
+**The refusal shape** (decided by T-DG3-ARCH-04, option (a): this text now matches the code, and the code is unchanged):
+
+- `errors[]` has **one entry per incomplete mandatory criterion**, in criterion order:
+  - `pointer` is `/criteria/<key>`;
+  - `code` is the code of that criterion's **first** missing item (from the table), or `gate.criterion_incomplete` when the criterion has none;
+  - `message` is **all** of that criterion's missing-item labels, joined with single spaces.
+- `detail` is "Mandatory required outputs are incomplete: <keys>." (the keys comma-separated).
+- Every label of the table therefore still appears **literally** in the 422. That covers 'Owners', 'Finance validation' and each initiative's '{code} {name}', which is what REQ-PB-019 ("rejected listing 'Owners'") and REQ-PB-046 ("rejected naming that initiative") need.
+- **The per-item list with pointers** (one `Warning` per missing item: `code`, `message`, and `pointer` naming the initiative, case, formula version or dependency) is in the gate view, `GET /transformations/{id}/gates/G4` → `criteria[].missing[]`. It is not repeated in the 422. A client that needs per-item links reads the view: the refusal says *which criteria* block, and the view says *which records*.
+- **Why not per-item entries (option (b))?** No requirement needs the 422 itself to carry per-item pointers. Changing it only for G4 would give one problem code two shapes, and changing it for every gate would break the byte-stable G1–G3 refusals that DG2 approved. `apps/api/test/integration/gates/g4.test.ts` checks the joined messages, for example `g4.owners` → 'Owners: {code} {name}'.
 
 **Snapshot.** The G4 snapshot freezes the in-scope initiative ids and versions, the ranking snapshot id, the active weight-set version, case ids and versions, formula version ids and their validation state, funding decision ids, committed demand ids and the wave assignment.
 
@@ -237,6 +248,30 @@ A T01 dimension is **covered** when its seeded `diagnostic_item` (active) states
 9. Harness ports stay below 32768; verification runs with the locale unset and with `C.UTF-8`.
 10. Unit tests are deterministic with explicit timeouts.
 11. Every new operation declares its ADR-0007 §5a/§5b platform statuses from the start (400 always; 401 non-public; 403 unsafe; 409/428 with If-Match; 429 always).
+
+### 11. Interpretations recorded after wave 4 (T-DG3-BE-E handback §7, T-DG3-FE-A/B/C handbacks; T-DG3-ARCH-04, 2026-10-08)
+
+These are the rule, and reviewers test against this text. Capacity and funding detail is in ADR-0023 §9.
+
+1. **Deselecting voids funding** (the §3 deselect row). A funding decision counts only for the selection it was recorded under. `latestFundingState()` (`portfolio/funding.ts`) reads the latest decision recorded after the initiative's latest `selected` row in `portfolio_selection`. If there is no selection row, every decision counts.
+   - A deselected and re-selected initiative is 'Selected - unfunded' (`fundingState = unfunded`), and launch is refused until a person records a **new** approved funding decision. Re-selection never puts the status back to `funded`.
+   - Deselecting writes no funding record. Selection and funding stay separate records (REQ-S09-003).
+   - G4 reads funding through the same function, so `g4.funding` also needs that new decision.
+2. **`g4.initiative_card_incomplete`.** The "name, objective, scope in" part of `g4.initiative_cards` had no missing-item code. Its code is `g4.initiative_card_incomplete`, with the message 'Initiative card incomplete: {code} {name} ({fields})', where {fields} is the comma-separated missing ones of `name`, `objective` and `scopeIn` (blank text counts as missing, `hasText`). It is listed before the gap and outcome items of the same initiative.
+3. **The G4 roadmap reading** (`g4.roadmap`, `workflows/g4.ts` with `portfolio/gate-facts.ts`):
+   - `g4.roadmap_missing` is listed for each in-scope initiative that has no wave, no `plannedStart`, no `plannedEnd`, or no milestone with an approved date.
+   - **Cycles are not re-checked.** The `dependency_acyclic` guard (0022, ADR-0023 §5) refuses a cycle at write time, so the dependency graph cannot hold one when G4 is evaluated.
+   - `g4.schedule_conflict` lists each unresolved dependency (not `resolved` and not `archived`) **into** an in-scope initiative that carries the T08 flag `schedule.needed_by_conflict` and has a blank `mitigation`. That is the §7 rule: a predecessor that finishes after the needed-by date, left without a mitigation. A mitigation text clears the item. The flag stays visible on T07 and T08.
+   - **A dependency whose schedule is Unknown (`schedule.unknown`: no needed-by date, or a predecessor with no finish date) is not listed by G4.** The §7 rule names only a known late predecessor. Every in-scope initiative's own dates are already required by `g4.roadmap_missing`, so an Unknown can only come from a missing needed-by date or a predecessor outside G4 scope (an external party, or an initiative that is not selected). T07 and T08 show these as Unknown, never as "no conflict". Listing them in G4 as well would be a stricter reading, and it is open as a recommendation (T-DG3-ARCH-04 handback §4). It changes only after an orchestrator decision.
+4. **Unknown capacity is a G4 conflict.** `g4.capacity` uses committed demand only (ADR-0023 §6). A role and month with committed demand and no active capacity row has Unknown capacity, and it is listed as 'Capacity conflict: {role} {YYYY-MM}', never passed.
+5. **Commit authority.** A capacity commitment needs `capacity.commit` (BO and TO by default), checked through the policy function at transformation scope (ADR-0023 §9).
+6. **Unpaged child lists refuse `limit`.** `GET /initiatives/{id}/gap-links`, `…/outcome-contributions`, `…/decision-links`, `…/deliverables`, `…/milestones`, `GET /business-cases/{id}/lines`, `GET /transformations/{id}/waves`, `…/resource-roles` and `GET /dependency-types` return `{items}` with no `nextCursor`. Their contract declares no `cursor` or `limit` parameter, only `includeArchived` where shown.
+   - This is the contract's intent. They are bounded child lists of one parent record, or small catalogues, and they are returned whole.
+   - Under ADR-0007 §5 (strict query objects), `limit` or `cursor` on them is **400**, not ignored.
+   - A client pages only the `*Page` operations: `listInitiatives`, `listT08Dependencies`, `listCapacity`, `listResourceDemands`, `listBenefitFormulas`, the calculation lineage and so on. FE-A's `api/portfolio.ts` uses a plain GET for the unpaged lists (FE-A handback §5.3).
+7. **Shared mirrors for the roadmap, T08 and capacity views.** `RoadmapWave(+List)`, `RoadmapView`, `DependencyType(Code)(+List)`, `T08Dependency(+Page)`, `PeriodMonth`, `ResourceRole(+List)`, `Capacity(+Page)`, `CapacityPlan(Cell)` and `ResourceDemand(+Page)` are now zod mirrors in `@mth/shared/schemas` (`roadmap.ts`). Before this, only the API route files defined them, and the web re-typed them by hand (FE-B handback §4.2, FE-A §5.4).
+   - The API route files re-export them under their old names, and the contract seams validate against them.
+   - The web's read-only TypeScript views (`pages/{roadmap,dependencies,capacity}/api.ts`, `api/types.ts`) are unchanged. A later web task switches them to the shared mirrors.
 
 ## Alternatives considered
 

@@ -13,7 +13,7 @@
 // read gate, row lock, then the write gate re-authorised at commit time on reloaded grants (BE18A), before the body
 // is parsed, so a read-only auditor gets 403 for any body.
 import { diffFields, type DbOrTx, type RoadmapWaveTable, type Tx } from "@mth/db";
-import { businessDate, freeText, timestamp, uuid, version } from "@mth/shared/schemas";
+import { businessDate, freeText, roadmapWave, roadmapWaveList, uuid, type RoadmapWave } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Selectable } from "kysely";
 import { v7 as uuidv7 } from "uuid";
@@ -136,40 +136,8 @@ const nullableDate = businessDate.nullable();
 const waveCode = z.string().regex(/^[a-z][a-z0-9_]{0,47}$/);
 const weeks = z.number().int().min(0).max(520);
 
-/** Zod mirror of the RoadmapWave component (docs/api/openapi.yaml). */
-export const roadmapWave = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  code: waveCode,
-  ordinal: z.number().int().min(0).max(99),
-  isSourceSeeded: z.boolean(),
-  sourceRef: z.string().nullable(),
-  nameEn: z.string(),
-  nameAr: z.string(),
-  purposeEn: z.string(),
-  purposeAr: z.string(),
-  horizonEn: z.string(),
-  horizonAr: z.string(),
-  entryCriteriaEn: z.string(),
-  entryCriteriaAr: z.string(),
-  exitEvidenceEn: z.string(),
-  exitEvidenceAr: z.string(),
-  horizonFromWeeks: weeks,
-  horizonToWeeks: weeks,
-  plannedStart: nullableDate,
-  plannedEnd: nullableDate,
-  ownerUserId: uuid.nullable(),
-  notes: z.string().min(1).max(4000).nullable(),
-  status: z.enum(["active", "archived"]),
-  version,
-  createdAt: timestamp,
-  createdBy: uuid,
-  updatedAt: timestamp,
-  updatedBy: uuid,
-});
-export type RoadmapWave = z.infer<typeof roadmapWave>;
-export const roadmapWaveList = z.strictObject({ items: z.array(roadmapWave) });
+// The RoadmapWave(+List) response mirrors live in `@mth/shared/schemas` (roadmap.ts, T-DG3-ARCH-04), re-exported here.
+export { roadmapWave, roadmapWaveList, type RoadmapWave };
 
 export const roadmapWaveCreate = z.strictObject({
   code: waveCode,

@@ -4,7 +4,7 @@
 - **Requirements:** REQ-PB-053, REQ-PB-054, REQ-PB-055, REQ-PB-056, REQ-PB-057, REQ-S05-005, REQ-S08-007, REQ-DLV-035 (tested financial inputs).
 - **Sources:** playbook B0083–B0088, B0139; master prompt §8 (lines ~263–282), M0148, M0168–M0173, M0329.
 - **Builds on:** ADR-0003, ADR-0004, ADR-0016, ADR-0019 (decimal, Unknown, validation staleness), ADR-0021 (G4), ADR-0002 (package boundaries).
-- **Physical model:** `0023_p3_business_case_formula.sql`. Module `kpi` (kpi-benefits-engineer) owns `business-cases` and `benefit-formulas`; the engine lives in `packages/shared/src/formula/` (§6).
+- **Physical model:** `0023_p3_business_case_formula.sql`; `0027_p3_calculation_rounding.sql` (§10). Module `kpi` (kpi-benefits-engineer) owns `business-cases` and `benefit-formulas`; the engine lives in `packages/shared/src/formula/` (§6).
 
 ## Decision
 
@@ -173,7 +173,7 @@ A team instantiates an example into its own T09 register (`POST /benefit-formula
   - `formula.missing_input`: 'Missing input: {names}; the result is Unknown'
   - `formula.result_out_of_range`: 'Result out of range: {value} does not fit numeric(24,6)'
   - `formula.syntax`: 'Syntax error at offset {n}: {detail}'
-- **(11) Exactness record.** The lineage's `rounding` object is `{column: "numeric(24,6)", scale: 6, mode: "ROUND_HALF_UP", precision: 80, exact, stored, rounded, inexactIntermediate}`. `rounded` reports the single storage rounding. `inexactIntermediate` is true when a division, an inverse period conversion or the 80-digit cap actually rounded an intermediate value, and every operation is re-checked against an unbounded-precision computation to set it. KBE-C stores this object in the `benefit_calculation` lineage as is.
+- **(11) Exactness record.** The lineage's `rounding` object is `{column: "numeric(24,6)", scale: 6, mode: "ROUND_HALF_UP", precision: 80, exact, stored, rounded, inexactIntermediate}`. `rounded` reports the single storage rounding. `inexactIntermediate` is true when a division, an inverse period conversion or the 80-digit cap actually rounded an intermediate value, and every operation is re-checked against an unbounded-precision computation to set it. KBE-C stores this object in the `benefit_calculation` lineage as is: in the row's `rounding jsonb` column (migration `0027_p3_calculation_rounding.sql`, T-DG3-ARCH-04), returned as `BenefitCalculation.rounding` (`FormulaRounding`; zod `formulaRounding`) and repeated in the row's `benefit_calculation.create` audit event. See §10 for the column's rules.
 - **(12) "500000" vs "500000.00".** These are the same value. The canonical `result` is the normalised decimal string `"500000"` (API `result`, comparison by `compareDecimal`). The stored column value is `"500000.000000"` (`rounding.stored`, `benefit_calculation.result`). The currency display is `SAR 500,000.00`. "500000.00 SAR" in the example table is the display form.
 - **(13) Display suffixes.** `formatFormulaValue` defaults to "pp" / `نقطة مئوية` for `fraction_delta` and "%" / `٪` for the percent kinds. The Arabic default is **provisional**. The web (FE-C) renders the suffix through i18next from the suffix code that `displayNumber` returns (`percentage_points` | `percent`), so translators own the text. The defaults are a fallback for non-UI callers (for example exports).
 
@@ -215,6 +215,21 @@ These are the rule, and reviewers test against this text.
 
 The source files are the single place for the texts marked "as written". This ADR fixes the codes and their meaning, not a second copy of every sentence.
 
+### 10. The rounding record on the lineage row (T-DG3-ARCH-04, 2026-10-08)
+
+KBE-C first stored only `rounded boolean` on the row and kept the full record in the audit event (KBE-C handback §6 item 2). That did not match §6 item 11. Migration `0027` closes the gap:
+
+- **Column.** `benefit_calculation.rounding jsonb NULL`, `CHECK (rounding IS NULL OR jsonb_typeof(rounding) = 'object')`.
+- **Shape bound to the row.** `benefit_calculation_rounding_shape` requires all eight keys and the constants (`numeric(24,6)`, 6, `ROUND_HALF_UP`, 80). It also requires `rounding.rounded = rounded` and `rounding.stored = result::text`, or JSON null when the result is Unknown. The record and the columns therefore cannot disagree.
+- **NULL means "written before 0027", and nothing else.** `benefit_calculation_rounding_required CHECK (rounding IS NOT NULL) NOT VALID` is enforced on every new row and does not check the rows that existed before. The API returns `rounding: null` for such a row. The contract allows null for that reason only.
+- **No backfill (decision).** A backfill from the audit events is possible, but it is not safe in the sense that matters here, and it is not needed:
+  - The table is append-only (trigger). A backfill would have to disable the trigger and rewrite immutable lineage, which is exactly what the table must never allow.
+  - No information is lost without one. The record of every pre-0027 row is in its `benefit_calculation.create` audit event, written in the same transaction, and `audit_event` is append-only as well.
+  - P3 is unreleased, so no production database has such rows. A fresh database has none.
+- **The override marker (FE-C handback §4.3).** In the lineage `inputs`, a value given in the calculation request carries `source` = exactly 'Calculation input (overrides the version value)' (`kpi/calculations.ts` `OVERRIDE_SOURCE`). The contract now documents this as a fixed English marker that clients may match and translate, and the web does so. Replacing it with a separate code field would be a further additive contract change, and it is not made in P3.
+- **No single-line GET (FE-C handback §4.4).** The contract has no `GET /business-cases/{id}/lines/{lineId}`. A line is read through its case's list (`listBusinessCaseLines`, unpaged, ADR-0021 §11 item 6), which is also how a client reloads the current values after a 409. This is the contract's intent, and no operation is added.
+- **Contract.** The change is additive. `BenefitCalculation` gains the required, nullable `rounding` (`oneOf [FormulaRounding, null]`), and the zod mirror changes with it. No operation is added or removed, so the pinned operation count stays 270.
+
 ## Alternatives considered
 
 1. **A third-party expression library** (for example `expr-eval`, `mathjs`). Rejected: they evaluate floats, carry far more surface than needed, and some compile to `Function`; a 300-line parser is auditable and has no new licence or supply-chain risk.
@@ -234,3 +249,4 @@ The source files are the single place for the texts marked "as written". This AD
 - Unit (`packages/shared/src/formula/*.test.ts`): grammar acceptance/rejection table; undefined variable; `eval`/`Function` absent (ESLint and a source scan); revenue example `"100000"` exact; cost example `"500000"` exact; monthly × annual → `formula.period_mismatch`; `to_period` conversion; division by zero → Unknown; 0.1 + 0.2 = 0.3 exactly; depth/size limits.
 - Integration: all ten sections round-trip; two classes → 400; class mismatch → 422; amounts are strings with exact decimals; transformation roll-up counts an edited initiative line once; confidence `X` → 400; G4 refused with 'Finance validation' until FIN validates the baseline and the current formula version; FIN validating their own record → 403/422.
 - Probe: `business_case_line` with two classes refused by the DB; `benefit_formula_version` expression update refused; `benefit_calculation` append-only.
+- Rounding record (§10): the integration test `apps/api/test/integration/kpi/benefit-formulas.test.ts` checks that the revenue example's row, POST response and GET list carry `{column, scale, mode, precision, exact: "100000", stored: "100000.000000", rounded: false, inexactIntermediate: false}`. It also checks that an Unknown row carries `exact`/`stored` null, and that the database refuses a new row with the record missing, not an object, missing a key, or disagreeing with `rounded`/`result`. `packages/db/test/integration/catalogue.test.ts` (0027) pins the three CHECKs, including `NOT VALID` on the required one.

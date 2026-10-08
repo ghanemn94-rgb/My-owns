@@ -9,7 +9,13 @@
 // required in the caller's organization, re-checked inside the write transaction on reloaded grants (BE18A).
 // Technical admins and auditors do not hold it. The database guard dependency_type_system_guard is the backstop.
 import { sql, type DbOrTx, type DependencyTypeTable, type Tx } from "@mth/db";
-import { freeText, version } from "@mth/shared/schemas";
+import {
+  dependencyType,
+  dependencyTypeCode,
+  dependencyTypeList,
+  freeText,
+  type DependencyType,
+} from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Selectable } from "kysely";
 import { v7 as uuidv7 } from "uuid";
@@ -35,24 +41,12 @@ const JSON_BODY = ["application/json"] as const;
  */
 export const DEPENDENCY_TYPE_LOCK_CLASS = ADVISORY_LOCK_CLASSES.dependencyType;
 
-const typeCode = z.string().regex(/^[a-z][a-z0-9_]{1,47}$/);
+const typeCode = dependencyTypeCode;
 const label = freeText(1, 100);
 const ordinal = z.number().int().min(1).max(999);
 
-/** Zod mirror of DependencyType (docs/api/openapi.yaml). */
-export const dependencyType = z.strictObject({
-  id: z.uuid(),
-  code: typeCode,
-  labelEn: z.string().min(1).max(100),
-  labelAr: z.string().min(1).max(100),
-  isSystem: z.boolean(),
-  sourceRef: z.string().nullable(),
-  ordinal,
-  status: z.enum(["active", "retired"]),
-  version,
-});
-export type DependencyType = z.infer<typeof dependencyType>;
-export const dependencyTypeList = z.strictObject({ items: z.array(dependencyType) });
+// The DependencyType(+List) response mirrors live in `@mth/shared/schemas` (roadmap.ts, T-DG3-ARCH-04), re-exported here.
+export { dependencyType, dependencyTypeList, type DependencyType };
 export const dependencyTypeCreate = z.strictObject({
   code: typeCode,
   labelEn: label,

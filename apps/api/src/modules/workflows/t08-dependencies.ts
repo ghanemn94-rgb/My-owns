@@ -22,7 +22,16 @@
 // explicitly, like the G4 GateFactsProvider (ADR-0023 §5, T-DG3-ARCH-03). Unwired, every scheduled dependency is
 // flagged schedule.unknown: Unknown is never shown as "no conflict".
 import { sql, type DbOrTx, type DependencyTable, type Tx } from "@mth/db";
-import { businessDate, freeText, timestamp, uuid, version, type ScheduleFlag } from "@mth/shared/schemas";
+import {
+  businessDate,
+  dependencyTypeCode,
+  freeText,
+  t08Dependency,
+  t08DependencyPage,
+  uuid,
+  type ScheduleFlag,
+  type T08Dependency,
+} from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Selectable } from "kysely";
 import { v7 as uuidv7 } from "uuid";
@@ -60,50 +69,12 @@ const JSON_BODY = ["application/json"] as const;
 
 // ------------------------------------------------------------------------------------------------ schemas
 
-const dependencyTypeCode = z.string().regex(/^[a-z][a-z0-9_]{1,47}$/);
-const ENDPOINT_KINDS = ["initiative", "external", "tom_dimension", "decision", "other"] as const;
 const t08From = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("initiative"), initiativeId: uuid }),
   z.strictObject({ kind: z.literal("external"), label: freeText(1, 300) }),
 ]);
-const scheduleFlag = z.strictObject({
-  code: z.string().regex(/^[a-z][a-z0-9_.]*$/),
-  message: z.string(),
-  dependencyId: uuid.optional(),
-  initiativeId: uuid.optional(),
-});
-
-/** Zod mirror of T08Dependency (docs/api/openapi.yaml). */
-export const t08Dependency = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  code: z.string().regex(/^DEP-[0-9]{2,6}$/),
-  description: z.string().min(1).max(2000),
-  fromKind: z.enum(ENDPOINT_KINDS),
-  fromLabel: z.string().min(1).max(300).nullable(),
-  fromInitiativeId: uuid.nullable(),
-  toKind: z.enum(ENDPOINT_KINDS),
-  toLabel: z.string().min(1).max(300).nullable(),
-  toInitiativeId: uuid.nullable(),
-  dependencyType: dependencyTypeCode,
-  neededBy: businessDate.nullable(),
-  ownerUserId: uuid.nullable(),
-  status: z.enum(["open", "at_risk", "resolved", "archived"]),
-  mitigation: z.string().min(1).max(4000).nullable(),
-  decisionId: uuid.nullable(),
-  flags: z.array(scheduleFlag),
-  archivedAt: timestamp.nullable(),
-  archivedBy: uuid.nullable(),
-  archiveReason: z.string().min(3).max(1000).nullable(),
-  version,
-  createdAt: timestamp,
-  createdBy: uuid,
-  updatedAt: timestamp,
-  updatedBy: uuid,
-});
-export type T08Dependency = z.infer<typeof t08Dependency>;
-export const t08DependencyPage = z.strictObject({ items: z.array(t08Dependency), nextCursor: z.string().nullable() });
+// The T08Dependency(+Page) response mirrors live in `@mth/shared/schemas` (roadmap.ts, T-DG3-ARCH-04), re-exported here.
+export { t08Dependency, t08DependencyPage, type T08Dependency };
 
 export const t08DependencyCreate = z.strictObject({
   transformationId: uuid,
