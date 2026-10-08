@@ -1,0 +1,54 @@
+diff -ru a/apps/web/e2e/p3-seams.spec.ts b/apps/web/e2e/p3-seams.spec.ts
+--- a/apps/web/e2e/p3-seams.spec.ts	2026-10-08 01:43:11.928536557 +0000
++++ b/apps/web/e2e/p3-seams.spec.ts	2026-10-08 01:43:20.448719329 +0000
+@@ -32,12 +32,9 @@
+ let tid = "";
+ const SOME_ID = "01920000-0000-7000-9000-0000000009a1";
+ 
++// T-DG3-FE-A replaced the portfolio, initiative, readiness and dispensations stubs (e2e: p3-portfolio.spec.ts).
+ /** [path segment(s) under the transformation, title key, namespace, workspace tab id or null for a detail page] */
+ const PAGES = [
+-  ["portfolio", "portfolio.title", "portfolio", "portfolio"],
+-  [`initiatives/${SOME_ID}`, "portfolio.initiativeTitle", "portfolio", null],
+-  ["readiness", "readiness.title", "readiness", "readiness"],
+-  ["dispensations", "dispensations.title", "dispensations", "dispensations"],
+   ["prioritization", "prioritization.title", "prioritization", "prioritization"],
+   ["roadmap", "roadmap.title", "roadmap", "roadmap"],
+   ["dependencies", "dependencies.title", "dependencies", "dependencies"],
+@@ -112,7 +109,9 @@
+     await shot(page, lang, `p3-area-${area}`);
+     await link.click();
+     await expect(page).toHaveURL(new RegExp(`/transformations/${tid}/${tab}$`));
+-    await expect(page.locator("[data-state='being-built']")).toBeVisible();
++    // The Portfolio tab is the real screen since T-DG3-FE-A; Business cases is still a stub until FE-C lands.
++    if (tab === "portfolio") await expect(page.locator("[data-workspace-tab='portfolio']")).toBeVisible();
++    else await expect(page.locator("[data-state='being-built']")).toBeVisible();
+   }
+   expect(foreign).toEqual([]);
+ });
+diff -ru a/apps/web/src/app/p3-seams.test.tsx b/apps/web/src/app/p3-seams.test.tsx
+--- a/apps/web/src/app/p3-seams.test.tsx	2026-10-08 01:43:11.926529901 +0000
++++ b/apps/web/src/app/p3-seams.test.tsx	2026-10-08 01:43:11.945182577 +0000
+@@ -83,6 +83,9 @@
+   ],
+ ] as const;
+ 
++/** Namespaces whose stub pages were replaced by their owning task (the route wiring test above still covers them). */
++const REPLACED: ReadonlySet<string> = new Set(["portfolio", "readiness", "dispensations"]);
++
+ const shellChildren = (): RouteObject[] => routes.find((r) => r.path === "/")!.children!;
+ const concrete = (path: string) =>
+   `/${path.replace(":id", TR_ID).replace(/:(initiativeId|businessCaseId|formulaId)/, "01920000-0000-7000-9000-0000000009a1")}`;
+@@ -113,7 +116,11 @@
+   });
+ 
+   describe.each(["en", "ar"] as const)("stubs (%s)", (locale) => {
+-    it.each(P3_ROUTES.map(([path, , ns, titleKey]) => [path, ns, titleKey] as const))(
++    // T-DG3-FE-A replaced the portfolio, initiative, readiness and dispensations stubs with the real screens (their
++    // own tests: pages/portfolio, pages/readiness, pages/dispensations, e2e/p3-portfolio.spec.ts).
++    it.each(
++      P3_ROUTES.filter(([, , ns]) => !REPLACED.has(ns)).map(([path, , ns, titleKey]) => [path, ns, titleKey] as const),
++    )(
+       "%s: bilingual title and an honest 'being built' state, no data, no write control",
+       async (path, ns, titleKey) => {
+         const { requests } = renderStub(concrete(path), locale);

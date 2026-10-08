@@ -146,3 +146,23 @@ export type InitiativeListPage = z.infer<typeof initiativePage>;
 export type PortfolioSelectionPage = z.infer<typeof portfolioSelectionPage>;
 export type FundingDecisionPage = z.infer<typeof fundingDecisionPage>;
 export type GateDispensationPage = z.infer<typeof gateDispensationPage>;
+
+/**
+ * T07 wave as returned by GET /transformations/{id}/waves (`RoadmapWave` in docs/api/openapi.yaml). No zod mirror exists
+ * in @mth/shared/schemas at this base, so the fields the portfolio screens read are typed here (T-DG3-FE-A).
+ */
+export interface RoadmapWave {
+  readonly id: string;
+  readonly transformationId: string;
+  readonly code: string;
+  readonly ordinal: number;
+  readonly isSourceSeeded: boolean;
+  readonly nameEn: string;
+  readonly nameAr: string;
+  readonly horizonEn: string;
+  readonly horizonAr: string;
+  readonly plannedStart: string | null;
+  readonly plannedEnd: string | null;
+  readonly status: "active" | "archived";
+  readonly version: number;
+}

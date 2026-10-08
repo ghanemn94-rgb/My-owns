@@ -1,0 +1,137 @@
+port-policy: PostgreSQL listening on port 23500 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applied 25 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 23501 (attempt 1)
+API: http://localhost:23501 (APP_BASE_URL=http://localhost:23501, PORT=23501)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 12 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:43:1 › setup: a fresh End-to-End transformation with one draft initiative, an outcome and a journey (368ms)
+  ✓   2 [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:78:1 › Portfolio: three separate columns, filters, a draft created before G1, the outcome hierarchy (5.2s)
+  ✘   3 [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:129:1 › Initiative Card: 14 T05 fields, submit refused before G1, not TOM evidence, an outcome contribution (12.7s)
+  -   4 [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:207:1 › Readiness: the five missing diagnostic areas and the translated sequencing blocker
+  -   5 [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:224:1 › Dispensations: a waiver with reason, scope and expiry; the recorder is not offered the decision
+  -   6 [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:272:1 › the read-only auditor sees every FE-A screen with no write control and sends nothing
+  ✓   7 [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:43:1 › setup: a fresh End-to-End transformation with one draft initiative, an outcome and a journey (168ms)
+  ✓   8 [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:78:1 › Portfolio: three separate columns, filters, a draft created before G1, the outcome hierarchy (5.2s)
+  ✘   9 [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:129:1 › Initiative Card: 14 T05 fields, submit refused before G1, not TOM evidence, an outcome contribution (12.9s)
+  -  10 [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:207:1 › Readiness: the five missing diagnostic areas and the translated sequencing blocker
+  -  11 [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:224:1 › Dispensations: a waiver with reason, scope and expiry; the recorder is not offered the decision
+  -  12 [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:272:1 › the read-only auditor sees every FE-A screen with no write control and sends nothing
+
+
+  1) [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:129:1 › Initiative Card: 14 T05 fields, submit refused before G1, not TOM evidence, an outcome contribution 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('#contributions [data-has-kpi=\'false\']')
+    Expected substring: [32m"Synthetic: raise digital adoption"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('#contributions [data-has-kpi=\'false\']')[22m
+
+
+      181 |   await expect(page.getByRole("dialog")).toHaveCount(0);
+      182 |   const contribution = page.locator("#contributions [data-has-kpi='false']");
+    > 183 |   await expect(contribution).toContainText(OUTCOME);
+          |                              ^
+      184 |   await expect(contribution).toContainText(tr(lang, "portfolio.contribution.noKpi"));
+      185 |   await expect(page.locator("body")).not.toContainText(/\bDG[0-7]\b/);
+      186 |   expect(foreign).toEqual([]);
+        at /home/user/wt/dg3-fe-a/apps/web/e2e/p3-portfolio.spec.ts:183:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:129:1 › Initiative Card: 14 T05 fields, submit refused before G1, not TOM evidence, an outcome contribution 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('#contributions [data-has-kpi=\'false\']')
+    Expected substring: [32m"Synthetic: raise digital adoption"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('#contributions [data-has-kpi=\'false\']')[22m
+
+
+      181 |   await expect(page.getByRole("dialog")).toHaveCount(0);
+      182 |   const contribution = page.locator("#contributions [data-has-kpi='false']");
+    > 183 |   await expect(contribution).toContainText(OUTCOME);
+          |                              ^
+      184 |   await expect(contribution).toContainText(tr(lang, "portfolio.contribution.noKpi"));
+      185 |   await expect(page.locator("body")).not.toContainText(/\bDG[0-7]\b/);
+      186 |   expect(foreign).toEqual([]);
+        at /home/user/wt/dg3-fe-a/apps/web/e2e/p3-portfolio.spec.ts:183:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p3-portfolio--fc4d7-nce-an-outcome-contribution-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/p3-portfolio.spec.ts:129:1 › Initiative Card: 14 T05 fields, submit refused before G1, not TOM evidence, an outcome contribution 
+    [chromium-ar] › apps/web/e2e/p3-portfolio.spec.ts:129:1 › Initiative Card: 14 T05 fields, submit refused before G1, not TOM evidence, an outcome contribution 
+  6 did not run
+  4 passed (42.5s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)

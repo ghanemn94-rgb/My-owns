@@ -231,7 +231,13 @@ describe("role-assignment events on a transformation's trail (F-DG1-008)", () =>
       kind: "untranslated",
       raw: '{"type":"galaxy","id":"x"}',
     });
-    expect(describeAuditValue(en, "scope", "transformation")).toEqual({ kind: "untranslated", raw: "transformation" });
+    // T-DG3-FE-A: a string `scope` is the free-text scope of a P3 business case (BUSINESS_CASE_AUDIT_FIELDS), shown as
+    // text; a role assignment's scope is always an object, and a malformed object stays marked (above and below).
+    expect(describeAuditValue(en, "scope", "Retail stores")).toEqual({ kind: "text", text: "Retail stores" });
+    expect(describeAuditValue(en, "scope", ["transformation"])).toEqual({
+      kind: "untranslated",
+      raw: '["transformation"]',
+    });
     expect(describeAuditValue(en, "scope", { type: "business_unit", id: "b" })).toEqual({
       kind: "scope",
       scopeType: "business_unit",
@@ -282,5 +288,186 @@ describe("P3 starter-structure events on the transformation trail", () => {
     for (const bad of [{ unknown_criterion: "10.00" }, { feasibility: 15 }, { feasibility: "15.000" }, {}, [], "x"]) {
       expect(describeAuditValue(en, "weights", bad).kind, JSON.stringify(bad)).toBe("untranslated");
     }
+  });
+});
+
+// P3 (T-DG3-FE-A): every P3 record type and action that can appear on a transformation's trail is labelled in both
+// languages; P3 statuses and enum codes have labels; decimals, dates and ids are shown exactly as recorded.
+describe("P3 record events on the transformation trail", () => {
+  const P3_ACTIONS = [
+    // initiative (T05), lifecycle and links
+    "initiative.create",
+    "initiative.update",
+    "initiative.submit",
+    "initiative.withdraw",
+    "initiative.select",
+    "initiative.deselect",
+    "initiative.launch",
+    "initiative.cancel",
+    "initiative.rank",
+    "initiative_gap_link.create",
+    "initiative_gap_link.remove",
+    "initiative_outcome_contribution.create",
+    "initiative_outcome_contribution.remove",
+    "initiative_decision_link.create",
+    "initiative_decision_link.remove",
+    // selection and funding (business approvals)
+    "portfolio_selection.select",
+    "portfolio_selection.deselect",
+    "funding_decision.create",
+    // prioritization
+    "scoring_weight_set.create",
+    "scoring_weight_set.approve",
+    "scoring_weight_set.supersede",
+    "scoring_weight_set.withdraw",
+    "initiative_score.create",
+    "initiative_score.update",
+    "ranking_snapshot.create",
+    "ranking_snapshot.supersede",
+    "ranking_override.create",
+    "ranking_override.decide",
+    "ranking_override.revoke",
+    // roadmap, deliverables, milestones, dependencies
+    "roadmap_wave.create",
+    "roadmap_wave.update",
+    "deliverable.create",
+    "deliverable.update",
+    "deliverable.archive",
+    "deliverable.submit",
+    "deliverable.decide",
+    "milestone.create",
+    "milestone.update",
+    "milestone.approve_date",
+    "milestone.reapprove_date",
+    "dependency.create",
+    "dependency.update",
+    "dependency.archive",
+    "dependency_type.create",
+    "dependency_type.update",
+    "dependency_type.retire",
+    // capacity and resource demand
+    "capacity.create",
+    "capacity.update",
+    "resource_demand.create",
+    "resource_demand.update",
+    "resource_demand.commit",
+    "resource_demand.release",
+    // business cases and T09
+    "business_case.create",
+    "business_case.update",
+    "business_case.archive",
+    "business_case.baseline_validate",
+    "business_case.baseline_reject",
+    "business_case_line.create",
+    "business_case_line.update",
+    "business_case_line.archive",
+    "benefit_formula.create",
+    "benefit_formula.update",
+    "benefit_formula.archive",
+    "benefit_formula.version_set",
+    "benefit_formula_version.create",
+    "benefit_formula_version.validate",
+    "benefit_formula_version.reject",
+    "benefit_calculation.create",
+    // dispensations and the G1 agreement
+    "gate_dispensation.create",
+    "gate_dispensation.decide",
+    "gate_dispensation.revoke",
+    "gate_decision.create",
+    "gate_decision_agreement.create",
+  ];
+
+  it.each(P3_ACTIONS)("labels %s in English and Arabic", (action) => {
+    const e = describeAuditAction(en, action, null);
+    const a = describeAuditAction(ar, action, null);
+    expect(e, action).toBeTruthy();
+    expect(a, action).toBeTruthy();
+    expect(a, action).not.toBe(e);
+  });
+
+  it("labels business approvals as such, never as an engineering gate", () => {
+    for (const action of [
+      "portfolio_selection.select",
+      "funding_decision.create",
+      "scoring_weight_set.approve",
+      "ranking_override.decide",
+      "gate_dispensation.decide",
+    ]) {
+      expect(describeAuditAction(en, action, null)).toContain("business approval");
+      expect(describeAuditAction(ar, action, null)).toContain("موافقة أعمال");
+      expect(describeAuditAction(en, action, null)).not.toMatch(/\bDG[0-7]\b/);
+    }
+  });
+
+  it("an initiative create shows its T05 fields labelled, people as users and the status translated", () => {
+    const changes = {
+      code: { from: null, to: "INI-01" },
+      name: { from: null, to: "Synthetic initiative" },
+      executive_owner_user_id: { from: null, to: "u-1" },
+      objective: { from: null, to: "Cut churn" },
+      planned_start: { from: null, to: "2026-11-01" },
+      status: { from: null, to: "draft" },
+    };
+    for (const t of [en, ar]) {
+      const list = describeAuditChanges(t, changes);
+      for (const c of list) {
+        expect(c.label, c.field).toBeTruthy();
+        expect(c.to.kind, c.field).not.toBe("untranslated");
+      }
+    }
+    expect(describeAuditChange(en, "executive_owner_user_id", { from: null, to: "u-1" }).to).toEqual({
+      kind: "user",
+      id: "u-1",
+    });
+    expect(describeAuditChange(en, "planned_start", { from: null, to: "2026-11-01" }).to).toEqual({
+      kind: "code",
+      text: "2026-11-01",
+    });
+  });
+
+  it("P3 statuses fall back to the P3 catalogue; the transformation statuses keep theirs", () => {
+    expect(describeAuditValue(en, "status", "submitted")).toEqual({
+      kind: "label",
+      text: "Submitted",
+      code: "submitted",
+    });
+    expect(describeAuditValue(ar, "status", "removed")).toEqual({ kind: "label", text: "مُزال", code: "removed" });
+    expect(describeAuditValue(en, "status", "on_hold")).toEqual({ kind: "label", text: "On hold", code: "on_hold" });
+    expect(describeAuditValue(en, "status", "galaxy").kind).toBe("untranslated");
+  });
+
+  it("P3 enum codes have labels (kind, action, link target type, acceptance, result); unknown codes stay marked", () => {
+    expect(describeAuditValue(en, "kind", "waiver")).toEqual({ kind: "label", text: "Waiver", code: "waiver" });
+    expect(describeAuditValue(ar, "kind", "inherited_approval")).toEqual({
+      kind: "label",
+      text: "اعتماد موروث",
+      code: "inherited_approval",
+    });
+    expect(describeAuditValue(en, "action", "deselected")).toMatchObject({ kind: "label", text: "Deselected" });
+    expect(describeAuditValue(en, "targetType", "tom_gap")).toMatchObject({ kind: "label", text: "T03 gap" });
+    expect(describeAuditValue(en, "acceptance_status", "accepted")).toMatchObject({ kind: "label" });
+    expect(describeAuditValue(en, "result", "accepted")).toMatchObject({ kind: "label", text: "Accepted" });
+    expect(describeAuditValue(en, "kind", "capability").kind).toBe("untranslated");
+    expect(describeAuditValue(en, "criterionCode", "feasibility")).toMatchObject({
+      kind: "label",
+      text: "Feasibility",
+    });
+    expect(describeAuditValue(en, "criterionCode", "luck").kind).toBe("untranslated");
+  });
+
+  it("decimal strings are shown exactly as recorded, never converted to numbers", () => {
+    expect(describeAuditValue(en, "amount", "1250000.50")).toEqual({ kind: "code", text: "1250000.50" });
+    expect(describeAuditValue(en, "score", "3.70")).toEqual({ kind: "code", text: "3.70" });
+    expect(describeAuditValue(en, "fte", "0.25")).toEqual({ kind: "code", text: "0.25" });
+  });
+
+  it("booleans, structured values and the G1 agreements are readable, not marked", () => {
+    expect(describeAuditValue(en, "isIllustrative", true)).toEqual({ kind: "label", text: "Yes", code: "true" });
+    expect(describeAuditValue(ar, "isIllustrative", false)).toEqual({ kind: "label", text: "لا", code: "false" });
+    expect(describeAuditValue(en, "agreements", ["problem", "baseline", "material_value_pools"])).toEqual({
+      kind: "code",
+      text: '["problem","baseline","material_value_pools"]',
+    });
+    expect(describeAuditChange(ar, "agreements", { from: null, to: ["problem"] }).label).toBe("اتفاق القيادة (G1)");
   });
 });
