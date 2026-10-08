@@ -1,0 +1,42 @@
+diff -ru a/apps/web/e2e/p3-seams.spec.ts b/apps/web/e2e/p3-seams.spec.ts
+--- a/apps/web/e2e/p3-seams.spec.ts	2026-10-08 01:50:30.801478342 +0000
++++ b/apps/web/e2e/p3-seams.spec.ts	2026-10-08 01:50:30.837380335 +0000
+@@ -42,10 +42,6 @@
+   ["roadmap", "roadmap.title", "roadmap", "roadmap"],
+   ["dependencies", "dependencies.title", "dependencies", "dependencies"],
+   ["capacity", "capacity.title", "capacity", "capacity"],
+-  ["business-cases", "businessCases.title", "businessCases", "business-cases"],
+-  [`business-cases/${SOME_ID}`, "businessCases.detailTitle", "businessCases", null],
+-  ["benefit-formulas", "benefitFormulas.title", "benefitFormulas", "benefit-formulas"],
+-  [`benefit-formulas/${SOME_ID}`, "benefitFormulas.detailTitle", "benefitFormulas", null],
+ ] as const;
+ 
+ test("setup: a fresh synthetic transformation for the P3 seam checks", async ({ playwright }, info) => {
+@@ -112,7 +108,8 @@
+     await shot(page, lang, `p3-area-${area}`);
+     await link.click();
+     await expect(page).toHaveURL(new RegExp(`/transformations/${tid}/${tab}$`));
+-    await expect(page.locator("[data-state='being-built']")).toBeVisible();
++    // Business cases is a real screen since T-DG3-FE-C (its own spec: p3-business-cases.spec.ts).
++    if (tab !== "business-cases") await expect(page.locator("[data-state='being-built']")).toBeVisible();
+   }
+   expect(foreign).toEqual([]);
+ });
+diff -ru a/apps/web/src/app/p3-seams.test.tsx b/apps/web/src/app/p3-seams.test.tsx
+--- a/apps/web/src/app/p3-seams.test.tsx	2026-10-08 01:50:30.798257464 +0000
++++ b/apps/web/src/app/p3-seams.test.tsx	2026-10-08 01:50:30.837213003 +0000
+@@ -113,7 +113,13 @@
+   });
+ 
+   describe.each(["en", "ar"] as const)("stubs (%s)", (locale) => {
+-    it.each(P3_ROUTES.map(([path, , ns, titleKey]) => [path, ns, titleKey] as const))(
++    // FE-C (T-DG3-FE-C) replaced the business-case and T09 stubs with the real screens; their tests are in
++    // pages/business-cases and pages/benefit-formulas. The route wiring above still covers all twelve routes.
++    it.each(
++      P3_ROUTES.filter(([path]) => !/business-cases|benefit-formulas/.test(path)).map(
++        ([path, , ns, titleKey]) => [path, ns, titleKey] as const,
++      ),
++    )(
+       "%s: bilingual title and an honest 'being built' state, no data, no write control",
+       async (path, ns, titleKey) => {
+         const { requests } = renderStub(concrete(path), locale);

@@ -2,8 +2,267 @@
   "tab": "Business cases",
   "title": "Business cases",
   "detailTitle": "Business case",
-  "stub": {
-    "title": "Being built in this stage",
-    "body": "The business case screen is being built in the current delivery stage. It does not show or change any data yet."
+  "intro": "One transformation business case holds the ten source sections; lighter initiative cases link to it and roll up into it. Amounts are exact decimals in the case currency (SAR by default). Finance validation is a business approval by Finance.",
+  "registerTitle": "Business case register",
+  "registerIntro": "Start with the transformation case. Each initiative case links to it, and the transformation totals count each distinct line once.",
+  "empty": "No business case yet",
+  "emptyBody": "Create the transformation business case first; initiative cases link to it.",
+  "showArchived": "Show archived cases",
+  "notApplicable": "Not applicable",
+  "initiativeNotVisible": "Initiative not visible to you",
+  "summaryTitle": "Summary",
+  "draftNote": "Saved changes are a draft: saving does not submit, fund or approve this business case.",
+  "archivedNote": "This business case is archived and read-only.",
+  "field": {
+    "code": "Code",
+    "title": "Title",
+    "level": "Level",
+    "initiative": "Initiative",
+    "parent": "Transformation case",
+    "updatedAt": "Last updated",
+    "currency": "Currency",
+    "currencyHint": "ISO code, for example SAR. Totals are kept per currency; there is no FX conversion."
+  },
+  "level": {
+    "transformation": "Transformation case",
+    "initiative": "Initiative case"
+  },
+  "create": {
+    "action": "New business case",
+    "title": "New business case",
+    "description": "The case is saved as a draft. Nothing is submitted, funded or approved.",
+    "levelHint": "Create the transformation case first; initiative cases link to it.",
+    "levelHintExists": "This transformation already has its transformation case; a new case is an initiative case linked to it.",
+    "initiativeHint": "Only initiatives without an active business case are listed."
+  },
+  "sections": {
+    "column": "Sections",
+    "title": "The ten sections",
+    "intro": {
+      "transformation": "A transformation case needs all ten sections.",
+      "initiative": "An initiative case is lighter: sections 1, 4, 5, 6, 7 and 9 are required; the others are optional."
+    },
+    "complete": "All required sections complete",
+    "missingCount": "Sections missing: {{count}}",
+    "required": "required",
+    "optional": "optional for this case",
+    "missing": "Missing",
+    "saved": "Sections saved as a draft.",
+    "save": "Save sections"
+  },
+  "section": {
+    "strategic_rationale": {
+      "title": "Strategic rationale",
+      "hint": "Why this change matters now and how it serves the North Star."
+    },
+    "baseline": {
+      "title": "Baseline",
+      "hint": "The measured starting point with its source. Finance validates it."
+    },
+    "value_pools": {
+      "title": "Value pools",
+      "hint": "Quantified upside and downside by driver."
+    },
+    "interventions": {
+      "title": "Interventions",
+      "hint": "What will change to capture the value."
+    },
+    "investment": {
+      "title": "Investment",
+      "hint": "Summary of the investment; the investment lines below carry the amounts."
+    },
+    "benefits": {
+      "title": "Benefits",
+      "hint": "Summary of the benefits; the benefit lines below carry the amounts."
+    },
+    "timing": {
+      "title": "Timing",
+      "hint": "Benefit ramp, one-off versus recurring, and the implementation horizon."
+    },
+    "risks": {
+      "title": "Risks and sensitivities",
+      "hint": "Key assumptions, downside case and upside case."
+    },
+    "ownership": {
+      "title": "Ownership",
+      "hint": "Benefit owner, initiative owner and Finance validator."
+    },
+    "decision_ask": {
+      "title": "Decision ask",
+      "hint": "The funding, policy, resource or prioritization decision needed."
+    }
+  },
+  "sectionField": {
+    "strategicRationale": "Strategic rationale",
+    "baselineSummary": "Baseline",
+    "valuePoolsSummary": "Value pools",
+    "interventionsSummary": "Interventions",
+    "investmentSummary": "Investment summary",
+    "benefitsSummary": "Benefits summary",
+    "benefitRamp": "Benefit ramp",
+    "recurrenceSummary": "One-off versus recurring",
+    "implementationHorizon": "Implementation horizon",
+    "keyAssumptions": "Key assumptions",
+    "downsideCase": "Downside case",
+    "upsideCase": "Upside case",
+    "benefitOwnerUserId": "Benefit owner",
+    "initiativeOwnerUserId": "Initiative owner",
+    "financeValidatorUserId": "Finance validator",
+    "decisionAskTypes": "Decision ask types",
+    "decisionAskText": "Decision ask"
+  },
+  "decisionAsk": {
+    "funding": "Funding",
+    "policy": "Policy",
+    "resource": "Resource",
+    "prioritization": "Prioritization"
+  },
+  "finance": {
+    "state": {
+      "unvalidated": "Not validated by Finance",
+      "validated": "Validated by Finance",
+      "rejected": "Rejected by Finance",
+      "stale": "Stale: changed after Finance validation"
+    },
+    "title": "Finance validation of the baseline",
+    "intro": "A business approval recorded by Finance, never by the case author. Editing the baseline afterwards makes the validation Stale; it then no longer counts.",
+    "baselineColumn": "Baseline (Finance)",
+    "action": "Record Finance validation (business approval)",
+    "confirm": "Record business approval",
+    "approvalNote": "This is a business approval by Finance. It is recorded in your name; it is not a delivery or engineering approval.",
+    "result": "Finance decision",
+    "choice": {
+      "validated": "Validate",
+      "rejected": "Reject"
+    },
+    "note": "Finance note",
+    "staleBody": "The baseline changed after Finance validated it. The validation no longer counts until Finance validates the current baseline.",
+    "unvalidatedBody": "Finance has not validated this baseline yet.",
+    "by": "Recorded by",
+    "at": "Recorded at",
+    "authorCannot": "You created this business case, so you cannot validate its baseline (separation of duties).",
+    "noBaseline": "The baseline section is empty: there is nothing to validate yet.",
+    "dialogTitle": "Finance validation of the baseline of {{code}}",
+    "dialogBody": "Record your Finance decision on the current baseline. A later change to the baseline makes it Stale.",
+    "editMakesStale": "The baseline is validated by Finance. Saving a change to it makes the validation Stale."
+  },
+  "totals": {
+    "title": "Totals",
+    "intro": "Gross benefits, implementation cost and net value are shown separately, per currency. Each distinct line is counted once.",
+    "partial": "Partial: {{count}} line(s) with unknown amount not included",
+    "rollUp": "Roll-up of this case and {{count}} initiative case(s), by reference:",
+    "ownOnly": "An initiative case counts its own lines only.",
+    "inCurrency": "In {{currency}}",
+    "gross": "Gross benefits",
+    "cost": "Implementation cost",
+    "cash": "Cash investment",
+    "nonCash": "Non-cash investment",
+    "net": "Net value",
+    "netNote": "Gross benefits minus implementation cost; shown next to both, never instead of them.",
+    "netUnknown": "Unknown until both gross benefits and implementation cost have a known amount",
+    "unknownSide": "No line with a known amount",
+    "byClass": "Gross benefits by class",
+    "byValueBasis": "Gross benefits by value basis",
+    "nonFinancial": "Strategic or non-financial benefits (not monetised): {{count}}",
+    "warnings": "Warnings",
+    "otherWarning": "The totals carry a warning; check the lines."
+  },
+  "lineKind": {
+    "investment": "Investment",
+    "benefit": "Benefit",
+    "investmentLines": "Investment lines",
+    "benefitLines": "Benefit lines"
+  },
+  "line": {
+    "title": "Line",
+    "class": "Class",
+    "valueBasis": "Value basis",
+    "amount": "Amount",
+    "fte": "FTE",
+    "formula": "Benefit formula",
+    "formulaLinked": "Linked formula",
+    "period": "Period",
+    "recurrence": "Recurrence",
+    "owner": "Owner",
+    "ownerUserId": "Owner",
+    "description": "Description",
+    "periodStart": "Period start",
+    "periodEnd": "Period end",
+    "benefitFormulaId": "Benefit formula (T09)",
+    "investmentIntro": "Capex, opex, internal FTE, vendor cost and opportunity cost. Each line has exactly one class.",
+    "benefitIntro": "Revenue, cost reduction, cost avoidance, working capital and strategic or non-financial benefits. Each line has exactly one class.",
+    "rollUpNote": "These are this case's own lines. Lines of linked initiative cases count in the totals through the roll-up.",
+    "add": {
+      "investment": "Add investment line",
+      "benefit": "Add benefit line"
+    },
+    "empty": {
+      "investment": "No investment line yet",
+      "benefit": "No benefit line yet"
+    },
+    "notMonetised": "Not monetised",
+    "editTitle": "Edit line: {{name}}",
+    "kindLabel": "Line kind",
+    "classHint": "Exactly one class per line. The class cannot change after the line is created.",
+    "valueBasisHint": "Only the value bases this class allows are offered.",
+    "amountIn": "Amount ({{currency}})",
+    "amountHint": "Latin digits and a dot, for example 1250000.50. Leave empty when not known yet: it is shown as Unknown, never 0.",
+    "amountNonFinancialHint": "A strategic or non-financial benefit has no amount: it is not monetised without an approved valuation method.",
+    "currencyHint": "Normally the case currency.",
+    "fteHint": "Full-time equivalents, for example 2.5.",
+    "formulaHint": "A benefit formula can back one active line in the whole transformation, so a benefit is never counted twice."
+  },
+  "class": {
+    "capex": "Capex",
+    "opex": "Opex",
+    "internal_fte": "Internal FTE",
+    "vendor_cost": "Vendor cost",
+    "opportunity_cost": "Opportunity cost",
+    "revenue": "Revenue",
+    "cost_reduction": "Cost reduction",
+    "cost_avoidance": "Cost avoidance",
+    "working_capital": "Working capital",
+    "strategic_non_financial": "Strategic / non-financial"
+  },
+  "valueBasis": {
+    "revenue_uplift": "Revenue uplift",
+    "margin_uplift": "Margin uplift",
+    "cash_saving": "Cash saving",
+    "avoided_cost": "Avoided cost",
+    "working_capital_release": "Working capital release",
+    "non_financial": "Non-financial",
+    "cash": "Cash",
+    "non_cash": "Non-cash"
+  },
+  "recurrence": {
+    "one_off": "One-off",
+    "recurring": "Recurring"
+  },
+  "problems": {
+    "business_case__line_class_mismatch": "This class does not belong to the line kind. Choose one class of the right kind.",
+    "business_case__value_basis_mismatch": "This value basis does not fit the class.",
+    "business_case__non_financial_amount": "A strategic or non-financial benefit has no amount: it is not monetised without an approved valuation method.",
+    "business_case__formula_already_linked": "This benefit formula already backs another active line; one benefit is counted in one line only. Nothing was saved.",
+    "business_case__not_initiative_lead": "A Workstream Lead edits only the business cases of initiatives they lead.",
+    "business_case__amount_negative": "A line amount cannot be negative.",
+    "business_case__fte_only_internal": "FTE applies only to internal FTE investment lines.",
+    "business_case__fte_positive": "FTE must be greater than 0.",
+    "business_case__period_range": "The period end cannot be before the period start.",
+    "business_case__formula_only_benefit": "Only a benefit line can be backed by a benefit formula.",
+    "business_case__transformation_case_exists": "This transformation already has an active transformation business case. Nothing was created.",
+    "business_case__initiative_case_exists": "This initiative already has an active business case. Nothing was created.",
+    "business_case__transformation_case_required": "Create the transformation business case first; an initiative case links to it.",
+    "business_case__initiative_required": "An initiative business case names its initiative.",
+    "business_case__initiative_not_allowed": "A transformation business case is not linked to an initiative.",
+    "business_case__has_initiative_cases": "Archive the initiative business cases linked to this transformation case first.",
+    "business_case__baseline_missing": "The baseline section is empty: there is no baseline to validate.",
+    "business_case__archived": "Archived business cases and their lines are read-only.",
+    "business_case__already_archived": "The business case is already archived.",
+    "business_case_line__archived": "Archived lines are read-only.",
+    "business_case_line__already_archived": "The line is already archived.",
+    "business_case__revenue_and_margin": "This case holds both revenue uplift and margin uplift: check that the same value is not counted twice.",
+    "business_case__possible_duplicate": "A transformation-level line and an initiative line share class, title and period: possible double count for Finance to resolve.",
+    "finance__validator_is_author": "Finance validation is done by someone other than the record's author (separation of duties). Nothing was recorded.",
+    "validation__fte": "Enter FTE as a decimal with up to 2 decimals, for example 2.5."
   }
 }
