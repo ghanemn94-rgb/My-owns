@@ -1,0 +1,139 @@
+# swallow-probe.mjs (sha256 d9989e67d76f940ba6a7e518b32350ca1254ab107972ed3448d294df1fb334e5), copy of the reviewer's probe, run 2026-10-08T16:25:42Z, node v22.22.2
+# clone /var/tmp/mth-run.3QlXXf/claude-0/review-p3 = worktree HEAD a233645 + T-DG3-KBE-G diff (git apply); clone status before:
+#    M docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+#    M docs/architecture/p3-work-split.md
+#    M eslint.config.js
+#    M packages/shared/src/formula/evaluate.ts
+#    M packages/shared/src/formula/fuzz.test.ts
+#    M packages/shared/src/formula/index.ts
+#    M packages/shared/src/formula/parse.ts
+
+=== W1: try { codegen } catch { } (own catch, no rethrow)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=1  1 error line(s)
+      150:5  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 219 passed | 1 skipped (221)    EvalError lines=11  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      throw new Error("wrapped", { cause: e });
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/tokenize.ts: expected [ 'catch without EvalError rethrow' ] to deeply equal []
+  ==> REFUSED BY: lint + scan
+
+=== W2: try { codegen } finally { return; } (finally swallows)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=1  1 error line(s)
+      152:5  error  Unsafe usage of ReturnStatement  no-unsafe-finally
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 219 passed | 1 skipped (221)    EvalError lines=8  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      throw new Error("wrapped", { cause: e });
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/tokenize.ts: expected [ Array(1) ] to deeply equal []
+  ==> REFUSED BY: lint + scan
+
+=== W3: Promise.resolve().then(codegen) (unhandled rejection)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=1  2 error line(s)
+      148:8  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+      148:8  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 219 passed | 1 skipped (221)  Errors  7656 errors  EvalError lines=7664  unhandled=true
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 14ms
+      throw new Error("wrapped", { cause: e });
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      ⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+      ⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+      ❯ processTicksAndRejections node:internal/process/task_queues:103:5
+  RUN-only failures (fail under the flag, pass without it): 0 + unhandled error only under the flag
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 14ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/tokenize.ts: expected [ 'Promise', '.then/.catch/.finally' ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== W4: Promise.resolve().then(codegen).catch(() => undefined) (.catch swallows)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=1  3 error line(s)
+      148:8  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+      148:8  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+      148:8  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 219 passed | 1 skipped (221)    EvalError lines=9  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 14ms
+      throw new Error("wrapped", { cause: e });
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/tokenize.ts: expected [ 'Promise', …(2) ] to deeply equal []
+  ==> REFUSED BY: lint + scan
+
+=== W5: try { codegen } catch (e) { throw new Error('wrapped', { cause: e }) } (wrapped EvalError)
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=1  1 error line(s)
+      150:5  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  4 failed | 216 passed | 1 skipped (221)    EvalError lines=15  unhandled=false
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      × grammar table (ADR-0024 §6 EBNF) > rejects "été" with formula.syntax at offset 0 15ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 5ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+      ✓ evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year 22ms
+  RUN-only failures (fail under the flag, pass without it): 3
+      packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "été" with formula.syntax at offset 0
+      packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+      packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/tokenize.ts: expected [ 'catch without EvalError rethrow' ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== W6: W5 at evaluation time (S3 path: m = '50')
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  1 error line(s)
+      122:7  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 1 passed | 69 skipped (71)
+  RUN (unit-formula-nocodegen) exit=1  Tests  3 failed | 217 passed | 1 skipped (221)    EvalError lines=11  unhandled=false
+      × fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 448ms
+      × fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 56ms
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 7ms
+      throw new Error("wrapped", { cause: e });
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator
+  RUN-only failures (fail under the flag, pass without it): 2
+      packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+      packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 210 passed (211)  unhandled=false
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 12ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'catch without EvalError rethrow' ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+# files restored; git status --porcelain: 'M docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+ M docs/architecture/p3-work-split.md
+ M eslint.config.js
+ M packages/shared/src/formula/evaluate.ts
+ M packages/shared/src/formula/fuzz.test.ts
+ M packages/shared/src/formula/index.ts
+ M packages/shared/src/formula/parse.ts'
+
+# SUMMARY (refused at run time = a test fails, or an unhandled error is reported, in unit-formula-nocodegen but not in the unit-node control)
+W1   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0  REFUSED BY: lint + scan  (try { codegen } catch { } (own catch, no rethrow))
+W2   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0  REFUSED BY: lint + scan  (try { codegen } finally { return; } (finally swallows))
+W3   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0+unhandled  REFUSED BY: lint + scan + run-time  (Promise.resolve().then(codegen) (unhandled rejection))
+W4   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0  REFUSED BY: lint + scan  (Promise.resolve().then(codegen).catch(() => undefined) (.catch swallows))
+W5   lint=1 scan=1 run=1 ctrl=1 run-only-fails=3  REFUSED BY: lint + scan + run-time  (try { codegen } catch (e) { throw new Error('wrapped', { cause: e }) } (wrapped EvalError))
+W6   lint=1 scan=1 run=1 ctrl=1 run-only-fails=2  REFUSED BY: lint + scan + run-time  (W5 at evaluation time (S3 path: m = '50'))
+EXIT=0

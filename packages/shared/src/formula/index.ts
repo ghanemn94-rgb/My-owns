@@ -154,8 +154,9 @@ export function evaluateFormula(
  * The one exception is EvalError (ADR-0024 §6 "No dynamic code", F-DG3-100 round 4). The host throws it when code is
  * generated from a string and code generation is refused: Node under --disallow-code-generation-from-strings, a
  * browser under a CSP without 'unsafe-eval'. The engine never generates code, so in production it cannot occur; if it
- * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine (here, in
- * evaluateAst and in ../value.ts formatDecimal) therefore RETHROWS EvalError instead of converting it, so an exercised
+ * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine's import closure
+ * (here, in evaluateAst, in parseFormula and in ../value.ts formatDecimal) therefore RETHROWS EvalError as its first
+ * statement instead of converting it (enforced by lint and the source scan since round 5), so an exercised
  * code-generating path fails every test that reaches it in the unit-formula-nocodegen project, whatever that test
  * asserts. Reporting it as a user's syntax error at offset 0 would hide a security defect.
  */

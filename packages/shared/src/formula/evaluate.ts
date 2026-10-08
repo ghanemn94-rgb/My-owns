@@ -254,9 +254,11 @@ export function evaluateAst(checked: CheckedFormula, inputs: FormulaInputs = {})
   try {
     exactValue = walk(ast.root);
   } catch (e) {
-    if (e instanceof EvalFailure) return fail([e.problem], inexact);
-    // ADR-0024 §6 (F-DG3-100 round 4): a refused code generation is rethrown, never converted (see index.ts internalProblem).
+    // ADR-0024 §6 (F-DG3-100 rounds 4–5): a refused code generation is rethrown, never converted (see index.ts
+    // internalProblem). It is the first statement of the catch, as lint and the scan require; an EvalFailure is a
+    // separate class, never an EvalError, so the order changes nothing.
     if (e instanceof EvalError) throw e;
+    if (e instanceof EvalFailure) return fail([e.problem], inexact);
     return fail([internal(e instanceof Error ? e.name : "error")], inexact);
   }
 

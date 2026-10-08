@@ -95,6 +95,21 @@ const FORMULA_SYNTAX = [
   },
 ];
 
+/**
+ * F-DG3-100 (round 5): the attributes of the one allowed catch shape, `catch (e) { if (e instanceof EvalError) throw e; … }`.
+ * The CatchClause selector below refuses every catch that lacks any of them.
+ */
+const CATCH_RETHROWS_EVAL_ERROR = [
+  "[param.type='Identifier'][param.name='e']",
+  "[body.body.0.type='IfStatement']",
+  "[body.body.0.test.type='BinaryExpression'][body.body.0.test.operator='instanceof']",
+  "[body.body.0.test.left.type='Identifier'][body.body.0.test.left.name='e']",
+  "[body.body.0.test.right.type='Identifier'][body.body.0.test.right.name='EvalError']",
+  "[body.body.0.consequent.type='ThrowStatement']",
+  "[body.body.0.consequent.argument.type='Identifier'][body.body.0.consequent.argument.name='e']",
+  ":not([body.body.0.alternate])",
+].join("");
+
 /** no-restricted-syntax entries added for the engine sources only (F-DG3-100 round 3; defence in depth). */
 const FORMULA_SOURCE_SYNTAX = [
   {
@@ -127,6 +142,28 @@ const FORMULA_SOURCE_SYNTAX = [
   {
     selector: "MetaProperty[meta.name='import']",
     message: `No import.meta in the formula engine ${FORMULA_MSG}.`,
+  },
+  // F-DG3-100 (round 5): the EvalError-rethrow rule of ADR-0024 §6 layer 3, enforced statically. A refused code
+  // generation (EvalError) must reach the test that exercised it, so nothing in the closure may handle it:
+  {
+    // Every catch binds its parameter as `e` and starts with `if (e instanceof EvalError) throw e;` (no else). An
+    // optional-binding `catch { }`, a destructured parameter, another name or any other first statement is refused.
+    // The fixed name keeps the rule a selector (esquery cannot compare two attributes); the scan mirrors it.
+    selector: `CatchClause:not(${CATCH_RETHROWS_EVAL_ERROR})`,
+    message: `Every catch in the formula engine starts with \`if (e instanceof EvalError) throw e;\`: a refused code generation is never handled ${FORMULA_MSG}.`,
+  },
+  {
+    // EvalError is named only as the right operand of instanceof, so a local declaration cannot shadow the global one
+    // the rethrow tests against, and the engine never constructs one.
+    selector: "Identifier[name='EvalError']:not(BinaryExpression[operator='instanceof'] > Identifier.right)",
+    message: `EvalError appears only in \`e instanceof EvalError\` in the formula engine ${FORMULA_MSG}.`,
+  },
+  {
+    // The engine is synchronous. A promise reaction (.then/.catch/.finally), an async function or a microtask moves a
+    // refused code generation out of the exercising test's call stack, where a handler can swallow it.
+    selector:
+      "Identifier[name=/^(Promise|queueMicrotask)$/], :function[async=true], AwaitExpression, ForOfStatement[await=true], MemberExpression[property.name=/^(then|catch|finally)$/], MemberExpression[computed=true][property.value=/^(then|catch|finally)$/]",
+    message: `No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous ${FORMULA_MSG}.`,
   },
 ];
 
@@ -241,6 +278,8 @@ export default tseslint.config(
         },
       ],
       "no-restricted-syntax": ["error", ...FORMULA_SYNTAX, ...FORMULA_SOURCE_SYNTAX],
+      // F-DG3-100 (round 5): a return/throw/break/continue in a finally discards the exception in flight (an EvalError).
+      "no-unsafe-finally": "error",
     },
   },
   {
