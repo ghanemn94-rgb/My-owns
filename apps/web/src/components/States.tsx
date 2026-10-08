@@ -32,6 +32,22 @@ export function EmptyState({ title, body, action }: { title: string; body?: stri
   );
 }
 
+/**
+ * An honest "being built in this stage" state for a screen whose route exists but whose content is not delivered yet
+ * (P3 seam stubs). It shows no data and offers no action, so nothing can be mistaken for a working screen.
+ */
+export function BeingBuiltState({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="state state--empty" role="note" data-state="being-built">
+      <Icon name="clock" />
+      <div>
+        <p className="state__title">{title}</p>
+        <p className="state__body">{body}</p>
+      </div>
+    </div>
+  );
+}
+
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const { t } = useTranslation();
   // F-DG2-530: an answer that belonged to a previous session is not an error of this one: nothing is shown.

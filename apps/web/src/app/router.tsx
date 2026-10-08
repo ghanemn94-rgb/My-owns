@@ -7,14 +7,26 @@ import { BusinessUnitEditPage, OrganizationDetailPage, OrganizationsPage } from 
 import { UserDetailPage, UsersPage } from "../pages/admin/UsersPage.tsx";
 import { AboutPage, AreaEntryPage, AreaPlaceholderPage, MyWorkPage, NotFoundPage } from "../pages/AreaPages.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
+import { BenefitFormulaPage } from "../pages/benefit-formulas/BenefitFormulaPage.tsx";
+import { BenefitFormulasPage } from "../pages/benefit-formulas/BenefitFormulasPage.tsx";
+import { BusinessCasePage } from "../pages/business-cases/BusinessCasePage.tsx";
+import { BusinessCasesPage } from "../pages/business-cases/BusinessCasesPage.tsx";
+import { CapacityPage } from "../pages/capacity/CapacityPage.tsx";
 import { DecisionsPage } from "../pages/decisions/DecisionsPage.tsx";
 import { CharterPage } from "../pages/define/CharterPage.tsx";
 import { DefinePage } from "../pages/define/DefinePage.tsx";
+import { DependenciesPage } from "../pages/dependencies/DependenciesPage.tsx";
 import { DesignPage } from "../pages/design/DesignPage.tsx";
 import { DiagnosePage } from "../pages/diagnose/DiagnosePage.tsx";
+import { DispensationsPage } from "../pages/dispensations/DispensationsPage.tsx";
 import { EvidencePage } from "../pages/evidence/EvidencePage.tsx";
 import { GateDetailPage } from "../pages/gates/GateDetailPage.tsx";
 import { GatesPage } from "../pages/gates/GatesPage.tsx";
+import { InitiativePage } from "../pages/portfolio/InitiativePage.tsx";
+import { PortfolioPage } from "../pages/portfolio/PortfolioPage.tsx";
+import { PrioritizationPage } from "../pages/prioritization/PrioritizationPage.tsx";
+import { ReadinessPage } from "../pages/readiness/ReadinessPage.tsx";
+import { RoadmapPage } from "../pages/roadmap/RoadmapPage.tsx";
 import { TeamPage } from "../pages/team/TeamPage.tsx";
 import { TransformationCreatePage } from "../pages/transformations/TransformationCreatePage.tsx";
 import { TransformationDetailPage } from "../pages/transformations/TransformationDetailPage.tsx";
@@ -59,6 +71,19 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/gates/:gateCode", element: <GateDetailPage /> },
       { path: "transformations/:id/evidence", element: <EvidencePage /> },
       { path: "transformations/:id/team", element: <TeamPage /> },
+      // P3 (DG3) routes; each page file and export is fixed, its FE task owns it (p3-work-split §4).
+      { path: "transformations/:id/portfolio", element: <PortfolioPage /> },
+      { path: "transformations/:id/initiatives/:initiativeId", element: <InitiativePage /> },
+      { path: "transformations/:id/readiness", element: <ReadinessPage /> },
+      { path: "transformations/:id/dispensations", element: <DispensationsPage /> },
+      { path: "transformations/:id/prioritization", element: <PrioritizationPage /> },
+      { path: "transformations/:id/roadmap", element: <RoadmapPage /> },
+      { path: "transformations/:id/dependencies", element: <DependenciesPage /> },
+      { path: "transformations/:id/capacity", element: <CapacityPage /> },
+      { path: "transformations/:id/business-cases", element: <BusinessCasesPage /> },
+      { path: "transformations/:id/business-cases/:businessCaseId", element: <BusinessCasePage /> },
+      { path: "transformations/:id/benefit-formulas", element: <BenefitFormulasPage /> },
+      { path: "transformations/:id/benefit-formulas/:formulaId", element: <BenefitFormulaPage /> },
       { path: "admin", element: <AdminHomePage /> },
       { path: "admin/organizations", element: <OrganizationsPage /> },
       { path: "admin/organizations/:id", element: <OrganizationDetailPage /> },

@@ -7,7 +7,13 @@
 // F-DG1-008: a transformation's trail also carries the role-assignment events written on it (`scoped_assignment.*`,
 // e.g. the derived creator assignment of F-DG1-106: userId, roleCode, scope, effectiveTo, derivedFromAssignmentId),
 // so their action, fields and values (user, role, scope) have catalogue labels too.
+//
+// P3 (T-DG3-FE-A0): creating a transformation also writes the P3 starter structure (0024/0025
+// p3_instantiate_transformation): `roadmap_wave.create` (no changes) and `scoring_weight_set.create` with
+// `weights: {criterion: "25.00", …}`. The weights are shown as localized criterion names with their exact decimal
+// percentages (never converted to numbers).
 import type { TFunction } from "i18next";
+import { CRITERION_CODES, isCriterionCode } from "@mth/shared/calc";
 
 /** How one side (from / to) of a change is shown. */
 export type AuditValue =
@@ -41,7 +47,7 @@ export interface AuditFieldChange {
 
 type ValueKind =
   | { readonly kind: "enum"; readonly prefix: string }
-  | { readonly kind: "text" | "code" | "user" | "businessUnit" | "datetime" | "role" | "scope" };
+  | { readonly kind: "text" | "code" | "user" | "businessUnit" | "datetime" | "role" | "scope" | "weights" };
 
 /** Audited transformation fields (apps/api transformations repository) and how their values are presented. */
 const FIELDS: Readonly<Record<string, ValueKind>> = {
@@ -68,7 +74,12 @@ const FIELDS: Readonly<Record<string, ValueKind>> = {
   effective_to: { kind: "datetime" },
   derived_from_assignment_id: { kind: "code" },
   revoked_at: { kind: "datetime" },
+  // P3 prioritization weight set (scoring_weight_set.create): criterion code -> percent as a decimal string.
+  weights: { kind: "weights" },
 };
+
+/** A weight percent as recorded: a decimal string 0-100 with at most two fraction digits (ADR-0022). */
+const PERCENT = /^(?:100(?:\.0{1,2})?|\d{1,2}(?:\.\d{1,2})?)$/;
 
 /** Catalogue key of an audit action ("transformation.create" -> "...actions.transformation_create"), or null. */
 export function auditActionKey(action: string, changes?: Readonly<Record<string, unknown>> | null): string | null {
@@ -137,6 +148,26 @@ export function describeAuditValue(t: TFunction, field: string, value: unknown):
       if (typeof value !== "string" || !ROLE_CODE.test(value)) return { kind: "untranslated", raw: raw(value) };
       const text = t(`transformations.audit.role.${value}`, { defaultValue: "" });
       return text ? { kind: "label", text, code: value } : { kind: "untranslated", raw: value };
+    }
+    case "weights": {
+      if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        return { kind: "untranslated", raw: raw(value) };
+      }
+      const entries = Object.entries(value as Record<string, unknown>);
+      const valid =
+        entries.length > 0 &&
+        entries.every(([code, pct]) => isCriterionCode(code) && typeof pct === "string" && PERCENT.test(pct));
+      if (!valid) return { kind: "untranslated", raw: raw(value) };
+      const byCode = new Map(entries);
+      const text = CRITERION_CODES.filter((c) => byCode.has(c))
+        .map((c) =>
+          t("transformations.audit.value.weight", {
+            criterion: t(`transformations.audit.criterion.${c}`),
+            percent: byCode.get(c) as string,
+          }),
+        )
+        .join(t("transformations.audit.value.listSeparator"));
+      return { kind: "label", text, code: "weights" };
     }
     case "scope": {
       const v = value as { type?: unknown; id?: unknown };

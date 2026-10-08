@@ -433,3 +433,85 @@ export function useP2Refresh(tid: string): () => Promise<boolean> {
     return getSessionGeneration() === generation;
   };
 }
+
+// ------------------------------------------------------------------------------------------------ P3 (DG3)
+// Query-key factory for the P3 screens (T-DG3-FE-A0 seam; p3-work-split §4). FE-B and FE-C do not edit api/**: they
+// write their hooks in pages/<feature>/api.ts with these keys and api/client.ts. Every P3 key is
+// [<feature>, transformationId, ...], so useP3Refresh() refreshes all of them for one transformation. Global
+// catalogues (dependency types, formula examples) have no transformation id.
+//
+// ADR-0023 §3: ["roadmap", transformationId] is the ONE cache entry the roadmap timeline, table and work board share;
+// moving a milestone updates (or invalidates) that entry and all three views follow. Never add a per-view roadmap key.
+
+/** The P3 feature roots whose second key element is the transformation id. */
+export const P3_FEATURES = [
+  "portfolio",
+  "readiness",
+  "outcome-hierarchy",
+  "dispensations",
+  "prioritization",
+  "roadmap",
+  "dependencies",
+  "capacity",
+  "business-cases",
+  "benefit-formulas",
+] as const;
+export type P3Feature = (typeof P3_FEATURES)[number];
+
+export const p3Keys = {
+  // FE-A: portfolio (T05), initiative links, deliverables, milestones, selection and funding history.
+  portfolio: (tid: string) => ["portfolio", tid] as const,
+  initiatives: (tid: string, query: Record<string, string> = {}) => ["portfolio", tid, "initiatives", query] as const,
+  initiative: (tid: string, initiativeId: string) => ["portfolio", tid, "initiative", initiativeId] as const,
+  /** One sub-resource of an initiative: "gap-links", "outcome-contributions", "decision-links", "deliverables", … */
+  initiativePart: (tid: string, initiativeId: string, part: string) =>
+    ["portfolio", tid, "initiative", initiativeId, part] as const,
+  readiness: (tid: string) => ["readiness", tid] as const,
+  outcomeHierarchy: (tid: string) => ["outcome-hierarchy", tid] as const,
+  dispensations: (tid: string) => ["dispensations", tid] as const,
+  // FE-B: prioritization, roadmap, dependencies, capacity.
+  prioritization: (tid: string) => ["prioritization", tid] as const,
+  /** One part of the prioritization view: "weight-sets", "rankings", "ranking-history", "overrides", … */
+  prioritizationPart: (tid: string, part: string, ...rest: (string | number)[]) =>
+    ["prioritization", tid, part, ...rest] as const,
+  /** ADR-0023 §3: the single entry shared by the roadmap timeline, table and work board. */
+  roadmap: (tid: string) => ["roadmap", tid] as const,
+  dependencies: (tid: string) => ["dependencies", tid] as const,
+  dependencyTypes: ["dependency-types"] as const,
+  capacity: (tid: string) => ["capacity", tid] as const,
+  // FE-C: business cases and T09 benefit formulas.
+  businessCases: (tid: string) => ["business-cases", tid] as const,
+  businessCase: (tid: string, businessCaseId: string) => ["business-cases", tid, businessCaseId] as const,
+  /** One part of a business case: "lines", "totals", "baseline-validation", … */
+  businessCasePart: (tid: string, businessCaseId: string, part: string) =>
+    ["business-cases", tid, businessCaseId, part] as const,
+  benefitFormulas: (tid: string) => ["benefit-formulas", tid] as const,
+  benefitFormula: (tid: string, formulaId: string) => ["benefit-formulas", tid, formulaId] as const,
+  /** One part of a formula: "versions", or ["versions", n, "calculations" | "validation"]. */
+  benefitFormulaPart: (tid: string, formulaId: string, ...rest: (string | number)[]) =>
+    ["benefit-formulas", tid, formulaId, ...rest] as const,
+  benefitFormulaExamples: ["benefit-formula-examples"] as const,
+};
+
+/** Whether a query key belongs to the P3 data of this transformation ([<P3 feature>, tid, ...]). */
+export function isP3KeyOf(tid: string, key: readonly unknown[]): boolean {
+  return (P3_FEATURES as readonly unknown[]).includes(key[0]) && key[1] === tid;
+}
+
+/**
+ * Refreshes everything of one transformation after a P3 mutation: every P3 feature entry, the P2 registers and LIVE
+ * gate readiness (G4 depends on the portfolio), and the transformation header. Like useP2Refresh, it resolves to
+ * whether the session generation it began under is still current: `if (!(await refresh())) return;`.
+ */
+export function useP3Refresh(tid: string): () => Promise<boolean> {
+  const queryClient = useQueryClient();
+  return async () => {
+    const generation = getSessionGeneration();
+    await Promise.all([
+      queryClient.invalidateQueries({ predicate: (q) => isP3KeyOf(tid, q.queryKey) }),
+      queryClient.invalidateQueries({ queryKey: p2Keys.all(tid) }),
+      queryClient.invalidateQueries({ queryKey: keys.transformation(tid) }),
+    ]);
+    return getSessionGeneration() === generation;
+  };
+}

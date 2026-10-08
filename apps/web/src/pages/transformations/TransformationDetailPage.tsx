@@ -479,7 +479,7 @@ function AuditTrail({ tr }: { tr: Transformation }) {
                       </td>
                       <td>
                         {e.changes ? (
-                          <ul className="plain-list">
+                          <ul className="plain-list audit-changes">
                             {describeAuditChanges(t, e.changes).map((c) => (
                               <li key={c.field}>
                                 {c.label ?? (

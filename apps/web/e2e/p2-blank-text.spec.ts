@@ -25,6 +25,7 @@ import {
   SYN_RETAIL,
   apiSession,
   axeSummary,
+  confirmG1Agreements,
   escape,
   expectAccessible,
   fieldLabel,
@@ -330,6 +331,8 @@ test("Gate G1 decision: a whitespace rationale is an inline error and decides no
   await page.getByRole("button", { name: tr(lang, "gates.decision.action"), exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("radio", { name: tr(lang, "gates.outcome.approved"), exact: true }).check();
+  // REQ-PB-022: the three G1 confirmations are ticked, so the only refusal left is the blank rationale.
+  await confirmG1Agreements(dialog, lang);
   await dialog.getByLabel(fieldLabel(lang, "gates.decision.rationale")).fill("     \n   ");
   await dialog.getByRole("button", { name: tr(lang, "gates.decision.confirm"), exact: true }).click();
   await expectBlankError(lang, "gates.decision.rationale", dialog);

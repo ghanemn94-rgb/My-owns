@@ -1166,6 +1166,10 @@ describe("Gates (business approval)", () => {
     expect(await within(dialog).findByText("This value is too short or too small.")).toBeTruthy();
     expect(requests.some((r) => r.method === "POST")).toBe(false);
     fireEvent.change(within(dialog).getByLabelText(/^Rationale/), { target: { value: "Synthetic rationale" } });
+    // REQ-PB-022 (ADR-0021 §8): approving G1 needs the three leadership agreement confirmations.
+    for (const name of ["problem", "baseline", "material value pools"]) {
+      fireEvent.click(within(dialog).getByRole("checkbox", { name: `The leadership team agrees on the ${name}` }));
+    }
     fireEvent.click(within(dialog).getByRole("button", { name: "Record decision" }));
     expect(await within(dialog).findByText(/Only the configured approver of this gate can decide it\./)).toBeTruthy();
     fireEvent.click(within(dialog).getByRole("button", { name: "Record decision" }));
@@ -1174,7 +1178,12 @@ describe("Gates (business approval)", () => {
     const conflict = await within(dialog).findByText(/This submission is no longer the current one/);
     expect(conflict.closest("[data-state]")!.getAttribute("data-state")).toBe("conflict");
     const body = requests.find((r) => r.method === "POST")!.body as Record<string, unknown>;
-    expect(body).toEqual({ submissionNo: 1, outcome: "approved", rationale: "Synthetic rationale" });
+    expect(body).toEqual({
+      submissionNo: 1,
+      outcome: "approved",
+      rationale: "Synthetic rationale",
+      agreements: { problem: true, baseline: true, materialValuePools: true },
+    });
   });
 
   // F-DG2-151 (REQ-PB-017 / B0023): the verbatim source gate name already contains the code; it is shown exactly once.

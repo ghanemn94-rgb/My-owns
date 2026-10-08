@@ -1,6 +1,7 @@
-// Transformation workspace frame for the P2 screens (REQ-S03-011): breadcrumbs, the transformation's code and name,
-// the workspace tabs (Overview, Diagnose, Charter, Define, Design, Decisions, Gates, Evidence, Team) and a context with the
-// permission hints for this transformation.
+// Transformation workspace frame for the P2 and P3 screens (REQ-S03-011): breadcrumbs, the transformation's code and
+// name, the workspace tabs (P2: Overview, Diagnose, Charter, Define, Design, Decisions, Gates, Evidence, Team; P3:
+// Portfolio, Prioritization, Roadmap, Dependencies, Capacity, Business cases, Benefit formulas, Readiness,
+// Dispensations) and a context with the permission hints for this transformation.
 //
 // Permission hints decide only what the UI OFFERS (ADR-0006): a read-only auditor (AUD) or anyone without the write
 // permission sees no enabled write control and a "read-only view" note. The server still re-checks every request and
@@ -20,18 +21,38 @@ import { Icon } from "./Icon.tsx";
 import { PageHeader, usePageTitle } from "./Page.tsx";
 import { NoPermissionState, QueryState } from "./States.tsx";
 
+/**
+ * The tabs in display order. A tab's id is also its path segment (the area entry pages link to
+ * `/transformations/<id>/<tab id>`). P2 tabs are labelled from `transformations.tabs.<id>`; each P3 tab is labelled
+ * from its own page namespace (`labelKey`), which the owning FE task maintains (p3-work-split §4).
+ */
 export const WORKSPACE_TABS = [
   { id: "overview", path: "" },
   { id: "diagnose", path: "/diagnose" },
   { id: "charter", path: "/charter" },
   { id: "define", path: "/define" },
   { id: "design", path: "/design" },
+  { id: "portfolio", path: "/portfolio", labelKey: "portfolio.tab" },
+  { id: "prioritization", path: "/prioritization", labelKey: "prioritization.tab" },
+  { id: "roadmap", path: "/roadmap", labelKey: "roadmap.tab" },
+  { id: "dependencies", path: "/dependencies", labelKey: "dependencies.tab" },
+  { id: "capacity", path: "/capacity", labelKey: "capacity.tab" },
+  { id: "business-cases", path: "/business-cases", labelKey: "businessCases.tab" },
+  { id: "benefit-formulas", path: "/benefit-formulas", labelKey: "benefitFormulas.tab" },
   { id: "decisions", path: "/decisions" },
   { id: "gates", path: "/gates" },
+  { id: "readiness", path: "/readiness", labelKey: "readiness.tab" },
+  { id: "dispensations", path: "/dispensations", labelKey: "dispensations.tab" },
   { id: "evidence", path: "/evidence" },
   { id: "team", path: "/team" },
-] as const;
+] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
+
+/** The i18n key of a workspace tab's label. */
+export function workspaceTabLabelKey(id: WorkspaceTabId): string {
+  const tab: { id: string; labelKey?: string } | undefined = WORKSPACE_TABS.find((x) => x.id === id);
+  return tab?.labelKey ?? `transformations.tabs.${id}`;
+}
 
 export interface WorkspaceContextValue {
   readonly tr: Transformation;
@@ -71,7 +92,7 @@ export function WorkspaceTabs({ tid }: { tid: string }) {
         {WORKSPACE_TABS.map((tab) => (
           <li key={tab.id}>
             <NavLink end to={`/transformations/${tid}${tab.path}`} className="workspace-tabs__link" data-tab={tab.id}>
-              {t(`transformations.tabs.${tab.id}`)}
+              {t(workspaceTabLabelKey(tab.id))}
             </NavLink>
           </li>
         ))}

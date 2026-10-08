@@ -14,6 +14,7 @@ import {
   SYN_RETAIL,
   apiSession,
   axeSummary,
+  confirmG1Agreements,
   escape,
   exactly,
   expectAccessible,
@@ -607,6 +608,8 @@ test("Gates: the approver's decision — 409 when the submission was superseded,
     { ifMatch: gate.gate.version },
   );
   await dialog.getByRole("radio", { name: tr(lang, "gates.outcome.approved"), exact: true }).check();
+  // REQ-PB-022 (ADR-0021 §8): approving G1 needs the three leadership agreement confirmations (B0032).
+  await confirmG1Agreements(dialog, lang);
   await dialog
     .getByLabel(fieldLabel(lang, "gates.decision.rationale"))
     .fill("Synthetic demo rationale: case for change evidenced.");
@@ -624,6 +627,8 @@ test("Gates: the approver's decision — 409 when the submission was superseded,
     dialog.getByRole("heading", { name: tr(lang, "gates.decision.title", { code: "G1", n: 2 }) }),
   ).toBeVisible();
   await dialog.getByRole("radio", { name: tr(lang, "gates.outcome.approved"), exact: true }).check();
+  // REQ-PB-022 (ADR-0021 §8): approving G1 needs the three leadership agreement confirmations (B0032).
+  await confirmG1Agreements(dialog, lang);
   await dialog
     .getByLabel(fieldLabel(lang, "gates.decision.rationale"))
     .fill("Synthetic demo rationale: case for change evidenced.");

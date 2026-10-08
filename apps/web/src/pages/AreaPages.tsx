@@ -6,7 +6,8 @@ import { DEFAULTS } from "@mth/shared";
 import { useTransformations } from "../api/queries.ts";
 import { EmptyState, QueryState } from "../components/States.tsx";
 import { LifecycleChip } from "../components/Badges.tsx";
-import type { AreaId } from "../app/nav.ts";
+import type { AreaId, AreaWorkspaceTab } from "../app/nav.ts";
+import { workspaceTabLabelKey } from "../components/Workspace.tsx";
 import { useMe } from "../auth/session.tsx";
 import { canAnywhere } from "../auth/permissions.ts";
 import { Icon } from "../components/Icon.tsx";
@@ -39,7 +40,7 @@ export function AreaPlaceholderPage({ area }: { area: AreaId }) {
  * Target Operating Model -> Design, Governance -> Gates, Evidence and Reports -> Evidence). It lists the
  * transformations the user can see and opens the matching workspace tab; the cross-portfolio view is still planned.
  */
-export function AreaEntryPage({ area, tab }: { area: AreaId; tab: "define" | "design" | "gates" | "evidence" }) {
+export function AreaEntryPage({ area, tab }: { area: AreaId; tab: AreaWorkspaceTab }) {
   const { t } = useTranslation();
   const label = t(`nav.areas.${area}.label`);
   usePageTitle(label);
@@ -49,7 +50,7 @@ export function AreaEntryPage({ area, tab }: { area: AreaId; tab: "define" | "de
       <PageHeader title={label} subtitle={t(`nav.areas.${area}.summary`)} />
       <section className="card" aria-labelledby="entry-title">
         <h2 id="entry-title" className="card__title">
-          {t("nav.entry.title", { tab: t(`transformations.tabs.${tab}`) })}
+          {t("nav.entry.title", { tab: t(workspaceTabLabelKey(tab)) })}
         </h2>
         <p>{t("nav.entry.body")}</p>
         <QueryState
