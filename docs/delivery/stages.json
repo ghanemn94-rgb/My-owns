@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG2"
       ],
@@ -1265,10 +1265,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33",
-        "source_commit": "928b765419e7e84feeaae1a60724a11c318799a8",
-        "frozen_at": "2026-10-08T06:46:13Z",
-        "manifest_path": "docs/delivery/candidates/DG3/873115d9bc84f763.manifest.json"
+        "candidate_id": "sha256:58ef3f4777967f7f5791565d6075c3ec28b45c3a42a58903057b81b522540f31",
+        "source_commit": "f49ca1604857f8a79dce28c306cff895e6158d8e",
+        "frozen_at": "2026-10-08T09:05:52Z",
+        "manifest_path": "docs/delivery/candidates/DG3/58ef3f4777967f7f.manifest.json"
       },
       "review_rounds": [
         {
@@ -1282,6 +1282,18 @@
             "qa-verifier": "docs/delivery/reviews/DG3/round-1/qa-verifier.json"
           },
           "note": "DG3 gate review round 1 on candidate 873115d9 (753 files, source 928b765). P3 built in 23 implementer runs across worktree waves (D-079); all 270 contract operations live; the 32 DG3-final requirements IMPLEMENTED (validate --register DG3 PASS). Orchestrator pre-freeze verification of the frozen tree: typecheck/build/lint/format/openapi/contrast exit 0; unit 1528/1528 with the locale unset and with C.UTF-8; integration 791/791 (migrations 0001-0027); product e2e 168/168 in chromium-en + chromium-ar under both locale settings; validate --historical --stage DG2 and --pipeline exit 0."
+        },
+        {
+          "round": 2,
+          "candidate_id": "sha256:58ef3f4777967f7f5791565d6075c3ec28b45c3a42a58903057b81b522540f31",
+          "frozen_at": "2026-10-08T09:05:52Z",
+          "source_commit": "f49ca1604857f8a79dce28c306cff895e6158d8e",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG3/round-2/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG3/round-2/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG3/round-2/qa-verifier.json"
+          },
+          "note": "DG3 gate review round 2 on the repaired candidate 58ef3f47 (754 files, source f49ca16). Repairs since round 1 (D-080, D-081): T-DG3-KBE-D (F-DG3-100, formula no-dynamic-code guard extended) and T-DG3-ARCH-05 (F-DG3-120, GateInstance.inheritedApproval annotation); the manifest diff against 873115d9 is exactly their 20 modified files plus inherited-approval.test.tsx, and D-081. Orchestrator pre-freeze verification of the merged tree 2f30603: typecheck/build/lint/format/openapi/contrast exit 0; unit 1565/1565 with the locale unset and with C.UTF-8; integration 793/793 (migrations 0001-0027); product e2e 168/168 in chromium-en + chromium-ar under both locale settings; register DG3, pipeline and --historical --stage DG2 PASS."
         }
       ],
       "gate_record": "docs/delivery/gates/DG3.json",
@@ -1305,6 +1317,11 @@
           "state": "FIXING",
           "at": "2026-10-08T07:54:40Z",
           "note": "Round 1 on candidate 873115d9: all three verdicts PASS. qa (19 checks, all 32 requirements, e2e 200/200 in both locale settings, no findings), code-security (26 checks; raised F-DG3-100 Low: the formula engine's no-dynamic-code guards accept Reflect.construct/apply(Function), an aliased Function, computed ['constructor'] and createRequire; the engine itself has none) and domain (17 checks; raised F-DG3-120 Low: ADR-0021 §5's inheritedApproval annotation on the gate list is not built). Both imported OPEN; no Critical/High/mandatory. Round-2 repairs (D-080): T-DG3-KBE-D (F-100) and T-DG3-ARCH-05 (F-120), each in its own worktree."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-08T09:05:52Z",
+          "note": "Round-2 repairs merged and verified (D-081). Candidate frozen as 58ef3f47 (754 files, source f49ca16) for DG3 gate review round 2: code-security verifies F-DG3-100, domain verifies F-DG3-120, qa runs the full regression; each also re-reviews in full."
         }
       ]
     },

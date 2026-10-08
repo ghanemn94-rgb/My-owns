@@ -13,24 +13,35 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Rounds 11-13** fixed operational server defects (D-071 to D-073): connection hygiene, pool bounds, the three-phase upload, commit-time re-authorisation and graceful shutdown.
   - **Rounds 13-17** closed session and identity edge cases in the web client (D-074 to D-077). The D-077 2 s residual for non-navigation GETs was judged acceptable as declared.
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
-- **DG3 state: REVIEWING, gate round 1** on candidate `sha256:873115d9…` (753 files, source `928b765`, frozen 2026-10-08T06:46Z).
+- **DG3 state: REVIEWING, gate round 2** on candidate `sha256:58ef3f47…` (754 files, source `f49ca16`, frozen 2026-10-08T09:05Z).
   - **How it was built (D-079):** 23 implementer runs, each concurrent writer in its own git worktree (D-004), merged and verified by the orchestrator after every wave:
     - ARCH-01–04;
     - BE-A–G;
     - KBE-A–C;
     - FE-A0, FE-A–F;
     - AN-P3 and AN-P3B.
-  - **Pre-freeze verification of the frozen tree:**
-    - unit tests 1528 in both locale settings;
-    - integration tests 791 (migrations 0001–0027);
+  - **Round 1** was on `873115d9` (753 files, source `928b765`). All three reviewers gave PASS (D-080).
+    - qa raised no findings.
+    - code-security raised **F-DG3-100** (Low): the formula engine's no-dynamic-code guards were incomplete.
+    - domain raised **F-DG3-120** (Low): the gate-list `inheritedApproval` annotation was missing.
+    - Both findings were **repaired** rather than accepted as observations, since accepting them needs the user's approval.
+  - **Round-2 repairs (D-081):**
+    - T-DG3-KBE-D (`4175262`) fixes F-100;
+    - T-DG3-ARCH-05 (`ea8e2de`) fixes F-120.
+    - Both are merged. Both findings are FIXED_PENDING_VERIFICATION.
+    - The manifest diff against round 1 is exactly their files plus D-081.
+  - **Pre-freeze verification of the merged tree** (`docs/delivery/test-evidence/DG3/orchestrator/round-2-prefreeze/`):
+    - unit tests 1565 in both locale settings;
+    - integration tests 793;
     - product e2e 168 in chromium-en and chromium-ar, under both locale settings;
-    - `validate --register DG3`, `--historical --stage DG2` and `--pipeline` exit 0.
-  - **Round 1:** three independent reviewers on `docs/delivery/assignments/DG3/round-1/` (finding ids: code-security F-DG3-100–119, domain 120–139, qa 140–159).
+    - `--register DG3`, `--historical --stage DG2` and `--pipeline` exit 0.
+  - **Round 2:** three independent reviewers on `docs/delivery/assignments/DG3/round-2/`.
+    - code-security verifies F-DG3-100; domain verifies F-DG3-120; qa runs the full regression. Each also re-reviews in full.
+    - New finding ids: code-security F-DG3-160–169, domain 170–179, qa 180–189.
 - **Next action:**
-  1. When the three round-1 records return, commit the evidence selectively and import (`import-findings --stage DG3 --round 1`).
-  2. If the reviewers raise findings, repair them in worktrees, freeze round 2, and verify.
-  3. When all three PASS and every finding is CLOSED_VERIFIED, run `validate --stage DG3` yourself, then set VERIFYING and run the release-auditor.
-  4. Environmental residuals stay PASS-on-evidence: D-057, D-058, D-049.
+  1. When the three round-2 records return, commit the evidence selectively and import (`import-findings --stage DG3 --round 2`), including the verification sidecars.
+  2. If all three PASS and both findings are CLOSED_VERIFIED, run `validate --stage DG3` yourself, then set VERIFYING and run the release-auditor (mirror the DG2 round-17 auditor assignment; the final-gate requirement ids are the 32 DG3 rows).
+  3. Environmental residuals stay PASS-on-evidence: D-057, D-058, D-049.
 
 ## DG2 scope (P2 — diagnose, define and design)
 
