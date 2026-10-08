@@ -13,25 +13,19 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Rounds 11-13** fixed operational server defects (D-071 to D-073): connection hygiene, pool bounds, the three-phase upload, commit-time re-authorisation and graceful shutdown.
   - **Rounds 13-17** closed session and identity edge cases in the web client (D-074 to D-077). The D-077 2 s residual for non-navigation GETs was judged acceptable as declared.
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
-- **DG3 state: REVIEWING, gate round 7** on candidate `sha256:f55095db…` (757 files, source `d3e6fe6`). Round 6 (`7049d793`): 3× PASS, F-DG3-100 CLOSED_VERIFIED, new Low F-DG3-280 repaired by KBE-I (D-087). Rounds 4–5: domain and qa PASS, code-security FAIL on F-DG3-100; repairs KBE-G (D-085) and KBE-H (D-086, meets the reviewer's final closure criterion).
-  - **Rounds 1–3** (D-080 to D-084):
-    - four findings raised: F-DG3-100, 120, 170 and 180 (170 and 180 describe the same defect);
-    - F-120, F-170 and F-180 are CLOSED_VERIFIED;
-    - F-DG3-100 (Low, the formula engine's no-dynamic-code guard) failed verification twice and has had three repairs: KBE-D, KBE-E and KBE-F.
-  - **Incidents:**
-    - D-082: repair worktrees were created during reviews, so those runs are not gate evidence. Rule: no worktree or install activity while any review or audit run is active.
-    - D-084: a container restart killed two round-3 reviews. They were re-run, with the orphaned material kept for provenance.
-  - **Pre-freeze verification** (`docs/delivery/test-evidence/DG3/orchestrator/round-4-prefreeze/`):
-    - unit 1593 + 199 (1 skipped by design), in both locale settings and on Node 22;
-    - integration 793;
-    - e2e 178 in both locale settings;
-    - register and pipeline PASS.
-  - **Round 7:** a full re-review; code-security verifies F-DG3-280 (ids: code-security F-DG3-310–319, domain 320–329, qa 330–339).
-    - New finding ids: code-security F-DG3-220–229, domain 230–239, qa 240–249.
-- **Next action:**
-  1. When the three round-4 records return, check each run's `meta.json` (exit 0, no config change). Commit the evidence and import (`--round 4`).
-  2. If all three PASS and F-100 is CLOSED_VERIFIED, run `validate --stage DG3`, set VERIFYING and run the release-auditor. The draft is `scratchpad/dg3/auditor-r3-draft.md`; update it to round 4.
-  3. Environmental residuals stay PASS-on-evidence: D-057, D-058, D-049.
+- **DG3 is APPROVED** (gate `docs/delivery/gates/DG3.json`, candidate `sha256:f55095db…`, 757 files, source `d3e6fe6`; 32/32 DG3-final requirements).
+  - **Gate round 7:** 3× PASS (domain, code-security, qa), plus a release-auditor PASS (`T-DG3-AUDIT-R7`) on the same candidate.
+  - **Findings:** all 5 DG3 findings are CLOSED_VERIFIED by non-owners: F-DG3-100, 120, 170, 180 and 280. There are 0 unresolved Critical/High findings and 0 mandatory violations.
+  - **Validators:** `validate.mjs --stage DG3`, `--historical --stage DG3` and `--pipeline` all exit 0.
+  - **7 review rounds** (D-078 to D-087):
+    - **F-DG3-100** (Low; the formula engine's no-dynamic-code guard) needed five repairs, KBE-D to KBE-H. It closed against the reviewer's own final criterion. ADR-0024 §6 now claims only enumerated behaviour, with an honest residual.
+    - **Incidents:**
+      - D-082: worktrees created during reviews. Rule: no worktree or install activity while any review or audit run is active.
+      - D-084: a container restart killed two reviews, which were re-run with the orphaned material kept for provenance.
+    - **Auditor observations (non-blocking):**
+      - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
+      - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
+- **Next action:** DG4 (P4). Run `node tools/gates/validate.mjs --historical --stage DG3` (exit 0) before any DG4 implementation, then plan DG4 from the master prompt and the register (`final_gate` = DG4), architecture first, as for DG3 (D-078).
 
 ## DG2 scope (P2 — diagnose, define and design)
 
@@ -43,4 +37,4 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Unresolved blockers
 
-None. DG0, DG1 and DG2 are APPROVED on this branch, and `--pipeline` exits 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
+None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
