@@ -454,3 +454,19 @@ export const api = {
 export function newIdempotencyKey(): string {
   return globalThis.crypto.randomUUID();
 }
+
+// ------------------------------------------------------------------------------------------------ P3 seam
+// T-DG3-FE-A0 (p3-work-split §4): FE-B and FE-C write their hooks in pages/<feature>/api.ts and never edit api/**, so
+// this module is their one import surface for requests. Above: `apiRequest`/`api.send` (If-Match from `ifMatch`, the
+// ETag in `ApiResponse.etag`, Idempotency-Key), `ApiError` (the parsed problem: `code`, `fieldErrors`,
+// `currentVersion`, `isConflict`), `NetworkError`, `isSessionChangedError`, `newIdempotencyKey`. Below: the
+// session-bound action helpers (F-DG2-530/580), re-exported from their ESLint-mandated home auth/sessionBound.ts.
+// That module imports getSessionGeneration/isSessionChangedError from here; neither module uses the other's bindings
+// while it is being evaluated (only inside functions), so this import cycle is safe.
+export {
+  beginSessionGuard,
+  useSessionBoundAction,
+  useSessionNavigate,
+  type SessionBoundAction,
+  type SessionGuard,
+} from "../auth/sessionBound.ts";

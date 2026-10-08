@@ -5,7 +5,14 @@ import { mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type APIRequestContext, type Page, type PlaywrightWorkerArgs, type TestInfo } from "@playwright/test";
+import {
+  expect,
+  type APIRequestContext,
+  type Locator,
+  type Page,
+  type PlaywrightWorkerArgs,
+  type TestInfo,
+} from "@playwright/test";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const SHOTS = process.env["E2E_SCREENSHOT_DIR"] ?? join(HERE, "..", "screenshots");
@@ -150,3 +157,15 @@ export const DEV_USERS = {
   lead: "01920000-0000-7000-9000-000000000203",
 } as const;
 export const SYN_RETAIL = "01920000-0000-7000-9000-000000000102";
+
+/**
+ * REQ-PB-022 (ADR-0021 §8, B0032): approving G1 needs the three leadership agreement confirmations. Ticks them in the
+ * gate decision dialog by their visible, translated labels (after "Approve" is chosen).
+ */
+export async function confirmG1Agreements(dialog: Locator, lang: Lang): Promise<void> {
+  const group = dialog.getByRole("group", { name: new RegExp(escape(tr(lang, "gates.agreements.legend"))) });
+  await expect(group).toBeVisible();
+  for (const key of ["problem", "baseline", "materialValuePools"]) {
+    await group.getByRole("checkbox", { name: tr(lang, `gates.agreements.item.${key}`), exact: true }).check();
+  }
+}

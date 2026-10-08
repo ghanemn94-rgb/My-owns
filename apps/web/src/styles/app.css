@@ -1219,6 +1219,14 @@ input[type="radio"] {
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
+/* Audit trail changes: a long value without spaces (e.g. a JSON object of weights from a P3 audit event) wraps inside
+   its cell instead of widening the table into a horizontally scrolled region with nothing focusable
+   (axe scrollable-region-focusable). `.table .code` keeps short codes on one line; here a code-styled value may wrap. */
+.audit-changes,
+.table .audit-changes .code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .clamp {
   display: -webkit-box;
   -webkit-line-clamp: 4;

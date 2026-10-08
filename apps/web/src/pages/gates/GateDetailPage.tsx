@@ -504,7 +504,24 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
   );
 }
 
-/** The approver's decision: one of four outcomes with a mandatory rationale; the submission number is the current one. */
+/** The three G1 leadership agreement confirmations (REQ-PB-022, B0032; ADR-0021 §8), in the order of GateAgreements. */
+export const G1_AGREEMENT_KEYS = ["problem", "baseline", "materialValuePools"] as const;
+type AgreementKey = (typeof G1_AGREEMENT_KEYS)[number];
+const NO_AGREEMENTS: Readonly<Record<AgreementKey, boolean>> = {
+  problem: false,
+  baseline: false,
+  materialValuePools: false,
+};
+
+/** Whether a decision needs (and sends) the leadership agreements: only approving G1. Absent for anything else. */
+export function needsG1Agreements(gateCode: string, outcome: string): boolean {
+  return gateCode === "G1" && outcome === "approved";
+}
+
+/**
+ * The approver's decision: one of four outcomes with a mandatory rationale; the submission number is the current one.
+ * Approving G1 also needs the three leadership agreement confirmations (B0032); they are sent only then.
+ */
 function DecideDialog({
   view,
   submissionNo,
@@ -523,6 +540,13 @@ function DecideDialog({
   const [outcome, setOutcome] = useState("");
   const [rationale, setRationale] = useState("");
   const [comments, setComments] = useState("");
+  const [agreements, setAgreements] = useState<Record<AgreementKey, boolean>>(NO_AGREEMENTS);
+  const needsAgreements = needsG1Agreements(view.definition.code, outcome);
+  const allAgreed = G1_AGREEMENT_KEYS.every((k) => agreements[k]);
+  const approvalBlocked = needsAgreements && !allAgreed;
+  /** Set by a submit attempt with a confirmation missing; the inline error shows while one is still unticked. */
+  const [agreementsTried, setAgreementsTried] = useState(false);
+  const agreementsInvalid = agreementsTried && approvalBlocked;
   /** FE12: field-error codes; translated at render time so a visible message follows a language switch. */
   const [errorCodes, setErrors] = useState<Record<string, string>>({});
   const errors = fieldErrorMessages(t, errorCodes);
@@ -543,12 +567,17 @@ function DecideDialog({
     if (isBlankText(comments)) next["comments"] = BLANK_CODE;
     const body: Record<string, unknown> = { submissionNo, outcome, rationale };
     if (comments !== "") body["comments"] = comments;
+    // ADR-0021 §8: `agreements` only with a G1 approval (all three true); any other gate or outcome sends none.
+    if (needsAgreements) body["agreements"] = { problem: true, baseline: true, materialValuePools: true };
     const parsed = gateDecisionCreate.safeParse(body);
     if (!parsed.success) {
       for (const issue of parsed.error.issues) next[String(issue.path[0])] ??= issueCode(issue);
     }
-    if (Object.keys(next).length > 0) {
+    // REQ-PB-022: approving G1 is impossible until the three confirmations are ticked; nothing is sent before.
+    setAgreementsTried(approvalBlocked);
+    if (Object.keys(next).length > 0 || approvalBlocked) {
       showErrors(next);
+      if (approvalBlocked) focusInvalid();
       return;
     }
     setErrors({});
@@ -618,6 +647,40 @@ function DecideDialog({
           </p>
         ) : null}
       </fieldset>
+      {needsAgreements ? (
+        <fieldset
+          className={`field field--group${agreementsInvalid ? " field--invalid" : ""}`}
+          data-g1-agreements="true"
+          aria-describedby="gate-agreements-intro"
+        >
+          <legend className="field__label">
+            {t("gates.agreements.legend")} <span className="field__required">({t("common.form.required")})</span>
+          </legend>
+          <p id="gate-agreements-intro" className="field__hint">
+            {t("gates.agreements.intro")}
+          </p>
+          {G1_AGREEMENT_KEYS.map((k) => (
+            <label key={k} className="checkbox">
+              <input
+                type="checkbox"
+                name={`g1-agreement-${k}`}
+                data-agreement={k}
+                required
+                aria-invalid={agreementsInvalid && !agreements[k] ? true : undefined}
+                aria-describedby={agreementsInvalid && !agreements[k] ? "gate-agreements-error" : undefined}
+                checked={agreements[k]}
+                onChange={(e) => setAgreements((prev) => ({ ...prev, [k]: e.target.checked }))}
+              />
+              {t(`gates.agreements.item.${k}`)}
+            </label>
+          ))}
+          {agreementsInvalid ? (
+            <p id="gate-agreements-error" className="field__error" data-state="agreements-missing">
+              <Icon name="alert" /> {t("gates.agreements.blocked")}
+            </p>
+          ) : null}
+        </fieldset>
+      ) : null}
       <Field
         label={t("gates.decision.rationale")}
         hint={t("gates.decision.rationaleHint")}
@@ -658,6 +721,18 @@ export function GateProblem({ error }: { error: unknown }) {
   const code = error instanceof ApiError ? error.code : null;
   const conflict = error instanceof ApiError && error.status === 409;
   const incomplete = error instanceof ApiError && code === "gate_criteria_incomplete";
+  // ADR-0021 §8: the two agreement problems, translated from gates.json; the missing confirmations are listed by name.
+  const agreementsRequired = code === "gate.g1_agreements_required";
+  const agreementsNotApplicable = code === "gate.agreements_not_applicable";
+  const missingAgreements =
+    agreementsRequired && error instanceof ApiError
+      ? G1_AGREEMENT_KEYS.filter((k) => error.fieldErrors.some((fe) => fe.pointer === `/agreements/${k}`))
+      : [];
+  const message = agreementsRequired
+    ? t("gates.agreements.problem.required")
+    : agreementsNotApplicable
+      ? t("gates.agreements.problem.notApplicable")
+      : errorMessage(t, error);
   return (
     <div
       className="banner banner--error"
@@ -666,8 +741,17 @@ export function GateProblem({ error }: { error: unknown }) {
       data-problem={code ?? ""}
     >
       <p>
-        <Icon name="alert" /> {errorMessage(t, error)}
+        <Icon name="alert" /> {message}
       </p>
+      {missingAgreements.length > 0 ? (
+        <ul className="plain-list" data-missing-agreements={missingAgreements.join(" ")}>
+          {missingAgreements.map((k) => (
+            <li key={k}>
+              <Icon name="cross" /> {t(`gates.agreements.missing.${k}`)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {incomplete && error instanceof ApiError ? (
         <ul className="plain-list">
           {error.fieldErrors.map((fe, i) => (

@@ -239,3 +239,48 @@ describe("role-assignment events on a transformation's trail (F-DG1-008)", () =>
     });
   });
 });
+
+// P3 (T-DG3-FE-A0): creating a transformation writes the P3 starter structure (0024/0025 p3_instantiate_transformation),
+// so its trail carries `roadmap_wave.create` and `scoring_weight_set.create` with the B0076 source weights.
+describe("P3 starter-structure events on the transformation trail", () => {
+  const weights = {
+    strategic_fit: "25.00",
+    financial_value: "25.00",
+    customer_impact: "20.00",
+    feasibility: "15.00",
+    time_to_value: "15.00",
+  };
+
+  it("labels the two instantiation actions in both languages", () => {
+    expect(describeAuditAction(en, "roadmap_wave.create", null)).toBe("Roadmap wave created");
+    expect(describeAuditAction(ar, "roadmap_wave.create", null)).toBe("أُنشئ: موجة في خارطة الطريق");
+    expect(describeAuditAction(en, "scoring_weight_set.create", { weights: { from: null, to: weights } })).toBe(
+      "Prioritization weight set created",
+    );
+    expect(describeAuditAction(ar, "scoring_weight_set.create", null)).toBe("أُنشئ: مجموعة أوزان ترتيب الأولويات");
+  });
+
+  it("shows the weights as localized criteria with their exact decimal percentages, in the B0076 order", () => {
+    const enChange = describeAuditChange(en, "weights", { from: null, to: weights });
+    expect(enChange.label).toBe("Criterion weights");
+    expect(enChange.from).toEqual({ kind: "none" });
+    expect(enChange.to).toEqual({
+      kind: "label",
+      code: "weights",
+      text: "Strategic fit 25.00%, Financial value 25.00%, Customer impact 20.00%, Feasibility 15.00%, Time-to-value 15.00%",
+    });
+    const arChange = describeAuditChange(ar, "weights", { from: null, to: weights });
+    expect(arChange.label).toBe("أوزان المعايير");
+    expect(arChange.to).toMatchObject({ kind: "label" });
+    const text = (arChange.to as { text: string }).text;
+    expect(text).toContain("الملاءمة الاستراتيجية 25.00٪");
+    expect(text).toContain("الوقت اللازم لتحقيق القيمة 15.00٪");
+    expect(text.split("، ")).toHaveLength(5);
+  });
+
+  it("keeps the marked fallback for an unknown criterion, a non-decimal percent or a malformed value", () => {
+    for (const bad of [{ unknown_criterion: "10.00" }, { feasibility: 15 }, { feasibility: "15.000" }, {}, [], "x"]) {
+      expect(describeAuditValue(en, "weights", bad).kind, JSON.stringify(bad)).toBe("untranslated");
+    }
+  });
+});

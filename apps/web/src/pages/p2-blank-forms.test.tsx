@@ -183,6 +183,11 @@ describe.each(LOCALES)("gate decision rationale and comments (%s)", (locale) => 
     fireEvent.click(await screen.findByRole("button", { name: t("gates.decision.action") }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("radio", { name: t("gates.outcome.approved") }));
+    // REQ-PB-022 (ADR-0021 §8): approving G1 needs the three leadership agreements; ticked so that the only refusal
+    // left in these tests is the blank rationale or comment.
+    for (const k of ["problem", "baseline", "materialValuePools"]) {
+      fireEvent.click(within(dialog).getByRole("checkbox", { name: t(`gates.agreements.item.${k}`) }));
+    }
     const rationale = within(dialog).getByLabelText(labelled(t("gates.decision.rationale")));
     const comments = within(dialog).getByLabelText(t("gates.decision.comments"));
     const submit = () => fireEvent.click(within(dialog).getByRole("button", { name: t("gates.decision.confirm") }));
@@ -222,7 +227,12 @@ describe.each(LOCALES)("gate decision rationale and comments (%s)", (locale) => 
     fireEvent.change(rationale, { target: { value: VERBATIM } });
     submit();
     await waitFor(() => expect(writes(requests)).toHaveLength(1));
-    expect(writes(requests)[0]!.body).toEqual({ submissionNo: 1, outcome: "approved", rationale: VERBATIM });
+    expect(writes(requests)[0]!.body).toEqual({
+      submissionNo: 1,
+      outcome: "approved",
+      rationale: VERBATIM,
+      agreements: { problem: true, baseline: true, materialValuePools: true },
+    });
   });
 
   it("a server 400 validation.blank on /rationale lands on the field", async () => {

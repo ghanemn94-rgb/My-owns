@@ -1,0 +1,191 @@
+Thu Oct  8 00:30:04 UTC 2026
+env: LANG/LC_ALL/LC_CTYPE/LANGUAGE unset
+port-policy: PostgreSQL listening on port 23500 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applied 25 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 23501 (attempt 1)
+API: http://localhost:23501 (APP_BASE_URL=http://localhost:23501, PORT=23501)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 76 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.5s)
+  ✓   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (2.2s)
+  ✓   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.8s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.5s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (2.0s)
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.5s)
+  ✓   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.8s)
+  ✓   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.9s)
+  ✘   9 [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (2.8s)
+  ✓  10 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (118ms)
+  ✓  11 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.8s)
+  ✓  12 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.7s)
+  ✓  13 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.9s)
+  ✓  14 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.9s)
+  ✓  15 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.9s)
+  ✓  16 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:384:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (3.1s)
+  ✓  17 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:427:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (3.3s)
+  ✓  18 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:463:1 › Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region (2.5s)
+  ✓  19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.5s)
+  ✓  20 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.4s)
+  ✓  21 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.5s)
+  ✓  22 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.8s)
+  ✓  23 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (5.1s)
+  ✓  24 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (5.5s)
+  ✓  25 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (4.5s)
+  ✓  26 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (4.0s)
+  ✓  27 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (16.1s)
+  ✓  28 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.6s)
+  ✓  29 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (5.6s)
+  ✓  30 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (11.8s)
+  ✓  31 [chromium-en] › apps/web/e2e/p3-seams.spec.ts:26:1 › setup: a fresh synthetic transformation for the P3 seam checks (56ms)
+  ✓  32 [chromium-en] › apps/web/e2e/p3-seams.spec.ts:38:1 › P3 pages: bilingual titles, an honest 'being built' state and the P3 workspace tabs (10.5s)
+  ✓  33 [chromium-en] › apps/web/e2e/p3-seams.spec.ts:76:1 › Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio and Business cases tabs (2.9s)
+  ✓  34 [chromium-en] › apps/web/e2e/session-end.spec.ts:156:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (4.6s)
+  ✓  35 [chromium-en] › apps/web/e2e/session-end.spec.ts:187:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in (4.7s)
+  ✓  36 [chromium-en] › apps/web/e2e/session-end.spec.ts:266:1 › after a session end, another browser context from the same IP can still sign in (no 429) (6.5s)
+  ✓  37 [chromium-en] › apps/web/e2e/session-end.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (4.4s)
+  ✓  38 [chromium-en] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records (4.9s)
+  ✓  39 [chromium-ar] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.1s)
+  ✓  40 [chromium-ar] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.6s)
+  ✓  41 [chromium-ar] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.3s)
+  ✓  42 [chromium-ar] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.9s)
+  ✓  43 [chromium-ar] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.9s)
+  ✓  44 [chromium-ar] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.2s)
+  ✓  45 [chromium-ar] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.8s)
+  ✓  46 [chromium-ar] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (1.7s)
+  ✘  47 [chromium-ar] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (2.5s)
+  ✓  48 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (140ms)
+  ✓  49 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.3s)
+  ✓  50 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.1s)
+  ✓  51 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.5s)
+  ✓  52 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.4s)
+  ✓  53 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.3s)
+  ✓  54 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:384:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (2.5s)
+  ✓  55 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:427:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (2.8s)
+  ✓  56 [chromium-ar] › apps/web/e2e/p2-blank-text.spec.ts:463:1 › Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region (2.1s)
+  ✓  57 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.0s)
+  ✓  58 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (5.6s)
+  ✓  59 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (4.0s)
+  ✓  60 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (3.7s)
+  ✓  61 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (4.7s)
+  ✓  62 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (5.1s)
+  ✓  63 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (3.9s)
+  ✓  64 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (3.6s)
+  ✓  65 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (15.2s)
+  ✓  66 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (4.1s)
+  ✓  67 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (4.2s)
+  ✓  68 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (9.8s)
+  ✓  69 [chromium-ar] › apps/web/e2e/p3-seams.spec.ts:26:1 › setup: a fresh synthetic transformation for the P3 seam checks (63ms)
+  ✓  70 [chromium-ar] › apps/web/e2e/p3-seams.spec.ts:38:1 › P3 pages: bilingual titles, an honest 'being built' state and the P3 workspace tabs (9.3s)
+  ✓  71 [chromium-ar] › apps/web/e2e/p3-seams.spec.ts:76:1 › Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio and Business cases tabs (2.3s)
+  ✓  72 [chromium-ar] › apps/web/e2e/session-end.spec.ts:156:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (4.5s)
+  ✓  73 [chromium-ar] › apps/web/e2e/session-end.spec.ts:187:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in (4.7s)
+  ✓  74 [chromium-ar] › apps/web/e2e/session-end.spec.ts:266:1 › after a session end, another browser context from the same IP can still sign in (no 429) (6.4s)
+  ✓  75 [chromium-ar] › apps/web/e2e/session-end.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (4.2s)
+  ✓  76 [chromium-ar] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records (5.1s)
+
+
+  1) [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: not [32m"field without a translation"[39m
+    Received string:        [31m"Audit trailAudit trailWhenActionByVersionChanges8 Oct 2026, 03:30Role granted to the creator (carried over from a business-unit assignment)Synthetic Transformation Lead— → 1User: None → Synthetic Transformation LeadRole: None → Transformation LeadScope: None → Transformation: this transformationEffective until: None → NoneCarried over from assignment: None → 01a118ea-d8b7-70b3-80fa-2f2b34eb7d138 Oct 2026, 03:30scoring_weight_set.create (action without a translation)Synthetic Transformation Lead— → 1weights ([7mfield without a translation[27m): None → {\"feasibility\":\"15.00\",\"strategic_fit\":\"25.00\",\"time_to_value\":\"15.00\",\"customer_impact\":\"20.00\",\"financial_value\":\"25.00\"} (value without a translation)8 Oct 2026, 03:30roadmap_wave.create (action without a translation)Synthetic Transformation Lead— → 1—8 Oct 2026, 03:30roadmap_wave.create (action without a translation)Synthetic Transformation Lead— → 1—8 Oct 2026, 03:30roadmap_wave.create (action without a translation)Synthetic Transformation Lead— → 1—8 Oct 2026, 03:30roadmap_wave.create (action without a translation)Synthetic Transformation Lead— → 1—8 Oct 2026, 03:30Stage gate createdSynthetic Transformation Lead— → 1—8 Oct 2026, 03:30Stage gate createdSynthetic Transformation Lead— → 1—8 Oct 2026, 03:30Stage gate createdSynthetic Transformation Lead— → 1—8 Oct 2026, 03:30Stage gate createdSynthetic Transformation Lead— → 1—Page 1 · 10 shownPreviousNext"[39m
+
+      505 |     tr(lang, "transformations.audit.untranslatedAction"),
+      506 |   ]) {
+    > 507 |     expect(text).not.toContain(raw);
+          |                      ^
+      508 |   }
+      509 |   expect(await page.evaluate(() => (window as unknown as { __mthNoReload?: boolean }).__mthNoReload === true)).toBe(
+      510 |     true,
+        at /home/user/wt/dg3-fe-a0/apps/web/e2e/journeys.spec.ts:507:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: not [32m"حقل بلا ترجمة"[39m
+    Received string:        [31m"سجل التدقيقسجل التدقيقالوقتالإجراءبواسطةالإصدارالتغييرات08‏/10‏/2026 03:33إسناد دور لمُنشئ السجل (منقول من إسناد على مستوى وحدة العمل)Synthetic Transformation Lead— → 1المستخدم: لا يوجد ← Synthetic Transformation Leadالدور: لا يوجد ← قائد التحوّلالنطاق: لا يوجد ← التحوّل: هذا التحوّليسري حتى: لا يوجد ← لا يوجدمنقول من الإسناد: لا يوجد ← 01a118ea-d8b7-70b3-80fa-2f2b34eb7d1308‏/10‏/2026 03:33scoring_weight_set.create (إجراء بلا ترجمة)Synthetic Transformation Lead— → 1weights ([7mحقل بلا ترجمة[27m): لا يوجد ← {\"feasibility\":\"15.00\",\"strategic_fit\":\"25.00\",\"time_to_value\":\"15.00\",\"customer_impact\":\"20.00\",\"financial_value\":\"25.00\"} (قيمة بلا ترجمة)08‏/10‏/2026 03:33roadmap_wave.create (إجراء بلا ترجمة)Synthetic Transformation Lead— → 1—08‏/10‏/2026 03:33roadmap_wave.create (إجراء بلا ترجمة)Synthetic Transformation Lead— → 1—08‏/10‏/2026 03:33roadmap_wave.create (إجراء بلا ترجمة)Synthetic Transformation Lead— → 1—08‏/10‏/2026 03:33roadmap_wave.create (إجراء بلا ترجمة)Synthetic Transformation Lead— → 1—08‏/10‏/2026 03:33أُنشئ: بوابة المرحلةSynthetic Transformation Lead— → 1—08‏/10‏/2026 03:33أُنشئ: بوابة المرحلةSynthetic Transformation Lead— → 1—08‏/10‏/2026 03:33أُنشئ: بوابة المرحلةSynthetic Transformation Lead— → 1—08‏/10‏/2026 03:33أُنشئ: بوابة المرحلةSynthetic Transformation Lead— → 1—الصفحة 1 · المعروض 10السابقالتالي"[39m
+
+      505 |     tr(lang, "transformations.audit.untranslatedAction"),
+      506 |   ]) {
+    > 507 |     expect(text).not.toContain(raw);
+          |                      ^
+      508 |   }
+      509 |   expect(await page.evaluate(() => (window as unknown as { __mthNoReload?: boolean }).__mthNoReload === true)).toBe(
+      510 |     true,
+        at /home/user/wt/dg3-fe-a0/apps/web/e2e/journeys.spec.ts:507:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-journeys-a-bu-d2a22--grant-localized-F-DG1-008--chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) 
+    [chromium-ar] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) 
+  74 passed (5.2m)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+EXIT=1
+Thu Oct  8 00:35:23 UTC 2026
+SUPERSEDED: 74 passed, 2 failed (journeys.spec.ts:560 audit trail 'without a translation' for the P3 instantiation events, en+ar); fixed afterwards, see the handback

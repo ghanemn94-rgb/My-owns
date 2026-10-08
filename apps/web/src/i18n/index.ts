@@ -19,6 +19,16 @@ import arNav from "./ar/nav.json" with { type: "json" };
 import arProblems from "./ar/problems.json" with { type: "json" };
 import arTeam from "./ar/team.json" with { type: "json" };
 import arTransformations from "./ar/transformations.json" with { type: "json" };
+// P3 (DG3) namespaces: one per page area, each owned by its FE task (p3-work-split §4).
+import arPortfolio from "./ar/portfolio.json" with { type: "json" };
+import arReadiness from "./ar/readiness.json" with { type: "json" };
+import arDispensations from "./ar/dispensations.json" with { type: "json" };
+import arPrioritization from "./ar/prioritization.json" with { type: "json" };
+import arRoadmap from "./ar/roadmap.json" with { type: "json" };
+import arDependencies from "./ar/dependencies.json" with { type: "json" };
+import arCapacity from "./ar/capacity.json" with { type: "json" };
+import arBusinessCases from "./ar/businessCases.json" with { type: "json" };
+import arBenefitFormulas from "./ar/benefitFormulas.json" with { type: "json" };
 import enAdmin from "./en/admin.json" with { type: "json" };
 import enDecisions from "./en/decisions.json" with { type: "json" };
 import enDefine from "./en/define.json" with { type: "json" };
@@ -33,6 +43,15 @@ import enNav from "./en/nav.json" with { type: "json" };
 import enProblems from "./en/problems.json" with { type: "json" };
 import enTeam from "./en/team.json" with { type: "json" };
 import enTransformations from "./en/transformations.json" with { type: "json" };
+import enPortfolio from "./en/portfolio.json" with { type: "json" };
+import enReadiness from "./en/readiness.json" with { type: "json" };
+import enDispensations from "./en/dispensations.json" with { type: "json" };
+import enPrioritization from "./en/prioritization.json" with { type: "json" };
+import enRoadmap from "./en/roadmap.json" with { type: "json" };
+import enDependencies from "./en/dependencies.json" with { type: "json" };
+import enCapacity from "./en/capacity.json" with { type: "json" };
+import enBusinessCases from "./en/businessCases.json" with { type: "json" };
+import enBenefitFormulas from "./en/benefitFormulas.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -51,6 +70,15 @@ export const catalogues = {
     gates: arGates,
     evidence: arEvidence,
     team: arTeam,
+    portfolio: arPortfolio,
+    readiness: arReadiness,
+    dispensations: arDispensations,
+    prioritization: arPrioritization,
+    roadmap: arRoadmap,
+    dependencies: arDependencies,
+    capacity: arCapacity,
+    businessCases: arBusinessCases,
+    benefitFormulas: arBenefitFormulas,
   },
   en: {
     common: enCommon,
@@ -67,6 +95,15 @@ export const catalogues = {
     gates: enGates,
     evidence: enEvidence,
     team: enTeam,
+    portfolio: enPortfolio,
+    readiness: enReadiness,
+    dispensations: enDispensations,
+    prioritization: enPrioritization,
+    roadmap: enRoadmap,
+    dependencies: enDependencies,
+    capacity: enCapacity,
+    businessCases: enBusinessCases,
+    benefitFormulas: enBenefitFormulas,
   },
 } as const;
 
