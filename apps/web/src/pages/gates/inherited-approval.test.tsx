@@ -98,6 +98,8 @@ function render(path: "list" | "G1", locale: Locale, g1: Annotation | null) {
 /** The badge never looks approved: neutral chip, info icon, never the on-track colour or the check icon. */
 function expectNeverApproved(badge: HTMLElement) {
   expect(badge.className).toContain("status-chip--unknown");
+  // F-DG3-170: the long badge wraps inside its card/row (layout itself: e2e/p3-inherited-approval.spec.ts).
+  expect(badge.className).toContain("status-chip--wrap");
   expect(badge.className).not.toContain("on-track");
   expect(badge.innerHTML).not.toContain(CHECK_PATH);
   expect(document.querySelector('[data-gate-status="approved"]')).toBeNull();

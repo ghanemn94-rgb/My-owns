@@ -1,0 +1,295 @@
+diff --git a/apps/web/src/pages/gates/GatesPage.tsx b/apps/web/src/pages/gates/GatesPage.tsx
+index 56bfa26..c22418e 100644
+--- a/apps/web/src/pages/gates/GatesPage.tsx
++++ b/apps/web/src/pages/gates/GatesPage.tsx
+@@ -56,12 +56,14 @@ export function InheritedApprovalBadge({ annotation }: { annotation: InheritedAp
+   if (annotation === null) return null;
+   const state = annotation.status === "accepted" && !annotation.counts ? "acceptedNotCounting" : annotation.status;
+   return (
++    // status-chip--wrap (F-DG3-170): the ~80-character text wraps inside its card (list) or row (gate view), so the
++    // whole of it, including "(does not approve this gate)", stays visible at every width, in LTR and RTL.
+     <span
+-      className="status-chip status-chip--unknown"
++      className="status-chip status-chip--unknown status-chip--wrap"
+       data-inherited-approval={annotation.status}
+       data-counts={annotation.counts ? "true" : "false"}
+     >
+-      <Icon name="info" /> {t(`gates.inheritedApproval.status.${state}`)}
++      <Icon name="info" /> <span>{t(`gates.inheritedApproval.status.${state}`)}</span>
+     </span>
+   );
+ }
+diff --git a/apps/web/src/pages/gates/inherited-approval.test.tsx b/apps/web/src/pages/gates/inherited-approval.test.tsx
+index 9d27026..63bc0ae 100644
+--- a/apps/web/src/pages/gates/inherited-approval.test.tsx
++++ b/apps/web/src/pages/gates/inherited-approval.test.tsx
+@@ -98,6 +98,8 @@ function render(path: "list" | "G1", locale: Locale, g1: Annotation | null) {
+ /** The badge never looks approved: neutral chip, info icon, never the on-track colour or the check icon. */
+ function expectNeverApproved(badge: HTMLElement) {
+   expect(badge.className).toContain("status-chip--unknown");
++  // F-DG3-170: the long badge wraps inside its card/row (layout itself: e2e/p3-inherited-approval.spec.ts).
++  expect(badge.className).toContain("status-chip--wrap");
+   expect(badge.className).not.toContain("on-track");
+   expect(badge.innerHTML).not.toContain(CHECK_PATH);
+   expect(document.querySelector('[data-gate-status="approved"]')).toBeNull();
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index eddbf87..ceda266 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -822,6 +822,25 @@ input[type="radio"] {
+   background: var(--mth-status-stale-bg);
+   color: var(--mth-status-stale-fg);
+ }
++/* A chip whose text is long (e.g. the inherited-approval badge, F-DG3-170) wraps inside its container instead of
++   overflowing it. Opt-in: the base .status-chip stays nowrap for the short chips that rely on it. Logical properties
++   only, so it behaves the same in RTL. The icon stays on the first line, at the start. */
++.status-chip--wrap {
++  white-space: normal;
++  overflow-wrap: anywhere;
++  max-inline-size: 100%;
++  min-inline-size: 0;
++  align-items: flex-start;
++  text-align: start;
++  border-radius: var(--mth-radius);
++  padding-block: 0.2rem;
++}
++.status-chip--wrap > .icon {
++  margin-block-start: 0.2em;
++}
++.status-chip--wrap > span {
++  min-inline-size: 0;
++}
+ .lifecycle-chip {
+   background: var(--mth-surface-card);
+   color: var(--mth-text-primary);
+diff --git a/apps/web/e2e/p3-inherited-approval.spec.ts b/apps/web/e2e/p3-inherited-approval.spec.ts
+new file mode 100644
+index 0000000..c62e3b0
+--- /dev/null
++++ b/apps/web/e2e/p3-inherited-approval.spec.ts
+@@ -0,0 +1,225 @@
++// The inherited-approval badge fits its card and its row, in a real browser, on the REAL stack (support/with-stack.sh;
++// no mocks). T-DG3-FE-G, F-DG3-170 (REQ-PB-004; ADR-0021 §5). The jsdom unit test (inherited-approval.test.tsx) checks
++// the badge's text, attributes and neutral styling but cannot see layout. This spec measures it:
++//  - on the Gates list, the badge's box (and every other chip in the G1 card's chip row) lies within the G1 card;
++//  - on the G1 gate view, the badge's box lies within its row (the "Inherited approval" entry);
++//  - the document never scrolls horizontally (documentElement.scrollWidth <= innerWidth);
++//  - the full translated badge text, including "(does not approve this gate)" / "(لا يعتمد هذه البوابة)", is rendered
++//    and not clipped (the badge's scrollWidth <= clientWidth, and its box stays inside the viewport);
++//  - G1 still shows the neutral "Not submitted" chip, the badge stays neutral (never the approved colour or check
++//    icon), and nothing reads as approved;
++//  - axe: 0 serious or critical issues.
++// At viewport widths 1024, 1366, 1920 and 390 (a phone; the shell has a narrow layout, app.css @media max-width 900px).
++//
++// Every record here is SYNTHETIC demo data. The Sponsor's acceptance of the inherited approval is a demo business
++// decision that approves nothing real, and no product gate (G1-G6) implies any engineering gate (DG0-DG7).
++import { expect, test, type Page } from "@playwright/test";
++import {
++  SYN_RETAIL,
++  apiSession,
++  expectAccessible,
++  langOf,
++  shot,
++  signIn,
++  tr,
++  trackRequests,
++  type Lang,
++} from "./support/ui.ts";
++import { syntheticUser } from "./support/p3-journey-setup.ts";
++
++test.describe.configure({ mode: "serial" });
++
++let tid = "";
++const WIDTHS = [1024, 1366, 1920, 390] as const;
++/** The SVG path of the approved ("check") icon (components/Icon.tsx). */
++const CHECK_PATH = "M4 10.5l4 4 8-9";
++const norm = (s: string) => s.replace(/\s+/g, " ").trim();
++
++interface Box {
++  left: number;
++  right: number;
++  top: number;
++  bottom: number;
++}
++interface Measure {
++  badge: Box;
++  container: Box;
++  badgeScrollWidth: number;
++  badgeClientWidth: number;
++  badgeText: string;
++  chips: { text: string; box: Box; scrollWidth: number; clientWidth: number }[];
++  docScrollWidth: number;
++  innerWidth: number;
++}
++
++/** Boxes of the badge, of its container (the G1 card or the gate view row) and of every chip in the container. */
++async function measure(page: Page, containerSelector: string): Promise<Measure> {
++  return page.evaluate((sel) => {
++    const box = (e: Element) => {
++      const r = e.getBoundingClientRect();
++      return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
++    };
++    const badge = document.querySelector<HTMLElement>("[data-inherited-approval]")!;
++    const container = badge.closest(sel)!;
++    return {
++      badge: box(badge),
++      container: box(container),
++      badgeScrollWidth: badge.scrollWidth,
++      badgeClientWidth: badge.clientWidth,
++      badgeText: badge.innerText,
++      chips: [...container.querySelectorAll<HTMLElement>(".status-chip, .lifecycle-chip")].map((c) => ({
++        text: c.innerText,
++        box: box(c),
++        scrollWidth: c.scrollWidth,
++        clientWidth: c.clientWidth,
++      })),
++      docScrollWidth: document.documentElement.scrollWidth,
++      innerWidth: window.innerWidth,
++    };
++  }, containerSelector);
++}
++
++/** a lies within b (sub-pixel rounding tolerated). */
++function expectInside(a: Box, b: Box, what: string) {
++  const eps = 0.5;
++  expect(a.left, `${what}: left edge ${a.left} inside ${b.left}`).toBeGreaterThanOrEqual(b.left - eps);
++  expect(a.right, `${what}: right edge ${a.right} inside ${b.right}`).toBeLessThanOrEqual(b.right + eps);
++}
++
++function expectFits(m: Measure, lang: Lang, where: string) {
++  const text = tr(lang, "gates.inheritedApproval.status.accepted");
++  // The whole translated text, disclaimer included, is the badge's rendered text.
++  expect(norm(m.badgeText)).toBe(norm(text));
++  expect(text).toContain(lang === "ar" ? "(لا يعتمد هذه البوابة)" : "(does not approve this gate)");
++  // Not clipped, inside its container and the viewport; the page does not scroll horizontally.
++  expect(m.badgeScrollWidth, `${where}: badge scrollWidth <= clientWidth`).toBeLessThanOrEqual(m.badgeClientWidth);
++  expectInside(m.badge, m.container, `${where}: badge within its container`);
++  expectInside(m.badge, { left: 0, right: m.innerWidth, top: 0, bottom: 0 }, `${where}: badge within the viewport`);
++  expect(m.docScrollWidth, `${where}: document scrollWidth <= innerWidth`).toBeLessThanOrEqual(m.innerWidth);
++  // Every other chip of the same container (gate status, readiness, unverified evidence) fits too.
++  for (const c of m.chips) {
++    expectInside(c.box, m.container, `${where}: chip "${norm(c.text)}" within its container`);
++    expect(c.scrollWidth, `${where}: chip "${norm(c.text)}" not clipped`).toBeLessThanOrEqual(c.clientWidth);
++  }
++}
++
++/** G1 stays "Not submitted" (neutral), the badge stays neutral, and nothing on the page reads as approved. */
++async function expectNeverApproved(page: Page, lang: Lang, scope: string) {
++  const status = page.locator(`${scope} [data-gate-status]`).first();
++  await expect(status).toHaveAttribute("data-gate-status", "draft");
++  await expect(status).toContainText(tr(lang, "gates.status.draft"));
++  const badge = page.locator("[data-inherited-approval]");
++  await expect(badge).toHaveAttribute("data-inherited-approval", "accepted");
++  await expect(badge).toHaveAttribute("data-counts", "true");
++  await expect(badge).toHaveClass(/status-chip--unknown/);
++  await expect(badge).not.toHaveClass(/on-track/);
++  expect(await badge.innerHTML()).not.toContain(CHECK_PATH);
++  await expect(page.locator('[data-gate="G1"] [data-gate-status="approved"]')).toHaveCount(0);
++  await expect(page.locator('main [data-gate-status="approved"]')).toHaveCount(0);
++}
++
++// ------------------------------------------------------------------------------------------------ setup
++
++test("setup: a Modular transformation whose G1 has an accepted inherited approval (synthetic, real API)", async ({
++  playwright,
++}, info) => {
++  const lang = langOf(info);
++  const lead = await apiSession(playwright, "dev.lead");
++  const office = await apiSession(playwright, "dev.office");
++  const admin = await apiSession(playwright, "dev.admin");
++  const created = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
++    businessUnitId: SYN_RETAIL,
++    name: `Synthetic inherited approval layout ${lang.toUpperCase()}`,
++    mode: "modular",
++    entryPhase: "mobilize",
++  });
++  tid = created.id;
++  const T = `/api/v1/transformations/${tid}`;
++  const me = await admin.call<{ organization: { id: string } }>("GET", "/api/v1/me");
++  const sp = await syntheticUser(
++    admin,
++    me.organization.id,
++    tid,
++    `dev.p3inh.sp.${lang}.${Date.now().toString(36)}`,
++    `Synthetic Sponsor ${lang}`,
++    "SP",
++    lang,
++  );
++  const sponsor = await apiSession(playwright, sp.username);
++  // Verified evidence of the earlier (pre-product) approval: a note, reviewed by the Transformation Office.
++  const ev = await lead.call<{ id: string; version: number }>("POST", `${T}/evidence`, {
++    kind: "note",
++    title: "Synthetic prior board minute",
++    ownerUserId: lead.userId,
++    noteBody: "Synthetic minute of an earlier executive committee decision.",
++  });
++  await office.call(
++    "POST",
++    `${T}/evidence/${ev.id}/review`,
++    { result: "verified", accessibilityStatus: "accessible", note: "Synthetic review" },
++    { ifMatch: ev.version },
++  );
++  const d = await lead.call<{ id: string; version: number }>("POST", `${T}/gate-dispensations`, {
++    kind: "inherited_approval",
++    gateCode: "G1",
++    approvingBody: "Synthetic executive committee",
++    approvedOn: "2026-01-15",
++    evidenceId: ev.id,
++  });
++  await sponsor.call(
++    "POST",
++    `${T}/gate-dispensations/${d.id}/decision`,
++    { result: "accepted", note: "Synthetic demo acceptance (approves nothing real)" },
++    { ifMatch: d.version },
++  );
++  const g1 = await lead.call<{
++    gate: { status: string; inheritedApproval: { status: string; counts: boolean } | null };
++  }>("GET", `${T}/gates/G1`);
++  expect(g1.gate.status).toBe("draft");
++  expect(g1.gate.inheritedApproval).toMatchObject({ status: "accepted", counts: true });
++});
++
++// ------------------------------------------------------------------------------------------------ layout per width
++
++for (const width of WIDTHS) {
++  test(`inherited-approval badge fits its card and row at ${width} px`, async ({ page }, info) => {
++    const lang = langOf(info);
++    const foreign = trackRequests(page);
++    await page.setViewportSize({ width, height: 900 });
++    await signIn(page, lang, "dev.lead");
++
++    // Gates list: the badge and the other chips stay inside the G1 card.
++    await page.goto(`/transformations/${tid}/gates`);
++    const card = page.locator('[data-gate="G1"]');
++    const badge = card.locator("[data-inherited-approval]");
++    await expect(badge).toBeVisible();
++    await expect(badge).toHaveText(tr(lang, "gates.inheritedApproval.status.accepted"));
++    await page.waitForLoadState("networkidle");
++    const list = await measure(page, "[data-gate]");
++    console.log(`MEASURE ${lang}.${width}.list ${JSON.stringify(list)}`);
++    await info.attach(`measure-${lang}-${width}-list.json`, { body: JSON.stringify(list, null, 2) });
++    expectFits(list, lang, `${lang} ${width} list`);
++    await expectNeverApproved(page, lang, '[data-gate="G1"]');
++    await card.scrollIntoViewIfNeeded();
++    await shot(page, lang, `p3-inherited-${width}-gates-list`);
++    await expectAccessible(page, lang, `p3-inherited-${width}-gates-list`);
++
++    // G1 gate view: the badge stays inside its row; the page does not scroll horizontally.
++    await page.goto(`/transformations/${tid}/gates/G1`);
++    const row = page.locator("[data-inherited-approval-row]");
++    await expect(row.locator("[data-inherited-approval]")).toHaveText(
++      tr(lang, "gates.inheritedApproval.status.accepted"),
++    );
++    await expect(row.getByText(tr(lang, "gates.inheritedApproval.label"), { exact: true })).toBeVisible();
++    await page.waitForLoadState("networkidle");
++    const view = await measure(page, "[data-inherited-approval-row]");
++    console.log(`MEASURE ${lang}.${width}.view ${JSON.stringify(view)}`);
++    await info.attach(`measure-${lang}-${width}-view.json`, { body: JSON.stringify(view, null, 2) });
++    expectFits(view, lang, `${lang} ${width} view`);
++    await expectNeverApproved(page, lang, "main");
++    await shot(page, lang, `p3-inherited-${width}-gate-view`);
++    await expectAccessible(page, lang, `p3-inherited-${width}-gate-view`);
++
++    expect(foreign).toEqual([]);
++  });
++}
