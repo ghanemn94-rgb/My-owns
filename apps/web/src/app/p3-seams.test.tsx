@@ -1,7 +1,7 @@
 // P3 frontend seams (T-DG3-FE-A0; p3-work-split §4). SYNTHETIC data.
 //  - every P3 route renders its page from a fixed file and export name;
-//  - each stub shows its bilingual title from its own namespace and an honest "being built in this stage" state, with
-//    no data and no write control, in English LTR and Arabic RTL;
+//  - (the stub pages were replaced by T-DG3-FE-A/B/C, whose own tests cover the screens; the stub assertions were
+//    retired by the orchestrator at the wave-4 integration, as all three tasks requested);
 //  - the workspace tabs include the P3 tabs, labelled from their own namespaces;
 //  - "Initiatives and Roadmaps" and "Benefits and Finance" are partial areas leading into the Portfolio and Business
 //    cases tabs of each transformation;
@@ -84,10 +84,8 @@ const P3_ROUTES = [
 ] as const;
 
 const shellChildren = (): RouteObject[] => routes.find((r) => r.path === "/")!.children!;
-const concrete = (path: string) =>
-  `/${path.replace(":id", TR_ID).replace(/:(initiativeId|businessCaseId|formulaId)/, "01920000-0000-7000-9000-0000000009a1")}`;
 
-function renderStub(path: string, locale: Locale) {
+function renderWorkspace(path: string, locale: Locale) {
   const tr = `/api/v1/transformations/${TR_ID}`;
   const api = mockApi(
     route("GET", /\/api\/v1\/me$/, () => ({
@@ -112,30 +110,11 @@ describe("P3 routes", () => {
     }
   });
 
-  describe.each(["en", "ar"] as const)("stubs (%s)", (locale) => {
-    it.each(P3_ROUTES.map(([path, , ns, titleKey]) => [path, ns, titleKey] as const))(
-      "%s: bilingual title and an honest 'being built' state, no data, no write control",
-      async (path, ns, titleKey) => {
-        const { requests } = renderStub(concrete(path), locale);
-        expect(await screen.findByRole("heading", { level: 1, name: text(locale, titleKey) })).toBeTruthy();
-        expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
-        const state = document.querySelector<HTMLElement>("[data-state='being-built']")!;
-        expect(state).toBeTruthy();
-        expect(state.getAttribute("role")).toBe("note");
-        expect(state.textContent).toContain(text(locale, `${ns}.stub.title`));
-        expect(state.textContent).toContain(text(locale, `${ns}.stub.body`));
-        // A stub fetches only the workspace frame (session, units, transformation, catalogue) and writes nothing.
-        expect(requests.filter((r) => r.method !== "GET")).toEqual([]);
-        expect(
-          requests.filter((r) => !/\/(me|business-units[^/]*|methodology)$|\/transformations\/[^/]+$/.test(r.url)),
-        ).toEqual([]);
-        expect(document.querySelector("main")!.querySelectorAll("form, input, textarea, select")).toHaveLength(0);
-        expect(document.body.textContent).not.toMatch(/\bDG[0-7]\b/);
-      },
-    );
-
+  // Every P3 stub page has been replaced by its owning task (T-DG3-FE-A, FE-B, FE-C; their own page tests and e2e specs
+  // cover the screens). This suite keeps the seam contract: the fixed route -> component wiring above, and the tabs.
+  describe.each(["en", "ar"] as const)("workspace tabs (%s)", (locale) => {
     it("the workspace tabs include the P3 tabs, labelled from their own namespaces", async () => {
-      renderStub(`/transformations/${TR_ID}/roadmap`, locale);
+      renderWorkspace(`/transformations/${TR_ID}/roadmap`, locale);
       const nav = await screen.findByRole("navigation", { name: text(locale, "transformations.tabs.label") });
       const links = within(nav).getAllByRole("link");
       expect(links.map((a) => a.dataset["tab"])).toEqual(WORKSPACE_TABS.map((t) => t.id));

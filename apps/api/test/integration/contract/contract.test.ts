@@ -608,9 +608,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
       const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
       const checked = await exerciseRateLimitSweep(limited, live);
       expect(checked).toHaveLength(live.length);
-      // 161 P1/P2 operations + the P3 operations routed so far: 6 T-DG3-BE-A, 20 T-DG3-BE-B, 25 T-DG3-BE-C,
-      // 17 T-DG3-BE-D, 11 T-DG3-KBE-B (orchestrator reconciliation), 13 T-DG3-KBE-C; rises as the other P3 tasks
-      // route theirs.
+      // 161 P1/P2 operations + all 109 P3 operations: 6 T-DG3-BE-A, 20 T-DG3-BE-B, 25 T-DG3-BE-C, 17 T-DG3-BE-D,
+      // 11 T-DG3-KBE-B, 13 T-DG3-KBE-C and 17 T-DG3-BE-E (orchestrator reconciliation). Every contract operation is live.
       expect(live.length).toBeGreaterThanOrEqual(270);
     } finally {
       await limited.close();

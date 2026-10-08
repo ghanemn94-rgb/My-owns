@@ -1,7 +1,8 @@
 // P3 frontend seams on the REAL stack (support/with-stack.sh; no mocks), in the project's language (chromium-en ->
 // English LTR, chromium-ar -> Arabic RTL). SYNTHETIC data (T-DG3-FE-A0; p3-work-split §4):
-//  - every P3 route opens inside the transformation workspace with its bilingual title and an honest "being built in
-//    this stage" state (no data, no form), axe-clean;
+//  - every P3 workspace tab opens inside the transformation workspace with its bilingual title, the right tab marked
+//    current, axe-clean, and visiting it writes nothing (the screens themselves are covered by the owning tasks' specs:
+//    p3-portfolio, p3-prioritization-roadmap, p3-business-cases);
 //  - the workspace tabs carry the P3 tabs; "Initiatives and Roadmaps" and "Benefits and Finance" lead into the
 //    Portfolio and Business cases tabs of each transformation.
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -30,12 +31,10 @@ test.afterAll(async ({}, info) => {
 });
 
 let tid = "";
-const SOME_ID = "01920000-0000-7000-9000-0000000009a1";
 
-/** [path segment(s) under the transformation, title key, namespace, workspace tab id or null for a detail page] */
+/** [path segment under the transformation, title key, namespace, workspace tab id] */
 const PAGES = [
   ["portfolio", "portfolio.title", "portfolio", "portfolio"],
-  [`initiatives/${SOME_ID}`, "portfolio.initiativeTitle", "portfolio", null],
   ["readiness", "readiness.title", "readiness", "readiness"],
   ["dispensations", "dispensations.title", "dispensations", "dispensations"],
   ["prioritization", "prioritization.title", "prioritization", "prioritization"],
@@ -43,9 +42,7 @@ const PAGES = [
   ["dependencies", "dependencies.title", "dependencies", "dependencies"],
   ["capacity", "capacity.title", "capacity", "capacity"],
   ["business-cases", "businessCases.title", "businessCases", "business-cases"],
-  [`business-cases/${SOME_ID}`, "businessCases.detailTitle", "businessCases", null],
   ["benefit-formulas", "benefitFormulas.title", "benefitFormulas", "benefit-formulas"],
-  [`benefit-formulas/${SOME_ID}`, "benefitFormulas.detailTitle", "benefitFormulas", null],
 ] as const;
 
 test("setup: a fresh synthetic transformation for the P3 seam checks", async ({ playwright }, info) => {
@@ -59,7 +56,7 @@ test("setup: a fresh synthetic transformation for the P3 seam checks", async ({ 
   tid = created.id;
 });
 
-test("P3 pages: bilingual titles, an honest 'being built' state and the P3 workspace tabs", async ({ page }, info) => {
+test("P3 pages: bilingual titles, the P3 workspace tabs, axe-clean, no write on visit", async ({ page }, info) => {
   const lang = langOf(info);
   const foreign = trackRequests(page);
   const sent: string[] = [];
@@ -71,21 +68,14 @@ test("P3 pages: bilingual titles, an honest 'being built' state and the P3 works
   for (const [path, titleKey, ns, tab] of PAGES) {
     await page.goto(`/transformations/${tid}/${path}`);
     await expect(page.locator("main#main h1")).toHaveText(exactly(tr(lang, titleKey)));
-    const state = page.locator("[data-state='being-built']");
-    await expect(state).toBeVisible();
-    await expect(state).toHaveAttribute("role", "note");
-    await expect(state).toContainText(tr(lang, `${ns}.stub.title`));
-    await expect(state).toContainText(tr(lang, `${ns}.stub.body`));
-    await expect(page.locator("main#main").locator("form, input, textarea, select")).toHaveCount(0);
+    await expect(page.locator("[data-state='being-built']")).toHaveCount(0);
     const tabs = page.getByRole("navigation", { name: tr(lang, "transformations.tabs.label"), exact: true });
-    if (tab) {
-      const current = tabs.locator(`[data-tab='${tab}']`);
-      await expect(current).toHaveAttribute("aria-current", "page");
-      await expect(current).toHaveText(tr(lang, `${ns}.tab`));
-    }
-    const name = `p3-seam-${path.split("/")[0]}${tab ? "" : "-detail"}`;
+    const current = tabs.locator(`[data-tab='${tab}']`);
+    await expect(current).toHaveAttribute("aria-current", "page");
+    await expect(current).toHaveText(tr(lang, `${ns}.tab`));
+    const name = `p3-seam-${path}`;
     await expectAccessible(page, lang, name);
-    if (["portfolio", "roadmap", "business-cases"].includes(path) || !tab) await shot(page, lang, name);
+    if (["portfolio", "roadmap", "business-cases"].includes(path)) await shot(page, lang, name);
   }
   await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
   await expect(page.locator("body")).not.toContainText(/\bDG[0-7]\b/);
@@ -99,9 +89,9 @@ test("Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio an
   const lang = langOf(info);
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.lead");
-  for (const [area, path, tab, tabKey] of [
-    ["initiatives", "/initiatives-roadmaps", "portfolio", "portfolio.tab"],
-    ["benefits", "/benefits-finance", "business-cases", "businessCases.tab"],
+  for (const [area, path, tab, tabKey, titleKey] of [
+    ["initiatives", "/initiatives-roadmaps", "portfolio", "portfolio.tab", "portfolio.title"],
+    ["benefits", "/benefits-finance", "business-cases", "businessCases.tab", "businessCases.title"],
   ] as const) {
     await page.goto(path);
     await expect(page.locator("main#main h1")).toHaveText(exactly(tr(lang, `nav.areas.${area}.label`)));
@@ -112,7 +102,7 @@ test("Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio an
     await shot(page, lang, `p3-area-${area}`);
     await link.click();
     await expect(page).toHaveURL(new RegExp(`/transformations/${tid}/${tab}$`));
-    await expect(page.locator("[data-state='being-built']")).toBeVisible();
+    await expect(page.locator("main#main h1")).toHaveText(exactly(tr(lang, titleKey)));
   }
   expect(foreign).toEqual([]);
 });
