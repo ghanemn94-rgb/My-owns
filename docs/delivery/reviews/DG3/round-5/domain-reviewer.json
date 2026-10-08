@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 5,
+  "candidate_id": "sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3",
+  "source_commit": "21e2742e4b0f6800e379a4d935d5592a873b1c59",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-REV-DOM-R5-domain-reviewer-20261008T171551Z-a603edd0",
+    "session_id": "a603edd0-64ba-4a3c-ba11-271953912af7"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG3 implementation, test, register row or ADR in the reviewed candidate, including the round-5 repair T-DG3-KBE-G (commit 10472b4). I formed this verdict from my own runs in a complete (non-shallow) disposable clone of source commit 21e2742. I used my own probes from rounds 3-4 (dg3-api, dg3-api-extra, dg3-ui-world, dg3-ui, dg3-ui-inherited, dg3-ui-overflow, dg3-ui-overflow-r3), with only the round label and evidence path changed. I read the repair diff only to understand the change. I did not open any other reviewer's round-5 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-5/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-004", "REQ-PB-006", "REQ-PB-007", "REQ-PB-019", "REQ-PB-022", "REQ-PB-032", "REQ-PB-040",
+    "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050", "REQ-PB-051",
+    "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-059",
+    "REQ-S04-006", "REQ-S05-005", "REQ-S09-001", "REQ-S09-003", "REQ-S09-004", "REQ-S09-005", "REQ-S09-006"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R5-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and its relation to source_commit. Recompute the candidate ID in the repository and in a complete disposable clone of 21e2742, before and after the runs.",
+      "command": "sha256sum docs/delivery/assignments/DG3/round-5/domain-reviewer.md; git log 21e2742..HEAD; node tools/gates/candidate.mjs --stage DG3 (repository and clone)",
+      "environment": "Repository /home/user/My-owns at HEAD 40c84e8; git clone into $TMPDIR/review-dom checked out at 21e2742e4b0f6800e379a4d935d5592a873b1c59; Node 24.21.0.",
+      "expected": "candidate_id sha256:dfedd62f…689ed3 over 757 files in both trees. The freeze HEAD differs from source only by delivery records.",
+      "actual": "The assignment hash matches (20cd1684…2599). HEAD is 40c84e8, the round-5 freeze commit. source_commit 21e2742 is its parent, and that commit changes only the three round-5 assignments, the candidate manifest, progress.md and stages.json, none of them in the manifest. The candidate ID is sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3 with 757 files in the repository and in the clone before the runs. The clone is not shallow, and the installed lockfile is byte-identical to pnpm-lock.yaml. Disclosure: one post-run recompute in the clone gave sha256:68d0332c… over 764 files. The cause was my own untracked rv/ directory, the 7 probe .mjs copies that run-all.sh puts in the clone so @playwright/test resolves (git status: '?? rv/'). After I moved rv/ out, git status was clean and the recompute gave dfedd62f… with 757 files again. The repository's recompute after the runs is also dfedd62f… with 757 files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/domain/round-5/candidate.log"]
+    },
+    {
+      "id": "DOM-R5-01-validators",
+      "procedure": "Run the three validators the assignment requires.",
+      "command": "node tools/gates/validate.mjs --register DG3; node tools/gates/validate.mjs --historical --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Repository at HEAD 40c84e8, Node 24.21.0.",
+      "expected": "All three PASS, exit 0.",
+      "actual": "'PASS register rules at DG3', 'PASS gate DG2 (historical)' and 'PASS gate DG1 (historical)', each with exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/domain/round-5/validators.log"]
+    },
+    {
+      "id": "DOM-R5-02-typecheck-build-lint-test-contrast",
+      "procedure": "In the clone, run typecheck, build, lint, the unit tests (pnpm test: unit-node + unit-web, then unit-formula-nocodegen) and the contrast check, on Node 22 and on Node 24.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-5/checks.sh (pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm test; pnpm --filter @mth/design-tokens run check:contrast)",
+      "environment": "Disposable clone at 21e2742; node_modules copied with cp -a from the working tree (lockfile identical); Node 22.22.2 and 24.21.0; offline sandbox.",
+      "expected": "All exit 0 on both versions. Every skip or warning is explained.",
+      "actual": "Every step exits 0 on both versions (checks-run.out: ALLDONE). pnpm test: 81 files, 1614/1614 passed (unit-node + unit-web), then 3 files, 220 passed and 1 skipped of 221 (unit-formula-nocodegen). Round 4 had 1593 and 199+1. The growth is exactly the repair's fuzz.test.ts, which grew from 50 to 71 tests (the W1/W2/W4/W5, catch, finally, async and X1 probe rows), and that file is counted in both projects. Lint runs with --max-warnings=0 and exits 0, so the new catch-shape, EvalError, synchronous-engine and no-unsafe-finally rules accept the five engine catches. Disclosures: (1) The ONE skipped test is fuzz.test.ts 'every file of the engine's import closure gets the engine-source lint rules', declared it.skipIf(NOCODEGEN). ESLint compiles its rule schemas with ajv (new Function), so it cannot run under --disallow-code-generation-from-strings. It RAN and passed in unit-node (71/71 on both versions). This is the documented exception in ADR-0024 §6. (2) The build logs carry Vite's 'Some chunks are larger than 500 kB … chunkSizeWarningLimit' advisory for apps/web, the same as rounds 1-4. It is a size notice, not an error. (3) The contrast logs' 'error' matches are token names (feedback.error.*) on PASS lines. (4) The 'warn' grep hit in the lint logs is the command line '--max-warnings=0'. No failed, flaky or timed-out test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/checks.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-5/checks-run.out",
+        "docs/delivery/test-evidence/DG3/domain/round-5/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/build-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/build-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/lint-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/lint-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/test-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/test-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/contrast-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/contrast-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/node22-version.txt",
+        "docs/delivery/test-evidence/DG3/domain/round-5/node24-version.txt"
+      ]
+    },
+    {
+      "id": "DOM-R5-03-repair-diff-and-formula-semantics",
+      "procedure": "Inspect git diff 171a0b57..21e2742 outside docs/delivery. Classify every changed line of the engine's non-test sources. Confirm that no API, web, DB, shared-schema or i18n file changed. Check whether EvalFailure/ParseFailure could be EvalError subclasses, because evaluate.ts reorders two checks.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-5/hygiene.sh; git diff 171a0b57..21e2742 -- packages/shared/src eslint.config.js docs/architecture; grep -n 'class EvalFailure|class ParseFailure' packages/shared/src/formula",
+      "environment": "Repository at HEAD 40c84e8 (the source tree is identical to 21e2742).",
+      "expected": "T-DG3-KBE-G only: the EvalError-rethrow rule enforced in lint and the scan, parse.ts given the same catch guard, and ADR-0024 §6 corrected. No change to formula semantics.",
+      "actual": "7 files: ADR-0024, p3-work-split.md (amendment 27), eslint.config.js (the catch-shape, EvalError-only-after-instanceof and synchronous-engine selectors, plus no-unsafe-finally), and packages/shared/src/formula/{evaluate.ts, index.ts (comment only), parse.ts, fuzz.test.ts}. The behavioural lines in non-test sources are: (a) evaluate.ts moves 'if (e instanceof EvalError) throw e;' ahead of 'if (e instanceof EvalFailure) return fail(...)'. EvalFailure is a plain class ('class EvalFailure {', evaluate.ts:91) and not an Error or EvalError subclass, so no value can match both tests and the order changes nothing. (b) parse.ts adds 'if (e instanceof EvalError) throw e;' ahead of the ParseFailure check. Its old final 'throw e' already rethrew anything that was not a ParseFailure, and ParseFailure is a plain class (parse.ts:41), so the behaviour is identical. The repair changed no tokenizer, parser grammar, type checker, period/unit rule, rounding or decimal operation. No file under apps/, packages/db or packages/shared/src/schemas changed, and there is no i18n change. The commit log 171a0b57..21e2742 contains only T-DG3-KBE-G (10472b4, merged in af27b01) plus delivery-record and review-evidence commits. Seeded results unchanged on the live stack (DOM-R5-07): attach rate 0.10->0.12 × 100000 × ARPU 50 SAR = '100000' exact (rounded false); the cost example gives 500000; monthly × annual gives 422 formula.period_mismatch.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/hygiene.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-5/hygiene.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-api.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-04-F-DG3-170-badge-layout-still-holds",
+      "procedure": "On the live stack, re-run the round-2 badge layout probe and the round-3 adversarial probe unchanged. They measure the inherited-approval badge against the G1 card and the gate view row at 320-1920 px in EN (LTR) and AR (RTL), with screenshots.",
+      "command": "PROBES=... bash with-stack.sh bash run-all.sh (rv/dg3-ui-overflow.mjs, rv/dg3-ui-overflow-r3.mjs)",
+      "environment": "Disposable stack: PostgreSQL 16 at 127.0.0.1:26401, API serving the built web at :26402, AUTH_MODE=dev, synthetic seed; Chromium from /opt/pw-browsers; Node 24.21.0.",
+      "expected": "The same pass set as round 4 (12/12 and 155/155). The badge stays inside its card and row, with no horizontal page scroll, in EN and AR.",
+      "actual": "dg3-ui-overflow 12/12 PASS and dg3-ui-overflow-r3 155/155 PASS, both exit 0. The set of PASS ids is identical to round 4 (diffed). I inspected ar-r3-390-gates-list-g1card.png myself: the badge text 'اعتماد موروث: مقبول، يُحتسب في التسلسل (لا يعتمد هذه البوابة)' wraps inside the G1 card, and G1 reads 'لم تُقدَّم' (not submitted). No error line in either log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-overflow.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-overflow-r3.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-r3-390-gates-list-g1card.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-r3-390-gates-list-g1card.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-05-F-DG3-120-api-still-holds",
+      "procedure": "Re-run the inherited-approval API probe. It walks one dispensation through none, pending, accepted, accepted-unverified, re-verified, revoked and rejected, plus End-to-End and waiver cases. At each state it checks the inheritedApproval annotation (status, counts), G1 in the list and the view, and the gate_submission/gate_decision row counts.",
+      "command": "rv/dg3-api-extra.mjs within with-stack.sh",
+      "environment": "As DOM-R5-04.",
+      "expected": "33/33 as in round 4. counts is true only when the record is accepted with verified evidence by a different holder of gate.decide. G1 stays draft with 0 submissions and 0 decisions in every state.",
+      "actual": "33/33 PASS, exit 0, with the same ids as round 4. The annotation goes pending_verification/false, accepted/true, accepted/false once the evidence is unverified, accepted/true again, then revoked/false and rejected/false. In every state G1 is draft, with approvedAt null, latestSubmissionNo 0, and 0 gate_submission and 0 gate_decision rows. While the record is pending, initiative submission is refused (422 initiative.g1_not_approved). The recorder cannot accept the record, and End-to-End refuses an inherited approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/stack-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-06-F-DG3-120-ui-still-holds",
+      "procedure": "Re-run the inherited-approval UI probe in EN and AR: gates list, gate view, readiness and dispensations, for each annotation state.",
+      "command": "rv/dg3-ui-inherited.mjs within with-stack.sh",
+      "environment": "As DOM-R5-04.",
+      "expected": "94/94 as in round 4. The badge text matches the state, G1 always reads 'Not submitted' / 'لم تُقدَّم', and the approval is never fabricated.",
+      "actual": "94/94 PASS, exit 0, with the same ids as round 4. The screenshots show the 'counts in sequencing (does not approve this gate)' wording, G1 not submitted, and '0 of 6 mandatory outputs complete', in EN and AR.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-inherited.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-inherited-pending-gate-view.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-07-full-domain-api",
+      "procedure": "Re-run the full live API probe of the P3 operating logic. It covers T05-T09, the business case, sequencing, structure, selection and G4, all with SYNTHETIC data. Compare the PASS ids with round 4.",
+      "command": "rv/dg3-api.mjs within with-stack.sh",
+      "environment": "As DOM-R5-04.",
+      "expected": "139/139 with the same ids as round 4. Each acceptance text in the register holds literally.",
+      "actual": "139/139 PASS, exit 0, with the same ids as round 4 (diffed). T05: 3-7 deliverables is a warning, never a rejection, and the 14 fields round-trip. T06: 5-4-3-2-1 gives 3.3000 (displayed 3.30) under v1 25/25/20/15/15, display100 is 57.5 with the conversion label '(score-1)/4*100', and a missing score is incomplete, never 0. T07: the four B0079 waves are verbatim, and overlap is accepted. T08: seven columns, and From can be External. T09: six columns. The attach rate 0.10->0.12 × 100000 × ARPU 50 SAR gives '100000' exact (rounded false, stored 100000.000000). The cost example gives 500000. Monthly × annual gives 422 formula.period_mismatch, and an explicit to_period gives 1200000. Business case: the ten B0085 sections and one class per line, with no double counting (a formula linked twice gives 409). Finance validation comes before G4 with SoD: the author cannot validate. Sequencing: submitting before G1 gives 422 with the B0011/B0012 text, G1 needs the three agreements, 'Outcome before activity' is enforced, and End-to-End launch waits for G2+G3. Structure: five levels, and an initiative is refused as TOM evidence. Selection: ranking never funds, and 'Selected - unfunded' cannot launch. Capacity: over_allocated with shortfall 0.50. G4: 422 gate_criteria_incomplete naming 'Owners: INI-02 …', 'Finance validation' and the initiatives. Observation, unchanged since round 1 and not a defect: the API message for g4.finance_validation repeats 'Finance validation' once per missing item, without the item names. The UI names each item.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-api.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/stack-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-08-full-domain-ui",
+      "procedure": "Set up the UI worlds through the API, then drive the real P3 screens in EN (LTR) and AR (RTL). The probe covers the T05 card and warning, prioritization 3.30 and the 0-100 view, roadmap waves, T08, the capacity conflict, the portfolio's 'Selected - unfunded', the business case's ten sections, benefit formulas, readiness and the G4 missing items, with screenshots.",
+      "command": "rv/dg3-ui-world.mjs then rv/dg3-ui.mjs within with-stack.sh",
+      "environment": "As DOM-R5-04.",
+      "expected": "42/42 with the same ids as round 4. Every claim is shown in both languages.",
+      "actual": "dg3-ui-world SETUP-OK (exit 0), and dg3-ui 42/42 PASS (exit 0) with the same ids as round 4. I inspected screenshots myself. en-g4-missing-items.png lists Owners, Finance validation, Funding and Capacity as Incomplete with the initiative linked, and says the software 'never approves anything itself'. The header shows the 'Provisional' wordmark marker. ar-benefit-formula-revenue.png shows 100,000.00 SAR per year with the B0087 example instantiation marked as an illustrative calculation with synthetic values, and shows the Finance validation as 'Synthetic demo validation'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-world.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-t05-card-C-deliverable-warning.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-t05-card-C-deliverable-warning.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-prioritization-3.30-incomplete.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-prioritization-0-100-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-roadmap-waves.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-roadmap-waves.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-dependencies-t08.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-capacity-conflict.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-portfolio-selected-unfunded.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-portfolio-selected-unfunded.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-business-case-ten-sections.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-business-case-ten-sections.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-benefit-formula-revenue.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-g4-missing-items.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-g4-missing-items.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-09-integration-targeted",
+      "procedure": "Run the integration suites of the portfolio (including dispensations), gates, gates.test.ts and contract against a scratch DB on the stack's PostgreSQL.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-5/integ.sh (npx vitest run --project integration apps/api/test/integration/{portfolio,gates,gates.test.ts,contract})",
+      "environment": "As DOM-R5-04; TEST_DATABASE_ADMIN_URL on 127.0.0.1:26401.",
+      "expected": "All pass.",
+      "actual": "16 files, 156/156 passed, exit 0. No skipped, failed or flaky test. The log has three 'npm warn Unknown project config' lines: npx reading the pnpm-only keys in .npmrc (strict-peer-dependencies, auto-install-peers, link-workspace-packages). They are a tooling notice, not a test result. The other 'fail'/'error' grep hits are inside the names of passing tests ('a failed /me refresh…', 'fail closed', 'failing outcomes', 'errors[] lists…').",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/integ.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-5/integration-targeted.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-10-source-fidelity-and-hygiene",
+      "procedure": "Grep for certification or official-PMI claims and for #0078FF. Check the provisional wordmark and the provisional-Arabic labels on screen. Confirm that the repair adds no user-facing string.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-5/hygiene.sh",
+      "environment": "Repository at HEAD 40c84e8; screenshots from DOM-R5-08.",
+      "expected": "No certification claim, #0078FF only as provisional, and the provisional wordmark and labels visible. The repair adds no user-facing string.",
+      "actual": "The certification/PMI grep matches only the explicit disclaimer ('… inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.') and a test asserting absence. #0078FF appears only in the provisional-branding text, design tokens marked provisional: true, comments saying it is not a verified Mobily colour, and tests. The header shows the 'Provisional' / 'مؤقت' wordmark marker in EN and AR, and the AR screens carry the provisional-translation labels. The repair diff contains no i18n file and no apps/ file, so the Arabic and English screens cannot have changed visibly. The probe results confirm this.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/hygiene.log",
+        "docs/source/playbook.md",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/en-g4-missing-items.png",
+        "docs/delivery/test-evidence/DG3/domain/round-5/screens/ar-roadmap-waves.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-11-run-disclosure",
+      "procedure": "Disclose every run in the evidence directory and every non-zero exit.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-5/full.sh",
+      "environment": "As above.",
+      "expected": "Every non-zero exit is explained.",
+      "actual": "There was ONE full run (full.sh: checks.sh, then one stack, stack-run-1). checks.sh ended with ALLDONE and every step's '### exit=0'. The stack command exited 0 ('### run-all exit=0 integ exit=0', 'stack exit=0'). There were no failed attempts, retries or port collisions. The only non-zero or unexpected items are the skip and the advisories explained in DOM-R5-02 and DOM-R5-09, and the post-run candidate recompute explained in DOM-R5-00.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-5/full.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-5/stack-run-1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-5/checks-run.out",
+        "docs/delivery/test-evidence/DG3/domain/round-5/run-all.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-5/with-stack.sh"
+      ]
+    },
+    {
+      "id": "DOM-R5-12-environmental-residuals",
+      "procedure": "Record the residuals the assignment names, on the offline/config surface.",
+      "command": "n/a (classification)",
+      "environment": "Offline sandbox, AUTH_MODE=dev.",
+      "expected": "PASS on the offline/config surface, with each residual noted.",
+      "actual": "Not exercised live: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak/OIDC sign-in (D-049). I used the dev sign-in and the copied install, whose lockfile is identical. These are residuals, not domain defects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG3/domain/round-5/env.txt"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG3/domain/round-5/env.txt",
+    "docs/delivery/test-evidence/DG3/domain/round-5/candidate.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/validators.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/hygiene.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/checks.sh",
+    "docs/delivery/test-evidence/DG3/domain/round-5/run-all.sh",
+    "docs/delivery/test-evidence/DG3/domain/round-5/with-stack.sh",
+    "docs/delivery/test-evidence/DG3/domain/round-5/full.sh",
+    "docs/delivery/test-evidence/DG3/domain/round-5/stack-run-1.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/dg3-api.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/dg3-api-extra.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-inherited.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-overflow.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/dg3-ui-overflow-r3.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/integration-targeted.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/test-node24.log",
+    "docs/delivery/test-evidence/DG3/domain/round-5/test-node22.log"
+  ],
+  "reviewed_at": "2026-10-08T17:40:00Z",
+  "summary": "PASS. I recomputed the candidate ID on a complete clone: dfedd62f…, 757 files. The KBE-G repair changes only lint and scan rules, tests, ADR text, one reordered rethrow in evaluate.ts and one added rethrow in parse.ts. Neither engine change alters behaviour, because EvalFailure and ParseFailure are plain classes. Formula semantics are therefore unchanged: 100000 SAR exact, the cost example gives 500000, and monthly × annual is refused. F-DG3-120 still holds (33/33 API, 94/94 UI: the annotation states and counts are correct, and G1 stays draft with no decision). F-DG3-170 still holds (12/12 and 155/155: the badge wraps inside its card and row in EN and AR). The full domain probes match round 4 exactly (API 139/139, UI 42/42, the same ids). Unit tests pass on Node 22 and 24 (1614 + 220 passed, 1 documented skip), the targeted integration suites pass (156), and all three validators pass. No new finding."
+}
