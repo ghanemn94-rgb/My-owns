@@ -11330,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11376,10 +11376,15 @@
           "at": "2026-10-08T17:50:00Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 5: FAIL"
+        },
+        {
+          "at": "2026-10-08T19:00:12Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 53ac073480337ea96952f8c80b957b2a60827c49"
         }
       ],
-      "fix_revision": "10472b4c2a1d400f3a50908b2f3fc55d290cffa9",
-      "fix_summary": "T-DG3-KBE-G 10472b4 (fourth pass, after the round-4 verification FAILED; reviewer's closure criterion (a)): the EvalError-rethrow rule is enforced statically in the engine's import closure -- every CatchClause must bind e and have 'if (e instanceof EvalError) throw e;' first (lint selector, mirrored by the scan); no-unsafe-finally; Promise, async, await and .then/.catch/.finally refused; parse.ts given the same first statement; engineImportClosure() follows string-named specifiers (X1). Reviewer probes: W1, W2, W4 now refused by lint+scan; W3, W5, W6 by all three layers; S1-S3, V1, V2 and the 18 earlier forms stay refused. ADR-0024 §6 corrected (five catch clauses; React Router's default error element, unreachable in practice; closure-parser scope). pnpm test 1614 + 220 (1 skip) x4; integration 793.",
+      "fix_revision": "53ac073480337ea96952f8c80b957b2a60827c49",
+      "fix_summary": "T-DG3-KBE-H 53ac073 (fifth pass; meets both options of the reviewer's round-5 final closure criterion): (a) generators/yield (L4), then/catch/finally names in any position (L6), fromAsync/asyncIterator (L7) refused in lint and mirrored in the scan; the scan's brace matcher is string/template/regex-aware (F1); (b) ADR-0024 §6 rewritten as an enumerated claim with no absolute wording, with the residual stated (self-handling forms outside the list are refused by no layer; G1/G2/A1 named as historical examples, now refused statically). Reviewer probes: G1, G2, A1, F1 refused by lint+scan; every earlier form keeps its layers. No engine source changed; pnpm test 1651 + 256/2 skipped x4; integration 793.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
