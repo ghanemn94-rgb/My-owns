@@ -1,0 +1,34 @@
+### v24.21.0 rv/dg3-ui-inherited.mjs (clone at f20bdef)
+PASS en.dir :: expected ltr :: actual ltr
+PASS ar.dir :: expected rtl :: actual rtl
+PASS en.approved-chip-reference :: expected W2 G1 approved chip present (reference colours) :: actual {"color":"rgb(20, 36, 56)","bg":"rgb(255, 255, 255)","border":"rgb(122, 134, 153)","cls":"lifecycle-chip"}
+PASS ar.approved-chip-reference :: expected W2 G1 approved chip present (reference colours) :: actual {"color":"rgb(20, 36, 56)","bg":"rgb(255, 255, 255)","border":"rgb(122, 134, 153)","cls":"lifecycle-chip"}
+FAIL en.none.list.gate-draft :: expected G1 chip draft 'Not submitted', no approved chip on the page :: actual draft 'لم تُقدَّم' approvedChips=0
+PASS en.none.list.no-badge :: expected no inherited-approval badge :: actual badges=0 label=false
+PASS en.none.view.no-row :: expected G1 view: status draft, no inherited row :: actual draft rows=0
+PASS en.none.readiness :: expected no counting/pending inherited line :: actual found=true
+PASS ar.none.list.gate-draft :: expected G1 chip draft 'لم تُقدَّم', no approved chip on the page :: actual draft 'لم تُقدَّم' approvedChips=0
+PASS ar.none.list.no-badge :: expected no inherited-approval badge :: actual badges=0 label=false
+PASS ar.none.view.no-row :: expected G1 view: status draft, no inherited row :: actual draft rows=0
+PASS ar.none.readiness :: expected no counting/pending inherited line :: actual found=true
+FAIL en.pending.list.gate-draft :: expected G1 chip draft 'Not submitted', no approved chip on the page :: actual draft 'لم تُقدَّم' approvedChips=0
+FAIL en.pending.list.badge-text :: expected 'Inherited approval: pending verification (does not approve this gate)' :: actual 'اعتماد موروث: بانتظار التحقق (لا يعتمد هذه البوابة)' data=pending_verification/false
+PASS en.pending.list.badge-never-approved :: expected neutral chip (status-chip--unknown), no check icon, colours differ from the approved chip, text not the 'Approved' status label :: actual cls=status-chip status-chip--unknown color=rgb(74, 85, 101) bg=rgb(237, 240, 244) border=rgb(74, 85, 101) vs approved color=rgb(20, 36, 56) bg=rgb(255, 255, 255); check=false
+FAIL en.pending.list.source :: expected source line names 'Synthetic executive committee' and says it is evidence, not a decision :: actual اعتمدته سابقاً جهة Synthetic executive committee بتاريخ 15‏/01‏/2026؛ مسجَّل كدليل، وليس قراراً على هذه البوابة.
+PASS en.pending.list.next-to-status :: expected badge in the same row as the 'Not submitted' status chip :: actual true
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.getAttribute: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-inherited-approval-row]').getByRole('link', { name: 'View gate dispensations' })[22m
+
+    at screens (/var/tmp/mth-run.8D23Rz/claude-0/review-dom/rv/dg3-ui-inherited.mjs:119:111)
+    at async both (/var/tmp/mth-run.8D23Rz/claude-0/review-dom/rv/dg3-ui-inherited.mjs:138:87)
+    at async file:///var/tmp/mth-run.8D23Rz/claude-0/review-dom/rv/dg3-ui-inherited.mjs:149:1 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.21.0
+### dg3-ui-inherited exit=1
