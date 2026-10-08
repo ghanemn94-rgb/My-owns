@@ -1,0 +1,35 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+/var/tmp/mth-run.NeWfM6/claude-0/review-dg3/packages/shared/src/formula/zz-qa-probe.ts
+   2:1   error  'node:module' import is restricted from being used. No module loader in the formula engine (ADR-0024 §6)             no-restricted-imports
+   2:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                    no-restricted-syntax
+   2:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                    no-restricted-syntax
+   3:1   error  'child_process' import is restricted from being used. The formula engine never runs code (ADR-0024 §6)               no-restricted-imports
+   4:11  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                            no-restricted-globals
+   4:11  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                               no-restricted-syntax
+   5:11  error  No ["constructor"] or ["Function"] member in the formula engine: that is the Function constructor (ADR-0024 §6)      no-restricted-syntax
+   6:11  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)  no-restricted-globals
+   6:11  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                               no-restricted-syntax
+   7:11  error  No .constructor access in the formula engine: that reaches the Function constructor (ADR-0024 §6)                    no-restricted-syntax
+   8:9   error  No .constructor access in the formula engine: that reaches the Function constructor (ADR-0024 §6)                    no-restricted-syntax
+   9:11  error  No ["constructor"] or ["Function"] member in the formula engine: that is the Function constructor (ADR-0024 §6)      no-restricted-syntax
+  10:11  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                    no-restricted-syntax
+  10:11  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                    no-restricted-syntax
+
+✖ 14 problems (14 errors, 0 warnings)
+
+EXIT 1
+--- probe source:
+// qa-verifier negative probe (disposable clone only): each line must be refused by the formula lint guard.
+import { createRequire } from "node:module";
+import * as cp from "child_process";
+const F = Function;
+const g = globalThis["Function"];
+const r = Reflect.construct(F, ["return 1"]);
+const c = (() => 0).constructor;
+const { constructor: k } = {} as { constructor: unknown };
+const t = (() => 0)[`constructor`];
+const q = createRequire("x")("vm");
+export const all = [F, g, r, c, k, t, q, cp];

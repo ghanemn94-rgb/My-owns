@@ -1,0 +1,9 @@
+$ git rev-parse HEAD (start)
+f20bdefb8574d92891dff3237249e487c82fa0b7
+$ git merge-base --is-ancestor f49ca16 HEAD -> ANCESTOR (exit 0)
+$ git diff --name-only f49ca16..f20bdef: 6 files (3 assignments, candidate manifest, progress.md, stages.json); none in the manifest
+$ node tools/gates/candidate.mjs --stage DG3 (repo working tree, start)
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:58ef3f4777967f7f5791565d6075c3ec28b45c3a42a58903057b81b522540f31","files":754}
+$ (clone $TMPDIR/review-dg3 @ f49ca16) node tools/gates/candidate.mjs --stage DG3
+{"stage":"DG3","source":"HEAD","candidate_id":"sha256:58ef3f4777967f7f5791565d6075c3ec28b45c3a42a58903057b81b522540f31","files":754}
+EXIT 0

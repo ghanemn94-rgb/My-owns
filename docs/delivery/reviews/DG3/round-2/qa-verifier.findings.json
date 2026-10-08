@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG3-180",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-004",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Inherited-approval badge (F-DG3-120 repair) overflows its gate card and field: the '(does not approve this gate)' disclaimer is hidden or overlaps other text in EN and AR",
+      "reproduction": "Real stack (e2e/support/qa-stack.sh) on candidate 58ef3f47 (clone @ f49ca160), default Playwright Desktop Chrome viewport 1280x720. Spec docs/delivery/test-evidence/DG3/qa/tests/round-2/e2e/dg3-qa-r2.spec.ts. IA1 creates a synthetic Modular transformation M1 with inherited approvals on G1 (accepted, counts), G2 (revoked) and G3 (accepted, does not count), and M2 with G1 pending_verification and G2 rejected. Then open /transformations/{M1}/gates, /transformations/{M2}/gates and the G1 gate views as dev.lead, in chromium-en and in chromium-ar. The test 'F180 layout probe' measures each [data-inherited-approval] badge's bounding box against its li.gate-card (list) or dd (gate view).",
+      "expected": "Every badge, including its full text 'Inherited approval: <state> (does not approve this gate)' / 'اعتماد موروث: … (لا يعتمد هذه البوابة)', stays inside its gate card or field, legible and wrapped as needed. ADR-0021 §5 / GatesPage.tsx say the annotation's text states in every state that it does not approve the gate.",
+      "actual": "chromium-en: 7 of 7 badges extend outside their box. Examples: M1 G1 list badge x 310-828 in card 297-603, so it runs under the G2 card and the disclaimer is hidden; M1 G3 badge x 946-1449 in card 933-1239, past the container and past the 1280 px viewport; G1 view badge x 297-815 in a dd of 297-595, over the next column. chromium-ar: 4 of 7 outside, e.g. M1 G1 list badge x 617-970 in card 677-983, overlapping the G2 card; M1 G1 view badge 630-983 in dd 685-983, over the Approver column. Cause: .status-chip has white-space: nowrap (apps/web/src/styles/app.css:803), and the long badge text (GatesPage.tsx InheritedApprovalBadge) uses that class. Axe reports nothing (it does not detect overlap). The API annotation, the neutral chip class and the text content are correct (IA1/U3 pass). Only the visual layout fails. Same result in both locale settings.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-cutf8-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-cutf8-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-unset-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-unset-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/en/qa-r2-lead-m1-gates-list.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/ar/qa-r2-lead-m1-gates-list.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/ar/qa-r2-aud-m1-G1-view.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/en/f180-m1-G1-view.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/04-e2e-cutf8.log",
+        "docs/delivery/test-evidence/DG3/qa/round-2/04-e2e-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/tests/round-2/e2e/dg3-qa-r2.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG3/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T10:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG3 round 2 from its own layout probe (F180), run before it saw any other reviewer's conclusion. At the end of the run, HEAD's commit subjects showed that the domain reviewer raised F-DG3-170 ('inherited-approval badge overflow') in the same round. qa-verifier did not open that record, so it cannot confirm that the two are the same. The orchestrator may treat F-DG3-180 as a duplicate and verify both with one repair."
+        }
+      ]
+    }
+  ]
+}

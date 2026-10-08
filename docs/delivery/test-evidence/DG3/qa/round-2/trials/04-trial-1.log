@@ -1,0 +1,145 @@
+$ [locale unset] QA_E2E_PG_PORT=26600 QA_E2E_API_PORT=26605 e2e/support/qa-stack.sh npx playwright test e2e/dg3-qa-r2.spec.ts --workers=1 --reporter=list  (node v24.21.0, dg3-qa-r2.spec.ts sha256 d1fda55a3b8fb829, 2026-10-08T09:34:40Z)
+port-policy: PostgreSQL listening on port 26600 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applied 27 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26605 (attempt 1)
+API:     http://localhost:26605
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 32 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/dg3-qa-r2.spec.ts:193:1 › A0 setup: End-to-End transformation; distinct synthetic SP, FIN and capacity owner (BO) (421ms)
+  ✓   2 [chromium-en] › e2e/dg3-qa-r2.spec.ts:226:1 › A1 sequencing before G1 (REQ-PB-007, REQ-PB-022): draft allowed, submit 422 invalid-transition, readiness lists missing areas (162ms)
+  ✓   3 [chromium-en] › e2e/dg3-qa-r2.spec.ts:262:1 › A2 G1: approval without the three agreements is refused; with them approved (REQ-PB-022) (504ms)
+  ✓   4 [chromium-en] › e2e/dg3-qa-r2.spec.ts:302:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) (499ms)
+  ✓   5 [chromium-en] › e2e/dg3-qa-r2.spec.ts:369:1 › A4 T05 deliverables 3-7 warning (REQ-PB-045) and REQ-S16-016 create+read with authorization (241ms)
+  ✓   6 [chromium-en] › e2e/dg3-qa-r2.spec.ts:421:1 › A5 T06 scoring, weights, ranking history, overrides (REQ-PB-047/048/049, REQ-S09-001/005, REQ-DLV-035) (697ms)
+  ✓   7 [chromium-en] › e2e/dg3-qa-r2.spec.ts:587:1 › A6 selection, 'Selected - unfunded', launch sequencing (REQ-S09-003, REQ-PB-004) (709ms)
+  ✓   8 [chromium-en] › e2e/dg3-qa-r2.spec.ts:689:1 › A7 roadmap: four waves verbatim, overlap accepted, milestone move, conflict (REQ-PB-050, REQ-S09-006) (117ms)
+  ✓   9 [chromium-en] › e2e/dg3-qa-r2.spec.ts:761:1 › A8 T08 dependencies (REQ-PB-051/052, REQ-S09-008, REQ-S09-004, REQ-DLV-035) (234ms)
+  ✓  10 [chromium-en] › e2e/dg3-qa-r2.spec.ts:907:1 › A9 business case and T09 formulas (REQ-PB-053/054/056/057, REQ-S05-005, REQ-S08-007) (340ms)
+  ✓  11 [chromium-en] › e2e/dg3-qa-r2.spec.ts:1161:1 › A10 capacity and G4 (REQ-PB-059, REQ-S09-004, REQ-PB-019, REQ-PB-046, REQ-PB-055, REQ-S04-006, REQ-DLV-035) (1.3s)
+QA-CHECK-FAIL IA1-m1-no-gate-decision-in-audit [REQ-PB-007] {"status":400,"actions":[],"gateWrites":[]}
+QA-CHECK-FAIL IA1-m2-no-gate-decision-in-audit [REQ-PB-007] {"status":400,"actions":[],"gateWrites":[]}
+  ✓  12 [chromium-en] › e2e/dg3-qa-r2.spec.ts:1381:1 › IA1 inheritedApproval annotation: null, pending_verification, accepted, rejected, revoked; gate stays draft, no decision, AUD read-only (F-DG3-120, REQ-PB-004, REQ-PB-007, REQ-S16-016) (1.2s)
+  ✓  13 [chromium-en] › e2e/dg3-qa-r2.spec.ts:1658:1 › U1 the approved G4, prioritization and roadmap render in the project's language (dir, lang), axe-clean (12.9s)
+  ✓  14 [chromium-en] › e2e/dg3-qa-r2.spec.ts:1700:1 › U2 the read-only auditor: G4 and P3 screens show no enabled write control and send only GETs (6.1s)
+  ✓  15 [chromium-en] › e2e/dg3-qa-r2.spec.ts:1727:1 › U3 the Gates list and gate view show the inherited-approval badge next to the unchanged status, in the project's language, axe-clean; AUD read-only (F-DG3-120) (17.9s)
+  ✘  16 [chromium-en] › e2e/dg3-qa-r2.spec.ts:1819:1 › Z every recorded acceptance check passed (5ms)
+  ✓  17 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:193:1 › A0 setup: End-to-End transformation; distinct synthetic SP, FIN and capacity owner (BO) (336ms)
+  ✓  18 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:226:1 › A1 sequencing before G1 (REQ-PB-007, REQ-PB-022): draft allowed, submit 422 invalid-transition, readiness lists missing areas (78ms)
+  ✓  19 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:262:1 › A2 G1: approval without the three agreements is refused; with them approved (REQ-PB-022) (382ms)
+  ✓  20 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:302:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) (425ms)
+  ✓  21 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:369:1 › A4 T05 deliverables 3-7 warning (REQ-PB-045) and REQ-S16-016 create+read with authorization (215ms)
+  ✓  22 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:421:1 › A5 T06 scoring, weights, ranking history, overrides (REQ-PB-047/048/049, REQ-S09-001/005, REQ-DLV-035) (657ms)
+  ✓  23 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:587:1 › A6 selection, 'Selected - unfunded', launch sequencing (REQ-S09-003, REQ-PB-004) (614ms)
+  ✓  24 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:689:1 › A7 roadmap: four waves verbatim, overlap accepted, milestone move, conflict (REQ-PB-050, REQ-S09-006) (141ms)
+  ✓  25 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:761:1 › A8 T08 dependencies (REQ-PB-051/052, REQ-S09-008, REQ-S09-004, REQ-DLV-035) (279ms)
+  ✓  26 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:907:1 › A9 business case and T09 formulas (REQ-PB-053/054/056/057, REQ-S05-005, REQ-S08-007) (348ms)
+  ✓  27 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1161:1 › A10 capacity and G4 (REQ-PB-059, REQ-S09-004, REQ-PB-019, REQ-PB-046, REQ-PB-055, REQ-S04-006, REQ-DLV-035) (1.3s)
+QA-CHECK-FAIL IA1-m1-no-gate-decision-in-audit [REQ-PB-007] {"status":400,"actions":[],"gateWrites":[]}
+QA-CHECK-FAIL IA1-m2-no-gate-decision-in-audit [REQ-PB-007] {"status":400,"actions":[],"gateWrites":[]}
+  ✓  28 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1381:1 › IA1 inheritedApproval annotation: null, pending_verification, accepted, rejected, revoked; gate stays draft, no decision, AUD read-only (F-DG3-120, REQ-PB-004, REQ-PB-007, REQ-S16-016) (981ms)
+  ✓  29 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1658:1 › U1 the approved G4, prioritization and roadmap render in the project's language (dir, lang), axe-clean (12.6s)
+  ✓  30 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1700:1 › U2 the read-only auditor: G4 and P3 screens show no enabled write control and send only GETs (6.1s)
+  ✓  31 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1727:1 › U3 the Gates list and gate view show the inherited-approval badge next to the unchanged status, in the project's language, axe-clean; AUD read-only (F-DG3-120) (17.5s)
+  ✘  32 [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1819:1 › Z every recorded acceptance check passed (5ms)
+
+
+  1) [chromium-en] › e2e/dg3-qa-r2.spec.ts:1819:1 › Z every recorded acceptance check passed ───────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 4[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "IA1-m1-no-gate-decision-in-audit [REQ-PB-007] {\"status\":400,\"actions\":[],\"gateWrites\":[]}",[39m
+    [31m+   "IA1-m2-no-gate-decision-in-audit [REQ-PB-007] {\"status\":400,\"actions\":[],\"gateWrites\":[]}",[39m
+    [31m+ ][39m
+
+      1597 | test("Z every recorded acceptance check passed", async () => {
+      1598 |   const failed = checks.filter((c) => !c.pass);
+    > 1599 |   expect(failed.map((c) => `${c.id} [${c.req}] ${c.detail.slice(0, 400)}`)).toEqual([]);
+           |                                                                             ^
+      1600 | });
+      1601 |
+        at /var/tmp/mth-run.NeWfM6/claude-0/review-dg3/e2e/dg3-qa-r2.spec.ts:1599:77
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r2-Z-every-recorded-acceptance-check-passed-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg3-qa-r2-Z-every-recorded-acceptance-check-passed-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1819:1 › Z every recorded acceptance check passed ───────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 4[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "IA1-m1-no-gate-decision-in-audit [REQ-PB-007] {\"status\":400,\"actions\":[],\"gateWrites\":[]}",[39m
+    [31m+   "IA1-m2-no-gate-decision-in-audit [REQ-PB-007] {\"status\":400,\"actions\":[],\"gateWrites\":[]}",[39m
+    [31m+ ][39m
+
+      1597 | test("Z every recorded acceptance check passed", async () => {
+      1598 |   const failed = checks.filter((c) => !c.pass);
+    > 1599 |   expect(failed.map((c) => `${c.id} [${c.req}] ${c.detail.slice(0, 400)}`)).toEqual([]);
+           |                                                                             ^
+      1600 | });
+      1601 |
+        at /var/tmp/mth-run.NeWfM6/claude-0/review-dg3/e2e/dg3-qa-r2.spec.ts:1599:77
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r2-Z-every-recorded-acceptance-check-passed-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg3-qa-r2-Z-every-recorded-acceptance-check-passed-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg3-qa-r2.spec.ts:1819:1 › Z every recorded acceptance check passed ────────
+    [chromium-ar] › e2e/dg3-qa-r2.spec.ts:1819:1 › Z every recorded acceptance check passed ────────
+  30 passed (1.5m)
+---- api.log (tail)
+EXIT 1
