@@ -13,6 +13,7 @@
 // Public interface:
 //  - registerPortfolioModule: wiring hook called by the composition root (server.ts);
 //  - loadPortfolioGateFacts: the portfolio part of workflows' GateFactsProvider (BE-E);
+//  - loadInheritedApprovalFacts: the provider's inherited-approval loader for the gate annotation (F-DG3-120);
 //  - the sequencing rules and their fact loader (initiative transitions, web), latestFundingState (BE-E).
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
@@ -36,6 +37,8 @@ import { registerInitiativeTransitionRoutes } from "./transitions.ts";
 import { registerWaveRoutes } from "./waves.ts";
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
+// The gate annotation's inherited approvals (ADR-0021 §5; F-DG3-120): the third member of the GateFactsProvider.
+export { loadInheritedApprovalFacts } from "./dispensations.ts";
 export { t08ScheduleFlags } from "./roadmap.ts";
 export { latestFundingState } from "./funding.ts";
 export { loadDispensations, loadSequencingFacts } from "./dispensations.ts";

@@ -31,7 +31,12 @@ import { registerEvidenceModule } from "./modules/evidence/index.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
-import { loadPortfolioGateFacts, registerPortfolioModule, t08ScheduleFlags } from "./modules/portfolio/index.ts";
+import {
+  loadInheritedApprovalFacts,
+  loadPortfolioGateFacts,
+  registerPortfolioModule,
+  t08ScheduleFlags,
+} from "./modules/portfolio/index.ts";
 import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
@@ -278,6 +283,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   const gateFacts: GateFactsProvider = {
     portfolio: loadPortfolioGateFacts,
     kpi: loadKpiP3GateFacts,
+    // The gate list/view inherited-approval annotation (ADR-0021 §5; F-DG3-120): read-only, never a gate status.
+    inheritedApprovals: loadInheritedApprovalFacts,
   };
   // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
   // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no

@@ -1,7 +1,7 @@
 // P2 product-gate mirrors (backend-workflow-engineer; ADR-0015 §2). G1-G6 are BUSINESS approvals inside the product,
 // decided by people; they are unrelated to the engineering delivery gates DG0-DG7 and never imply them.
-// Mirrors docs/api/openapi.yaml GateInstance, GateSubmission*, GateDecision*, GateCriterionEvaluation, GateView,
-// GateList, GateApproverConfig.
+// Mirrors docs/api/openapi.yaml GateInstance, GateInheritedApproval, GateSubmission*, GateDecision*,
+// GateCriterionEvaluation, GateView, GateList, GateApproverConfig.
 import { z } from "zod";
 import { freeText, roleCode, timestamp, uuid, version } from "./common.ts";
 import { businessDate } from "./kpi.ts";
@@ -21,6 +21,22 @@ export const GATE_STATUSES = [
 export const GATE_OUTCOMES = ["approved", "rejected", "changes_requested", "deferred"] as const;
 export const APPROVER_BASES = ["configured_user", "configured_role", "default_role"] as const;
 
+/** ADR-0021 §5 (F-DG3-120): the dispensation status as the gate annotation shows it (`pending` → pending_verification). */
+export const INHERITED_APPROVAL_STATUSES = ["pending_verification", "accepted", "rejected", "revoked"] as const;
+
+/**
+ * Mirrors GateInheritedApproval: the Modular inherited approval recorded for a gate. An annotation only; it never
+ * changes the gate's status and never approves the gate.
+ */
+export const gateInheritedApproval = z.strictObject({
+  dispensationId: uuid,
+  status: z.enum(INHERITED_APPROVAL_STATUSES),
+  counts: z.boolean(),
+  approvingBody: z.string().min(1).max(300),
+  approvedOn: businessDate,
+});
+export type GateInheritedApproval = z.infer<typeof gateInheritedApproval>;
+
 export const gateInstance = z.strictObject({
   id: uuid,
   organizationId: uuid,
@@ -37,6 +53,7 @@ export const gateInstance = z.strictObject({
   createdBy: uuid,
   updatedAt: timestamp,
   updatedBy: uuid,
+  inheritedApproval: gateInheritedApproval.nullable(),
 });
 export type GateInstance = z.infer<typeof gateInstance>;
 

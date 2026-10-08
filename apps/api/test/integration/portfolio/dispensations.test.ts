@@ -3,8 +3,10 @@
 //    never by its recorder; it unblocks the launch sequencing of that gate only and can be revoked;
 //  - inherited approval (Modular): approving body, date and evidence required; it counts only once its evidence is
 //    VERIFIED and it is accepted by a person other than the recorder;
-//  - never a gate decision, never a gate status change; every mutation audited, If-Match 428/409, AUD 403.
+//  - never a gate decision, never a gate status change; every mutation audited, If-Match 428/409, AUD 403;
+//  - the gate list and gate view annotate the gate with `inheritedApproval` and keep its status draft (F-DG3-120).
 // Synthetic data; the acceptances are demo business decisions that approve nothing real (never DG0-DG7).
+import { gateList, gateView } from "@mth/shared/schemas";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   auditOf,
@@ -285,5 +287,112 @@ describe("inherited approvals (Modular entry)", () => {
     const list = await call(api.app, "GET", `${base(p)}?limit=1`, { session: p.auditor.session });
     expect(list.status).toBe(200);
     expect(list.body.items).toHaveLength(1);
+  });
+});
+
+describe("the gate list and gate view inheritedApproval annotation (ADR-0021 §5; F-DG3-120)", () => {
+  it("pending_verification → accepted (counts) → revoked; G1 stays draft and no gate decision is ever written", async () => {
+    const p = await setupModularWorld(api, w);
+    const T = `/api/v1/transformations/${p.transformationId}`;
+    type Annotation = {
+      dispensationId: string;
+      status: string;
+      counts: boolean;
+      approvingBody: string;
+      approvedOn: string;
+    };
+    type View = {
+      gate: { gateCode: string; status: string; approvedAt: string | null; inheritedApproval: Annotation | null };
+    };
+    /** The G1 item of the gate list and the G1 gate view, both checked against the zod mirrors of the contract. */
+    async function g1() {
+      const list = await call<{ items: View[] }>(api.app, "GET", `${T}/gates`, { session: p.auditor.session });
+      expect(list.status).toBe(200);
+      expect(gateList.safeParse(list.body).success, JSON.stringify(gateList.safeParse(list.body).error)).toBe(true);
+      const one = await call<View>(api.app, "GET", `${T}/gates/G1`, { session: p.lead.session });
+      expect(one.status).toBe(200);
+      expect(gateView.safeParse(one.body).success).toBe(true);
+      const item = list.body.items.find((v) => v.gate.gateCode === "G1")!;
+      expect(one.body.gate.inheritedApproval).toEqual(item.gate.inheritedApproval);
+      // Only G1 is annotated; every other gate carries null.
+      expect(list.body.items.filter((v) => v.gate.gateCode !== "G1").map((v) => v.gate.inheritedApproval)).toEqual([
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]);
+      // The annotation never makes the gate look approved: the gate's own status stays draft, with no approval time.
+      expect([item.gate.status, item.gate.approvedAt, one.body.gate.status]).toEqual(["draft", null, "draft"]);
+      expect(await gateState(p)).toMatchObject({ decisions: 0 });
+      expect((await gateState(p)).gates[0]).toBe("G1:draft");
+      return item.gate.inheritedApproval;
+    }
+
+    // None recorded yet: null.
+    expect(await g1()).toBeNull();
+
+    const evidence = await call(api.app, "POST", `${T}/evidence`, {
+      session: p.lead.session,
+      body: {
+        kind: "note",
+        title: "Synthetic board minutes approving the case for change",
+        noteBody: "Synthetic minutes.",
+        ownerUserId: p.lead.id,
+      },
+    });
+    expect(evidence.status, JSON.stringify(evidence.body)).toBe(201);
+    const review = await call(api.app, "POST", `${T}/evidence/${evidence.body.id}/review`, {
+      session: p.office.session,
+      headers: ifm(evidence.body.version),
+      body: { result: "verified", accessibilityStatus: "accessible", note: "Synthetic: minutes read." },
+    });
+    expect(review.status, JSON.stringify(review.body)).toBe(200);
+
+    // Recorded with VERIFIED evidence, not yet accepted: pending verification, does not count.
+    const created = await create(p, {
+      kind: "inherited_approval",
+      gateCode: "G1",
+      approvingBody: "Synthetic executive committee",
+      approvedOn: "2026-01-15",
+      evidenceId: evidence.body.id,
+    });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    expect(created.body).toMatchObject({ status: "pending", evidenceVerified: true, counts: false });
+    expect(await g1()).toEqual({
+      dispensationId: created.body.id,
+      status: "pending_verification",
+      counts: false,
+      approvingBody: "Synthetic executive committee",
+      approvedOn: "2026-01-15",
+    });
+
+    // The synthetic Sponsor accepts it (a demo business decision that approves nothing real): accepted, counts.
+    const accepted = await decideD(p, created.body, "accepted");
+    expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+    expect(await g1()).toMatchObject({ dispensationId: created.body.id, status: "accepted", counts: true });
+    expect((await readiness(p)).body.sequencing.canSubmitInitiatives).toBe(true);
+
+    // Revoked: revoked, no longer counts; the gate is still the same draft.
+    const revoked = await call(api.app, "POST", `${base(p)}/${created.body.id}/revoke`, {
+      session: p.sponsor.session,
+      headers: ifm(accepted.body.version),
+      body: { reason: "Synthetic: the minutes were superseded." },
+    });
+    expect(revoked.status, JSON.stringify(revoked.body)).toBe(200);
+    expect(await g1()).toMatchObject({ dispensationId: created.body.id, status: "revoked", counts: false });
+    expect((await readiness(p)).body.sequencing.canSubmitInitiatives).toBe(false);
+  });
+
+  it("an End-to-End transformation's gates carry inheritedApproval null (the DG2 shape otherwise unchanged)", async () => {
+    const p = await setupP2World(api, w);
+    const list = await call<{ items: { gate: { inheritedApproval: unknown } }[] }>(
+      api.app,
+      "GET",
+      `/api/v1/transformations/${p.transformationId}/gates`,
+      { session: p.lead.session },
+    );
+    expect(list.status).toBe(200);
+    expect(list.body.items.map((v) => v.gate.inheritedApproval)).toEqual([null, null, null, null, null, null]);
   });
 });

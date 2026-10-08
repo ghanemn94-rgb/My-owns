@@ -43,7 +43,7 @@ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, gateLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
-import { BusinessApprovalNote, readiness } from "./GatesPage.tsx";
+import { BusinessApprovalNote, InheritedApprovalBadge, inheritedApprovalSource, readiness } from "./GatesPage.tsx";
 
 export function GateDetailPage() {
   const { t } = useTranslation();
@@ -139,6 +139,20 @@ function GateContent({ view }: { view: GateView }) {
               <GateStatusChip status={view.gate.status} />
             </dd>
           </div>
+          {view.gate.inheritedApproval ? (
+            <div data-inherited-approval-row="true">
+              <dt>{t("gates.inheritedApproval.label")}</dt>
+              <dd>
+                <InheritedApprovalBadge annotation={view.gate.inheritedApproval} />
+                <span className="block muted small">
+                  {inheritedApprovalSource(view.gate.inheritedApproval, locale, t)}
+                </span>
+                <Link className="link small" to={`/transformations/${ws.tid}/dispensations`}>
+                  {t("gates.inheritedApproval.viewDispensations")}
+                </Link>
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt>{t("gates.approver")}</dt>
             <dd>

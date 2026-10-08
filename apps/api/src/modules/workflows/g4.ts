@@ -90,16 +90,40 @@ export interface KpiP3GateFacts {
   readonly [fact: string]: unknown;
 }
 
-/** The P3 fact loaders the G4 evaluators read through (wired by server.ts). */
+/**
+ * One inherited-approval gate dispensation (ADR-0021 §5; F-DG3-120), as the gate list and gate view annotate the gate
+ * with it. portfolio/dispensations.ts loads it; `counts` is the sequencing rule's own verdict (hasInheritedApproval:
+ * Modular, accepted, evidence verified now). It is evidence of an earlier approval: it never approves the gate.
+ */
+export interface InheritedApprovalFact {
+  readonly dispensationId: string;
+  readonly gateCode: string;
+  /** The dispensation's own status. */
+  readonly status: "pending" | "accepted" | "rejected" | "revoked";
+  readonly counts: boolean;
+  readonly approvingBody: string;
+  /** YYYY-MM-DD. */
+  readonly approvedOn: string;
+  /** ISO timestamp of the recording, to choose the newest. */
+  readonly createdAt: string;
+}
+
+/** The P3 fact loaders the G4 evaluators (and the gate annotation) read through (wired by server.ts). */
 export interface GateFactsProvider {
   readonly portfolio: (db: DbOrTx, transformationId: string) => Promise<PortfolioGateFacts>;
   readonly kpi: (db: DbOrTx, transformationId: string) => Promise<KpiP3GateFacts>;
+  /** Every inherited-approval dispensation of the transformation (portfolio; ADR-0021 §5, F-DG3-120). */
+  readonly inheritedApprovals: (db: DbOrTx, transformationId: string) => Promise<readonly InheritedApprovalFact[]>;
 }
 
-/** The provider before anything is wired: no facts, so every G4 criterion stays incomplete (fail closed). */
+/**
+ * The provider before anything is wired: no facts, so every G4 criterion stays incomplete (fail closed), and no
+ * gate carries an inherited-approval annotation (the DG2 shape: nothing is shown that was not read).
+ */
 export const UNWIRED_GATE_FACTS: GateFactsProvider = Object.freeze({
   portfolio: async (_db: DbOrTx, transformationId: string) => ({ transformationId }),
   kpi: async (_db: DbOrTx, transformationId: string) => ({ transformationId }),
+  inheritedApprovals: async () => [],
 });
 
 /** Both halves, loaded once per evaluation (inside the submitting transaction on submit). */

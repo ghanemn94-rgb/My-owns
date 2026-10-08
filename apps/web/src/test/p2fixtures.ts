@@ -493,6 +493,8 @@ export function gateViews(
     canDecide?: boolean;
     evidenceId?: string;
     outcomeId?: string;
+    /** G1's inherited-approval annotation (ADR-0021 §5; F-DG3-120); null for every other gate. */
+    g1InheritedApproval?: GateView["gate"]["inheritedApproval"];
   } = {},
 ): GateView[] {
   return METHODOLOGY.gateDefinitions.map((def) => {
@@ -536,6 +538,7 @@ export function gateViews(
         latestSubmissionNo: pending ? 1 : 0,
         approvedAt: null,
         version: 3,
+        inheritedApproval: def.code === "G1" ? (opts.g1InheritedApproval ?? null) : null,
       },
       definition: def,
       criteria,

@@ -12,6 +12,7 @@ import { GateStatusChip } from "../../components/P2Badges.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+import { formatBusinessDate } from "../../lib/format.ts";
 import { gateLabel, pick } from "../../lib/methodology.ts";
 
 export function GatesPage() {
@@ -40,6 +41,41 @@ export function BusinessApprovalNote() {
       {t("gates.businessApprovalBody")}
     </p>
   );
+}
+
+type InheritedApproval = GateView["gate"]["inheritedApproval"];
+
+/**
+ * ADR-0021 §5 (F-DG3-120): the gate's Modular inherited approval, shown NEXT TO the gate's own status (which stays,
+ * e.g., "Not submitted"). It is evidence of an approval granted before the product was used and never approves the
+ * gate, so it always uses the neutral chip and the info icon, never the approved colour or the check icon, and its
+ * text says so in every state.
+ */
+export function InheritedApprovalBadge({ annotation }: { annotation: InheritedApproval }) {
+  const { t } = useTranslation();
+  if (annotation === null) return null;
+  const state = annotation.status === "accepted" && !annotation.counts ? "acceptedNotCounting" : annotation.status;
+  return (
+    <span
+      className="status-chip status-chip--unknown"
+      data-inherited-approval={annotation.status}
+      data-counts={annotation.counts ? "true" : "false"}
+    >
+      <Icon name="info" /> {t(`gates.inheritedApproval.status.${state}`)}
+    </span>
+  );
+}
+
+/** The approving body and date of an inherited approval, as recorded (evidence, not a decision on the gate). */
+export function inheritedApprovalSource(
+  annotation: NonNullable<InheritedApproval>,
+  locale: ReturnType<typeof useLocale>,
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
+  return t("gates.inheritedApproval.source", {
+    body: annotation.approvingBody,
+    date: formatBusinessDate(annotation.approvedOn, locale) ?? annotation.approvedOn,
+  });
 }
 
 /** "3 of 5 mandatory required outputs complete" — computed from the live evaluation; nothing is assumed complete. */
@@ -80,6 +116,7 @@ function GateList() {
                   </p>
                   <p className="chip-row">
                     <GateStatusChip status={g.gate.status} />
+                    <InheritedApprovalBadge annotation={g.gate.inheritedApproval} />
                     {g.submissionEnabled ? (
                       <span
                         className={`status-chip status-chip--${r.ready ? "on-track" : r.total === 0 ? "unknown" : "off-track"}`}
@@ -99,6 +136,11 @@ function GateList() {
                       </span>
                     ) : null}
                   </p>
+                  {g.gate.inheritedApproval ? (
+                    <p className="muted small" data-inherited-approval-source="true">
+                      {inheritedApprovalSource(g.gate.inheritedApproval, locale, t)}
+                    </p>
+                  ) : null}
                   <p className="small">
                     {t("gates.approver")}:{" "}
                     {t(`transformations.audit.role.${g.gate.approverRoleCode}`, {
