@@ -2,7 +2,10 @@
 //  1. Random byte strings and random grammar-alphabet strings never make validateFormula/evaluateFormula throw, and
 //     every outcome is well formed (a known code, or a decimal/null result).
 //  2. Code never runs: global eval/Function are replaced by tripwires during the fuzz, code-shaped payloads are syntax
-//     errors, and a source scan proves the engine has no eval/Function/vm/dynamic import/with/timer-string.
+//     errors, and a source scan proves the engine has no eval/Function/vm/dynamic import/with/timer-string, imports
+//     only allowlisted modules, and names no global object, process, 'constructor' or prototype reflection.
+//  This file also runs in the Vitest project unit-formula-nocodegen (node --disallow-code-generation-from-strings), the
+//  spelling-independent run-time layer of ADR-0024 §6 (F-DG3-100).
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -241,7 +244,32 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
   ["with statement", /\bwith\s*\(/],
   ["timers", /\b(setTimeout|setInterval|setImmediate)\b/],
   ["globalThis", /\bglobalThis\b/],
+  // F-DG3-100 (round 3). The global object under any name, and the host process: global["ev" + "al"], self[…],
+  // process.getBuiltinModule("node:vm"). The engine uses none of these words outside comments.
+  ["host global", /\b(process|global|globalThis|self|window|frames|parent|top|opener|document)\b/],
+  // The word constructor in any position (string, template, identifier, key) except a class constructor declaration,
+  // which scanSource masks first.
+  ["constructor word", /\bconstructor\b/],
+  [
+    "prototype reflection",
+    /\b(getPrototypeOf|setPrototypeOf|getOwnPropertyDescriptors?|defineProperty|defineProperties|__proto__|__lookupGetter__|__lookupSetter__|__defineGetter__|__defineSetter__)\b/,
+  ],
+  // A computed key assembled from a string literal: ["con" + k], [k + "structor"].
+  ["string-assembled key", /\[\s*(["'`])[^"'`\]]*\1\s*\+|\+\s*(["'`])[^"'`\]]*\2\s*\]/],
+  ["import.meta", /\bimport\s*\.\s*meta\b/],
+  // A hex or Unicode escape spells a name without its letters ("\x63onstructor", "\u0065val"); the engine needs none.
+  ["escape sequence", /\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F{])/],
 ];
+
+/**
+ * F-DG3-100 (round 3): module loading is an ALLOWLIST, mirroring the ESLint override. An engine source may import or
+ * re-export only a sibling module (./x.ts), the shared value helpers (../value.ts) and decimal.js.
+ */
+const IMPORT_ALLOWLIST = /^(?:\.\/[A-Za-z0-9_-]+\.ts|\.\.\/value\.ts|decimal\.js)$/;
+/** Static import/export-from specifiers, including multi-line braces, type-only imports and side-effect imports. */
+const IMPORT_SPECIFIER = /\b(?:import|export)\s+(?:type\s+)?(?:[\w*$\s{},]+?\s+from\s+)?(["'`])([^"'`]*)\1/g;
+/** A class constructor declaration (constructor(params) { on one line), the only allowed use of the word. */
+const CLASS_CONSTRUCTOR = /(^|[{};])(\s*)constructor(\s*\([^)]*\)[ \t]*\{)/gm;
 
 /** Removes block and line comments (a line comment starts at `//` not preceded by `:`, so "https://" in a string stays). */
 function stripComments(text: string): string {
@@ -250,13 +278,16 @@ function stripComments(text: string): string {
 
 /** The names of the forbidden forms found in `text` (empty when clean). */
 function scanSource(text: string): string[] {
-  const code = stripComments(text);
-  return FORBIDDEN.filter(([, re]) => re.test(code)).map(([what]) => what);
+  const code = stripComments(text).replace(CLASS_CONSTRUCTOR, "$1$2__class_ctor__$3");
+  const hits = FORBIDDEN.filter(([, re]) => re.test(code)).map(([what]) => what);
+  const imports = [...code.matchAll(IMPORT_SPECIFIER)].map((m) => m[2]!);
+  if (imports.some((spec) => !IMPORT_ALLOWLIST.test(spec))) hits.push("non-allowlisted import");
+  return hits;
 }
 
 describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)", () => {
   it(
-    "engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers",
+    "engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules",
     { timeout: 10_000 },
     () => {
       const dir = fileURLToPath(new URL(".", import.meta.url));
@@ -289,6 +320,40 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
     ['import vm from "node:vm"', "vm import"],
     ['setTimeout("x()", 0)', "timers"],
     ["globalThis.x = 1", "globalThis"],
+    // F-DG3-100 round 2 (code-security-reviewer, guard-bypass-probe.mjs): O2 and N1-N12, verbatim minus the type casts
+    // that do not change the form. N2 and N5 assemble the key at run time; the scan still refuses their carriers.
+    ['(globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1")', "globalThis"],
+    ['(globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1")', "string-assembled key"],
+    ['const __k1 = "constructor";\n((() => 0) as R)[__k1]!("return 6*7")()', "constructor word"],
+    ['((() => 0) as R)["con" + "structor"]!("return 6*7")()', "string-assembled key"],
+    ['Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value', "prototype reflection"],
+    ['Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value', "constructor word"],
+    [
+      'const __k4 = "constructor";\nconst { [__k4]: __C4 } = Object.getPrototypeOf(function* () {})',
+      "constructor word",
+    ],
+    [
+      'const __k5 = ["con", "structor"].join("");\n(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")()',
+      "prototype reflection",
+    ],
+    ['const __k6 = "constructor";\n((() => 0) as R)[__k6]!`return 6*7`()', "constructor word"],
+    ['declare const global: Record<string, (s: string) => unknown>;\nglobal["ev" + "al"]!("6*7")', "host global"],
+    ['declare const self: Record<string, (s: string) => unknown>;\nself["ev" + "al"]!("6*7")', "host global"],
+    ['process.getBuiltinModule("node:vm").runInThisContext("6*7")', "host global"],
+    [
+      'import { Session } from "node:inspector";\nnew Session().post("Runtime.evaluate", { expression: "6*7" })',
+      "non-allowlisted import",
+    ],
+    ['import * as __repl from "node:repl";', "non-allowlisted import"],
+    ['import.meta.resolve("node:vm")', "import.meta"],
+    // The allowlist refuses any other module, not only the ones named in a denylist.
+    ['import { readFileSync } from "node:fs";', "non-allowlisted import"],
+    ['export * from "@mth/shared";', "non-allowlisted import"],
+    ['import type { X } from "../../db/index.ts";', "non-allowlisted import"],
+    ['import "./side-effect.js";', "non-allowlisted import"],
+    ['import {\n  a,\n  type B,\n} from "zod";', "non-allowlisted import"],
+    ['const k = "\\x63onstructor";', "escape sequence"],
+    ["window.eval", "host global"],
   ];
   it.each(PROBES)("flags %s as %s", (probe, what) => {
     expect(scanSource(probe)).toContain(what);
@@ -300,6 +365,14 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
       "/* new Function(...) and require('vm') are banned */",
       "type FormulaFunction = string; const isFunctionName = (s: string) => s.length > 0;",
       "class FormulaError extends Error { constructor(p: string) { super(p); } }",
+      "class P {\n  private readonly tokens: readonly Token[];\n  constructor(tokens: readonly Token[]) {\n    this.tokens = tokens;\n  }\n}",
+      'import { Decimal } from "decimal.js";',
+      'import { checkDecimal, MEASURE_COLUMN } from "../value.ts";',
+      'import {\n  FORMULA_LIMITS,\n  type FormulaProblem,\n} from "./types.ts";',
+      'export * from "./types.ts";',
+      'export { tokenize, type Token } from "./tokenize.ts";',
+      "const after = this.tokens[this.pos + 1];",
+      "// the parent expression at the top level; a global constructor",
       'const note = "ISO 4217 code; required for kind currency";',
       'const url = "https://example.invalid/a"; // trailing comment with Function(',
     ].join("\n");

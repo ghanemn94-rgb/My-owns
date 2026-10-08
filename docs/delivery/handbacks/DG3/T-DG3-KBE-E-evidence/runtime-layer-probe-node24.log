@@ -1,0 +1,97 @@
+# command: node $TMPDIR/probes/runtime-layer-probe.mjs $TMPDIR/review-p2  (copy of this harness kept as runtime-layer-probe.mjs; clone 0968bbf)
+# node v24.21.0; started 2026-10-08T10:00:37Z
+
+=== O1: Reflect.construct(Function, …)
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned a function
+
+=== O2: globalThis['ev'+'al']
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 1
+
+=== O3: createRequire(import.meta.url)('vm')
+  no-codegen project: exit=0  returned {"constants":{}}
+  unit-node control:  exit=0  returned {"constants":{}}
+
+=== O4: Reflect.apply(Function, …)
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned a function
+
+=== O5: computed ['constructor'] on a generator prototype
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned a function
+
+=== O6: alias F = Function
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned a function
+
+=== N1: computed member with an identifier key: f[k] where k = 'constructor'
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N2: computed member with a concatenated key: f['con' + 'structor']
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N3: Object.getOwnPropertyDescriptor(fnProto, 'constructor').value
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N4: destructuring with a computed identifier key: const { [k]: C } = generator prototype
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N5: AsyncFunction through the prototype, key built with join
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N6: tagged template on the constructor reached by an identifier key
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N7: Node 'global' indexing: global['ev'+'al']
+  no-codegen project: exit=1  threw EvalError: Code generation from strings disallowed for this context
+  unit-node control:  exit=0  returned 42
+
+=== N8: browser 'self' indexing: self['ev'+'al']
+  no-codegen project: exit=1  threw ReferenceError: self is not defined
+  unit-node control:  exit=1  threw ReferenceError: self is not defined
+
+=== N9: process.getBuiltinModule('node:vm').runInThisContext
+  no-codegen project: exit=0  returned 42
+  unit-node control:  exit=0  returned 42
+
+=== N10: static import of node:inspector, Runtime.evaluate
+  no-codegen project: exit=0  returned undefined
+  unit-node control:  exit=0  returned undefined
+
+=== N11: static import of node:repl
+  no-codegen project: exit=0  returned a function
+  unit-node control:  exit=0  returned a function
+
+=== N12: import.meta.resolve (resolves a specifier; loads and runs nothing)
+  no-codegen project: exit=1  threw TypeError: __vite_ssr_import_meta__.resolve is not a function
+  unit-node control:  exit=1  threw TypeError: __vite_ssr_import_meta__.resolve is not a function
+
+# evaluate.ts restored, probe test removed; git status packages/shared: ''
+
+# SUMMARY
+O1   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned a function]
+O2   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 1]
+O3   nocodegen exit=0 [returned {"constants":{}}] | control exit=0 [returned {"constants":{}}]
+O4   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned a function]
+O5   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned a function]
+O6   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned a function]
+N1   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N2   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N3   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N4   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N5   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N6   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N7   nocodegen exit=1 [threw EvalError: Code generation from strings disallowed for this context] | control exit=0 [returned 42]
+N8   nocodegen exit=1 [threw ReferenceError: self is not defined] | control exit=1 [threw ReferenceError: self is not defined]
+N9   nocodegen exit=0 [returned 42] | control exit=0 [returned 42]
+N10  nocodegen exit=0 [returned undefined] | control exit=0 [returned undefined]
+N11  nocodegen exit=0 [returned a function] | control exit=0 [returned a function]
+N12  nocodegen exit=1 [threw TypeError: __vite_ssr_import_meta__.resolve is not a function] | control exit=1 [threw TypeError: __vite_ssr_import_meta__.resolve is not a f]
+# exit_status: 0  finished: 2026-10-08T10:01:36Z

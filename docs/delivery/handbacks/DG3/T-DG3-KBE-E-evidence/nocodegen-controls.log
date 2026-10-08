@@ -1,0 +1,29 @@
+# NEGATIVE CONTROL 1 - command: pnpm vitest run packages/shared/src/formula/codegen.nocodegen.test.ts   (no --project: the flag is NOT applied; the canary MUST fail)
+# node v24.21.0; started 2026-10-08T10:20:20Z
+   ✓ no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 4ms
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings
+AssertionError: expected [ '--conditions', 'node', …(2) ] to include '--disallow-code-generation-from-strin…'
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect)
+AssertionError: expected function to throw an error, but it didn't
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+# exit_status: 1 (expected non-zero)
+
+# NEGATIVE CONTROL 2 - command: pnpm vitest run --project unit-node --project unit-formula-nocodegen   (mixed selection MUST be refused at startup)
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Run --project unit-formula-nocodegen in its own vitest invocation: its forks start with --disallow-code-generation-from-strings, which the other projects must not inherit.
+# exit_status: 1 (expected non-zero)
+
+# POSITIVE - command: pnpm vitest run --project unit-formula-nocodegen
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts (6 tests) 12ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts (136 tests) 86ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts (48 tests) 4147ms
+ Test Files  3 passed (3)
+      Tests  190 passed (190)
+# exit_status: 0  finished: 2026-10-08T10:20:28Z

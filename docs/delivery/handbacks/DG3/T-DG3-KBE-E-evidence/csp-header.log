@@ -1,0 +1,13 @@
+# command: (cd apps/api && node --input-type=module -e '<import ./dist/server.js; await captureSecurityHeaders(); print CSP>')  -- dist rebuilt by pnpm -r build at 10:04Z (build.log)
+# node v24.21.0; started 2026-10-08T10:16:54Z
+content-security-policy: default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'
+script-src directive: script-src 'self'
+unsafe-eval present anywhere: false
+wasm-unsafe-eval present anywhere: false
+HELMET_OPTIONS.contentSecurityPolicy.useDefaults: false
+# web bundle served by the API (apps/api/src/server.ts):
+21:import fastifyStatic from "@fastify/static";
+131:export function defaultWebRoot(): string | null {
+155:  const webRoot = options.webRoot === undefined ? defaultWebRoot() : options.webRoot;
+302:    await app.register(fastifyStatic, { root: webRoot, wildcard: false, index: ["index.html"] });
+# exit_status: 0  finished: 2026-10-08T10:16:55Z
