@@ -1,0 +1,509 @@
+# round-2 guard-bypass-probe.mjs (copy, 18 forms), via symlink review-p2 -> review-p3; node v22.22.2; clone /var/tmp/mth-run.HBzmLF/claude-0/review-p2 at 75ffac87136436da3a436198562606f0ab9f5966, git status ''; started 2026-10-08T18:45:02Z
+
+=== O1: Reflect.construct(Function, …)
+--- snippet:
+export const __o1 = (): unknown => Reflect.construct(Function, ["return 1"]);
+  eslint exit=1
+      301:36  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)  no-restricted-globals
+      301:36  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                               no-restricted-syntax
+      301:54  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                            no-restricted-globals
+      301:54  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                               no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 17ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'Function identifier', …(2) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+      [31m+   "Reflect.construct",[39m
+      [31m+   "Reflect",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O2: globalThis['ev'+'al']
+--- snippet:
+export const __o2 = (): unknown => (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1");
+  eslint exit=1
+      301:37   error  Unexpected use of 'globalThis'. No globalThis in the formula engine: it reaches eval or a module loader (ADR-0024 §6)  no-restricted-globals
+      301:37   error  No global object, process or document in the formula engine (ADR-0024 §6)                                              no-restricted-syntax
+      301:102  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)       no-restricted-syntax
+      301:109  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)       no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'globalThis', 'host global', …(1) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "globalThis",[39m
+      [31m+   "host global",[39m
+      [31m+   "string-assembled key",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O3: createRequire(import.meta.url)('vm')
+--- snippet:
+import { createRequire } from "node:module";
+export const __o3 = (): unknown => createRequire(import.meta.url)("vm");
+  eslint exit=1
+      301:1   error  'node:module' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+      301:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                                                          no-restricted-syntax
+      301:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                                                          no-restricted-syntax
+      302:36  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                                                          no-restricted-syntax
+      302:36  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                                                          no-restricted-syntax
+      302:50  error  No import.meta in the formula engine (ADR-0024 §6)                                                                                                         no-restricted-syntax
+      ✖ 6 problems (6 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ Array(4) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "createRequire",[39m
+      [31m+   "node:module",[39m
+      [31m+   "import.meta",[39m
+      [31m+   "non-allowlisted import",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O4: Reflect.apply(Function, …)
+--- snippet:
+export const __o4 = (): unknown => Reflect.apply(Function, null, ["return 1"]);
+  eslint exit=1
+      301:36  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)  no-restricted-globals
+      301:36  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                               no-restricted-syntax
+      301:50  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                            no-restricted-globals
+      301:50  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                               no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'Function identifier', …(2) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+      [31m+   "Reflect.apply",[39m
+      [31m+   "Reflect",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O5: computed ['constructor'] on a generator prototype
+--- snippet:
+export const __o5 = (): unknown => (Object.getPrototypeOf(function* () {}) as Record<string, (s: string) => unknown>)["constructor"]!("yield 1");
+  eslint exit=1
+      301:36   error  No ["constructor"] or ["Function"] member in the formula engine: that is the Function constructor (ADR-0024 §6)               no-restricted-syntax
+      301:44   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                   no-restricted-syntax
+      301:59   error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+      301:119  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)       no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 20ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ '["constructor"]', …(3) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "[\"constructor\"]",[39m
+      [31m+   "constructor word",[39m
+      [31m+   "prototype reflection",[39m
+      [31m+   "generator",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== O6: alias F = Function
+--- snippet:
+const __F = Function;
+export const __o6 = (): unknown => __F("return 1");
+  eslint exit=1
+      301:13  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)  no-restricted-globals
+      301:13  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)     no-restricted-syntax
+      ✖ 2 problems (2 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'Function identifier' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "Function identifier",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N1: computed member with an identifier key: f[k] where k = 'constructor'
+--- snippet:
+const __k1 = "constructor";
+export const __n1 = (): unknown => ((() => 0) as unknown as Record<string, (s: string) => () => unknown>)[__k1]!("return 6*7")();
+  eslint exit=1
+      301:14  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      302:36  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+      ✖ 2 problems (2 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'constructor word' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "constructor word",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N2: computed member with a concatenated key: f['con' + 'structor']
+--- snippet:
+export const __n2 = (): unknown => ((() => 0) as unknown as Record<string, (s: string) => () => unknown>)["con" + "structor"]!("return 6*7")();
+  eslint exit=1
+      301:36   error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      301:107  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      301:115  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      ✖ 3 problems (3 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'string-assembled key' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "string-assembled key",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N3: Object.getOwnPropertyDescriptor(fnProto, 'constructor').value
+--- snippet:
+export const __n3 = (): unknown =>
+  (Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as (s: string) => () => unknown)("return 6*7")();
+  eslint exit=1
+      302:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      302:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      302:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      ✖ 3 problems (3 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 20ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'constructor word', …(1) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "constructor word",[39m
+      [31m+   "prototype reflection",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N4: destructuring with a computed identifier key: const { [k]: C } = generator prototype
+--- snippet:
+const __k4 = "constructor";
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as Record<string, (s: string) => () => Iterator<unknown>>;
+export const __n4 = (): unknown => __C4!("yield 6*7")().next().value;
+  eslint exit=1
+      301:14  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)       no-restricted-syntax
+      302:33  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                   no-restricted-syntax
+      302:48  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+      ✖ 3 problems (3 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'constructor word', …(2) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "constructor word",[39m
+      [31m+   "prototype reflection",[39m
+      [31m+   "generator",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N5: AsyncFunction through the prototype, key built with join
+--- snippet:
+const __k5 = ["con", "structor"].join("");
+export const __n5 = (): unknown => (Object.getPrototypeOf(async () => 0) as Record<string, (s: string) => () => Promise<unknown>>)[__k5]!("return 6*7")();
+  eslint exit=1
+      302:44   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+      302:59   error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+      302:113  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)  no-restricted-syntax
+      ✖ 3 problems (3 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'prototype reflection', …(2) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "prototype reflection",[39m
+      [31m+   "Promise",[39m
+      [31m+   "async",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N6: tagged template on the constructor reached by an identifier key
+--- snippet:
+const __k6 = "constructor";
+export const __n6 = (): unknown => ((() => 0) as unknown as Record<string, (s: TemplateStringsArray) => () => unknown>)[__k6]!`return 6*7`();
+  eslint exit=1
+      301:14  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      302:36  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+      ✖ 2 problems (2 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 15ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'constructor word' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "constructor word",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N7: Node 'global' indexing: global['ev'+'al']
+--- snippet:
+declare const global: Record<string, (s: string) => unknown>;
+export const __n7 = (): unknown => global["ev" + "al"]!("6*7");
+  eslint exit=1
+      301:15  error  No global object, process or document in the formula engine (ADR-0024 §6)                                         no-restricted-syntax
+      302:36  error  No global object, process or document in the formula engine (ADR-0024 §6)                                         no-restricted-syntax
+      302:43  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      302:50  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'host global', …(1) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "host global",[39m
+      [31m+   "string-assembled key",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N8: browser 'self' indexing: self['ev'+'al']
+--- snippet:
+declare const self: Record<string, (s: string) => unknown>;
+export const __n8 = (): unknown => self["ev" + "al"]!("6*7");
+  eslint exit=1
+      301:15  error  No global object, process or document in the formula engine (ADR-0024 §6)                                         no-restricted-syntax
+      302:36  error  No global object, process or document in the formula engine (ADR-0024 §6)                                         no-restricted-syntax
+      302:41  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      302:48  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      ✖ 4 problems (4 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 24ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'host global', …(1) ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "host global",[39m
+      [31m+   "string-assembled key",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N9: process.getBuiltinModule('node:vm').runInThisContext
+--- snippet:
+declare const process: { getBuiltinModule(id: string): { runInThisContext(code: string): unknown } };
+export const __n9 = (): unknown => process.getBuiltinModule("node:vm").runInThisContext("6*7");
+  eslint exit=1
+      301:15  error  No global object, process or document in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      302:36  error  No global object, process or document in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      ✖ 2 problems (2 errors, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'host global' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "host global",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N10: static import of node:inspector, Runtime.evaluate
+--- snippet:
+import { Session } from "node:inspector";
+export const __n10 = (): void => {
+  const s = new Session();
+  s.connect();
+  s.post("Runtime.evaluate", { expression: "6*7" }, () => undefined);
+};
+  eslint exit=1
+      301:1  error  'node:inspector' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 17ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'non-allowlisted import' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "non-allowlisted import",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N11: static import of node:repl
+--- snippet:
+import * as __repl from "node:repl";
+export const __n11 = (): unknown => __repl.start;
+  eslint exit=1
+      301:1  error  'node:repl' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 18ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'non-allowlisted import' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "non-allowlisted import",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+=== N12: import.meta.resolve (resolves a specifier; loads and runs nothing)
+--- snippet:
+export const __n12 = (): unknown => import.meta.resolve("node:vm");
+  eslint exit=1
+      301:37  error  No import.meta in the formula engine (ADR-0024 §6)  no-restricted-syntax
+      ✖ 1 problem (1 error, 0 warnings)
+  source-scan exit=1
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+      ↓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+      global["ev" + "al"]!("6*7") as host global
+      self["ev" + "al"]!("6*7") as host global
+      Tests  1 failed | 107 skipped (108)
+      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: formula/evaluate.ts: expected [ 'import.meta' ] to deeply equal []
+      [32m- Expected[39m
+      [31m+   "import.meta",[39m
+  tsc (informational) exit=0
+
+  ==> BLOCKED BY BOTH
+
+# evaluate.ts restored; git status packages/shared: ''
+
+# SUMMARY
+O1   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (Reflect.construct(Function, …))
+O2   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (globalThis['ev'+'al'])
+O3   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (createRequire(import.meta.url)('vm'))
+O4   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (Reflect.apply(Function, …))
+O5   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (computed ['constructor'] on a generator prototype)
+O6   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (alias F = Function)
+N1   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (computed member with an identifier key: f[k] where k = 'constructor')
+N2   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (computed member with a concatenated key: f['con' + 'structor'])
+N3   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (Object.getOwnPropertyDescriptor(fnProto, 'constructor').value)
+N4   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (destructuring with a computed identifier key: const { [k]: C } = generator prototype)
+N5   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (AsyncFunction through the prototype, key built with join)
+N6   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (tagged template on the constructor reached by an identifier key)
+N7   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (Node 'global' indexing: global['ev'+'al'])
+N8   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (browser 'self' indexing: self['ev'+'al'])
+N9   eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (process.getBuiltinModule('node:vm').runInThisContext)
+N10  eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (static import of node:inspector, Runtime.evaluate)
+N11  eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (static import of node:repl)
+N12  eslint=1 scan=1 tsc=0  BLOCKED BY BOTH  (import.meta.resolve (resolves a specifier; loads and runs nothing))
+# exit_status: 0  finished 2026-10-08T18:46:47Z

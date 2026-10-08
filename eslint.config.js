@@ -165,6 +165,22 @@ const FORMULA_SOURCE_SYNTAX = [
       "Identifier[name=/^(Promise|queueMicrotask)$/], :function[async=true], AwaitExpression, ForOfStatement[await=true], MemberExpression[property.name=/^(then|catch|finally)$/], MemberExpression[computed=true][property.value=/^(then|catch|finally)$/]",
     message: `No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous ${FORMULA_MSG}.`,
   },
+  // F-DG3-100 (round 6; the reviewer's G1, G2 and A1). Self-handling forms that the round-5 rules above did not list.
+  {
+    // No generators. A generator suspended at a `yield` inside a finally holds the exception in flight and never resumes
+    // it (G1); its return() then replaces the pending throw (G2).
+    selector: ":function[generator=true], YieldExpression",
+    message: `No generator function or yield in the formula engine: a suspended generator can hold a refused code generation ${FORMULA_MSG}.`,
+  },
+  {
+    // The names then, catch and finally in ANY position: a property key, a member, a computed or string key, a
+    // destructured name (`const { then: t } = p`, A1), a variable, a string or a template. The try/catch/finally
+    // statement keywords are not identifiers and stay allowed. Also the asynchronous sources fromAsync (Array.fromAsync,
+    // A1's promise) and asyncIterator (Symbol.asyncIterator); `for await` is refused above.
+    selector:
+      "Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], PrivateIdentifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], Literal[value=/^(then|catch|finally|fromAsync|asyncIterator)$/], TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
+    message: `No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous ${FORMULA_MSG}.`,
+  },
 ];
 
 /**
