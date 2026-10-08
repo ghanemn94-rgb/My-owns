@@ -24,3 +24,5 @@ export * from "./portfolio.ts";
 export * from "./business-case.ts";
 // P3 prioritization mirrors (solution-architect, T-DG3-ARCH-03; moved from the BE-D route files for FE-B).
 export * from "./prioritization.ts";
+// P3 T09 benefit-formula mirrors (kpi-benefits-engineer, T-DG3-KBE-C; p3-work-split §3). Line added by KBE-C.
+export * from "./benefit-formula.ts";

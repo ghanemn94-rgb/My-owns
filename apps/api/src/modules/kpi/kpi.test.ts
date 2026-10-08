@@ -62,6 +62,32 @@ const KPI_P3_BUSINESS_CASE_OPERATIONS = [
   "archiveBusinessCaseLine",
 ];
 
+/** The 13 T09 benefit-formula operations of the P3 contract (T-DG3-KBE-C; ADR-0024 §5-§6). */
+const KPI_P3_BENEFIT_FORMULA_OPERATIONS = [
+  "listBenefitFormulaExamples",
+  "checkBenefitFormula",
+  "listBenefitFormulas",
+  "createBenefitFormula",
+  "getBenefitFormula",
+  "updateBenefitFormula",
+  "archiveBenefitFormula",
+  "listBenefitFormulaVersions",
+  "createBenefitFormulaVersion",
+  "getBenefitFormulaVersion",
+  "listBenefitCalculations",
+  "createBenefitCalculation",
+  "validateBenefitFormulaVersion",
+];
+/**
+ * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
+ * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
+ * check writes nothing but declares 403, so it needs benefit_formula.edit held somewhere.
+ */
+const PERMISSION_EXCEPTIONS: ReadonlyMap<string, string> = new Map([
+  ["listBenefitFormulaExamples", "authenticated"],
+  ["checkBenefitFormula", "benefit_formula.edit"],
+]);
+
 const openapi = parseYaml(
   readFileSync(fileURLToPath(new URL("../../../../../docs/api/openapi.yaml", import.meta.url)), "utf8"),
 ) as { paths: Record<string, Record<string, { operationId?: string; summary?: string }>> };
@@ -109,10 +135,13 @@ describe("kpi module (P2)", () => {
       "activeLinesOf",
       "baselineSha256",
       "baselineValidationState",
+      // P3 T09 benefit formulas (T-DG3-KBE-C): the kpi half of the G4 GateFactsProvider.
+      "buildKpiP3GateFacts",
       "computeTotals",
       "includedCaseIds",
       "loadCaseTotals",
       "loadKpiGateFacts",
+      "loadKpiP3GateFacts",
       "missingSections",
       "presentCases",
       "registerKpiModule",
@@ -120,21 +149,24 @@ describe("kpi module (P2)", () => {
     ]);
     expect(typeof mod.loadKpiGateFacts).toBe("function");
     expect(mod.loadKpiGateFacts.length).toBe(2); // (db, transformationId)
+    expect(mod.loadKpiP3GateFacts.length).toBe(2); // (db, transformationId): the GateFactsProvider `kpi` signature
   });
 
   it("models missing and outdated values as unknown / stale - never as zero or green", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 24 P2 kpi operations and the 11 P3 business-case operations, and reports them", async () => {
+  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case and the 13 T09 operations, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
     expect(ids.filter((id) => id === undefined)).toEqual([]);
-    expect([...ids].sort()).toEqual([...KPI_OPERATIONS, ...KPI_P3_BUSINESS_CASE_OPERATIONS].sort());
+    expect([...ids].sort()).toEqual(
+      [...KPI_OPERATIONS, ...KPI_P3_BUSINESS_CASE_OPERATIONS, ...KPI_P3_BENEFIT_FORMULA_OPERATIONS].sort(),
+    );
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
-    expect(registration.routes).toHaveLength(35);
+    expect(registration.routes).toHaveLength(48);
     expect(Object.isFrozen(registration)).toBe(true);
   });
 
@@ -143,6 +175,10 @@ describe("kpi module (P2)", () => {
     const byKey = new Map(contractOps.map((o) => [o.key, o]));
     for (const r of routes) {
       const op = byKey.get(r.key)!;
+      if (PERMISSION_EXCEPTIONS.has(op.operationId)) {
+        expect(r.permission, op.operationId).toBe(PERMISSION_EXCEPTIONS.get(op.operationId));
+        continue;
+      }
       if (r.key.startsWith("GET ")) {
         expect(r.permission, r.key).toBe("transformation.read");
         continue;
@@ -162,6 +198,7 @@ describe("kpi module (P2)", () => {
         "finance.validate",
         "kpi_target.approve",
         "business_case.edit",
+        "benefit_formula.edit",
       ]),
     );
   });

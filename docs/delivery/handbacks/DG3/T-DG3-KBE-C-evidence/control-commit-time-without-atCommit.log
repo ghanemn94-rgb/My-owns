@@ -1,0 +1,56 @@
+port-policy: PostgreSQL listening on port 23420 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg3-kbe-c
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muysr6ot_455fb3a8 (server_encoding UTF8); applied 25 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts (16 tests | 1 failed | 15 skipped) 531ms
+   ↓ T09 register (REQ-PB-056) > the six T09 columns persist; BF-nn codes; the formula is the current version's expression
+   ↓ T09 register (REQ-PB-056) > confidence outside H/M/L -> 400 (create and PATCH), nothing written; the DB CHECK refuses it too
+   ↓ T09 register (REQ-PB-056) > an undefined variable -> 422 'Undefined variable: {name}'; an invalid expression writes nothing
+   ↓ the two seeded B0087 examples (REQ-PB-057, REQ-S08-007) > reading the examples shows the B0087 text verbatim, marked illustrative
+   ↓ the two seeded B0087 examples (REQ-PB-057, REQ-S08-007) > instantiating revenue_uplift and previewing gives exactly 100000 SAR per year; cost_reduction 500000
+   ↓ the two seeded B0087 examples (REQ-PB-057, REQ-S08-007) > changing arpu to period = month while eligible_customers stays year -> 422 formula.period_mismatch
+   ↓ calculations and lineage > records inputs with kind/unit/currency/period/source, assumptions and period; Unknown never 0; append-only
+   ↓ Finance validation of the benefit logic (REQ-PB-055) > FIN validates or rejects with a note; the author gets 403; final once recorded; If-Match 428/409
+   ↓ every mutation: AUD 403, If-Match, audit, archive > the read-only auditor gets 403 (audited) on every T09 mutation, whatever the body
+   ↓ every mutation: AUD 403, If-Match, audit, archive > If-Match: 428 without, 409 stale on PATCH, archive and new version; archive guards; audit events
+   ↓ every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (update): a grant revoked after authentication -> 403, nothing written
+   ↓ every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (archive): a grant revoked after authentication -> 403, nothing written
+   ↓ every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (new version): a grant revoked after authentication -> 403, nothing written
+   × every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (calculation): a grant revoked after authentication -> 403, nothing written 358ms
+     → {"id":"01a118e8-306d-7080-b2dc-5f35eb45c56c","formulaVersionId":"01a118e8-3021-76b9-ba89-7a1ecf8e8125","inputs":{"arpu":{"kind":"currency","name":"arpu","unit":"per customer","value":"50","period":"year","source":null,"currency":"SAR","description":null},"eligible_customers":{"kind":"count","name":"eligible_customers","unit":"customers","value":"100000","period":"year","source":null,"currency":null,"description":null},"target_attach_rate":{"kind":"fraction","name":"target_attach_rate","unit":null,"value":"0.12","period":"none","source":null,"currency":null,"description":null},"baseline_attach_rate":{"kind":"fraction","name":"baseline_attach_rate","unit":null,"value":"0.1","period":"none","source":"Synthetic CRM extract","currency":null,"description":null}},"assumptions":null,"periodStart":null,"periodEnd":null,"outcome":"ok","result":"100000","resultKind":"currency","resultUnit":"per customer","resultCurrency":"SAR","resultPeriod":"year","errorCode":null,"rounded":false,"engineVersion":"mth-formula/1.0.0","computedAt":"2026-10-08T00:27:12.352Z","computedBy":"01a118e8-3049-70ae-80b3-540b8b3d0e2f"}: expected 201 to be 403 // Object.is equality
+   ↓ every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (validation): a grant revoked after authentication -> 403, nothing written
+   ↓ loadKpiP3GateFacts: the kpi half of the G4 GateFactsProvider > cases with sections and baseline state (incl. Stale); each financial benefit line's current version state
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts > every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (calculation): a grant revoked after authentication -> 403, nothing written
+AssertionError: {"id":"01a118e8-306d-7080-b2dc-5f35eb45c56c","formulaVersionId":"01a118e8-3021-76b9-ba89-7a1ecf8e8125","inputs":{"arpu":{"kind":"currency","name":"arpu","unit":"per customer","value":"50","period":"year","source":null,"currency":"SAR","description":null},"eligible_customers":{"kind":"count","name":"eligible_customers","unit":"customers","value":"100000","period":"year","source":null,"currency":null,"description":null},"target_attach_rate":{"kind":"fraction","name":"target_attach_rate","unit":null,"value":"0.12","period":"none","source":null,"currency":null,"description":null},"baseline_attach_rate":{"kind":"fraction","name":"baseline_attach_rate","unit":null,"value":"0.1","period":"none","source":"Synthetic CRM extract","currency":null,"description":null}},"assumptions":null,"periodStart":null,"periodEnd":null,"outcome":"ok","result":"100000","resultKind":"currency","resultUnit":"per customer","resultCurrency":"SAR","resultPeriod":"year","errorCode":null,"rounded":false,"engineVersion":"mth-formula/1.0.0","computedAt":"2026-10-08T00:27:12.352Z","computedBy":"01a118e8-3049-70ae-80b3-540b8b3d0e2f"}: expected 201 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 201[39m
+
+ ❯ apps/api/test/integration/kpi/benefit-formulas.test.ts:874:52
+    872|         locker.release();
+    873|       }
+    874|       expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                    ^
+    875|       expect(await auditOfRequest(api.db, String(res.headers["x-reques…
+    876|         expect.objectContaining({ action: "authorization.denied" }),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  00:27:07
+   Duration  4.71s (transform 1.37s, setup 0ms, collect 2.89s, tests 531ms, environment 0ms, prepare 83ms)
+
+EXIT=1
