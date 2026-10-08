@@ -15,23 +15,26 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
 - **DG3 state: BUILDING** (P3 Mobilization and portfolio, 32 DG3-final requirements; D-078). The implementation runs in waves. Per D-004 there are at most 4 workers at a time, and each concurrent writer has its own git worktree under `/home/user/wt/`, merged back with `--no-ff`.
   - **Done, integrated and verified by the orchestrator:**
-    - `T-DG3-ARCH-01`: ADR-0021–0024, migrations `0020`–`0024`, contract (109 P3 operations), work split.
-    - Wave 1:
-      - `T-DG3-BE-A`: portfolio module foundation, G1 agreements + `0025`, readiness, hierarchy, dispensations, P3 problem mapping, contract seams.
-      - `T-DG3-KBE-A`: T06 scoring and the T09 restricted formula engine.
-    - `T-DG3-ARCH-02`:
-      - the `@mth/shared/calc` subpath;
-      - the `0024` audit shape fixed at source;
-      - ADR alignment;
-      - KBE-A interpretations confirmed;
-      - ownership amendments, recorded in work split §9.
-  - **Results:** unit 1123 in both locale settings, integration 638, `validate --historical --stage DG2` exit 0.
-  - **Running: wave 2** (from about 23:12Z), each in its own worktree: `T-DG3-BE-B` (initiatives, links, transitions, selection), `T-DG3-BE-C` (roadmap, deliverables, milestones, T08), `T-DG3-BE-D` (prioritization) and `T-DG3-KBE-B` (business cases).
+    - Architecture: `T-DG3-ARCH-01`, `ARCH-02` and `ARCH-03` (ADR-0021–0024, migrations `0020`–`0025`, contract, work split §9, advisory-lock registry, one delegation rule).
+    - Wave 1: `T-DG3-BE-A` (portfolio foundation, G1 agreements, readiness, dispensations) and `T-DG3-KBE-A` (T06 scoring, T09 engine).
+    - Wave 2:
+      - `T-DG3-BE-B`: initiatives, transitions, selection;
+      - `T-DG3-BE-C`: roadmap, T08 with race-free cycle rejection;
+      - `T-DG3-BE-D`: prioritization;
+      - `T-DG3-KBE-B`: business cases.
+    - Wave 3:
+      - `T-DG3-KBE-C`: T09 formulas, lineage, Finance validation, kpi G4 facts;
+      - `T-DG3-FE-A0`: web seams and the G1 agreements step.
+  - **Results:** merged tree at `e14993e`: unit 1235 in both locale settings, integration 764, product e2e 76, `validate --historical --stage DG2` exit 0.
+  - **Running, wave 4** (from about 01:08Z, one worktree each):
+    - `T-DG3-BE-E`: capacity, funding, G4 evaluators and `0026`, wiring follow-ups;
+    - `T-DG3-FE-A`: portfolio, initiative card, readiness, dispensations, G4 view;
+    - `T-DG3-FE-B`: prioritization, roadmap, dependencies, capacity;
+    - `T-DG3-FE-C`: business cases, T09 builder.
 - **Next action:**
-  1. Verify each wave-2 handback in its worktree, commit on its branch, and merge all four into the main branch. Reconcile only the pinned contract counts, then verify the merged tree.
-  2. Wave 3: KBE-C, FE-A, FE-B, FE-C.
-  3. Wave 4: BE-E (capacity, funding, G4 evaluators, `0026`).
-  4. Then the P3 e2e journeys, the register update, the freeze and review round 1.
+  1. Merge and verify wave 4.
+  2. Wave 5: P3 e2e journeys, including G4 end to end with distinct synthetic TL, FIN and SP users; the register update by the analyst; and any small repairs.
+  3. Then freeze the candidate and run DG3 review round 1.
 - **Environmental residuals** stay PASS-on-evidence, never BLOCKED: D-057 (online registry), D-058 (live CI), D-049 (Keycloak).
 
 ## DG2 scope (P2 — diagnose, define and design)
