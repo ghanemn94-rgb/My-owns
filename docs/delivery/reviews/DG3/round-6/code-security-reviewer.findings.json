@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG3-280",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-056",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0024 §6 'Pinned by tests' overstates the lintText test: only 48 of the 99 probe-table rows are linted (4 of the unlinted rows are L2/L5 handler spellings)",
+      "reproduction": "Candidate sha256:7049d793… (source c40232b).\n(1) Read ADR-0024 §6, line 126. It says that fuzz.test.ts 'also lints the reviewer's G1, G2, A1, A2 and F1 helpers and the probe-table spellings below with ESLint.lintText … and requires a rule to refuse each one'.\n(2) Read fuzz.test.ts lines 829-831. The lintText test lints only the PROBES rows whose scan-hit name matches /^(catch|finally|\\.then|Promise|generator|then|fromAsync)/.\n(3) Count the rows: node docs/delivery/test-evidence/DG3/code-security/round-6/probes/count-lint-pinned-rows.mjs <clone>. The result is 99 rows, of which 48 are linted and 51 are not. The unlinted rows include the L5 rows 'async' (×1) and 'await' (×2), the L2 row 'EvalError outside instanceof' (×1), the round-1/round-2 forms and the 10 non-allowlisted imports.\n(4) Control. In a disposable clone, widen the filter to every row except the two 'unbalanced' rows (bash run-spellings-r6.sh). The test still passes, so lint does refuse all 97 lintable rows.",
+      "expected": "§6 describes what the test pins. Either the test lints every probe-table spelling (for example, filter out only the two 'unbalanced' rows, which are not valid modules; with that filter the test passes on this candidate), or the sentence names the subset it lints (the L1, L3, L4, L6 and L7 rows, plus the round-4 and round-5 helpers).",
+      "actual": "The sentence claims that the lintText test covers every probe-table spelling. It covers 48 of the 99 rows, so no rule's refusal of the other 51 rows is exercised by an ESLint run. The config assertion checks selector substrings. Some partial removals would therefore fail neither test, for example dropping 'ForOfStatement[await=true]' from the async selector, or the 'PrivateIdentifier[…]' part of the round-6 name selector. Removing ':function[async=true]' or 'AwaitExpression' would still fail the config assertion. There is no behavioural effect today: lint refuses every row on this candidate (spellings-r6.log). This is documentation drift and is not blocking.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md",
+        "packages/shared/src/formula/fuzz.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/count-lint-pinned-rows.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probes/count-lint-pinned-rows.mjs",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/spellings-r6.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/run-spellings-r6.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG3/round-6/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T20:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG3 round 6 by code-security-reviewer. Low, non-mandatory and non-blocking: a documentation drift about test scope. Lint itself refuses every probe-table row on this candidate."
+        }
+      ]
+    }
+  ]
+}

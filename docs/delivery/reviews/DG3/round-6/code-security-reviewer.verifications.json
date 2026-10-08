@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG3-100",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified closed on candidate sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96 (757 files, recomputed in a complete clone at the freeze commit 36411df; source c40232b). The repair is T-DG3-KBE-H (53ac073, merged in a5c4f5e). My round-5 FINAL criterion was option (b) or option (a). Both are met.\n\n(b) ADR-0024 section 6 no longer makes absolute claims.\n- The three statements I named are gone:\n  - 'It cannot handle its own refusal';\n  - 'So the exception reaches the test on the exercising test's call stack';\n  - 'This closes a promise reaction ...'.\n- They are replaced by an enumerated claim. Lint refuses exactly L1-L7, and the scan's mirror is enumerated per item.\n- 'What it refuses' is now conditional: the test fails if the EvalError reaches it.\n- The residual is stated in my wording: 'A self-handling form outside the list L1-L7, even on an exercised path, is refused by no layer', with G1, G2 and A1 as historical examples.\n\n(a) G1, G2 and A1 are also refused statically. My round-5 probes, run verbatim in a disposable clone on Node 22.22.2 (sha256 values in probes-summary.txt; every probe restored its files, and the clone's git status was empty at the end):\n- G1 and G2: lint + scan (L4: generator, yield);\n- A1: lint + scan (L6/L7: the destructured then, fromAsync);\n- F1 (finally { const s = \"}\"; return; }): now lint + scan; in round 5 only lint refused it;\n- the controls behave as in round 5:\n  - G3 and A2: lint + scan + run time;\n  - E1, E2, H2, H4 and S2: run time;\n  - H1, H3 and F2: scan + run time;\n  - S1: lint + run time.\n- No earlier form lost a layer:\n  - W1, W2 and W4: lint + scan;\n  - W3, W5 and W6: all three layers;\n  - V1: lint + scan; V2: all three layers;\n  - S1, S2 and S3 (round 3): run time;\n  - all 18 round-2 forms (O1-O6, N1-N12): 'BLOCKED BY BOTH'.\n\nIndependent confirmation of section 6's sentences:\n- An AST walk with the TypeScript parser (word-claims.log) confirms:\n  - decimal.js 10.6.0 (decimal.js and decimal.mjs) has none of try, catch, finally, Promise, async, await, then, yield, fromAsync or asyncIterator outside comments, and no function*;\n  - the seven engine sources contain exactly five try/catch statements and no finally block, generator, yield, async, await, then, fromAsync or asyncIterator.\n- spellings-r6.log covers 53 independent L1-L7 spellings of my own:\n  - every one is refused by no-restricted-syntax or no-unsafe-finally;\n  - the four allowed shapes (the engine's catch, try/finally, try/catch/finally and \"thenable\") lint clean;\n  - the scan flags 52 of the 53.\n- The one spelling the scan misses is 'class C { private *g() {} }'. This matches section 6's enumerated scan claim for L4 (a '*' after { } , ; static or async), and lint refuses it. A generator needs yield to hold an exception, and the scan refuses yield anywhere. So no sentence is false.\n- The residual is real and correctly stated. A3, A1 with fromAsync and then assembled at run time by String.fromCharCode, passes all three layers on the exercised path (residual-probe-r6.log). Its control, A4, is refused at run time (unhandled rejection), which proves that the code generation runs. A3 falls inside the stated residual, so it meets my criterion and is not a reason to fail.\n\nThe engine is unchanged.\n- Probe C (round-1 formula fuzz with the exact oracle) gives 65/65 in unit-node and 75/75 in unit-formula-nocodegen, on Node 22 and on Node 24, identical to round 5.\n- The repair diff touches no engine source, API, web, db or contract file (diff-scan.log D2, D3 and D5 are empty).\n\nOne sentence about test coverage is not exact, and I raise it separately as F-DG3-280 (Low, non-mandatory, non-blocking). ADR line 126 says fuzz.test.ts lints 'the probe-table spellings below' and requires a rule to refuse each. The test lints only the 48 of 99 rows that its name filter selects. I widened the filter to all 97 lintable rows, and lint refused every one. So the behaviour the sentence describes is true; only the description of the test overstates it. My closure criterion concerned the refusal and guarantee claims and the residual, and those are now exact.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-6/rethrow-rule-attack-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/rethrow-rule-attack-probe-2.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/swallow-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/guard-layers-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/guard-bypass-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probes-summary.txt",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/run-probes.sh",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/residual-probe-r6.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probes/residual-probe-r6.mjs",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/spellings-r6.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probes/spellings-r6.append.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/run-spellings-r6.sh",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/word-claims.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probes/word-claims.mjs",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probe-C-unit-node-node22.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probe-C-nocodegen-node24.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/diff-scan.log",
+        "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md"
+      ]
+    }
+  ]
+}
