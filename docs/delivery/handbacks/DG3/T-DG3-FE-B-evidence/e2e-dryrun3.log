@@ -1,0 +1,97 @@
+port-policy: PostgreSQL listening on port 23550 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applied 25 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 23551 (attempt 1)
+API: http://localhost:23551 (APP_BASE_URL=http://localhost:23551, PORT=23551)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 7 tests using 1 worker
+
+  ✓  1 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:110:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies (1.8s)
+  ✘  2 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:250:1 › lead: ranked table, 0–100 view, scorecard (6 refused), the live 100% check, weight version 2 proposal and an override (16.3s)
+  -  3 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:374:1 › another person (demo Sponsor) approves weight version 2 and the override (business approvals); history shows 'weight version 2'
+  -  4 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:435:1 › roadmap: source waves; moving a milestone updates the timeline, table and board; a stale edit is a 409 conflict
+  -  5 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:500:1 › dependencies: the seven T08 columns, the needed-by flag and a cycle refused with its path
+  -  6 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:534:1 › the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control
+  -  7 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:561:1 › capacity screen with STUBBED capacity responses (BE-E's API lands in the next wave): grid, shortfall, Unknown; axe
+
+
+  1) [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:250:1 › lead: ranked table, 0–100 view, scorecard (6 refused), the live 100% check, weight version 2 proposal and an override 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('weight-set-history').locator('[data-version=\'2\']')
+    Expected substring: [32m"You proposed this set; another person must approve it."[39m
+    Received string:    [31m"Version 2ProposedStrategic fit: 15%Financial value: 25%Customer impact: 20%Feasibility: 15%Time-to-value: 15%Risk / compliance: 10%Synthetic: regulated context adds risk/compliance8 Oct 2026, 04:36Withdraw version 2"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('weight-set-history').locator('[data-version=\'2\']')[22m
+    [2m    9 × locator resolved to <tr data-version="2">…</tr>[22m
+    [2m      - unexpected value "Version 2ProposedStrategic fit: 15%Financial value: 25%Customer impact: 20%Feasibility: 15%Time-to-value: 15%Risk / compliance: 10%Synthetic: regulated context adds risk/compliance8 Oct 2026, 04:36Withdraw version 2"[22m
+
+
+      285 |   const history = page.getByTestId("weight-set-history");
+      286 |   await expect(history.locator("[data-version='2']")).toContainText(tr(lang, "prioritization.weights.state.proposed"));
+    > 287 |   await expect(history.locator("[data-version='2']")).toContainText(tr(lang, "prioritization.weights.ownProposal"));
+          |                                                       ^
+      288 |
+      289 |   // Override: a reason is required; then proposed.
+      290 |   sent.length = 0;
+        at /home/user/wt/dg3-fe-b/apps/web/e2e/p3-prioritization-roadmap.spec.ts:287:55
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-prioritiza-b2208--2-proposal-and-an-override-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p3-prioritiza-b2208--2-proposal-and-an-override-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-prioritiza-b2208--2-proposal-and-an-override-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p3-prioritiza-b2208--2-proposal-and-an-override-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:250:1 › lead: ranked table, 0–100 view, scorecard (6 refused), the live 100% check, weight version 2 proposal and an override 
+  5 did not run
+  1 passed (22.2s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+EXIT=1

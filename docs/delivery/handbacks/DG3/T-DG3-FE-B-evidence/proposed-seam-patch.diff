@@ -1,0 +1,35 @@
+diff -ru a/apps/web/e2e/p3-seams.spec.ts b/apps/web/e2e/p3-seams.spec.ts
+--- a/apps/web/e2e/p3-seams.spec.ts	2026-10-08 01:49:38.543321405 +0000
++++ b/apps/web/e2e/p3-seams.spec.ts	2026-10-08 01:49:38.560499271 +0000
+@@ -33,15 +33,12 @@
+ const SOME_ID = "01920000-0000-7000-9000-0000000009a1";
+ 
+ /** [path segment(s) under the transformation, title key, namespace, workspace tab id or null for a detail page] */
++// T-DG3-FE-B delivered prioritization, roadmap, dependencies and capacity (p3-prioritization-roadmap.spec.ts).
+ const PAGES = [
+   ["portfolio", "portfolio.title", "portfolio", "portfolio"],
+   [`initiatives/${SOME_ID}`, "portfolio.initiativeTitle", "portfolio", null],
+   ["readiness", "readiness.title", "readiness", "readiness"],
+   ["dispensations", "dispensations.title", "dispensations", "dispensations"],
+-  ["prioritization", "prioritization.title", "prioritization", "prioritization"],
+-  ["roadmap", "roadmap.title", "roadmap", "roadmap"],
+-  ["dependencies", "dependencies.title", "dependencies", "dependencies"],
+-  ["capacity", "capacity.title", "capacity", "capacity"],
+   ["business-cases", "businessCases.title", "businessCases", "business-cases"],
+   [`business-cases/${SOME_ID}`, "businessCases.detailTitle", "businessCases", null],
+   ["benefit-formulas", "benefitFormulas.title", "benefitFormulas", "benefit-formulas"],
+diff -ru a/apps/web/src/app/p3-seams.test.tsx b/apps/web/src/app/p3-seams.test.tsx
+--- a/apps/web/src/app/p3-seams.test.tsx	2026-10-08 01:49:38.539756500 +0000
++++ b/apps/web/src/app/p3-seams.test.tsx	2026-10-08 01:49:38.560360289 +0000
+@@ -113,7 +113,10 @@
+   });
+ 
+   describe.each(["en", "ar"] as const)("stubs (%s)", (locale) => {
+-    it.each(P3_ROUTES.map(([path, , ns, titleKey]) => [path, ns, titleKey] as const))(
++    // T-DG3-FE-B delivered these four screens; they are no longer stubs (their own tests cover them).
++    const DELIVERED = new Set(["prioritization", "roadmap", "dependencies", "capacity"]);
++    const STUBS = P3_ROUTES.filter(([, , ns]) => !DELIVERED.has(ns));
++    it.each(STUBS.map(([path, , ns, titleKey]) => [path, ns, titleKey] as const))(
+       "%s: bilingual title and an honest 'being built' state, no data, no write control",
+       async (path, ns, titleKey) => {
+         const { requests } = renderStub(concrete(path), locale);
