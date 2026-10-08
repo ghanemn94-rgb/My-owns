@@ -1,0 +1,82 @@
+$ [c-utf8] apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p3-journeys.spec.ts --workers=1 --reporter=list
+Thu Oct  8 04:53:55 UTC 2026
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applied 27 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 23801 (attempt 1)
+API: http://localhost:23801 (APP_BASE_URL=http://localhost:23801, PORT=23801)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 36 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:112:1 › setup: a synthetic End-to-End transformation, a synthetic Sponsor and Finance user, two draft initiatives (309ms)
+  ✓   2 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:146:1 › 1a. sequencing: a draft before G1 cannot be submitted (translated G1 reason); readiness lists the missing areas (4.2s)
+  ✓   3 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:203:1 › 1b. sequencing: G1 is submitted by the lead and approved by the demo Sponsor with the three confirmations (3.8s)
+  ✓   4 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:248:1 › 1c. sequencing: 'Outcome before activity' refuses a submission without an outcome/KPI link; with it, accepted (3.8s)
+  ✓   5 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:345:1 › 2a. prioritization: 5,4,3,2,1 -> 3.30 and 57.5 (labelled); 95% refused; weight version 2 proposed; an override needs a reason (7.6s)
+  ✓   6 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:458:1 › 2b. prioritization: the demo Sponsor approves weight version 2; the history shows 'weight version 2'; A is 'Selected - unfunded' (6.6s)
+  ✓   7 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:521:1 › 3a. roadmap: four source waves; a milestone created, its date approved and moved — timeline, table and board agree; a stale edit shows the 409 banner (6.1s)
+  ✓   8 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:615:1 › 3b. dependencies: A->B and B->C recorded; C->A refused naming the cycle; the needed-by conflict is flagged, then mitigated (4.5s)
+  ✓   9 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:721:1 › 4a. T09: the revenue example previews 100000 SAR; instantiated; monthly ARPU with an annual population is refused (3.6s)
+  ✓  10 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:783:1 › 4b. business case: ten sections, one class per line, an initiative case rolled up once (7.8s)
+  ✓  11 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:866:1 › 4c. Finance validates both baselines and formula version 1 (business approval); the author is not offered it and is refused (6.5s)
+  ✓  12 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:936:1 › 5a. capacity: the owner records a role and capacity; the lead's demand above it is flagged; the owner raises capacity and commits (5.6s)
+  ✓  13 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:1028:1 › 5b. funding: Finance records an approved funding decision (business approval); A shows Funded (3.7s)
+  ✓  14 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:1059:1 › 1d. sequencing (End-to-End): launching the funded A before G2/G3 is refused; after G2 and G3 it launches (4.4s)
+  ✓  15 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:1112:1 › 6a. G4: the lead's submission is refused listing 'Owners', 'Finance validation' and the initiative (translated) (4.0s)
+  ✓  16 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:1189:1 › 6b. G4: the lead restores the owner, Finance re-validates the case, the lead resubmits; 403 for a non-approver and the submitter (4.8s)
+  ✓  17 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:1314:1 › 6c. G4: a decision on a superseded submission is a 409; the demo Sponsor approves the current one and the phase advances to Transform (7.2s)
+  ✓  18 [chromium-en] › apps/web/e2e/p3-journeys.spec.ts:1399:1 › 7. the read-only auditor sees every P3 screen with the journey's data and no enabled write control; sends nothing (17.3s)
+  ✓  19 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:112:1 › setup: a synthetic End-to-End transformation, a synthetic Sponsor and Finance user, two draft initiatives (193ms)
+  ✓  20 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:146:1 › 1a. sequencing: a draft before G1 cannot be submitted (translated G1 reason); readiness lists the missing areas (3.8s)
+  ✓  21 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:203:1 › 1b. sequencing: G1 is submitted by the lead and approved by the demo Sponsor with the three confirmations (3.5s)
+  ✓  22 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:248:1 › 1c. sequencing: 'Outcome before activity' refuses a submission without an outcome/KPI link; with it, accepted (3.6s)
+  ✓  23 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:345:1 › 2a. prioritization: 5,4,3,2,1 -> 3.30 and 57.5 (labelled); 95% refused; weight version 2 proposed; an override needs a reason (6.7s)
+  ✓  24 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:458:1 › 2b. prioritization: the demo Sponsor approves weight version 2; the history shows 'weight version 2'; A is 'Selected - unfunded' (5.5s)
+  ✓  25 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:521:1 › 3a. roadmap: four source waves; a milestone created, its date approved and moved — timeline, table and board agree; a stale edit shows the 409 banner (5.3s)
+  ✓  26 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:615:1 › 3b. dependencies: A->B and B->C recorded; C->A refused naming the cycle; the needed-by conflict is flagged, then mitigated (4.6s)
+  ✓  27 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:721:1 › 4a. T09: the revenue example previews 100000 SAR; instantiated; monthly ARPU with an annual population is refused (3.7s)
+  ✓  28 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:783:1 › 4b. business case: ten sections, one class per line, an initiative case rolled up once (6.8s)
+  ✓  29 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:866:1 › 4c. Finance validates both baselines and formula version 1 (business approval); the author is not offered it and is refused (5.8s)
+  ✓  30 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:936:1 › 5a. capacity: the owner records a role and capacity; the lead's demand above it is flagged; the owner raises capacity and commits (4.9s)
+  ✓  31 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:1028:1 › 5b. funding: Finance records an approved funding decision (business approval); A shows Funded (3.4s)
+  ✓  32 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:1059:1 › 1d. sequencing (End-to-End): launching the funded A before G2/G3 is refused; after G2 and G3 it launches (4.3s)
+  ✓  33 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:1112:1 › 6a. G4: the lead's submission is refused listing 'Owners', 'Finance validation' and the initiative (translated) (3.7s)
+  ✓  34 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:1189:1 › 6b. G4: the lead restores the owner, Finance re-validates the case, the lead resubmits; 403 for a non-approver and the submitter (4.2s)
+  ✓  35 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:1314:1 › 6c. G4: a decision on a superseded submission is a 409; the demo Sponsor approves the current one and the phase advances to Transform (5.1s)
+  ✓  36 [chromium-ar] › apps/web/e2e/p3-journeys.spec.ts:1399:1 › 7. the read-only auditor sees every P3 screen with the journey's data and no enabled write control; sends nothing (15.5s)
+
+  36 passed (3.3m)
+Thu Oct  8 04:57:17 UTC 2026
+exit=0
