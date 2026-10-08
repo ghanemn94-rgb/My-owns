@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 3,
+  "candidate_id": "sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d",
+  "source_commit": "ce988e20f7ea2752cd3283995fbf7ed05b704485",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-REV-DOM-R3-domain-reviewer-20261008T111024Z-60f6afce",
+    "session_id": "60f6afce-1722-41fa-b878-27217e7736b1"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG3 implementation, test, register row or ADR in the reviewed candidate, including the round-3 repairs T-DG3-KBE-E and T-DG3-FE-G. I formed this verdict from my own runs in a complete disposable clone of the freeze commit 0e820ae (source ce988e20), with my own probes: dg3-api, dg3-api-extra, dg3-ui-world, dg3-ui, dg3-ui-inherited and dg3-ui-overflow byte-identical to round 2, plus the new dg3-ui-overflow-r3. I read the repair diff and the new e2e spec only to understand the change. I did not open any other reviewer's round-3 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-3/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-004",
+    "REQ-PB-006",
+    "REQ-PB-007",
+    "REQ-PB-019",
+    "REQ-PB-022",
+    "REQ-PB-032",
+    "REQ-PB-040",
+    "REQ-PB-045",
+    "REQ-PB-046",
+    "REQ-PB-047",
+    "REQ-PB-048",
+    "REQ-PB-049",
+    "REQ-PB-050",
+    "REQ-PB-051",
+    "REQ-PB-052",
+    "REQ-PB-053",
+    "REQ-PB-054",
+    "REQ-PB-055",
+    "REQ-PB-056",
+    "REQ-PB-057",
+    "REQ-PB-059",
+    "REQ-S04-006",
+    "REQ-S05-005",
+    "REQ-S09-001",
+    "REQ-S09-003",
+    "REQ-S09-004",
+    "REQ-S09-005",
+    "REQ-S09-006"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R3-00-candidate",
+      "procedure": "Verify the assignment sha256, the HEAD lineage and the candidate ID, on the repo and on a complete disposable clone, before and after the runs.",
+      "command": "sha256sum <assignment>; git log --oneline -3; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG3 (repo + clone)",
+      "environment": "Node 24.21.0; repo /home/user/My-owns at 0e820ae; clone $TMPDIR/review-dom at 0e820ae (not shallow)",
+      "expected": "Assignment sha 0be762a3…; 0e820ae is the freeze commit on ce988e20; candidate sha256:f2b4c77a… with 757 files everywhere.",
+      "actual": "The assignment sha256 matches. HEAD 0e820ae has parent ce988e2 and adds only the round-3 assignments, the manifest, progress.md and stages.json. The candidate is sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d with 757 files, on the repo and on the non-shallow clone, before and after the runs (rv/ removed first). The lockfile is byte-identical to the installed tree's lock.yaml.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/candidate.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R3-01-validators",
+      "procedure": "Run the register validator for DG3 and the historical validators for DG2 and DG1.",
+      "command": "node tools/gates/validate.mjs --register DG3; node tools/gates/validate.mjs --historical --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 24.21.0, repo at 0e820ae",
+      "expected": "All three PASS, exit 0.",
+      "actual": "'PASS register rules at DG3', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)', each exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-02-typecheck-build-lint-test-contrast",
+      "procedure": "Run typecheck, build, lint, the unit tests (now including the unit-formula-nocodegen project) and the contrast check, on Node 22 and 24, in the clone. The node_modules trees were copied from the repo because an offline pnpm install cannot complete in this sandbox; the lockfile is identical.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-3/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0, pnpm 10.33.0, clone at 0e820ae",
+      "expected": "All exit 0. The unit tests include the new scan probes, and the nocodegen project runs with its canary.",
+      "actual": "All ten logs end '### exit=0'. pnpm test: unit-node + unit-web 81 files, 1587/1587 passed on both versions (round 2: 1565; the +22 are the new fuzz.test.ts scan probes and clean lines). Then unit-formula-nocodegen: 3 files, 190/190 passed on both (codegen.nocodegen.test.ts 6, formula.test.ts 136, fuzz.test.ts 48). Disclosed non-failure lines: the Fastify FSTDEP022 deprecation warning in the test logs; Vite's chunk-size advisory in the build logs; the three documented prohibited contrast pairs ('PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'). Other lines with 'error'/'fail' are names of passing tests. Lint ran before any probe was copied into the clone.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/checks.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-3/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/build-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/build-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/lint-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/lint-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/test-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/test-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/contrast-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/contrast-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/node22-version.txt",
+        "docs/delivery/test-evidence/DG3/domain/round-3/node24-version.txt"
+      ]
+    },
+    {
+      "id": "DOM-R3-03-repair-diff-and-formula-semantics",
+      "procedure": "Inspect git diff f49ca160..ce988e20 over apps/**, packages/**, eslint.config.js, vitest.config.ts, package.json, docs/api/** and docs/architecture/**. Confirm that T-DG3-KBE-E changed no formula semantics, and that T-DG3-FE-G changed only the badge presentation.",
+      "command": "git diff --stat f49ca160..ce988e20f7ea2752cd3283995fbf7ed05b704485 -- apps packages eslint.config.js vitest.config.ts package.json pnpm-lock.yaml docs/api docs/architecture; git diff … -- packages/shared/src/formula packages/calc ':!**/*.test.ts' ':!**/test-support/**'; git diff … -- apps/api apps/worker packages/db packages/shared/src/schemas docs/api apps/web/src/i18n",
+      "environment": "repo / clone at 0e820ae",
+      "expected": "KBE-E: lint, the source scan, a no-codegen test project and the ADR-0024 §6 text only, with no engine source. FE-G: CSS modifier, a span and tests; no i18n, API, DB or contract change.",
+      "actual": "12 files. In packages/shared/src/formula, only codegen.nocodegen.test.ts (new), fuzz.test.ts and test-support/nocodegen-preload.mjs (new, a test-only fork preload) changed. No engine source, nothing in packages/calc, and no API, worker, DB, shared-schema, OpenAPI or i18n file changed (hygiene.log). eslint.config.js adds the engine-only import allowlist, host-global and constructor-key bans. vitest.config.ts adds the nocodegen project; package.json only gains its second vitest invocation; the lockfile is unchanged. ADR-0024 §6 is rewritten into three layers with an honest residual statement, and p3-work-split §9 item 25 records it. FE-G: GatesPage.tsx adds status-chip--wrap and a <span> around the text; app.css adds the scoped modifier with logical properties; the jsdom test asserts the class; a new e2e spec measures the layout. Formula semantics are confirmed unchanged live in DOM-R3-07: revenue 100000 SAR exact, cost 500000, monthly × annual refused.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/hygiene.log",
+        "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md",
+        "docs/architecture/p3-work-split.md"
+      ]
+    },
+    {
+      "id": "DOM-R3-04-F-DG3-170-badge-layout",
+      "procedure": "Re-run my round-2 layout probe unchanged (1024/1366/1920, EN/AR, list and view). Then run the new adversarial probe at 320, 390, 768, 1024, 1280, 1366 and 1920 px, in EN and AR, on the Gates list (G1 card) and the G1 view (the dd row). It checks: fit in the container and viewport; no horizontal document scroll; no clipping; every text line box inside the badge; the full translated text with the disclaimer; no overlap with sibling chips; the icon at the inline start; neutral styling; G1 'Not submitted'/'لم تُقدَّم'; no approved element. Then look at the screenshots myself.",
+      "command": "PROBES='… dg3-ui-overflow dg3-ui-overflow-r3' bash with-stack.sh bash -c 'run-all.sh; integ.sh' (stack-run-1)",
+      "environment": "PostgreSQL 16 on 127.0.0.1:26401, API AUTH_MODE=dev on :26402, Node 24.21.0, Chromium /opt/pw-browsers, en-US/ar-SA, Asia/Riyadh; synthetic data",
+      "expected": "12/12 on the round-2 probe; every case of the r3 probe passes; screenshots show the whole disclaimer inside the card/row, with RTL Arabic and the icon at the start.",
+      "actual": "dg3-ui-overflow 12/12 PASS, exit 0 (round 2: 2/12). EN 1366 list badge [310,619] in card [297,632]; EN 1366 view doc scrollWidth 1366 (was 1604); AR 1024 view badge [41,372] in [24,744] (was [19,372]); AR list badges now inside the card (was spilling into G2). dg3-ui-overflow-r3 155/155 PASS, exit 0: at 390 px the EN badge wraps to two lines [70–312],[70–307] inside a [42–348] badge in a [29–361] card, and the AR icon (324–340) sits right of the first line (63–320), dir rtl. At every width the text equals the full catalogue string ending '(does not approve this gate)' / '(لا يعتمد هذه البوابة)'. Visual inspection: the disclaimer is legible in full and inside the card or row at 1366, 1024, 390 and 320; the Arabic breaks naturally inside the parenthesis, with the icon at the start; G1 shows 'Not submitted' / 'لم تُقدَّم' and the draft header chip, and nothing reads as approved. F-DG3-170 is CLOSED_VERIFIED (verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-390-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-390-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-390-gates-list-g1card.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-390-gates-list-g1card.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1024-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-1024-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-320-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-320-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-overflow-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-overflow-1366-gates-list.png",
+        "docs/delivery/reviews/DG3/round-3/domain-reviewer.verifications.json"
+      ]
+    },
+    {
+      "id": "DOM-R3-05-F-DG3-120-api-still-holds",
+      "procedure": "Re-run dg3-api-extra.mjs, byte-identical to round 2. Step through the Modular inherited-approval states (none, pending, accepted, accepted with unverified evidence, re-verified, revoked; second transformation rejected; End-to-End all null). At every step, count gate_submission and gate_decision rows with psql. Also re-run the waiver and Finance-stale steps.",
+      "command": "dg3-api-extra.mjs in stack-run-1",
+      "environment": "as DOM-R3-04",
+      "expected": "33/33 with round 2's ids and results: annotation states and counts correct; G1 stays draft with no gate decision.",
+      "actual": "33/33 PASS, exit 0, with the same ids and results as round 2. pending_verification/counts false, then accepted/counts true, then accepted/counts false once the evidence is unverified, then revoked/counts false; rejected/counts false. At every step: G1 draft, approvedAt null, latestSubmissionNo 0, 0 gate_submission and 0 gate_decision rows. Recorder self-accept 403; delegated accept 422; the lead's revoke 403; End-to-End all null and inherited 422 inherited_requires_modular; a waiver is never an annotation.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api-extra.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-06-F-DG3-120-ui-still-holds",
+      "procedure": "Re-run dg3-ui-inherited.mjs, byte-identical to round 2. Drive each badge state, then open the Gates list, the G1 view, Readiness and Dispensations in EN (LTR) and AR (RTL), compare the computed colours with an approved chip, and take screenshots.",
+      "command": "dg3-ui-inherited.mjs in stack-run-1",
+      "environment": "as DOM-R3-04, 1366x900",
+      "expected": "94/94 with round 2's ids and results.",
+      "actual": "94/94 PASS, exit 0, with the same ids and results as round 2. Translated badge per state beside G1's 'Not submitted' / 'لم تُقدَّم' chip; neutral grey status-chip--unknown with the info icon and no check; no approved chip; the source line 'recorded as evidence, not as a decision on this gate'. The screenshots now show the badge wrapped inside the card (e.g. AR revoked list, EN pending view).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-inherited.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-inherited.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-inherited-pending-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-inherited-pending-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-inherited-accepted-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-inherited-accepted-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-inherited-revoked-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-inherited-revoked-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-inherited-rejected-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-inherited-rejected-gates-list.png"
+      ]
+    },
+    {
+      "id": "DOM-R3-07-round1-regression-api",
+      "procedure": "Re-run the round-1 API probe, byte-identical (sha256 5f1e332e…92c5). It covers: sequencing (before G1, the three agreements, outcome before activity, End-to-End launch after G2+G3); the five-level outcome hierarchy; an initiative refused as TOM evidence; T05; T06 (3.30/57.5, weights 95/105, v2, overrides); the T07 waves verbatim with overlap; T08 (7 columns, External From, cycles); capacity and conflict; the business case (ten sections, one class per line, no double counting, totals, Unknown); T09 and the formula examples; Finance validation and SoD; selection and funding; G4. Compare the ids and results with round 2.",
+      "command": "dg3-api.mjs in stack-run-1; PASS/FAIL ids compared with round-2 dg3-api.log",
+      "environment": "as DOM-R3-04",
+      "expected": "139/139 as in rounds 1–2. Attach 0.10→0.12 × 100000 × ARPU 50 = 100000 SAR exactly; cost example exact; monthly × annual refused.",
+      "actual": "139/139 PASS, exit 0, with the same ids and results as round 2. Revenue preview 100000 SAR per year; calculation '100000', rounding.exact '100000', stored 100000.000000; delta 0.02 fraction_delta. Monthly ARPU × annual population is 422 formula.period_mismatch; with to_period, 200. Cost example 500000 exact. Totals: gross 650000, implementation 5001.25 (cash 3000.75 / non-cash 2000.5), net 644998.75, and the roll-up adds without duplication. 5,4,3,2,1 → 3.3000 (display 3.30) and 57.5 with '(score-1)/4*100'. Four B0079 waves verbatim, overlap accepted (200, 200). From = External accepted. 'Selected - unfunded' cannot launch (422 initiative.selected_unfunded). The G4 refusal (422 gate_criteria_incomplete) names 'Owners: INI-02 …', 'Finance validation', 'Gap link missing: INI-03 …', and the funding and capacity gaps per initiative. The author's baseline validation is 403. Observation, not a defect (unchanged since round 1): the g4.finance_validation message repeats 'Finance validation' once per missing item.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-08-round1-regression-ui",
+      "procedure": "Re-run the round-1 UI world setup and UI probe, byte-identical, in EN and AR. They cover: readiness; T05 (14 labels, the 3–7 warning); T06 (3.30, 'incomplete', 57.5 with the label, the v2 history and the override); 'Selected - unfunded'; the G4 missing items; T07 (the four waves, the provisional-Arabic note, three views); T08 External From; the capacity conflict; the business case's ten sections; the formula examples; revenue 100,000; the brand marker; no foreign requests.",
+      "command": "dg3-ui-world.mjs + dg3-ui.mjs in stack-run-1",
+      "environment": "Chromium /opt/pw-browsers, en-US/ar-SA, Asia/Riyadh",
+      "expected": "SETUP-OK and 42/42 as in rounds 1–2.",
+      "actual": "SETUP-OK and 42/42 PASS, exit 0, with the same ids and results as round 2. The header shows the 'Provisional' / 'مؤقت' wordmark marker; dir is ltr/rtl; the Arabic G4 view has no English labels; no foreign requests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-world.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-world.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-t05-card-A.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-t05-card-A.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-t05-card-C-deliverable-warning.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-t05-card-C-deliverable-warning.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-prioritization-0-100-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-prioritization-0-100-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-portfolio-selected-unfunded.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-portfolio-selected-unfunded.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-g4-missing-items.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-g4-missing-items.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-roadmap-waves.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-roadmap-waves.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-dependencies-t08.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-dependencies-t08.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-capacity-conflict.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-capacity-conflict.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-business-case-ten-sections.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-business-case-ten-sections.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-benefit-formula-revenue.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-benefit-formula-revenue.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-readiness-missing-areas.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-readiness-missing-areas.png"
+      ]
+    },
+    {
+      "id": "DOM-R3-09-integration-targeted",
+      "procedure": "Run the integration suites of the repaired and adjacent areas (portfolio including dispensations, gates, gates.test.ts, contract) against a scratch DB on the stack's PostgreSQL.",
+      "command": "bash integ.sh (npx vitest run --project integration apps/api/test/integration/{portfolio,gates,gates.test.ts,contract}), in stack-run-1",
+      "environment": "Node 24.21.0, PostgreSQL 16 on 127.0.0.1:26401",
+      "expected": "All pass.",
+      "actual": "16 files, 156/156 passed, exit 0. No skipped, failed or flaky test. The log carries three 'npm warn Unknown project config' lines: npx reading the pnpm-specific .npmrc keys. They are a tooling notice, not a test result.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/integ.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-3/integration-targeted.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-10-source-fidelity-and-hygiene",
+      "procedure": "Check 'captured, never fabricated' against B0009, B0011, B0012 and B0032 and ADR-0021 §5 on every surface. Grep for certification or official-PMI claims and for #0078FF, and check the provisional wordmark and the provisional-Arabic labels.",
+      "command": "grep (hygiene.log); docs/source/playbook.md; screens",
+      "environment": "clone at 0e820ae",
+      "expected": "The inherited approval satisfies only the G1 sequencing precondition, never a G1 approval. No certification claim. #0078FF only as provisional.",
+      "actual": "Unchanged from round 2 and still true (DOM-R3-04/05/06): a Modular inherited approval is evidence, never a G1 decision; acceptance needs verified evidence and a different holder of gate.decide, and it is revocable. 'Outcome before activity' still blocks submission after acceptance. The certification/PMI grep matches only the explicit disclaimer ('not an official PMI standard, and this product is not certified by PMI or any other body') and a test asserting absence. #0078FF appears only in the provisional-branding text, the design tokens and their tests. The header shows the 'Provisional' / 'مؤقت' wordmark marker, and the AR roadmap shows the provisional-Arabic note. The repair added no user-facing string.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/hygiene.log",
+        "docs/source/playbook.md",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-roadmap-waves.png"
+      ]
+    },
+    {
+      "id": "DOM-R3-11-probe-attempts-disclosure",
+      "procedure": "Disclose every failing run in the evidence directory.",
+      "command": "PROBES=… bash with-stack.sh bash -c 'bash docs/…/run-all.sh; bash docs/…/integ.sh' (relative paths), stack-run-0-pathmistake.log",
+      "environment": "as DOM-R3-04",
+      "expected": "Every non-zero exit explained.",
+      "actual": "stack-run-0-pathmistake.log exits 127, and this was MY MISTAKE. I passed the two scripts as relative paths, but with-stack.sh changes directory to the clone, so bash reported 'No such file or directory' for both. No probe ran, and the stack started and stopped cleanly (migrate 27, seed, readyz ready). No candidate behaviour is implicated. stack-run-1 re-ran everything with absolute paths and is the cited run. There are no other failing runs.",
+      "exit_status": 127,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-0-pathmistake.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R3-12-environmental-residuals",
+      "procedure": "Record the residuals the assignment names.",
+      "command": "None",
+      "environment": "offline sandbox",
+      "expected": "PASS on the offline/config surface, with the residual noted.",
+      "actual": "Not exercised live: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak/OIDC sign-in (D-049). I used the dev sign-in and the copied, lockfile-identical install. These are residuals, not domain defects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG3/domain/round-3/env.txt",
+    "docs/delivery/test-evidence/DG3/domain/round-3/candidate.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/validators.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/hygiene.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/run-all.sh",
+    "docs/delivery/test-evidence/DG3/domain/round-3/with-stack.sh",
+    "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api-extra.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui.log",
+    "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-inherited.log",
+    "docs/delivery/reviews/DG3/round-3/domain-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-10-08T11:40:00Z",
+  "summary": "PASS. F-DG3-170 is CLOSED_VERIFIED. The inherited-approval badge now wraps inside the G1 card and the gate view row at 320–1920 px in EN and AR. The full disclaimer is visible, the page never scrolls horizontally, and the icon sits at the inline start. G1 still reads 'Not submitted' / 'لم تُقدَّم' with nothing approved. The round-2 probe is 12/12 (was 2/12) and the new adversarial probe is 155/155. F-DG3-120 still holds (33/33, 94/94). The KBE-E guard hardening changed no formula-engine source, and the formula results are unchanged (100000 SAR exact, cost 500000, monthly × annual refused). The round-1 API and UI results are unchanged (139/139, 42/42). Unit tests pass on Node 22 and 24 (1587 + 190 nocodegen), and so do the targeted integration suites (156). No new finding."
+}

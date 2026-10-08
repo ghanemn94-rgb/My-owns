@@ -1,0 +1,31 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG3-170",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d (source ce988e20, freeze 0e820ae), live in Chromium on a disposable PostgreSQL 16 + API stack built from a complete clone, with synthetic data. The fix (T-DG3-FE-G, 6b30768) adds the opt-in .status-chip--wrap modifier (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties only), wraps the text in a <span>, and leaves the base .status-chip nowrap. (1) My round-2 probe dg3-ui-overflow.mjs, byte-identical, is now 12/12 PASS (round 2: 2/12). EN 1366 list: badge [310,619] inside card [297,632] (was [310,828]); EN 1366 view: doc scrollWidth 1366 = viewport (was 1604); AR 1366 view: badge [41,280] inside [24,1086], doc 1366 (was 1439). (2) The new adversarial probe dg3-ui-overflow-r3.mjs is 155/155 PASS at 320, 390, 768, 1024, 1280, 1366 and 1920 px, in EN and AR, on the Gates list and the G1 view: the badge stays within its card/row and the viewport; the document never scrolls horizontally; the badge is not clipped (scrollWidth = clientWidth, scrollHeight = clientHeight); every rendered text line lies inside the badge; the visible text is the full string ending '(does not approve this gate)' / '(لا يعتمد هذه البوابة)'; it overlaps no sibling chip; the info icon sits at the inline start of the first line (left in LTR, right in RTL, dir ltr/rtl); the chip stays status-chip--unknown with no check icon; G1 reads 'Not submitted' / 'لم تُقدَّم' (data-gate-status draft), and no element is approved. (3) dg3-ui-inherited.mjs, byte-identical, is 94/94 with the same ids and results as round 2, so the states and semantics are unchanged. (4) I looked at the screenshots myself (EN/AR 1366 list, 390 list and G1 card crop, 1024 and 320 view, the AR revoked list, the EN pending view): the whole disclaimer is legible on two lines, the badge sits inside the card/row, and the Arabic wraps naturally in RTL with the icon at the start. F-DG3-120 still holds (dg3-api-extra.mjs 33/33, identical to round 2): pending_verification, then accepted/counts true, then revoked/rejected counts false; G1 stays draft with 0 gate_submission and 0 gate_decision rows (psql) at every step.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-inherited.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-390-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-390-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-390-gates-list-g1card.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-390-gates-list-g1card.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1024-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-1024-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-320-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-320-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-overflow-1366-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-overflow-1366-gate-view.png"
+      ]
+    }
+  ]
+}
