@@ -1,0 +1,11 @@
+$ git rev-parse HEAD (repo, end)
+463cc82a7657217a4b87225f667ebfc47e9a56f7
+$ git diff --name-only 923311b..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG3 --ref HEAD
+{"stage":"DG3","source":"HEAD","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+$ node tools/gates/candidate.mjs --stage DG3 (working tree)
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+$ (clone) git status --short (excluding my copied spec e2e/dg3-qa-r3.spec.ts and build/test outputs)
+?? e2e/dg3-qa-r3.spec.ts
+EXIT 0

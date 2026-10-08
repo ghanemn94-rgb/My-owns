@@ -1,0 +1,16 @@
+initiative | migration 0020_p3_portfolio_roadmap.sql | PK True | owner cols ['executive_owner_user_id'] | status cols ['status'] | erd mentions 29 | later ALTERs []
+deliverable | migration 0020_p3_portfolio_roadmap.sql | PK True | owner cols ['owner_user_id'] | status cols ['acceptance_status', 'status'] | erd mentions 5 | later ALTERs []
+milestone | migration 0020_p3_portfolio_roadmap.sql | PK True | owner cols ['owner_user_id'] | status cols ['status'] | erd mentions 5 | later ALTERs []
+roadmap_wave | migration 0020_p3_portfolio_roadmap.sql | PK True | owner cols ['owner_user_id'] | status cols ['status'] | erd mentions 6 | later ALTERs []
+dependency | migration 0017_p2_decisions_gates.sql | PK True | owner cols ['owner_user_id'] | status cols ['status'] | erd mentions 12 | later ALTERs ['0022_p3_dependency_capacity_funding.sql']
+resource_demand | migration 0022_p3_dependency_capacity_funding.sql | PK True | owner cols ['owner_user_id'] | status cols ['status'] | erd mentions 5 | later ALTERs []
+capacity | migration 0022_p3_dependency_capacity_funding.sql | PK True | owner cols ['owner_user_id'] | status cols ['status'] | erd mentions 8 | later ALTERs []
+funding_decision | migration 0022_p3_dependency_capacity_funding.sql | PK True | owner cols [] | status cols [] | erd mentions 6 | later ALTERs ['0023_p3_business_case_formula.sql']
+
+Note: funding_decision is an immutable decision record; its owner is decided_by (+ approver_role_code) and its status is outcome (approved|rejected|deferred|revoked) -> 'owner and status where applicable' satisfied.
+$ git diff --stat f49ca160..ce988e2 -- packages/db docs/architecture/erd.md
+(empty = no migration/ERD change in the round-3 repair)
+$ ls packages/db/migrations | sed -n '1p;$p'; wc -l
+0001_identity_access.sql
+0027_p3_calculation_rounding.sql
+27

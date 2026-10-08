@@ -1,0 +1,59 @@
+=== mutated packages/shared/src/formula/index.ts (diff):
+diff --git a/packages/shared/src/formula/index.ts b/packages/shared/src/formula/index.ts
+index ae38b6b..734ccde 100644
+--- a/packages/shared/src/formula/index.ts
++++ b/packages/shared/src/formula/index.ts
+@@ -115,6 +115,10 @@ export function evaluateFormula(
+   inputs: FormulaInputs = {},
+ ): FormulaEvaluation {
+   const v = validateFormula(expression, variables);
++  // QA MUTATION (throwaway): reaches the Function constructor with a key assembled at run time.
++  const qaHost: unknown = Math.max;
++  const qaKey = ["con", "struc", "tor"].join("");
++  (qaHost as Record<string, (body: string) => () => unknown>)[qaKey]!("return 0")();
+   if (!v.ok) {
+     return {
+       ok: false,
+
+$ npx eslint packages/shared/src/formula/index.ts   (does the STATIC layer see it? ADR-0024 §6 says a run-time-assembled key is outside any static rule)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+EXIT 0
+
+$ npx vitest run --project unit-node packages/shared/src/formula   (normal process: expected to PASS, i.e. the mutation is invisible without the run-time guard)
+ Test Files  2 passed (2)
+      Tests  184 passed (184)
+EXIT 0
+
+$ npx vitest run --project unit-formula-nocodegen   (run-time guard: expected to FAIL with EvalError)
+      1       Tests  25 failed | 165 passed (190)
+      3      → expected [Function] to not throw an error but 'EvalError: Code generation from strin…' was thrown
+      1    ✓ no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+      1    ✓ no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+      1    ✓ no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 0ms
+      1    ✓ no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+      1  Test Files  3 failed (3)
+      3 "EvalError: Code generation from strings disallowed for this context"
+EXIT 1
+
+$ pnpm test   (with the mutation: expected non-zero)
+ Test Files  81 passed (81)
+      Tests  1587 passed (1587)
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  25 failed | 165 passed (190)
+EXIT 1
+
+=== restored; git status --short:
+(empty = clean)
+
+$ npx vitest run --project unit-formula-nocodegen --project unit-node   (mixing projects: expected config error)
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Run --project unit-formula-nocodegen in its own vitest invocation: its forks start with --disallow-code-generation-from-strings, which the other projects must not inherit.
+EXIT 1
+
+$ npx vitest run --project unit-formula-nocodegen   (restored engine: expected PASS)
+ Test Files  3 passed (3)
+      Tests  190 passed (190)
+EXIT 0

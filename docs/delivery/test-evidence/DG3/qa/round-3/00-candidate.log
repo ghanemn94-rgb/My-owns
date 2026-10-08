@@ -1,0 +1,22 @@
+$ git rev-parse HEAD (repo, start)
+923311b7def7c7712b42fba02f331f5e07625847
+$ git merge-base --is-ancestor ce988e2 HEAD
+ANCESTOR (exit 0)
+$ git diff --name-only ce988e2..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG3 (repo working tree)
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+$ (clone $TMPDIR/review-dg3 @ ce988e2) node tools/gates/candidate.mjs --stage DG3
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+$ (repo) node tools/gates/candidate.mjs --stage DG3 --ref ce988e2
+{"stage":"DG3","source":"ce988e20f7ea2752cd3283995fbf7ed05b704485","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+$ manifest file candidate_id
+sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d ce988e20f7ea2752cd3283995fbf7ed05b704485 0
+$ git -C clone status --short | wc -l
+0
+EXIT 0
+$ git rev-parse --is-shallow-repository (repo)
+false
+$ manifest entries = 757 (key "entries")
+$ (clone) git rev-parse --is-shallow-repository
+false

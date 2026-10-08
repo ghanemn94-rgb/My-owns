@@ -1,0 +1,1058 @@
+[
+  {
+    "id": "A0-distinct-users",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "{\"lead\":\"01920000-0000-7000-9000-000000000203\",\"sp\":\"01a11bac-bda8-774c-918d-cd15cb153b64\",\"fin\":\"01a11bac-bdbc-70a1-a466-fd4be0c303b4\",\"bo\":\"01a11bac-bdce-7772-a002-4403edc4d7cf\"}"
+  },
+  {
+    "id": "A1-draft-created-before-G1",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":\"draft\"}"
+  },
+  {
+    "id": "A1-submit-before-G1-422",
+    "req": "REQ-PB-007/REQ-PB-022",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:invalid-transition\",\"code\":\"initiative.g1_not_approved\",\"detail\":\"Case for change not yet approved (G1): leadership agreement on problem, baseline and material value pools is required before an initiative enters the portfolio\"}"
+  },
+  {
+    "id": "A1-still-draft",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "draft"
+  },
+  {
+    "id": "A1-readiness-missing-areas",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":200,\"missing\":[\"economics\",\"customer\",\"operations\",\"capability\",\"technology\"],\"seq\":{\"canSubmitInitiatives\":false,\"canLaunchInitiatives\":false,\"blockers\":[{\"code\":\"initiative.g1_not_approved\",\"message\":\"Case for change not yet approved (G1): leadership agreement on problem, baseline and material value pools is required before an initiative enters the portfolio\"},{\"code\":\"initiative.direction_not_approved\",\"message\":\"North Star, outcomes and target state not yet approved\"}]}}"
+  },
+  {
+    "id": "A1-T05-direct-fields-persist",
+    "req": "REQ-PB-045",
+    "pass": true,
+    "detail": "{\"mismatched\":[]}"
+  },
+  {
+    "id": "A2-G1-without-agreements-refused",
+    "req": "REQ-PB-022",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"gate.g1_agreements_required\",\"detail\":\"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)\"}"
+  },
+  {
+    "id": "A2-G1-two-of-three-refused",
+    "req": "REQ-PB-022",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"gate.g1_agreements_required\",\"detail\":\"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)\"}"
+  },
+  {
+    "id": "A2-G1-with-agreements-approved",
+    "req": "REQ-PB-022",
+    "pass": true,
+    "detail": "{\"status\":201}"
+  },
+  {
+    "id": "A2-readiness-after-G1",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"canSubmitInitiatives\":true,\"canLaunchInitiatives\":false,\"blockers\":[{\"code\":\"initiative.direction_not_approved\",\"message\":\"North Star, outcomes and target state not yet approved\"}]}"
+  },
+  {
+    "id": "A3-contribution-without-outcome-refused",
+    "req": "REQ-PB-032",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "A3-outcome-before-activity",
+    "req": "REQ-PB-006",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"initiative.outcome_before_activity\",\"detail\":\"Outcome before activity: link at least one measurable outcome with a KPI before submitting for prioritization\"}"
+  },
+  {
+    "id": "A3-with-link-accepted",
+    "req": "REQ-PB-006",
+    "pass": true,
+    "detail": "{\"status\":200,\"code\":\"INI-01\"}"
+  },
+  {
+    "id": "A3-initiative-not-TOM-evidence",
+    "req": "REQ-PB-040",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"initiative.gap_target_type\",\"detail\":\"A gap link points to a TOM gap (tom_gap) or a diagnosed finding (diagnostic_finding).\"}"
+  },
+  {
+    "id": "A3-evidence-link-to-initiative-refused",
+    "req": "REQ-PB-040",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "A3-initiative-links-two-gaps",
+    "req": "REQ-PB-040",
+    "pass": true,
+    "detail": "{\"gl\":201,\"gl2\":201,\"n\":2}"
+  },
+  {
+    "id": "A3-G3-completeness-unchanged-by-initiative",
+    "req": "REQ-PB-040",
+    "pass": true,
+    "detail": "{\"before\":[\"complete\",\"complete\",\"complete\",\"complete\",\"complete\"],\"after\":[\"complete\",\"complete\",\"complete\",\"complete\",\"complete\"]}"
+  },
+  {
+    "id": "A3-hierarchy-outcome-kpi-target-contribution",
+    "req": "REQ-PB-032",
+    "pass": true,
+    "detail": "{\"outcome\":true,\"kpi\":{\"t\":\"1.500000\",\"d\":\"2027-12-31\",\"c\":1}}"
+  },
+  {
+    "id": "A4-two-deliverables-warning",
+    "req": "REQ-PB-045",
+    "pass": true,
+    "detail": "{\"code\":\"initiative.deliverable_count\",\"message\":\"The initiative has 2 key deliverables; 3-7 are recommended.\"}"
+  },
+  {
+    "id": "A4-three-no-warning",
+    "req": "REQ-PB-045",
+    "pass": true,
+    "detail": "null"
+  },
+  {
+    "id": "A4-eight-warning",
+    "req": "REQ-PB-045",
+    "pass": true,
+    "detail": "{\"w\":{\"code\":\"initiative.deliverable_count\",\"message\":\"The initiative has 8 key deliverables; 3-7 are recommended.\"},\"n\":8}"
+  },
+  {
+    "id": "A4-card-warning",
+    "req": "REQ-PB-045",
+    "pass": true,
+    "detail": "[{\"code\":\"initiative.deliverable_count\",\"message\":\"Key deliverables: 3 to 7 are recommended (currently 8).\",\"pointer\":\"/deliverables\"}]"
+  },
+  {
+    "id": "A4-seven-no-warning",
+    "req": "REQ-PB-045",
+    "pass": true,
+    "detail": "{\"a\":200,\"w\":null}"
+  },
+  {
+    "id": "A4-S16-deliverable-authz",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"w\":403,\"r\":200}"
+  },
+  {
+    "id": "A4-S16-initiative-authz",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"w\":403,\"r\":200}"
+  },
+  {
+    "id": "A5-54321-is-3.30",
+    "req": "REQ-PB-048/REQ-DLV-035",
+    "pass": true,
+    "detail": "{\"weightSetVersionNo\":1,\"completeness\":\"complete\",\"weightedScore\":\"3.3000\",\"weightedScoreDisplay\":\"3.30\",\"display100\":\"57.5\",\"conversion\":\"(score-1)/4*100\",\"missingCriteria\":[],\"computedAt\":\"2026-10-08T13:21:09.940Z\"}"
+  },
+  {
+    "id": "A5-display100-57.5",
+    "req": "REQ-S09-001",
+    "pass": true,
+    "detail": "{\"weightSetVersionNo\":1,\"completeness\":\"complete\",\"weightedScore\":\"3.3000\",\"weightedScoreDisplay\":\"3.30\",\"display100\":\"57.5\",\"conversion\":\"(score-1)/4*100\",\"missingCriteria\":[],\"computedAt\":\"2026-10-08T13:21:09.940Z\"}"
+  },
+  {
+    "id": "A5-conversion-label",
+    "req": "REQ-S09-001",
+    "pass": true,
+    "detail": "0–100 view = (weighted score − 1) ÷ 4 × 100"
+  },
+  {
+    "id": "A5-weighted-score-read-only",
+    "req": "REQ-PB-047",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "A5-score-6-refused",
+    "req": "REQ-PB-048",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "A5-missing-score-incomplete",
+    "req": "REQ-PB-048",
+    "pass": true,
+    "detail": "{\"weightSetVersionNo\":1,\"completeness\":\"incomplete\",\"weightedScore\":null,\"weightedScoreDisplay\":null,\"display100\":null,\"conversion\":\"(score-1)/4*100\",\"missingCriteria\":[\"customer_impact\",\"feasibility\",\"time_to_value\"],\"computedAt\":\"2026-10-08T13:21:10.027Z\"}"
+  },
+  {
+    "id": "A5-weights-95-105-refused-nothing-written",
+    "req": "REQ-PB-049/REQ-DLV-035",
+    "pass": true,
+    "detail": "{\"r95\":{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"prioritization.weights_total\",\"detail\":\"Weights must total 100% (got 95.00%)\"},\"r105\":{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"prioritization.weights_total\",\"detail\":\"Weights must total 100% (got 105.00%)\"},\"before\":1,\"after\":1}"
+  },
+  {
+    "id": "A5-snapshot1-v1",
+    "req": "REQ-PB-049",
+    "pass": true,
+    "detail": "{\"status\":201,\"entries\":[[\"X\",1,\"3.3000\"],[\"Y\",2,\"2.6000\"],[\"Z\",3,\"2.0000\"]]}"
+  },
+  {
+    "id": "A5-v2-accepted",
+    "req": "REQ-PB-049",
+    "pass": true,
+    "detail": "{\"status\":201}"
+  },
+  {
+    "id": "A5-v2-approved-by-sponsor-not-proposer",
+    "req": "REQ-PB-049",
+    "pass": true,
+    "detail": "{\"self\":{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"},\"sp\":{\"status\":200}}"
+  },
+  {
+    "id": "A5-rescoring-uses-v2",
+    "req": "REQ-PB-049",
+    "pass": true,
+    "detail": "{\"weightSetVersionNo\":2,\"completeness\":\"complete\",\"weightedScore\":\"2.9000\",\"weightedScoreDisplay\":\"2.90\",\"display100\":\"47.5\",\"conversion\":\"(score-1)/4*100\",\"missingCriteria\":[],\"computedAt\":\"2026-10-08T13:21:10.327Z\"}"
+  },
+  {
+    "id": "A5-snapshot2-v2-rank-change",
+    "req": "REQ-PB-049",
+    "pass": true,
+    "detail": "{\"status\":201,\"ey\":{\"initiativeId\":\"01a11bac-c461-74ee-85f8-9c1bca76699d\",\"rank\":1,\"previousRank\":2,\"weightedScore\":\"3.0000\",\"completeness\":\"complete\",\"causes\":[\"weight\"],\"causeLabels\":[\"weight version 2\"],\"causeDetail\":{\"weightSetVersionNo\":2,\"previousWeightSetVersionNo\":1},\"overrideId\":null}}"
+  },
+  {
+    "id": "A5-v1-results-keep-v1-reference",
+    "req": "REQ-PB-049",
+    "pass": true,
+    "detail": "{\"snap\":{\"id\":\"01a11bac-c683-76bb-9118-e2ecb2a5afce\",\"transformationId\":\"01a11bac-bd7a-73a8-82fa-b4f8858a17ae\",\"snapshotNo\":1,\"weightSetId\":\"01a11bac-bd8f-76eb-b1fe-c4ce50df8195\",\"weightSetVersionNo\":1,\"status\":\"superseded\",\"note\":\"Synthetic QA proposal 1\",\"proposedBy\":\"01920000-0000-7000-9000-000000000203\",\"proposedAt\":\"2026-10-08T13:21:10.274Z\",\"supersededAt\":\"2026-10-08T13:21:10.368Z\",\"version\":2},\"ox\":{\"initiativeId\":\"01a11bac-be58-77de-82a4-e76b199efb26\",\"rank\":1,\"previousRank\":null,\"weightedScore\":\"3.3000\",\"completeness\":\"complete\",\"causes\":[\"new\"],\"causeLabels\":[\"new\"],\"causeDetail\":{\"weightSetVersionNo\":1},\"overrideId\":null}}"
+  },
+  {
+    "id": "A5-history-weight-version-2",
+    "req": "REQ-S09-005/REQ-PB-049",
+    "pass": true,
+    "detail": "{\"snapshotNo\":2,\"proposedAt\":\"2026-10-08T13:21:10.368Z\",\"entry\":{\"initiativeId\":\"01a11bac-c461-74ee-85f8-9c1bca76699d\",\"rank\":1,\"previousRank\":2,\"weightedScore\":\"3.0000\",\"completeness\":\"complete\",\"causes\":[\"weight\"],\"causeLabels\":[\"weight version 2\"],\"causeDetail\":{\"weightSetVersionNo\":2,\"previousWeightSetVersionNo\":1},\"overrideId\":null}}"
+  },
+  {
+    "id": "A5-override-without-reason-refused",
+    "req": "REQ-S09-005",
+    "pass": true,
+    "detail": "{\"noReason\":{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"},\"blank\":{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"prioritization.override_reason_required\",\"detail\":\"An override needs a reason.\"},\"ovBefore\":0,\"ovAfter\":0}"
+  },
+  {
+    "id": "A6-selected-unfunded",
+    "req": "REQ-S09-003",
+    "pass": true,
+    "detail": "{\"status\":\"selected\",\"f\":\"unfunded\",\"d\":\"initiative.status.selected_unfunded\"}"
+  },
+  {
+    "id": "A6-unfunded-cannot-launch",
+    "req": "REQ-S09-003",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:invalid-transition\",\"code\":\"initiative.direction_not_approved\",\"detail\":\"North Star, outcomes and target state not yet approved\",\"errors\":[{\"pointer\":\"\",\"code\":\"initiative.direction_not_approved\",\"message\":\"North Star, outcomes and target state not yet approved\"},{\"pointer\":\"/status\",\"code\":\"initiative.selected_unfunded\",\"message\":\"Selected - unfunded: a funding approval is required before launch\"}]}"
+  },
+  {
+    "id": "A6-funding-recorded-by-FIN",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"status\":201}"
+  },
+  {
+    "id": "A6-S16-funding-authz",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"read\":200,\"leadWrite\":{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"}}"
+  },
+  {
+    "id": "A6-E2E-launch-before-G2G3-422",
+    "req": "REQ-PB-004",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:invalid-transition\",\"code\":\"initiative.direction_not_approved\",\"detail\":\"North Star, outcomes and target state not yet approved\"}"
+  },
+  {
+    "id": "A6-hierarchy-five-levels",
+    "req": "REQ-PB-032",
+    "pass": true,
+    "detail": "{\"northStar\":\"Every synthetic retail bill is right the first time\",\"outcome\":true,\"kpi\":[\"1.500000\",\"2027-12-31\",3]}"
+  },
+  {
+    "id": "A6-launch-with-G2-pending-still-422",
+    "req": "REQ-PB-004",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:invalid-transition\",\"code\":\"initiative.direction_not_approved\",\"detail\":\"North Star, outcomes and target state not yet approved\"}"
+  },
+  {
+    "id": "A6-launch-after-G2-only-still-422",
+    "req": "REQ-PB-004",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:invalid-transition\",\"code\":\"initiative.direction_not_approved\",\"detail\":\"North Star, outcomes and target state not yet approved\"}"
+  },
+  {
+    "id": "A6-launch-after-G2G3-succeeds",
+    "req": "REQ-PB-004",
+    "pass": true,
+    "detail": "{\"status\":200,\"code\":\"INI-01\"}"
+  },
+  {
+    "id": "A6-selected-unfunded-cannot-launch-after-G2G3",
+    "req": "REQ-S09-003",
+    "pass": true,
+    "detail": "{\"display\":\"initiative.status.selected_unfunded\",\"launch\":{\"status\":422,\"type\":\"urn:mth:problem:invalid-transition\",\"code\":\"initiative.selected_unfunded\",\"detail\":\"Selected - unfunded: a funding approval is required before launch\"},\"after\":\"selected\"}"
+  },
+  {
+    "id": "A7-four-waves-verbatim",
+    "req": "REQ-PB-050",
+    "pass": true,
+    "detail": "[[\"Wave 0 — Mobilize\",\"Baseline, governance, design decisions\",\"0-6 weeks\",\"Sponsor + charter\",\"Approved case, owners, stage gates\"],[\"Wave 1 — Prove\",\"Quick wins / pilots / de-risking\",\"1-3 months\",\"Prioritized initiatives\",\"Measured pilot results\"],[\"Wave 2 — Scale\",\"Scale validated changes\",\"3-9 months\",\"Evidence + capacity\",\"Adoption + KPI movement\"],[\"Wave 3 — Embed\",\"BAU integration / optimization\",\"6-18 months\",\"Stable solution\",\"Benefits sustained, ownership transferred\"]]"
+  },
+  {
+    "id": "A7-waves-arabic",
+    "req": "REQ-PB-050",
+    "pass": true,
+    "detail": "[\"الموجة 0 — التعبئة\",\"الموجة 1 — الإثبات\",\"الموجة 2 — التوسّع\",\"الموجة 3 — الترسيخ\"]"
+  },
+  {
+    "id": "A7-overlap-accepted",
+    "req": "REQ-PB-050",
+    "pass": true,
+    "detail": "{\"p1\":{\"status\":200,\"code\":\"wave_1\"},\"p2\":{\"status\":200,\"code\":\"wave_2\"}}"
+  },
+  {
+    "id": "A7-source-text-immutable",
+    "req": "REQ-PB-050",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "A7-milestone-move-in-roadmap",
+    "req": "REQ-S09-006",
+    "pass": true,
+    "detail": "{\"moved\":{\"status\":200},\"inView\":\"2027-05-15\"}"
+  },
+  {
+    "id": "A7-concurrent-edit-409",
+    "req": "REQ-S09-006",
+    "pass": true,
+    "detail": "{\"stale\":{\"status\":409,\"type\":\"urn:mth:problem:version-conflict\",\"code\":\"version_conflict\",\"detail\":\"The record was changed by someone else. Review the current version and re-apply your change.\"},\"after\":\"2027-05-15\"}"
+  },
+  {
+    "id": "A7-S16-milestone-wave-authz",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"w\":403,\"r\":200}"
+  },
+  {
+    "id": "A8-four-source-types",
+    "req": "REQ-PB-052",
+    "pass": true,
+    "detail": "[[\"decision\",\"Decision\",true],[\"tech\",\"Tech\",true],[\"data\",\"Data\",true],[\"vendor\",\"Vendor\",true],[\"other\",\"Other\",true]]"
+  },
+  {
+    "id": "A8-system-types-undeletable",
+    "req": "REQ-PB-052",
+    "pass": true,
+    "detail": "[{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency_type.system_undeletable\",\"detail\":\"Decision is a system dependency type and cannot be deleted or retired.\"},{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency_type.system_undeletable\",\"detail\":\"Tech is a system dependency type and cannot be deleted or retired.\"},{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency_type.system_undeletable\",\"detail\":\"Data is a system dependency type and cannot be deleted or retired.\"},{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency_type.system_undeletable\",\"detail\":\"Vendor is a system dependency type and cannot be deleted or retired.\"}]"
+  },
+  {
+    "id": "A8-unknown-type-refused",
+    "req": "REQ-PB-052",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency.unknown_type\",\"detail\":\"Unknown dependency type: telepathy\"}"
+  },
+  {
+    "id": "A8-seven-columns-external",
+    "req": "REQ-PB-051",
+    "pass": true,
+    "detail": "{\"id\":\"01a11bac-cb53-741a-876d-2a070383e311\",\"organizationId\":\"01920000-0000-7000-9000-000000000001\",\"transformationId\":\"01a11bac-bd7a-73a8-82fa-b4f8858a17ae\",\"code\":\"DEP-01\",\"description\":\"Synthetic vendor API delivery\",\"fromKind\":\"external\",\"fromLabel\":\"Synthetic vendor\",\"fromInitiativeId\":null,\"toKind\":\"initiative\",\"toLabel\":null,\"toInitiativeId\":\"01a11bac-c461-74ee-85f8-9c1bca76699d\",\"dependencyType\":\"vendor\",\"neededBy\":\"2027-02-01\",\"ownerUserId\":\"01920000-0000-7000-9000-000000000203\",\"status\":\"open\",\"mitigation\":\"Synthetic weekly checkpoint\",\"decisionId\":null,\"flags\":[{\"code\":\"schedule.unknown\",\"message\":\"Schedule unknown for Synthetic vendor → INI-02: Synthetic vendor finish date (external) missing\",\"dependencyId\":\"01a11bac-cb53-741a-876d-2a070383e311\",\"initiativeId\":\"01a11bac-c461-74ee-85f8-9c1bca76699d\"}],\"archivedAt\":null,\"archivedBy\":null,\"archiveReason\":null,\"version\":1,\"createdAt\":\"2026-10-08T13:21:11.501Z\",\"createdBy\":\"01920000-0000-7000-9000-000000000203\",\"updatedAt\":\"2026-10-08T13:21:11.501Z\",\"updatedBy\":\"01920000-0000-7000-9000-000000000203\"}"
+  },
+  {
+    "id": "A8-cycle-A-B-A-reported",
+    "req": "REQ-PB-051",
+    "pass": true,
+    "detail": "{\"ab\":201,\"ba\":{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency.cycle\",\"detail\":\"Dependency cycle: INI-03 → INI-02 → INI-03\",\"errors\":[{\"pointer\":\"/toInitiativeId\",\"code\":\"dependency.cycle\",\"message\":\"Dependency cycle: INI-03 → INI-02 → INI-03\"}]}}"
+  },
+  {
+    "id": "A8-cycle-A-B-C-A-refused-naming-cycle",
+    "req": "REQ-S09-008/REQ-DLV-035",
+    "pass": true,
+    "detail": "{\"bc\":201,\"ca\":{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dependency.cycle\",\"detail\":\"Dependency cycle: INI-04 → INI-02 → INI-03 → INI-04\",\"errors\":[{\"pointer\":\"/toInitiativeId\",\"code\":\"dependency.cycle\",\"message\":\"Dependency cycle: INI-04 → INI-02 → INI-03 → INI-04\"}]}}"
+  },
+  {
+    "id": "A8-needed-by-conflict-flagged",
+    "req": "REQ-S09-008",
+    "pass": true,
+    "detail": "{\"status\":201,\"flags\":[{\"code\":\"schedule.needed_by_conflict\",\"message\":\"INI-02 finishes after INI-04 needs it (2027-03-01)\",\"dependencyId\":\"01a11bac-cbbc-700c-a5df-7af98e30bb4f\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"code\":\"schedule.before_predecessor\",\"message\":\"INI-04 is sequenced before its predecessor INI-02\",\"dependencyId\":\"01a11bac-cbbc-700c-a5df-7af98e30bb4f\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"}]}"
+  },
+  {
+    "id": "A8-sequenced-before-predecessor-flagged",
+    "req": "REQ-S09-004",
+    "pass": true,
+    "detail": "{\"cardFlags\":[{\"code\":\"schedule.before_predecessor\",\"message\":\"INI-04 is sequenced before its predecessor INI-03\",\"dependencyId\":\"01a11bac-cba1-748f-a99c-482352ec248a\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"code\":\"schedule.unknown\",\"message\":\"Schedule unknown for INI-03 → INI-04: needed-by date missing\",\"dependencyId\":\"01a11bac-cba1-748f-a99c-482352ec248a\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"code\":\"schedule.needed_by_conflict\",\"message\":\"INI-02 finishes after INI-04 needs it (2027-03-01)\",\"dependencyId\":\"01a11bac-cbbc-700c-a5df-7af98e30bb4f\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"code\":\"schedule.before_predecessor\",\"message\":\"INI-04 is sequenced before its predecessor INI-02\",\"dependencyId\":\"01a11bac-cbbc-700c-a5df-7af98e30bb4f\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"}],\"roadmapFlags\":[{\"code\":\"schedule.before_predecessor\",\"message\":\"INI-04 is sequenced before its predecessor INI-03\",\"dependencyId\":\"01a11bac-cba1-748f-a99c-482352ec248a\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"code\":\"schedule.unknown\",\"message\":\"Schedule unknown for INI-03 → INI-04: needed-by date missing\",\"dependencyId\":\"01a11bac-cba1-748f-a99c-482352ec248a\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"code\":\"schedule.needed_by_conflict\",\"message\":\"INI-02 finishes after INI-04 needs it (2027-03-01)\",\"dependencyId\":\"01a11bac-cbbc-700c-a5df-7af98e30bb4f\",\"initiativeId\":\"01a11bac-cb8e-7487-ac37-95a6fa1990ba\"},{\"co"
+  },
+  {
+    "id": "A9-ten-sections-persist",
+    "req": "REQ-PB-053",
+    "pass": true,
+    "detail": "{\"lost\":[],\"missing\":[\"investment\",\"benefits\"]}"
+  },
+  {
+    "id": "A9-initiative-case-links-transformation-case",
+    "req": "REQ-PB-054",
+    "pass": true,
+    "detail": "{\"s\":201,\"parent\":\"01a11bac-cc1f-704d-bc2b-266d3a70fd77\",\"top\":\"01a11bac-cc1f-704d-bc2b-266d3a70fd77\"}"
+  },
+  {
+    "id": "A9-two-classes-refused",
+    "req": "REQ-S05-005/REQ-PB-053",
+    "pass": true,
+    "detail": "[{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"},{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"},{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}]"
+  },
+  {
+    "id": "A9-SAR-decimal",
+    "req": "REQ-PB-053",
+    "pass": true,
+    "detail": "1000.1000"
+  },
+  {
+    "id": "A9-no-missing-section-with-lines",
+    "req": "REQ-PB-053",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "A9-total-distinct-lines-once",
+    "req": "REQ-S05-005/REQ-PB-054",
+    "pass": true,
+    "detail": "{\"gross1\":{\"currency\":\"SAR\",\"amount\":\"3300.6\",\"unknownLineCount\":0,\"lineCount\":3},\"included\":[\"01a11bac-cc1f-704d-bc2b-266d3a70fd77\",\"01a11bac-cc3e-736d-8978-d27f3e44bb33\"],\"cost\":[{\"currency\":\"SAR\",\"amount\":\"500.05\",\"unknownLineCount\":0,\"lineCount\":1}],\"net\":[{\"currency\":\"SAR\",\"amount\":\"2800.55\",\"unknownLineCount\":0,\"lineCount\":4}]}"
+  },
+  {
+    "id": "A9-edit-initiative-case-changes-rollup-no-dup",
+    "req": "REQ-PB-054",
+    "pass": true,
+    "detail": "{\"ed\":{\"status\":200},\"gross2\":{\"currency\":\"SAR\",\"amount\":\"3400.7\",\"unknownLineCount\":0,\"lineCount\":3}}"
+  },
+  {
+    "id": "A9-confidence-outside-HML-refused",
+    "req": "REQ-PB-056",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "A9-undefined-variable-refused",
+    "req": "REQ-PB-056",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"formula.undefined_variable\",\"detail\":\"Undefined variable: ghost\",\"body\":{\"type\":\"urn:mth:problem:validation\",\"title\":\"Business rule violated\",\"status\":422,\"detail\":\"Undefined variable: ghost\",\"code\":\"formula.undefined_variable\",\"requestId\":\"01a11bac-ccdf-76fe-b41e-b2cf956cc9a8\",\"errors\":[{\"pointer\":\"/expression\",\"code\":\"formula.undefined_variable\",\"message\":\"Undefined variable: ghost\"}]}}"
+  },
+  {
+    "id": "A9-revenue-0.10-0.12-100000-SAR",
+    "req": "REQ-PB-057/REQ-S08-007",
+    "pass": true,
+    "detail": "{\"valid\":true,\"resultKind\":\"currency\",\"resultUnit\":null,\"resultCurrency\":\"SAR\",\"resultPeriod\":\"month\",\"result\":\"100000\",\"errors\":[]}"
+  },
+  {
+    "id": "A9-0.02x100000x50",
+    "req": "REQ-S08-007",
+    "pass": true,
+    "detail": "{\"valid\":true,\"resultKind\":\"currency\",\"resultUnit\":null,\"resultCurrency\":\"SAR\",\"resultPeriod\":\"month\",\"result\":\"100000\",\"errors\":[]}"
+  },
+  {
+    "id": "A9-cost-example-exact",
+    "req": "REQ-PB-057",
+    "pass": true,
+    "detail": "{\"valid\":true,\"resultKind\":\"currency\",\"resultUnit\":null,\"resultCurrency\":\"SAR\",\"resultPeriod\":\"none\",\"result\":\"151852.11\",\"errors\":[]}"
+  },
+  {
+    "id": "A9-monthly-ARPU-x-annual-population-refused",
+    "req": "REQ-S08-007",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"formula.period_mismatch\",\"detail\":\"Period mismatch: arpu is per month but customers is per year; convert with to_period(arpu, year)\",\"body\":{\"type\":\"urn:mth:problem:validation\",\"title\":\"Business rule violated\",\"status\":422,\"detail\":\"Period mismatch: arpu is per month but customers is per year; convert with to_period(arpu, year)\",\"code\":\"formula.period_mismatch\",\"requestId\":\"01a11bac-ccf9-707e-8ce4-ec9de9d2f35b\",\"errors\":[{\"pointer\":\"/expression\",\"code\":\"formula.period_mismatch\",\"message\":\"Period mismatch: arpu is per month but customers is per year; convert with to_period(arpu, year)\"}]}}"
+  },
+  {
+    "id": "A9-T09-six-columns",
+    "req": "REQ-PB-056",
+    "pass": true,
+    "detail": "{\"s\":201,\"fg\":{\"id\":\"01a11bac-cd06-750a-aa35-c3b72d5ec0b5\",\"organizationId\":\"01920000-0000-7000-9000-000000000001\",\"transformationId\":\"01a11bac-bd7a-73a8-82fa-b4f8858a17ae\",\"code\":\"BF-01\",\"benefitName\":\"Synthetic QA attach uplift\",\"baselineDriver\":\"Customers x attach rate x ARPU\",\"changeAssumption\":\"Attach +2 pp\",\"ramp\":\"Q1-Q4\",\"confidence\":\"M\",\"ownerUserId\":null,\"currentVersionNo\":1,\"currentVersion\":\"100000\",\"isIllustrative\":false,\"exampleCode\":null,\"status\":\"active\",\"archivedAt\":null,\"archivedBy\":null,\"archiveReason\":null,\"version\":2,\"createdAt\":\"2026-10-08T13:21:11.937Z\",\"createdBy\":\"01920000-0000-7000-9000-000000000203\",\"updatedAt\":\"2026-10-08T13:21:11.937Z\",\"updatedBy\":\"01920000-0000-7000-9000-000000000203\"}}"
+  },
+  {
+    "id": "A9-formula-undefined-variable-create-refused",
+    "req": "REQ-PB-056",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"formula.undefined_variable\",\"detail\":\"Undefined variable: ghost\"}"
+  },
+  {
+    "id": "A9-examples-illustrative",
+    "req": "REQ-PB-057",
+    "pass": true,
+    "detail": "{\"items\":[{\"code\":\"revenue_uplift\",\"ordinal\":1,\"sourceBenefitEn\":\"Revenue uplift\",\"sourceBaselineDriverEn\":\"Customers × attach rate × ARPU\",\"sourceChangeAssumptionEn\":\"Attach +X pp\",\"sourceFormulaEn\":\"Δ attach × customers × ARPU\",\"sourceRampEn\":\"Q1-Q4\",\"sourceConfidence\":\"M\",\"benefitAr\":\"زيادة الإير"
+  },
+  {
+    "id": "A9-author-cannot-validate",
+    "req": "REQ-PB-055",
+    "pass": true,
+    "detail": "{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"}"
+  },
+  {
+    "id": "A10-demand-above-capacity-conflict",
+    "req": "REQ-PB-059/REQ-S09-004",
+    "pass": true,
+    "detail": "{\"cap\":201,\"dem\":201,\"cell\":{\"resourceRoleId\":\"01a11bac-cdab-700e-9e9d-a122440f943c\",\"periodMonth\":\"2027-02-01\",\"demandFte\":\"1.50\",\"committedDemandFte\":\"0.00\",\"availableFte\":\"1.00\",\"shortfallFte\":\"0.50\",\"flag\":\"capacity.over_allocated\"}}"
+  },
+  {
+    "id": "A10-unknown-capacity-not-zero",
+    "req": "REQ-PB-059",
+    "pass": true,
+    "detail": "no unknown cell"
+  },
+  {
+    "id": "A10-S16-capacity-demand-authz",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"w\":403,\"rd\":200,\"rc\":200}"
+  },
+  {
+    "id": "A10-G4-refused-422",
+    "req": "REQ-PB-019",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"gate_criteria_incomplete\",\"detail\":\"Mandatory required outputs are incomplete: g4.initiative_cards, g4.business_cases, g4.finance_validation, g4.roadmap, g4.owners, g4.funding, g4.capacity.\"}"
+  },
+  {
+    "id": "A10-G4-owners-named",
+    "req": "REQ-PB-019/REQ-PB-059",
+    "pass": true,
+    "detail": "{\"pointer\":\"/criteria/g4.owners\",\"code\":\"g4.owner_missing\",\"message\":\"Owners: INI-01 Synthetic QA order validation\"}"
+  },
+  {
+    "id": "A10-G4-no-gap-link-named",
+    "req": "REQ-PB-046",
+    "pass": true,
+    "detail": "{\"pointer\":\"/criteria/g4.initiative_cards\",\"code\":\"g4.initiative_card_incomplete\",\"message\":\"Initiative card incomplete: INI-02 Synthetic QA billing analytics (scopeIn) Gap link missing: INI-02 Synthetic QA billing analytics\"}"
+  },
+  {
+    "id": "A10-G4-no-funding-named",
+    "req": "REQ-S04-006",
+    "pass": true,
+    "detail": "{\"pointer\":\"/criteria/g4.funding\",\"code\":\"g4.funding_missing\",\"message\":\"Funding decision missing: INI-02 Synthetic QA billing analytics\"}"
+  },
+  {
+    "id": "A10-G4-no-capacity-commitment-named",
+    "req": "REQ-S04-006",
+    "pass": true,
+    "detail": "{\"pointer\":\"/criteria/g4.capacity\",\"code\":\"g4.capacity_commitment_missing\",\"message\":\"Capacity commitment missing: INI-01 Synthetic QA order validation Capacity commitment missing: INI-02 Synthetic QA billing analytics\"}"
+  },
+  {
+    "id": "A10-G4-finance-validation-listed",
+    "req": "REQ-PB-055",
+    "pass": true,
+    "detail": "{\"pointer\":\"/criteria/g4.finance_validation\",\"code\":\"g4.finance_validation_missing\",\"message\":\"Finance validation Finance validation Finance validation Finance validation\"}"
+  },
+  {
+    "id": "A10-G4-refusal-writes-nothing",
+    "req": "REQ-PB-019",
+    "pass": true,
+    "detail": "{\"b\":1,\"a\":1}"
+  },
+  {
+    "id": "A10-commit-by-capacity-owner-only",
+    "req": "REQ-PB-059",
+    "pass": true,
+    "detail": "{\"lead\":{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"},\"bo\":{\"status\":200}}"
+  },
+  {
+    "id": "A10-G4-unvalidated-formula-lists-finance-validation",
+    "req": "REQ-PB-055",
+    "pass": true,
+    "detail": "{\"status\":422,\"errors\":[{\"pointer\":\"/criteria/g4.finance_validation\",\"code\":\"g4.finance_validation_missing\",\"message\":\"Finance validation\"}],\"missing1\":[[\"g4.finance_validation\",[{\"code\":\"g4.finance_validation_missing\",\"message\":\"Finance validation\",\"pointer\":\"/benefit-formulas/01a11bac-cd06-750a-aa35-c3b72d5ec0b5/versions/1\"}]]]}"
+  },
+  {
+    "id": "A10-G4-ready",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "A10-G4-submitted",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "{\"status\":201}"
+  },
+  {
+    "id": "A10-G4-submitter-403",
+    "req": "REQ-S04-006",
+    "pass": true,
+    "detail": "{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.submitter_cannot_decide\",\"detail\":\"The person who submitted the gate cannot decide it (separation of duties).\"}"
+  },
+  {
+    "id": "A10-G4-order-observation",
+    "req": "info",
+    "pass": true,
+    "detail": "{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.submitter_cannot_decide\",\"detail\":\"The person who submitted the gate cannot decide it (separation of duties).\"}"
+  },
+  {
+    "id": "A10-G4-superseded-409",
+    "req": "REQ-S04-006",
+    "pass": true,
+    "detail": "[{\"status\":409,\"type\":\"urn:mth:problem:version-conflict\",\"code\":\"gate.submission_superseded\",\"detail\":\"Submission 1 is not the current pending submission (3).\"},{\"status\":409,\"type\":\"urn:mth:problem:version-conflict\",\"code\":\"gate.submission_superseded\",\"detail\":\"Submission 2 is not the current pending submission (3).\"}]"
+  },
+  {
+    "id": "A10-G4-non-approver-403",
+    "req": "REQ-S04-006",
+    "pass": true,
+    "detail": "{\"nonApprovers\":[{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.not_approver\",\"detail\":\"Only the configured approver of this gate can decide it.\"},{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.not_approver\",\"detail\":\"Only the configured approver of this gate can decide it.\"},{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.not_approver\",\"detail\":\"Only the configured approver of this gate can decide it.\"},{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.not_approver\",\"detail\":\"Only the configured approver of this gate can decide it.\"}],\"leadSubmitter\":{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"gate.not_approver\",\"detail\":\"Only the configured approver of this gate can decide it.\"}}"
+  },
+  {
+    "id": "A10-G4-approved-end-to-end",
+    "req": "REQ-DLV-035/REQ-S04-006",
+    "pass": true,
+    "detail": "{\"ok\":{\"status\":201},\"gate\":\"approved\",\"phase\":\"transform\"}"
+  },
+  {
+    "id": "A10-G4-double-decision-refused",
+    "req": "REQ-S04-006",
+    "pass": true,
+    "detail": "{\"status\":409,\"type\":\"urn:mth:problem:version-conflict\",\"code\":\"gate.submission_superseded\",\"detail\":\"There is no pending submission to decide.\"}"
+  },
+  {
+    "id": "IA1-m1-null-before",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "[[\"G1\",\"draft\",null],[\"G2\",\"draft\",null],[\"G3\",\"draft\",null],[\"G4\",\"draft\",null],[\"G5\",\"draft\",null],[\"G6\",\"draft\",null]]"
+  },
+  {
+    "id": "IA1-m2-null-before",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "[[\"G1\",\"draft\",null],[\"G2\",\"draft\",null],[\"G3\",\"draft\",null],[\"G4\",\"draft\",null],[\"G5\",\"draft\",null],[\"G6\",\"draft\",null]]"
+  },
+  {
+    "id": "IA1-end-to-end-null",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "[[\"G1\",\"approved\",null],[\"G2\",\"approved\",null],[\"G3\",\"approved\",null],[\"G4\",\"approved\",null],[\"G5\",\"draft\",null],[\"G6\",\"draft\",null]]"
+  },
+  {
+    "id": "IA1-neg-end-to-end-refused",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dispensation.inherited_requires_modular\",\"detail\":\"An inherited approval can be recorded only for a Modular transformation.\"}"
+  },
+  {
+    "id": "IA1-neg-G4-refused",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":400,\"type\":\"urn:mth:problem:validation\",\"code\":\"validation\",\"detail\":\"The request is not valid.\"}"
+  },
+  {
+    "id": "IA1-neg-end-to-end-still-null",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "[null,null,null,null,null,null]"
+  },
+  {
+    "id": "IA1-m1-d1-created-pending",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":201,\"s\":\"pending\",\"c\":false}"
+  },
+  {
+    "id": "IA1-m1-G1-pending_verification",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d3a6-774f-8671-e0595f7e7748\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d3a6-774f-8671-e0595f7e7748\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[null,null,null,null,null]}"
+  },
+  {
+    "id": "IA1-aud-sees-annotation",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d3a6-774f-8671-e0595f7e7748\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d3a6-774f-8671-e0595f7e7748\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[null,null,null,null,null]}"
+  },
+  {
+    "id": "IA1-aud-writes-403",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "{\"audCreate\":{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"},\"audDecide\":{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"}}"
+  },
+  {
+    "id": "IA1-recorder-cannot-decide",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":403,\"type\":\"urn:mth:problem:forbidden\",\"code\":\"forbidden\",\"detail\":\"You do not have permission for this action.\"}"
+  },
+  {
+    "id": "IA1-unverified-cannot-be-accepted",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":422,\"type\":\"urn:mth:problem:validation\",\"code\":\"dispensation.evidence_not_verified\",\"detail\":\"The inherited approval's evidence must be verified before it can be accepted (a filename never counts).\"}"
+  },
+  {
+    "id": "IA1-m1-G1-rejected",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"rej\":{\"status\":200},\"a\":{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d3a6-774f-8671-e0595f7e7748\",\"status\":\"rejected\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d3a6-774f-8671-e0595f7e7748\",\"status\":\"rejected\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[null,null,null,null,null]}}"
+  },
+  {
+    "id": "IA1-m1-G1-newer-pending-shown-over-rejected",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[null,null,null,null,null]}"
+  },
+  {
+    "id": "IA1-m1-G1-accepted-counts",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"acc\":{\"status\":200},\"a\":{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[null,null,null,null,null]}}"
+  },
+  {
+    "id": "IA1-m1-readiness-sequencing-counts",
+    "req": "REQ-PB-004",
+    "pass": true,
+    "detail": "{\"canSubmitInitiatives\":true,\"canLaunchInitiatives\":true,\"blockers\":[]}"
+  },
+  {
+    "id": "IA1-m1-G1-counting-one-shown-over-newer-pending",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"d3\":201,\"a\":{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[null,null,null,null,null]}}"
+  },
+  {
+    "id": "IA1-m1-d3-rejected",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":200}"
+  },
+  {
+    "id": "IA1-m1-G2-revoked",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"acc4\":200,\"audRevoke\":403,\"noIfMatch\":428,\"rev4\":{\"status\":200},\"a\":{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d546-7627-8c1b-19f89b64ee83\",\"status\":\"revoked\",\"counts\":false,\"approvingBody\":\"Synthetic steering board\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d546-7627-8c1b-19f89b64ee83\",\"status\":\"revoked\",\"counts\":false,\"approvingBody\":\"Synthetic steering board\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},null,null,null,null]}}"
+  },
+  {
+    "id": "IA1-m1-G3-accepted-not-counting-after-evidence-edit",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"acc5\":200,\"before5\":{\"dispensationId\":\"01a11bac-d5ca-76dd-984d-510cebdf42c3\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic programme board\",\"approvedOn\":\"2026-01-15\"},\"edit\":{\"status\":200,\"reviewStatus\":\"unverified\"},\"a\":{\"listStatus\":200,\"viewStatus\":200,\"fromList\":{\"dispensationId\":\"01a11bac-d5ca-76dd-984d-510cebdf42c3\",\"status\":\"accepted\",\"counts\":false,\"approvingBody\":\"Synthetic programme board\",\"approvedOn\":\"2026-01-15\"},\"fromView\":{\"dispensationId\":\"01a11bac-d5ca-76dd-984d-510cebdf42c3\",\"status\":\"accepted\",\"counts\":false,\"approvingBody\":\"Synthetic programme board\",\"approvedOn\":\"2026-01-15\"},\"hasKey\":true,\"gate\":{\"status\":\"draft\",\"approvedAt\":null,\"currentSubmissionId\":null,\"latestSubmissionNo\":0},\"viewGateStatus\":\"draft\",\"submissions\":0,\"allNullOthers\":[{\"dispensationId\":\"01a11bac-d47d-7218-a59b-ecd2f8df7bd9\",\"status\":\"accepted\",\"counts\":true,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"},{\"dispensationId\":\"01a11bac-d546-7627-8c1b-19f89b64ee83\",\"status\":\"revoked\",\"counts\":false,\"approvingBody\":\"Synthetic steering board\",\"approvedOn\":\"2026-01-15\"},null,null,null]}}"
+  },
+  {
+    "id": "IA1-m2-pending-rejected-null",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "[[\"G1\",\"draft\",{\"dispensationId\":\"01a11bac-d66d-7150-9dfc-82e0e259c998\",\"status\":\"pending_verification\",\"counts\":false,\"approvingBody\":\"Synthetic executive committee\",\"approvedOn\":\"2026-01-15\"}],[\"G2\",\"draft\",{\"dispensationId\":\"01a11bac-d67d-761b-957c-fef692102b71\",\"status\":\"rejected\",\"counts\":false,\"approvingBody\":\"Synthetic steering board\",\"approvedOn\":\"2026-01-15\"}],[\"G3\",\"draft\",null],[\"G4\",\"draft\",null],[\"G5\",\"draft\",null],[\"G6\",\"draft\",null]]"
+  },
+  {
+    "id": "IA1-m1-no-gate-decision-in-audit",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":200,\"actions\":[\"evidence.update\",\"gate_dispensation.decide\",\"gate_dispensation.create\",\"evidence.review\",\"evidence.create\",\"gate_dispensation.revoke\",\"authorization.denied\",\"scoped_assignment.create\",\"scoring_weight_set.create\",\"roadmap_wave.create\",\"gate_instance.create\",\"tom_canvas_cell.create\",\"diagnostic_item.create\",\"transformation_config_pin.create\",\"transformation.create\"],\"gateWrites\":[],\"gateInstanceCreate\":6}"
+  },
+  {
+    "id": "IA1-m2-no-gate-decision-in-audit",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"status\":200,\"actions\":[\"gate_dispensation.decide\",\"gate_dispensation.create\",\"evidence.review\",\"evidence.create\",\"scoped_assignment.create\",\"scoring_weight_set.create\",\"roadmap_wave.create\",\"gate_instance.create\",\"tom_canvas_cell.create\",\"diagnostic_item.create\",\"transformation_config_pin.create\",\"transformation.create\"],\"gateWrites\":[],\"gateInstanceCreate\":6}"
+  },
+  {
+    "id": "U1-dir-lang",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[\"ltr\",\"en\"]"
+  },
+  {
+    "id": "U1-gates-renders",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "Transformations\nTR-0016\nGate G4\nGate G4\n\nTR-0016\nSynthetic QA DG3 R3 EN\nDraft – not submitted\nPhase: Transform\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoadmap\nDependencies\nCa"
+  },
+  {
+    "id": "UI-axe-gates-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U1-prioritization-renders",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "Transformations\nTR-0016\nPrioritization Scorecard (T06)\nPrioritization Scorecard (T06)\n\nTR-0016\nSynthetic QA DG3 R3 EN\nDraft – not submitted\nPhase: Transform\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPo"
+  },
+  {
+    "id": "UI-axe-prioritization-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U1-roadmap-renders",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "Transformations\nTR-0016\nWave Roadmap (T07)\nWave Roadmap (T07)\n\nTR-0016\nSynthetic QA DG3 R3 EN\nDraft – not submitted\nPhase: Transform\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nR"
+  },
+  {
+    "id": "UI-axe-roadmap-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U1-portfolio-renders",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "Transformations\nTR-0016\nInitiative portfolio\nInitiative portfolio\n\nTR-0016\nSynthetic QA DG3 R3 EN\nDraft – not submitted\nPhase: Transform\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritizati"
+  },
+  {
+    "id": "UI-axe-portfolio-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U1-capacity-renders",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "Transformations\nTR-0016\nResource capacity\nResource capacity\n\nTR-0016\nSynthetic QA DG3 R3 EN\nDraft – not submitted\nPhase: Transform\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoa"
+  },
+  {
+    "id": "UI-axe-capacity-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U1-business-cases-renders",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "Transformations\nTR-0016\nBusiness cases\nBusiness cases\n\nTR-0016\nSynthetic QA DG3 R3 EN\nDraft – not submitted\nPhase: Transform\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoadmap\nD"
+  },
+  {
+    "id": "UI-axe-business-cases-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U1-0-100-view-under-v2",
+    "req": "REQ-S09-001",
+    "pass": true,
+    "detail": "2\tINI-01 Synthetic QA order validation\t47.5\t3.56\t1.50\tLaunched\tSelected\tFunded\tNo flags\tScorecard of INI-01"
+  },
+  {
+    "id": "U1-conversion-label-visible",
+    "req": "REQ-S09-001",
+    "pass": true,
+    "detail": "[\"Weights must total exactly 100%. Version 1 is the source default (25/25/20/15/15). A new s\",\"Show the 0–100 view\",\"0–100 view = (weighted score − 1) ÷ 4 × 100\",\"Proposed rank\\tInitiative\\tWeighted score (0–100 view)\\tValue\\tFeasibility\\tStatus\\tSelection\\tFunding\\tFlags\\tActi\"]"
+  },
+  {
+    "id": "U2-gates/G4-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[\"View #3\",\"View #2\",\"View #1\"]"
+  },
+  {
+    "id": "U2-prioritization-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[\"Show the 0–100 view\",\"Columns\",\"Scorecard of INI-02\",\"Scorecard of INI-01\",\"Scorecard of INI-03\"]"
+  },
+  {
+    "id": "U2-roadmap-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U2-portfolio-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[\"Columns\",\"Codesorted ascending\",\"Namenot sorted\",\"Statusnot sorted\",\"Wavenot sorted\",\"Proposed ranknot sorted\",\"Fundingnot sorted\",\"Warningsnot sorted\"]"
+  },
+  {
+    "id": "U2-capacity-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U2-business-cases-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[\"Columns\",\"Codesorted ascending\",\"Titlenot sorted\",\"Levelnot sorted\",\"Initiativenot sorted\",\"Baseline (Finance)not sorted\",\"Sectionsnot sorted\",\"Statusnot sorted\",\"Last updatednot sorted\"]"
+  },
+  {
+    "id": "U2-dependencies-enabled-buttons",
+    "req": "info",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U2-aud-sends-no-writes",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-lead-m1-list-badges-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"badges\":[{\"s\":\"accepted\",\"c\":\"true\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: accepted, counts for sequencing (does not approve this gate)\"},{\"s\":\"revoked\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: revoked (does not approve this gate)\"},{\"s\":\"accepted\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: accepted, does not count now (does not approve this gate)\"}],\"sources\":[\"Approved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\",\"Approved earlier by Synthetic steering board on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\",\"Approved earlier by Synthetic programme board on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\"]}"
+  },
+  {
+    "id": "U3-lead-m1-list-text-en",
+    "req": "info",
+    "pass": true,
+    "detail": "Transformations\nTR-0017\nStage gates\nStage gates\n\nTR-0017\nSynthetic QA DG3 R3 Modular M1 EN\nDraft – not submitted\nPhase: Define\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoadmap\nDependencies\nCapacity\nBusiness cases\nBenefit formulas\nDecisions\nGates\nReadiness\nDispensations\nEvidence\nTeam\n\nThe product gates G1 to G6 of this transformation: readiness of every required output, submission and the approver's decision.\n\nBusiness approval A stage gate is a business approval decided by the configured approver, a person. This software checks readiness and records the decision; it never approves anything itself.\n\nGates\nG1 - Case for Change\n\nDo we agree on the problem/opportunity and value at stake?\n\nNot submitted\nInherited approval: accepted, counts for sequencing (does not approve this gate)\n0 of 6 mandatory outputs complete\n\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\n\nApprover: Executive Sponsor\n\nG2 - Direction\n\nAre outcomes specific enough to steer decisions?\n\nNot submitted\nInherited approval: revoked (does not approve this gate)\n0 of 5 mandatory outputs complete\n\nApproved earlier by Synthetic"
+  },
+  {
+    "id": "UI-axe-lead-m1-gates-list-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-lead-m2-list-badges-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"badges\":[{\"s\":\"pending_verification\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: pending verification (does not approve this gate)\"},{\"s\":\"rejected\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: rejected (does not approve this gate)\"}],\"sources\":[\"Approved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\",\"Approved earlier by Synthetic steering board on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\"]}"
+  },
+  {
+    "id": "U3-lead-m2-list-text-en",
+    "req": "info",
+    "pass": true,
+    "detail": "Transformations\nTR-0018\nStage gates\nStage gates\n\nTR-0018\nSynthetic QA DG3 R3 Modular M2 EN\nDraft – not submitted\nPhase: Define\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoadmap\nDependencies\nCapacity\nBusiness cases\nBenefit formulas\nDecisions\nGates\nReadiness\nDispensations\nEvidence\nTeam\n\nThe product gates G1 to G6 of this transformation: readiness of every required output, submission and the approver's decision.\n\nBusiness approval A stage gate is a business approval decided by the configured approver, a person. This software checks readiness and records the decision; it never approves anything itself.\n\nGates\nG1 - Case for Change\n\nDo we agree on the problem/opportunity and value at stake?\n\nNot submitted\nInherited approval: pending verification (does not approve this gate)\n0 of 6 mandatory outputs complete\n\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\n\nApprover: Executive Sponsor\n\nG2 - Direction\n\nAre outcomes specific enough to steer decisions?\n\nNot submitted\nInherited approval: rejected (does not approve this gate)\n0 of 5 mandatory outputs complete\n\nApproved earlier by Synthetic steering "
+  },
+  {
+    "id": "UI-axe-lead-m2-gates-list-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-lead-m1-G1-view-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"n\":1,\"badge\":\"accepted\",\"link\":\"/transformations/01a11bac-d288-727f-83fc-0148b4b2e763/dispensations\",\"rowText\":\"Inherited approval\\nInherited approval: accepted, counts for sequencing (does not approve this gate)\\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\\nView gate dispensations\"}"
+  },
+  {
+    "id": "UI-axe-lead-m1-G1-view-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-lead-m2-G1-view-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"n\":1,\"badge\":\"pending_verification\",\"link\":\"/transformations/01a11bac-d2b1-75f5-80dd-60a5afc72a66/dispensations\",\"rowText\":\"Inherited approval\\nInherited approval: pending verification (does not approve this gate)\\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\\nView gate dispensations\"}"
+  },
+  {
+    "id": "UI-axe-lead-m2-G1-view-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-lead-m2-G3-view-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"n\":0,\"badge\":null,\"link\":null,\"rowText\":\"\"}"
+  },
+  {
+    "id": "UI-axe-lead-m2-G3-view-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-lead-dir-lang-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[\"ltr\",\"en\"]"
+  },
+  {
+    "id": "U3-aud-m1-list-badges-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"badges\":[{\"s\":\"accepted\",\"c\":\"true\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: accepted, counts for sequencing (does not approve this gate)\"},{\"s\":\"revoked\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: revoked (does not approve this gate)\"},{\"s\":\"accepted\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: accepted, does not count now (does not approve this gate)\"}],\"sources\":[\"Approved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\",\"Approved earlier by Synthetic steering board on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\",\"Approved earlier by Synthetic programme board on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\"]}"
+  },
+  {
+    "id": "U3-aud-m1-list-text-en",
+    "req": "info",
+    "pass": true,
+    "detail": "Transformations\nTR-0017\nStage gates\nStage gates\n\nTR-0017\nSynthetic QA DG3 R3 Modular M1 EN\nDraft – not submitted\nPhase: Define\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoadmap\nDependencies\nCapacity\nBusiness cases\nBenefit formulas\nDecisions\nGates\nReadiness\nDispensations\nEvidence\nTeam\n\nThe product gates G1 to G6 of this transformation: readiness of every required output, submission and the approver's decision.\n\n Read-only view: your role assignments do not allow changes here. The server checks every change.\n\nBusiness approval A stage gate is a business approval decided by the configured approver, a person. This software checks readiness and records the decision; it never approves anything itself.\n\nGates\nG1 - Case for Change\n\nDo we agree on the problem/opportunity and value at stake?\n\nNot submitted\nInherited approval: accepted, counts for sequencing (does not approve this gate)\n0 of 6 mandatory outputs complete\n\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\n\nApprover: Executive Sponsor\n\nG2 - Direction\n\nAre outcomes specific enough to steer decisions?\n\nNot submitted\nInherited approval: re"
+  },
+  {
+    "id": "UI-axe-aud-m1-gates-list-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-aud-m2-list-badges-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"badges\":[{\"s\":\"pending_verification\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: pending verification (does not approve this gate)\"},{\"s\":\"rejected\",\"c\":\"false\",\"cls\":\"status-chip status-chip--unknown status-chip--wrap\",\"text\":\"Inherited approval: rejected (does not approve this gate)\"}],\"sources\":[\"Approved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\",\"Approved earlier by Synthetic steering board on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\"]}"
+  },
+  {
+    "id": "U3-aud-m2-list-text-en",
+    "req": "info",
+    "pass": true,
+    "detail": "Transformations\nTR-0018\nStage gates\nStage gates\n\nTR-0018\nSynthetic QA DG3 R3 Modular M2 EN\nDraft – not submitted\nPhase: Define\n\nOverview\nDiagnose\nCharter\nDefine\nDesign\nPortfolio\nPrioritization\nRoadmap\nDependencies\nCapacity\nBusiness cases\nBenefit formulas\nDecisions\nGates\nReadiness\nDispensations\nEvidence\nTeam\n\nThe product gates G1 to G6 of this transformation: readiness of every required output, submission and the approver's decision.\n\n Read-only view: your role assignments do not allow changes here. The server checks every change.\n\nBusiness approval A stage gate is a business approval decided by the configured approver, a person. This software checks readiness and records the decision; it never approves anything itself.\n\nGates\nG1 - Case for Change\n\nDo we agree on the problem/opportunity and value at stake?\n\nNot submitted\nInherited approval: pending verification (does not approve this gate)\n0 of 6 mandatory outputs complete\n\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\n\nApprover: Executive Sponsor\n\nG2 - Direction\n\nAre outcomes specific enough to steer decisions?\n\nNot submitted\nInherited approval: rejected (doe"
+  },
+  {
+    "id": "UI-axe-aud-m2-gates-list-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-aud-m1-G1-view-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"n\":1,\"badge\":\"accepted\",\"link\":\"/transformations/01a11bac-d288-727f-83fc-0148b4b2e763/dispensations\",\"rowText\":\"Inherited approval\\nInherited approval: accepted, counts for sequencing (does not approve this gate)\\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\\nView gate dispensations\"}"
+  },
+  {
+    "id": "UI-axe-aud-m1-G1-view-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-aud-m2-G1-view-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"n\":1,\"badge\":\"pending_verification\",\"link\":\"/transformations/01a11bac-d2b1-75f5-80dd-60a5afc72a66/dispensations\",\"rowText\":\"Inherited approval\\nInherited approval: pending verification (does not approve this gate)\\nApproved earlier by Synthetic executive committee on 15 Jan 2026; recorded as evidence, not as a decision on this gate.\\nView gate dispensations\"}"
+  },
+  {
+    "id": "UI-axe-aud-m2-G1-view-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-aud-m2-G3-view-en",
+    "req": "REQ-PB-007",
+    "pass": true,
+    "detail": "{\"n\":0,\"badge\":null,\"link\":null,\"rowText\":\"\"}"
+  },
+  {
+    "id": "UI-axe-aud-m2-G3-view-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-aud-dir-lang-en",
+    "req": "REQ-DLV-035",
+    "pass": true,
+    "detail": "[\"ltr\",\"en\"]"
+  },
+  {
+    "id": "U3-aud-gate-view-enabled-buttons-en",
+    "req": "info",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "id": "U3-aud-sends-no-writes-en",
+    "req": "REQ-S16-016",
+    "pass": true,
+    "detail": "[]"
+  }
+]
