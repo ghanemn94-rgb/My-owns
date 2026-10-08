@@ -1,0 +1,28 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG3-180",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified fixed on candidate sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d (source ce988e20, repair T-DG3-FE-G 6b30768 merged in 3dcb41f), on the real stack (disposable PostgreSQL 16, migrations, seed-dev, built API + SPA; synthetic data) in chromium-en (LTR) and chromium-ar (RTL), with LANG/LC_ALL unset and with C.UTF-8. (1) My round-2 probe 'F180 layout probe', unchanged, PASSES in all 4 project/setting combinations: 7 of 7 badges (M1 list accepted+counts / revoked / accepted-not-counting, M2 list pending_verification / rejected, M1 and M2 G1 view) lie inside their li.gate-card or dd at 1280x720; in round 2 7/7 (en) and 4/7 (ar) were outside. (2) My added probe F180b measures every badge state on the Gates list and the G1 view at 320, 390, 768, 900, 901, 1024, 1280, 1366 and 1920 px plus 200% root text at 1280 and 390 px (77 measurements per project and setting). In ALL 77 x 4 measurements the badge lies inside its card/field horizontally and vertically, wraps (white-space normal), is not clipped (scrollWidth <= clientWidth) and overlaps no other text-bearing element of its card; every other .status-chip keeps white-space nowrap (the fix is scoped). In 70 of 77 (every width 320-1920 at 100%, and 1280 px at 200%) the rendered rectangles of the clause '(does not approve this gate)' / '(لا يعتمد هذه البوابة)' also lie inside the viewport and the document does not scroll horizontally. The 7 remaining rows are the one state 390 px + 200% root text: the badge and its clause are inside the card, but the card itself is wider than the viewport because the pre-existing gate grid is minmax(18rem, 1fr) (app.css:1506, since DG2 ea72d86; 576 px at 32 px root), so the page scrolls horizontally. That is about 195 CSS px of effective width, below WCAG 1.4.10's 320 px reflow requirement, and 1.4.4 permits scrolling; the clause is reachable, never hidden under a neighbour or overlapped, which was the F-DG3-180 defect. This makes F180b exit non-zero by my own stricter criterion (disclosed in RUN-NOTES item 6); it is an observation about the grid, not a residual of this finding. (3) The product spec p3-inherited-approval.spec.ts passes 5/5 per project in both settings (axe clean), the unit assertion of status-chip--wrap passes, and the repair diff touches only the badge's class, a span wrapper and the opt-in .status-chip--wrap CSS: nothing else on the Gates screens changed (U3 13/13 checks: states, text, neutral chip, source line, link, dir/lang, AUD read-only). Screenshots at 320 px (AR) and 1280 px (EN) show the full clause wrapped inside the card and the field.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180b-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180b-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180b-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180b-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-cutf8.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG3/qa/tests/round-3/e2e/dg3-qa-r3.spec.ts",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/ar/f180b-m1-list-320.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/en/f180-m1-G1-view.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/en/f180b-m1-list-320.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/ar/f180-m1-G1-view.png"
+      ]
+    }
+  ]
+}

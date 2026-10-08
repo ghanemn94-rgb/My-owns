@@ -1,0 +1,557 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 3,
+  "candidate_id": "sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d",
+  "source_commit": "ce988e20f7ea2752cd3283995fbf7ed05b704485",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-REV-QA-R3B-qa-verifier-20261008T120708Z-7b0434bc",
+    "session_id": "7b0434bc-6fac-48a5-ad35-044d3d1a995b"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG3 scope. In this rerun I wrote only QA tests and evidence: the spec docs/delivery/test-evidence/DG3/qa/tests/round-3/e2e/dg3-qa-r3.spec.ts (outside the frozen candidate), the evidence under docs/delivery/test-evidence/DG3/qa/round-3/, this record, its verifications sidecar and its narrative. Every result comes from my own runs in one disposable clone of ce988e20 under $TMPDIR (review-dg3), removed at the end with all test scratch. HEAD was 923311b at the start and 463cc82 at the end; both differ from ce988e2 only under docs/delivery/, and the candidate ID recomputes identical at the start (working tree), in the clone, at --ref ce988e2 and at --ref HEAD at the end (757 files). I did not open any other reviewer's round-3 record or evidence, nor the orphaned first round-3 qa run (qa-r3-orphaned/). I formed my verdict from my own runs. Disclosure: at the very end, after all runs and the F-DG3-180 verification were complete, `git log` showed commit subjects saying that the code-security rerun reports F-DG3-100 not closed and that a repair T-DG3-KBE-F was assigned. F-DG3-100 is not mine to verify; those subjects changed nothing in my results or verdict. Product gates G1-G6 are business approvals inside the product and never imply DG0-DG7; every business decision in my tests is a synthetic demo record that approves nothing real."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-3/qa-verifier-rerun.md",
+  "requirements_checked": [
+    "REQ-PB-004",
+    "REQ-PB-006",
+    "REQ-PB-007",
+    "REQ-PB-019",
+    "REQ-PB-022",
+    "REQ-PB-032",
+    "REQ-PB-040",
+    "REQ-PB-045",
+    "REQ-PB-046",
+    "REQ-PB-047",
+    "REQ-PB-048",
+    "REQ-PB-049",
+    "REQ-PB-050",
+    "REQ-PB-051",
+    "REQ-PB-052",
+    "REQ-PB-053",
+    "REQ-PB-054",
+    "REQ-PB-055",
+    "REQ-PB-056",
+    "REQ-PB-057",
+    "REQ-PB-059",
+    "REQ-DLV-035",
+    "REQ-S04-006",
+    "REQ-S05-005",
+    "REQ-S08-007",
+    "REQ-S09-001",
+    "REQ-S09-003",
+    "REQ-S09-004",
+    "REQ-S09-005",
+    "REQ-S09-006",
+    "REQ-S09-008",
+    "REQ-S16-016"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R3-00-candidate",
+      "procedure": "Confirm the frozen candidate on a complete (non-shallow) clone before and after the review: HEAD lineage, the diff outside docs/delivery/, and the candidate ID recomputed in the repo, in the clone and at --ref.",
+      "command": "git rev-parse HEAD; git merge-base --is-ancestor ce988e2 HEAD; git diff --name-only ce988e2..HEAD | grep -v ^docs/delivery/; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG3 [--ref ce988e2 | --ref HEAD]",
+      "environment": "repo /home/user/My-owns (HEAD 923311b at start, 463cc82 at end); clone $TMPDIR/review-dg3 @ ce988e20; node v24.21.0",
+      "expected": "candidate sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d, 757 files, everywhere; HEAD a descendant of ce988e2 differing only under docs/delivery/; complete clone",
+      "actual": "Identical candidate ID (757 files) in the repo working tree at the start, in the clone at ce988e20, at --ref ce988e2, and at --ref HEAD and in the working tree at the end. ce988e2 is an ancestor of HEAD; 0 files outside docs/delivery/ changed from ce988e2 to 923311b and from 923311b to 463cc82. Neither repo nor clone is shallow. The manifest file records the same candidate_id, source ce988e2 and 757 entries.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/00-candidate.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/00-candidate-end.log"
+      ]
+    },
+    {
+      "id": "QA-R3-00-install",
+      "procedure": "Offline install of the workspace from a copy of the local pnpm store (the sandbox has no network).",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pnpm-store-root/v10",
+      "environment": "clone review-dg3 @ce988e20; node v24.21.0; pnpm 10.33.0; no network",
+      "expected": "exit 0, lockfile honoured",
+      "actual": "EXIT 0: 'Lockfile is up to date', 371 packages reused, 0 downloaded. The four 'WARN Failed to create bin … mth-db … dist/cli.js' lines are expected before the first build (packages/db/dist does not exist yet); the bin works after pnpm -r build (the e2e harness runs the built CLI).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/00-install.log"
+      ]
+    },
+    {
+      "id": "QA-R3-01-static",
+      "procedure": "All static checks of the assignment, each with its own log.",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "clone review-dg3 @ce988e20; node v24.21.0; pnpm 10.33.0; CI=1",
+      "expected": "each exits 0; the KBE-E formula rules (eslint.config.js) do not fail on the shipped code",
+      "actual": "All 7 EXIT 0. lint is `eslint . --max-warnings=0`, so the round-3 formula rules (import allowlist, host globals, constructor literal/identifier, prototype reflection, assembled keys) pass on the shipped code. openapi:lint 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 270 operations'. contrast: '50 pairs meet WCAG AA; 3 prohibited pairs fail as documented' (the three 'fails' lines are the prohibited pairs, asserted to fail by design). build: the only warning is Vite's advisory about chunks > 500 kB. No other error or warning line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-056",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/01-pnpm-filter-mth-design-tokens-run-check-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R3-01b-formula-guard-static-negative-probe",
+      "procedure": "T-DG3-KBE-E static rules from the acceptance side: a throwaway engine source packages/shared/src/formula/zz-qa-probe.ts with 15 forbidden forms (node:module/createRequire, node:inspector, workspace import @mth/shared, globalThis[\"ev\"+\"al\"], process.getBuiltinModule, Object.getPrototypeOf, a \"constructor\" literal, a template key on a function expression, self, import.meta, a Function alias, Reflect.construct, a .constructor read) is linted, then deleted.",
+      "command": "npx eslint packages/shared/src/formula/zz-qa-probe.ts; rm packages/shared/src/formula/zz-qa-probe.ts",
+      "environment": "clone review-dg3 @ce988e20; node v24.21.0; ESLint 10.1.0",
+      "expected": "ESLint refuses every forbidden form (exit 1 by design); the clone is clean afterwards",
+      "actual": "EXIT 1 by design: 25 errors covering every forbidden form, on lines 2-12 and 15-17 (no-restricted-imports allowlist for node:module, node:inspector and @mth/shared; no-restricted-globals and the host-name rule for globalThis/process/self; assembled-key, prototype-reflection, constructor-literal, import.meta, require/createRequire, Function-alias, Reflect and .constructor rules). Lines 13, 14 and 18 only reference already-refused imports or a timer without calling it and are not separate forms. The file was deleted. A first attempt (trials/01b-trial-1-wrong-formatter.log, EXIT 2) used `--format unix`, which ESLint 10 no longer ships, so nothing was linted there; it is superseded by this run.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-056"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/01b-guard-static-negative-probe.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/trials/01b-trial-1-wrong-formatter.log"
+      ]
+    },
+    {
+      "id": "QA-R3-01c-formula-guard-runtime-mutation-probe",
+      "procedure": "T-DG3-KBE-E run-time layer from the acceptance side: mutate the engine (index.ts evaluateFormula) to call the Function constructor through a key assembled at run time (['con','struc','tor'].join('') on Math.max), which no static rule can see; lint it; run the formula tests in a normal process, in the unit-formula-nocodegen project and via pnpm test; restore; confirm that mixing projects is refused and that the restored engine passes.",
+      "command": "npx eslint packages/shared/src/formula/index.ts; npx vitest run --project unit-node packages/shared/src/formula; npx vitest run --project unit-formula-nocodegen; pnpm test; (restore) npx vitest run --project unit-formula-nocodegen --project unit-node; npx vitest run --project unit-formula-nocodegen",
+      "environment": "clone review-dg3 @ce988e20; node v24.21.0; vitest 3.2.4",
+      "expected": "lint 0 (outside static reach, as ADR-0024 §6 states); normal process passes; no-codegen project fails with EvalError; pnpm test non-zero; mixing projects refused; restored engine passes 190/190; clone clean",
+      "actual": "Mutated: eslint EXIT 0; unit-node formula 184/184 EXIT 0 (invisible in a normal process); unit-formula-nocodegen EXIT 1, 25 failed / 165 passed, 'EvalError: Code generation from strings disallowed for this context'; pnpm test EXIT 1 (first invocation 1587/1587, second 25 failed). Restored: git status clean; mixing projects -> Startup Error 'Run --project unit-formula-nocodegen in its own vitest invocation…' EXIT 1 by design; unit-formula-nocodegen 190/190 EXIT 0. The non-zero steps are the intended outcomes. The trial-1 copy of this log (trials/01c-…) failed only in its lint step (the same unix-formatter error, EXIT 2); its run-time results were identical.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-056"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/01c-guard-runtime-mutation-probe.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/trials/01c-trial-1-lint-step-wrong-formatter.log"
+      ]
+    },
+    {
+      "id": "QA-R3-02-unit",
+      "procedure": "pnpm test (now two Vitest invocations: unit-node + unit-web, then unit-formula-nocodegen) on Node 22 and Node 24, with LANG/LC_ALL/TZ unset and with C.UTF-8/UTC; per-file counts compared with round 2.",
+      "command": "pnpm test   (env -u LANG -u LC_ALL -u TZ | LANG=C.UTF-8 LC_ALL=C.UTF-8 TZ=UTC) x (node 22.22.2, node 24.21.0)",
+      "environment": "clone review-dg3 @ce988e20; /opt/node22/bin and /opt/nvm/versions/node/v24.21.0/bin; locale -a: C, C.utf8, POSIX; host load ~8 on 4 vCPU (concurrent reviewers)",
+      "expected": "exit 0 in every run; both invocations report their tests; formula acceptance unchanged",
+      "actual": "Node 22 C.UTF-8, Node 24 unset and Node 24 C.UTF-8: EXIT 0, first invocation 81 files / 1587 tests passed, second (unit-formula-nocodegen) 3 files / 190 tests passed (codegen.nocodegen 6, formula 136, fuzz 48). Versus round 2 (1565): the only change is fuzz.test.ts 26 -> 48 (+22); every other file count is identical. Node 22 unset, first run: EXIT 1, 1 failed / 1586 passed, so the second invocation did not run. The failure: apps/web/src/auth/session-identity.test.tsx 'F-DG2-500 sign-out here and 403 (en) > signing out here clears everything…', findByText('No transformations yet') timed out (Testing Library default 1000 ms) at line 295 under host load ~8 on 4 vCPU. The DOM dump shows user B's own home page, and the assertion before it (A's secret absent, line 293) passed, so no data of A leaked: the list had not yet rendered. The file is unchanged since DG2 (29da00d). Rerun of the same configuration: EXIT 0, 1587/1587 + 190/190; the file alone 8 of 8 repeats 18/18. A load-sensitive timing flake of a DG2 test, not a DG3 defect: disclosed, not a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-047",
+        "REQ-PB-056",
+        "REQ-PB-057",
+        "REQ-S08-007",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/02-unit-node22-unset-rerun.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/02-unit-node24-C.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/trials/02-session-identity-repeat-node22-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R3-03-integration-x2",
+      "procedure": "The integration project twice, each on its own disposable PostgreSQL 16 cluster (UTF8, C locale): migrations 0001->0027 on a fresh database, contract.test.ts against the 270-operation contract, every p3-pending list empty.",
+      "command": "QA_PG_PORT=26510|26530 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose",
+      "environment": "clone review-dg3 @ce988e20; node v24.21.0; PostgreSQL 16.13",
+      "expected": "exit 0 twice; 27 migrations; every operation routed and exercised; pending lists empty",
+      "actual": "Run 1 and run 2: EXIT 0, 56 files / 793 tests passed each (same as round 2), 'applied 27 migrations to a fresh database' (0001_identity_access … 0027_p3_calculation_rounding). contract.test.ts passes every module group (P2, kpi, BE-A..E, KBE-B/C) and the U+0000 sweeps. openapi:lint counts 270 operations. P3_PENDING_BE_A/B/C/D/E, KBE_B/C, P2_PENDING_KPI and P2_PENDING_BACKEND are all `[]`. Notable passing-test stdout: 'BE17 db-econnreset {status 500 … ECONNRESET}' is the deliberate negative 'a database-side ECONNRESET while the request body is still arriving is a 500 with an error log'; BE17 R6*/R8, SWEEP 408 and BE18 Q7 idp_unavailable are stdout of passing request-io / connection-hygiene / commit-time-auth tests; 'npm warn Unknown project config' lines are npm advisories about pnpm .npmrc keys. No failure, skip or timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-016",
+        "REQ-PB-004",
+        "REQ-PB-007",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/03-pending-lists.txt"
+      ]
+    },
+    {
+      "id": "QA-R3-04-e2e-full",
+      "procedure": "Product journeys (apps/web/e2e, 12 specs incl. the new p3-inherited-approval.spec.ts), the A20 shell spec and my spec on the real stack (disposable PostgreSQL, migrate, seed-dev, built API serving the built SPA), --workers=1, chromium-en and chromium-ar, with LANG/LC_ALL unset and with C.UTF-8. Per-spec counts compared with round 2.",
+      "command": "[env -u LANG -u LC_ALL | LANG=C.UTF-8 LC_ALL=C.UTF-8] QA_E2E_PG_PORT=26620|26640 QA_E2E_API_PORT=26625|26645 MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test <14 explicit spec files> --workers=1 --reporter=list",
+      "environment": "clone review-dg3 @ce988e20; node v24.21.0; @playwright/test 1.56.1; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (pre-installed chromium, never installed); my spec sha256 c99431a4 in both runs",
+      "expected": "every product and A20 test passes; every QA test passes, apart from failures explained precisely",
+      "actual": "Each setting: EXIT 1, 216 passed, 2 failed, 0 skipped/flaky/did-not-run. Product + A20: 182/182 per setting (round 2: 172; +10 = p3-inherited-approval 5 per project; every other spec's count identical: journeys 9+9, p2-blank-text 9+9, p2-journeys 12+12, p3-business-cases 6+6, p3-g4-refusal 2+2, p3-journeys 18+18, p3-portfolio 6+6, p3-prioritization-roadmap 7+7, p3-seams 3+3, p3-ui-completion 7+7, session-end 5+5, a20 2+2). My spec: 17 passed + 1 failed per project (round 2: 16 + 1 with F180 failing; now F180 passes). The 2 failures are my new probe F180b (en and ar), single failing assertion line 1768 `expect(bad).toEqual([])`: 7 of 77 rows, all in the one state 390 px + 200% root text, where the pre-existing gate grid (minmax(18rem,1fr), since DG2) makes each card 576 px wide and the page scroll horizontally, while every badge stays inside its card; details in QA-R3-07b and RUN-NOTES item 6. A trial run (trials/04-trial-1-…, EXIT 1, 216/2) failed only in F180b because my probe's page.addStyleTag was refused by the app's CSP style-src 'self' (the CSP working as intended); fixed in my spec by using the CSSOM. Every other 'error' match in the logs is the name of a passing test.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-cutf8.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-per-spec-counts-r2-vs-r3-unset.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-per-spec-counts-r2-vs-r3-cutf8.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-3/trials/04-trial-1-unset-addStyleTag-csp.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG3/qa/tests/round-3/e2e/dg3-qa-r3.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R3-05-inherited-approval-api",
+      "procedure": "Regression of the F-DG3-120 behaviour through the public API (spec IA1, unchanged): two synthetic Modular transformations covering every annotation state; selection rule; End-to-End and G4 negatives; gate stays draft with no submission or decision (full audit trail); AUD reads the same annotation and every write is 403; revoke without If-Match 428.",
+      "command": "part of QA-R3-04 (e2e/dg3-qa-r3.spec.ts test IA1)",
+      "environment": "real stack as QA-R3-04; users dev.lead (TL), a synthetic SP per transformation, dev.office, dev.auditor (AUD)",
+      "expected": "states exactly as recorded; list == view; gate status draft, approvedAt null, latestSubmissionNo 0; no gate decision/submission in the audit trail; AUD read-only",
+      "actual": "All 23 IA1 checks pass in en and ar in both settings, with the same results as round 2: null before any record; End-to-End recording 422 dispensation.inherited_requires_modular; G4 400; pending_verification / accepted (counts true / false) / rejected / revoked as recorded; list == view; every gate draft, approvedAt null, latestSubmissionNo 0; 6 gate_instance.create and no other gate event in each audit trail; AUD sees the same annotation and gets 403 on every write; revoke without If-Match 428.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004",
+        "REQ-PB-007",
+        "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R3-06-inherited-approval-ui",
+      "procedure": "Spec U3 (unchanged): Gates list of M1 and M2 and gate views M1 G1, M2 G1, M2 G3, as TL and as AUD, in chromium-en and chromium-ar: badge state and data-counts, label + 'does not approve this gate' clause, neutral chip class, source line, dispensations link, axe, dir/lang, AUD sends no write. Confirms that nothing else on the Gates screens changed with T-DG3-FE-G.",
+      "command": "part of QA-R3-04 (e2e/dg3-qa-r3.spec.ts test U3); git diff f49ca160..ce988e2 -- apps/web/src",
+      "environment": "real stack as QA-R3-04; Desktop Chrome 1280x720; locale en-US / ar-SA; Asia/Riyadh",
+      "expected": "badges correct next to the unchanged 'Not submitted' status; clause in every state; neutral chip (now with status-chip--wrap); no row where none; axe clean; AUD GETs only",
+      "actual": "All 13 U3 checks pass in both projects and both settings. M1 list [accepted/true, revoked/false, accepted/false], M2 [pending_verification/false, rejected/false]; every badge contains the label and the clause, carries status-chip--unknown and never approved/on-track; M2 G3 has no row; links go to /dispensations; axe 0 serious/critical; dir/lang rtl/ar and ltr/en; AUD sends no non-GET. The web repair diff is only GatesPage.tsx (badge class + status-chip--wrap and a span around the text), app.css (the opt-in .status-chip--wrap rules) and one unit assertion; no other Gates element changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-007",
+        "REQ-S16-016",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/en/qa-r3-lead-m1-gates-list.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/ar/qa-r3-lead-m1-gates-list.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/ar/qa-r3-aud-m2-G1-view.png"
+      ]
+    },
+    {
+      "id": "QA-R3-07-F180-verification-round2-probe",
+      "procedure": "F-DG3-180 verification, step 1: my round-2 'F180 layout probe', unchanged: each of the 7 badges (M1 list x3, M2 list x2, M1 G1 view, M2 G1 view) compared with its li.gate-card / dd at the default 1280x720 viewport, within 1 px.",
+      "command": "part of QA-R3-04 (e2e/dg3-qa-r3.spec.ts test 'F180 layout probe')",
+      "environment": "real stack as QA-R3-04; chromium-en and chromium-ar; both locale settings",
+      "expected": "0 badges outside their box, in all 4 project/setting combinations",
+      "actual": "PASS in all 4 combinations: 7 of 7 inside (round 2: 7/7 outside in en, 4/7 in ar). E.g. the M1 G1 view badge now wraps within its dd; screenshots show the full '(does not approve this gate)' / '(لا يعتمد هذه البوابة)' clause.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/en/f180-m1-G1-view.png"
+      ]
+    },
+    {
+      "id": "QA-R3-07b-F180-extended-layout-probe",
+      "procedure": "F-DG3-180 verification, step 2 (widths and states I judged missing): new test F180b. Every badge state on the Gates list and the G1 view at 320, 390, 768, 900, 901, 1024, 1280, 1366, 1920 px and at 200% root text at 1280 and 390 px (77 measurements per project). Per badge: inside its card/dd horizontally and vertically; the clause's rendered rectangles inside the card and the viewport; not clipped; no overlap with other text-bearing elements of the card; no horizontal document scroll; every other .status-chip still nowrap.",
+      "command": "part of QA-R3-04 (e2e/dg3-qa-r3.spec.ts test 'F180b extended layout probe')",
+      "environment": "real stack as QA-R3-04; chromium-en and chromium-ar; both locale settings",
+      "expected": "badge inside its card/field, clause visible and never overlapped, at every width and state; fix scoped to the badge",
+      "actual": "Test EXIT non-zero in all 4 combinations, by my own stricter criterion; explained. In all 77 x 4 rows: badge inside its box (horizontal and vertical), white-space normal, not clipped, 0 overlaps, other chips nowrap, root font 16 -> 32 px in the 200% state. In 70 of 77 (all of 320-1920 px at 100%, and 1280 px at 200%) every criterion holds, including clause-in-viewport and no horizontal scroll. The 7 failing rows are exactly the 7 badges at 390 px + 200% text: the card itself (minmax(18rem,1fr) in .gate-list, app.css:1506, unchanged since DG2 ea72d86 = 576 px at 32 px root; the view's dd is likewise wider) exceeds the 390 px viewport, the document scrolls (scrollWidth 633/505 > 390), and the clause, inside its card, extends past the viewport edge and is reachable by scrolling. The effective width is about 195 CSS px, below WCAG 1.4.10's 320 px reflow requirement; 1.4.4 allows horizontal scrolling. It is a property of the pre-existing grid, unrelated to the badge, and not a DG3 acceptance criterion: an observation, not a finding. F-DG3-180 (badge overflowing its card or field, the clause hidden or overlapped) is not reproduced in any state.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180b-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180b-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180b-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180b-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/ar/f180b-m1-list-320.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/en/f180b-m1-list-390-zoom200.png",
+        "docs/delivery/test-evidence/DG3/qa/round-3/RUN-NOTES.md"
+      ]
+    },
+    {
+      "id": "QA-R3-08-sequencing",
+      "procedure": "Literal API probes (spec A1, A2, A3, A6, unchanged) on a fresh End-to-End transformation per project: draft and submit before G1; readiness; G1 decision with and without the three agreements; pre-G1 portfolio add; 'Outcome before activity'; launch before and after G2/G3.",
+      "command": "part of QA-R3-04 (tests A1, A2, A3, A6)",
+      "environment": "real stack as QA-R3-04",
+      "expected": "REQ-PB-007: 422 invalid-transition before G1, readiness lists missing dimensions; REQ-PB-022: G1 needs the three agreements, pre-G1 portfolio add 422; REQ-PB-006: validation error naming 'Outcome before activity', accepted with a link; REQ-PB-004: launch 422 with the literal reason before G2/G3, success after",
+      "actual": "All A1 (5), A2 (4), A3 (8) and A6 (10) checks pass in both projects and both settings. Submit before G1 -> 422 invalid-transition, the initiative stays draft, readiness lists economics, customer, operations, capability and technology; G1 without the agreements -> 422, with them approved; launch with G2 pending and after G2 only -> 422 initiative.direction_not_approved 'North Star, outcomes and target state not yet approved'; after G2 and G3 -> 200 (INI-01).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004",
+        "REQ-PB-006",
+        "REQ-PB-007",
+        "REQ-PB-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R3-09-hierarchy-tom-T05",
+      "procedure": "Spec A1, A3, A4, A6: five-level outcome tree; contribution without outcome link refused; initiative as G3 TOM evidence refused and linked to one or more TOM gaps; T05 14 fields round-trip; deliverables 2/3/7/8 and the 3-7 warning; S16 entities created and read with authorization.",
+      "command": "part of QA-R3-04 (tests A1, A3, A4, A6)",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-032/040/045/046 and REQ-S16-016 as written",
+      "actual": "All A4 (7) checks and the related A1/A3/A6 checks pass in both projects and both settings, with the same literal results as rounds 1-2: the T05 fields persist; the initiative.deliverable_count warning appears for 2 and 8 deliverables and not for 3 or 7; the tree persists and links at all five levels; a contribution without an outcome link and an initiative as TOM evidence are refused; an initiative links to two TOM gaps; G4 names the initiative without a gap link.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-032",
+        "REQ-PB-040",
+        "REQ-PB-045",
+        "REQ-PB-046",
+        "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R3-10-T06-prioritization",
+      "procedure": "Spec A5 and U1: scores 5,4,3,2,1 -> 3.30; 6 refused; missing score 'incomplete'; Weighted score read-only; weights 95%/105% refused; weight-set version 2 with risk/compliance 10%; version-1 references kept; ranking history naming 'weight version 2'; override without reason refused; the 0-100 view with its conversion label.",
+      "command": "part of QA-R3-04 (tests A5, U1)",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-047/048/049, REQ-S09-001/005, REQ-DLV-035 as written",
+      "actual": "All A5 (15) and U1 (9) checks pass in both projects and both settings: weightedScore '3.3000' displayed 3.30, display100 '57.5' with conversion '(score-1)/4*100' and the 1-5 value stored; score 6 refused; missing score 'incomplete' with no numeric total; Weighted score write 400; 95% and 105% -> 422 prioritization.weights_total ('got 95.00%') with nothing written; version 2 accepted and used, version-1 scores keep their reference; history names 'weight version 2'; an override without reason refused; on screen the 0-100 view shows 47.5 for the 2.90 score under version 2 with the conversion label.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-047",
+        "REQ-PB-048",
+        "REQ-PB-049",
+        "REQ-S09-001",
+        "REQ-S09-005",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/ar/qa-prioritization-100.png"
+      ]
+    },
+    {
+      "id": "QA-R3-11-roadmap-T07",
+      "procedure": "Spec A7: the four seeded waves compared verbatim with playbook B0079 (Arabic present); overlapping horizons accepted; milestone move reflected in table and board; conflicting concurrent edit shows a conflict.",
+      "command": "part of QA-R3-04 (test A7) plus product p3-journeys, p3-prioritization-roadmap, p3-ui-completion",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-050, REQ-S09-006 as written",
+      "actual": "All A7 (7) checks pass in both projects and both settings ('0-6 weeks', 'Sponsor + charter' etc. verbatim; overlap accepted; milestone move; 409 conflict on a stale version), and the product roadmap specs pass (QA-R3-04).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-050",
+        "REQ-S09-006",
+        "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R3-12-T08-dependencies",
+      "procedure": "Spec A8: T08 7 columns; From initiative or 'External'; source types present and undeletable; unknown type refused; cycles A->B->A and A->B->C->A; predecessor finishing after the successor's needed-by date flagged; sequencing before predecessor flagged.",
+      "command": "part of QA-R3-04 (test A8)",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-051/052, REQ-S09-008, REQ-S09-004, REQ-DLV-035 as written",
+      "actual": "All A8 (8) checks pass in both projects and both settings: system types undeletable (422 dependency_type.system_undeletable); 'telepathy' -> 422 dependency.unknown_type; A->B->A and A->B->C->A -> 422 dependency.cycle 'Dependency cycle: INI-04 → INI-02 → INI-03 → INI-04'; schedule flags for the late predecessor and the out-of-order initiative.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-051",
+        "REQ-PB-052",
+        "REQ-S09-008",
+        "REQ-S09-004",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R3-13-business-case-T09",
+      "procedure": "Spec A9 and A10, the formula acceptance after T-DG3-KBE-E: ten sections; one classification per line, two refused; SAR decimals; initiative case -> transformation roll-up without duplication; T09 six columns; Confidence outside H/M/L refused; undefined variable refused; 0.10->0.12 x 100000 x 50 SAR = 100000 SAR; cost example exact; monthly ARPU x annual population refused; 0.02 x 100000 x 50 SAR = 100000 SAR; unvalidated formula blocks G4 'Finance validation'.",
+      "command": "part of QA-R3-04 (tests A9, A10)",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-053/054/055/056/057, REQ-S05-005, REQ-S08-007 unchanged and as written",
+      "actual": "All A9 (17) checks pass in both projects and both settings with the same literal results as rounds 1-2, so the formula acceptance is unchanged by KBE-E (whose engine sources are unchanged; only tests and test-support changed): revenue example result '100000' SAR; 0.02x100000x50 '100000'; cost example '151852.11' SAR exact; Confidence outside H/M/L -> 400; undefined variable refused; monthly x annual without conversion refused; two classes on a line refused; case total = sum of distinct lines; roll-up without duplication. G4 with an unvalidated formula is refused listing 'Finance validation' (A10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-053",
+        "REQ-PB-054",
+        "REQ-PB-055",
+        "REQ-PB-056",
+        "REQ-PB-057",
+        "REQ-S05-005",
+        "REQ-S08-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R3-14-capacity-funding-selection",
+      "procedure": "Spec A6, A10: selection by the synthetic SP; 'Selected - unfunded'; launch unfunded refused; FIN funding; TL funding refused; demand above capacity reported as a conflict; Unknown capacity never 0; commitment only by the capacity owner.",
+      "command": "part of QA-R3-04 (tests A6, A10)",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-059, REQ-S09-003, REQ-S09-004, REQ-S16-016 as written",
+      "actual": "All related checks pass in both projects and both settings: 1.50 FTE demand against 1.00 available is an over-allocation with a 0.50 shortfall; status selected / funding unfunded, displayed 'Selected - unfunded', launch after G2/G3 refused 422 initiative.selected_unfunded; FIN funding 201, TL 403; capacity commitment by TL 403, by the owner 200. A10-unknown-capacity-not-zero passes with 'no unknown cell' (my fixture creates none, so it only shows that no zero was invented); the Unknown-never-0 rendering is covered by the passing unit test 'capacity (en)/(ar) … Unknown capacity as Unknown (never 0)' in QA-R3-02.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-059",
+        "REQ-S09-003",
+        "REQ-S09-004",
+        "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/02-unit-node24-C.log"
+      ]
+    },
+    {
+      "id": "QA-R3-15-G4",
+      "procedure": "Spec A10: G4 refusal naming Owners, gap link, funding, capacity commitment and Finance validation, writing nothing; then ready; submitted; submitter 403; superseded submission 409; non-approver 403; approved end to end; double decision refused.",
+      "command": "part of QA-R3-04 (test A10) plus product p3-journeys and p3-g4-refusal",
+      "environment": "real stack as QA-R3-04",
+      "expected": "acceptance of REQ-PB-019, REQ-PB-046, REQ-PB-055, REQ-S04-006, REQ-DLV-035 as written; G4 is a demo business decision that approves nothing real",
+      "actual": "All A10 (19) checks pass in both projects and both settings, as in rounds 1-2. The info row A10-G4-order-observation (separation of duties is checked before the version: 403 gate.submitter_cannot_decide) is unchanged. p3-g4-refusal passes 2+2 per setting.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-019",
+        "REQ-PB-046",
+        "REQ-PB-055",
+        "REQ-S04-006",
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-dg3-qa-r3-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R3-16-S16-entities",
+      "procedure": "Each listed entity in the migrations (CREATE TABLE block: primary key, owner and status columns) and in the ERD; created and read through the API with authorization (spec A4-A10 and the integration suites).",
+      "command": "python3 -I s16.py (CREATE TABLE / PRIMARY KEY / owner / status / erd.md scan of the clone); git diff --stat f49ca160..ce988e2 -- packages/db docs/architecture/erd.md",
+      "environment": "clone review-dg3 @ce988e20",
+      "expected": "all 8 entities with PK and owner/status where applicable; create+read with authorization",
+      "actual": "All 8 found with PRIMARY KEY and in erd.md: initiative, deliverable, milestone, roadmap_wave (0020), dependency (0017, altered in 0022), resource_demand, capacity, funding_decision (0022, altered in 0023). Owner and status columns on all but funding_decision, an immutable decision record whose owner is decided_by (+ approver_role_code) and whose status is outcome (approved|rejected|deferred|revoked). The round-3 repair touches no migration or ERD. The 10 S16 API checks per project pass, and the integration suites pass twice.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/06-s16-entities.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-dg3-qa-r3-checks-en.json"
+      ]
+    },
+    {
+      "id": "QA-R3-17-bilingual-a11y-aud",
+      "procedure": "Axe (wcag2a/aa, wcag21a/aa) on the P3 screens of my spec (U1, U3) and the product specs' axe summaries; dir/lang; AUD read-only pass (U2 on the P3 screens, U3 on the Gates screens, IA1 on the API).",
+      "command": "part of QA-R3-04; summary script over results/axe-e2e-*/ and the checks files",
+      "environment": "real stack as QA-R3-04",
+      "expected": "no serious or critical axe issue; rtl/ar and ltr/en; AUD sends only GETs",
+      "actual": "Product axe summaries: 1392 page analyses per setting, 0 violations of any impact (+48 vs round 2: the 8 p3-inherited-approval pages per language recorded in the cumulative summary and dumped by 3 later specs; that spec also fails itself on any serious/critical issue and passed). My axe checks: 32 per setting, 0 failed. dir/lang correct in both projects. AUD: U2-aud-sends-no-writes and U3-aud-sends-no-writes pass (no non-GET request), IA1 AUD writes all 403. Recorded checks: 163 per project per setting, 0 failed (same as round 2), plus 13 (en) / 19 (ar) info rows.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-035",
+        "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-axe-summary.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-3/04-checks-summary.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/axe-e2e-unset/en-axe-summary-p3-portfolio.json",
+        "docs/delivery/test-evidence/DG3/qa/round-3/results/axe-e2e-cutf8/ar-axe-summary-p3-portfolio.json"
+      ]
+    },
+    {
+      "id": "QA-R3-18-register-pipeline-historical",
+      "procedure": "Register rules at DG3, pipeline, and the two previously approved gates historically.",
+      "command": "node tools/gates/validate.mjs --register DG3; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --historical --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "repo /home/user/My-owns @ 923311b; node v24.21.0",
+      "expected": "each exits 0",
+      "actual": "PASS register rules at DG3; PASS pipeline (active stage: DG3 REVIEWING); PASS gate DG2 (historical); PASS gate DG1 (historical). All EXIT 0. The register has 32 DG3-final rows, exactly the 32 assigned ids, and their acceptance texts are the ones tested literally.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-035"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/05-validate-register-DG3.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/05-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/05-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/05-validate-historical-stage-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R3-19-environmental-residuals",
+      "procedure": "Environmental residuals named by the assignment, checked on the offline/config surface only.",
+      "environment": "sandbox without network",
+      "expected": "PASS on the offline/config surface with the residual noted",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057): not reachable; the offline frozen-lockfile install from the store passes (QA-R3-00-install). Live CI (REQ-DLV-025 A24, D-058): not run here; the same commands ran locally (QA-R3-01..04). Keycloak (D-049): not available; the e2e stack uses AUTH_MODE=dev and the integration OIDC tests use the in-process test IdP. These are residuals, not product results.",
+      "exit_status": null,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-3/00-install.log",
+        "docs/delivery/test-evidence/DG3/qa/round-3/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG3/qa/round-3/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG3/qa/round-3/env.txt",
+    "docs/delivery/test-evidence/DG3/qa/round-3/00-candidate.log",
+    "docs/delivery/test-evidence/DG3/qa/round-3/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-unset.log",
+    "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-cutf8.log",
+    "docs/delivery/test-evidence/DG3/qa/round-3/04-checks-summary.txt",
+    "docs/delivery/test-evidence/DG3/qa/round-3/04-axe-summary.txt",
+    "docs/delivery/test-evidence/DG3/qa/tests/round-3/e2e/dg3-qa-r3.spec.ts",
+    "docs/delivery/reviews/DG3/round-3/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG3/round-3/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-08T13:40:00Z",
+  "summary": "PASS. F-DG3-180 verified CLOSED: my round-2 F180 probe passes 7/7 in chromium-en and chromium-ar under both locale settings, and my new F180b probe shows every badge state inside its card/field, wrapped, unclipped and unoverlapped at 320-1920 px and at 200% text. Its only failing state (390 px + 200% text) is caused by the pre-existing 18rem gate grid, not the badge, lies below the WCAG reflow width, and is disclosed as an observation. Full regression on candidate f2b4c77a: static checks pass; the KBE-E formula guard passes on shipped code, refuses all 15 forbidden static forms, and its run-time layer catches a run-time-assembled constructor key that lint cannot see; pnpm test runs both invocations (1587 + 190) on Node 22 and 24 in both locales (one DG2 unit test flaked once under load, rerun and 8 repeats green); integration 793/793 twice (27 migrations, 270 operations, pending lists empty); e2e 182/182 product + A20 per setting and 163/163 literal acceptance checks per project; axe 0 violations; AUD read-only; validators pass. No new findings.",
+  "narrative": "docs/delivery/reviews/DG3/round-3/qa-verifier.md"
+}
