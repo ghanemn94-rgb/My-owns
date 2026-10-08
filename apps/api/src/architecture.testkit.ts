@@ -132,7 +132,7 @@ const TEST_ONLY_THIRD_PARTY: ReadonlySet<string> = new Set([
   "vitest",
   ...Object.keys(apiPkg.devDependencies ?? {}).filter((d) => !d.startsWith("@mth/") && !d.startsWith("@types/")),
 ]);
-const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
+const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/shared/calc", "@mth/config", "@mth/db"]);
 /**
  * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from
  * what module source imports (crypto, fs, path, url) plus the read/utility built-ins fs/promises, os and util. Per the

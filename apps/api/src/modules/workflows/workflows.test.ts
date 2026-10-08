@@ -63,7 +63,12 @@ describe("workflows module (P2)", () => {
     expect(routes.map((r) => r.key).sort()).toEqual([...registration.routes].sort());
     for (const r of routes) {
       const permission = (r.access as { permission?: string }).permission;
-      if (r.key.startsWith("GET")) expect(permission, r.key).toBe("transformation.read");
+      // GET /api/v1/dependency-types is the one global catalogue read: the contract declares no 403 on it, so it is
+      // "authenticated" (T-DG3-BE-C handback 7.1; integrated by the orchestrator).
+      if (r.key.startsWith("GET"))
+        expect(permission, r.key).toBe(
+          r.key === "GET /api/v1/dependency-types" ? "authenticated" : "transformation.read",
+        );
       else expect(permission, r.key).not.toMatch(/\.read$/);
     }
     expect(routes.find((r) => r.key.endsWith("/decision"))?.access).toEqual({ permission: "gate.decide" });
