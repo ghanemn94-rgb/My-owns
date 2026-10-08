@@ -803,6 +803,9 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
     ["void Array.fromAsync([0]);", "fromAsync/asyncIterator"],
     ["const i = o[Symbol.asyncIterator];", "fromAsync/asyncIterator"],
     ["for await (const x of xs) a(x);", "await"],
+    // F-DG3-280 (round 7): a private name. Only the PrivateIdentifier part of the round-6 name selector refuses these.
+    ["class C {\n  #then() {}\n}", "then"],
+    ["class C {\n  #fromAsync = 0;\n}", "fromAsync/asyncIterator"],
     ['const s = "unclosed;', "unbalanced braces, quotes or templates"],
     ["function f() {", "unbalanced braces, quotes or templates"],
   ];
@@ -810,28 +813,65 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
     expect(scanSource(probe)).toContain(what);
   });
 
+  // F-DG3-280 (round 7): the probe-table rows that are not valid modules, and why. The ESLint test below lints every other
+  // row, and requires each of these to be a parse error instead.
+  const LINT_EXCLUDED: ReadonlyMap<string, string> = new Map([
+    ['const s = "unclosed;', "unterminated string literal: not a valid module, so ESLint reports a parse error"],
+    ["function f() {", "unclosed block: not a valid module, so ESLint reports a parse error"],
+  ]);
+  it("excludes from the ESLint test only the named probe rows that are not valid modules", () => {
+    for (const text of LINT_EXCLUDED.keys())
+      expect(
+        PROBES.map(([t]) => t),
+        text,
+      ).toContain(text);
+    expect(PROBES.filter(([text]) => LINT_EXCLUDED.has(text)).length).toBe(LINT_EXCLUDED.size);
+  });
+
   // F-DG3-100 round 6: layer 1 refuses the same forms. ESLint lints each probe as if it were an engine source, so the
   // test proves the rule fires, not only that it is configured. unit-node only (ESLint cannot run without codegen).
   it.skipIf(NOCODEGEN)(
-    "ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and the round-4 forms (W1, W2, W4) in an engine source",
+    "ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source",
     { timeout: 60_000 },
     async () => {
       const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
       const eslint = new ESLint({ cwd: repoRoot });
-      const lint = async (text: string) => {
+      const lintResult = async (text: string) => {
         const [result] = await eslint.lintText(text, { filePath: `${SRC_DIR}formula/tokenize.ts` });
-        return result!.messages.filter((m) => m.severity === 2).map((m) => m.ruleId);
+        return result!;
       };
+      const lint = async (text: string) =>
+        (await lintResult(text)).messages.filter((m) => m.severity === 2).map((m) => m.ruleId);
       for (const [id, text, , rule] of ROUND5_HANDLER_FORMS) {
         expect(await lint(text), id).toContain(rule);
       }
       for (const text of F1_FORMS) expect(await lint(text), text).toContain("no-unsafe-finally");
-      for (const [text] of PROBES.filter(([, what]) =>
-        /^(catch|finally|\.then|Promise|generator|then|fromAsync)/.test(what),
-      )) {
-        // A rule refuses it (a parse error, ruleId null, does not count).
-        expect((await lint(text)).filter((r) => r !== null).length, text).toBeGreaterThan(0);
+      // F-DG3-280 (round 7): every probe-table row except the LINT_EXCLUDED ones (each is a parse error instead).
+      const GUARD_RULES: ReadonlySet<string> = new Set([
+        "no-eval",
+        "no-implied-eval",
+        "no-new-func",
+        "no-restricted-globals",
+        "no-restricted-imports",
+        "no-restricted-syntax",
+        "no-unsafe-finally",
+      ]);
+      let linted = 0;
+      for (const [text, what] of PROBES) {
+        if (LINT_EXCLUDED.has(text)) {
+          const fatal = (await lintResult(text)).messages.filter((m) => m.fatal === true);
+          expect(fatal.length, `${text} (${LINT_EXCLUDED.get(text)!})`).toBeGreaterThan(0);
+          continue;
+        }
+        // A guard rule of the formula block refuses it. A parse error (ruleId null) or a general rule such as
+        // no-unused-vars does not count, so removing a guard selector cannot be masked by an unrelated rule.
+        expect(
+          (await lint(text)).filter((r) => r !== null && GUARD_RULES.has(r)),
+          `${text} (${what})`,
+        ).not.toEqual([]);
+        linted += 1;
       }
+      expect(linted).toBe(PROBES.length - LINT_EXCLUDED.size);
       // The engine's own shapes stay allowed.
       expect(
         await lint(

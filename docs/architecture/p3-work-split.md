@@ -310,3 +310,11 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
     - **Lint proof.** A new `unit-node` test lints G1, G2, A1, A2, F1 and the probe-table spellings with `ESLint.lintText` as an engine source, and requires a rule to refuse each one.
     - **ADR-0024 §6.** The absolute claims are gone. Lint and the scan refuse an enumerated list of handler and asynchrony forms, L1–L7. The residual is stated: a self-handling form outside that list, even on an exercised path, is refused by no layer (the run-time analogue of Q1–Q5; G1, G2 and A1 are historical examples, now refused statically). The "stricter than `no-unsafe-finally`" sentence is replaced with the exact difference.
     - **Engine, API and web.** No change. Formula results are unchanged.
+
+### Amendments in the DG3 round-7 repair (T-DG3-KBE-I, 2026-10-08)
+
+29. **The lint proof covers every probe-table row (F-DG3-280; ADR-0024 §6 "Pinned by tests").**
+    - **Test.** The `unit-node` `ESLint.lintText` test in `fuzz.test.ts` lints every probe-table row (99 of 101) as an engine source. A guard rule of the formula block must refuse each one; a parse error or a general rule such as `no-unused-vars` does not count. The two "unbalanced" rows are not valid modules: they are named in `LINT_EXCLUDED`, each with its reason, and must be parse errors instead. Before this, the test linted 48 of the 99 rows and accepted any rule.
+    - **Probe table.** Two private-name rows (`#then`, `#fromAsync`) are added for the `PrivateIdentifier` part of the L6/L7 selector.
+    - **Mutation proof.** Removing `ForOfStatement[await=true]` from the async selector, or the `PrivateIdentifier[…]` part of the round-6 name selector, now fails the test.
+    - **Lint, engine, API and web.** No lint gap was found and `eslint.config.js` is unchanged. Formula results are unchanged.
