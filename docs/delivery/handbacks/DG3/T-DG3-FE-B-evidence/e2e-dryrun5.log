@@ -1,0 +1,99 @@
+port-policy: PostgreSQL listening on port 23550 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applied 25 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 23551 (attempt 1)
+API: http://localhost:23551 (APP_BASE_URL=http://localhost:23551, PORT=23551)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 7 tests using 1 worker
+
+  ✓  1 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:110:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies (2.2s)
+  ✓  2 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:250:1 › lead: ranked table, 0–100 view, scorecard (6 refused), the live 100% check, weight version 2 proposal and an override (11.0s)
+  ✓  3 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:374:1 › another person (demo Sponsor) approves weight version 2 and the override (business approvals); history shows 'weight version 2' (7.5s)
+  ✓  4 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:440:1 › roadmap: source waves; moving a milestone updates the timeline, table and board; a stale edit is a 409 conflict (5.1s)
+  ✘  5 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:505:1 › dependencies: the seven T08 columns, the needed-by flag and a cycle refused with its path (1.3s)
+  -  6 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:539:1 › the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control
+  -  7 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:566:1 › capacity screen with STUBBED capacity responses (BE-E's API lands in the next wave): grid, shortfall, Unknown; axe
+
+
+  1) [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:505:1 › dependencies: the seven T08 columns, the needed-by flag and a cycle refused with its path 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 9[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "Dependency",[39m
+    [32m-   "From",[39m
+    [32m-   "To",[39m
+    [32m-   "Type",[39m
+    [32m-   "Needed by",[39m
+    [32m-   "Owner",[39m
+    [32m-   "Status / mitigation",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+      396 |   const table = page.getByTestId("t08");
+      397 |   const headers = await table.getByRole("columnheader").allTextContents();
+    > 398 |   expect(headers.slice(0, 7).map((h) => h.trim())).toEqual(
+          |                                                    ^
+      399 |     ["dependency", "from", "to", "type", "neededBy", "owner", "statusMitigation"].map((k) => tr(lang, `dependencies.col.${k}`)),
+      400 |   );
+      401 |   await expect(table).toContainText(tr(lang, "roadmap.flag.schedule__needed_by_conflict"));
+        at /home/user/wt/dg3-fe-b/apps/web/e2e/p3-prioritization-roadmap.spec.ts:398:52
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-prioritiza-ecb66-cycle-refused-with-its-path-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p3-prioritiza-ecb66-cycle-refused-with-its-path-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-prioritiza-ecb66-cycle-refused-with-its-path-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p3-prioritiza-ecb66-cycle-refused-with-its-path-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:505:1 › dependencies: the seven T08 columns, the needed-by flag and a cycle refused with its path 
+  2 did not run
+  4 passed (30.0s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+EXIT=1

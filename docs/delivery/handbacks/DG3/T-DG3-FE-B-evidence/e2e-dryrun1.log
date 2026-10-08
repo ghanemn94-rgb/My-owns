@@ -1,0 +1,125 @@
+port-policy: PostgreSQL listening on port 23550 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applied 25 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 23551 (attempt 1)
+API: http://localhost:23551 (APP_BASE_URL=http://localhost:23551, PORT=23551)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+  ✘   1 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:111:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies (577ms)
+  -   2 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:248:1 › lead: ranked table, 0–100 view, scorecard (6 refused), the live 100% check, weight version 2 proposal and an override
+  -   3 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:372:1 › another person (demo Sponsor) approves weight version 2 and the override (business approvals); history shows 'weight version 2'
+  -   4 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:433:1 › roadmap: source waves; moving a milestone updates the timeline, table and board; a stale edit is a 409 conflict
+  -   5 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:498:1 › dependencies: the seven T08 columns, the needed-by flag and a cycle refused with its path
+  -   6 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:532:1 › the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control
+  -   7 [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:559:1 › capacity screen with STUBBED capacity responses (BE-E's API lands in the next wave): grid, shortfall, Unknown; axe
+  ✘   8 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:111:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies (536ms)
+  -   9 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:248:1 › lead: ranked table, 0–100 view, scorecard (6 refused), the live 100% check, weight version 2 proposal and an override
+  -  10 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:372:1 › another person (demo Sponsor) approves weight version 2 and the override (business approvals); history shows 'weight version 2'
+  -  11 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:433:1 › roadmap: source waves; moving a milestone updates the timeline, table and board; a stale edit is a 409 conflict
+  -  12 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:498:1 › dependencies: the seven T08 columns, the needed-by flag and a cycle refused with its path
+  -  13 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:532:1 › the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control
+  -  14 [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:559:1 › capacity screen with STUBBED capacity responses (BE-E's API lands in the next wave): grid, shortfall, Unknown; axe
+
+
+  1) [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:111:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies 
+
+    Error: GET /api/v1/transformations/01a11926-b54c-73e0-917c-5babd3d80b88/charter -> 404: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"detail":"No charter has been created for this transformation yet.","code":"charter_not_found","requestId":"01a11926-b6a5-775a-aaa4-0300a05fb93e"}
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+       at apps/web/e2e/support/ui.ts:149
+
+      147 |       const text = await res.text();
+      148 |       if (options.expect !== undefined) expect(res.status(), `${method} ${path}: ${text}`).toBe(options.expect);
+    > 149 |       else expect(res.ok(), `${method} ${path} -> ${res.status()}: ${text}`).toBe(true);
+          |                                                                              ^
+      150 |       return (text ? JSON.parse(text) : {}) as never;
+      151 |     },
+      152 |   };
+        at Object.call (/home/user/wt/dg3-fe-b/apps/web/e2e/support/ui.ts:149:78)
+        at completeG1 (/home/user/wt/dg3-fe-b/apps/web/e2e/p3-prioritization-roadmap.spec.ts:109:19)
+        at /home/user/wt/dg3-fe-b/apps/web/e2e/p3-prioritization-roadmap.spec.ts:146:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-prioritiza-97b69--milestone-and-dependencies-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p3-prioritiza-97b69--milestone-and-dependencies-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:111:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies 
+
+    Error: GET /api/v1/transformations/01a11926-bb98-7027-ba04-9babfe34bcee/charter -> 404: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"detail":"No charter has been created for this transformation yet.","code":"charter_not_found","requestId":"01a11926-bd00-7513-8dc9-ba228603b748"}
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+       at apps/web/e2e/support/ui.ts:149
+
+      147 |       const text = await res.text();
+      148 |       if (options.expect !== undefined) expect(res.status(), `${method} ${path}: ${text}`).toBe(options.expect);
+    > 149 |       else expect(res.ok(), `${method} ${path} -> ${res.status()}: ${text}`).toBe(true);
+          |                                                                              ^
+      150 |       return (text ? JSON.parse(text) : {}) as never;
+      151 |     },
+      152 |   };
+        at Object.call (/home/user/wt/dg3-fe-b/apps/web/e2e/support/ui.ts:149:78)
+        at completeG1 (/home/user/wt/dg3-fe-b/apps/web/e2e/p3-prioritization-roadmap.spec.ts:109:19)
+        at /home/user/wt/dg3-fe-b/apps/web/e2e/p3-prioritization-roadmap.spec.ts:146:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p3-prioritiza-97b69--milestone-and-dependencies-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p3-prioritiza-97b69--milestone-and-dependencies-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:111:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies 
+    [chromium-ar] › apps/web/e2e/p3-prioritization-roadmap.spec.ts:111:1 › setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies 
+  12 did not run
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)
+EXIT=1
