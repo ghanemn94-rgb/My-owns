@@ -21,7 +21,7 @@ import { registerWorkshopRoutes } from "./workshops.ts";
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
 // P3 (ADR-0021 §1, T-DG3-BE-A): the interface through which the G4 evaluators read portfolio and kpi facts.
-export type { GateFactsProvider, KpiP3GateFacts, PortfolioGateFacts } from "./g4.ts";
+export type { GateFactsProvider, InheritedApprovalFact, KpiP3GateFacts, PortfolioGateFacts } from "./g4.ts";
 // P3 (ADR-0023 §4-§5, T-DG3-BE-C): the seam through which portfolio supplies the T08 schedule flags.
 // Types only: the composition root passes the provider in registerWorkflowsModule's options (T-DG3-ARCH-03).
 export type { T08Dependency, T08ScheduleFlagsProvider } from "./t08-dependencies.ts";

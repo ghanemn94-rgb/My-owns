@@ -9633,7 +9633,7 @@ components:
     GateInstance:
       type: object
       description: "Product gate instance of a transformation."
-      required: [id, organizationId, transformationId, gateCode, status, approverRoleCode, approverUserId, currentSubmissionId, latestSubmissionNo, approvedAt, version, createdAt, createdBy, updatedAt, updatedBy]
+      required: [id, organizationId, transformationId, gateCode, status, approverRoleCode, approverUserId, currentSubmissionId, latestSubmissionNo, approvedAt, version, createdAt, createdBy, updatedAt, updatedBy, inheritedApproval]
       additionalProperties: false
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
@@ -9651,6 +9651,20 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        inheritedApproval:
+          description: "P3 (ADR-0021 §5, F-DG3-120): the Modular inherited approval recorded for this gate (a gate_dispensation of kind inherited_approval), or null when there is none. An annotation only: it never changes `status`, never approves the gate and is never a gate decision."
+          oneOf: [{ $ref: "#/components/schemas/GateInheritedApproval" }, { type: "null" }]
+    GateInheritedApproval:
+      type: object
+      description: "Annotation of a product gate with its inherited approval (ADR-0021 §5). When several exist, the one shown is the one that counts, else the newest pending one, else the newest. Evidence of an approval granted before the product was used; it never approves the gate."
+      required: [dispensationId, status, counts, approvingBody, approvedOn]
+      additionalProperties: false
+      properties:
+        dispensationId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [pending_verification, accepted, rejected, revoked], description: "The dispensation's status; `pending` is shown as pending_verification (evidence verification and acceptance by another person outstanding)." }
+        counts: { type: boolean, description: "Whether it satisfies the sequencing rule now, by the same rule sequencing uses: Modular transformation, accepted, evidence verified." }
+        approvingBody: { type: string, minLength: 1, maxLength: 300 }
+        approvedOn: { $ref: "#/components/schemas/BusinessDate" }
     GateSubmission:
       type: object
       description: "Versioned gate submission with its immutable snapshot."

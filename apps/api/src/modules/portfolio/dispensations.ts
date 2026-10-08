@@ -38,8 +38,13 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { assertSameTransformation, bumpStamps, openWrite, type WriteContext } from "../transformations/index.ts";
-import { isGateApprover } from "../workflows/index.ts";
-import type { DispensationFact, SequencingFacts, SequencingGate } from "./sequencing.ts";
+import { isGateApprover, type InheritedApprovalFact } from "../workflows/index.ts";
+import {
+  hasInheritedApproval,
+  type DispensationFact,
+  type SequencingFacts,
+  type SequencingGate,
+} from "./sequencing.ts";
 
 const BASE = "/api/v1/transformations/:transformationId/gate-dispensations";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -485,6 +490,37 @@ async function revokeDispensation(tx: Tx, request: FastifyRequest, transformatio
     changes: { status: { from: "accepted", to: "revoked" } },
   });
   return updated;
+}
+
+/**
+ * The inherited-approval dispensations of a transformation for the gate annotation (ADR-0021 §5; F-DG3-120): the
+ * `inheritedApprovals` member of workflows' GateFactsProvider, wired by server.ts. `counts` is decided by the sequencing
+ * rule itself (hasInheritedApproval: Modular, accepted, evidence verified now), never re-implemented here.
+ */
+export async function loadInheritedApprovalFacts(
+  db: DbOrTx,
+  transformationId: string,
+): Promise<InheritedApprovalFact[]> {
+  const t = await db.selectFrom("transformation").select("mode").where("id", "=", transformationId).executeTakeFirst();
+  if (!t) return [];
+  const mode = t.mode === "modular" ? "modular" : "end_to_end";
+  // The DB CHECK gate_dispensation_inherited_shape guarantees body and date on every inherited approval.
+  return (await loadDispensations(db, transformationId)).flatMap((d) => {
+    if (d.kind !== "inherited_approval" || d.approvingBody === null || d.approvedOn === null) return [];
+    const gate = d.gateCode as SequencingGate;
+    const fact: DispensationFact = { kind: d.kind, gateCode: gate, initiativeId: d.initiativeId, counts: d.counts };
+    return [
+      {
+        dispensationId: d.id,
+        gateCode: d.gateCode,
+        status: d.status,
+        counts: hasInheritedApproval({ mode, gates: {}, dispensations: [fact] }, gate),
+        approvingBody: d.approvingBody,
+        approvedOn: d.approvedOn,
+        createdAt: d.createdAt,
+      },
+    ];
+  });
 }
 
 // ------------------------------------------------------------------------------------------------ routes

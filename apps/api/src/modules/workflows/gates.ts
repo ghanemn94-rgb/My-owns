@@ -33,6 +33,7 @@ import {
   type GateCriterionEvaluation,
   type GateDecision,
   type GateDefinition,
+  type GateInheritedApproval,
   type GateInstance,
   type GateSubmission,
   truncateText,
@@ -82,7 +83,7 @@ import {
 } from "../transformations/index.ts";
 import { nextCode } from "./codes.ts";
 import { evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
-import { buildG4Snapshot, type GateFactsProvider } from "./g4.ts";
+import { buildG4Snapshot, type GateFactsProvider, type InheritedApprovalFact } from "./g4.ts";
 
 const G = "/api/v1/transformations/:transformationId/gates";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -94,7 +95,35 @@ const forbidden = (code: string, detail: string) =>
 
 // ------------------------------------------------------------------------------------------------ shapes
 
-export const toGateInstance = (r: GateInstanceRow): GateInstance => ({
+const newestFirst = (a: string, b: string) => (a === b ? 0 : a < b ? 1 : -1);
+
+/**
+ * The inherited-approval annotation of one gate (ADR-0021 §5; F-DG3-120), from the transformation's inherited-approval
+ * dispensations: the one that counts, else the newest pending one, else the newest; null when there is none. `pending`
+ * is shown as pending_verification. It never touches the gate's status: the gate stays as recorded (e.g. draft).
+ */
+export function inheritedApprovalOf(
+  facts: readonly InheritedApprovalFact[],
+  gateCode: string,
+): GateInheritedApproval | null {
+  const mine = facts
+    .filter((f) => f.gateCode === gateCode)
+    .sort((a, b) => newestFirst(a.createdAt, b.createdAt) || newestFirst(a.dispensationId, b.dispensationId));
+  const shown = mine.find((f) => f.counts) ?? mine.find((f) => f.status === "pending") ?? mine[0];
+  if (shown === undefined) return null;
+  return {
+    dispensationId: shown.dispensationId,
+    status: shown.status === "pending" ? "pending_verification" : shown.status,
+    counts: shown.counts,
+    approvingBody: shown.approvingBody,
+    approvedOn: shown.approvedOn,
+  };
+}
+
+export const toGateInstance = (
+  r: GateInstanceRow,
+  inheritedApproval: GateInheritedApproval | null = null,
+): GateInstance => ({
   id: r.id,
   organizationId: r.organization_id,
   transformationId: r.transformation_id,
@@ -110,6 +139,7 @@ export const toGateInstance = (r: GateInstanceRow): GateInstance => ({
   createdBy: r.created_by,
   updatedAt: iso(r.updated_at),
   updatedBy: r.updated_by,
+  inheritedApproval,
 });
 
 export const toGateSubmission = (r: GateSubmissionRow): GateSubmission => ({
@@ -277,6 +307,7 @@ async function gateView(
   def: GateDefinition,
   facts: GateFacts,
   defs: readonly GateDefinition[],
+  inherited: readonly InheritedApprovalFact[],
 ) {
   const criteria: GateCriterionEvaluation[] = evaluateGate(def, facts);
   const current = instance.current_submission_id
@@ -299,7 +330,7 @@ async function gateView(
     pending.submitted_by !== principal.userId &&
     (await isApprover(db, principal, approverOf(pending, def), target, undefined));
   return {
-    gate: toGateInstance(instance),
+    gate: toGateInstance(instance, inheritedApprovalOf(inherited, instance.gate_code)),
     definition: def,
     criteria,
     currentSubmission: current ? toGateSubmission(current) : null,
@@ -372,11 +403,12 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       .where("transformation_id", "=", transformationId)
       .execute();
     const facts = await loadGateFacts(db, transformationId, gateFacts);
+    const inherited = await gateFacts.inheritedApprovals(db, transformationId);
     const items = [];
     for (const def of defs) {
       const instance = instances.find((i) => i.gate_code === def.code);
       if (!instance) throw problems.notFound();
-      items.push(await gateView(db, principal, target, instance, def, facts, defs));
+      items.push(await gateView(db, principal, target, instance, def, facts, defs, inherited));
     }
     return { items };
   });
@@ -396,6 +428,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       def,
       await loadGateFacts(db, transformationId, gateFacts),
       defs,
+      await gateFacts.inheritedApprovals(db, transformationId),
     );
     reply.header("ETag", `"${instance.version}"`);
     return view;
@@ -465,7 +498,16 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const defs = await loadGateDefinitions(db);
     const def = definitionOf(defs, gateCode);
     reply.header("ETag", `"${instance.version}"`);
-    return gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId, gateFacts), defs);
+    return gateView(
+      db,
+      principal,
+      target,
+      instance,
+      def,
+      await loadGateFacts(db, transformationId, gateFacts),
+      defs,
+      await gateFacts.inheritedApprovals(db, transformationId),
+    );
   });
 
   app.get(`${G}/:gateCode/submissions`, { config: read }, async (request) => {
