@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG2"
       ],
@@ -1366,6 +1366,11 @@
           "state": "REVIEWING",
           "at": "2026-10-08T14:52:36Z",
           "note": "KBE-F merged and verified (D-084). Candidate frozen as 8376d762 (757 files, source 171a0b5) for DG3 gate review round 4: code-security verifies F-DG3-100; domain and qa re-review in full. No worktree or install activity while reviewers run (D-082)."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-08T16:03:23Z",
+          "note": "Round 4 on candidate 8376d762: domain PASS and qa PASS (no findings; F-120/170/180 still hold); code-security FAIL: F-DG3-100 verification failed a third time (KBE-F closed both round-3 reasons, but ADR-0024 §6's 'every catch rethrows EvalError' is not enforced for a new handler: catch{}, finally-return and Promise.catch pass all three layers; three minor ADR inaccuracies). All runs exit 0 with no configuration change. Repair: T-DG3-KBE-G (enforce the rethrow rule in lint and the scan; correct §6)."
         }
       ]
     },
