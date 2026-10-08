@@ -22,3 +22,5 @@ export * from "./team.ts";
 export * from "./portfolio.ts";
 // P3 business-case mirrors (kpi-benefits-engineer, T-DG3-KBE-B; p3-work-split §3). Line added by KBE-B, see its handback.
 export * from "./business-case.ts";
+// P3 T09 benefit-formula mirrors (kpi-benefits-engineer, T-DG3-KBE-C; p3-work-split §3). Line added by KBE-C.
+export * from "./benefit-formula.ts";

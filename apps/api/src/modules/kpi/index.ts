@@ -26,6 +26,17 @@ export {
 } from "./business-cases.ts";
 export { activeLinesOf, toBusinessCaseLine } from "./business-case-lines.ts";
 export { computeTotals, type TotalsInput, type TotalsLine } from "./totals.ts";
+// P3 T09 benefit formulas (T-DG3-KBE-C): the kpi half of the G4 GateFactsProvider (business cases, section
+// completeness, baseline validation incl. Stale, formula version validation per financial benefit line). server.ts
+// wires it (BE-E).
+export {
+  buildKpiP3GateFacts,
+  loadKpiP3GateFacts,
+  type FormulaValidationFact,
+  type KpiBenefitLineFact,
+  type KpiCaseFact,
+  type KpiP3GateFactsData,
+} from "./p3-gate-facts.ts";
 
 /** Freshness of a KPI or benefit value. Missing data is "unknown" and outdated data "stale", never zero or green. */
 export const VALUE_FRESHNESS = ["unknown", "stale", "current"] as const;
