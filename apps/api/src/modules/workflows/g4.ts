@@ -6,7 +6,7 @@
 // (portfolio/gate-facts.ts) and kpi's (kpi/p3-gate-facts.ts) loaders - dependency injection, no import.
 //
 // Fail closed everywhere: facts that were not loaded (an unwired provider) make every criterion incomplete; Unknown
-// capacity is a conflict, never "no conflict"; a stale, rejected or missing Finance validation never counts.
+// capacity and an Unknown schedule are conflicts, never "no conflict"; a stale, rejected or missing Finance validation never counts.
 // Missing items use the exact English labels of ADR-0021 §7, with the initiative's code and name filled in, so
 // 'Owners', 'Finance validation' and the initiative names appear literally in a refused submission (422).
 //
@@ -54,7 +54,10 @@ export interface G4CapacityConflictFact {
   readonly availableFte: string | null;
 }
 
-/** A needed-by conflict of an unresolved dependency into an in-scope initiative, without a mitigation. */
+/**
+ * An unresolved dependency into an in-scope initiative, without a mitigation, that carries a schedule.ts flag G4
+ * lists: a needed-by conflict (scheduleConflicts) or an Unknown schedule (scheduleUnknowns; D-079).
+ */
 export interface G4ScheduleConflictFact {
   readonly dependencyId: string;
   readonly code: string;
@@ -72,6 +75,8 @@ export interface PortfolioGateFacts {
   } | null;
   readonly activeWeightSet?: { readonly id: string; readonly versionNo: number } | null;
   readonly scheduleConflicts?: readonly G4ScheduleConflictFact[];
+  /** Dependencies flagged schedule.unknown (a date is missing): Unknown is never "no conflict" (D-079). */
+  readonly scheduleUnknowns?: readonly G4ScheduleConflictFact[];
   readonly capacityConflicts?: readonly G4CapacityConflictFact[];
   readonly [fact: string]: unknown;
 }
@@ -230,7 +235,9 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
     (f) => {
       const scope = scopeOf(f);
       const conflicts = f?.portfolio.scheduleConflicts;
-      if (scope === undefined || conflicts === undefined) return NOT_LOADED("Roadmap", "g4.roadmap_missing");
+      const unknowns = f?.portfolio.scheduleUnknowns;
+      if (scope === undefined || conflicts === undefined || unknowns === undefined)
+        return NOT_LOADED("Roadmap", "g4.roadmap_missing");
       const missing: Warning[] = [];
       for (const i of scope)
         if (i.waveId === null || i.plannedStart === null || i.plannedEnd === null || i.approvedMilestones === 0)
@@ -238,6 +245,9 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       // A dependency cycle cannot exist: the dependency_acyclic guard refuses it at write time (ADR-0023 §5).
       for (const c of conflicts)
         missing.push(item("g4.schedule_conflict", `Schedule conflict: ${c.code}`, `/dependencies/${c.dependencyId}`));
+      // An Unknown schedule (schedule.unknown) is a missing item too, never "no conflict" (D-079; ADR-0021 §10 rule 6).
+      for (const u of unknowns)
+        missing.push(item("g4.schedule_unknown", `Schedule unknown: ${u.code}`, `/dependencies/${u.dependencyId}`));
       return { missing };
     },
   ],

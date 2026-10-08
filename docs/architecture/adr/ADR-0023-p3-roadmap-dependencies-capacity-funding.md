@@ -19,7 +19,7 @@
   | `wave_2` | Wave 2 — Scale | Scale validated changes | 3-9 months | Evidence + capacity | Adoption + KPI movement | 13–39 |
   | `wave_3` | Wave 3 — Embed | BAU integration / optimization | 6-18 months | Stable solution | Benefits sustained, ownership transferred | 26–78 |
 
-- The verbatim columns are immutable (trigger `roadmap_wave_source_immutable`; like `tom_dimension`). Editable: `label_en/ar` overrides, `planned_start`, `planned_end`, `owner_user_id`, `notes`. Teams may add non-source waves (`is_source_seeded = false`).
+- The verbatim columns are immutable (trigger `roadmap_wave_source_immutable`; like `tom_dimension`). Editable (`RoadmapWaveUpdate`, `portfolio/waves.ts`): `planned_start`, `planned_end`, `owner_user_id`, `notes` and `status` (a source wave cannot be archived). Teams may add non-source waves (`is_source_seeded = false`). **Labels, as built (corrected by T-DG3-BE-F; FE-E handback §4.1):** a source wave's label is its verbatim source text (`name_en`/`name_ar`); a team-added non-source wave carries the name it was created with. There are no label overrides in P3, and `0020` has no override columns.
 - **Overlap is allowed** (planning horizons, not deadlines; master prompt §9): there is no exclusion constraint on horizons or planned dates, and the horizon weeks are the numeric reading of the verbatim text, used only to draw the timeline. The verbatim text stays the label.
 - An initiative belongs to at most one wave (`initiative.wave_id`, composite FK within the transformation).
 
