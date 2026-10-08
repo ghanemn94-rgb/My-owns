@@ -11256,7 +11256,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-08T07:07:10Z",
@@ -11267,10 +11267,48 @@
           "at": "2026-10-08T08:29:51Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ea8e2de70235c90d98e5fb3c43b366c68245f2a0"
+        },
+        {
+          "at": "2026-10-08T09:36:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "ea8e2de70235c90d98e5fb3c43b366c68245f2a0",
-      "fix_summary": "T-DG3-ARCH-05 ea8e2de: GateInstance (listGates, getGate, configureGate) gains the required, nullable inheritedApproval (GateInheritedApproval {dispensationId, status pending_verification|accepted|rejected|revoked, counts, approvingBody, approvedOn}); zod mirror in packages/shared/src/schemas/gate.ts. workflows reads it through a third GateFactsProvider member wired by server.ts with portfolio's loadInheritedApprovalFacts (counts = hasInheritedApproval; workflows never imports portfolio). The gate status, approvedAt and gate_decision are untouched. Web: a neutral translated badge (EN/AR) beside the status on the Gates list and a labelled row on the gate view, never the approved colour. Integration test through pending -> accepted -> revoked; web test 16 cases EN/AR. ADR-0021 §5 states the field; p3-work-split §9 item 24."
+      "fix_summary": "T-DG3-ARCH-05 ea8e2de: GateInstance (listGates, getGate, configureGate) gains the required, nullable inheritedApproval (GateInheritedApproval {dispensationId, status pending_verification|accepted|rejected|revoked, counts, approvingBody, approvedOn}); zod mirror in packages/shared/src/schemas/gate.ts. workflows reads it through a third GateFactsProvider member wired by server.ts with portfolio's loadInheritedApprovalFacts (counts = hasInheritedApproval; workflows never imports portfolio). The gate status, approvedAt and gate_decision are untouched. Web: a neutral translated badge (EN/AR) beside the status on the Gates list and a labelled row on the gate view, never the approved colour. Integration test through pending -> accepted -> revoked; web test 16 cases EN/AR. ADR-0021 §5 states the field; p3-work-split §9 item 24.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG3-T-DG3-REV-DOM-R2-domain-reviewer-20261008T091016Z-478aac6a",
+          "session_id": "478aac6a-f9e2-4b73-9730-9bb05d6c8e4c"
+        },
+        "at": "2026-10-08T09:36:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG3/domain/round-2/dg3-api-extra.mjs",
+          "docs/delivery/test-evidence/DG3/domain/round-2/dg3-api-extra.log",
+          "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-inherited.mjs",
+          "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-inherited.log",
+          "docs/delivery/test-evidence/DG3/domain/round-2/integration-targeted.log",
+          "docs/delivery/test-evidence/DG3/domain/round-2/stack-run-2.log",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-pending-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-pending-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-revoked-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-revoked-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-rejected-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-rejected-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-readiness.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-readiness.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-pending-dispensations.png",
+          "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-pending-dispensations.png"
+        ],
+        "note": "Verified fixed on candidate sha256:58ef3f4777967f7f5791565d6075c3ec28b45c3a42a58903057b81b522540f31 (source f49ca160, freeze f20bdef), live on a disposable PostgreSQL 16 + API stack built from a complete clone, with synthetic data (Node 24.21.0, Chromium). API (dg3-api-extra.mjs 33/33): on a Modular transformation (entry phase mobilize) G1.inheritedApproval is null until a dispensation exists. An inherited_approval for G1 with VERIFIED evidence gives {dispensationId, status pending_verification, counts false, approvingBody, approvedOn 2026-01-15}, and submit is still 422 initiative.g1_not_approved. The recorder's self-accept is 403 and a delegated accept is 422. Once the synthetic Sponsor accepts: accepted, counts true, canSubmitInitiatives true, and submit fails only on outcome_before_activity. Evidence re-reviewed 'rejected': accepted, counts false, canSubmitInitiatives false. Re-verified: counts true. Revoked by the SP (the lead's revoke is 403): revoked, counts false, canSubmitInitiatives false. A second Modular transformation: unverified evidence cannot be accepted (422 evidence_not_verified), and the rejected dispensation shows rejected, counts false. At EVERY step: G1 status draft in the list and the view, approvedAt null, latestSubmissionNo 0, 0 gate_submission and 0 gate_decision rows (psql), list annotation == gate-view annotation, the other five gates null, readiness G1 draft. End-to-End: all six gates carry inheritedApproval null, an inherited_approval is refused (422 inherited_requires_modular), and a waiver never appears as an annotation. UI (dg3-ui-inherited.mjs 94/94): in EN (LTR) and AR (RTL), for none/pending/accepted/accepted-unverified/revoked/rejected, the Gates list keeps G1's 'Not submitted' / 'لم تُقدَّم' chip and shows the translated badge beside it ('Inherited approval: … (does not approve this gate)' / 'اعتماد موروث: … (لا يعتمد هذه البوابة)'). The badge is a neutral grey chip (status-chip--unknown) with an info icon and no check icon, and its computed colours differ from the approved gate chip's. No approved chip appears. The source line names the approving body and date 'recorded as evidence, not as a decision on this gate'. The gate view has a labelled row and a link to the Dispensations page. Readiness and Dispensations agree, and the Arabic reads naturally. ADR-0021 §5, the OpenAPI GateInheritedApproval and the zod mirror state the field. The targeted integration suites (incl. the new dispensations tests) pass 156/156. 'Captured, never fabricated' (B0009 Modular entry, B0011, B0012, B0032 G1; ADR-0021 §5) holds on the gate list, gate view, readiness, Dispensations page and sequencing. Residual layout defect, raised separately as F-DG3-170 (Medium, not blocking): the badge does not wrap. It overflows the G1 card on the Gates list, and makes the gate view scroll horizontally at 1024/1366 px. In EN the '(does not approve this gate)' tail is clipped on the list. The annotation itself is correct, and the gate still reads 'Not submitted' with the neutral chip and the evidence sentence."
+      }
     },
     {
       "id": "F-DG3-100",
@@ -11292,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11303,10 +11341,110 @@
           "at": "2026-10-08T08:29:51Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 41752629c3676e127dc91cd2b456be3de0ca2c70"
+        },
+        {
+          "at": "2026-10-08T09:34:58Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 2: FAIL"
         }
       ],
       "fix_revision": "41752629c3676e127dc91cd2b456be3de0ca2c70",
-      "fix_summary": "T-DG3-KBE-D 4175262: the ESLint override for packages/shared/src/formula/** adds no-restricted-globals (Function, eval, Reflect), no-restricted-syntax (any Function identifier, computed/template ['constructor']/['Function'] members, any .constructor read or destructuring, require/createRequire calls and the createRequire name, Reflect members) and no-restricted-imports (module, node:module, worker_threads, child_process, with and without node:). The fuzz.test.ts scan becomes scanSource() over a FORBIDDEN table (comments stripped) with the same forms, a 20-probe it.each pinning each form as a hit and a false-positive test. Engine code unchanged; lint probe 22 errors after vs 0 before (handback evidence). ADR-0024 §6 'Extended guard'; p3-work-split §9 item 23."
+      "fix_summary": "T-DG3-KBE-D 4175262: the ESLint override for packages/shared/src/formula/** adds no-restricted-globals (Function, eval, Reflect), no-restricted-syntax (any Function identifier, computed/template ['constructor']/['Function'] members, any .constructor read or destructuring, require/createRequire calls and the createRequire name, Reflect members) and no-restricted-imports (module, node:module, worker_threads, child_process, with and without node:). The fuzz.test.ts scan becomes scanSource() over a FORBIDDEN table (comments stripped) with the same forms, a 20-probe it.each pinning each form as a hit and a false-positive test. Engine code unchanged; lint probe 22 errors after vs 0 before (handback evidence). ADR-0024 §6 'Extended guard'; p3-work-split §9 item 23.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG3-T-DG3-REV-SEC-R2-code-security-reviewer-20261008T090956Z-1fcbceaa",
+          "session_id": "1fcbceaa-ab9e-4c48-98f4-fdacbf497b23"
+        },
+        "at": "2026-10-08T09:34:58Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG3/code-security/round-2/guard-bypass-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/guard-bypass-probe-supplement.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe-supplement.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/residual-runtime.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/probes/residual-runtime.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/residual-runtime-disallow-codegen.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/probe-C-formula-fuzz-node22.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/probe-C-formula-fuzz-node24.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/diff-scan.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-2/lint.log"
+        ],
+        "note": "Not closed.\n\nWhat the fix does close. On the frozen candidate 58ef3f47 (disposable clone $TMPDIR/review-p2 at f20bdef, Node 22.22.2), I appended each of my six round-1 forms to packages/shared/src/formula/evaluate.ts, one at a time. Five of them now fail BOTH eslint (exit 1) and the engine's own source-scan test (exit 1): O1 Reflect.construct(Function, ...), O3 createRequire(import.meta.url)('vm'), O4 Reflect.apply(Function, ...), O5 a computed [\"constructor\"] on a generator prototype, and O6 the alias F = Function. The sixth, O2 globalThis['ev'+'al'], still passes eslint (exit 0) and is caught only by the scan's globalThis pattern, as in round 1. The assignment's step-1 test ('every one of the six must now fail lint AND the scan') is therefore not met for O2. I also checked three refusals the fix claims (guard-bypass-probe-supplement.log), and each fails both guards: X1 plain destructuring { constructor }, X2 Object.getOwnPropertyDescriptors(...).constructor, and X3 globalThis.Function.\n\nWhy it is not closed. The finding's expected result was that ANY reference to the Function constructor should fail lint or the scan, whether direct, aliased, through Reflect, or as a computed ['constructor'] member, and so should any module loading other than static imports. ADR-0024 §6 'Extended guard' now says the override 'refuses the forms that reach the Function constructor or a module loader without those names'. Both guards are still denylists keyed on literal spellings, and one-token variants of the round-1 forms pass both of them (eslint exit 0, source scan exit 0, tsc exit 0):\n- N1: f[k](...) with const k = 'constructor'. The selector tests property.value, and an identifier key has none.\n- N2: f['con' + 'structor']. This is O5 with the string split.\n- N3: Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), 'constructor').value(...).\n- N4: const { [k]: C } = Object.getPrototypeOf(function* () {}).\n- N5: the AsyncFunction constructor reached through the prototype, with the key built by ['con','structor'].join('').\n- N6: a tagged template, f[k]`return 6*7`.\n- N7: global['ev' + 'al']. Node's global is neither a restricted global nor a scan pattern.\n- N8: self['ev' + 'al']. This is a browser or worker form, and it matters because the engine is bundled into apps/web.\n- N9: process.getBuiltinModule('node:vm').runInThisContext(...). This is a run-time module load with no import and no require.\n- N10: a static import of node:inspector, then Session.post('Runtime.evaluate').\n- N11: a static import of node:repl.\nN12, import.meta.resolve, also passes, but it only resolves a specifier and loads nothing, so it is not a vector.\n\nRun-time confirmation (residual-runtime.log). On both Node 22.22.2 and Node 24.21.0, each of N1-N7, N9 and N10 evaluates the text '6*7' and returns 42. N8 throws ReferenceError in Node, which has no self; it is a browser-only form.\n\nEngine impact: none. The engine sources are byte-identical to round 1 (diff-scan S1) and the shipped engine lints clean. All 26 fuzz.test.ts tests pass. My round-1 probe C also passes unchanged on both Node versions: 65 tests covering injection, limits, division by zero, 20,000 fuzz strings and a BigInt-rational oracle. Severity stays Low and non-mandatory.\n\nSuggested direction (not prescriptive):\n1. Add a run-time guard that does not depend on spelling: run the engine's fuzz and unit project under node --disallow-code-generation-from-strings, which turns N1-N7 into EvalError (residual-runtime-disallow-codegen.log). The existing tripwire proxies only globalThis.Function, which N1-N6 never touch.\n2. Use an import allowlist for formula/**, allowing only decimal.js and relative paths through no-restricted-imports patterns. This covers N10 and N11.\n3. Add no-restricted-globals for process, global, self and window; the engine uses none of them.\n4. For N1-N6, refuse computed member access on functions, or refuse any 'constructor' string literal (Literal[value='constructor'], plus the scan equivalent).\nThen correct ADR-0024 §6's claim to match what is actually enforced.\n\nReproduction: docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe.mjs. Run node guard-bypass-probe.mjs $TMPDIR/review-p2 in a disposable clone; it restores evaluate.ts afterwards. The output is in guard-bypass-probe.log."
+      }
+    },
+    {
+      "id": "F-DG3-170",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-004",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Inherited-approval badge does not wrap: it overflows the G1 card on the Gates list (EN and AR, every width) and makes the gate view scroll horizontally; in EN its '(does not approve this gate)' disclaimer is clipped",
+      "reproduction": "Disposable stack (docs/delivery/test-evidence/DG3/domain/round-2/with-stack.sh), probe dg3-ui-overflow.mjs (PROBES=dg3-ui-overflow run-all.sh). Create a Modular transformation, record an inherited_approval of G1 with verified evidence, and have the synthetic Sponsor accept it. Sign in as dev.lead in EN and in AR at viewport widths 1024, 1366 and 1920. Open /transformations/{id}/gates and /transformations/{id}/gates/G1, then measure the [data-inherited-approval] box against its card and the document scrollWidth against the viewport. Cause: apps/web/src/styles/app.css .status-chip { white-space: nowrap } applies to the ~80-character label 'Inherited approval: accepted, counts for sequencing (does not approve this gate)'.",
+      "expected": "The badge (ADR-0021 §5, F-DG3-120 repair) stays inside its card or row and wraps, so its full text is visible, including the '(does not approve this gate)' / '(لا يعتمد هذه البوابة)' safeguard. The page never scrolls horizontally at common desktop widths in either direction.",
+      "actual": "Gates list: the EN badge is 518 px wide inside a ~335 px G1 card at 1024, 1366 and 1920 (box [310,828] vs card [297,632] at 1366). On screen it reads 'Inherited approval: accepted, counts for sequencing (' and is clipped, so the disclaimer is not visible. The AR badge (353 px) spills out of the card's left edge and overlaps the G2 card's approver line. Gate view: the badge spills out of its row and the document scrolls horizontally (EN scrollWidth 1604 at a 1366 viewport and 1170 at 1024; AR 1439 at 1366, where the badge starts at x=-73). It fits only at 1920 on the gate view. No approval is fabricated: G1 still shows the neutral 'Not submitted' chip, the badge is grey with an info icon, and the sentence below says 'recorded as evidence, not as a decision on this gate'. So this is a presentation/readability defect of the new safeguard text, not an integrity failure. The jsdom unit test (inherited-approval.test.tsx) cannot see layout, so it passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-overflow.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-2/dg3-ui-overflow.log",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-overflow-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-overflow-1366-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-overflow-1366-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-overflow-1366-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gates-list.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-accepted-gate-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gate-view.png",
+        "apps/web/src/styles/app.css",
+        "apps/web/src/pages/gates/GatesPage.tsx"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG3/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T09:35:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG3 round 2 while verifying F-DG3-120. Medium, non-mandatory layout defect; not blocking (no approval is fabricated or implied: the gate status chip, neutral styling and the evidence sentence stay visible)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG3-180",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-004",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Inherited-approval badge (F-DG3-120 repair) overflows its gate card and field: the '(does not approve this gate)' disclaimer is hidden or overlaps other text in EN and AR",
+      "reproduction": "Real stack (e2e/support/qa-stack.sh) on candidate 58ef3f47 (clone @ f49ca160), default Playwright Desktop Chrome viewport 1280x720. Spec docs/delivery/test-evidence/DG3/qa/tests/round-2/e2e/dg3-qa-r2.spec.ts. IA1 creates a synthetic Modular transformation M1 with inherited approvals on G1 (accepted, counts), G2 (revoked) and G3 (accepted, does not count), and M2 with G1 pending_verification and G2 rejected. Then open /transformations/{M1}/gates, /transformations/{M2}/gates and the G1 gate views as dev.lead, in chromium-en and in chromium-ar. The test 'F180 layout probe' measures each [data-inherited-approval] badge's bounding box against its li.gate-card (list) or dd (gate view).",
+      "expected": "Every badge, including its full text 'Inherited approval: <state> (does not approve this gate)' / 'اعتماد موروث: … (لا يعتمد هذه البوابة)', stays inside its gate card or field, legible and wrapped as needed. ADR-0021 §5 / GatesPage.tsx say the annotation's text states in every state that it does not approve the gate.",
+      "actual": "chromium-en: 7 of 7 badges extend outside their box. Examples: M1 G1 list badge x 310-828 in card 297-603, so it runs under the G2 card and the disclaimer is hidden; M1 G3 badge x 946-1449 in card 933-1239, past the container and past the 1280 px viewport; G1 view badge x 297-815 in a dd of 297-595, over the next column. chromium-ar: 4 of 7 outside, e.g. M1 G1 list badge x 617-970 in card 677-983, overlapping the G2 card; M1 G1 view badge 630-983 in dd 685-983, over the Approver column. Cause: .status-chip has white-space: nowrap (apps/web/src/styles/app.css:803), and the long badge text (GatesPage.tsx InheritedApprovalBadge) uses that class. Axe reports nothing (it does not detect overlap). The API annotation, the neutral chip class and the text content are correct (IA1/U3 pass). Only the visual layout fails. Same result in both locale settings.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-cutf8-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-cutf8-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-unset-f180-layout-en.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/results/e2e-unset-f180-layout-ar.json",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/en/qa-r2-lead-m1-gates-list.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/ar/qa-r2-lead-m1-gates-list.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/ar/qa-r2-aud-m1-G1-view.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/screens/en/f180-m1-G1-view.png",
+        "docs/delivery/test-evidence/DG3/qa/round-2/04-e2e-cutf8.log",
+        "docs/delivery/test-evidence/DG3/qa/round-2/04-e2e-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/tests/round-2/e2e/dg3-qa-r2.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG3/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T10:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG3 round 2 from its own layout probe (F180), run before it saw any other reviewer's conclusion. At the end of the run, HEAD's commit subjects showed that the domain reviewer raised F-DG3-170 ('inherited-approval badge overflow') in the same round. qa-verifier did not open that record, so it cannot confirm that the two are the same. The orchestrator may treat F-DG3-180 as a duplicate and verify both with one repair."
+        }
+      ]
     }
   ]
 }

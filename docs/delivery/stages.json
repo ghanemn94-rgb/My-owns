@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG2"
       ],
@@ -1322,6 +1322,11 @@
           "state": "REVIEWING",
           "at": "2026-10-08T09:05:52Z",
           "note": "Round-2 repairs merged and verified (D-081). Candidate frozen as 58ef3f47 (754 files, source f49ca16) for DG3 gate review round 2: code-security verifies F-DG3-100, domain verifies F-DG3-120, qa runs the full regression; each also re-reviews in full."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-08T10:26:26Z",
+          "note": "Round 2 on candidate 58ef3f47. domain PASS: F-DG3-120 verified CLOSED_VERIFIED; raised F-DG3-170 (Medium, badge overflow). code-security FAIL: F-DG3-100 verification FAILED (the guards are still spelling denylists; 11 one-token variants pass; the engine itself has no dynamic code); no new finding. qa FAIL: raised F-DG3-180 (Medium, the same badge overflow); all 32 acceptance texts pass; e2e product 172/172 per setting. The code-security and qa runs report external_config_changed (exit 71) because the orchestrator created the dg3-fe-g and dg3-kbe-e worktrees while they ran; every changed entry is under those worktrees and equals the committed content; neither run is gate evidence (D-082). Repairs for round 3: T-DG3-FE-G (F-170/F-180) and T-DG3-KBE-E (F-100)."
         }
       ]
     },
