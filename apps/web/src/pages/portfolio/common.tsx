@@ -37,6 +37,9 @@ export function p3ProblemMessage(t: TFunction, error: unknown, namespaces: reado
   return errorMessage(t, error);
 }
 
+/** Portfolio problem codes (initiative.read_only, initiative.planned_range, …) are translated specifically in forms. */
+export const PORTFOLIO_NS: readonly string[] = ["portfolio"];
+
 /** Proposed rank / selection / funding: the three columns of REQ-S09-003. */
 export const SELECTED_STATUSES: ReadonlySet<string> = new Set(["selected", "funded", "launched", "completed"]);
 
@@ -159,6 +162,8 @@ export interface ActionDialogProps {
   confirmLabel: string;
   danger?: boolean;
   url: string;
+  /** POST (transitions, decisions; the default) or PATCH (e.g. archiving a deliverable with its `archiveReason`). */
+  method?: "POST" | "PATCH";
   version: number;
   /** Builds the body from the text (an empty optional text is omitted). */
   toBody?: (text: string | undefined) => Record<string, unknown>;
@@ -196,7 +201,7 @@ export function ActionDialog(props: ActionDialogProps) {
     try {
       const value = text === "" || !hasText(text) ? undefined : text;
       const body = props.toBody ? props.toBody(value) : value === undefined ? {} : { [spec.name]: value };
-      await api.send(props.url, { method: "POST", body, ifMatch: props.version });
+      await api.send(props.url, { method: props.method ?? "POST", body, ifMatch: props.version });
       if (action.stale()) return;
       if (!(await props.onDone())) return;
       props.onClose();
