@@ -1,0 +1,53 @@
+## certification / official PMI claims (apps, packages, docs/api)
+apps/web/src/i18n/en/common.json
+apps/api/src/modules/admin/branding.test.ts
+130:esis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+## #0078FF
+apps/web/src/i18n/en/common.json:127:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0
+apps/web/src/i18n/ar/common.json:127:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيً
+apps/api/src/modules/admin/branding.test.ts:15:  ["brand.primary", "#0078FF", "Primary accents and selected elements"],
+apps/api/src/modules/admin/branding.test.ts:88:    const ok = { provenance: "provisional", tokens: [{ name: "brand.primary", value: "#0078FF", provisional: true }] };
+apps/api/src/modules/admin/branding.ts:4:// #0078FF is a provisional brand token, not a verified Mobily colour; nothing here claims official brand compliance.
+apps/api/test/integration/contract/contract.test.ts:476:    // #0078FF is a provisional brand token, not a verified Mobily colour: the API must never call the set official.
+apps/api/test/integration/contract/contract.test.ts:479:    expect(res.body.tokens.some((t) => t.value.toUpperCase() === "#0078FF" && t.provisional)).toBe(true);
+packages/shared/src/schemas/branding.ts:3:// are unverified. #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colour
+packages/design-tokens/src/tokens.json:5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+packages/design-tokens/src/tokens.json:18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed wit
+packages/design-tokens/src/tokens.json:220:        "why": "white small text on #0078FF is about 4.09:1; action buttons use action.primary instead"
+packages/design-tokens/src/tokens.test.ts:21:      "brand.primary": "#0078FF",
+packages/design-tokens/src/tokens.test.ts:36:    expect(contrastRatio("#0078FF", "#FFFFFF")).toBeCloseTo(4.09, 2);
+packages/design-tokens/src/tokens.test.ts:37:    expect(contrastRatio("#0078FF", "#F5F8FC")).toBeCloseTo(3.84, 2);
+packages/design-tokens/src/tokens.test.ts:48:  it("never puts small white text on #0078FF: the action shade passes 4.5:1 on card and page", () => {
+packages/design-tokens/src/tokens.test.ts:51:    expect(action).not.toBe("#0078FF");
+packages/design-tokens/src/tokens.test.ts:56:    const shade = deriveDarkerShade("#0078FF", ["#FFFFFF", "#F5F8FC"], 4.5);
+packages/design-tokens/src/tokens.test.ts:85:    expect(css).toContain("--mth-brand-primary: #0078FF;");
+packages/design-tokens/src/index.ts:4:// (REQ-S15-002/003). #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/index.ts:160:    "/* PROVISIONAL tokens (master prompt §15): #0078FF is not a verified Mobily colour. */",
+## repair diff: all changed files (product)
+docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+docs/architecture/p3-work-split.md
+eslint.config.js
+packages/shared/src/formula/evaluate.ts
+packages/shared/src/formula/fuzz.test.ts
+packages/shared/src/formula/index.ts
+packages/shared/src/formula/parse.ts
+## repair diff: new i18n strings
+(none above = no i18n change)
+## repair diff: apps/ and packages/db, packages/shared/src/schemas
+(none above = no API/DB/web/contract change)
+## repair diff: formula engine non-test sources (+/- lines)
+-    if (e instanceof EvalFailure) return fail([e.problem], inexact);
+-    // ADR-0024 §6 (F-DG3-100 round 4): a refused code generation is rethrown, never converted (see index.ts internalProblem).
++    // ADR-0024 §6 (F-DG3-100 rounds 4–5): a refused code generation is rethrown, never converted (see index.ts
++    // internalProblem). It is the first statement of the catch, as lint and the scan require; an EvalFailure is a
++    // separate class, never an EvalError, so the order changes nothing.
++    if (e instanceof EvalFailure) return fail([e.problem], inexact);
+- * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine (here, in
+- * evaluateAst and in ../value.ts formatDecimal) therefore RETHROWS EvalError instead of converting it, so an exercised
++ * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine's import closure
++ * (here, in evaluateAst, in parseFormula and in ../value.ts formatDecimal) therefore RETHROWS EvalError as its first
++ * statement instead of converting it (enforced by lint and the source scan since round 5), so an exercised
++    // ADR-0024 §6 (F-DG3-100 round 5): the first statement of every catch in the engine's import closure (lint and scan
++    // enforce it). It changes nothing here: anything that is not a ParseFailure was already rethrown.
++    if (e instanceof EvalError) throw e;
