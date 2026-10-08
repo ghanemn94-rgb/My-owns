@@ -1,0 +1,42 @@
+# ADR-0024 §6 'Extended guard' claims vs code, clone /var/tmp/mth-run.szSM9q/claude-0/review-r4 at 171a0b57f9b8d2112891d1284adda6f0384da090, 2026-10-08T15:23:24Z
+## A1 'There are four [catches]': every catch/finally/.catch/Promise in the 7-file closure (decimal.js has none: diff-scan D7)
+packages/shared/src/formula/index.ts:102:  } catch (e) {
+packages/shared/src/formula/index.ts:134:  } catch (e) {
+packages/shared/src/formula/evaluate.ts:256:  } catch (e) {
+packages/shared/src/formula/parse.ts:67:  } catch (e) {
+packages/shared/src/value.ts:154:  } catch (e) {
+## A1b parse.ts catch body (rethrows anything that is not its own ParseFailure, so EvalError too):
+  } catch (e) {
+    if (e instanceof ParseFailure) return { ok: false, error: e.problem };
+    throw e;
+  }
+## A2 lint rules that would refuse a NEW non-rethrowing handler in the closure (CatchClause/TryStatement selectors, no-unsafe-finally, .catch): computed config for tokenize.ts and value.ts
+packages/shared/src/formula/tokenize.ts no-unsafe-finally= None | CatchClause/TryStatement selector: False | .catch selector: False
+packages/shared/src/value.ts no-unsafe-finally= None | CatchClause/TryStatement selector: False | .catch selector: False
+## A3 the ADR's layer-3 guarantee and residual text:
+94:- **Pinned by a test.** `fuzz.test.ts` computes the closure from `formula/index.ts`, following every static `import` and `export … from` (type-only included), and asserts four things:
+122:   - **Guarantee.** Any engine path that generates code from a string fails the engine's tests, provided a test exercises it. Two rules make this true, whatever the exercising test asserts:
+123:     - **The engine rethrows `EvalError` (F-DG3-100 round 4).** Every catch in the closure rethrows `EvalError` instead of converting it into a problem or a null. There are four: `validateFormula`, `evaluateFormula`, the tree walk in `evaluateAst`, and `formatDecimal` in `value.ts`. So the exception reaches the test.
+126:     - **Production behaviour.** A genuinely unexpected error is unchanged: it is a 422 `formula.syntax` problem with `reason: "internal"` (`formatDecimal`: null, shown as Unknown). An `EvalError` cannot occur in production, because nothing in the engine generates code. If one ever did occur, it would propagate: the API's error handler answers with the generic 500 `internal` problem, and the w
+136:- **Where it is refused.** Such a form fails the tests only on a path a test exercises. Wherever it sits in the closure, an exercised one fails every test that reaches it, through the `EvalError` rethrow. A future catch that converted it into an internal problem would still fail every `fuzz.test.ts` outcome check and every rejection-table row that reaches it, through the internal-failure rule.
+## A4 web: app-defined error boundary? (expect none; React Router 7 createBrowserRouter falls back to its DefaultErrorComponent)
+(grep exit 1)
+2:import { Navigate, createBrowserRouter, type RouteObject } from "react-router";
+103:  return createBrowserRouter(routes);
+## A4b react-router DefaultErrorComponent (production build) renders:
+function DefaultErrorComponent() {
+  let error = useRouteError();
+  let message = isRouteErrorResponse(error) ? `${error.status} ${error.statusText}` : error instanceof Error ? error.message : JSON.stringify(error);
+  let stack = error instanceof Error ? error.stack : null;
+createElement("h2", null, "Unexpected Application Error!"), /* @__PURE__ */ React2.createElement("h3", { style: { fontStyle: "italic" } }, message), stack ? /* @__PURE__ */ React2.createElement("pre", { style: preStyles }, stack) : null, devInfo)
+## A5 API: problems.internal() body and handler (500, no detail):
+grep: apps/api/src/modules/platform/problems.ts: No such file or directory
+222:    request.log.error({ err: error }, "unhandled error");
+223-    return sendProblem(reply, request, problemForError(error, request));
+## A6 openapi: operations declaring 500 (project convention: none):
+0
+## A7 closure-test import parser (IMPORT_SPECIFIER) cannot match a quoted specifier name; ESLint refuses the module (closure-parser-probe.log X1)
+296:const IMPORT_SPECIFIER = /\b(?:import|export)\s+(?:type\s+)?(?:[\w*$\s{},]+?\s+from\s+)?(["'`])([^"'`]*)\1/g;
+## A5 (corrected path apps/api/src/modules/platform/problem.ts):
+149:  internal: () =>
+150-    new HttpProblem({ status: 500, type: PROBLEM_TYPES.internal, code: "internal", title: "Internal error" }),

@@ -1,0 +1,61 @@
+# diff-scan 2026-10-08T15:02:32Z base ce988e20f7ea2752cd3283995fbf7ed05b704485 head 171a0b57f9b8d2112891d1284adda6f0384da090 (clone /var/tmp/mth-run.szSM9q/claude-0/review-r4)
+## D1 files changed outside docs/delivery:
+docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+docs/architecture/p3-work-split.md
+eslint.config.js
+packages/shared/src/formula/codegen.nocodegen.test.ts
+packages/shared/src/formula/evaluate.ts
+packages/shared/src/formula/formula.test.ts
+packages/shared/src/formula/fuzz.test.ts
+packages/shared/src/formula/index.ts
+packages/shared/src/value.ts
+## D2 changed files under apps/ migrations/ openapi vitest config package.json lockfile (expect none):
+(grep exit 1)
+## D3 non-test product source changed (expect index.ts evaluate.ts value.ts):
+packages/shared/src/formula/evaluate.ts
+packages/shared/src/formula/index.ts
+packages/shared/src/value.ts
+## D4 stat of product changes
+ ...0024-p3-business-case-and-formula-foundation.md |  36 ++--
+ docs/architecture/p3-work-split.md                 |   8 +
+ eslint.config.js                                   |  36 +++-
+ .../shared/src/formula/codegen.nocodegen.test.ts   |  54 +++++-
+ packages/shared/src/formula/evaluate.ts            |   5 +-
+ packages/shared/src/formula/formula.test.ts        |  73 +++++++-
+ packages/shared/src/formula/fuzz.test.ts           | 198 +++++++++++++++++++--
+ packages/shared/src/formula/index.ts               |  18 +-
+ packages/shared/src/value.ts                       |   5 +-
+ 9 files changed, 401 insertions(+), 32 deletions(-)
+## D5 non-comment, non-test code lines changed in engine/value.ts:
++    if (e instanceof EvalError) throw e;
++    if (e instanceof EvalError) throw e; // ADR-0024 §6: a refused code generation is never a formula problem
++    if (e instanceof EvalError) throw e; // ADR-0024 §6: see internalProblem
+-  } catch {
++  } catch (e) {
++    if (e instanceof EvalError) throw e;
+## D6 every try/catch/finally/.catch/Promise/then in the engine closure (7 files):
+packages/shared/src/formula/index.ts:67:  try {
+packages/shared/src/formula/index.ts:102:  } catch (e) {
+packages/shared/src/formula/index.ts:132:  try {
+packages/shared/src/formula/index.ts:134:  } catch (e) {
+packages/shared/src/formula/evaluate.ts:254:  try {
+packages/shared/src/formula/evaluate.ts:256:  } catch (e) {
+packages/shared/src/formula/parse.ts:52:  try {
+packages/shared/src/formula/parse.ts:67:  } catch (e) {
+packages/shared/src/value.ts:152:  try {
+packages/shared/src/value.ts:154:  } catch (e) {
+## D7 decimal.js 10.6.0 sources: eval( / Function( / try / catch counts
+node_modules/.pnpm/decimal.js@10.6.0/node_modules/decimal.js/decimal.js eval(=0 Function(=0 try=0 catch=0
+node_modules/.pnpm/decimal.js@10.6.0/node_modules/decimal.js/decimal.mjs eval(=0 Function(=0 try=0 catch=0
+## D8 'reason: internal' accepting assertions in formula tests (toMatchObject/toBe internal outside the 4 new tests):
+packages/shared/src/formula/codegen.nocodegen.test.ts:54:// here. Round 3 showed the engine's own catch-all turning the EvalError into an ordinary formula.syntax "internal"
+packages/shared/src/formula/formula.test.ts:37: * F-DG3-100 (round 4): the problems that report an internal engine failure (params.reason "internal"). An expected
+packages/shared/src/formula/formula.test.ts:41:  return problems.filter((p) => p.params["reason"] === "internal").map((p) => `${p.code}: ${p.message}`);
+packages/shared/src/formula/formula.test.ts:774:// into a problem (the API's 422 formula.syntax "internal", never 500), but RETHROWS EvalError, the host's refusal of a
+packages/shared/src/formula/formula.test.ts:805:      expect(r.errors[0]).toMatchObject({ code: "formula.syntax", offset: 0, params: { reason: "internal" } });
+packages/shared/src/formula/formula.test.ts:815:    expect(r.errors[0]!.params).toMatchObject({ reason: "internal", detail: "TypeError" });
+packages/shared/src/formula/formula.test.ts:822:    expect(r.errors[0]!.params).toMatchObject({ reason: "internal", detail: "TypeError" });
+packages/shared/src/formula/fuzz.test.ts:60: * F-DG3-100 (round 4): the problems that report an internal engine failure (params.reason "internal"; index.ts
+packages/shared/src/formula/fuzz.test.ts:65:  return problems.filter((p) => p.params["reason"] === "internal").map((p) => `${p.code}: ${p.message}`);
+## D9 secrets / CDN sweep on added product lines (apps packages eslint.config.js vitest.config.ts docs/architecture; expect none):
+(grep exit 1)

@@ -1,0 +1,15 @@
+# closure-parser probe 2026-10-08T15:22:40Z; node v22.22.2; disposable clone /var/tmp/mth-run.szSM9q/claude-0/review-p3 at 171a0b57f9b8d2112891d1284adda6f0384da090; git status ''
+# X1: formula/types.ts gains  export { "weightedScore" as zzX } from "../scoring.ts";  (string-named export specifier: the closure test's IMPORT_SPECIFIER regex cannot match a quoted name)
+23:export const CRITERION_CODES = [
+33:export function isCriterionCode(value: unknown): value is CriterionCode {
+44:export const DEFAULT_WEIGHTS_V1: readonly { readonly criterionCode: CriterionCode; readonly weightPercent: string }[] =
+## eslint packages/shared/src/formula/types.ts
+  159:1  error  '../scoring.ts' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+✖ 1 problem (1 error, 0 warnings)
+# eslint exit 1
+## closure + scan tests (unit-node)
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (50 tests | 47 skipped) 1088ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1075ms
+      Tests  3 passed | 47 skipped (50)
+# vitest exit 0
+# restored; git status ''

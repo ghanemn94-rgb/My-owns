@@ -1,0 +1,30 @@
+# command: bash /home/user/My-owns/docs/delivery/test-evidence/DG3/code-security/round-4/with-pg.sh 26322 pnpm exec vitest run --project integration apps/api/test/integration/zz-sec-r4 --reporter=verbose
+# node: v24.21.0  commit: 171a0b57f9b8d2112891d1284adda6f0384da090  LANG=C.UTF-8 LC_ALL=<unset> LC_CTYPE=<unset>  started: 2026-10-08T15:19:55Z
+[with-pg initdb] The database cluster will be initialized with locale "C.UTF-8".
+[with-pg initdb] The default database encoding has accordingly been set to "UTF8".
+[with-pg] cluster template1 encoding UTF8, collate C.UTF-8
+
+ RUN  v3.2.4 /var/tmp/mth-run.szSM9q/claude-0/review-r4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muzond39_d6761118 (server_encoding UTF8); applied 27 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r4/sec-r4-evalerror-api-v2.test.ts > sec-r4: an EvalError from the engine is a generic 500 at the API, never a formula problem > POST /benefit-formulas/validate: marked -> 500 internal without detail; unmarked -> 200 unchanged
+validate marked: [33m500[39m {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11c19-9997-766f-96e8-0f341dbfe3d3"}
+
+stdout | apps/api/test/integration/zz-sec-r4/sec-r4-evalerror-api-v2.test.ts > sec-r4: an EvalError from the engine is a generic 500 at the API, never a formula problem > POST /benefit-formulas/validate: marked -> 500 internal without detail; unmarked -> 200 unchanged
+validate unmarked: [33m200[39m {"valid":true,"resultKind":"number","resultUnit":null,"resultCurrency":null,"resultPeriod":"none","result":"42","errors":[]}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r4/sec-r4-evalerror-api-v2.test.ts > sec-r4: an EvalError from the engine is a generic 500 at the API, never a formula problem > POST /benefit-formulas/validate: marked -> 500 internal without detail; unmarked -> 200 unchanged 269ms
+stdout | apps/api/test/integration/zz-sec-r4/sec-r4-evalerror-api-v2.test.ts > sec-r4: an EvalError from the engine is a generic 500 at the API, never a formula problem > POST /benefit-formulas (create): marked -> 500 internal, nothing written; unmarked -> 201
+create marked: [33m500[39m {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11c19-9a2b-7606-975f-532cbc0febf3"}
+
+stdout | apps/api/test/integration/zz-sec-r4/sec-r4-evalerror-api-v2.test.ts > sec-r4: an EvalError from the engine is a generic 500 at the API, never a formula problem > POST /benefit-formulas (create): marked -> 500 internal, nothing written; unmarked -> 201
+create unmarked: [33m201[39m 42
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r4/sec-r4-evalerror-api-v2.test.ts > sec-r4: an EvalError from the engine is a generic 500 at the API, never a formula problem > POST /benefit-formulas (create): marked -> 500 internal, nothing written; unmarked -> 201 182ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:19:57
+   Duration  5.33s (transform 1.43s, setup 0ms, collect 3.09s, tests 657ms, environment 0ms, prepare 90ms)
+
+# exit_status: 0  finished: 2026-10-08T15:20:02Z

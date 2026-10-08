@@ -1,0 +1,25 @@
+# test-name diff round-3 -> round-4 (passing tests; durations stripped), 2026-10-08T15:22:28Z
+## invocation 1 (unit-node + unit-web): r3=1587 r4=1593
+## removed (in r3, not in r4):
+## added (in r4, not in r3):
+|unit-node| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > ../value.ts formatDecimal: a TypeError is null (Unknown); an EvalError is rethrown
+|unit-node| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateAst: a TypeError while walking is an 'internal' problem; an EvalError is rethrown
+|unit-node| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateFormula: a TypeError is an 'internal' problem with a null result; an EvalError is rethrown
+|unit-node| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > validateFormula: a TypeError is a formula.syntax 'internal' problem; an EvalError is rethrown
+|unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)
+|unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside
+## invocation 2 (unit-formula-nocodegen): r3=190 r4=199
+## removed:
+## added:
+|unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > ../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read
+|unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked
+|unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read
+|unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read
+|unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > ../value.ts formatDecimal: a TypeError is null (Unknown); an EvalError is rethrown
+|unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateAst: a TypeError while walking is an 'internal' problem; an EvalError is rethrown
+|unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateFormula: a TypeError is an 'internal' problem with a null result; an EvalError is rethrown
+|unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > validateFormula: a TypeError is a formula.syntax 'internal' problem; an EvalError is rethrown
+|unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside
+## skipped in r4 invocation 2:
+round-4/unit-node22.log: ↓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules 
+round-4/unit-node24.log: ↓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules 
