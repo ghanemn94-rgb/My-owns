@@ -1,0 +1,1034 @@
+$ /home/user/My-owns/docs/delivery/test-evidence/DG3/qa/round-7/scripts/probe-r7-static.sh $TMPDIR/probe-dg3 (node v24.21.0, 2026-10-08T22:10:59Z)
+=================== [R6 new forms] forms appended to packages/shared/src/formula/parse.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/formula/parse.ts b/packages/shared/src/formula/parse.ts
+index f95b339..03a4d34 100644
+--- a/packages/shared/src/formula/parse.ts
++++ b/packages/shared/src/formula/parse.ts
+@@ -248,3 +248,23 @@ class Parser {
+       this.fail(at, `${node.fn} takes at least two arguments`, "arity");
+   }
+ }
++// QA PROBE (throwaway, round 6): the self-handling forms named by T-DG3-KBE-H, in qa-verifier's own spellings.
++declare const qaGen: () => number;
++declare const qaP: { then(f: () => void): typeof qaP; catch(f: () => void): typeof qaP; finally(f: () => void): typeof qaP };
++export function* qaG1(): Generator<number> { try { yield qaGen(); } finally { yield 0; } }
++export const qaG2 = { *m(): Generator<number> { yield 1; } };
++export class QaG3 { *m(): Generator<number> { yield 1; } }
++export const qaG4 = function* (): Generator<number> { yield* [1]; };
++export function qaG5(): number { const it = (function* () { try { yield qaGen(); } finally { return; } })(); it.next(); it.return(undefined); return 0; }
++export function qaT1(p: typeof qaP): void { const { then: t } = p; void t; }
++export const qaT2 = { "finally": 1 };
++export const qaT3 = `then`;
++export class QaT4 { #then = 1; get v(): number { return this.#then; } }
++export const qaT5 = { then(r: (v: number) => void): void { r(qaGen()); } };
++export const qaT6 = { catch: 1 };
++export function qaA1(): unknown { return (Array as unknown as { fromAsync(x: unknown): unknown }).fromAsync([qaGen()]); }
++export const qaA2 = { [Symbol.asyncIterator](): typeof qaP { return qaP; } };
++export const qaA3 = (Array as unknown as Record<string, unknown>)["fromAsync"];
++// Allowed shapes (must NOT be reported): the documented rethrow, and a plain try/finally with no control transfer.
++export function qaOK(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; return 0; } }
++export function qaOK2(): number { let n = 0; try { n = qaGen(); } finally { n += 0; } return n; }
+$ npx eslint packages/shared/src/formula/parse.ts
+
+/var/tmp/mth-run.kgxWe5/claude-0/probe-dg3/packages/shared/src/formula/parse.ts
+  253:22  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  253:55  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  253:89  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  254:8   error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  254:52  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  254:79  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  255:25  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  255:49  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  256:23  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  256:47  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  257:21  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  257:55  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  258:46  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  258:67  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  258:94  error  Unsafe usage of ReturnStatement                                                                                               no-unsafe-finally
+  259:53  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  260:23  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  261:21  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  262:21  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  262:57  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)           no-restricted-syntax
+  262:62  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  263:23  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  264:23  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  265:65  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  265:99  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  266:31  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  267:67  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+
+✖ 27 problems (27 errors, 0 warnings)
+
+EXIT 1
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+
+ RUN  v3.2.4 /var/tmp/mth-run.kgxWe5/claude-0/probe-dg3
+
+ ❯ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests | 1 failed | 4 skipped) 1860ms
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates
+   ↓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator
+   ↓ fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 35ms
+     → formula/parse.ts: expected [ 'generator', 'then', …(4) ] to deeply equal []
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 2ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1314ms
+__F("return 1") as Function identifier 0ms
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+global["ev" + "al"]!("6*7") as host global 0ms
+self["ev" + "al"]!("6*7") as host global 0ms
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 0ms
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  void __g().next();
+} as generator 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  const it = __g();
+  it.next();
+  it.return(0);
+} as generator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as then 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as fromAsync/asyncIterator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+} as then 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    const s = "}";
+    void s;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = '}';
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `${"}"}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const r = /}/;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  *g() {}
+} as generator 0ms
+  static *g() {}
+} as generator 0ms
+  const x = yield 1;
+} as generator 0ms
+  m() {}
+  catch(e) {
+    if (e instanceof EvalError) throw e;
+  }
+} as catch outside a try statement 0ms
+  m() {}
+  finally() {}
+} as finally outside a try statement 0ms
+  #then() {}
+} as then 0ms
+  #fromAsync = 0;
+} as fromAsync/asyncIterator 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > excludes from the ESLint test only the named probe rows that are not valid modules 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  488ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: formula/parse.ts: expected [ 'generator', 'then', …(4) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "generator",[39m
+[31m+   "then",[39m
+[31m+   "fromAsync/asyncIterator",[39m
+[31m+   "catch outside a try statement",[39m
+[31m+   "finally outside a try statement",[39m
+[31m+   "finally with return/throw/break/continue",[39m
+[31m+ ][39m
+
+ ❯ packages/shared/src/formula/fuzz.test.ts:575:88
+    573|       ]);
+    574|       for (const { file, allowlist } of files) {
+    575|         expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), a…
+       |                                                                                        ^
+    576|       }
+    577|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 106 passed | 4 skipped (111)
+   Start at  22:11:03
+   Duration  2.93s (transform 352ms, setup 0ms, collect 505ms, tests 1.86s, environment 0ms, prepare 103ms)
+
+EXIT 1
+restored: git status --porcelain = ''
+=================== [R5 regression forms] forms appended to packages/shared/src/formula/parse.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/formula/parse.ts b/packages/shared/src/formula/parse.ts
+index f95b339..a09c5cd 100644
+--- a/packages/shared/src/formula/parse.ts
++++ b/packages/shared/src/formula/parse.ts
+@@ -248,3 +248,26 @@ class Parser {
+       this.fail(at, `${node.fn} takes at least two arguments`, "arity");
+   }
+ }
++declare const qaGen: () => number;
++declare const qaP: { then(f: () => void): typeof qaP; catch(f: () => void): typeof qaP; finally(f: () => void): typeof qaP };
++// Round-5 forms (regression; byte-identical to the round-5 probe):
++export function qaW1(): number { try { return qaGen(); } catch { return 0; } }
++export function qaW2(): number { try { return qaGen(); } finally { return 0; } }
++export function qaW4(): void { void Promise.resolve().then(() => qaGen()).catch(() => undefined); }
++export function qaW5(): number { try { return qaGen(); } catch (e) { throw new Error("wrapped", { cause: e }); } }
++export function qaR1(): number { try { return qaGen(); } catch (err) { if (err instanceof EvalError) throw err; return 0; } }
++export function qaR2(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; else return 0; } }
++export function qaR3(): number { try { return qaGen(); } catch (e) { const z = 1; if (e instanceof EvalError) throw e; return z; } }
++export function qaR4(): number { try { return qaGen(); } catch (e) { if (e instanceof TypeError) throw e; return 0; } }
++export function qaR5(): number { for (;;) { try { return qaGen(); } finally { break; } } return 0; }
++export function qaR6(): number { try { return qaGen(); } finally { throw new RangeError("x"); } }
++export const qaR7 = (): void => { const EvalError = RangeError; void EvalError; };
++export async function qaR8(): Promise<number> { return await Promise.resolve(qaGen()); }
++export function qaR9(): void { queueMicrotask(() => { qaGen(); }); }
++export function qaR10(): void { qaP["then"](() => undefined); qaP?.catch(() => undefined); qaP.finally(() => undefined); }
++export const qaR11 = async (): Promise<void> => {};
++export function qaR12(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) { throw e; } return 0; } }
++export function qaR13(): number { try { return qaGen(); } catch (e) { if (!(e instanceof EvalError)) return 0; throw e; } }
++// Allowed shapes (must NOT be reported): the documented rethrow, and a plain try/finally with no control transfer.
++export function qaOK(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; return 0; } }
++export function qaOK2(): number { let n = 0; try { n = qaGen(); } finally { n += 0; } return n; }
+$ npx eslint packages/shared/src/formula/parse.ts
+
+/var/tmp/mth-run.kgxWe5/claude-0/probe-dg3/packages/shared/src/formula/parse.ts
+  252:22  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  252:55  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  252:89  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  254:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  255:68  error  Unsafe usage of ReturnStatement                                                                                                                 no-unsafe-finally
+  256:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  256:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  256:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  256:55  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  256:75  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  257:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  258:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  259:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  260:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  261:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  262:79  error  Unsafe usage of BreakStatement                                                                                                                  no-unsafe-finally
+  263:68  error  Unsafe usage of ThrowStatement                                                                                                                  no-unsafe-finally
+  264:41  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  264:70  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  265:8   error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  265:31  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  265:56  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  265:62  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  266:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:33  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:37  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  267:63  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:68  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  267:92  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:96  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  268:22  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  268:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  269:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  270:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+
+✖ 34 problems (34 errors, 0 warnings)
+
+EXIT 1
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+
+ RUN  v3.2.4 /var/tmp/mth-run.kgxWe5/claude-0/probe-dg3
+
+ ❯ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests | 1 failed | 4 skipped) 1592ms
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates
+   ↓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator
+   ↓ fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 28ms
+     → formula/parse.ts: expected [ 'Promise', 'async', 'await', …(7) ] to deeply equal []
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 8ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1097ms
+__F("return 1") as Function identifier 0ms
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+global["ev" + "al"]!("6*7") as host global 0ms
+self["ev" + "al"]!("6*7") as host global 0ms
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 0ms
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  void __g().next();
+} as generator 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  const it = __g();
+  it.next();
+  it.return(0);
+} as generator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as then 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as fromAsync/asyncIterator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+} as then 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    const s = "}";
+    void s;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = '}';
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `${"}"}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const r = /}/;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  *g() {}
+} as generator 0ms
+  static *g() {}
+} as generator 0ms
+  const x = yield 1;
+} as generator 0ms
+  m() {}
+  catch(e) {
+    if (e instanceof EvalError) throw e;
+  }
+} as catch outside a try statement 0ms
+  m() {}
+  finally() {}
+} as finally outside a try statement 0ms
+  #then() {}
+} as then 0ms
+  #fromAsync = 0;
+} as fromAsync/asyncIterator 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > excludes from the ESLint test only the named probe rows that are not valid modules 1ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  426ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: formula/parse.ts: expected [ 'Promise', 'async', 'await', …(7) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "Promise",[39m
+[31m+   "async",[39m
+[31m+   "await",[39m
+[31m+   ".then/.catch/.finally",[39m
+[31m+   "then",[39m
+[31m+   "catch outside a try statement",[39m
+[31m+   "catch without EvalError rethrow",[39m
+[31m+   "finally outside a try statement",[39m
+[31m+   "finally with return/throw/break/continue",[39m
+[31m+   "EvalError outside instanceof",[39m
+[31m+ ][39m
+
+ ❯ packages/shared/src/formula/fuzz.test.ts:575:88
+    573|       ]);
+    574|       for (const { file, allowlist } of files) {
+    575|         expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), a…
+       |                                                                                        ^
+    576|       }
+    577|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 106 passed | 4 skipped (111)
+   Start at  22:11:09
+   Duration  2.58s (transform 355ms, setup 0ms, collect 512ms, tests 1.59s, environment 0ms, prepare 113ms)
+
+EXIT 1
+restored: git status --porcelain = ''
+=================== [R6 new forms] forms appended to packages/shared/src/value.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 961b148..79f59a7 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -293,3 +293,23 @@ export function totalValuePoolsIn(
+ export function isPartialTotal(total: ValuePoolTotal): boolean {
+   return total.unquantifiedCount > 0;
+ }
++// QA PROBE (throwaway, round 6): the self-handling forms named by T-DG3-KBE-H, in qa-verifier's own spellings.
++declare const qaGen: () => number;
++declare const qaP: { then(f: () => void): typeof qaP; catch(f: () => void): typeof qaP; finally(f: () => void): typeof qaP };
++export function* qaG1(): Generator<number> { try { yield qaGen(); } finally { yield 0; } }
++export const qaG2 = { *m(): Generator<number> { yield 1; } };
++export class QaG3 { *m(): Generator<number> { yield 1; } }
++export const qaG4 = function* (): Generator<number> { yield* [1]; };
++export function qaG5(): number { const it = (function* () { try { yield qaGen(); } finally { return; } })(); it.next(); it.return(undefined); return 0; }
++export function qaT1(p: typeof qaP): void { const { then: t } = p; void t; }
++export const qaT2 = { "finally": 1 };
++export const qaT3 = `then`;
++export class QaT4 { #then = 1; get v(): number { return this.#then; } }
++export const qaT5 = { then(r: (v: number) => void): void { r(qaGen()); } };
++export const qaT6 = { catch: 1 };
++export function qaA1(): unknown { return (Array as unknown as { fromAsync(x: unknown): unknown }).fromAsync([qaGen()]); }
++export const qaA2 = { [Symbol.asyncIterator](): typeof qaP { return qaP; } };
++export const qaA3 = (Array as unknown as Record<string, unknown>)["fromAsync"];
++// Allowed shapes (must NOT be reported): the documented rethrow, and a plain try/finally with no control transfer.
++export function qaOK(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; return 0; } }
++export function qaOK2(): number { let n = 0; try { n = qaGen(); } finally { n += 0; } return n; }
+$ npx eslint packages/shared/src/value.ts
+
+/var/tmp/mth-run.kgxWe5/claude-0/probe-dg3/packages/shared/src/value.ts
+  298:22  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  298:55  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  298:89  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  299:8   error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  299:52  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  299:79  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  300:25  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  300:49  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  301:23  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  301:47  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  302:21  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  302:55  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  303:46  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  303:67  error  No generator function or yield in the formula engine: a suspended generator can hold a refused code generation (ADR-0024 §6)  no-restricted-syntax
+  303:94  error  Unsafe usage of ReturnStatement                                                                                               no-unsafe-finally
+  304:53  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  305:23  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  306:21  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  307:21  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  307:57  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)           no-restricted-syntax
+  307:62  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  308:23  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  309:23  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  310:65  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  310:99  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  311:31  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+  312:67  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                 no-restricted-syntax
+
+✖ 27 problems (27 errors, 0 warnings)
+
+EXIT 1
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+
+ RUN  v3.2.4 /var/tmp/mth-run.kgxWe5/claude-0/probe-dg3
+
+ ❯ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests | 1 failed | 4 skipped) 1778ms
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates
+   ↓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator
+   ↓ fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 39ms
+     → value.ts: expected [ 'generator', 'then', …(4) ] to deeply equal []
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 7ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1271ms
+__F("return 1") as Function identifier 0ms
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+global["ev" + "al"]!("6*7") as host global 0ms
+self["ev" + "al"]!("6*7") as host global 0ms
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 0ms
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  void __g().next();
+} as generator 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  const it = __g();
+  it.next();
+  it.return(0);
+} as generator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as then 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as fromAsync/asyncIterator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+} as then 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    const s = "}";
+    void s;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = '}';
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `${"}"}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const r = /}/;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  *g() {}
+} as generator 0ms
+  static *g() {}
+} as generator 0ms
+  const x = yield 1;
+} as generator 0ms
+  m() {}
+  catch(e) {
+    if (e instanceof EvalError) throw e;
+  }
+} as catch outside a try statement 0ms
+  m() {}
+  finally() {}
+} as finally outside a try statement 0ms
+  #then() {}
+} as then 0ms
+  #fromAsync = 0;
+} as fromAsync/asyncIterator 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > excludes from the ESLint test only the named probe rows that are not valid modules 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  446ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: value.ts: expected [ 'generator', 'then', …(4) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "generator",[39m
+[31m+   "then",[39m
+[31m+   "fromAsync/asyncIterator",[39m
+[31m+   "catch outside a try statement",[39m
+[31m+   "finally outside a try statement",[39m
+[31m+   "finally with return/throw/break/continue",[39m
+[31m+ ][39m
+
+ ❯ packages/shared/src/formula/fuzz.test.ts:575:88
+    573|       ]);
+    574|       for (const { file, allowlist } of files) {
+    575|         expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), a…
+       |                                                                                        ^
+    576|       }
+    577|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 106 passed | 4 skipped (111)
+   Start at  22:11:14
+   Duration  2.82s (transform 363ms, setup 0ms, collect 516ms, tests 1.78s, environment 0ms, prepare 131ms)
+
+EXIT 1
+restored: git status --porcelain = ''
+=================== [R5 regression forms] forms appended to packages/shared/src/value.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 961b148..8d122f3 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -293,3 +293,26 @@ export function totalValuePoolsIn(
+ export function isPartialTotal(total: ValuePoolTotal): boolean {
+   return total.unquantifiedCount > 0;
+ }
++declare const qaGen: () => number;
++declare const qaP: { then(f: () => void): typeof qaP; catch(f: () => void): typeof qaP; finally(f: () => void): typeof qaP };
++// Round-5 forms (regression; byte-identical to the round-5 probe):
++export function qaW1(): number { try { return qaGen(); } catch { return 0; } }
++export function qaW2(): number { try { return qaGen(); } finally { return 0; } }
++export function qaW4(): void { void Promise.resolve().then(() => qaGen()).catch(() => undefined); }
++export function qaW5(): number { try { return qaGen(); } catch (e) { throw new Error("wrapped", { cause: e }); } }
++export function qaR1(): number { try { return qaGen(); } catch (err) { if (err instanceof EvalError) throw err; return 0; } }
++export function qaR2(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; else return 0; } }
++export function qaR3(): number { try { return qaGen(); } catch (e) { const z = 1; if (e instanceof EvalError) throw e; return z; } }
++export function qaR4(): number { try { return qaGen(); } catch (e) { if (e instanceof TypeError) throw e; return 0; } }
++export function qaR5(): number { for (;;) { try { return qaGen(); } finally { break; } } return 0; }
++export function qaR6(): number { try { return qaGen(); } finally { throw new RangeError("x"); } }
++export const qaR7 = (): void => { const EvalError = RangeError; void EvalError; };
++export async function qaR8(): Promise<number> { return await Promise.resolve(qaGen()); }
++export function qaR9(): void { queueMicrotask(() => { qaGen(); }); }
++export function qaR10(): void { qaP["then"](() => undefined); qaP?.catch(() => undefined); qaP.finally(() => undefined); }
++export const qaR11 = async (): Promise<void> => {};
++export function qaR12(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) { throw e; } return 0; } }
++export function qaR13(): number { try { return qaGen(); } catch (e) { if (!(e instanceof EvalError)) return 0; throw e; } }
++// Allowed shapes (must NOT be reported): the documented rethrow, and a plain try/finally with no control transfer.
++export function qaOK(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; return 0; } }
++export function qaOK2(): number { let n = 0; try { n = qaGen(); } finally { n += 0; } return n; }
+$ npx eslint packages/shared/src/value.ts
+
+/var/tmp/mth-run.kgxWe5/claude-0/probe-dg3/packages/shared/src/value.ts
+  297:22  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  297:55  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  297:89  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  299:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  300:68  error  Unsafe usage of ReturnStatement                                                                                                                 no-unsafe-finally
+  301:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  301:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  301:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  301:55  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  301:75  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  302:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  303:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  304:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  305:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  306:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  307:79  error  Unsafe usage of BreakStatement                                                                                                                  no-unsafe-finally
+  308:68  error  Unsafe usage of ThrowStatement                                                                                                                  no-unsafe-finally
+  309:41  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  309:70  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  310:8   error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  310:31  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  310:56  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  310:62  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  311:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:33  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:37  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  312:63  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:68  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  312:92  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:96  error  No then/catch/finally name, fromAsync or asyncIterator in the formula engine: it is synchronous (ADR-0024 §6)                                   no-restricted-syntax
+  313:22  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  313:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  314:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  315:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+
+✖ 34 problems (34 errors, 0 warnings)
+
+EXIT 1
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+
+ RUN  v3.2.4 /var/tmp/mth-run.kgxWe5/claude-0/probe-dg3
+
+ ❯ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests | 1 failed | 4 skipped) 1968ms
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+   ↓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates
+   ↓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator
+   ↓ fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 49ms
+     → value.ts: expected [ 'Promise', 'async', 'await', …(7) ] to deeply equal []
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 2ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1442ms
+__F("return 1") as Function identifier 0ms
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+global["ev" + "al"]!("6*7") as host global 0ms
+self["ev" + "al"]!("6*7") as host global 0ms
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 3ms
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  void __g().next();
+} as generator 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  const it = __g();
+  it.next();
+  it.return(0);
+} as generator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as then 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as fromAsync/asyncIterator 0ms
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+} as then 0ms
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    const s = "}";
+    void s;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = '}';
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const s = `${"}"}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  try {
+    a();
+  } finally {
+    const r = /}/;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+  *g() {}
+} as generator 0ms
+  static *g() {}
+} as generator 0ms
+  const x = yield 1;
+} as generator 0ms
+  m() {}
+  catch(e) {
+    if (e instanceof EvalError) throw e;
+  }
+} as catch outside a try statement 0ms
+  m() {}
+  finally() {}
+} as finally outside a try statement 0ms
+  #then() {}
+} as then 0ms
+  #fromAsync = 0;
+} as fromAsync/asyncIterator 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > excludes from the ESLint test only the named probe rows that are not valid modules 2ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  455ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: value.ts: expected [ 'Promise', 'async', 'await', …(7) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "Promise",[39m
+[31m+   "async",[39m
+[31m+   "await",[39m
+[31m+   ".then/.catch/.finally",[39m
+[31m+   "then",[39m
+[31m+   "catch outside a try statement",[39m
+[31m+   "catch without EvalError rethrow",[39m
+[31m+   "finally outside a try statement",[39m
+[31m+   "finally with return/throw/break/continue",[39m
+[31m+   "EvalError outside instanceof",[39m
+[31m+ ][39m
+
+ ❯ packages/shared/src/formula/fuzz.test.ts:575:88
+    573|       ]);
+    574|       for (const { file, allowlist } of files) {
+    575|         expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), a…
+       |                                                                                        ^
+    576|       }
+    577|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 106 passed | 4 skipped (111)
+   Start at  22:11:20
+   Duration  2.81s (transform 289ms, setup 0ms, collect 469ms, tests 1.97s, environment 0ms, prepare 103ms)
+
+EXIT 1
+restored: git status --porcelain = ''
+=================== after restore
+$ npx eslint packages/shared/src/formula packages/shared/src/value.ts
+EXIT 0
+git status --porcelain = ''
+SCRIPT EXIT 0

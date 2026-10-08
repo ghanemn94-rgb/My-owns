@@ -1,0 +1,79 @@
+$ /home/user/My-owns/docs/delivery/test-evidence/DG3/qa/round-7/scripts/probe-r7-lintproof.sh $TMPDIR/probe-dg3 (node v24.21.0, 2026-10-08T22:10:14Z)
+=================== control (unmodified candidate)
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms' --reporter=verbose
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 1861ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 110 skipped (111)
+EXIT 0
+=================== P1 remove ForOfStatement[await=true] from the async selector
+diff --git a/eslint.config.js b/eslint.config.js
+index 37b3f3c..0b08024 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -165 +165 @@ const FORMULA_SOURCE_SYNTAX = [
+-      "Identifier[name=/^(Promise|queueMicrotask)$/], :function[async=true], AwaitExpression, ForOfStatement[await=true], MemberExpression[property.name=/^(then|catch|finally)$/], MemberExpression[computed=true][property.value=/^(then|catch|finally)$/]",
++      "Identifier[name=/^(Promise|queueMicrotask)$/], :function[async=true], AwaitExpression, MemberExpression[property.name=/^(then|catch|finally)$/], MemberExpression[computed=true][property.value=/^(then|catch|finally)$/]",
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms' --reporter=verbose
+ × |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 1815ms
+   → for await (const x of xs) a(x); (await): expected [] to not deeply equal []
+AssertionError: for await (const x of xs) a(x); (await): expected [] to not deeply equal []
+ Test Files  1 failed (1)
+      Tests  1 failed | 110 skipped (111)
+EXIT 1
+restored: git status --short = []
+=================== P2 remove the PrivateIdentifier part of the round-6 name selector
+diff --git a/eslint.config.js b/eslint.config.js
+index 37b3f3c..85d2b16 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -181 +181 @@ const FORMULA_SOURCE_SYNTAX = [
+-      "Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], PrivateIdentifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], Literal[value=/^(then|catch|finally|fromAsync|asyncIterator)$/], TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
++      "Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], Literal[value=/^(then|catch|finally|fromAsync|asyncIterator)$/], TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms' --reporter=verbose
+ × |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 1798ms
+   → class C {
+AssertionError: class C {
+ Test Files  1 failed (1)
+      Tests  1 failed | 110 skipped (111)
+EXIT 1
+restored: git status --short = []
+=================== P3 remove the generator selector (:function[generator=true], YieldExpression -> a selector matching nothing)
+diff --git a/eslint.config.js b/eslint.config.js
+index 37b3f3c..c0a9d83 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -172 +172 @@ const FORMULA_SOURCE_SYNTAX = [
+-    selector: ":function[generator=true], YieldExpression",
++    selector: "Identifier[name=\"qaNeverUsedName\"]",
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms' --reporter=verbose
+ × |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 1357ms
+   → G1: expected [] to include 'no-restricted-syntax'
+AssertionError: G1: expected [] to include 'no-restricted-syntax'
+ Test Files  1 failed (1)
+      Tests  1 failed | 110 skipped (111)
+EXIT 1
+restored: git status --short = []
+=================== P4 remove the Literal part of the round-6 name selector
+diff --git a/eslint.config.js b/eslint.config.js
+index 37b3f3c..3a0a275 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -181 +181 @@ const FORMULA_SOURCE_SYNTAX = [
+-      "Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], PrivateIdentifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], Literal[value=/^(then|catch|finally|fromAsync|asyncIterator)$/], TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
++      "Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], PrivateIdentifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/], TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms' --reporter=verbose
+ × |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 1657ms
+   → const { ["then"]: t } = p; (then): expected [] to not deeply equal []
+AssertionError: const { ["then"]: t } = p; (then): expected [] to not deeply equal []
+ Test Files  1 failed (1)
+      Tests  1 failed | 110 skipped (111)
+EXIT 1
+restored: git status --short = []
+=================== control after restore
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms' --reporter=verbose
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source 1803ms
+ Test Files  1 passed (1)
+      Tests  1 passed | 110 skipped (111)
+EXIT 0
+git status --porcelain = ''
+SCRIPT EXIT 0

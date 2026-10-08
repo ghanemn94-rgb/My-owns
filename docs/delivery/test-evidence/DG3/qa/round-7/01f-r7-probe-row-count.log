@@ -1,0 +1,10 @@
+$ (throwaway) insert after 'expect(linted).toBe(...)': console.log('QA-R7 PROBES', PROBES.length, 'linted', linted, 'excluded', LINT_EXCLUDED.size); npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'ESLint refuses the round-5 handler forms'
+diff --git a/packages/shared/src/formula/fuzz.test.ts b/packages/shared/src/formula/fuzz.test.ts
+index b4dc77b..b822e56 100644
+--- a/packages/shared/src/formula/fuzz.test.ts
++++ b/packages/shared/src/formula/fuzz.test.ts
+@@ -874,0 +875 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024
++      console.log('QA-R7 PROBES', PROBES.length, 'linted', linted, 'excluded', LINT_EXCLUDED.size, [...LINT_EXCLUDED.keys()]);
+QA-R7 PROBES 101 linted 99 excluded 2 [ 'const s = "unclosed;', 'function f() {' ]
+      Tests  1 passed | 110 skipped (111)
+restored: []
