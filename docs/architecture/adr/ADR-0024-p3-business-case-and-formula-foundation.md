@@ -88,6 +88,8 @@ G4 `g4.finance_validation` is complete only when every in-scope case (and the tr
 
 **No dynamic code.** The engine is a hand-written tokenizer, recursive-descent parser and AST walker. `eval`, `new Function`, `Function(...)`, `vm`/`node:vm`, `setTimeout(string)`, dynamic `import()` and `with` are forbidden in `packages/shared/src/formula/**`; an ESLint override (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports: vm, node:vm`, `no-restricted-syntax: ImportExpression`, `WithStatement`, timer calls `setTimeout`/`setInterval`/`setImmediate`/`execScript` as plain or member calls, and `.constructor(...)` calls) enforces it. The timer selectors are needed because core `no-implied-eval` only recognises declared globals (T-DG3-KBE-A lint probe); a source scan in `fuzz.test.ts` backs the rule up.
 
+**Extended guard (F-DG3-100, T-DG3-KBE-D).** The override also refuses the forms that reach the Function constructor or a module loader without those names: `no-restricted-globals` `Function`, `eval`, `Reflect` (the engine uses no `Reflect`); `no-restricted-syntax` for any `Function` identifier (aliases, `globalThis.Function`, `Reflect.construct/apply(Function, …)`), computed `["constructor"]`/`["Function"]` members (string or template), any `.constructor` read or destructuring, `require`/`createRequire` calls and the `createRequire` name; and `no-restricted-imports` `module`, `node:module`, `worker_threads`, `child_process` (with and without `node:`). The `fuzz.test.ts` scan (`scanSource`, comments stripped) checks the same forms in the engine sources, and a table of in-memory probes pins that each form is a hit. The fuzz tripwire's three `globalThis.Function` lines carry a justified `eslint-disable-next-line`.
+
 **Grammar (EBNF).**
 
 ```ebnf

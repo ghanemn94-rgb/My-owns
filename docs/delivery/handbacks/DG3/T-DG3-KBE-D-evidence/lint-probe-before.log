@@ -1,0 +1,14 @@
+## BEFORE: round-1 eslint.config.js (git show HEAD:eslint.config.js) on the probe
+EXIT=0
+## CONTROL: round-1 config is active (it refuses eval and .constructor(...) calls)
+     1	// TEMPORARY control: the round-1 config must refuse this
+     2	export const x = eval("1");
+     3	export const y = (() => 1).constructor("return 1");
+
+/home/user/wt/dg3-kbe-d/packages/shared/src/formula/zz-lint-control.ts
+  2:18  error  `eval` can be harmful                                                                             no-eval
+  3:18  error  No .constructor(...) calls in the formula engine: that is the Function constructor (ADR-0024 §6)  no-restricted-syntax
+
+✖ 2 problems (2 errors, 0 warnings)
+
+EXIT=1

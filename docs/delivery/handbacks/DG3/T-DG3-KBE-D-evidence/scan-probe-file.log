@@ -1,0 +1,54 @@
+## Scan probe on a temporary file ($TMPDIR/probe.ts = the lint probe source), patterns copied verbatim from fuzz.test.ts (round-1 = git HEAD, repaired = working tree). Lines 7, 11, 14 and 16 only use a value whose defining line is flagged.
+each probe line scanned on its own (comments stripped as in scanSource):
+"// TEMPORARY lint probe for F-DG3-100 (T-DG3-KBE-D). Deleted after the" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: NOT FLAGGED
+"import { createRequire } from \"node:module\"; // L2  form: node:module " 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: createRequire, node:module
+"import * as mod from \"module\"; // L3  form: bare module import" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: node:module
+"export const p1 = Reflect.construct(Function, [\"return 1\"]); // L4  fo" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: Function identifier, Reflect.construct, Reflect
+"export const p2 = Reflect.apply(Function, null, [\"return 1\"]); // L5  " 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: Function identifier, Reflect.apply, Reflect
+"const __F = Function; // L6  form: aliased Function" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: Function identifier
+"export const p3 = __F(\"return 1\"); // L7  (call of the alias; the alia" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: NOT FLAGGED
+"export const p4 = Object.getPrototypeOf(function* () {})[\"constructor\"" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: ["constructor"]
+"export const p5 = Object.getPrototypeOf(function* () {})[`constructor`" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: ["constructor"]
+"export const p6 = createRequire(import.meta.url)(\"vm\"); // L10 form: c" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: createRequire
+"declare const require: (id: string) => unknown;" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: NOT FLAGGED
+"export const p7 = require(\"vm\"); // L12 form: require(...)" 
+   round-1 scan: vm require 
+   repaired scan: require(, vm require
+"const C = (async () => {}).constructor; // L13 form: .constructor read" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: .constructor access
+"export const p8 = (C as (s: string) => unknown)(\"return 1\");" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: NOT FLAGGED
+"const { constructor: D } = function* () {}; // L15 form: destructured " 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: constructor key
+"export const p9 = [D, mod];" 
+   round-1 scan: NOT FLAGGED 
+   repaired scan: NOT FLAGGED
+"export const p10 = globalThis[\"Function\"]; // L17 form: computed [\"Fun" 
+   round-1 scan: globalThis 
+   repaired scan: Function identifier, globalThis
+EXIT=0
