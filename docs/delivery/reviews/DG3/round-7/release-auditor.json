@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 7,
+  "candidate_id": "sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0",
+  "source_commit": "d3e6fe62d9a4a3a0e8d08fcf273aef74857b3e81",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-AUDIT-R7-release-auditor-20261008T225848Z-bbce06d4",
+    "session_id": "bbce06d4-60b4-4148-9b9e-f37103a5b1b7"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor authored no implementation, test, register row, ADR, review or finding fix in the DG3 scope. That includes the five F-DG3-100 repairs (KBE-D..H), ARCH-05, FE-G and KBE-I. I audited the frozen candidate directly, in a complete disposable clone ($TMPDIR/c, not shallow, fsck clean) at source d3e6fe62. I checked the three round-7 specialist records and the code-security verification sidecar, the run metadata and sandbox files of every DG3 run, findings.json, stages.json and decisions D-078..D-087, and the cited evidence content. I reproduced pnpm test and the formula fuzz/lint test myself. My only writes are my evidence under docs/delivery/test-evidence/DG3/audit/round-7/ and this record and the gate record, written with the Write tool."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-7/release-auditor.md",
+  "requirements_checked": [
+    "REQ-PB-004", "REQ-PB-006", "REQ-PB-007", "REQ-PB-019", "REQ-PB-022", "REQ-PB-032", "REQ-PB-040", "REQ-PB-045",
+    "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050", "REQ-PB-051", "REQ-PB-052", "REQ-PB-053",
+    "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-059", "REQ-DLV-035", "REQ-S04-006", "REQ-S05-005",
+    "REQ-S08-007", "REQ-S09-001", "REQ-S09-003", "REQ-S09-004", "REQ-S09-005", "REQ-S09-006", "REQ-S09-008", "REQ-S16-016"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-R7-1-clone-and-identity",
+      "procedure": "Verify the assignment hash. Use a complete git clone (not a worktree) under $TMPDIR. Recompute the candidate in the working tree and in the clone at the source commit (also after an offline install and build there). Confirm HEAD descends from the source commit with no change outside docs/delivery. Run the previous gates historically and the register rules at DG3.",
+      "command": "sha256sum <assignment>; git clone . $TMPDIR/c; git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG3 (HEAD and clone @d3e6fe62); node tools/gates/validate.mjs --historical --stage DG2; --historical --stage DG1; --register DG3",
+      "environment": "repository HEAD 0cb2898 (descendant of d3e6fe62; delivery metadata only); clone $TMPDIR/c; node v24.21.0; auditor sandbox",
+      "expected": "assignment sha 7a6dcf29...; complete clone; sha256:f55095db...bf6e0 with 757 files everywhere; DG2 and DG1 historical PASS; register PASS",
+      "actual": "Assignment sha256 7a6dcf2957f5...b493114f matches. Clone complete: is-shallow=false, 736 commits, fsck exit 0. d3e6fe62 is an ancestor of HEAD, and git diff d3e6fe62..HEAD outside docs/delivery is empty. Candidate sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0, 757 files, in the working tree, in the clone at d3e6fe62 (also after install and build) and at 0cb2898. It equals stages.json (state VERIFYING, frozen 2026-10-08T21:47:45Z), the manifest and all three round-7 records. 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)' and 'PASS register rules at DG3', each exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log",
+        "docs/delivery/candidates/DG3/f55095dbec364594.manifest.json"
+      ]
+    },
+    {
+      "id": "AUD-R7-2-independence-and-provenance",
+      "procedure": "Resolve each round-7 specialist record's invocation_reference to its run directory. Check meta.json (role, invocation_reference equality, exit_code, is_error, subtype, external_config_changed, bash_sandbox, process_sandbox_discarded, tool_authored) and that sha256(sandbox.json) equals meta.process_sandbox_sha256. Check the independence declarations against the authorship of every DG3 implementation run.",
+      "command": "python3 -I over docs/delivery/runs/DG3/*/meta.json and sandbox.json (02-provenance-findings-incidents.log sections A and E)",
+      "environment": "repository HEAD 0cb2898; python3 -I",
+      "expected": "three distinct successful sandboxed round-7 runs; exit 0; empty external_config_changed; sandbox hashes match; no reviewer among the implementation roles",
+      "actual": "domain 07643801, code-security 2c76861e, qa fd289c52: three distinct run_ids and session_ids. Each meta's invocation_reference equals its record, with the matching role, exit_code 0, is_error false, subtype success, external_config_changed [], bash_sandbox true, process_sandbox_discarded [] and a matching sandbox.json sha256. tool_authored holds only each role's own round-7 review files. Every DG3 implementation run (ARCH-01..05, BE-A..G, KBE-A..I, FE-A0..G, AN-P3/P3B) was run by an implementer role; no reviewer role implemented any DG3 requirement, and each record declares reviewer_authored_reviewed_scope=false. meta.outputs is the shared-tree pre/post diff (run-agent.sh snapshot): it lists the concurrent reviewers' round-7 evidence too, so authorship is taken from tool_authored, as in rounds 1-6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log",
+        "docs/delivery/runs/DG3/DG3-T-DG3-REV-DOM-R7-domain-reviewer-20261008T215008Z-07643801/meta.json",
+        "docs/delivery/runs/DG3/DG3-T-DG3-REV-SEC-R7-code-security-reviewer-20261008T214948Z-2c76861e/meta.json",
+        "docs/delivery/runs/DG3/DG3-T-DG3-REV-QA-R7-qa-verifier-20261008T215028Z-fd289c52/meta.json"
+      ]
+    },
+    {
+      "id": "AUD-R7-3-verdicts",
+      "procedure": "Read the three round-7 records: verdict, candidate, source, findings and every check's result.",
+      "command": "python3 over docs/delivery/reviews/DG3/round-7/*.json",
+      "environment": "repository HEAD 0cb2898",
+      "expected": "three PASS verdicts on f55095db / d3e6fe62; no BLOCKED or FAIL check; no new finding",
+      "actual": "domain PASS (13 checks), code-security PASS (22 checks), qa PASS (26 checks), all on sha256:f55095db...bf6e0 and d3e6fe62. Every check is PASS and none is BLOCKED; findings [] in all three. Three qa checks carry exit_status 1 with PASS (QA-R7-01b, 04 and 07b). Each is explained: the deliberate negative probe, and qa's own F180b probe failing only at 390 px + 200% text, identical to rounds 3-6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG3/round-7/domain-reviewer.json",
+        "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
+        "docs/delivery/reviews/DG3/round-7/qa-verifier.json",
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log"
+      ]
+    },
+    {
+      "id": "AUD-R7-4-findings",
+      "procedure": "For each of the five DG3 findings, check: status; a verifier who is not the owner; fix_revision an ancestor of d3e6fe62; and the verifying run's exit, config, sandbox and evidence existence. Then judge the F-DG3-100 closure against the reviewer's round-5 final criterion and ADR-0024 §6, spot-checking §6's factual claims in the clone.",
+      "command": "python3 over findings.json + runs; git merge-base --is-ancestor <fix> d3e6fe62; grep of the seven engine sources and decimal.js 10.6.0; read ADR-0024 §6 and the round-5/6/7 code-security verifications",
+      "environment": "repository HEAD 0cb2898; clone $TMPDIR/c @d3e6fe62",
+      "expected": "5/5 CLOSED_VERIFIED by non-owners with ancestor fixes and clean verifying runs; §6 claims only what the code guarantees, with an honest residual",
+      "actual": "5 DG3 findings, all CLOSED_VERIFIED, none mandatory, 0 Critical/High.\n- F-DG3-120 (Low): owner solution-architect, verified by domain in run 478aac6a (round 2, finished before D-082, external_config_changed []); fix ea8e2de is an ancestor. Domain re-confirmed it in round 7 (33/33 API, UI EN/AR).\n- F-DG3-170 (Medium): owner frontend-ux-engineer, verified by domain in run 60f6afce (round 3); fix 6b30768 is an ancestor.\n- F-DG3-180 (Medium): verified by the qa rerun 7b0434bc (R3B, D-084); fix 6b30768 is an ancestor.\n- F-DG3-100 (Low): owner kpi-benefits-engineer, closed by code-security in round 6 (run 4bb03630) on 7049d793; fix 53ac073 is an ancestor.\n- F-DG3-280 (Low): closed by code-security in round 7 (run 2c76861e); fix 1cd89e6 is an ancestor.\nEvery verifying run has exit 0, external_config_changed [] and a matching sandbox, and every cited verification evidence file exists.\n\nF-DG3-100 judgement: the closure is sound.\n- The round-5 final criterion offered (b) narrow §6 to enumerated claims and state the residual, or (a) refuse G1/G2/A1 and drop the absolute wording. Round 6 shows both met with the reviewer's own verbatim probes, and round 7 re-ran all five probes with byte-identical verdicts.\n- §6 now states 'Each one refuses only what is listed for it here; none of them proves that the engine generates no code' and lists lint's L1-L7 exactly.\n- The residual is honest. It names unexercised paths (Q1-Q5) and 'A self-handling form outside the list L1-L7, even on an exercised path, is refused by no layer', which code-security demonstrated with A3.\n- I checked the factual claims myself. There are exactly five catch clauses in the seven closure files, each beginning 'if (e instanceof EvalError) throw e;'. The closure files have no finally, generator, yield, async, await, Promise, then, fromAsync, asyncIterator, eval or Function. decimal.js 10.6.0 has those words only in comments and no function*. The imports are only ./*.ts, ../value.ts and decimal.js. The CSP has useDefaults:false and scriptSrc 'self'.\n- My own run of fuzz.test.ts passes 111/111, including the lintText test over G1/G2/A1/A2/F1 and every lintable probe row.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/05-adr-0024-and-scope-spotcheck.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/04-unit-reproduction.log",
+        "docs/delivery/reviews/DG3/round-6/code-security-reviewer.verifications.json",
+        "docs/delivery/reviews/DG3/round-7/code-security-reviewer.verifications.json",
+        "docs/delivery/findings.json",
+        "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md"
+      ]
+    },
+    {
+      "id": "AUD-R7-5-process-incidents",
+      "procedure": "D-082: parse both round-2 runs' external_config_changed. Check each entry's root, and compare each tracked entry's sha256 with the blob at f20bdef and at f49ca16. Check that no closure or gate verdict uses either run, and that no run after the round-3 freeze reports a change. D-084: check the orphaned material and the rerun assignments. Round-5 discarded freeze: check stages.json history.",
+      "command": "python3 over runs/DG3/*R2*/meta.json with git show <ref>:<path> | sha256; listing of test-evidence/DG3/*-r3-orphaned and assignments/DG3/round-3; stages.json history",
+      "environment": "repository HEAD 0cb2898",
+      "expected": "all entries under the two new worktrees; tracked entries equal committed content; no reliance; no change in rounds 3-7; orphaned material and reruns present; discarded freeze recorded",
+      "actual": "D-082 handled acceptably.\n- The code-security R2 run (1fcbceaa) has 39 entries, all under /home/user/wt/dg3-fe-g/: 15 tracked, every one byte-equal to both f20bdef and f49ca16, plus 24 node_modules.\n- The qa R2 run (b13e71c6) has 78 entries, all under dg3-fe-g/ and dg3-kbe-e/: 30 tracked, all equal, plus 48 node_modules.\n- No closure relies on either run (the verifying runs are 478aac6a, 60f6afce, 7b0434bc, 4bb03630 and 2c76861e), and the gate relies only on the round-7 records. F-DG3-180 was raised in the qa R2 run but closed by R3B.\n- The corrective rule held: no run started after the round-3 freeze (11:07:45Z) reports a configuration change, reviewer or implementer.\n- D-084: code-security-r3-orphaned/{partial-evidence,run} and qa-r3-orphaned/{partial-evidence,partial-tests,run} exist; round-3/*-rerun.md exist; the R3B runs are clean.\n- Discarded round-5 freeze: the stages.json REVIEWING entry at 17:13:17Z records that dad583d3 (source 537c5fa) omitted D-085 and was discarded uncommitted before any review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log",
+        "docs/delivery/runs/DG3/DG3-T-DG3-REV-SEC-R2-code-security-reviewer-20261008T090956Z-1fcbceaa/meta.json",
+        "docs/delivery/runs/DG3/DG3-T-DG3-REV-QA-R2-qa-verifier-20261008T091036Z-b13e71c6/meta.json",
+        "docs/delivery/stages.json"
+      ]
+    },
+    {
+      "id": "AUD-R7-6-environmental-residuals",
+      "procedure": "Read SEC-R7-21, DOM-R7-12 and QA-R7-19, and confirm that no round-7 check is BLOCKED. Confirm that D-049, D-057 and D-058 exist.",
+      "command": "python3 over round-7 records; grep decisions.md",
+      "environment": "repository HEAD 0cb2898",
+      "expected": "no BLOCKED check; residuals documented, with their offline/config surfaces verified",
+      "actual": "No round-7 specialist check is BLOCKED. The offline/config surfaces are verified:\n- live registry (REQ-DLV-042 AC-1, D-057): the offline frozen install exits 0, and the repair changes no manifest or lockfile;\n- live CI (REQ-DLV-025 A24, D-058): check-ci-needs OK, 46/46 tests;\n- Keycloak (D-049): 37 OIDC test lines per integration run against the in-process IdP.\nAll three residuals are documented in decisions.md. None is a DG3-final requirement.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
+        "docs/delivery/reviews/DG3/round-7/qa-verifier.json",
+        "docs/delivery/reviews/DG3/round-7/domain-reviewer.json"
+      ]
+    },
+    {
+      "id": "AUD-R7-7-requirements",
+      "procedure": "Compare the register's final_gate=DG3 rows with the assignment list and the reviewers' requirements_checked.",
+      "command": "python3 over requirements.csv and round-7 records; node tools/gates/validate.mjs --register DG3",
+      "environment": "repository HEAD 0cb2898",
+      "expected": "32/32 IMPLEMENTED; all in qa; each in domain or code-security; register PASS",
+      "actual": "The register has 32 final_gate=DG3 rows, all IMPLEMENTED, equal to the assignment list. qa checked 32/32. domain checked 28 and code-security 16; their union covers all 32, and REQ-DLV-035, REQ-S08-007, REQ-S09-008 and REQ-S16-016 are covered by code-security. 'PASS register rules at DG3', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004", "REQ-PB-006", "REQ-PB-007", "REQ-PB-019", "REQ-PB-022", "REQ-PB-032", "REQ-PB-040", "REQ-PB-045",
+        "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050", "REQ-PB-051", "REQ-PB-052", "REQ-PB-053",
+        "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-059", "REQ-DLV-035", "REQ-S04-006", "REQ-S05-005",
+        "REQ-S08-007", "REQ-S09-001", "REQ-S09-003", "REQ-S09-004", "REQ-S09-005", "REQ-S09-006", "REQ-S09-008", "REQ-S16-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "AUD-R7-8-decisions",
+      "procedure": "Read D-078..D-087 in decisions.md verbatim, and judge the limitations and disclosures the assignment names.",
+      "command": "Read docs/delivery/decisions.md lines 7-16; cross-check against run metadata, handbacks and requirements.csv",
+      "environment": "repository HEAD 0cb2898",
+      "expected": "each decision recorded with its rationale; limitations acceptable as disclosed",
+      "actual": "All ten decisions are recorded with their rationale.\n- D-078 records the plan ('The solution-architect runs first and alone (T-DG3-ARCH-01)') and the correction: 'That summary was wrong. ... The records were accurate; only the orchestrator's paraphrase was not. From now on, assignments quote decisions verbatim from this file.'\n- D-079 records 'Twenty-three implementer runs ran in waves', integration edits 'limited to test kits, test pins or document wording', and three disclosed limitations. I judge each acceptable as disclosed for DG3:\n  - 'the role name is the server's labelEn data ... so it can appear in English in Arabic'. Bilingual API messages are owned by REQ-S15-007 (DG6, SPECIFIED), and the refusal still names the item and the missing criterion.\n  - 'A Finance-validation item names the record type, not the record's title'. The missing item stays identifiable.\n  - 'rounding is NULL only on calculation rows written before 0027 (none exist in a fresh database)'.\n- D-080: 'They are repaired instead, because accepting them would need the user's approval and both are small.'\n- D-081: 'At the merge the orchestrator put both under one heading and renumbered them 23 (KBE-D) and 24 (ARCH-05), keeping their texts verbatim.'\n- D-082: quoted under AUD-R7-5; the rule 'no worktree creation or removal, no install ... while any review or audit run is active' held.\n- D-083: 'The orchestrator accepts the change' to the root test script. It is acceptable, because without it unit-formula-nocodegen is not in pnpm test; I ran pnpm test and both invocations executed. The flaky unit-web test is disclosed.\n- D-084..D-087 record the round 3-6 results and the KBE-F/G/H/I repairs, each with merged-tree verification.\n- The session-identity.test.tsx flake under load (D-083, D-084) is acceptable as disclosed. It is a DG2 test, it passed on every rerun and isolated repeat, and the round-7 runs were green on the first run, both mine and qa's. No specialist raised it.\nTwo record inaccuracies, neither affecting the gate:\n  - D-083 says 'Both implementer runs report external_config_changed', but only FE-G's meta does; KBE-E's is []. This is an over-disclosure.\n  - The ARCH-02 implementer run (2026-10-07, before any review) reports 39 '<path> removed' entries under /home/user/wt/dg3-kbe-a, the wave-1 worktree removed during its run, and D-079 does not mention it. This is implementer-only and warning-class (D-082), and the run's meta records it transparently.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/05-adr-0024-and-scope-spotcheck.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/04-unit-reproduction.log"
+      ]
+    },
+    {
+      "id": "AUD-R7-9-evidence-honesty",
+      "procedure": "Collect every evidence path cited by the three round-7 records and by the round-2 domain record (the F-DG3-120 closure). Check that each exists, grep every cited .log/.txt for non-zero exits, failed suites and hook timeouts, and match each hit to its disclosure in the records.",
+      "command": "python3 path collection; grep -c -i -E '<exit/failed/timeout pattern>' over each cited log (03-disclosure-grep.log)",
+      "environment": "repository HEAD 0cb2898",
+      "expected": "every cited path exists; every non-zero exit, failed suite or timeout disclosed and explained",
+      "actual": "All 282 cited paths exist; 0 are missing. The hits fall into these groups:\n- integration logs: passing encoding.test.ts titles ('mth-db migrate: exit 1 ...'), not failures;\n- domain round-7 logs: only a passing test title;\n- code-security probe logs: deliberate mutations, plus spellings-r7 exit 1 (1/169, the round-6-identical scan miss 'class C { private *g() {} }', disclosed in SEC-R7-16 and consistent with §6's enumerated L4 scan claim) and the A4 control;\n- qa: the 01b/01c/01e deliberate probes, and e2e 'EXIT 1' (216 passed, 2 failed, both F180b), disclosed in QA-R7-04/07b;\n- round-2 domain: attempt-1 crash (the reviewer's own probe mistake) and the by-design dg3-ui-overflow exit 1, both disclosed in the record (DOM-R2-05/06) and env.txt.\nNothing is undisclosed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/03-disclosure-grep.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/03a-cited-evidence-existence.txt"
+      ]
+    },
+    {
+      "id": "AUD-R7-10-product-vs-engineering-gates",
+      "procedure": "Grep the candidate's product code for DG0-DG7 references, certification claims, the provisional brand token and seed guards. Check that G4 approvals in the evidence come from synthetic users.",
+      "command": "grep -rn DG0-DG7 apps/*/src packages/*/src; grep certification/official-PMI; grep 0078FF; packages/db/src/dev-seed.ts",
+      "environment": "clone $TMPDIR/c @d3e6fe62",
+      "expected": "no product code grants a real business/Finance/IT approval or ties G1-G6 to DG0-DG7; demo approvals synthetic",
+      "actual": "Every DG0-DG7 mention in product code is a separation statement, for example workflows/index.ts 'unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse)' and g4.ts 'it never implies an engineering gate DG0-DG7'. There is no certification or official-PMI claim; docs/architecture/README.md disclaims it. #0078FF is marked provisional (branding.ts). dev-seed creates SYNTHETIC users only, refusing NODE_ENV=production and AUTH_MODE other than dev. The reviewers' G4 decisions use synthetic dev users (qa: 'synthetic FIN and synthetic SP users'). This audit grants no business, Finance or IT approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/05-adr-0024-and-scope-spotcheck.log"
+      ]
+    },
+    {
+      "id": "AUD-R7-11-auditor-reproduction",
+      "procedure": "In the complete clone at d3e6fe62: offline frozen install from a private copy of the local pnpm store, pnpm -r build, pnpm test (both Vitest invocations), and the formula fuzz/lint test on its own.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm test; npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts",
+      "environment": "clone $TMPDIR/c @d3e6fe62; node v24.21.0; pnpm 10.33.0; no network",
+      "expected": "exit 0; 1654 + 259 passed / 2 skipped, as reported by all three reviewers and D-087",
+      "actual": "install exit 0 (two benign bin-link warnings before build), build exit 0, pnpm test exit 0. unit-node+unit-web: 81 files, 1654/1654. unit-formula-nocodegen: 3 files, 259 passed, 2 skipped (261). fuzz.test.ts in unit-node: 111/111, including 'ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row'. The candidate ID was unchanged after the install and build.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/04-unit-reproduction.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log"
+      ]
+    },
+    {
+      "id": "AUD-R7-12-validate-stage-DG3",
+      "procedure": "Run the stage validator before writing the gate record. Run it again after writing; that output is reported in the handback, because this record is written first.",
+      "command": "node tools/gates/validate.mjs --stage DG3",
+      "environment": "repository HEAD 0cb2898, before the gate record existed",
+      "expected": "only errors about the missing gate record or my own in-flight run_id",
+      "actual": "Before writing: 'FAIL gate DG3 (current) (1 problem) - gate DG3: file not found (docs/delivery/gates/DG3.json)'. That is the record this run writes; no other problem was reported.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log",
+    "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log",
+    "docs/delivery/test-evidence/DG3/audit/round-7/03-disclosure-grep.log",
+    "docs/delivery/test-evidence/DG3/audit/round-7/03a-cited-evidence-existence.txt",
+    "docs/delivery/test-evidence/DG3/audit/round-7/04-unit-reproduction.log",
+    "docs/delivery/test-evidence/DG3/audit/round-7/05-adr-0024-and-scope-spotcheck.log",
+    "docs/delivery/reviews/DG3/round-7/domain-reviewer.json",
+    "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
+    "docs/delivery/reviews/DG3/round-7/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG3/round-7/qa-verifier.json",
+    "docs/delivery/findings.json",
+    "docs/delivery/stages.json",
+    "docs/delivery/decisions.md"
+  ],
+  "reviewed_at": "2026-10-08T23:10:00Z",
+  "summary": "Audit PASS on candidate sha256:f55095db...bf6e0 (757 files, source d3e6fe62), recomputed in a complete clone.\n- Three independent, successful, sandboxed round-7 specialist runs, all PASS on this candidate. No new finding and no BLOCKED check.\n- 5/5 DG3 findings CLOSED_VERIFIED by non-owners. Every fix is an ancestor of the candidate, and every verifying run is clean. 0 unresolved Critical/High findings and 0 mandatory violations.\n- The F-DG3-100 closure is sound: ADR-0024 §6 claims only enumerated, checked behaviour, and its residual is honest.\n- 32/32 DG3 requirements IMPLEMENTED and covered. DG2 and DG1 historical PASS; register PASS.\n- The D-082 and D-084 incidents were handled acceptably, and the corrective rule held in rounds 3-7.\n- Every non-zero exit in the cited logs is disclosed. I reproduced pnpm test: 1654, then 259 + 2 skipped.\n- Non-blocking observations (no finding): the D-083 over-disclosure about KBE-E; the undisclosed ARCH-02 worktree-removal warning; the D-079 labelEn limitation and the F180b 390 px + 200% grid state, both carried to DG6 (REQ-S15-007, REQ-S15-009); the session-identity flake, acceptable as disclosed."
+}

@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "decision": "APPROVED",
+  "candidate_id": "sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0",
+  "source_commit": "d3e6fe62d9a4a3a0e8d08fcf273aef74857b3e81",
+  "manifest_path": "docs/delivery/candidates/DG3/f55095dbec364594.manifest.json",
+  "previous_gate": "DG2",
+  "reviews": {
+    "domain-reviewer": "docs/delivery/reviews/DG3/round-7/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG3/round-7/qa-verifier.json"
+  },
+  "release_audit": "docs/delivery/reviews/DG3/round-7/release-auditor.json",
+  "requirements": {
+    "final_gate_ids": [
+      "REQ-PB-004",
+      "REQ-PB-006",
+      "REQ-PB-007",
+      "REQ-PB-019",
+      "REQ-PB-022",
+      "REQ-PB-032",
+      "REQ-PB-040",
+      "REQ-PB-045",
+      "REQ-PB-046",
+      "REQ-PB-047",
+      "REQ-PB-048",
+      "REQ-PB-049",
+      "REQ-PB-050",
+      "REQ-PB-051",
+      "REQ-PB-052",
+      "REQ-PB-053",
+      "REQ-PB-054",
+      "REQ-PB-055",
+      "REQ-PB-056",
+      "REQ-PB-057",
+      "REQ-PB-059",
+      "REQ-DLV-035",
+      "REQ-S04-006",
+      "REQ-S05-005",
+      "REQ-S08-007",
+      "REQ-S09-001",
+      "REQ-S09-003",
+      "REQ-S09-004",
+      "REQ-S09-005",
+      "REQ-S09-006",
+      "REQ-S09-008",
+      "REQ-S16-016"
+    ],
+    "notes": "All 32 register rows with final_gate DG3 are IMPLEMENTED and match the assignment list. qa-verifier checked all 32. domain-reviewer checked 28 and code-security-reviewer 16; REQ-DLV-035, REQ-S08-007, REQ-S09-008 and REQ-S16-016 are covered by code-security. validate --register DG3 PASS. Documented environmental residuals with verified offline/config surfaces: live-registry install effect (REQ-DLV-042 AC-1, D-057), live GitHub-Actions run (REQ-DLV-025 A24, D-058), Keycloak (D-049; OIDC verified against the in-process IdP, 37 lines per integration run)."
+  },
+  "tests": [
+    {
+      "name": "Complete-clone check and candidate recomputation (working tree, and a clean clone at d3e6fe62 before and after install/build)",
+      "command": "git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG3",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/00-candidate.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/candidate.log"
+      ]
+    },
+    {
+      "name": "Previous gates DG2 and DG1 historical validation, and register rules at DG3",
+      "command": "node tools/gates/validate.mjs --historical --stage DG2; node tools/gates/validate.mjs --historical --stage DG1; node tools/gates/validate.mjs --register DG3",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/01-audit-checks.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/validators.log"
+      ]
+    },
+    {
+      "name": "Unit tests on Node 22 and Node 24: pnpm test runs both Vitest invocations (1654/1654; unit-formula-nocodegen 259 passed, 2 skipped by design), reproduced by the auditor",
+      "command": "pnpm test (unit-node + unit-web, then unit-formula-nocodegen under --disallow-code-generation-from-strings)",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/04-unit-reproduction.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/test-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/test-node24.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/02-unit-summary.txt"
+      ]
+    },
+    {
+      "name": "Integration on disposable PostgreSQL 16 in both locale settings (793/793; migrations 0001-0027; 270 contract operations)",
+      "command": "pnpm test:integration on a disposable PG16 cluster, LANG unset and LANG=C.UTF-8",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-7/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/03-integration-run2.log"
+      ]
+    },
+    {
+      "name": "e2e EN+AR on the real stack in both locale settings (216 passed per run; every product spec passes; the 2 failures are qa's own F180b probe at 390 px + 200% text, identical to rounds 3-6, explained), with 0 axe violations",
+      "command": "e2e/support/qa-stack.sh npx playwright test <14 spec files> --workers=1 (chromium-en, chromium-ar; LANG unset and C.UTF-8)",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-e2e-unset.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-e2e-cutf8.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-axe-summary.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-f180-summary.txt"
+      ]
+    },
+    {
+      "name": "Literal acceptance trace of all 32 DG3 requirements in EN and AR (qa), and domain probes of the P3 operating logic (API 139/139, UI 42/42)",
+      "command": "qa dg3-qa-r7 spec and requirement trace; domain dg3-api, dg3-ui probes",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-requirement-trace.txt",
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-checks-summary.txt",
+        "docs/delivery/test-evidence/DG3/domain/round-7/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/dg3-ui.log"
+      ]
+    },
+    {
+      "name": "F-DG3-280 verification (code-security, round 7) and F-DG3-100 no-regression (every probe verdict byte-identical to round 6)",
+      "command": "lint-mutation-probe.mjs (M1/M2 vs repaired and pre-repair tests); independent-row-lint.mjs; run-probes.sh; probe-verdicts-r6-vs-r7 diff",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG3/round-7/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG3/code-security/round-7/lint-mutation-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-7/independent-row-lint.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-7/probe-verdicts-r6-vs-r7.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/01e-r7-lintproof-mutation-probe.log"
+      ]
+    },
+    {
+      "name": "Earlier closures still hold on this candidate: F-DG3-120 (API 33/33, UI EN/AR) and F-DG3-170/180 (badge layout 12/12 and 155/155; qa F180)",
+      "command": "domain dg3-api-extra, dg3-ui-inherited, dg3-ui-overflow, dg3-ui-overflow-r3; qa F180 probe",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-7/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/dg3-ui-inherited.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/dg3-ui-overflow.log",
+        "docs/delivery/test-evidence/DG3/domain/round-7/dg3-ui-overflow-r3.log",
+        "docs/delivery/test-evidence/DG3/qa/round-7/04-f180-summary.txt"
+      ]
+    },
+    {
+      "name": "Auditor provenance and findings check: three clean round-7 runs; 5/5 findings CLOSED_VERIFIED by non-owners with ancestor fixes and clean verifying runs; D-082/D-084 handling; no configuration change after the round-3 freeze",
+      "command": "python3 -I over runs/DG3/*/meta.json, sandbox.json, findings.json; git merge-base --is-ancestor; git show <ref>:<path> | sha256",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/02-provenance-findings-incidents.log"
+      ]
+    },
+    {
+      "name": "Disclosure check: every path cited by the round-7 records and the round-2 domain record exists (282), and every non-zero exit, failed suite or timeout in the cited logs is disclosed",
+      "command": "inline path collection and grep over every cited evidence file",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/03-disclosure-grep.log",
+        "docs/delivery/test-evidence/DG3/audit/round-7/03a-cited-evidence-existence.txt"
+      ]
+    },
+    {
+      "name": "ADR-0024 §6 claim spot-check, repair scope, and product-vs-engineering gate separation",
+      "command": "git diff --name-status c40232b0..d3e6fe62; grep of the seven engine sources and decimal.js 10.6.0; CSP; DG0-DG7 mentions in product code; dev-seed guards",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/audit/round-7/05-adr-0024-and-scope-spotcheck.log"
+      ]
+    },
+    {
+      "name": "Environmental residuals on the offline/config surface: live registry (D-057), live CI (D-058), Keycloak (D-049)",
+      "command": "offline frozen install; check-ci-needs + tests; OIDC tests against the in-process IdP",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
+        "docs/delivery/reviews/DG3/round-7/qa-verifier.json"
+      ]
+    }
+  ],
+  "blocking_conditions": [],
+  "accepted_observations": [],
+  "decided_at": "2026-10-08T23:12:00Z",
+  "decided_by": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-AUDIT-R7-release-auditor-20261008T225848Z-bbce06d4",
+    "session_id": "bbce06d4-60b4-4148-9b9e-f37103a5b1b7"
+  },
+  "notes": "DG3 is an engineering delivery gate only. It grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. Product gate G4 decisions in the evidence are synthetic demo decisions by synthetic dev users. All 5 DG3 findings (F-DG3-100, 120, 170, 180, 280) are CLOSED_VERIFIED by non-owners, and there are no DG3 accepted observations. The F-DG3-100 closure (round 6, re-confirmed in round 7) is sound: ADR-0024 §6 claims only enumerated, checked behaviour, and states its residual honestly (unexercised paths; self-handling forms outside L1-L7). The D-082 and D-084 incidents were handled acceptably: no closure or verdict relies on the tainted round-2 runs, and no run after the round-3 freeze reports a configuration change. Non-finding observations: (1) for delivery-orchestrator: D-083 says both KBE-E and FE-G report external_config_changed, but only FE-G's meta does. The ARCH-02 implementer run (before any review) reports 39 'removed' entries under /home/user/wt/dg3-kbe-a, which no decision mentions. Correct both in the next decision. (2) For backend-workflow-engineer and frontend-ux-engineer, carried to DG6 (REQ-S15-007): the D-079 limitation, where a G4 capacity-conflict item can show a role's English labelEn in Arabic, is acceptable as disclosed for DG3. (3) For frontend-ux-engineer, carried to DG6 (REQ-S15-009): the pre-existing gate grid scrolls horizontally at 390 px with 200% root text (qa F180b; the badge stays inside its card). (4) The session-identity.test.tsx flake under load (D-083/D-084) is acceptable as disclosed; it did not recur in round 7."
+}
