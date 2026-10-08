@@ -1,0 +1,610 @@
+# revision 2 of the probe; node v22.22.2; clone /var/tmp/mth-run.IbnCNt/claude-0/review-p3 at ce988e20f7ea2752cd3283995fbf7ed05b704485; started 2026-10-08T12:19:49Z
+
+=== O1: Reflect.construct(Function, …)
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  7 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:36  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)      no-restricted-globals
+      305:36  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                                   no-restricted-syntax
+      305:54  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                                no-restricted-globals
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 17ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 52ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 14ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'constructor word', …(1) ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== O2: globalThis['ev'+'al']
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  1 error line(s)
+      298:44  error  No prototype reflection in the formula engine (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 44ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 5ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 52ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 14ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'prototype reflection' ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== O3: createRequire(import.meta.url)('vm').runInThisContext
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  9 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                                no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                                no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                    no-restricted-syntax
+      305:1   error  'node:module' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+      305:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                                                          no-restricted-syntax
+      305:10  error  No require/createRequire in the formula engine: static imports only (ADR-0024 §6)                                                                          no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 17ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 38ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 19ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'constructor word' ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== O4: Reflect.apply(Function, …)
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  7 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:36  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)      no-restricted-globals
+      305:36  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                                   no-restricted-syntax
+      305:50  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                                no-restricted-globals
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  23 failed | 167 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 13ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 5ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 59ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  3 failed | 181 passed (184)
+      × fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 2033ms
+      × fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 2836ms
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 4ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== O5: computed ['constructor'] on a generator prototype
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  6 error line(s)
+      299:11   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68   error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:36   error  No ["constructor"] or ["Function"] member in the formula engine: that is the Function constructor (ADR-0024 §6)          no-restricted-syntax
+      305:44   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      305:119  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=4
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 8ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 6ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 83ms
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  20 failed | 164 passed (184)
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 35ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+  ==> REFUSED BY: lint + scan + run-time
+
+=== O6: alias F = Function
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  5 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:13  error  Unexpected use of 'Function'. No Function constructor in the formula engine (ADR-0024 §6)                                no-restricted-globals
+      305:13  error  No Function constructor in the formula engine, not even through an alias (ADR-0024 §6)                                   no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 189 passed (190)  EvalError lines=0
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 15ms
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'host global' ] to deeply equal []
+  ==> REFUSED BY: lint + scan
+
+=== N1: f[k], k = 'constructor'
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  1 error line(s)
+      297:1  error  'node:inspector' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 189 passed (190)  EvalError lines=0
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 11ms
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 11ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'non-allowlisted import' ] to deeply equal []
+  ==> REFUSED BY: lint + scan
+
+=== N2: f['con' + 'structor']
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  6 error line(s)
+      299:11   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43   error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68   error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:36   error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+      305:107  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+      305:115  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  1 failed | 189 passed (190)  EvalError lines=0
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 14ms
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'non-allowlisted import' ] to deeply equal []
+  ==> REFUSED BY: lint + scan
+
+=== N3: getOwnPropertyDescriptor(fnProto, 'constructor').value
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  6 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      306:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      306:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      306:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=4
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 11ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 6ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 52ms
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  20 failed | 164 passed (184)
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 4ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 23ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 72ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N4: const { [k]: C } = generator prototype
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  5 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:14  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      306:33  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1  Tests  20 failed | 170 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 20ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 3ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 37ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N5: AsyncFunction via prototype, join-built key
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  4 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      306:44  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 3
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N6: tagged template f[k]`…`
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  5 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:14  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      306:36  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 3
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N7: global['ev'+'al']
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  7 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:15  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                no-restricted-syntax
+      306:36  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                no-restricted-syntax
+      306:43  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1  Tests  20 failed | 170 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 10ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 51ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N8: self['ev'+'al'] (browser form)
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  7 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:15  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                no-restricted-syntax
+      306:36  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                no-restricted-syntax
+      306:41  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)         no-restricted-syntax
+  SCAN exit=0  Tests  1 passed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  20 failed | 170 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 56ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 4ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 101ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + run-time
+
+=== N9: process.getBuiltinModule('node:vm').runInThisContext
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  5 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:15  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                no-restricted-syntax
+      306:36  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=0  Tests  190 passed (190)  EvalError lines=0
+  RUN-only failures (fail under the flag, pass without it): 0
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan
+
+=== N10: node:inspector Runtime.evaluate
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  4 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                                   no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                                   no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                       no-restricted-syntax
+      305:1   error  'node:inspector' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1  Tests  61 failed | 129 passed (190)  EvalError lines=43
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 34ms
+      × grammar table (ADR-0024 §6 EBNF) > accepts "a" 38ms
+      × grammar table (ADR-0024 §6 EBNF) > accepts "a + b" 1ms
+      × grammar table (ADR-0024 §6 EBNF) > accepts "a+b" 1ms
+  RUN-only failures (fail under the flag, pass without it): 59
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a"
+      packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a + b"
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  2 failed | 182 passed (184)
+      × fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 1857ms
+      × fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 3191ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+      AssertionError: expected [ 'new Function', …(158) ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N11: static import of node:repl
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  4 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                  no-restricted-syntax
+      305:1   error  'node:repl' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 3
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== N12: import.meta.resolve (loads nothing)
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  4 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+      305:37  error  No import.meta in the formula engine (ADR-0024 §6)                                                                       no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 3
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=0  Tests  184 passed (184)
+  ==> REFUSED BY: lint + scan + run-time
+
+=== Q1: key harvested: Object.getOwnPropertyNames(Object.prototype) -> 'constructor'; fnVar[k]
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=1  
+      FAIL  |unit-node| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+      Error: Transform failed with 1 error:
+  ==> REFUSED BY: lint + scan + run-time
+
+=== Q2: key from String.fromCharCode(numbers); fnVar[k]
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=1  
+      FAIL  |unit-node| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+      Error: Transform failed with 1 error:
+  ==> REFUSED BY: lint + scan + run-time
+
+=== Q3: key from atob('Y29uc3RydWN0b3I=')
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=1  
+      FAIL  |unit-node| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+      Error: Transform failed with 1 error:
+  ==> REFUSED BY: lint + scan + run-time
+
+=== Q4: key from decodeURIComponent('%63onstructor')
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=1  
+      FAIL  |unit-node| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+      Error: Transform failed with 1 error:
+  ==> REFUSED BY: lint + scan + run-time
+
+=== Q5: key reversed: 'rotcurtsnoc'.split('').reverse().join('')
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      299:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      299:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  
+  RUN (unit-formula-nocodegen) exit=1    EvalError lines=0
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+  RUN-only failures (fail under the flag, pass without it): 1
+      packages/shared/src/formula/codegen.nocodegen.test.ts [ packages/shared/src/formula/codegen.nocodegen.test.ts ]
+  CTRL (unit-node, formula dir, no flag) exit=1  
+      FAIL  |unit-node| packages/shared/src/formula/formula.test.ts [ packages/shared/src/formula/formula.test.ts ]
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts [ packages/shared/src/formula/fuzz.test.ts ]
+      Error: Transform failed with 1 error:
+  ==> REFUSED BY: lint + scan + run-time
+
+=== V1: node:vm in the allowlisted ../value.ts (checkDecimal runs vm.runInThisContext)
+--- modified: packages/shared/src/value.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 56ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 6ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 41ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 10ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'constructor word', …(1) ] to deeply equal []
+  ==> REFUSED BY: scan + run-time
+
+=== V2: new Function in the allowlisted ../value.ts (checkDecimal)
+--- modified: packages/shared/src/value.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  63 failed | 127 passed (190)  EvalError lines=43
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 16ms
+      × grammar table (ADR-0024 §6 EBNF) > accepts "a" 35ms
+      × grammar table (ADR-0024 §6 EBNF) > accepts "a + b" 2ms
+      × grammar table (ADR-0024 §6 EBNF) > accepts "a+b" 3ms
+  RUN-only failures (fail under the flag, pass without it): 60
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a"
+      packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a + b"
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  3 failed | 181 passed (184)
+      × fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 1475ms
+      × fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 2811ms
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 3ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)
+  ==> REFUSED BY: scan + run-time
+
+=== S1: tokenize.ts describe(): code generation for a disallowed character U+00C0..U+1FFF (key from fromCharCode); exercised by fuzz + 'été'
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 33ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 57ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'constructor word', …(1) ] to deeply equal []
+  ==> REFUSED BY: scan + run-time
+
+=== S2: evaluate.ts: evaluation-time code generation only when a used value has a trailing fraction zero (e.g. '12.50')
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      305:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      305:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      305:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 21ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 44ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 16ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'constructor word', …(1) ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+=== S3: evaluate.ts: evaluation-time code generation only when the variable named m has the value 50 (the fuzz VARS' monthly SAR value)
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=1  3 error line(s)
+      302:11  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      302:43  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                              no-restricted-syntax
+      302:68  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)  no-restricted-syntax
+  SCAN exit=1  Tests  1 failed | 47 skipped (48)
+  RUN (unit-formula-nocodegen) exit=1  Tests  21 failed | 169 passed (190)  EvalError lines=8
+      × no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 33ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 8ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 2ms
+      × type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 45ms
+  RUN-only failures (fail under the flag, pass without it): 20
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code)
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared
+      packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  1 failed | 183 passed (184)
+      × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 13ms
+      FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+      AssertionError: evaluate.ts: expected [ 'constructor word', …(1) ] to deeply equal []
+  ==> REFUSED BY: lint + scan + run-time
+
+# files restored; git status --porcelain: 'M packages/shared/src/formula/evaluate.ts'
+
+# SUMMARY (refused at run time = at least one test fails in unit-formula-nocodegen that passes in the unit-node control)
+O1   lint=1 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: lint + scan + run-time  (Reflect.construct(Function, …))
+O2   lint=1 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: lint + scan + run-time  (globalThis['ev'+'al'])
+O3   lint=1 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: lint + scan + run-time  (createRequire(import.meta.url)('vm').runInThisContext)
+O4   lint=1 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: lint + scan + run-time  (Reflect.apply(Function, …))
+O5   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (computed ['constructor'] on a generator prototype)
+O6   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0  REFUSED BY: lint + scan  (alias F = Function)
+N1   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0  REFUSED BY: lint + scan  (f[k], k = 'constructor')
+N2   lint=1 scan=1 run=1 ctrl=1 run-only-fails=0  REFUSED BY: lint + scan  (f['con' + 'structor'])
+N3   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (getOwnPropertyDescriptor(fnProto, 'constructor').value)
+N4   lint=1 scan=1 run=1 ctrl=0 run-only-fails=20  REFUSED BY: lint + scan + run-time  (const { [k]: C } = generator prototype)
+N5   lint=1 scan=1 run=1 ctrl=0 run-only-fails=3  REFUSED BY: lint + scan + run-time  (AsyncFunction via prototype, join-built key)
+N6   lint=1 scan=1 run=1 ctrl=0 run-only-fails=3  REFUSED BY: lint + scan + run-time  (tagged template f[k]`…`)
+N7   lint=1 scan=1 run=1 ctrl=0 run-only-fails=20  REFUSED BY: lint + scan + run-time  (global['ev'+'al'])
+N8   lint=1 scan=0 run=1 ctrl=0 run-only-fails=20  REFUSED BY: lint + run-time  (self['ev'+'al'] (browser form))
+N9   lint=1 scan=1 run=0 ctrl=0 run-only-fails=0  REFUSED BY: lint + scan  (process.getBuiltinModule('node:vm').runInThisContext)
+N10  lint=1 scan=1 run=1 ctrl=1 run-only-fails=59  REFUSED BY: lint + scan + run-time  (node:inspector Runtime.evaluate)
+N11  lint=1 scan=1 run=1 ctrl=0 run-only-fails=3  REFUSED BY: lint + scan + run-time  (static import of node:repl)
+N12  lint=1 scan=1 run=1 ctrl=0 run-only-fails=3  REFUSED BY: lint + scan + run-time  (import.meta.resolve (loads nothing))
+Q1   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (key harvested: Object.getOwnPropertyNames(Object.prototype) -> 'constructor'; fnVar[k])
+Q2   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (key from String.fromCharCode(numbers); fnVar[k])
+Q3   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (key from atob('Y29uc3RydWN0b3I='))
+Q4   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (key from decodeURIComponent('%63onstructor'))
+Q5   lint=1 scan=1 run=1 ctrl=1 run-only-fails=1  REFUSED BY: lint + scan + run-time  (key reversed: 'rotcurtsnoc'.split('').reverse().join(''))
+V1   lint=0 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: scan + run-time  (node:vm in the allowlisted ../value.ts (checkDecimal runs vm.runInThisContext))
+V2   lint=0 scan=1 run=1 ctrl=1 run-only-fails=60  REFUSED BY: scan + run-time  (new Function in the allowlisted ../value.ts (checkDecimal))
+S1   lint=0 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: scan + run-time  (tokenize.ts describe(): code generation for a disallowed character U+00C0..U+1FFF (key from fromCharCode); exercised by fuzz + 'été')
+S2   lint=1 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: lint + scan + run-time  (evaluate.ts: evaluation-time code generation only when a used value has a trailing fraction zero (e.g. '12.50'))
+S3   lint=1 scan=1 run=1 ctrl=1 run-only-fails=20  REFUSED BY: lint + scan + run-time  (evaluate.ts: evaluation-time code generation only when the variable named m has the value 50 (the fuzz VARS' monthly SAR value))
+# probe exit_status: 0  finished 2026-10-08T12:29:28Z
+# CORRECTION 2026-10-08T12:30:03Z by the reviewer: INVALID EVIDENCE, kept only for disclosure. Revision 1 (started ~12:17Z) was NOT killed: 'pkill -f guard-layers-probe.mjs' matched and killed the reviewer's own shell (exit 143) instead, and the orphaned revision-1 probe kept running to completion in the same disposable clone $TMPDIR/review-p3 while revision 2 (started ~12:23Z) ran there too. Both probes rewrote evaluate.ts concurrently, so every result from O6 (rev 1) onwards and every rev-2 result is cross-contaminated (e.g. the rev-2 O6 scan reported 'host global', a word that only N7-N9 contain). The 'ATTEMPT 1 KILLED' line above is wrong. Superseded by guard-layers-probe.log (revision 2 logic, fresh clone $TMPDIR/review-p3b, no concurrent writer).

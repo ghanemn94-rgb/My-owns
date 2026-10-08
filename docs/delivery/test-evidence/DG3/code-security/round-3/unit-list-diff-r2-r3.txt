@@ -1,0 +1,28 @@
+# per-test diff of the FIRST pnpm-test invocation (unit-node + unit-web): round-2 unit-node22.log (verbose, 1565) vs round-3 unit-list-node22.log (verbose, 1587); ✓ lines, durations removed, sorted; 2026-10-08T12:46:09Z
+# round-2 count: 1565  round-3 count: 1587
+## in round 2, not in round 3:
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers
+## in round 3, not in round 2:
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global
+✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global

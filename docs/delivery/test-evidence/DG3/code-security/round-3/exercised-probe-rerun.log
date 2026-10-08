@@ -1,0 +1,67 @@
+# CLEAN RERUN in fresh clone review-p3b; node v22.22.2; 2026-10-08T12:38:18Z
+# command: pnpm exec vitest run --project unit-formula-nocodegen --reporter=verbose zz-sec-r3-exercised.test.ts fuzz.test.ts codegen.nocodegen.test.ts
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 4ms
+[probe] S1 validateFormula('été') -> {"code":"formula.syntax","message":"Syntax error at offset 0: the formula could not be processed (EvalError)","offset":0,"params":{"offset":"0","reason":"internal","detail":"EvalError"}}
+[probe] S1 fuzz byte strings (seed 0x5eedf00d, 10000): EvalError swallowed as formula.syntax/internal in [33m2805[39m
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/zz-sec-r3-exercised.test.ts > reviewer probe: S1/S3 paths run under the flag and are swallowed > runs in the no-codegen process 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/zz-sec-r3-exercised.test.ts > reviewer probe: S1/S3 paths run under the flag and are swallowed > S1: 'été' and the fuzz byte strings reach the code-generating describe() path 114ms
+[probe] S3 grammar fuzz (seed 42, 20000): EvalError swallowed in [33m41[39m evaluations; errorCode(s) reported: formula.syntax
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/zz-sec-r3-exercised.test.ts > reviewer probe: S1/S3 paths run under the flag and are swallowed > S3: the grammar-alphabet fuzz reaches the evaluation-time code-generating path 225ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 1529ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates 1099ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 2267ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 0ms
+ Test Files  3 passed (3)
+      Tests  57 passed (57)
+# vitest exit_status: 0
+# restored; git status --porcelain: ''
+# probe exit_status: 0

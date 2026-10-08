@@ -1,0 +1,131 @@
+# diff-scan: clone HEAD ce988e20f7ea2752cd3283995fbf7ed05b704485; repair base f49ca1604857f8a79dce28c306cff895e6158d8e; source ce988e20f7ea2752cd3283995fbf7ed05b704485; 2026-10-08T12:20:23Z
+## S0 repair diff, product paths
+ 12 files changed, 687 insertions(+), 88 deletions(-)
+## S0b files changed by the repair outside apps/packages/docs (expect eslint.config.js, package.json, vitest.config.ts)
+  eslint.config.js
+  package.json
+  vitest.config.ts
+## S0c repair commits between f49ca1604857f8a79dce28c306cff895e6158d8e and ce988e20f7ea2752cd3283995fbf7ed05b704485 (first-parent and merged)
+  ce988e2 DG3: D-082 (round-2 results; orchestrator worktree error and rule), D-083 (round-3 repairs integrated, verification); pre-freeze evidence
+  048b8af DG3: F-DG3-100 (KBE-E de06138), F-DG3-170/180 (FE-G 6b30768) FIXED_PENDING_VERIFICATION
+  3dcb41f Merge T-DG3-FE-G (DG3 round-3 repair) into the DG3 integration branch
+  a715b54 Merge T-DG3-KBE-E (DG3 round-3 repair) into the DG3 integration branch
+  853f8d4 DG3 run evidence: T-DG3-FE-G (frontend-ux-engineer, F-DG3-170/180 repair)
+  6b30768 T-DG3-FE-G: repair F-DG3-170/180 (inherited-approval badge wraps inside its card and row)
+  99d9b23 DG3 round 2 imported: F-DG3-120 CLOSED_VERIFIED; F-DG3-100 reopened; F-DG3-170/180 (Medium) raised; FIXING
+  87e918e DG3 round 2: qa-verifier narrative
+  1af3e75 DG3 round 2: qa-verifier record (FAIL: F-DG3-180 Medium, badge overflow), evidence and run
+  aa32105 DG3 run evidence: T-DG3-KBE-E (kpi-benefits-engineer, F-DG3-100 second repair)
+  de06138 T-DG3-KBE-E: repair F-DG3-100, second pass (spelling-independent guard)
+  153f798 DG3: repair assignment T-DG3-KBE-E for F-DG3-100 (round-2 verification FAILED)
+  9e28775 DG3 round 2: code-security-reviewer record (FAIL: F-DG3-100 not closed), evidence and run
+  ca2dc52 DG3: repair assignment T-DG3-FE-G for F-DG3-170 (inherited-approval badge overflow)
+  ce1cfc3 DG3 round 2: domain-reviewer record (PASS; F-DG3-120 verified; raised F-DG3-170 Medium), evidence and run
+  05cce2c run: DG3-T-DG3-REV-DOM-R2-domain-reviewer-20261008T091016Z-478aac6a (review evidence, auto-committed by run-agent.sh)
+  f20bdef DG3 round 2 frozen: candidate 58ef3f47 (754 files, source f49ca16); REVIEWING; reviewer assignments
+## S0d authors of the repair commits
+  3dcb41f Claude <noreply@anthropic.com> Merge T-DG3-FE-G (DG3 round-3 repair) into the DG3 integration branch
+  6b30768 Claude <noreply@anthropic.com> T-DG3-FE-G: repair F-DG3-170/180 (inherited-approval badge wraps inside its card and row)
+  de06138 Claude <noreply@anthropic.com> T-DG3-KBE-E: repair F-DG3-100, second pass (spelling-independent guard)
+## S1 engine sources changed by the repair (expect none; only tests, canary, preload)
+  packages/shared/src/formula/codegen.nocodegen.test.ts
+  packages/shared/src/formula/fuzz.test.ts
+  packages/shared/src/formula/test-support/nocodegen-preload.mjs
+  => engine sources: none changed
+## S1b engine sources vs round-1 candidate (928b765419e7e84feeaae1a60724a11c318799a8) (expect none)
+  (empty line = unchanged)
+## S1c ../value.ts (allowlisted engine import) changed in P3? (expect no)
+  (empty line = unchanged)
+## S1d ../value.ts contains no eval/Function/vm/require/import()/process? (expect none)
+70:  constructor(reason: DecimalProblem, input: unknown) {
+## S1e which lint config blocks apply to value.ts (formula rules?)
+  no-eval: "(not set)"
+  no-new-func: "(not set)"
+  no-implied-eval: "(not set)"
+  no-restricted-imports: "(not set)"
+  no-restricted-globals: "(not set)"
+## S1f lint config for evaluate.ts (engine) vs test-support preload vs fuzz.test.ts: no-restricted-imports present?
+  packages/shared/src/formula/evaluate.ts: restricted-imports ALLOWLIST; restricted-globals 13 names
+  packages/shared/src/formula/test-support/nocodegen-preload.mjs: restricted-imports paths-only/none; restricted-globals 3 names
+  packages/shared/src/formula/fuzz.test.ts: restricted-imports paths-only/none; restricted-globals 3 names
+## S2 base .status-chip unchanged; removed CSS lines in the repair (expect none)
+  none
+## S2b users of status-chip--wrap (expect only InheritedApprovalBadge)
+  apps/web/src/pages/gates/GatesPage.tsx:59:    // status-chip--wrap (F-DG3-170): the ~80-character text wraps inside its card (list) or row (gate view), so the
+  apps/web/src/pages/gates/GatesPage.tsx:62:      className="status-chip status-chip--unknown status-chip--wrap"
+## S2c other chips touched in the repair (className lines changed)
+  -      className="status-chip status-chip--unknown"
+  +      className="status-chip status-chip--unknown status-chip--wrap"
+## S3 advisory-lock registry (expect 730219-730223 distinct; unchanged by repair)
+  (empty line = unchanged)
+  apps/api/src/modules/platform/advisory-locks.ts:6:// one write wait for an unrelated one (T-DG3-ARCH-03: prioritization and dependency-type creation both used 730222).
+  apps/api/src/modules/platform/advisory-locks.ts:18:  businessUnitHierarchy: 730219,
+  apps/api/src/modules/platform/advisory-locks.ts:20:  outcomeTree: 730220,
+  apps/api/src/modules/platform/advisory-locks.ts:22:  dependencyGraph: 730221,
+  apps/api/src/modules/platform/advisory-locks.ts:24:  prioritization: 730222,
+  apps/api/src/modules/platform/advisory-locks.ts:26:  dependencyType: 730223,
+  packages/db/migrations/0009_business_unit_hierarchy_guard.sql:44:  hierarchy_lock_class CONSTANT integer := 730219;
+  packages/db/migrations/0013_p2_direction_charter.sql:92:  outcome_lock_class CONSTANT integer := 730220;
+  packages/db/migrations/0022_p3_dependency_capacity_funding.sql:85:--  1. SERIALIZE per transformation with the transaction-scoped advisory lock (730221, hashtext(transformation_id)); the
+  packages/db/migrations/0022_p3_dependency_capacity_funding.sql:95:  graph_lock_class CONSTANT integer := 730221;
+## S4 migrations: changed by the repair (expect none); list
+  0019_evidence_review_separation.sql
+  0020_p3_portfolio_roadmap.sql
+  0021_p3_prioritization.sql
+  0022_p3_dependency_capacity_funding.sql
+  0023_p3_business_case_formula.sql
+  0024_p3_gates_access_instantiation.sql
+  0025_p3_g1_agreement_guard.sql
+  0026_p3_enable_g4.sql
+  0027_p3_calculation_rounding.sql
+## S4b migrations 0020-0027 changed since the round-1 candidate (expect none)
+## S5 p3-pending lists (expect every list empty)
+  apps/api/test/support/p3-pending-be-a.ts: 0
+  apps/api/test/support/p3-pending-be-b.ts: 0
+  apps/api/test/support/p3-pending-be-c.ts: 0
+  apps/api/test/support/p3-pending-be-d.ts: 0
+  apps/api/test/support/p3-pending-be-e.ts: 0
+  apps/api/test/support/p3-pending-kbe-b.ts: 0
+  apps/api/test/support/p3-pending-kbe-c.ts: 0
+## S6 OpenAPI operations counted from the YAML; contract changed by the repair?
+270
+  (empty line = unchanged)
+## S7 API/worker/db code changed by the repair (expect none)
+  (empty line = unchanged)
+## S8 dependency manifests and lockfile changed by the repair (expect root package.json scripts only)
+  -    "test": "vitest run --project unit-node --project unit-web",
+  +    "test": "vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen",
+## S9 eslint-disable comments added by the repair
+  +    // eslint-disable-next-line no-new-func, no-restricted-globals, no-restricted-syntax -- canary: must throw EvalError under the flag; never runs code
+  +    // eslint-disable-next-line no-eval, no-restricted-globals -- canary: must throw EvalError under the flag; never runs code
+  +    // eslint-disable-next-line no-eval, no-restricted-globals -- canary: indirect eval, must throw EvalError under the flag
+  +    // eslint-disable-next-line no-restricted-syntax -- canary: reaches the AsyncFunction constructor without its name, as the F-DG3-100 forms do
+## S10 secrets-shaped strings in added lines (expect none)
+  none
+## S11 public CDN / remote URLs in added lines (expect none besides comments/docs)
+## S12 vitest projects: include globs and pools
+  19: * The --project names selected on this Vitest command line. Vitest 3.2 takes the forks pool execArgv from the ROOT
+  20: * poolOptions only (a project-level poolOptions.forks.execArgv is ignored), worker threads refuse the flag
+  42:    poolOptions: { forks: { execArgv: nocodegenRun ? [NOCODEGEN_FLAG, "--import", NOCODEGEN_PRELOAD] : [] } },
+  51:          name: "unit-node",
+  53:          include: [
+  59:          exclude: [...configDefaults.exclude, NOCODEGEN_CANARY],
+  74:          name: NOCODEGEN_PROJECT,
+  76:          include: ["packages/shared/src/formula/**/*.test.ts"],
+  77:          pool: "forks",
+  85:          name: "integration",
+  87:          include: [
+  98:          pool: "forks",
+## S13 formula-engine tests outside packages/shared/src/formula (would run only in unit-node, not under the flag)
+## S14 CI and gate tooling invoke 'pnpm test' (both vitest invocations)
+  .github/workflows/ci.yml:66:      - run: pnpm test
+  .github/workflows/ci.yml:101:      - run: pnpm test:integration
+  deploy/ci/ci.yml:66:      - run: pnpm test
+  deploy/ci/ci.yml:101:      - run: pnpm test:integration
+## S15 engine bundled into apps/web (imports of the formula engine in apps/web/src)
+  apps/web/src/lib/auditChanges.ts:29:import { CRITERION_CODES, isCriterionCode } from "@mth/shared/calc";
+  apps/web/src/pages/benefit-formulas/BenefitFormulasPage.tsx:12:import { evaluateFormula } from "@mth/shared/calc";
+  apps/web/src/pages/benefit-formulas/FormulaBuilder.tsx:2:// (`validateFormula` / `evaluateFormula` from @mth/shared/calc, the same code the API runs) parses, type-checks and
+  apps/web/src/pages/benefit-formulas/FormulaBuilder.tsx:14:import { evaluateFormula, type FormulaKind, type FormulaPeriod, type FormulaProblem } from "@mth/shared/calc";
+  apps/web/src/pages/benefit-formulas/values.tsx:4:// (@mth/shared/calc), and its suffix code (`percent` | `percentage_points`) is translated by i18next, so a
+# end

@@ -1,0 +1,120 @@
+### /opt/node22/bin/node  adr-mechanics-probe.mjs
+node v22.22.2 execArgv=[]
+A1 eval('6*7') -> 42
+A2 Function via (()=>0)[k] -> 42
+A3 AsyncFunction via prototype[k] -> 42
+A4 GeneratorFunction via prototype[k] -> 42
+B1 vm.runInThisContext('6*7') (script compilation, not covered by the flag per ADR) -> 42
+B2 vm.runInNewContext('6*7') -> 42
+B3 vm.runInNewContext("eval('6*7')") (ADR: vm contexts re-enable code generation) -> 42
+B4 vm.runInThisContext("eval('6*7')") (main context: flag applies) -> 42
+B5 vm.createContext({}, {codeGeneration:{strings:false}}) eval -> threw EvalError: Code generation from strings disallowed for this context
+C1 process.getBuiltinModule('node:vm').runInThisContext('6*7') -> 42
+D1 inspector Runtime.evaluate('6*7') -> 42
+E1 new Worker(eval, execArgv:[flag]) (ADR: threads refuse the flag) -> threw ERR_WORKER_INVALID_EXEC_ARGV: Initiated Worker with invalid execArgv flags: --disallow-code-generation-from-strings
+F1 WebAssembly.compile(minimal module) -> "object"
+# exit 0
+### /opt/node22/bin/node  residual-runtime.mjs
+node v22.22.2
+N1 f[k]('return 6*7')() -> 42
+N2 f['con'+'structor'] -> 42
+N3 getOwnPropertyDescriptor(...).value -> 42
+N4 const {[k]: C} = genProto -> 42
+N5 AsyncFunction via join key -> 42
+N6 tagged template -> 42
+N7 global['ev'+'al'] -> 42
+N8 self['ev'+'al'] (Node has no self; browser-only form) -> threw ReferenceError: self is not defined
+N9 process.getBuiltinModule('node:vm') -> 42
+N10 node:inspector Runtime.evaluate -> 42
+N11 node:repl exports start() -> "function"
+# exit 0
+### /opt/node22/bin/node --disallow-code-generation-from-strings adr-mechanics-probe.mjs
+node v22.22.2 execArgv=["--disallow-code-generation-from-strings"]
+A1 eval('6*7') -> threw EvalError: Code generation from strings disallowed for this context
+A2 Function via (()=>0)[k] -> threw EvalError: Code generation from strings disallowed for this context
+A3 AsyncFunction via prototype[k] -> threw EvalError: Code generation from strings disallowed for this context
+A4 GeneratorFunction via prototype[k] -> threw EvalError: Code generation from strings disallowed for this context
+B1 vm.runInThisContext('6*7') (script compilation, not covered by the flag per ADR) -> 42
+B2 vm.runInNewContext('6*7') -> 42
+B3 vm.runInNewContext("eval('6*7')") (ADR: vm contexts re-enable code generation) -> 42
+B4 vm.runInThisContext("eval('6*7')") (main context: flag applies) -> threw EvalError: Code generation from strings disallowed for this context
+B5 vm.createContext({}, {codeGeneration:{strings:false}}) eval -> threw EvalError: Code generation from strings disallowed for this context
+C1 process.getBuiltinModule('node:vm').runInThisContext('6*7') -> 42
+D1 inspector Runtime.evaluate('6*7') -> 42
+E1 new Worker(eval, execArgv:[flag]) (ADR: threads refuse the flag) -> threw ERR_WORKER_INVALID_EXEC_ARGV: Initiated Worker with invalid execArgv flags: --disallow-code-generation-from-strings
+F1 WebAssembly.compile(minimal module) -> "object"
+# exit 0
+### /opt/node22/bin/node --disallow-code-generation-from-strings residual-runtime.mjs
+node v22.22.2
+N1 f[k]('return 6*7')() -> threw EvalError: Code generation from strings disallowed for this context
+N2 f['con'+'structor'] -> threw EvalError: Code generation from strings disallowed for this context
+N3 getOwnPropertyDescriptor(...).value -> threw EvalError: Code generation from strings disallowed for this context
+N4 const {[k]: C} = genProto -> threw EvalError: Code generation from strings disallowed for this context
+N5 AsyncFunction via join key -> threw EvalError: Code generation from strings disallowed for this context
+N6 tagged template -> threw EvalError: Code generation from strings disallowed for this context
+N7 global['ev'+'al'] -> threw EvalError: Code generation from strings disallowed for this context
+N8 self['ev'+'al'] (Node has no self; browser-only form) -> threw ReferenceError: self is not defined
+N9 process.getBuiltinModule('node:vm') -> 42
+N10 node:inspector Runtime.evaluate -> 42
+N11 node:repl exports start() -> "function"
+# exit 0
+### /opt/nvm/versions/node/v24.21.0/bin/node  adr-mechanics-probe.mjs
+node v24.21.0 execArgv=[]
+A1 eval('6*7') -> 42
+A2 Function via (()=>0)[k] -> 42
+A3 AsyncFunction via prototype[k] -> 42
+A4 GeneratorFunction via prototype[k] -> 42
+B1 vm.runInThisContext('6*7') (script compilation, not covered by the flag per ADR) -> 42
+B2 vm.runInNewContext('6*7') -> 42
+B3 vm.runInNewContext("eval('6*7')") (ADR: vm contexts re-enable code generation) -> 42
+B4 vm.runInThisContext("eval('6*7')") (main context: flag applies) -> 42
+B5 vm.createContext({}, {codeGeneration:{strings:false}}) eval -> threw EvalError: Code generation from strings disallowed for this context
+C1 process.getBuiltinModule('node:vm').runInThisContext('6*7') -> 42
+D1 inspector Runtime.evaluate('6*7') -> 42
+E1 new Worker(eval, execArgv:[flag]) (ADR: threads refuse the flag) -> threw ERR_WORKER_INVALID_EXEC_ARGV: Initiated Worker with invalid execArgv flags: --disallow-code-generation-from-strings
+F1 WebAssembly.compile(minimal module) -> "object"
+# exit 0
+### /opt/nvm/versions/node/v24.21.0/bin/node  residual-runtime.mjs
+node v24.21.0
+N1 f[k]('return 6*7')() -> 42
+N2 f['con'+'structor'] -> 42
+N3 getOwnPropertyDescriptor(...).value -> 42
+N4 const {[k]: C} = genProto -> 42
+N5 AsyncFunction via join key -> 42
+N6 tagged template -> 42
+N7 global['ev'+'al'] -> 42
+N8 self['ev'+'al'] (Node has no self; browser-only form) -> threw ReferenceError: self is not defined
+N9 process.getBuiltinModule('node:vm') -> 42
+N10 node:inspector Runtime.evaluate -> 42
+N11 node:repl exports start() -> "function"
+# exit 0
+### /opt/nvm/versions/node/v24.21.0/bin/node --disallow-code-generation-from-strings adr-mechanics-probe.mjs
+node v24.21.0 execArgv=["--disallow-code-generation-from-strings"]
+A1 eval('6*7') -> threw EvalError: Code generation from strings disallowed for this context
+A2 Function via (()=>0)[k] -> threw EvalError: Code generation from strings disallowed for this context
+A3 AsyncFunction via prototype[k] -> threw EvalError: Code generation from strings disallowed for this context
+A4 GeneratorFunction via prototype[k] -> threw EvalError: Code generation from strings disallowed for this context
+B1 vm.runInThisContext('6*7') (script compilation, not covered by the flag per ADR) -> 42
+B2 vm.runInNewContext('6*7') -> 42
+B3 vm.runInNewContext("eval('6*7')") (ADR: vm contexts re-enable code generation) -> 42
+B4 vm.runInThisContext("eval('6*7')") (main context: flag applies) -> threw EvalError: Code generation from strings disallowed for this context
+B5 vm.createContext({}, {codeGeneration:{strings:false}}) eval -> threw EvalError: Code generation from strings disallowed for this context
+C1 process.getBuiltinModule('node:vm').runInThisContext('6*7') -> 42
+D1 inspector Runtime.evaluate('6*7') -> 42
+E1 new Worker(eval, execArgv:[flag]) (ADR: threads refuse the flag) -> threw ERR_WORKER_INVALID_EXEC_ARGV: Initiated Worker with invalid execArgv flags: --disallow-code-generation-from-strings
+F1 WebAssembly.compile(minimal module) -> "object"
+# exit 0
+### /opt/nvm/versions/node/v24.21.0/bin/node --disallow-code-generation-from-strings residual-runtime.mjs
+node v24.21.0
+N1 f[k]('return 6*7')() -> threw EvalError: Code generation from strings disallowed for this context
+N2 f['con'+'structor'] -> threw EvalError: Code generation from strings disallowed for this context
+N3 getOwnPropertyDescriptor(...).value -> threw EvalError: Code generation from strings disallowed for this context
+N4 const {[k]: C} = genProto -> threw EvalError: Code generation from strings disallowed for this context
+N5 AsyncFunction via join key -> threw EvalError: Code generation from strings disallowed for this context
+N6 tagged template -> threw EvalError: Code generation from strings disallowed for this context
+N7 global['ev'+'al'] -> threw EvalError: Code generation from strings disallowed for this context
+N8 self['ev'+'al'] (Node has no self; browser-only form) -> threw ReferenceError: self is not defined
+N9 process.getBuiltinModule('node:vm') -> 42
+N10 node:inspector Runtime.evaluate -> 42
+N11 node:repl exports start() -> "function"
+# exit 0
