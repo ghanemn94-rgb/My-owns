@@ -299,7 +299,7 @@ function CriteriaTable({ criteria }: { criteria: readonly GateCriterionEvaluatio
                   ) : (
                     <ul className="plain-list missing-list">
                       {c.missing.map((m, i) => {
-                        const subject = resolve(m.pointer);
+                        const subject = resolve(m.pointer, m);
                         return (
                           <li key={`${m.code}-${i}`} data-missing={m.code}>
                             <Icon name="cross" />{" "}
@@ -368,10 +368,24 @@ function useSubjectResolver() {
   const gaps = useRegister<TomGap>(ws.tid, "tom-gaps");
   const decisions = useDecisions(ws.tid, "design");
   const base = `/transformations/${ws.tid}`;
-  return (pointer: string | undefined): { label: string; to?: string } | null => {
-    if (!pointer) return null;
+  return (
+    pointer: string | undefined,
+    item?: { code: string; message?: string | undefined },
+  ): { label: string; to?: string } | null => {
+    // G4 (ADR-0021 §7): the item's subject is the data part of the server label ("Owners: INI-01 Name" -> "INI-01
+    // Name"): initiative codes and names, sections, roles and periods are shown as the server returns them.
+    const g4 = item ? g4Subject(item) : null;
+    if (!pointer) return g4 ? { label: g4 } : null;
     const [, kind = "", id = ""] = pointer.split("/");
     switch (kind) {
+      case "initiatives":
+        return { label: g4 ?? t("gates.subject.initiative"), to: `${base}/initiatives/${id}` };
+      case "business-cases":
+      case "businessCases":
+        return { label: g4 ?? t("gates.subject.businessCase"), to: `${base}/business-cases/${id}` };
+      case "benefit-formulas":
+      case "benefitFormulas":
+        return { label: g4 ?? t("gates.subject.benefitFormula"), to: `${base}/benefit-formulas/${id}` };
       case "diagnosticItems":
         return { label: diagnosticDimensionLabel(ws.methodology, id, locale) ?? id, to: `${base}/diagnose#t01` };
       case "outcomes":
@@ -409,9 +423,21 @@ function useSubjectResolver() {
           to: `${base}/charter`,
         };
       default:
-        return null;
+        return g4 ? { label: g4 } : null;
     }
   };
+}
+
+/**
+ * The data part of a G4 missing item's English label ("Owners: INI-01 Name" -> "INI-01 Name"; "Finance validation" ->
+ * null). Only G4 items carry their subject in `message` (ADR-0021 §7); the label itself is translated from the code.
+ */
+export function g4Subject(item: { code: string; message?: string | undefined }): string | null {
+  if (!item.code.startsWith("g4.") || !item.message) return null;
+  const at = item.message.indexOf(": ");
+  if (at < 0) return null;
+  const rest = item.message.slice(at + 2).trim();
+  return rest === "" ? null : rest;
 }
 
 function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () => void; onDone: () => Promise<void> }) {
@@ -754,13 +780,22 @@ export function GateProblem({ error }: { error: unknown }) {
       ) : null}
       {incomplete && error instanceof ApiError ? (
         <ul className="plain-list">
-          {error.fieldErrors.map((fe, i) => (
-            <li key={`${fe.pointer}-${i}`}>
-              {t(`gates.missingItems.${fe.code.replace(/\./g, "__")}`, {
-                defaultValue: t("gates.missingItems.generic"),
-              })}
-            </li>
-          ))}
+          {error.fieldErrors.map((fe, i) => {
+            const subject = g4Subject(fe);
+            return (
+              <li key={`${fe.pointer}-${i}`} data-missing={fe.code}>
+                {t(`gates.missingItems.${fe.code.replace(/\./g, "__")}`, {
+                  defaultValue: t("gates.missingItems.generic"),
+                })}
+                {subject ? (
+                  <>
+                    {" — "}
+                    <bdi>{subject}</bdi>
+                  </>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
       {conflict ? <p className="small">{t("gates.reloaded")}</p> : null}

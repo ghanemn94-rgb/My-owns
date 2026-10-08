@@ -2,8 +2,284 @@
   "tab": "Portfolio",
   "title": "Initiative portfolio",
   "initiativeTitle": "Initiative Card (T05)",
-  "stub": {
-    "title": "Being built in this stage",
-    "body": "The initiative portfolio and Initiative Card (T05) screen is being built in the current delivery stage. It does not show or change any data yet."
+  "intro": "Initiatives are vehicles that close target-state gaps. A project portfolio is not a Target Operating Model. Proposed rank, selection and funding are three separate records: ranking never selects and selection never funds.",
+  "businessApproval": "Business approval",
+  "businessApprovalBody": "this is a business decision recorded in the name of the person who makes it, with their rationale. The software never approves anything itself, and nobody can decide on someone else's behalf here.",
+  "conflictReloaded": "Nothing was saved. The latest version has been loaded; review it and try again.",
+  "status": {
+    "draft": "Draft - not submitted",
+    "submitted": "Submitted for prioritization",
+    "ranked": "Ranked (proposed)",
+    "selected": "Selected",
+    "selected_unfunded": "Selected - unfunded",
+    "funded": "Funded",
+    "launched": "Launched",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "selection": {
+    "selected": "Selected",
+    "notSelected": "Not selected"
+  },
+  "funding": {
+    "funded": "Funded",
+    "selectedUnfunded": "Selected - unfunded",
+    "revoked": "The funding approval was revoked.",
+    "noneLabel": "No funding state: not selected"
+  },
+  "warning": {
+    "none": "No warnings",
+    "generic": "Readiness hint",
+    "initiative__deliverable_count": "Key deliverables: the card should list 3 to 7.",
+    "initiative__no_gap_link": "No gap link: link a T03 gap or a diagnosed finding.",
+    "initiative__no_owner": "No executive owner."
+  },
+  "problem": {
+    "initiative__g1_not_approved": "Case for change not yet approved (G1): leadership agreement on problem, baseline and material value pools is required before an initiative enters the portfolio.",
+    "initiative__outcome_before_activity": "Outcome before activity: link at least one measurable outcome with a KPI before submitting for prioritization.",
+    "initiative__direction_not_approved": "North Star, outcomes and target state not yet approved.",
+    "initiative__selected_unfunded": "Selected - unfunded: a funding approval is required before launch.",
+    "initiative__not_launchable": "Only a funded initiative can be launched.",
+    "initiative__not_ranked": "The initiative is not in the current proposed ranking.",
+    "initiative__not_withdrawable": "Only a submitted or ranked initiative can be withdrawn.",
+    "initiative__not_submittable": "Only a draft initiative can be submitted.",
+    "initiative__not_cancellable": "A launched or completed initiative cannot be cancelled.",
+    "initiative__not_deselectable": "Only a selected or funded initiative that is not launched can be deselected.",
+    "initiative__not_tom_evidence": "A project portfolio is not a Target Operating Model: an initiative cannot be attached as G3 TOM evidence.",
+    "initiative__read_only": "A cancelled or completed initiative is read-only; its card and links can no longer be changed.",
+    "initiative__gap_target_type": "Link the initiative to a T03 gap or a diagnosed finding.",
+    "initiative__gap_link_duplicate": "This gap or finding is already linked to the initiative.",
+    "initiative__decision_link_duplicate": "This decision is already linked to the initiative.",
+    "initiative__kpi_not_in_outcome": "The KPI row does not belong to the chosen outcome.",
+    "initiative__link_removed": "This link was already removed.",
+    "initiative__link_target_archived": "The linked record is archived and cannot be linked.",
+    "initiative__planned_range": "The planned end date cannot be before the planned start date.",
+    "selection__on_behalf_not_supported": "A selection is decided by the approver in person; deciding on someone's behalf is not available. Nothing was recorded.",
+    "approval__approver_is_proposer": "Separation of duties: the person who proposed this cannot approve it."
+  },
+  "list": {
+    "title": "Initiatives (T05)",
+    "intro": "A draft can be created at any time, also before G1. Warnings are readiness hints, not blocks; they block only at G4.",
+    "empty": "No initiatives yet",
+    "emptyFiltered": "No initiative matches these filters",
+    "emptyBody": "Create a draft initiative to start the portfolio."
+  },
+  "field": {
+    "code": "Code",
+    "name": "Name",
+    "status": "Status",
+    "wave": "Wave",
+    "owners": "Owners",
+    "executiveOwner": "Executive owner",
+    "workstreamLead": "Workstream lead",
+    "proposedRank": "Proposed rank",
+    "selection": "Selection",
+    "funding": "Funding",
+    "warnings": "Warnings",
+    "objective": "Objective",
+    "problemStatement": "Problem / gap addressed (narrative)",
+    "scopeIn": "Scope in",
+    "scopeOut": "Scope out",
+    "financialBenefitHint": "A narrative summary; the quantified lines live in the initiative business case.",
+    "plannedStart": "Planned start",
+    "plannedEnd": "Planned end"
+  },
+  "wave": {
+    "none": "No wave"
+  },
+  "rank": {
+    "unavailable": "The prioritization view is not available.",
+    "notRanked": "Not ranked"
+  },
+  "create": {
+    "action": "New draft initiative",
+    "title": "New draft initiative",
+    "note": "The initiative is created as a draft with a generated code (INI-nn). Drafting is allowed at any time; submitting it to the portfolio needs G1.",
+    "submit": "Create draft"
+  },
+  "filter": {
+    "label": "Filter initiatives",
+    "status": "Status",
+    "wave": "Wave",
+    "all": "All"
+  },
+  "hierarchy": {
+    "title": "Outcome hierarchy",
+    "intro": "Read-only: North Star → outcome → KPI → target → initiative contribution.",
+    "level": {
+      "northStar": "North Star",
+      "outcome": "Outcome",
+      "kpi": "KPI",
+      "target": "Target",
+      "contribution": "Initiative contribution"
+    },
+    "noNorthStar": "No current North Star is set.",
+    "noOutcomes": "No outcome is recorded yet.",
+    "noKpis": "No KPI is linked to this outcome.",
+    "targetUnknown": "No target value is set.",
+    "by": "by {{date}}",
+    "noContributions": "No initiative contributes yet.",
+    "withoutKpi": "Contributions to the outcome without a KPI:"
+  },
+  "card": {
+    "backToList": "Back to the portfolio",
+    "draftNote": "Draft - not submitted. It is not in the portfolio until it is submitted for prioritization.",
+    "readOnly": "This initiative is {{status}}: its card and links are read-only.",
+    "cancelReason": "Cancellation reason",
+    "warningsTitle": "Readiness hints.",
+    "warningsBody": "They do not block saving; they block only at G4.",
+    "t05Title": "Initiative Card (T05): the 14 fields",
+    "t05Intro": "The fields of the source template, in its order. Fields 4, 7, 8, 11, 13 and 14 are linked records.",
+    "edit": "Edit card",
+    "editTitle": "Edit initiative {{code}}",
+    "seeGapLinks": "Linked gaps and findings",
+    "seeDeliverables": "See the key deliverables",
+    "seeContributions": "See the outcome and KPI contributions",
+    "seeDependencies": "Open the dependency map (T08)",
+    "seeMilestones": "See the milestones",
+    "seeDecisions": "See the required decisions",
+    "openRoadmap": "Open the roadmap"
+  },
+  "t05": {
+    "name": "Initiative name",
+    "executiveOwner": "Executive owner",
+    "workstreamLead": "Workstream lead",
+    "problemGap": "Problem / gap addressed",
+    "objective": "Objective",
+    "scope": "Scope (in/out)",
+    "deliverables": "Key deliverables",
+    "contribution": "Outcome/KPI contribution",
+    "financialBenefit": "Financial benefit",
+    "customerBenefit": "Customer benefit",
+    "dependencies": "Dependencies",
+    "risks": "Risks",
+    "milestones": "Milestones",
+    "decisions": "Required decisions"
+  },
+  "transition": {
+    "label": "Initiative actions",
+    "text": {
+      "note": "Note",
+      "reason": "Reason",
+      "rationale": "Rationale"
+    },
+    "submit": {
+      "action": "Submit for prioritization",
+      "title": "Submit {{code}} for prioritization",
+      "description": "The initiative enters the portfolio. G1 must be approved and at least one outcome contribution must name a KPI.",
+      "confirm": "Submit"
+    },
+    "withdraw": {
+      "action": "Withdraw to draft",
+      "title": "Withdraw {{code}} to draft",
+      "description": "The initiative leaves the portfolio and returns to draft.",
+      "confirm": "Withdraw"
+    },
+    "select": {
+      "action": "Select",
+      "title": "Select {{code}} for the portfolio",
+      "description": "The approved portfolio selection. Selection does not fund the initiative: a separate funding approval is required before launch.",
+      "confirm": "Record selection"
+    },
+    "deselect": {
+      "action": "Deselect",
+      "title": "Deselect {{code}}",
+      "description": "The initiative returns to the proposed ranking. Not possible once launched.",
+      "confirm": "Record deselection"
+    },
+    "launch": {
+      "action": "Launch",
+      "title": "Launch {{code}}",
+      "description": "Only a funded initiative can be launched. End-to-End: the North Star, outcomes and target state (G2 and G3) must be approved or waived.",
+      "confirm": "Launch"
+    },
+    "cancel": {
+      "action": "Cancel initiative",
+      "title": "Cancel {{code}}",
+      "description": "Cancelling is final: the initiative and its links become read-only. Nothing is deleted.",
+      "confirm": "Cancel initiative"
+    }
+  },
+  "gap": {
+    "title": "Problem / gap addressed: linked gaps and findings",
+    "intro": "An initiative is a vehicle linked to T03 gaps or diagnosed findings. It is never TOM evidence: a project portfolio is not a Target Operating Model.",
+    "add": "Link gap or finding",
+    "empty": "No gap or finding is linked yet.",
+    "addTitle": "Link {{code}} to a gap or finding",
+    "addDescription": "Choose a T03 gap or a diagnosed finding that this initiative closes.",
+    "otherTomGroup": "Other TOM records (refused: not a vehicle link)",
+    "type": {
+      "tom_gap": "T03 gap",
+      "diagnostic_finding": "Diagnosed finding",
+      "journey": "Journey (TOM record)"
+    },
+    "field": {
+      "type": "Linked record type",
+      "typeHint": "Only a T03 gap or a diagnosed finding can be linked.",
+      "target": "Gap or finding",
+      "note": "Note"
+    }
+  },
+  "link": {
+    "remove": "Remove",
+    "removeTitle": "Remove link: {{label}}",
+    "removeDescription": "The link is removed with a reason and kept in the history; nothing is deleted."
+  },
+  "contribution": {
+    "title": "Outcome/KPI contribution",
+    "intro": "Each contribution names an outcome (required) and, optionally, a KPI of that outcome. Submitting for prioritization needs at least one contribution with a KPI.",
+    "add": "Add contribution",
+    "empty": "No outcome contribution yet.",
+    "noKpi": "No KPI",
+    "addTitle": "Add an outcome contribution to {{code}}",
+    "addDescription": "Outcome before activity: say which measurable outcome the initiative moves.",
+    "field": {
+      "outcome": "Outcome",
+      "kpi": "KPI",
+      "kpiOptional": "KPI (T02 row, optional)",
+      "kpiHint": "Choose the outcome first; only KPIs of that outcome are offered.",
+      "statement": "Contribution statement",
+      "movement": "Expected KPI movement"
+    }
+  },
+  "decisionLink": {
+    "title": "Required decisions",
+    "intro": "Decisions come from the one decision log: their owner and due date are those of the decision.",
+    "add": "Link decision",
+    "empty": "No decision is linked yet.",
+    "owner": "Owner",
+    "due": "Due",
+    "addTitle": "Link a decision to {{code}}",
+    "field": {
+      "decision": "Decision"
+    }
+  },
+  "deliverable": {
+    "title": "Key deliverables",
+    "intro": "Managed on the roadmap. The card should list 3 to 7 key deliverables.",
+    "count": "Active deliverables: {{count}}",
+    "notABlock": "This is a warning, not a block.",
+    "acceptance": {
+      "pending": "Acceptance pending",
+      "submitted": "Submitted for acceptance",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    }
+  },
+  "milestone": {
+    "title": "Milestones",
+    "intro": "Managed on the roadmap: approved dates and forecasts are shown separately.",
+    "empty": "No milestone yet.",
+    "approved": "Approved date",
+    "notApproved": "Not approved",
+    "forecast": "Forecast"
+  },
+  "selectionHistory": {
+    "title": "Selection history",
+    "empty": "No selection decision yet.",
+    "action": {
+      "selected": "Selected",
+      "deselected": "Deselected"
+    }
   }
 }

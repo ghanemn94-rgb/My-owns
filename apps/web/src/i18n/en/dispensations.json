@@ -1,8 +1,103 @@
 {
   "tab": "Dispensations",
   "title": "Gate dispensations",
-  "stub": {
-    "title": "Being built in this stage",
-    "body": "The gate dispensations (inherited approvals and waivers) screen is being built in the current delivery stage. It does not show or change any data yet."
+  "intro": "Inherited approvals (Modular) and waivers (End-to-End). A dispensation never creates a gate decision and never approves a gate.",
+  "businessApproval": "accepting, rejecting and revoking a dispensation are decided in person by the waived gate's configured approver. The person who recorded it can never decide it.",
+  "kind": {
+    "inherited_approval": "Inherited approval",
+    "waiver": "Waiver"
+  },
+  "field": {
+    "kind": "Type",
+    "gate": "Gate",
+    "scope": "Scope",
+    "basis": "Basis",
+    "approvingBody": "Approving body",
+    "approvedOn": "Approval date",
+    "evidence": "Evidence",
+    "verification": "Evidence verification",
+    "expiresOn": "Expires on",
+    "status": "Status",
+    "recordedBy": "Recorded by",
+    "decidedBy": "Decided by",
+    "revokeReason": "Revocation reason",
+    "reason": "Reason"
+  },
+  "scope": {
+    "transformation": "The whole transformation",
+    "initiative": "One initiative"
+  },
+  "verification": {
+    "notApplicable": "Not applicable",
+    "verified": "Verified",
+    "unverified": "Unverified"
+  },
+  "status": {
+    "pending": "Pending decision",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "revoked": "Revoked"
+  },
+  "counts": {
+    "yes": "Counts for sequencing",
+    "no": "Does not count"
+  },
+  "decide": {
+    "action": "Decide",
+    "recorderCannot": "Recorded by you: another approver decides.",
+    "title": "Decide: {{kind}} of {{gate}}",
+    "description": {
+      "inherited_approval": "Accepting records that an approval granted before this product was used stands for the sequencing rules. It counts only while its evidence is verified.",
+      "waiver": "Accepting unblocks the launch sequencing for this gate only, until the expiry date. It does not approve the gate."
+    },
+    "unverifiedEvidence": "The evidence of this inherited approval is not verified: it will not count until it is.",
+    "result": "Decision",
+    "accepted": "Accept",
+    "rejected": "Reject",
+    "note": "Note",
+    "confirm": "Record decision"
+  },
+  "revoke": {
+    "action": "Revoke",
+    "title": "Revoke the dispensation of {{gate}}",
+    "description": "A revoked dispensation no longer counts for sequencing. It stays in the history."
+  },
+  "list": {
+    "title": "Inherited approvals and waivers",
+    "intro": "Every dispensation is pending until another person holding the gate decision accepts or rejects it.",
+    "empty": "No dispensation is recorded",
+    "emptyBody": "Gates are only passed by their own approval in this product unless a dispensation is recorded and accepted."
+  },
+  "record": {
+    "action": "Record dispensation",
+    "title": "Record a dispensation",
+    "submit": "Record",
+    "description": "A waiver needs a reason, a scope and an expiry. An inherited approval needs the approving body, the approval date and an evidence item.",
+    "kindHint": {
+      "end_to_end": "End-to-End transformation: waivers of G2 or G3 for launch. Inherited approvals apply only to Modular transformations.",
+      "modular": "Modular transformation: inherited approvals of G1-G3 granted before this product was used. Waivers apply only to End-to-End transformations."
+    },
+    "reasonHint": "Why the launch may proceed before this gate is approved.",
+    "scopeHint": "The whole transformation, or one initiative only.",
+    "evidenceHint": "The record of the earlier approval. It counts only once verified; a filename alone never counts.",
+    "pendingNote": "It stays pending until another person decides it."
+  },
+  "problem": {
+    "dispensation__approved_on_future": "The approval date cannot be in the future.",
+    "dispensation__decider_is_recorder": "Separation of duties: the person who recorded this dispensation cannot decide it.",
+    "dispensation__evidence_not_verified": "The evidence is not verified: the inherited approval cannot be accepted yet.",
+    "dispensation__expired": "The expiry date has passed.",
+    "dispensation__gate_approved": "This gate is already approved; nothing to dispense.",
+    "dispensation__inherited_requires_modular": "An inherited approval can be recorded only for a Modular transformation.",
+    "dispensation__inherited_scope": "An inherited approval covers the whole transformation, not one initiative.",
+    "dispensation__inherited_incomplete": "An inherited approval needs the approving body, the approval date and an evidence item.",
+    "dispensation__not_pending": "Only a pending dispensation can be accepted or rejected.",
+    "dispensation__not_revocable": "Only an accepted dispensation can be revoked.",
+    "dispensation__on_behalf_not_supported": "A dispensation is decided by the approver in person; deciding on someone's behalf is not available. Nothing was recorded.",
+    "dispensation__waiver_gate": "A waiver applies only to the launch sequencing of G2 or G3; G1 is never waived.",
+    "dispensation__waiver_requires_end_to_end": "A waiver applies to the End-to-End launch sequencing; a Modular transformation is not held to it.",
+    "dispensation__waiver_shape": "A waiver carries no approving body, approval date or evidence.",
+    "dispensation__waiver_incomplete": "A waiver needs a reason and an expiry date.",
+    "gate__not_approver": "Only the configured approver of this gate can decide its dispensations."
   }
 }
