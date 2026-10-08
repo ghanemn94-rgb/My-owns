@@ -11256,14 +11256,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T07:07:10Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG3 round 1. Low, non-mandatory documentation/presentation drift; not blocking."
+        },
+        {
+          "at": "2026-10-08T08:29:51Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at ea8e2de70235c90d98e5fb3c43b366c68245f2a0"
         }
-      ]
+      ],
+      "fix_revision": "ea8e2de70235c90d98e5fb3c43b366c68245f2a0",
+      "fix_summary": "T-DG3-ARCH-05 ea8e2de: GateInstance (listGates, getGate, configureGate) gains the required, nullable inheritedApproval (GateInheritedApproval {dispensationId, status pending_verification|accepted|rejected|revoked, counts, approvingBody, approvedOn}); zod mirror in packages/shared/src/schemas/gate.ts. workflows reads it through a third GateFactsProvider member wired by server.ts with portfolio's loadInheritedApprovalFacts (counts = hasInheritedApproval; workflows never imports portfolio). The gate status, approvedAt and gate_decision are untouched. Web: a neutral translated badge (EN/AR) beside the status on the Gates list and a labelled row on the gate view, never the approved colour. Integration test through pending -> accepted -> revoked; web test 16 cases EN/AR. ADR-0021 §5 states the field; p3-work-split §9 item 24."
     },
     {
       "id": "F-DG3-100",
@@ -11285,14 +11292,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG3 round 1 (session afa637ec). Low and non-mandatory: the guard has a coverage gap, and the shipped engine has no dynamic code. It does not block the gate verdict."
+        },
+        {
+          "at": "2026-10-08T08:29:51Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 41752629c3676e127dc91cd2b456be3de0ca2c70"
         }
-      ]
+      ],
+      "fix_revision": "41752629c3676e127dc91cd2b456be3de0ca2c70",
+      "fix_summary": "T-DG3-KBE-D 4175262: the ESLint override for packages/shared/src/formula/** adds no-restricted-globals (Function, eval, Reflect), no-restricted-syntax (any Function identifier, computed/template ['constructor']/['Function'] members, any .constructor read or destructuring, require/createRequire calls and the createRequire name, Reflect members) and no-restricted-imports (module, node:module, worker_threads, child_process, with and without node:). The fuzz.test.ts scan becomes scanSource() over a FORBIDDEN table (comments stripped) with the same forms, a 20-probe it.each pinning each form as a hit and a false-positive test. Engine code unchanged; lint probe 22 errors after vs 0 before (handback evidence). ADR-0024 §6 'Extended guard'; p3-work-split §9 item 23."
     }
   ]
 }
