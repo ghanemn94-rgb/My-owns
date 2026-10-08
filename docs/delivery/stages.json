@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG2"
       ],
@@ -1265,10 +1265,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3",
-        "source_commit": "21e2742e4b0f6800e379a4d935d5592a873b1c59",
-        "frozen_at": "2026-10-08T17:13:17Z",
-        "manifest_path": "docs/delivery/candidates/DG3/dfedd62f05412fd7.manifest.json"
+        "candidate_id": "sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96",
+        "source_commit": "c40232b01b7ec3cbf24759617bc645847a517a7e",
+        "frozen_at": "2026-10-08T19:38:29Z",
+        "manifest_path": "docs/delivery/candidates/DG3/7049d793cd20ed77.manifest.json"
       },
       "review_rounds": [
         {
@@ -1330,6 +1330,18 @@
             "qa-verifier": "docs/delivery/reviews/DG3/round-5/qa-verifier.json"
           },
           "note": "DG3 gate review round 5 on candidate dfedd62f (757 files, source 21e2742). Repair since round 4 (D-085): T-DG3-KBE-G (F-DG3-100 fourth pass: the EvalError-rethrow rule enforced statically in lint and the scan; no-unsafe-finally; asynchrony refused; ADR-0024 §6 corrected). The manifest diff against 8376d762 is exactly its 7 files and D-085. Orchestrator pre-freeze verification of fb64322: static checks; pnpm test 1614 + 220/1 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS. Full re-review; code-security verifies F-DG3-100."
+        },
+        {
+          "round": 6,
+          "candidate_id": "sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96",
+          "frozen_at": "2026-10-08T19:38:29Z",
+          "source_commit": "c40232b01b7ec3cbf24759617bc645847a517a7e",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG3/round-6/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG3/round-6/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG3/round-6/qa-verifier.json"
+          },
+          "note": "DG3 gate review round 6 on candidate 7049d793 (757 files, source c40232b). Repair since round 5 (D-086): T-DG3-KBE-H (F-DG3-100 fifth pass, meeting both options of the reviewer's final closure criterion; lint and scan only, ADR-0024 §6 rewritten; no engine source changed). Orchestrator pre-freeze verification of 43ca734: static checks; pnpm test 1651 + 256/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
         }
       ],
       "gate_record": "docs/delivery/gates/DG3.json",
@@ -1393,6 +1405,11 @@
           "state": "FIXING",
           "at": "2026-10-08T18:23:53Z",
           "note": "Round 5 on candidate dfedd62f: domain and qa PASS; code-security FAIL: F-DG3-100 verification failed a fourth time (W1/W2/W4 now refused, but ADR-0024 §6's absolute claims are falsified by G1/G2 generator finally-yield and A1 Array.fromAsync with a destructured then). The reviewer gave a final closure criterion: (b) narrow §6 to enumerated claims and state the residual, or (a) also refuse G1/G2/A1 and drop the absolute wording. All runs exit 0, no configuration change. Repair: T-DG3-KBE-H does both."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-08T19:38:29Z",
+          "note": "KBE-H merged and verified (D-086). Candidate frozen as 7049d793 (757 files, source c40232b) for DG3 gate review round 6; code-security judges F-DG3-100 against its own final closure criterion."
         }
       ]
     },
