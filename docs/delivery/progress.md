@@ -13,29 +13,24 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Rounds 11-13** fixed operational server defects (D-071 to D-073): connection hygiene, pool bounds, the three-phase upload, commit-time re-authorisation and graceful shutdown.
   - **Rounds 13-17** closed session and identity edge cases in the web client (D-074 to D-077). The D-077 2 s residual for non-navigation GETs was judged acceptable as declared.
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
-- **DG3 state: BUILDING** (P3 Mobilization and portfolio, 32 DG3-final requirements; D-078). The implementation runs in waves. Per D-004 there are at most 4 workers at a time, and each concurrent writer has its own git worktree under `/home/user/wt/`, merged back with `--no-ff`.
-  - **Done, integrated and verified by the orchestrator:**
-    - Architecture: `T-DG3-ARCH-01`, `ARCH-02` and `ARCH-03` (ADR-0021–0024, migrations `0020`–`0025`, contract, work split §9, advisory-lock registry, one delegation rule).
-    - Wave 1: `T-DG3-BE-A` (portfolio foundation, G1 agreements, readiness, dispensations) and `T-DG3-KBE-A` (T06 scoring, T09 engine).
-    - Wave 2:
-      - `T-DG3-BE-B`: initiatives, transitions, selection;
-      - `T-DG3-BE-C`: roadmap, T08 with race-free cycle rejection;
-      - `T-DG3-BE-D`: prioritization;
-      - `T-DG3-KBE-B`: business cases.
-    - Wave 3:
-      - `T-DG3-KBE-C`: T09 formulas, lineage, Finance validation, kpi G4 facts;
-      - `T-DG3-FE-A0`: web seams and the G1 agreements step.
-  - **Results:** merged tree at `e14993e`: unit 1235 in both locale settings, integration 764, product e2e 76, `validate --historical --stage DG2` exit 0.
-  - **Running, wave 4** (from about 01:08Z, one worktree each):
-    - `T-DG3-BE-E`: capacity, funding, G4 evaluators and `0026`, wiring follow-ups;
-    - `T-DG3-FE-A`: portfolio, initiative card, readiness, dispensations, G4 view;
-    - `T-DG3-FE-B`: prioritization, roadmap, dependencies, capacity;
-    - `T-DG3-FE-C`: business cases, T09 builder.
+- **DG3 state: REVIEWING, gate round 1** on candidate `sha256:873115d9…` (753 files, source `928b765`, frozen 2026-10-08T06:46Z).
+  - **How it was built (D-079):** 23 implementer runs, each concurrent writer in its own git worktree (D-004), merged and verified by the orchestrator after every wave:
+    - ARCH-01–04;
+    - BE-A–G;
+    - KBE-A–C;
+    - FE-A0, FE-A–F;
+    - AN-P3 and AN-P3B.
+  - **Pre-freeze verification of the frozen tree:**
+    - unit tests 1528 in both locale settings;
+    - integration tests 791 (migrations 0001–0027);
+    - product e2e 168 in chromium-en and chromium-ar, under both locale settings;
+    - `validate --register DG3`, `--historical --stage DG2` and `--pipeline` exit 0.
+  - **Round 1:** three independent reviewers on `docs/delivery/assignments/DG3/round-1/` (finding ids: code-security F-DG3-100–119, domain 120–139, qa 140–159).
 - **Next action:**
-  1. Merge and verify wave 4.
-  2. Wave 5: P3 e2e journeys, including G4 end to end with distinct synthetic TL, FIN and SP users; the register update by the analyst; and any small repairs.
-  3. Then freeze the candidate and run DG3 review round 1.
-- **Environmental residuals** stay PASS-on-evidence, never BLOCKED: D-057 (online registry), D-058 (live CI), D-049 (Keycloak).
+  1. When the three round-1 records return, commit the evidence selectively and import (`import-findings --stage DG3 --round 1`).
+  2. If the reviewers raise findings, repair them in worktrees, freeze round 2, and verify.
+  3. When all three PASS and every finding is CLOSED_VERIFIED, run `validate --stage DG3` yourself, then set VERIFYING and run the release-auditor.
+  4. Environmental residuals stay PASS-on-evidence: D-057, D-058, D-049.
 
 ## DG2 scope (P2 — diagnose, define and design)
 

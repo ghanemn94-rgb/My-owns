@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "BUILDING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG2"
       ],
@@ -1265,12 +1265,25 @@
         ]
       },
       "candidate": {
-        "candidate_id": null,
-        "source_commit": null,
-        "frozen_at": null,
-        "manifest_path": null
+        "candidate_id": "sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33",
+        "source_commit": "928b765419e7e84feeaae1a60724a11c318799a8",
+        "frozen_at": "2026-10-08T06:46:13Z",
+        "manifest_path": "docs/delivery/candidates/DG3/873115d9bc84f763.manifest.json"
       },
-      "review_rounds": [],
+      "review_rounds": [
+        {
+          "round": 1,
+          "candidate_id": "sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33",
+          "frozen_at": "2026-10-08T06:46:13Z",
+          "source_commit": "928b765419e7e84feeaae1a60724a11c318799a8",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG3/round-1/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG3/round-1/qa-verifier.json"
+          },
+          "note": "DG3 gate review round 1 on candidate 873115d9 (753 files, source 928b765). P3 built in 23 implementer runs across worktree waves (D-079); all 270 contract operations live; the 32 DG3-final requirements IMPLEMENTED (validate --register DG3 PASS). Orchestrator pre-freeze verification of the frozen tree: typecheck/build/lint/format/openapi/contrast exit 0; unit 1528/1528 with the locale unset and with C.UTF-8; integration 791/791 (migrations 0001-0027); product e2e 168/168 in chromium-en + chromium-ar under both locale settings; validate --historical --stage DG2 and --pipeline exit 0."
+        }
+      ],
       "gate_record": "docs/delivery/gates/DG3.json",
       "blockers": [],
       "history": [
@@ -1282,6 +1295,11 @@
           "state": "BUILDING",
           "at": "2026-10-07T21:06:09Z",
           "note": "DG2 APPROVED and DG3 unblocked (validate --historical --stage DG2 exit 0; --pipeline exit 0). Begin P3 (Mobilization and portfolio) on branch claude/mobily-transformation-platform-regate. Scope: 32 DG3-final requirements: the portfolio and roadmap entity group (Initiative, Deliverable, Milestone, RoadmapWave, Dependency, ResourceDemand, Capacity, FundingDecision; REQ-S16-016); T05 Initiative Card, T06 Prioritization Scorecard with versioned weight sets, T07 Wave Roadmap, T08 Dependency Map with cycle and schedule-conflict detection, T09 Benefit Formula on a restricted expression language; the business case (ten sections, single-class lines, roll-up without double counting, Finance validation before G4); owners and capacity; proposed ranking vs selection vs funding; sequencing rules (REQ-PB-004/006/007/022, incl. the G1 agreement confirmations and the readiness view); product gate G4 (REQ-PB-019, REQ-S04-006). Serial-first: solution-architect T-DG3-ARCH-01 (ADRs, migrations 0020+, schema types, probe, ERD, contract, permissions, P3 work split sized for the runner's 2 h window), then the implementers per the work split (D-078)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-08T06:46:13Z",
+          "note": "P3 build complete and integrated (D-079): ARCH-01..04, BE-A..G, KBE-A..C, FE-A0, FE-A..F, AN-P3/P3B, each concurrent writer in its own worktree (D-004). Orchestrator verification of the frozen tree: unit 1528 x2 locale settings, integration 791, e2e 168 x2, register DG3 PASS, pipeline PASS. Candidate frozen as 873115d9 (753 files, source 928b765) for DG3 gate review round 1; three independent reviewers (domain, code-security, qa) run next."
         }
       ]
     },
