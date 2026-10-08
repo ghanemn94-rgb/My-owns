@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG2"
       ],
@@ -1300,6 +1300,11 @@
           "state": "REVIEWING",
           "at": "2026-10-08T06:46:13Z",
           "note": "P3 build complete and integrated (D-079): ARCH-01..04, BE-A..G, KBE-A..C, FE-A0, FE-A..F, AN-P3/P3B, each concurrent writer in its own worktree (D-004). Orchestrator verification of the frozen tree: unit 1528 x2 locale settings, integration 791, e2e 168 x2, register DG3 PASS, pipeline PASS. Candidate frozen as 873115d9 (753 files, source 928b765) for DG3 gate review round 1; three independent reviewers (domain, code-security, qa) run next."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-08T07:54:40Z",
+          "note": "Round 1 on candidate 873115d9: all three verdicts PASS. qa (19 checks, all 32 requirements, e2e 200/200 in both locale settings, no findings), code-security (26 checks; raised F-DG3-100 Low: the formula engine's no-dynamic-code guards accept Reflect.construct/apply(Function), an aliased Function, computed ['constructor'] and createRequire; the engine itself has none) and domain (17 checks; raised F-DG3-120 Low: ADR-0021 §5's inheritedApproval annotation on the gate list is not built). Both imported OPEN; no Critical/High/mandatory. Round-2 repairs (D-080): T-DG3-KBE-D (F-100) and T-DG3-ARCH-05 (F-120), each in its own worktree."
         }
       ]
     },
