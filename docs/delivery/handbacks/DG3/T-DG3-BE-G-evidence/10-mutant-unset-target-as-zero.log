@@ -1,0 +1,54 @@
+# mutation: sed 's/targetValue: k.target_value,/targetValue: k.target_value ?? "0",/' apps/api/src/modules/portfolio/hierarchy.ts (temporary; restored after)
+diff --git a/apps/api/src/modules/portfolio/hierarchy.ts b/apps/api/src/modules/portfolio/hierarchy.ts
+index bac27c4..04c9f7f 100644
+--- a/apps/api/src/modules/portfolio/hierarchy.ts
++++ b/apps/api/src/modules/portfolio/hierarchy.ts
+@@ -77,7 +77,7 @@ export async function loadOutcomeHierarchy(db: DbOrTx, transformationId: string)
+         kpis: own.map((k) => ({
+           outcomeKpiId: k.id,
+           kpiDefinitionId: k.kpi_definition_id,
+-          targetValue: k.target_value,
++          targetValue: k.target_value ?? "0",
+           targetDate: String(k.target_date).slice(0, 10),
+           contributions: contributions.filter((c) => c.outcomeKpiId === k.id),
+         })),
+port-policy: PostgreSQL listening on port 23100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 <worktree>
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muz3ydvd_c6384217 (server_encoding UTF8); applied 27 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/portfolio/hierarchy.test.ts (3 tests | 1 failed) 901ms
+   × GET /transformations/{id}/outcome-hierarchy, full nested shape (REQ-PB-032) > returns all five levels, linked, field by field 47ms
+     → expected '0' to be null
+   ✓ GET /transformations/{id}/outcome-hierarchy, full nested shape (REQ-PB-032) > refuses a contribution without an outcome (400 at /outcomeId) and the tree is unchanged 58ms
+   ✓ GET /transformations/{id}/outcome-hierarchy, full nested shape (REQ-PB-032) > is readable by AUD (same tree) and not by another organization or an unscoped user 59ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/hierarchy.test.ts > GET /transformations/{id}/outcome-hierarchy, full nested shape (REQ-PB-032) > returns all five levels, linked, field by field
+AssertionError: expected '0' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"0"
+
+ ❯ apps/api/test/integration/portfolio/hierarchy.test.ts:111:32
+    109|     // Unset target: null (Unknown), never 0 or "0".
+    110|     expect(unset!.kpiDefinitionId).toBe(otherKpiDefinitionId);
+    111|     expect(unset!.targetValue).toBeNull();
+       |                                ^
+    112|     expect(unset!.targetDate).toBe("2028-06-30");
+    113|     expect(unset!.contributions).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  05:40:39
+   Duration  6.30s (transform 1.76s, setup 0ms, collect 3.89s, tests 901ms, environment 0ms, prepare 95ms)
+
+EXIT=1
