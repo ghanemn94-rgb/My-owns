@@ -1,0 +1,39 @@
+# env residuals: clone $TMPDIR/scan at 0e820ae7f122caecffdac00d1ec8a125375f90a3; node v22.22.2; 2026-10-08T11:39:08Z
+## node deploy/scripts/check-ci-needs.mjs
+node:internal/modules/cjs/loader:1383
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module 'yaml'
+Require stack:
+- /var/tmp/mth-run.nxtJGv/claude-0/scan/apps/api/package.json
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at file:///var/tmp/mth-run.nxtJGv/claude-0/scan/deploy/scripts/check-ci-needs.mjs:37:70
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/var/tmp/mth-run.nxtJGv/claude-0/scan/apps/api/package.json' ]
+}
+
+Node.js v22.22.2
+# exit_status: 1
+## node --test deploy/scripts/tests/check-ci-needs.test.mjs
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 271.114455
+# exit_status: 1
+## .github, deploy, lockfile, manifests changed f49ca16..ce988e2 (expect only root package.json test script)
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)

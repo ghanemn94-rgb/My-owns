@@ -1,0 +1,21 @@
+$ git rev-parse HEAD (repo, start)
+0e820ae7f122caecffdac00d1ec8a125375f90a3
+$ git merge-base --is-ancestor ce988e2 HEAD
+ANCESTOR (exit 0)
+$ git diff --name-only ce988e2..HEAD
+docs/delivery/assignments/DG3/round-3/code-security-reviewer.md
+docs/delivery/assignments/DG3/round-3/domain-reviewer.md
+docs/delivery/assignments/DG3/round-3/qa-verifier.md
+docs/delivery/candidates/DG3/f2b4c77a026c6825.manifest.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+$ node tools/gates/candidate.mjs --stage DG3 (repo working tree)
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+$ (clone $TMPDIR/review-dg3 @ ce988e2) git rev-parse HEAD; --is-shallow-repository; candidate.mjs
+ce988e20f7ea2752cd3283995fbf7ed05b704485
+false
+668
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d","files":757}
+EXIT 0
+$ manifest compare
+sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d 0

@@ -1,0 +1,691 @@
+# command: bash /home/user/My-owns/docs/delivery/test-evidence/DG3/code-security/round-3/with-pg.sh 26310 pnpm vitest run --project integration apps/api/test/integration/zz-sec-r1 apps/api/test/integration/zz-sec-r2 apps/api/test/integration/zz-sec-r3 --reporter=verbose
+# node: v22.22.2  commit: 0e820ae7f122caecffdac00d1ec8a125375f90a3  LANG=<unset> LC_ALL=<unset> LC_CTYPE=<unset>  started: 2026-10-08T11:39:14Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.nxtJGv/claude-0/review-p2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_muzgrlij_bf869b79 (server_encoding UTF8); applied 27 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts
+[probe-B] raw pool role mth_app superuser=false
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > scoring_weight_set: a copy with approved_by = created_by is refused by scoring_weight_set_approver_not_proposer
+[probe-B1] scoring_weight_set: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > scoring_weight_set: a copy with approved_by = created_by is refused by scoring_weight_set_approver_not_proposer
+[probe-B1] scoring_weight_set: 23514 scoring_weight_set_approver_not_proposer new row for relation "scoring_weight_set" violates check constraint "scoring_weight_set_approver_not_proposer"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > ranking_override: a copy with decided_by = proposed_by is refused by ranking_override_approver_not_proposer
+[probe-B1] ranking_override: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > ranking_override: a copy with decided_by = proposed_by is refused by ranking_override_approver_not_proposer
+[probe-B1] ranking_override: 23514 ranking_override_approver_not_proposer new row for relation "ranking_override" violates check constraint "ranking_override_approver_not_proposer"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > business_case: a copy with baseline_validated_by = created_by is refused by business_case_validator_not_author
+[probe-B1] business_case: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > business_case: a copy with baseline_validated_by = created_by is refused by business_case_validator_not_author
+[probe-B1] business_case: 23514 business_case_validator_not_author new row for relation "business_case" violates check constraint "business_case_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > benefit_formula_version: a copy with validated_by = created_by is refused by benefit_formula_version_validator_not_author
+[probe-B1] benefit_formula_version: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > benefit_formula_version: a copy with validated_by = created_by is refused by benefit_formula_version_validator_not_author
+[probe-B1] benefit_formula_version: 23514 benefit_formula_version_validator_not_author new row for relation "benefit_formula_version" violates check constraint "benefit_formula_version_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > gate_dispensation: a copy with decided_by = recorded_by is refused by gate_dispensation_decider_not_recorder
+[probe-B1] gate_dispensation: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > gate_dispensation: a copy with decided_by = recorded_by is refused by gate_dispensation_decider_not_recorder
+[probe-B1] gate_dispensation: 23514 gate_dispensation_decider_not_recorder new row for relation "gate_dispensation" violates check constraint "gate_dispensation_decider_not_recorder"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > deliverable: a copy with decided_by = submitted_by is refused by deliverable_acceptor_not_submitter
+[probe-B1] deliverable: decided source rows available=1
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > deliverable: a copy with decided_by = submitted_by is refused by deliverable_acceptor_not_submitter
+[probe-B1] deliverable: 23514 deliverable_acceptor_not_submitter new row for relation "deliverable" violates check constraint "deliverable_acceptor_not_submitter"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] scoring_weight_set: 23514 scoring_weight_set_immutable scoring_weight_set 01a11b4f-b566-7520-85e2-7706613a7e1f: approval columns change only with the status
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] ranking_override: 23514 ranking_override_approver_not_proposer new row for relation "ranking_override" violates check constraint "ranking_override_approver_not_proposer"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] business_case: 23514 business_case_validator_not_author new row for relation "business_case" violates check constraint "business_case_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] benefit_formula_version: 23514 benefit_formula_version_validator_not_author new row for relation "benefit_formula_version" violates check constraint "benefit_formula_version_validator_not_author"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] gate_dispensation: 23514 gate_dispensation_decider_not_recorder new row for relation "gate_dispensation" violates check constraint "gate_dispensation_decider_not_recorder"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused
+[probe-B1u] deliverable: 23514 deliverable_acceptor_not_submitter new row for relation "deliverable" violates check constraint "deliverable_acceptor_not_submitter"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] SET session_replication_role = replica -> 42501 permission denied to set parameter "session_replication_role"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] ALTER TABLE gate_decision DISABLE TRIGGER gate_decision_g1_agreements -> 42501 must be owner of table gate_decision
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] ALTER TABLE dependency DISABLE TRIGGER dependency_cycle_guard -> 42501 must be owner of table dependency
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] ALTER TABLE scoring_weight_set DROP CONSTRAINT scoring_weight_set_appr -> 42501 must be owner of table scoring_weight_set
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] DROP TRIGGER dependency_cycle_guard ON dependency -> 42501 must be owner of relation dependency
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app
+[probe-B2] CREATE OR REPLACE FUNCTION dependency_cycle_guard() RETURNS trigger LA -> 42501 permission denied for schema public
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > scoring_weight_set: a copy with approved_by = created_by is refused by scoring_weight_set_approver_not_proposer 8ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > ranking_override: a copy with decided_by = proposed_by is refused by ranking_override_approver_not_proposer 4ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > business_case: a copy with baseline_validated_by = created_by is refused by business_case_validator_not_author 7ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > benefit_formula_version: a copy with validated_by = created_by is refused by benefit_formula_version_validator_not_author 4ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > gate_dispensation: a copy with decided_by = recorded_by is refused by gate_dispensation_decider_not_recorder 4ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > deliverable: a copy with decided_by = submitted_by is refused by deliverable_acceptor_not_submitter 5ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B1 database separation of duties (raw SQL as mth_app) > the same UPDATE route: setting an existing decided row's approver to its proposer is refused 22ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B2 the runtime role cannot switch the guards off > session_replication_role, DISABLE TRIGGER and ALTER on guarded tables are denied to mth_app 7ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] race 0: first=commit second=23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] race 1: first=commit second=23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] race 2: first=commit second=23514 dependency_acyclic dependency cycle: INI-02 -> INI-01 -> INI-02
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle
+[probe-B3] races with exactly one commit: 25/25
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > 25 races A->B vs B->A on two connections: exactly one commits each time; the loser names the cycle 5378ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > A->B->C->A by raw SQL is refused naming the cycle; nothing persists
+[probe-B3] 3-cycle: 23514 dependency_acyclic dependency cycle: INI-03 -> INI-01 -> INI-02 -> INI-03
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > A->B->C->A by raw SQL is refused naming the cycle; nothing persists 231ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > API: A->B->C->A is 422 dependency.cycle naming the cycle; nothing written
+[probe-B3] API 3-cycle: 422 dependency.cycle Dependency cycle: INI-03 → INI-01 → INI-02 → INI-03 pointer=/toInitiativeId
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > API: A->B->C->A is 422 dependency.cycle naming the cycle; nothing written 267ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > re-activating an archived edge, or re-pointing an edge, that closes a cycle is refused by the guard
+[probe-B3] un-archive closing a cycle: 23514 dependency_acyclic dependency cycle: INI-01 -> INI-02 -> INI-01
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > re-activating an archived edge, or re-pointing an edge, that closes a cycle is refused by the guard
+[probe-B3] re-point into a cycle: 23514 dependency_acyclic dependency cycle: INI-01 -> INI-02 -> INI-01
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B3 the dependency-graph guard alone (raw SQL, no API) > re-activating an archived edge, or re-pointing an edge, that closes a cycle is refused by the guard 195ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] weights total 95.00: 422 prioritization.weights_total "Weights must total 100% (got 95.00%)"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] weights total 105.00: 422 prioritization.weights_total "Weights must total 100% (got 105.00%)"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] weights total 99.99: 422 prioritization.weights_total "Weights must total 100% (got 99.99%)"
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written
+[probe-B4] 50.005 + 49.995: 400 validation
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > 95% and 105% -> 422 prioritization.weights_total with the exact text; nothing written 236ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > a proposer who ALSO holds SP cannot approve their own weight set (403); onBehalfOfUserId on approve is 400
+[probe-B4] dual-role self-approve: 403 approval.approver_is_proposer
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > a proposer who ALSO holds SP cannot approve their own weight set (403); onBehalfOfUserId on approve is 400
+[probe-B4] weight-set approve onBehalfOf: 400 validation
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > a proposer who ALSO holds SP cannot approve their own weight set (403); onBehalfOfUserId on approve is 400 184ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written
+[probe-B4] baseline-validation onBehalfOf: 400 validation pointer= audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written
+[probe-B4] formula-version-validation onBehalfOf: 400 validation pointer= audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written
+[probe-B4] override-revoke onBehalfOf: 400 validation pointer= audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B5 audit `changes` shape on every P3 audit event written by the exercises > every top-level member of `changes` is exactly {from, to} (ADR-0004 diff shape)
+[probe-B5] audit events with changes: 282 (80 actions); malformed members: 0
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B4 API: weights, on-behalf on the strict approvals, self-approval by a dual-role proposer > Finance validations and override revoke refuse onBehalfOfUserId (strict 400); nothing written 92ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-integrity.test.ts > B5 audit `changes` shape on every P3 audit event written by the exercises > every top-level member of `changes` is exactly {from, to} (ADR-0004 diff shape) 4ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D1 the annotation is read under the transformation read authorization > a reader sees it (accepted, counts) while the gate stays draft 92ms
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D1 the annotation is read under the transformation read authorization > outsiders get 404 on list, view and PATCH, and never see the dispensation
+[SEC-R2 D1] same-org user without grants: list 404, view 404, patch 404
+
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D1 the annotation is read under the transformation read authorization > outsiders get 404 on list, view and PATCH, and never see the dispensation
+[SEC-R2 D1] TL of the sibling business unit a2: list 404, view 404, patch 404
+
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D1 the annotation is read under the transformation read authorization > outsiders get 404 on list, view and PATCH, and never see the dispensation
+[SEC-R2 D1] TO of the other organization: list 404, view 404, patch 404
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D1 the annotation is read under the transformation read authorization > outsiders get 404 on list, view and PATCH, and never see the dispensation 149ms
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D2 reads only > 20 list/view reads by the lead, auditor and sponsor change no gate row and write no audit event
+[SEC-R2 D2] before {"gate_instance":"bbb0a36f548c0828f9d434e9d7744656","gate_decision":"d41d8cd98f00b204e9800998ecf8427e","gate_submission":"d41d8cd98f00b204e9800998ecf8427e","gate_dispensation":"da1d4598fe124c0c880b4f7018b93730","audit_event_count":"2113"}
+[SEC-R2 D2] after  {"gate_instance":"bbb0a36f548c0828f9d434e9d7744656","gate_decision":"d41d8cd98f00b204e9800998ecf8427e","gate_submission":"d41d8cd98f00b204e9800998ecf8427e","gate_dispensation":"da1d4598fe124c0c880b4f7018b93730","audit_event_count":"2113"}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D2 reads only > 20 list/view reads by the lead, auditor and sponsor change no gate row and write no audit event 1113ms
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D3 configureGate returns the annotation; the write touches only the approver > PATCH by a gate.configure holder: 200, annotation present, status still draft
+[SEC-R2 D3] PATCH 200 {"gate":{"id":"01a11b4f-e259-7c9a-ad99-225487649d27","organizationId":"01a11b4f-e16a-763b-a2eb-085ea4421337","transformationId":"01a11b4f-e243-716d-aacf-0a45f5113535","gateCode":"G1","status":"draft","approverRoleCode":"SP","approverUserId":null,"currentSubmissionId":null,"latestSubmissionNo":0,"app
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D3 configureGate returns the annotation; the write touches only the approver > PATCH by a gate.configure holder: 200, annotation present, status still draft 83ms
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D4 unverified evidence never counts, even when accepted > an accepted G2 inherited approval on unverified evidence is shown with counts=false
+[SEC-R2 D4] accept on unverified evidence: 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The inherited approval's evidence must be verified before it can be accepted (a filename never counts).","c
+
+stdout | apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D4 unverified evidence never counts, even when accepted > an accepted G2 inherited approval on unverified evidence is shown with counts=false
+[SEC-R2 D4] G2 annotation {"dispensationId":"01a11b4f-e947-746b-a20e-9cdbe5f73caa","status":"pending_verification","counts":false,"approvingBody":"Synthetic SEC-R2 executive committee","approvedOn":"2026-02-01"} status draft
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r2/sec-r2-inherited-approval.test.ts > D4 unverified evidence never counts, even when accepted > an accepted G2 inherited approval on unverified evidence is shown with counts=false 85ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > covers the P3 mutating operations
+[probe-A] P3 mutating operations: 64
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiative (POST /api/v1/initiatives): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiative POST /api/v1/initiatives body={} -> 400 validation audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiative (POST /api/v1/initiatives): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiative POST /api/v1/initiatives body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateInitiative (PATCH /api/v1/initiatives/{initiativeId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateInitiative PATCH /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174 body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateInitiative (PATCH /api/v1/initiatives/{initiativeId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateInitiative PATCH /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174 body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > submitInitiative (POST /api/v1/initiatives/{initiativeId}/submit): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] submitInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/submit body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > submitInitiative (POST /api/v1/initiatives/{initiativeId}/submit): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] submitInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/submit body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > withdrawInitiative (POST /api/v1/initiatives/{initiativeId}/withdraw): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] withdrawInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/withdraw body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > withdrawInitiative (POST /api/v1/initiatives/{initiativeId}/withdraw): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] withdrawInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/withdraw body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > selectInitiative (POST /api/v1/initiatives/{initiativeId}/select): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] selectInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/select body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > selectInitiative (POST /api/v1/initiatives/{initiativeId}/select): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] selectInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/select body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > covers the P3 mutating operations 3ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiative (POST /api/v1/initiatives): 403 for an empty and a plausible body, only authorization.denied written 17ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateInitiative (PATCH /api/v1/initiatives/{initiativeId}): 403 for an empty and a plausible body, only authorization.denied written 29ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > submitInitiative (POST /api/v1/initiatives/{initiativeId}/submit): 403 for an empty and a plausible body, only authorization.denied written 27ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > withdrawInitiative (POST /api/v1/initiatives/{initiativeId}/withdraw): 403 for an empty and a plausible body, only authorization.denied written 21ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > selectInitiative (POST /api/v1/initiatives/{initiativeId}/select): 403 for an empty and a plausible body, only authorization.denied written 17ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > deselectInitiative (POST /api/v1/initiatives/{initiativeId}/deselect): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] deselectInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/deselect body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > deselectInitiative (POST /api/v1/initiatives/{initiativeId}/deselect): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] deselectInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/deselect body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > launchInitiative (POST /api/v1/initiatives/{initiativeId}/launch): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] launchInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/launch body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > launchInitiative (POST /api/v1/initiatives/{initiativeId}/launch): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] launchInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/launch body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > cancelInitiative (POST /api/v1/initiatives/{initiativeId}/cancel): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] cancelInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/cancel body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > cancelInitiative (POST /api/v1/initiatives/{initiativeId}/cancel): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] cancelInitiative POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/cancel body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeGapLink (POST /api/v1/initiatives/{initiativeId}/gap-links): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeGapLink POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/gap-links body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeGapLink (POST /api/v1/initiatives/{initiativeId}/gap-links): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeGapLink POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/gap-links body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeGapLink (POST /api/v1/initiatives/{initiativeId}/gap-links/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] removeInitiativeGapLink POST /api/v1/initiatives/01a11b4f-f0cf-76d8-a43d-7337251e0c9c/gap-links/01a11b4f-f180-70eb-be90-d5fa6351ea20/remove body={} -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > deselectInitiative (POST /api/v1/initiatives/{initiativeId}/deselect): 403 for an empty and a plausible body, only authorization.denied written 16ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > launchInitiative (POST /api/v1/initiatives/{initiativeId}/launch): 403 for an empty and a plausible body, only authorization.denied written 25ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > cancelInitiative (POST /api/v1/initiatives/{initiativeId}/cancel): 403 for an empty and a plausible body, only authorization.denied written 21ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeGapLink (POST /api/v1/initiatives/{initiativeId}/gap-links): 403 for an empty and a plausible body, only authorization.denied written 18ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeGapLink (POST /api/v1/initiatives/{initiativeId}/gap-links/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] removeInitiativeGapLink POST /api/v1/initiatives/01a11b4f-f0cf-76d8-a43d-7337251e0c9c/gap-links/01a11b4f-f180-70eb-be90-d5fa6351ea20/remove body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeOutcomeContribution (POST /api/v1/initiatives/{initiativeId}/outcome-contributions): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeOutcomeContribution POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/outcome-contributions body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeOutcomeContribution (POST /api/v1/initiatives/{initiativeId}/outcome-contributions): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeOutcomeContribution POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/outcome-contributions body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeOutcomeContribution (POST /api/v1/initiatives/{initiativeId}/outcome-contributions/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] removeInitiativeOutcomeContribution POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/outcome-contributions/01a11b4f-fd86-7688-8445-c1e6c1b1a1fa/remove body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeOutcomeContribution (POST /api/v1/initiatives/{initiativeId}/outcome-contributions/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] removeInitiativeOutcomeContribution POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/outcome-contributions/01a11b4f-fd86-7688-8445-c1e6c1b1a1fa/remove body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeDecisionLink (POST /api/v1/initiatives/{initiativeId}/decision-links): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeDecisionLink POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/decision-links body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeDecisionLink (POST /api/v1/initiatives/{initiativeId}/decision-links): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeDecisionLink POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/decision-links body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeDecisionLink (POST /api/v1/initiatives/{initiativeId}/decision-links/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] removeInitiativeDecisionLink POST /api/v1/initiatives/01a11b4f-f0cf-76d8-a43d-7337251e0c9c/decision-links/01a11b4f-f26c-72ee-a1df-2f2b4a7561e5/remove body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeDecisionLink (POST /api/v1/initiatives/{initiativeId}/decision-links/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] removeInitiativeDecisionLink POST /api/v1/initiatives/01a11b4f-f0cf-76d8-a43d-7337251e0c9c/decision-links/01a11b4f-f26c-72ee-a1df-2f2b4a7561e5/remove body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeGapLink (POST /api/v1/initiatives/{initiativeId}/gap-links/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written 33ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeOutcomeContribution (POST /api/v1/initiatives/{initiativeId}/outcome-contributions): 403 for an empty and a plausible body, only authorization.denied written 18ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeOutcomeContribution (POST /api/v1/initiatives/{initiativeId}/outcome-contributions/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written 27ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeDecisionLink (POST /api/v1/initiatives/{initiativeId}/decision-links): 403 for an empty and a plausible body, only authorization.denied written 21ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > removeInitiativeDecisionLink (POST /api/v1/initiatives/{initiativeId}/decision-links/{linkId}/remove): 403 for an empty and a plausible body, only authorization.denied written 23ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createDeliverable (POST /api/v1/initiatives/{initiativeId}/deliverables): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createDeliverable POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/deliverables body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createDeliverable (POST /api/v1/initiatives/{initiativeId}/deliverables): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createDeliverable POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/deliverables body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateDeliverable (PATCH /api/v1/deliverables/{deliverableId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateDeliverable PATCH /api/v1/deliverables/01a11b4f-f52b-76f4-830a-d36ba0ebc44d body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateDeliverable (PATCH /api/v1/deliverables/{deliverableId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateDeliverable PATCH /api/v1/deliverables/01a11b4f-f52b-76f4-830a-d36ba0ebc44d body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > submitDeliverable (POST /api/v1/deliverables/{deliverableId}/submit): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] submitDeliverable POST /api/v1/deliverables/01a11b4f-f52b-76f4-830a-d36ba0ebc44d/submit body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > submitDeliverable (POST /api/v1/deliverables/{deliverableId}/submit): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] submitDeliverable POST /api/v1/deliverables/01a11b4f-f52b-76f4-830a-d36ba0ebc44d/submit body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideDeliverable (POST /api/v1/deliverables/{deliverableId}/acceptance): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] decideDeliverable POST /api/v1/deliverables/01a11b4f-f52b-76f4-830a-d36ba0ebc44d/acceptance body={} -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createDeliverable (POST /api/v1/initiatives/{initiativeId}/deliverables): 403 for an empty and a plausible body, only authorization.denied written 20ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateDeliverable (PATCH /api/v1/deliverables/{deliverableId}): 403 for an empty and a plausible body, only authorization.denied written 23ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > submitDeliverable (POST /api/v1/deliverables/{deliverableId}/submit): 403 for an empty and a plausible body, only authorization.denied written 38ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideDeliverable (POST /api/v1/deliverables/{deliverableId}/acceptance): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] decideDeliverable POST /api/v1/deliverables/01a11b4f-f52b-76f4-830a-d36ba0ebc44d/acceptance body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createMilestone (POST /api/v1/initiatives/{initiativeId}/milestones): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createMilestone POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/milestones body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createMilestone (POST /api/v1/initiatives/{initiativeId}/milestones): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createMilestone POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/milestones body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateMilestone (PATCH /api/v1/milestones/{milestoneId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateMilestone PATCH /api/v1/milestones/01a11b4f-f5a4-7297-80de-2d31e729a0c1 body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateMilestone (PATCH /api/v1/milestones/{milestoneId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateMilestone PATCH /api/v1/milestones/01a11b4f-f5a4-7297-80de-2d31e729a0c1 body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > approveMilestoneDate (POST /api/v1/milestones/{milestoneId}/approve-date): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] approveMilestoneDate POST /api/v1/milestones/01a11b4f-f5a4-7297-80de-2d31e729a0c1/approve-date body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > approveMilestoneDate (POST /api/v1/milestones/{milestoneId}/approve-date): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] approveMilestoneDate POST /api/v1/milestones/01a11b4f-f5a4-7297-80de-2d31e729a0c1/approve-date body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createGateDispensation POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/gate-dispensations body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createGateDispensation POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/gate-dispensations body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations/{dispensationId}/decision): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] decideGateDispensation POST /api/v1/transformations/01a11b4f-ee30-7615-ae08-f4bd1c7e069b/gate-dispensations/01a11b4f-ef38-7041-9167-028390db94f6/decision body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations/{dispensationId}/decision): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] decideGateDispensation POST /api/v1/transformations/01a11b4f-ee30-7615-ae08-f4bd1c7e069b/gate-dispensations/01a11b4f-ef38-7041-9167-028390db94f6/decision body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideDeliverable (POST /api/v1/deliverables/{deliverableId}/acceptance): 403 for an empty and a plausible body, only authorization.denied written 26ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createMilestone (POST /api/v1/initiatives/{initiativeId}/milestones): 403 for an empty and a plausible body, only authorization.denied written 17ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateMilestone (PATCH /api/v1/milestones/{milestoneId}): 403 for an empty and a plausible body, only authorization.denied written 17ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > approveMilestoneDate (POST /api/v1/milestones/{milestoneId}/approve-date): 403 for an empty and a plausible body, only authorization.denied written 17ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations): 403 for an empty and a plausible body, only authorization.denied written 19ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations/{dispensationId}/decision): 403 for an empty and a plausible body, only authorization.denied written 24ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > revokeGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations/{dispensationId}/revoke): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] revokeGateDispensation POST /api/v1/transformations/01a11b4f-ee30-7615-ae08-f4bd1c7e069b/gate-dispensations/01a11b4f-ef38-7041-9167-028390db94f6/revoke body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > revokeGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations/{dispensationId}/revoke): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] revokeGateDispensation POST /api/v1/transformations/01a11b4f-ee30-7615-ae08-f4bd1c7e069b/gate-dispensations/01a11b4f-ef38-7041-9167-028390db94f6/revoke body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRoadmapWave (POST /api/v1/transformations/{transformationId}/waves): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createRoadmapWave POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/waves body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRoadmapWave (POST /api/v1/transformations/{transformationId}/waves): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createRoadmapWave POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/waves body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateRoadmapWave (PATCH /api/v1/transformations/{transformationId}/waves/{waveId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateRoadmapWave PATCH /api/v1/transformations/01a11b4f-ffbe-71ae-8cab-9423d4fcbeb5/waves/01a11b4f-ffc7-725a-8653-c9f61b4f1ddf body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateRoadmapWave (PATCH /api/v1/transformations/{transformationId}/waves/{waveId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateRoadmapWave PATCH /api/v1/transformations/01a11b4f-ffbe-71ae-8cab-9423d4fcbeb5/waves/01a11b4f-ffc7-725a-8653-c9f61b4f1ddf body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createWeightSet POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/prioritization/weight-sets body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createWeightSet POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/prioritization/weight-sets body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > approveWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets/{versionNo}/approve): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] approveWeightSet POST /api/v1/transformations/01a11b4f-ffbe-71ae-8cab-9423d4fcbeb5/prioritization/weight-sets/1/approve body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > approveWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets/{versionNo}/approve): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] approveWeightSet POST /api/v1/transformations/01a11b4f-ffbe-71ae-8cab-9423d4fcbeb5/prioritization/weight-sets/1/approve body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > revokeGateDispensation (POST /api/v1/transformations/{transformationId}/gate-dispensations/{dispensationId}/revoke): 403 for an empty and a plausible body, only authorization.denied written 21ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRoadmapWave (POST /api/v1/transformations/{transformationId}/waves): 403 for an empty and a plausible body, only authorization.denied written 25ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateRoadmapWave (PATCH /api/v1/transformations/{transformationId}/waves/{waveId}): 403 for an empty and a plausible body, only authorization.denied written 29ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets): 403 for an empty and a plausible body, only authorization.denied written 23ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > approveWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets/{versionNo}/approve): 403 for an empty and a plausible body, only authorization.denied written 18ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > withdrawWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets/{versionNo}/withdraw): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] withdrawWeightSet POST /api/v1/transformations/01a11b4f-ffbe-71ae-8cab-9423d4fcbeb5/prioritization/weight-sets/1/withdraw body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > withdrawWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets/{versionNo}/withdraw): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] withdrawWeightSet POST /api/v1/transformations/01a11b4f-ffbe-71ae-8cab-9423d4fcbeb5/prioritization/weight-sets/1/withdraw body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeScore (POST /api/v1/initiatives/{initiativeId}/scores): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeScore POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/scores body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeScore (POST /api/v1/initiatives/{initiativeId}/scores): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createInitiativeScore POST /api/v1/initiatives/01a11b4f-fd73-72aa-bd79-79457822f174/scores body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateInitiativeScore (PATCH /api/v1/initiatives/{initiativeId}/scores/{criterionCode}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateInitiativeScore PATCH /api/v1/initiatives/01a11b4f-f774-7195-8ac2-c1feefa1b522/scores/risk_compliance body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateInitiativeScore (PATCH /api/v1/initiatives/{initiativeId}/scores/{criterionCode}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateInitiativeScore PATCH /api/v1/initiatives/01a11b4f-f774-7195-8ac2-c1feefa1b522/scores/risk_compliance body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRankingSnapshot (POST /api/v1/transformations/{transformationId}/prioritization/rankings): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createRankingSnapshot POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/prioritization/rankings body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRankingSnapshot (POST /api/v1/transformations/{transformationId}/prioritization/rankings): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createRankingSnapshot POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/prioritization/rankings body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createRankingOverride POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/prioritization/overrides body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createRankingOverride POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/prioritization/overrides body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides/{overrideId}/decision): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] decideRankingOverride POST /api/v1/transformations/01a11b4f-f71c-73d8-bdc6-a8c7bf011a09/prioritization/overrides/01a11b4f-f8ca-74dc-a06f-18307fdb79b2/decision body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides/{overrideId}/decision): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] decideRankingOverride POST /api/v1/transformations/01a11b4f-f71c-73d8-bdc6-a8c7bf011a09/prioritization/overrides/01a11b4f-f8ca-74dc-a06f-18307fdb79b2/decision body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > withdrawWeightSet (POST /api/v1/transformations/{transformationId}/prioritization/weight-sets/{versionNo}/withdraw): 403 for an empty and a plausible body, only authorization.denied written 23ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createInitiativeScore (POST /api/v1/initiatives/{initiativeId}/scores): 403 for an empty and a plausible body, only authorization.denied written 20ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateInitiativeScore (PATCH /api/v1/initiatives/{initiativeId}/scores/{criterionCode}): 403 for an empty and a plausible body, only authorization.denied written 15ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRankingSnapshot (POST /api/v1/transformations/{transformationId}/prioritization/rankings): 403 for an empty and a plausible body, only authorization.denied written 16ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides): 403 for an empty and a plausible body, only authorization.denied written 25ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > decideRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides/{overrideId}/decision): 403 for an empty and a plausible body, only authorization.denied written 17ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > revokeRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides/{overrideId}/revoke): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] revokeRankingOverride POST /api/v1/transformations/01a11b4f-f71c-73d8-bdc6-a8c7bf011a09/prioritization/overrides/01a11b4f-f8ca-74dc-a06f-18307fdb79b2/revoke body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > revokeRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides/{overrideId}/revoke): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] revokeRankingOverride POST /api/v1/transformations/01a11b4f-f71c-73d8-bdc6-a8c7bf011a09/prioritization/overrides/01a11b4f-f8ca-74dc-a06f-18307fdb79b2/revoke body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createT08Dependency (POST /api/v1/dependencies): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createT08Dependency POST /api/v1/dependencies body={} -> 400 validation audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createT08Dependency (POST /api/v1/dependencies): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createT08Dependency POST /api/v1/dependencies body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateT08Dependency (PATCH /api/v1/dependencies/{dependencyId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateT08Dependency PATCH /api/v1/dependencies/01a11b4f-f677-766c-bb36-d7ff7d091993 body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateT08Dependency (PATCH /api/v1/dependencies/{dependencyId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateT08Dependency PATCH /api/v1/dependencies/01a11b4f-f677-766c-bb36-d7ff7d091993 body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveT08Dependency (POST /api/v1/dependencies/{dependencyId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveT08Dependency POST /api/v1/dependencies/01a11b4f-f677-766c-bb36-d7ff7d091993/archive body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveT08Dependency (POST /api/v1/dependencies/{dependencyId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveT08Dependency POST /api/v1/dependencies/01a11b4f-f677-766c-bb36-d7ff7d091993/archive body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createDependencyType (POST /api/v1/dependency-types): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createDependencyType POST /api/v1/dependency-types body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createDependencyType (POST /api/v1/dependency-types): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createDependencyType POST /api/v1/dependency-types body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > revokeRankingOverride (POST /api/v1/transformations/{transformationId}/prioritization/overrides/{overrideId}/revoke): 403 for an empty and a plausible body, only authorization.denied written 21ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createT08Dependency (POST /api/v1/dependencies): 403 for an empty and a plausible body, only authorization.denied written 16ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateT08Dependency (PATCH /api/v1/dependencies/{dependencyId}): 403 for an empty and a plausible body, only authorization.denied written 23ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveT08Dependency (POST /api/v1/dependencies/{dependencyId}/archive): 403 for an empty and a plausible body, only authorization.denied written 21ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createDependencyType (POST /api/v1/dependency-types): 403 for an empty and a plausible body, only authorization.denied written 15ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateDependencyType (PATCH /api/v1/dependency-types/{dependencyTypeCode}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateDependencyType PATCH /api/v1/dependency-types/ct_13b89b body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateDependencyType (PATCH /api/v1/dependency-types/{dependencyTypeCode}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateDependencyType PATCH /api/v1/dependency-types/ct_13b89b body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > retireDependencyType (DELETE /api/v1/dependency-types/{dependencyTypeCode}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] retireDependencyType DELETE /api/v1/dependency-types/ct_13b89b body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > retireDependencyType (DELETE /api/v1/dependency-types/{dependencyTypeCode}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] retireDependencyType DELETE /api/v1/dependency-types/ct_13b89b body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createResourceRole (POST /api/v1/transformations/{transformationId}/resource-roles): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createResourceRole POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/resource-roles body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createResourceRole (POST /api/v1/transformations/{transformationId}/resource-roles): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createResourceRole POST /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/resource-roles body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateResourceRole (PATCH /api/v1/transformations/{transformationId}/resource-roles/{resourceRoleId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateResourceRole PATCH /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/resource-roles/01a11b4f-fbe1-775c-83d6-71f043f5c134 body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateResourceRole (PATCH /api/v1/transformations/{transformationId}/resource-roles/{resourceRoleId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateResourceRole PATCH /api/v1/transformations/01a11b4f-fb85-70dd-b88f-2cac538ef8cb/resource-roles/01a11b4f-fbe1-775c-83d6-71f043f5c134 body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createCapacity (POST /api/v1/capacity): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createCapacity POST /api/v1/capacity body={} -> 400 validation audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createCapacity (POST /api/v1/capacity): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createCapacity POST /api/v1/capacity body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateCapacity (PATCH /api/v1/capacity/{capacityId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateCapacity PATCH /api/v1/capacity/01a11b4f-fc43-7276-8306-728038f0566f body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateCapacity (PATCH /api/v1/capacity/{capacityId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateCapacity PATCH /api/v1/capacity/01a11b4f-fc43-7276-8306-728038f0566f body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createResourceDemand (POST /api/v1/resource-demands): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createResourceDemand POST /api/v1/resource-demands body={} -> 400 validation audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createResourceDemand (POST /api/v1/resource-demands): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createResourceDemand POST /api/v1/resource-demands body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateDependencyType (PATCH /api/v1/dependency-types/{dependencyTypeCode}): 403 for an empty and a plausible body, only authorization.denied written 22ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > retireDependencyType (DELETE /api/v1/dependency-types/{dependencyTypeCode}): 403 for an empty and a plausible body, only authorization.denied written 15ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createResourceRole (POST /api/v1/transformations/{transformationId}/resource-roles): 403 for an empty and a plausible body, only authorization.denied written 16ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateResourceRole (PATCH /api/v1/transformations/{transformationId}/resource-roles/{resourceRoleId}): 403 for an empty and a plausible body, only authorization.denied written 19ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createCapacity (POST /api/v1/capacity): 403 for an empty and a plausible body, only authorization.denied written 14ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateCapacity (PATCH /api/v1/capacity/{capacityId}): 403 for an empty and a plausible body, only authorization.denied written 18ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createResourceDemand (POST /api/v1/resource-demands): 403 for an empty and a plausible body, only authorization.denied written 13ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateResourceDemand (PATCH /api/v1/resource-demands/{resourceDemandId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateResourceDemand PATCH /api/v1/resource-demands/01a11b4f-fcb1-760e-9055-c77022b7aa90 body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateResourceDemand (PATCH /api/v1/resource-demands/{resourceDemandId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateResourceDemand PATCH /api/v1/resource-demands/01a11b4f-fcb1-760e-9055-c77022b7aa90 body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > commitResourceDemand (POST /api/v1/resource-demands/{resourceDemandId}/commit): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] commitResourceDemand POST /api/v1/resource-demands/01a11b4f-fcb1-760e-9055-c77022b7aa90/commit body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > commitResourceDemand (POST /api/v1/resource-demands/{resourceDemandId}/commit): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] commitResourceDemand POST /api/v1/resource-demands/01a11b4f-fcb1-760e-9055-c77022b7aa90/commit body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > releaseResourceDemand (POST /api/v1/resource-demands/{resourceDemandId}/release): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] releaseResourceDemand POST /api/v1/resource-demands/01a11b4f-fcb1-760e-9055-c77022b7aa90/release body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > releaseResourceDemand (POST /api/v1/resource-demands/{resourceDemandId}/release): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] releaseResourceDemand POST /api/v1/resource-demands/01a11b4f-fcb1-760e-9055-c77022b7aa90/release body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateResourceDemand (PATCH /api/v1/resource-demands/{resourceDemandId}): 403 for an empty and a plausible body, only authorization.denied written 33ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > commitResourceDemand (POST /api/v1/resource-demands/{resourceDemandId}/commit): 403 for an empty and a plausible body, only authorization.denied written 42ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > releaseResourceDemand (POST /api/v1/resource-demands/{resourceDemandId}/release): 403 for an empty and a plausible body, only authorization.denied written 25ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createFundingDecision (POST /api/v1/funding-decisions): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createFundingDecision POST /api/v1/funding-decisions body={} -> 400 validation audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createFundingDecision (POST /api/v1/funding-decisions): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createFundingDecision POST /api/v1/funding-decisions body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBusinessCase (POST /api/v1/business-cases): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBusinessCase POST /api/v1/business-cases body={} -> 403 forbidden audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBusinessCase (POST /api/v1/business-cases): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBusinessCase POST /api/v1/business-cases body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBusinessCase (PATCH /api/v1/business-cases/{businessCaseId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateBusinessCase PATCH /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBusinessCase (PATCH /api/v1/business-cases/{businessCaseId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateBusinessCase PATCH /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBusinessCase (POST /api/v1/business-cases/{businessCaseId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveBusinessCase POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/archive body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBusinessCase (POST /api/v1/business-cases/{businessCaseId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveBusinessCase POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/archive body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > validateBusinessCaseBaseline (POST /api/v1/business-cases/{businessCaseId}/baseline-validation): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] validateBusinessCaseBaseline POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/baseline-validation body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > validateBusinessCaseBaseline (POST /api/v1/business-cases/{businessCaseId}/baseline-validation): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] validateBusinessCaseBaseline POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/baseline-validation body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createFundingDecision (POST /api/v1/funding-decisions): 403 for an empty and a plausible body, only authorization.denied written 28ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBusinessCase (POST /api/v1/business-cases): 403 for an empty and a plausible body, only authorization.denied written 24ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBusinessCase (PATCH /api/v1/business-cases/{businessCaseId}): 403 for an empty and a plausible body, only authorization.denied written 26ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBusinessCase (POST /api/v1/business-cases/{businessCaseId}/archive): 403 for an empty and a plausible body, only authorization.denied written 18ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > validateBusinessCaseBaseline (POST /api/v1/business-cases/{businessCaseId}/baseline-validation): 403 for an empty and a plausible body, only authorization.denied written 20ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBusinessCaseLine (POST /api/v1/business-cases/{businessCaseId}/lines): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBusinessCaseLine POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/lines body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBusinessCaseLine (POST /api/v1/business-cases/{businessCaseId}/lines): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBusinessCaseLine POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/lines body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBusinessCaseLine (PATCH /api/v1/business-cases/{businessCaseId}/lines/{lineId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateBusinessCaseLine PATCH /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/lines/01a11b4f-ff18-748b-89e0-1bd6640fd814 body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBusinessCaseLine (PATCH /api/v1/business-cases/{businessCaseId}/lines/{lineId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateBusinessCaseLine PATCH /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/lines/01a11b4f-ff18-748b-89e0-1bd6640fd814 body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBusinessCaseLine (POST /api/v1/business-cases/{businessCaseId}/lines/{lineId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveBusinessCaseLine POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/lines/01a11b4f-ff18-748b-89e0-1bd6640fd814/archive body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBusinessCaseLine (POST /api/v1/business-cases/{businessCaseId}/lines/{lineId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveBusinessCaseLine POST /api/v1/business-cases/01a11b4f-fe95-72b8-be6b-db3f3121f1aa/lines/01a11b4f-ff18-748b-89e0-1bd6640fd814/archive body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > checkBenefitFormula (POST /api/v1/benefit-formulas/validate): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] checkBenefitFormula POST /api/v1/benefit-formulas/validate body={} -> 403 forbidden audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > checkBenefitFormula (POST /api/v1/benefit-formulas/validate): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] checkBenefitFormula POST /api/v1/benefit-formulas/validate body=plausible -> 403 forbidden audit=[]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitFormula (POST /api/v1/benefit-formulas): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBenefitFormula POST /api/v1/benefit-formulas body={} -> 403 forbidden audit=[]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBusinessCaseLine (POST /api/v1/business-cases/{businessCaseId}/lines): 403 for an empty and a plausible body, only authorization.denied written 27ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBusinessCaseLine (PATCH /api/v1/business-cases/{businessCaseId}/lines/{lineId}): 403 for an empty and a plausible body, only authorization.denied written 20ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBusinessCaseLine (POST /api/v1/business-cases/{businessCaseId}/lines/{lineId}/archive): 403 for an empty and a plausible body, only authorization.denied written 22ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > checkBenefitFormula (POST /api/v1/benefit-formulas/validate): 403 for an empty and a plausible body, only authorization.denied written 15ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitFormula (POST /api/v1/benefit-formulas): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBenefitFormula POST /api/v1/benefit-formulas body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBenefitFormula (PATCH /api/v1/benefit-formulas/{benefitFormulaId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateBenefitFormula PATCH /api/v1/benefit-formulas/01a11b50-0102-7697-ab37-43d06fb386ea body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBenefitFormula (PATCH /api/v1/benefit-formulas/{benefitFormulaId}): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] updateBenefitFormula PATCH /api/v1/benefit-formulas/01a11b50-0102-7697-ab37-43d06fb386ea body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBenefitFormula (POST /api/v1/benefit-formulas/{benefitFormulaId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveBenefitFormula POST /api/v1/benefit-formulas/01a11b50-0102-7697-ab37-43d06fb386ea/archive body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBenefitFormula (POST /api/v1/benefit-formulas/{benefitFormulaId}/archive): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] archiveBenefitFormula POST /api/v1/benefit-formulas/01a11b50-0102-7697-ab37-43d06fb386ea/archive body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitFormulaVersion (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBenefitFormulaVersion POST /api/v1/benefit-formulas/01a11b50-0102-7697-ab37-43d06fb386ea/versions body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitFormulaVersion (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBenefitFormulaVersion POST /api/v1/benefit-formulas/01a11b50-0102-7697-ab37-43d06fb386ea/versions body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitCalculation (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions/{versionNo}/calculations): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBenefitCalculation POST /api/v1/benefit-formulas/01a11b50-0057-755c-b6eb-d37a1ecefc59/versions/2/calculations body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitCalculation (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions/{versionNo}/calculations): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] createBenefitCalculation POST /api/v1/benefit-formulas/01a11b50-0057-755c-b6eb-d37a1ecefc59/versions/2/calculations body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > validateBenefitFormulaVersion (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions/{versionNo}/validation): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] validateBenefitFormulaVersion POST /api/v1/benefit-formulas/01a11b50-0057-755c-b6eb-d37a1ecefc59/versions/2/validation body={} -> 403 forbidden audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > validateBenefitFormulaVersion (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions/{versionNo}/validation): 403 for an empty and a plausible body, only authorization.denied written
+[probe-A] validateBenefitFormulaVersion POST /api/v1/benefit-formulas/01a11b50-0057-755c-b6eb-d37a1ecefc59/versions/2/validation body=plausible -> 403 forbidden audit=["authorization.denied"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitFormula (POST /api/v1/benefit-formulas): 403 for an empty and a plausible body, only authorization.denied written 23ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > updateBenefitFormula (PATCH /api/v1/benefit-formulas/{benefitFormulaId}): 403 for an empty and a plausible body, only authorization.denied written 15ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > archiveBenefitFormula (POST /api/v1/benefit-formulas/{benefitFormulaId}/archive): 403 for an empty and a plausible body, only authorization.denied written 20ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitFormulaVersion (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions): 403 for an empty and a plausible body, only authorization.denied written 19ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > createBenefitCalculation (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions/{versionNo}/calculations): 403 for an empty and a plausible body, only authorization.denied written 23ms
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > validateBenefitFormulaVersion (POST /api/v1/benefit-formulas/{benefitFormulaId}/versions/{versionNo}/validation): 403 for an empty and a plausible body, only authorization.denied written 23ms
+stdout | apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > no P3 table changed during the sweep
+[probe-A] checksum roadmap_wave 182:87bcfa5683cbde451d5021f45882e776 -> 182:87bcfa5683cbde451d5021f45882e776
+[probe-A] checksum initiative 1073:ea43f9cc9ef4366e7ee14af4c99bc985 -> 1073:ea43f9cc9ef4366e7ee14af4c99bc985
+[probe-A] checksum initiative_gap_link 2:671fba1fa621ccac333c91bb4aaa3b04 -> 2:671fba1fa621ccac333c91bb4aaa3b04
+[probe-A] checksum initiative_outcome_contribution 6:80a9be596783b46063525ac53a792c25 -> 6:80a9be596783b46063525ac53a792c25
+[probe-A] checksum initiative_decision_link 2:471db8b7749330373328910d1fa75788 -> 2:471db8b7749330373328910d1fa75788
+[probe-A] checksum deliverable 2:79ad1c310a0f4a215ad368843381f813 -> 2:79ad1c310a0f4a215ad368843381f813
+[probe-A] checksum milestone 2:a76bf4b888d4a46150d9a9ccf9646d85 -> 2:a76bf4b888d4a46150d9a9ccf9646d85
+[probe-A] checksum gate_dispensation 4:439d91e028e22f61131aefa4db1ce4d3 -> 4:439d91e028e22f61131aefa4db1ce4d3
+[probe-A] checksum scoring_weight_set 50:98aff9003456ddec129c3be600a2cf2f -> 50:98aff9003456ddec129c3be600a2cf2f
+[probe-A] checksum scoring_weight 251:072282fe8e73581e0c9590749a91d92d -> 251:072282fe8e73581e0c9590749a91d92d
+[probe-A] checksum initiative_score 12:ed9d340a4b7c5efc4e67765e8e19f527 -> 12:ed9d340a4b7c5efc4e67765e8e19f527
+[probe-A] checksum initiative_score_result 18:a7ebd28b88129497160369aff8678be5 -> 18:a7ebd28b88129497160369aff8678be5
+[probe-A] checksum ranking_snapshot 6:0b7f11e904316645c19c2eb1fc72d960 -> 6:0b7f11e904316645c19c2eb1fc72d960
+[probe-A] checksum ranking_override 2:fe47045501a0b2f45efdacabeaeda53f -> 2:fe47045501a0b2f45efdacabeaeda53f
+[probe-A] checksum ranking_entry 8:dc277b3ee8da5f16ce2613c631220f9b -> 8:dc277b3ee8da5f16ce2613c631220f9b
+[probe-A] checksum dependency_type 7:1953764ac9faddca9bbe5a1c1ba8dd29 -> 7:1953764ac9faddca9bbe5a1c1ba8dd29
+[probe-A] checksum resource_role 2:4c6a6b535fdcb028fa03cb9b54102c7c -> 2:4c6a6b535fdcb028fa03cb9b54102c7c
+[probe-A] checksum capacity 2:aa9b09e4f1a6ffa0f026c7a1049d5735 -> 2:aa9b09e4f1a6ffa0f026c7a1049d5735
+[probe-A] checksum resource_demand 2:23278cdaef91eb515819d487fbb6e917 -> 2:23278cdaef91eb515819d487fbb6e917
+[probe-A] checksum portfolio_selection 8:1647efeb7f3153d5fc7b67df26ad7a78 -> 8:1647efeb7f3153d5fc7b67df26ad7a78
+[probe-A] checksum funding_decision 4:3890ece7573abb6b91f83e1f53f037be -> 4:3890ece7573abb6b91f83e1f53f037be
+[probe-A] checksum benefit_formula 4:485f16ebe8e6d6223e04f9dd33513c28 -> 4:485f16ebe8e6d6223e04f9dd33513c28
+[probe-A] checksum benefit_formula_version 4:35af9f21161f8aab54da4c08f529e14d -> 4:35af9f21161f8aab54da4c08f529e14d
+[probe-A] checksum benefit_formula_variable 14:c8c1b79b7fcaef647ec5ecab1a0d2c5d -> 14:c8c1b79b7fcaef647ec5ecab1a0d2c5d
+[probe-A] checksum benefit_calculation 2:ba85b4a5a02ad8303007c2b2679401c2 -> 2:ba85b4a5a02ad8303007c2b2679401c2
+[probe-A] checksum business_case 2:e0bc793630b2ead383ac2b62201e93e4 -> 2:e0bc793630b2ead383ac2b62201e93e4
+[probe-A] checksum business_case_line 4:ee0b543c397105f8a04b0f2f32231a42 -> 4:ee0b543c397105f8a04b0f2f32231a42
+[probe-A] checksum gate_decision_agreement 0:null -> 0:null
+[probe-A] checksum dependency 36:4574cb4dfe206301644556a3e066372e -> 36:4574cb4dfe206301644556a3e066372e
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1/sec-r1-aud-sweep.test.ts > SEC-R1 probe A: AUD gets 403 on every P3 mutating operation (generated from the contract) > no P3 table changed during the sweep 17ms
+stdout | apps/api/test/integration/zz-sec-r3/sec-r3-csp-web-bundle.test.ts > probe E: CSP on the served web bundle (ADR-0024 §6 Production/Browser) > E1-E4
+E1 / -> 200 text/html; charset=utf-8
+   CSP: default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'
+
+stdout | apps/api/test/integration/zz-sec-r3/sec-r3-csp-web-bundle.test.ts > probe E: CSP on the served web bundle (ADR-0024 §6 Production/Browser) > E1-E4
+E1 /transformations/x/gates -> 200 text/html; charset=utf-8
+   CSP: default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'
+
+stdout | apps/api/test/integration/zz-sec-r3/sec-r3-csp-web-bundle.test.ts > probe E: CSP on the served web bundle (ADR-0024 §6 Production/Browser) > E1-E4
+E1 /assets/index-q0phTYD3.js -> 200 application/javascript; charset=utf-8
+   CSP: default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'
+
+stdout | apps/api/test/integration/zz-sec-r3/sec-r3-csp-web-bundle.test.ts > probe E: CSP on the served web bundle (ADR-0024 §6 Production/Browser) > E1-E4
+E1 /healthz -> 200 application/json; charset=utf-8
+   CSP: default-src 'self';script-src 'self';style-src 'self';img-src 'self' data:;font-src 'self';connect-src 'self';object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'none'
+E3 index.html scripts: [["src=\"/locale-boot.js\"",0],["type=\"module\" crossorigin src=\"/assets/index-q0phTYD3.js\"",0]]
+E4 built JS (6 files): eval( 0, new Function( 0, Function( 0
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r3/sec-r3-csp-web-bundle.test.ts > probe E: CSP on the served web bundle (ADR-0024 §6 Production/Browser) > E1-E4 152ms
+
+ Test Files  4 passed (4)
+      Tests  88 passed (88)
+   Start at  11:39:17
+   Duration  35.26s (transform 2.39s, setup 0ms, collect 8.56s, tests 22.80s, environment 0ms, prepare 345ms)
+
+# exit_status: 0  finished: 2026-10-08T11:39:54Z

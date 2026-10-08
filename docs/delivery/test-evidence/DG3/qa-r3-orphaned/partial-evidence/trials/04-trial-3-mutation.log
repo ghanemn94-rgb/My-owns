@@ -1,0 +1,339 @@
+# MUTATION CONTROL (disposable clone only): the BUILT css rule .status-chip--wrap was changed to white-space:nowrap (round-2 behaviour), to show F180/F180X detect the defect. Expected: F180 and F180X FAIL in both projects; everything else passes.
+.status-chip--wrap{white-space:nowrap;align-items:flex-start;text-align:start;border-radius:var(--mth-radius);padding-block:.2rem}
+$ QA_RESULTS_DIR=$TMPDIR/qa-mut QA_E2E_PG_PORT=26680 QA_E2E_API_PORT=26685 MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test e2e/dg3-qa-r3.spec.ts --workers=1 --reporter=list
+port-policy: PostgreSQL listening on port 26680 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applied 27 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26685 (attempt 1)
+API:     http://localhost:26685
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 36 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/dg3-qa-r3.spec.ts:193:1 › A0 setup: End-to-End transformation; distinct synthetic SP, FIN and capacity owner (BO) (515ms)
+  ✓   2 [chromium-en] › e2e/dg3-qa-r3.spec.ts:226:1 › A1 sequencing before G1 (REQ-PB-007, REQ-PB-022): draft allowed, submit 422 invalid-transition, readiness lists missing areas (171ms)
+  ✓   3 [chromium-en] › e2e/dg3-qa-r3.spec.ts:262:1 › A2 G1: approval without the three agreements is refused; with them approved (REQ-PB-022) (595ms)
+  ✓   4 [chromium-en] › e2e/dg3-qa-r3.spec.ts:302:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) (533ms)
+  ✓   5 [chromium-en] › e2e/dg3-qa-r3.spec.ts:369:1 › A4 T05 deliverables 3-7 warning (REQ-PB-045) and REQ-S16-016 create+read with authorization (237ms)
+  ✓   6 [chromium-en] › e2e/dg3-qa-r3.spec.ts:421:1 › A5 T06 scoring, weights, ranking history, overrides (REQ-PB-047/048/049, REQ-S09-001/005, REQ-DLV-035) (657ms)
+  ✓   7 [chromium-en] › e2e/dg3-qa-r3.spec.ts:587:1 › A6 selection, 'Selected - unfunded', launch sequencing (REQ-S09-003, REQ-PB-004) (853ms)
+  ✓   8 [chromium-en] › e2e/dg3-qa-r3.spec.ts:689:1 › A7 roadmap: four waves verbatim, overlap accepted, milestone move, conflict (REQ-PB-050, REQ-S09-006) (138ms)
+  ✓   9 [chromium-en] › e2e/dg3-qa-r3.spec.ts:761:1 › A8 T08 dependencies (REQ-PB-051/052, REQ-S09-008, REQ-S09-004, REQ-DLV-035) (385ms)
+  ✓  10 [chromium-en] › e2e/dg3-qa-r3.spec.ts:907:1 › A9 business case and T09 formulas (REQ-PB-053/054/056/057, REQ-S05-005, REQ-S08-007) (437ms)
+  ✓  11 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1161:1 › A10 capacity and G4 (REQ-PB-059, REQ-S09-004, REQ-PB-019, REQ-PB-046, REQ-PB-055, REQ-S04-006, REQ-DLV-035) (1.3s)
+  ✓  12 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1381:1 › IA1 inheritedApproval annotation: null, pending_verification, accepted, rejected, revoked; gate stays draft, no decision, AUD read-only (F-DG3-120, REQ-PB-004, REQ-PB-007, REQ-S16-016) (1.3s)
+  ✓  13 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1667:1 › U1 the approved G4, prioritization and roadmap render in the project's language (dir, lang), axe-clean (14.2s)
+  ✓  14 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1709:1 › U2 the read-only auditor: G4 and P3 screens show no enabled write control and send only GETs (6.7s)
+  ✓  15 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1736:1 › U3 the Gates list and gate view show the inherited-approval badge next to the unchanged status, in the project's language, axe-clean; AUD read-only (F-DG3-120) (19.4s)
+  ✓  16 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1828:1 › Z every recorded acceptance check passed (1ms)
+  ✘  17 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1838:1 › F180 layout probe: the inherited-approval badge stays inside its gate card and field (F-DG3-180) (4.7s)
+  -  18 [chromium-en] › e2e/dg3-qa-r3.spec.ts:1892:1 › F180X layout probe at 320-1920 px, every badge state: inside card/field, not clipped, clause visible and unobscured, no chip overlap (F-DG3-180)
+  ✓  19 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:193:1 › A0 setup: End-to-End transformation; distinct synthetic SP, FIN and capacity owner (BO) (426ms)
+  ✓  20 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:226:1 › A1 sequencing before G1 (REQ-PB-007, REQ-PB-022): draft allowed, submit 422 invalid-transition, readiness lists missing areas (116ms)
+  ✓  21 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:262:1 › A2 G1: approval without the three agreements is refused; with them approved (REQ-PB-022) (379ms)
+  ✓  22 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:302:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) (434ms)
+  ✓  23 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:369:1 › A4 T05 deliverables 3-7 warning (REQ-PB-045) and REQ-S16-016 create+read with authorization (204ms)
+  ✓  24 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:421:1 › A5 T06 scoring, weights, ranking history, overrides (REQ-PB-047/048/049, REQ-S09-001/005, REQ-DLV-035) (629ms)
+  ✓  25 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:587:1 › A6 selection, 'Selected - unfunded', launch sequencing (REQ-S09-003, REQ-PB-004) (569ms)
+  ✓  26 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:689:1 › A7 roadmap: four waves verbatim, overlap accepted, milestone move, conflict (REQ-PB-050, REQ-S09-006) (112ms)
+  ✓  27 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:761:1 › A8 T08 dependencies (REQ-PB-051/052, REQ-S09-008, REQ-S09-004, REQ-DLV-035) (259ms)
+  ✓  28 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:907:1 › A9 business case and T09 formulas (REQ-PB-053/054/056/057, REQ-S05-005, REQ-S08-007) (311ms)
+  ✓  29 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1161:1 › A10 capacity and G4 (REQ-PB-059, REQ-S09-004, REQ-PB-019, REQ-PB-046, REQ-PB-055, REQ-S04-006, REQ-DLV-035) (1.0s)
+  ✓  30 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1381:1 › IA1 inheritedApproval annotation: null, pending_verification, accepted, rejected, revoked; gate stays draft, no decision, AUD read-only (F-DG3-120, REQ-PB-004, REQ-PB-007, REQ-S16-016) (1.1s)
+  ✓  31 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1667:1 › U1 the approved G4, prioritization and roadmap render in the project's language (dir, lang), axe-clean (14.3s)
+  ✓  32 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1709:1 › U2 the read-only auditor: G4 and P3 screens show no enabled write control and send only GETs (6.6s)
+  ✓  33 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1736:1 › U3 the Gates list and gate view show the inherited-approval badge next to the unchanged status, in the project's language, axe-clean; AUD read-only (F-DG3-120) (18.5s)
+  ✓  34 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1828:1 › Z every recorded acceptance check passed (3ms)
+  ✘  35 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1838:1 › F180 layout probe: the inherited-approval badge stays inside its gate card and field (F-DG3-180) (4.7s)
+  -  36 [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1892:1 › F180X layout probe at 320-1920 px, every badge state: inside card/field, not clipped, clause visible and unobscured, no chip overlap (F-DG3-180)
+
+
+  1) [chromium-en] › e2e/dg3-qa-r3.spec.ts:1838:1 › F180 layout probe: the inherited-approval badge stays inside its gate card and field (F-DG3-180) 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  -   1[39m
+    [31m+ Received  + 128[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       310,[39m
+    [31m+       828,[39m
+    [31m+       634,[39m
+    [31m+       659,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       297,[39m
+    [31m+       603,[39m
+    [31m+       507,[39m
+    [31m+       823,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G1",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "accepted",[39m
+    [31m+     "where": "m1-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       628,[39m
+    [31m+       999,[39m
+    [31m+       634,[39m
+    [31m+       659,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       615,[39m
+    [31m+       921,[39m
+    [31m+       507,[39m
+    [31m+       823,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G2",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "revoked",[39m
+    [31m+     "where": "m1-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       946,[39m
+    [31m+       1449,[39m
+    [31m+       634,[39m
+    [31m+       659,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       933,[39m
+    [31m+       1239,[39m
+    [31m+       507,[39m
+    [31m+       823,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G3",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "accepted",[39m
+    [31m+     "where": "m1-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       297,[39m
+    [31m+       815,[39m
+    [31m+       564,[39m
+    [31m+       590,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       297,[39m
+    [31m+       595,[39m
+    [31m+       564,[39m
+    [31m+       679,[39m
+    [31m+     ],[39m
+    [31m+     "gate": null,[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "accepted",[39m
+    [31m+     "where": "m1-G1-view",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       310,[39m
+    [31m+       752,[39m
+    [31m+       634,[39m
+    [31m+       659,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       297,[39m
+    [31m+       603,[39m
+    [31m+       507,[39m
+    [31m+       823,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G1",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "pending_verification",[39m
+    [31m+     "where": "m2-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       628,[39m
+    [31m+       1000,[39m
+    [31m+       634,[39m
+    [31m+       659,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       615,[39m
+    [31m+       921,[39m
+    [31m+       507,[39m
+    [31m+       823,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G2",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "rejected",[39m
+    [31m+     "where": "m2-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       297,[39m
+    [31m+       739,[39m
+    [31m+       564,[39m
+    [31m+       590,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       297,[39m
+    [31m+       595,[39m
+    [31m+       564,[39m
+    [31m+       679,[39m
+    [31m+     ],[39m
+    [31m+     "gate": null,[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "pending_verification",[39m
+    [31m+     "where": "m2-G1-view",[39m
+    [31m+   },[39m
+    [31m+ ][39m
+
+      1646 |   writeFileSync(join(OUT, `f180-layout-${lang}.json`), `${JSON.stringify(out, null, 2)}\n`);
+      1647 |   expect(out.length).toBe(7);
+    > 1648 |   expect(out.filter((x) => !x.inside)).toEqual([]);
+           |                                        ^
+      1649 | });
+      1650 |
+      1651 | // F180X (round 3, qa-verifier): F-DG3-180 at the widths and in the states that neither the round-2 probe (1280 only,
+        at /var/tmp/mth-run.m3BvO5/claude-0/review-dg3/e2e/dg3-qa-r3.spec.ts:1648:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1838:1 › F180 layout probe: the inherited-approval badge stays inside its gate card and field (F-DG3-180) 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  -  1[39m
+    [31m+ Received  + 56[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       617,[39m
+    [31m+       970,[39m
+    [31m+       636,[39m
+    [31m+       661,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       677,[39m
+    [31m+       983,[39m
+    [31m+       508,[39m
+    [31m+       825,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G1",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "accepted",[39m
+    [31m+     "where": "m1-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       6,[39m
+    [31m+       334,[39m
+    [31m+       615,[39m
+    [31m+       640,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       41,[39m
+    [31m+       347,[39m
+    [31m+       508,[39m
+    [31m+       825,[39m
+    [31m+     ],[39m
+    [31m+     "gate": "G3",[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "accepted",[39m
+    [31m+     "where": "m1-list",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "badge": Array [[39m
+    [31m+       630,[39m
+    [31m+       983,[39m
+    [31m+       566,[39m
+    [31m+       591,[39m
+    [31m+     ],[39m
+    [31m+     "box": Array [[39m
+    [31m+       685,[39m
+    [31m+       983,[39m
+    [31m+       566,[39m
+    [31m+       681,[39m
+    [31m+     ],[39m
+    [31m+     "gate": null,[39m
+    [31m+     "inside": false,[39m
+    [31m+     "status": "accepted",[39m
+    [31m+     "where": "m1-G1-view",[39m
+    [31m+   },[39m
+    [31m+ ][39m
+
+      1646 |   writeFileSync(join(OUT, `f180-layout-${lang}.json`), `${JSON.stringify(out, null, 2)}\n`);
+      1647 |   expect(out.length).toBe(7);
+    > 1648 |   expect(out.filter((x) => !x.inside)).toEqual([]);
+           |                                        ^
+      1649 | });
+      1650 |
+      1651 | // F180X (round 3, qa-verifier): F-DG3-180 at the widths and in the states that neither the round-2 probe (1280 only,
+        at /var/tmp/mth-run.m3BvO5/claude-0/review-dg3/e2e/dg3-qa-r3.spec.ts:1648:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg3-qa-r3-F180-layout--504bc-e-card-and-field-F-DG3-180--chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/dg3-qa-r3.spec.ts:1838:1 › F180 layout probe: the inherited-approval badge stays inside its gate card and field (F-DG3-180) 
+    [chromium-ar] › e2e/dg3-qa-r3.spec.ts:1838:1 › F180 layout probe: the inherited-approval badge stays inside its gate card and field (F-DG3-180) 
+  2 did not run
+  32 passed (1.8m)
+---- api.log (tail)
+EXIT 1
+RESTORED

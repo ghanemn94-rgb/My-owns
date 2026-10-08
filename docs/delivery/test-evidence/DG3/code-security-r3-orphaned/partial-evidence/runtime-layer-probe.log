@@ -1,0 +1,158 @@
+# command: bash runtime-layer-probe.sh (clone $TMPDIR/probe at 0e820ae7f122caecffdac00d1ec8a125375f90a3); node v22.22.2; started 2026-10-08T11:19:28Z
+
+=================== A. every fork of the project carries the flag; the first invocation (unit-node) never does
+EXECARGV file=1 pid=166 flag=true newFunction=EvalError project=unit-formula-nocodegen
+EXECARGV file=2 pid=173 flag=true newFunction=EvalError project=unit-formula-nocodegen
+EXECARGV file=3 pid=206 flag=true newFunction=EvalError project=unit-formula-nocodegen
+ Test Files  6 passed (6)
+      Tests  193 passed (193)
+exit(nocodegen)=0
+EXECARGV file=1 pid=344 flag=false newFunction=none project=unit-node
+EXECARGV file=2 pid=398 flag=false newFunction=none project=unit-node
+EXECARGV file=3 pid=418 flag=false newFunction=none project=unit-node
+ Test Files  5 passed (5)
+      Tests  187 passed (187)
+exit(unit-node formula)=0
+
+=================== B. a per-file environment docblock (@vitest-environment jsdom) does not escape the flag
+stdout | packages/shared/src/formula/zz-sec-r3-jsdom.test.ts > jsdom env: still EvalError for eval, Function and a prototype-reached constructor
+EXECARGV jsdom typeof window=object flag=true
+ Test Files  4 passed (4)
+      Tests  191 passed (191)
+exit=0
+
+=================== C. the canary failing makes 'pnpm test' fail (flag dropped from the root execArgv)
+ vitest.config.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   ✓ T09 benefit formulas (en) > builder: monthly ARPU × annual customers is a period mismatch, translated, before saving  843ms
+   ✓ T09 benefit formulas (ar) > builder: monthly ARPU × annual customers is a period mismatch, translated, before saving  758ms
+   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  748ms
+   ✓ capacity (ar) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  392ms
+ Test Files  81 passed (81)
+      Tests  1587 passed (1587)
+   × no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 28ms
+   × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 1ms
+   × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+   × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+   × no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings
+AssertionError: expected [ '--conditions', 'node', …(2) ] to include '--disallow-code-generation-from-strin…'
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+     15|   it('new Function("return 1") throws EvalError', () => {
+     17|     expect(() => new Function("return 1")).toThrow(EvalError);
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect)
+AssertionError: expected function to throw an error, but it didn't
+exit(pnpm test)=1
+
+=================== D. preload removed (flag kept): forks die, 'pnpm vitest run --project unit-formula-nocodegen' fails loudly
+ vitest.config.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+EvalError: Code generation from strings disallowed for this context
+Error: Channel closed
+Serialized Error: { code: 'ERR_IPC_CHANNEL_CLOSED' }
+exit=1
+
+=================== E. pool switched to threads / vmForks in the project: the canary fails loudly
+-- pool=threads
+-          pool: "forks",
++          pool: "threads",
+-          pool: "forks",
++          pool: "threads",
+   × no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 95ms
+   × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 1ms
+   × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+   × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+   × no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings
+AssertionError: expected [ '--conditions', 'node', …(2) ] to include '--disallow-code-generation-from-strin…'
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+     15|   it('new Function("return 1") throws EvalError', () => {
+     17|     expect(() => new Function("return 1")).toThrow(EvalError);
+exit=1
+-- pool=vmForks
+-          pool: "forks",
++          pool: "vmForks",
+-          pool: "forks",
++          pool: "vmForks",
+   × no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 50ms
+   × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 14ms
+   × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 1ms
+   × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 1ms
+   × no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings
+AssertionError: expected [ …(8) ] to include '--disallow-code-generation-from-strin…'
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+     15|   it('new Function("return 1") throws EvalError', () => {
+     17|     expect(() => new Function("return 1")).toThrow(EvalError);
+exit=1
+
+=================== F. all projects in one invocation / a wildcard project filter: the canary runs without the flag and fails
+   × no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 35ms
+   × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 1ms
+   × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 5ms
+   × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+   × no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings
+AssertionError: expected [ '--conditions', 'node', …(2) ] to include '--disallow-code-generation-from-strin…'
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+     15|   it('new Function("return 1") throws EvalError', () => {
+     17|     expect(() => new Function("return 1")).toThrow(EvalError);
+exit(--project unit-*)=1
+   × no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 25ms
+   × no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 1ms
+   × no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+   × no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+   × no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+   ✓ evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year  338ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings
+AssertionError: expected [ '--conditions', 'node', …(2) ] to include '--disallow-code-generation-from-strin…'
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError
+AssertionError: expected function to throw an error, but it didn't
+     15|   it('new Function("return 1") throws EvalError', () => {
+exit(no --project)=1
+
+=================== G. combining the no-codegen project with another project is refused by the config
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Run --project unit-formula-nocodegen in its own vitest invocation: its forks start with --disallow-code-generation-from-strings, which the other projects must not inherit.
+exit=1
+
+=================== H. an empty selection cannot pass silently (no passWithNoTests)
+passWithNoTests: not set anywhere
+No test files found, exiting with code 1
+exit(filter matching nothing)=1
+-          include: ["packages/shared/src/formula/**/*.test.ts"],
++          include: ["packages/shared/src/formula/**/*.nomatch.ts"],
+No test files found, exiting with code 1
+exit(empty include)=1
+
+=================== I. 'pnpm test <filter>': extra args reach only the second invocation (informational)
+> mobily-transformation-hub@0.1.0 test /var/tmp/mth-run.nxtJGv/claude-0/probe
+> vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen fuzz
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 80 passed (81)
+      Tests  1 failed | 1586 passed (1587)
+exit(pnpm test fuzz)=1
+
+=================== J. canary assertion broken: pnpm test exits non-zero
+ packages/shared/src/formula/codegen.nocodegen.test.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  376ms
+ Test Files  81 passed (81)
+      Tests  1587 passed (1587)
+   × no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 8ms
+   ✓ no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 1ms
+   ✓ no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+   ✓ no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+   ✓ no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+exit(pnpm test)=1
+DONE
+# exit_status: 0  finished 2026-10-08T11:34:21Z

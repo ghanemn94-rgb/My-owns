@@ -1,0 +1,35 @@
+--- probe source (packages/shared/src/formula/zz-qa-codegen.test.ts):
+     1	// qa-verifier run-time probe (disposable clone only): simulates an engine path that generates code from a string
+     2	// with a key assembled at run time (outside any static rule). It must FAIL with EvalError in the no-codegen project
+     3	// and PASS (returns 2) in an ordinary process (control).
+     4	import { expect, it } from "vitest";
+     5	it("a run-time-assembled constructor key generates code", () => {
+     6	  const key = ["con", "struc", "tor"].join("");
+     7	  const F = (Object.getPrototypeOf(() => 0) as Record<string, (b: string) => () => number>)[key]!;
+     8	  expect(F("return 1 + 1")()).toBe(2);
+     9	});
+$ [1] npx vitest run --project unit-formula-nocodegen packages/shared/src/formula/zz-qa-codegen.test.ts   (expected: EXIT 1, EvalError)
+   × a run-time-assembled constructor key generates code 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-formula-nocodegen| packages/shared/src/formula/zz-qa-codegen.test.ts > a run-time-assembled constructor key generates code
+EvalError: Code generation from strings disallowed for this context
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+EXIT 1
+$ [2] npx vitest run --project unit-node packages/shared/src/formula/zz-qa-codegen.test.ts   (control, expected: EXIT 0)
+ ✓ |unit-node| packages/shared/src/formula/zz-qa-codegen.test.ts (1 test) 3ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+EXIT 0
+$ [3] npx vitest run --project unit-node --project unit-formula-nocodegen   (expected: refused, EXIT non-zero)
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Run --project unit-formula-nocodegen in its own vitest invocation: its forks start with --disallow-code-generation-from-strings, which the other projects must not inherit.
+EXIT 1
+$ [4] npx vitest run --project unit-formula-nocodegen --reporter=verbose (the shipped corpus; expected: EXIT 0)
+EXIT 0
+ Test Files  3 passed (3)
+      Tests  190 passed (190)
+      6 |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts
+    136 |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts
+     48 |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts
+--- after: rm packages/shared/src/formula/zz-qa-codegen.test.ts; git status --short:

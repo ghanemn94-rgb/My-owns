@@ -1,0 +1,78 @@
+$ [locale unset] E2E_SCREENSHOT_DIR=$TMPDIR/shots-unset QA_RESULTS_DIR=$TMPDIR/qa-unset QA_E2E_PG_PORT=26620 QA_E2E_API_PORT=26625 MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test apps/web/e2e/journeys.spec.ts apps/web/e2e/p2-blank-text.spec.ts apps/web/e2e/p2-journeys.spec.ts apps/web/e2e/p3-business-cases.spec.ts apps/web/e2e/p3-g4-refusal.spec.ts apps/web/e2e/p3-inherited-approval.spec.ts apps/web/e2e/p3-journeys.spec.ts apps/web/e2e/p3-portfolio.spec.ts apps/web/e2e/p3-prioritization-roadmap.spec.ts apps/web/e2e/p3-seams.spec.ts apps/web/e2e/p3-ui-completion.spec.ts apps/web/e2e/session-end.spec.ts e2e/a20-bilingual-shell.spec.ts e2e/dg3-qa-r3.spec.ts --workers=1 --reporter=list  (node v24.21.0, dg3-qa-r3.spec.ts sha256 bf13461cb77bfc40, 2026-10-08T12:02:43Z)
+port-policy: PostgreSQL listening on port 26620 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applied 27 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26625 (attempt 1)
+API:     http://localhost:26625
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 218 tests using 1 worker
+
+  ✓    1 [chromium-en] › apps/web/e2e/journeys.spec.ts:187:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.4s)
+  ✓    2 [chromium-en] › apps/web/e2e/journeys.spec.ts:213:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.9s)
+  ✓    3 [chromium-en] › apps/web/e2e/journeys.spec.ts:258:1 › create a modular transformation with an entry phase (4.9s)
+  ✓    4 [chromium-en] › apps/web/e2e/journeys.spec.ts:332:1 › list: sort, filter chips, column selection and pagination controls (2.8s)
+  ✓    5 [chromium-en] › apps/web/e2e/journeys.spec.ts:390:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (2.3s)
+  ✓    6 [chromium-en] › apps/web/e2e/journeys.spec.ts:442:1 › archive with a mandatory reason makes the record read-only (2.7s)
+  ✓    7 [chromium-en] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) (4.8s)
+  ✓    8 [chromium-en] › apps/web/e2e/journeys.spec.ts:538:1 › a user without roles sees no Administration and no business records (2.0s)
+  ✓    9 [chromium-en] › apps/web/e2e/journeys.spec.ts:560:1 › a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210), the derived grant localized (F-DG1-008) (3.6s)
+  ✓   10 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:58:1 › setup: a fresh End-to-End transformation for the blank-text checks (95ms)
+  ✓   11 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:73:1 › Charter create: a whitespace Case for change is an inline error and creates no charter (2.5s)
+  ✓   12 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:113:1 › Charter edit: a whitespace Out of scope is an inline error, writes no version and keeps the value (3.7s)
+  ✓   13 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:163:1 › T01: a whitespace Current state is an inline error and sends nothing (2.9s)
+  ✓   14 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:265:1 › Gate G1 submission: a whitespace note is an inline error and submits nothing; visible text is verbatim (2.7s)
+  ✓   15 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:326:1 › Gate G1 decision: a whitespace rationale is an inline error and decides nothing (2.7s)
+  ✓   16 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:384:1 › Journey steps: a whitespace actor is an inline error and writes no journey version (3.1s)
+  ✓   17 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:427:1 › Reason dialog: an invisible-only archive reason is an inline error and archives nothing (3.3s)
+  ✓   18 [chromium-en] › apps/web/e2e/p2-blank-text.spec.ts:463:1 › Charter create: a form-level validation problem (invalid UTF-8 body) is said once, in one live region (2.5s)
+  ✓   19 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (2.5s)
+  ✓   20 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (6.8s)
+  ✓   21 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (5.1s)
+  ✓   22 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (4.6s)
+  ✓   23 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (5.7s)
+  ✓   24 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (6.5s)
+  ✓   25 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (5.3s)
+  ✓   26 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (4.5s)
+  ✓   27 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (18.9s)
+  ✓   28 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (5.3s)
+  ✓   29 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (5.7s)
+  ✓   30 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (12.8s)
+  ✓   31 [chromium-en] › apps/web/e2e/p3-business-cases.spec.ts:60:1 › setup: a synthetic transformation, an initiative, and a synthetic Finance grant on it (140ms)
+  ✓   32 [chromium-en] › apps/web/e2e/p3-business-cases.spec.ts:87:1 › lead: transformation case with sections, one-class lines and gross / cost / net apart; initiative roll-up (8.2s)
+  ✓   33 [chromium-en] › apps/web/e2e/p3-business-cases.spec.ts:202:1 › Finance validates the baseline (business approval); the lead's later baseline edit makes it Stale; 409 conflict (8.8s)
+  ✓   34 [chromium-en] › apps/web/e2e/p3-business-cases.spec.ts:281:1 › T09: illustrative B0087 examples (100000 / 500000 SAR per year), live builder, new version, preview lineage (7.5s)
+  ✓   35 [chromium-en] › apps/web/e2e/p3-business-cases.spec.ts:371:1 › Finance validates formula version 2 (business approval, not its author) (2.5s)

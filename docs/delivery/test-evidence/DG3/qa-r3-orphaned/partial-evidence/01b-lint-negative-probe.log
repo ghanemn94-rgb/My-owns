@@ -1,0 +1,47 @@
+$ npx eslint --max-warnings=0 packages/shared/src/formula/zz-qa-probe.ts  (disposable file in the clone; expected: EXIT 1, an error on each of lines 5-16 and NONE on lines 3-4)
+--- probe source:
+     1	// qa-verifier negative probe (disposable clone only). Lines 3-4 are POSITIVE controls (allowlisted imports, no error);
+     2	// every later line must be refused by the formula lint guard.
+     3	import { Decimal } from "decimal.js";
+     4	import { parseFormula } from "./parse.ts";
+     5	import * as vm from "node:vm";
+     6	import { evaluateFormula } from "@mth/shared";
+     7	import * as path from "node:path";
+     8	export const a = globalThis["ev" + "al"];
+     9	export const b = (process as unknown as { getBuiltinModule(n: string): unknown }).getBuiltinModule("vm");
+    10	export const c = Object.getPrototypeOf(async () => {});
+    11	export const d = "constructor";
+    12	export const e = import.meta.url;
+    13	export const f = self;
+    14	export const g = (() => 0)[`${"con"}structor`];
+    15	export const h = Reflect.apply;
+    16	export const i = eval;
+    17	export const keep = [Decimal, parseFormula, vm, evaluateFormula, path];
+--- eslint:
+
+/var/tmp/mth-run.m3BvO5/claude-0/review-dg3/packages/shared/src/formula/zz-qa-probe.ts
+   5:1   error  'node:vm' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)      no-restricted-imports
+   6:1   error  '@mth/shared' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+   7:1   error  'node:path' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)    no-restricted-imports
+   8:18  error  Unexpected use of 'globalThis'. No globalThis in the formula engine: it reaches eval or a module loader (ADR-0024 §6)                                      no-restricted-globals
+   8:18  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                                                  no-restricted-syntax
+   8:29  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+   8:36  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+   9:19  error  Unexpected use of 'process'. No process in the formula engine: it reaches eval or a module loader (ADR-0024 §6)                                            no-restricted-globals
+   9:19  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                                                  no-restricted-syntax
+  10:25  error  No prototype reflection in the formula engine (ADR-0024 §6)                                                                                                no-restricted-syntax
+  11:18  error  No 'constructor' literal, template or identifier in the formula engine: it names the Function constructor (ADR-0024 §6)                                    no-restricted-syntax
+  12:18  error  No import.meta in the formula engine (ADR-0024 §6)                                                                                                         no-restricted-syntax
+  13:18  error  Unexpected use of 'self'. No self in the formula engine: it reaches eval or a module loader (ADR-0024 §6)                                                  no-restricted-globals
+  13:18  error  No global object, process or document in the formula engine (ADR-0024 §6)                                                                                  no-restricted-syntax
+  14:18  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+  14:28  error  No string-assembled computed key or computed member of a function expression in the formula engine (ADR-0024 §6)                                           no-restricted-syntax
+  15:18  error  Unexpected use of 'Reflect'. No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                                        no-restricted-globals
+  15:18  error  No Reflect in the formula engine: Reflect.construct/apply reach Function (ADR-0024 §6)                                                                     no-restricted-syntax
+  16:18  error  Unexpected use of 'eval'. No eval in the formula engine (ADR-0024 §6)                                                                                      no-restricted-globals
+  16:18  error  `eval` can be harmful                                                                                                                                      no-eval
+
+✖ 20 problems (20 errors, 0 warnings)
+
+EXIT 1
+--- after: rm packages/shared/src/formula/zz-qa-probe.ts; git status --short:
