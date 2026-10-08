@@ -11599,14 +11599,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-6/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T20:10:00Z",
           "status": "OPEN",
           "note": "Raised in DG3 round 6 by code-security-reviewer. Low, non-mandatory and non-blocking: a documentation drift about test scope. Lint itself refuses every probe-table row on this candidate."
+        },
+        {
+          "at": "2026-10-08T21:10:37Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1cd89e6b08f2d8283496f2445536d334e41dde81"
         }
-      ]
+      ],
+      "fix_revision": "1cd89e6b08f2d8283496f2445536d334e41dde81",
+      "fix_summary": "T-DG3-KBE-I 1cd89e6: the ESLint.lintText test now lints every probe-table row except two named LINT_EXCLUDED rows (not valid modules; the test requires each to be a fatal parse error and pins the exclusion list), and requires a formula-block guard rule (not any rule) to refuse each linted row; two private-name rows added. Mutations: removing ForOfStatement[await=true] (M1) and the PrivateIdentifier selector (M2) each now fail a test; the clean run passes. ADR-0024 §6 'Pinned by tests' states exactly what is linted. No lint gap found; eslint.config.js unchanged. pnpm test 1654 + 259/2 skipped x4."
     }
   ]
 }
