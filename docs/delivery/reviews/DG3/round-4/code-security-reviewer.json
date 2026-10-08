@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 4,
+  "candidate_id": "sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455",
+  "source_commit": "171a0b57f9b8d2112891d1284adda6f0384da090",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-REV-SEC-R4-code-security-reviewer-20261008T145455Z-96a05c5a",
+    "session_id": "96a05c5a-8088-4511-bac4-2e7993bdf3c9"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 96a05c5a (task T-DG3-REV-SEC-R4). I authored no implementation in the DG3 scope.\n\nAuthorship of the reviewed scope:\n- The round-4 repair, T-DG3-KBE-F (0fb892c, merged in 35133fb), is by kpi-benefits-engineer.\n- D-084 records no orchestrator edits to product code.\n- The rest of P3 is by the implementer roles listed.\n\nMy only writes are review evidence under docs/delivery/test-evidence/DG3/code-security/round-4/ and my round-4 review files. Every probe ran in a disposable clone under $TMPDIR, never in the candidate tree.\n\nI formed this verdict before reading any other round-4 reviewer record. The domain reviewer's run evidence was auto-committed to the repository during my run (39fb610, 15dac7c), and I did not open it. I do not grant, and nothing here implies, any business, Finance or IT approval. Product gates G1–G6 are unrelated to DG0–DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-4/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S16-016",
+    "REQ-S09-008",
+    "REQ-DLV-035",
+    "REQ-S08-007",
+    "REQ-PB-004",
+    "REQ-PB-007",
+    "REQ-PB-022",
+    "REQ-S04-006",
+    "REQ-PB-048",
+    "REQ-PB-049",
+    "REQ-PB-051",
+    "REQ-PB-052",
+    "REQ-PB-055",
+    "REQ-PB-056",
+    "REQ-S09-003",
+    "REQ-S09-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R4-00-candidate",
+      "procedure": "Confirm the frozen candidate before reviewing:\n- git rev-parse HEAD in the repository;\n- the diff from the source commit to HEAD outside docs/delivery;\n- the candidate ID recomputed in the repository tree, and in a complete, non-shallow clone at the source commit and at HEAD;\n- the same again after the run, because other reviewers' runs auto-commit evidence.",
+      "command": "git rev-parse HEAD; git diff --name-only 171a0b57..HEAD | grep -v '^docs/delivery/'; node tools/gates/candidate.mjs --stage DG3 (repository tree, and a clone at 171a0b57 and at HEAD)",
+      "environment": "Node 24.21.0; repository /home/user/My-owns; clone $TMPDIR/review-r4 (git clone, not a worktree), shallow=false; no network",
+      "expected": "sha256:8376d762920591f1348e321dc36aaa806793efe2238af113f903b76b016fc455, 757 files; no product change between the source commit and HEAD",
+      "actual": "HEAD was fd27c10 at the start: the source commit plus the round-4 freeze commits, which touch only docs/delivery (assignments, manifest, progress, stages). No file outside docs/delivery differs (grep exit 1).\n\nThe candidate ID is sha256:8376d762…fc455 with 757 files in all three places: the repository tree, the clone at 171a0b57 and the clone at fd27c10.\n\nRecheck at 15:18Z: HEAD had moved to 15dac7c. The two new commits are the domain reviewer's run evidence, auto-committed by run-agent.sh, and are docs/delivery only. The candidate ID is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/00-identity.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/candidate-id.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-01-build",
+      "procedure": "Offline frozen install, then build every workspace package, then install again.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, pnpm 10.33.0; clone $TMPDIR/review-r4 at 171a0b57; store copied from the local pnpm store; no network",
+      "expected": "exit 0",
+      "actual": "install1 exit 0. Its 'WARN Failed to create bin … mth-db' lines appear because packages/db/dist does not exist before the first build; rounds 1–3 had the same warning.\n\nbuild exit 0. Its one warning is Vite's advisory 'Some chunks are larger than 500 kB' for apps/web, also present in earlier rounds; it is not an error.\n\ninstall2 after the build: exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/install1.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/build.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/install2.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R4-02-typecheck",
+      "procedure": "Type-check every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r4 at 171a0b57",
+      "expected": "exit 0",
+      "actual": "exit 0, every package Done.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-03-lint",
+      "procedure": "Lint the repository with the zero-warning policy.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r4 at 171a0b57",
+      "expected": "exit 0, no warnings",
+      "actual": "exit 0 (eslint . --max-warnings=0). value.ts lints clean under the formula engine-source blocks it now gets.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-04-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r4 at 171a0b57",
+      "expected": "exit 0; 270 operations",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 270 operations', exit 0. The repair does not touch the contract (diff-scan D2).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-05-no-cdn",
+      "procedure": "Run the no-CDN portability scan, and sweep the repair's added product lines for CDN URLs and secret-shaped strings.",
+      "command": "pnpm check:no-cdn; git diff ce988e20..171a0b57 -- apps packages eslint.config.js vitest.config.ts docs/architecture | grep '^+' | grep -iE 'cdn|unpkg|jsdelivr|api_key|secret|password|BEGIN PRIVATE'",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r4 at 171a0b57",
+      "expected": "exit 0; no hit in the added product lines",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.\n\nThe diff sweep (diff-scan D9) has no hit (grep exit 1). The lockfile, every package.json, .github and deploy are unchanged by the repair (diff-scan D2; env-residuals).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/no-cdn.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-06-format",
+      "procedure": "Check formatting.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r4 at 171a0b57",
+      "expected": "exit 0",
+      "actual": "'All matched files use Prettier code style!', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-07-unit-node22",
+      "procedure": "Run pnpm test on Node 22. It runs two Vitest invocations: unit-node + unit-web, then unit-formula-nocodegen. Both must run.\n\nAlso run a verbose listing of the first invocation, and diff its test names against round 3, to show that no test was removed or renamed.",
+      "command": "pnpm test --reporter=verbose; pnpm exec vitest run --project unit-node --project unit-web --reporter=verbose",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-r4 at 171a0b57; LC_CTYPE=C.UTF-8 inherited, LANG/LC_ALL unset",
+      "expected": "Both invocations exit 0. The counts equal round 3's plus the repair's new tests, with nothing removed.",
+      "actual": "Invocation 1: Test Files 81 passed (81); Tests 1593 passed (1593).\n\nInvocation 2 (unit-formula-nocodegen): 3 files; Tests 199 passed, 1 skipped (200). The skip is by design: the ESLint-config closure test is it.skipIf(NOCODEGEN), because ESLint's ajv compiles schemas with new Function.\n\nExit 0.\n\nTest-name diff against round 3 (unit-list-diff-r3-r4.txt): no test removed. Added: 6 in invocation 1 (the 4 formula.test.ts internal-failure tests and the 2 closure tests) and 9 in invocation 2, plus the 1 skipped.\n\nThe only warning line is Fastify's FSTDEP022 deprecation notice, also present once in round 3. No failure, timeout or unhandled error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/unit-node22.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/unit-list-node22.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/unit-list-diff-r3-r4.txt"
+      ]
+    },
+    {
+      "id": "SEC-R4-08-unit-node24",
+      "procedure": "Run pnpm test on Node 24, both Vitest invocations.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0; clone $TMPDIR/review-r4 at 171a0b57",
+      "expected": "Both invocations exit 0",
+      "actual": "Invocation 1: 81 files, 1593 passed (1593). Invocation 2: 199 passed, 1 skipped (200), the same by-design skip. Exit 0.\n\nThe only warning is the same FSTDEP022 notice. No failure, flake or rerun this round.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-09-integration-lang-unset",
+      "procedure": "Run the integration suite on a disposable PostgreSQL 16 cluster with LANG, LC_ALL and LC_CTYPE unset. The suite includes contract.test.ts and migrations 0001→0027.",
+      "command": "(unset LANG LC_ALL LC_CTYPE) bash with-pg.sh 26301 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2; disposable PG 16.13 cluster (SQL_ASCII, collate C) on 127.0.0.1:26301, deleted afterwards; clone at 171a0b57",
+      "expected": "exit 0; all files and tests pass; 27 migrations applied; contract coverage complete",
+      "actual": "Test Files 56 passed (56); Tests 793 passed (793); exit 0. That equals round 3's 793; the repair adds no integration test.\n- 'applied 27 migrations to a fresh database'.\n- contract.test.ts: 'covers every operation with at least one success …' and the 429 sweep over all live operations both pass.\n\nNo ×, ↓, FAIL, hook timeout or unhandled-error line. The one line containing 'FST_ERR_BAD_URL' is a SWEEP label of an expected 400 case.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R4-10-integration-lang-c-utf8",
+      "procedure": "Run the integration suite again with LANG=C.UTF-8.",
+      "command": "(LANG=C.UTF-8) bash with-pg.sh 26302 pnpm test:integration --reporter=verbose",
+      "environment": "Node 24.21.0; disposable PG 16.13 cluster (UTF8, collate C.UTF-8) on 127.0.0.1:26302, deleted afterwards; clone at 171a0b57",
+      "expected": "exit 0",
+      "actual": "Test Files 56 passed (56); Tests 793 passed (793); exit 0; 27 migrations applied.\n\nNo failure or skip markers. The 'exit 1 … nothing applied' text belongs to the name of a passing encoding.test.ts case, which tests that a SQL_ASCII database is refused.\n\nAfter both runs the clone's git status is clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R4-11-validate-historical-DG2",
+      "procedure": "Validate the previous approved gate.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG2",
+      "environment": "Node 22.22.2; repository /home/user/My-owns (HEAD 15dac7c at run time; candidate unchanged)",
+      "expected": "PASS, exit 0",
+      "actual": "'PASS gate DG2 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/validate-historical-DG2.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-12-validate-historical-DG1",
+      "procedure": "Validate DG1.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 22.22.2; repository /home/user/My-owns",
+      "expected": "PASS, exit 0",
+      "actual": "'PASS gate DG1 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-13-aud-sweep",
+      "procedure": "The AUD-403 sweep.\n- Probe A: my contract-generated sweep over all 64 P3 mutating operations, run as the org-wide read-only auditor after the seven P3 exercise seams populate every record type. Run unchanged from round 3 (sha256 b0e1c79c…).\n- Probes B (integrity), D (inherited approval) and the round-3 CSP probe run alongside it.\n- The product's own aud-write-deny.test.ts covers P2.",
+      "command": "checks-extra.sh: vitest run --project integration zz-sec-r1 zz-sec-r2 zz-sec-r3 zz-sec-r4 (probes copied into the clone, removed afterwards), twice",
+      "environment": "Node 22 with LANG unset (PG on 26310, SQL_ASCII) and Node 24 with LANG=C.UTF-8 (PG on 26312, UTF8); clone at 171a0b57",
+      "expected": "A, B, D and CSP all pass in both runs",
+      "actual": "Per file, in both runs: A 66/66, B 16/16, D 5/5, CSP 1/1.\n\nEach run reports 'Tests 2 failed | 88 passed (90)' with exit 1. Both failures are revision 1 of my NEW round-4 API probe (sec-r4-evalerror-api.test.ts), not product failures. The harness's contract check refused the undeclared 500 ('contract: checkBenefitFormula does not declare status 500 …') before my assertions ran. No operation of the 270 declares 500; that is the project convention for an unexpected error. Revision 2, with contract: false on the marked requests only, passes 2/2 in both environments (SEC-R4-16).\n\nAs in rounds 1–3:\n- every targeted call gets 403 and exactly one authorization.denied event;\n- the P3 table checksums are unchanged;\n- empty-body creates answer 400 or 403 and write nothing.\n\nThe product's aud-write-deny.test.ts passes 146 tests in each integration run. The repair adds no operation and changes no API code (diff-scan D2).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/sec-r1-aud-sweep.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes-ABD-CSP-E-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes-ABD-CSP-E-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/summary-extra.txt",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/checks-extra.sh"
+      ]
+    },
+    {
+      "id": "SEC-R4-14-F-DG3-100-round3-forms",
+      "procedure": "Re-run my round-3 probes VERBATIM in disposable clones at 171a0b57, never in the candidate tree, and report which layer refuses each form:\n- guard-layers-probe.mjs on S1 S2 S3 V1 V2 (sha256 7887455b…);\n- exercised-probe.mjs (sha256 c4e63640…).\nLayers: lint, the scan, unit-formula-nocodegen, and the unit-node control.",
+      "command": "run-probes.sh: node round-3/probes/guard-layers-probe.mjs $TMPDIR/review-p3 S1 S2 S3 V1 V2; node round-3/probes/exercised-probe.mjs $TMPDIR/review-p3",
+      "environment": "Node 22.22.2 (as in round 3); fresh clone $TMPDIR/review-p3 at 171a0b57, git status clean before and after",
+      "expected": "S1 and S3 (which passed all three layers in round 3) are refused at run time; V1 is refused by lint and the scan; S2 and V2 stay refused",
+      "actual": "Per-form result (lint / scan / no-codegen / control):\n- S1: 0 / 0 / 1 / 0. Refused at RUN TIME: 3 tests fail only under the flag ('rejects \"été\" … offset 0' and two fuzz tests).\n- S2: 0 / 0 / 1 / 0. Refused at run time: 8 flag-only failures.\n- S3: 0 / 0 / 1 / 0. Refused at RUN TIME: 2 flag-only failures.\n- V1: 1 / 1 / 1 / 1. Refused by LINT + SCAN. Lint: \"'node:vm' import is restricted … imports only decimal.js\"; 0 flag-only failures, as expected, since vm is outside the flag.\n- V2: 1 / 1 / 1 / 1. Refused by lint + scan + run time: 61 flag-only failures.\nThe probe exits 0 and restores its files.\n\nexercised-probe with S1+S3 applied: vitest exits 1 BY DESIGN, with 5 failed and 57 passed (63, 1 skipped).\n- fuzz.test.ts's three fuzz tests fail with 'EvalError: Code generation from strings disallowed'.\n- The probe's own S1 and S3 tests fail with EvalError. They assert the round-3 swallow, which no longer happens; that is the point.\n- The four new regression tests and the canary pass.\nThe probe exits 0; the clone's git status is clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/guard-layers-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/exercised-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes-summary.txt",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/run-probes.sh",
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/guard-layers-probe.mjs",
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/exercised-probe.mjs"
+      ]
+    },
+    {
+      "id": "SEC-R4-15-F-DG3-100-round1-2-forms",
+      "procedure": "Re-run the round-2 guard-bypass-probe.mjs VERBATIM (sha256 934c62b1…) on the 18 earlier forms, O1–O6 and N1–N12, in a disposable clone.",
+      "command": "node round-3/probes/guard-bypass-probe.mjs $TMPDIR/review-p2",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-p2 at 171a0b57",
+      "expected": "All 18 forms refused by eslint and by the scan",
+      "actual": "O1–O6 and N1–N12: each eslint=1 scan=1, 'BLOCKED BY BOTH'. The probe exits 0 and the clone's git status is clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/guard-bypass-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/guard-bypass-probe.mjs"
+      ]
+    },
+    {
+      "id": "SEC-R4-16-F-DG3-100-attack-new-mechanisms",
+      "procedure": "Attack the round-4 mechanisms.\n\n(1) Read every catch, finally, .catch and Promise in the 7-file closure and in decimal.js 10.6.0.\n\n(2) NEW swallow-probe.mjs: a real string code generation on the exercised round-3 S1 path, with six ways of handling its failure:\n- W1: empty catch;\n- W2: finally { return; };\n- W3: unhandled Promise rejection;\n- W4: Promise .catch(() => undefined);\n- W5: rethrow wrapped with `cause`;\n- W6: W5 at evaluation time.\nEach form goes through lint, the scan, the no-codegen run and the unit-node control.\n\n(3) A closure-parser probe X1: a string-named export specifier, `export { \"x\" as y } from \"../scoring.ts\"`.\n\n(4) Does the internal-failure rule cover every fuzz.test.ts outcome check? (read)\n\n(5) The API effect of the EvalError rethrow: probe E mocks @mth/shared/calc so that a marked expression throws a real EvalError, then POSTs /benefit-formulas/validate and /benefit-formulas. The real engine cannot throw EvalError without the flag, and Fastify cannot run under it.",
+      "command": "node round-4/probes/swallow-probe.mjs $TMPDIR/review-p3; closure-parser probe (adr-claims/closure-parser-probe.log); checks-extra-v2.sh (probe E revision 2 on PG 26320 and 26322)",
+      "environment": "Node 22.22.2 (probes) and Node 24.21.0 (probe E, run 2); disposable clones review-p3 and review-r4 at 171a0b57; disposable PG clusters, deleted afterwards",
+      "expected": "ADR-0024 §6 layer 3: 'Any engine path that generates code from a string fails the engine's tests, provided a test exercises it … Every catch in the closure rethrows EvalError'. So every W form is refused by at least one layer. The API answers a generic 500 without detail and writes nothing.",
+      "actual": "(1) The closure has five catch clauses, all of which rethrow EvalError: the four named in the ADR, plus parse.ts, which rethrows anything that is not its own ParseFailure. There is no finally, .catch or Promise in the closure. decimal.js has no try/catch, eval( or Function(.\n\n(2) Results:\n- W3: REFUSED at run time (7,656 unhandled EvalErrors, exit 1).\n- W5: REFUSED at run time (3 flag-only failures, through the internal-failure rule).\n- W6: REFUSED at run time (2 flag-only failures).\n- W1, W2, W4: PASS ALL THREE LAYERS. Lint exit 0, scan exit 0, unit-formula-nocodegen 199 passed + 1 skipped (exit 0), control exit 0.\nW5 is the positive control: the same site, codegen and key, exercised and refused under the flag. In W1, W2 and W4 the code generation runs and is refused, and the new handler hides the refusal. In production, with no flag, the code runs.\nNothing enforces the 'every catch rethrows' rule for a new handler: no CatchClause or TryStatement selector, no-unsafe-finally off, no scan pattern (adr-claims.log A2).\n\n(3) X1: the closure and scan tests pass (3/3), because IMPORT_SPECIFIER cannot match a quoted name. ESLint refuses the module ('../scoring.ts' import is restricted), so layer 1 holds.\n\n(4) checkOutcome (both entry points), the payload test and every rejection-table row refuse reason 'internal'.\n\n(5) Probe E revision 1 failed 2/2 because the harness contract check refused an undeclared 500 (disclosed in SEC-R4-13). Revision 2 passes 2/2 in both environments:\n- marked validate → 500 {type urn:mth:problem:internal, title 'Internal error', code internal, requestId}, with no 'EvalError', message or stack;\n- marked create → the same 500, and the benefit_formula count is unchanged;\n- unmarked → 200 (result 42) and 201.\n\nConclusion: W1, W2 and W4 contradict the §6 guarantee, so F-DG3-100 stays OPEN (verifications sidecar). This is not a new finding.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/swallow-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes/swallow-probe.mjs",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/closure-parser-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/adr-claims.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/diff-scan.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes/sec-r4-evalerror-api.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes/sec-r4-evalerror-api-v2.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-E-v2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-E-v2-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/summary-extra-v2.txt",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/checks-extra-v2.sh"
+      ]
+    },
+    {
+      "id": "SEC-R4-17-F-DG3-100-adr-claims",
+      "procedure": "Check ADR-0024 §6 'Extended guard', statement by statement, against the code and the probes, including the residual paragraph.",
+      "command": "adr-claims.log (grep/eslint --print-config over the clone) plus the probe logs",
+      "environment": "clone $TMPDIR/review-r4 at 171a0b57; Node 22.22.2",
+      "expected": "Every statement is exactly true",
+      "actual": "TRUE:\n- Scope: the closure is the six formula sources, value.ts and decimal.js.\n- Layer 1 for value.ts, with its decimal.js-only allowlist (V1 refused).\n- Layer 2's file set includes value.ts.\n- The closure test asserts no unresolved relative specifier, decimal.js as the only package, and every closure file in the scan set.\n- The ESLint assertion runs in unit-node only (1 skipped under the flag).\n- decimal.js 10.6.0 has no eval( or Function(.\n- The internal-failure rule covers checkOutcome, the payload test and every rejection row.\n- The regression tests exist and pass.\n- The production behaviour of a non-EvalError is unchanged (formula.test.ts TypeError tests).\n- The API 500 is generic (probe E).\n- 'Not covered by the flag': vm, inspector and getBuiltinModule are refused in every closure file (V1).\n- The residual's Q1–Q5 example stands.\n\nNOT EXACTLY TRUE:\n(a) The layer-3 'Guarantee' and its rule 'Every catch in the closure rethrows EvalError'. W1, W2 and W4 add a handler that hides an exercised refusal and pass every layer. The residual names only unexercised paths, plus a future catch converting to 'internal'.\n(b) 'There are four': there are five catch clauses (parse.ts rethrows, so no behavioural effect).\n(c) 'the web formula builder would show its error boundary'. apps/web defines none. React Router's DefaultErrorComponent would render 'Unexpected Application Error!' with the error message and stack, in English only. This is unreachable in practice, because the engine generates no code.\n(d) 'following every static import and export … from': not a string-named specifier (X1). ESLint backs it.\n\n(a) is the reason F-DG3-100 stays open. (b)–(d) are minor and listed in the verification note for the repair.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/adr-claims.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/swallow-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/closure-parser-probe.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-E-v2-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-18-formula-engine-unchanged-fuzz",
+      "procedure": "Confirm that the engine's formula results are unchanged:\n- re-run probe C (my round-1 formula fuzz, unchanged; sha256 8d9a21f7…) in unit-node and in unit-formula-nocodegen (with the canary and regression tests), on Node 22 and Node 24;\n- diff the engine's non-comment code lines.",
+      "command": "checks-extra.sh: vitest run --project unit-node zz-sec-r1-fuzz.test.ts; vitest run --project unit-formula-nocodegen zz-sec-r1-fuzz.test.ts codegen.nocodegen.test.ts (Node 22 and 24)",
+      "environment": "clone $TMPDIR/review-r4 at 171a0b57; Node 22.22.2 and 24.21.0",
+      "expected": "All pass; the only code change in the engine is the EvalError rethrow",
+      "actual": "Probe C passes:\n- unit-node: 65/65 on Node 22 and Node 24;\n- unit-formula-nocodegen: 75/75 on both (65 + 10 canary/regression).\nIt covers:\n- C1 injection strings;\n- C2 limits;\n- C3 division by zero is Unknown;\n- C4 20,000-string fuzz;\n- C5 an exact oracle: 3,000 random trees, stored result = oracle rounded half-up to 6 dp;\n- C6 hostile inputs objects.\n\nThe engine's only non-comment code change (diff-scan D5) is the four `if (e instanceof EvalError) throw e;` lines, plus `catch {` → `catch (e) {` in value.ts.\n\n(grep calls the probe-C logs 'binary' only because a C1 test name contains a NUL byte.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-C-unit-node-node22.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-C-nocodegen-node22.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-C-unit-node-node24.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probe-C-nocodegen-node24.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/sec-r1-formula-fuzz.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-19-repair-diff-scope",
+      "procedure": "Inspect the repair diff, git diff ce988e20..171a0b57.\n- Product scope: only the T-DG3-KBE-F files.\n- No API, web, db, migration, OpenAPI, vitest config or dependency change.\n- No Vitest project changed.\n- No formula result or API status changed, apart from the documented EvalError path.",
+      "command": "diff-scan.sh sections D1–D9 (diff-scan.log)",
+      "environment": "clone $TMPDIR/review-r4",
+      "expected": "Only the 9 files in the handback; no other surface",
+      "actual": "Files outside docs/delivery:\n- ADR-0024 and p3-work-split.md;\n- eslint.config.js (formula blocks only);\n- in packages/shared: codegen.nocodegen.test.ts, evaluate.ts, formula.test.ts, fuzz.test.ts, index.ts and value.ts.\n\nNo file under apps/, packages/db, openapi, vitest.config, package.json or the lockfile changed (D2: grep exit 1).\n\nThe web uses formatDecimal widely, and its behaviour is unchanged for every input except an EvalError, which cannot arise outside a refused code generation. The API EvalError path is a generic 500 (SEC-R4-16).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-20-p3-surface-no-regression",
+      "procedure": "The P3 surface, as in round 1, re-verified on this candidate:\n- every P3 mutation: authorization re-checked at commit time, validation, If-Match, audit, no I/O inside a transaction;\n- separation of duties and no on-behalf decision;\n- the G1 agreements guard;\n- dependency-graph cycle refusal and its concurrency;\n- the advisory-lock registry;\n- decimals;\n- migrations 0020–0027;\n- the contract (270 operations live, every p3-pending empty);\n- the inheritedApproval annotation.\n\nThe API, web, db and worker are unchanged since round 3 (diff-scan D2), so my round-1 static review stands. Confirmed through the suites, probes B and D, and static sweeps.",
+      "command": "static-sweeps.log; counts over integration-run{1,2}.log; probes B and D (checks-extra.sh)",
+      "environment": "clones at 171a0b57; integration on PG 16 in both locale settings",
+      "expected": "Same as round 3; nothing regressed",
+      "actual": "Counts in each integration run:\n- commit-time/BE18A tests: 30 (round 3: 30);\n- aud-write-deny: 146;\n- g1-agreements: 7, including 403/409 precedence and the migration-0025 COMMIT guard;\n- SoD (submitter, on-behalf, proposer): 7;\n- cycle/lock/concurrency: 32, including 'two DATABASE connections inserting A→B and B→A concurrently: exactly one commits';\n- inherited: 4;\n- decimal/exact: 49.\n\nProbe B (integrity: SoD CHECKs, the guards mth_app cannot disable, raw-SQL races) passes 16/16 twice. Probe D (inheritedApproval: read-only, read gate, acyclic, additive) passes 5/5 twice.\n\nThe advisory-lock registry has 730219–730223 as five distinct classes; the extra 730222 match is a historical comment.\n\nMigrations 0020–0027 are present and unchanged since round 3.\n\nContract: 270 operationIds; P2_PENDING_KPI, P2_PENDING_BACKEND and all seven p3-pending-*.ts lists are empty; the coverage and 429 sweeps pass.\n\nMy round-1 observation on the DG2-approved product-gate submit and decide routes is unchanged and not raised.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/static-sweeps.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/probes-ABD-CSP-E-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/sec-r1-integrity.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-3/probes/sec-r2-inherited-approval.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R4-21-requirement-acceptance",
+      "procedure": "Map each assigned requirement's binding acceptance text (requirements.csv, final_gate DG3) to passing tests in this round's logs.",
+      "command": "requirement-acceptance.log (grep of passing test names in both integration runs and both unit runs)",
+      "environment": "this round's logs",
+      "expected": "Every acceptance behaviour has passing evidence",
+      "actual": "Every acceptance behaviour passes in both integration runs (0 ×/↓ markers).\n- S16-016: every P3 entity is created and read through the API with authorization (contract seams, probe A).\n- S09-008 and PB-051:\n  - A→B→C→A is 422, naming the cycle; A→B→A is refused the same way;\n  - a late predecessor is flagged;\n  - T08's seven columns round-trip;\n  - 'External' is accepted.\n- DLV-035: 3.30; 95%/105% refused; cycles; G4 end to end with distinct users.\n- S08-007: period_mismatch; exactly 100000 SAR (unit and integration).\n- PB-004: End-to-End launch is 422 'North Star, outcomes and target state not yet approved', and succeeds after G2+G3.\n- PB-007 and PB-022:\n  - before G1, 422 invalid-transition;\n  - readiness lists what is missing;\n  - G1 without the three agreements is refused.\n- S04-006: G4 names the missing funding or capacity; 403 not-approver/submitter; 409 superseded.\n- PB-048: 3.30; incomplete is never a number.\n- PB-049: v2 accepted; history names the weight version.\n- PB-052: the system types are listed, and DELETE is 422.\n- PB-055: G4 lists 'Finance validation'.\n- PB-056: the six T09 columns; confidence outside H/M/L is 400; an undefined variable is 422.\n- S09-003: 'Selected - unfunded' cannot launch.\n- S09-006: the API side holds (milestone If-Match 428 and stale 409). The UI propagation is in qa-verifier's e2e.\n\nPB-056's acceptance text passes. Its gate-tooling FAIL is F-DG3-100 (SEC-R4-16/17).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-22-environment-residuals",
+      "procedure": "Check the environmental residuals on their offline/config surface:\n- live registry (REQ-DLV-042 AC-1, D-057);\n- live CI (REQ-DLV-025 A24, D-058);\n- Keycloak (D-049).",
+      "command": "node deploy/scripts/check-ci-needs.mjs; node --test deploy/scripts/tests/check-ci-needs.test.mjs; git diff --name-only ce988e20..171a0b57 -- '*package.json' pnpm-lock.yaml .github deploy; count of passing oidc tests",
+      "environment": "Node 22.22.2; clone $TMPDIR/review-p2 at 171a0b57; no network",
+      "expected": "PASS on the offline/config surface; residuals noted",
+      "actual": "Registry: the offline frozen install exits 0. The repair changes no manifest or lockfile (empty diff). The live registry is the residual (D-057).\n\nCI:\n- check-ci-needs reports OK (5 jobs; delivery-gates first; every other job depends on it), exit 0.\n- Its tests: 46 pass, 0 fail, 0 skipped, exit 0. The 'FAIL:' lines in the log are the expected outputs of negative cases N1–N38.\n- .github and deploy are unchanged by the repair, and ci.yml runs pnpm test and pnpm test:integration.\n- Live CI is the residual (D-058).\n\nKeycloak: 37 passing test lines mention oidc (the fake IdP) in each integration run. Live Keycloak is the residual (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/code-security/round-4/env-residuals.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-4/install1.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG3/round-4/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/00-identity.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/summary.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/summary-extra.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/summary-extra-v2.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/probes-summary.txt",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/checks.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/checks-extra.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/checks-extra-v2.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/run-probes.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/with-pg.sh",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/swallow-probe.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/probes/swallow-probe.mjs",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/adr-claims.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/diff-scan.log",
+    "docs/delivery/test-evidence/DG3/code-security/round-4/requirement-acceptance.log"
+  ],
+  "reviewed_at": "2026-10-08T15:30:00Z",
+  "summary": "FAIL, for one reason: F-DG3-100 (Low, non-mandatory, REQ-PB-056) does not verify closed, so it stays OPEN. I raise no new finding, and nothing Critical, High or mandatory is open. Every required check ran and passed: build, typecheck, lint, openapi (270), no-cdn, format, pnpm test on Node 22 and 24 (1593 + 199/1 skipped each), integration 793/793 in both locale settings, the AUD sweep and both historical validators.\n\nWhat the repair closes (both round-3 reasons):\n- S1 and S3 are refused at run time.\n- value.ts is guarded: V1 is refused by lint and the scan.\n- The 18 earlier forms stay refused.\n- Wrapped and unhandled EvalErrors are refused.\n- The API answers a generic 500 with nothing written.\n- Formula results are unchanged (exact oracle).\n\nWhy it stays open: ADR-0024 §6 guarantees that any exercised code-generating path fails the tests, because 'every catch in the closure rethrows EvalError'. Nothing enforces that rule for a new handler. An exercised code generation wrapped in an empty catch, a finally-return or a Promise .catch passes lint, the scan and the no-codegen run (W1/W2/W4).\n\nThe fix is small. Either enforce the rule statically (a CatchClause rule, no-unsafe-finally, no Promise in engine sources), or narrow the guarantee and state this residual honestly. Also correct three minor statements: 'four' catches (there are five), the web error boundary, and the closure parser's string-named specifiers."
+}
