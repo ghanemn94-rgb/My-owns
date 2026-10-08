@@ -8,13 +8,14 @@
 // approvals inside the product; nothing here approves anything, and nothing touches the engineering gates DG0-DG7.
 import { diffFields, sql, type Db, type DbOrTx, type InitiativeRow, type Tx } from "@mth/db";
 import type { Permission } from "@mth/shared";
-import type { FundingState, Initiative, Warning } from "@mth/shared/schemas";
+import type { FundingState, Initiative, ScheduleFlag, Warning } from "@mth/shared/schemas";
 import type { FastifyRequest } from "fastify";
 import type { z } from "zod";
 import { principalOf, requireTransformationRead, type ResolvedTarget } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { HttpProblem, iso, isoOrNull, parseBody, problems, requireIfMatch } from "../platform/index.ts";
 import { bumpStamps, openWrite, type WriteContext } from "../transformations/index.ts";
+import { initiativeFlags } from "./capacity.ts";
 import { latestFundingState } from "./funding.ts";
 
 export type { InitiativeRow };
@@ -80,6 +81,16 @@ export function assertEditable(row: InitiativeRow): void {
       "initiative.read_only",
       `A ${row.status} initiative is read-only; its card and links can no longer be changed.`,
     );
+}
+
+/**
+ * The initiative of a dependent record (score, deliverable, milestone, resource demand) is read-only once cancelled or
+ * completed (ADR-0021 §2; p3-work-split §9 item 14): 422 initiative.read_only. Called after validation and If-Match.
+ */
+export async function assertInitiativeEditable(db: DbOrTx, initiativeId: string): Promise<void> {
+  assertEditable(
+    await db.selectFrom("initiative").selectAll().where("id", "=", initiativeId).executeTakeFirstOrThrow(),
+  );
 }
 
 // ------------------------------------------------------------------------------------------------ problems
@@ -193,11 +204,20 @@ async function countsBy(
   return new Map(rows.map((r) => [r.initiative_id, Number.parseInt(String(r.n), 10)]));
 }
 
-/** Rows -> API representations (warnings, funding state, display status). Flags: none in this task (BE-C's schedule). */
-export async function presentInitiatives(db: DbOrTx, rows: readonly InitiativeRow[]): Promise<Initiative[]> {
+/**
+ * Rows -> API representations (warnings, funding state, display status, schedule and capacity flags). THE single
+ * initiative presenter (p3-work-split §9 item 13): the initiative routes, the roadmap read model and the prioritization
+ * view all call it. `flags` lets a caller that has already computed the flags (the prioritization view) pass them in.
+ */
+export async function presentInitiatives(
+  db: DbOrTx,
+  rows: readonly InitiativeRow[],
+  precomputedFlags?: ReadonlyMap<string, readonly ScheduleFlag[]>,
+): Promise<Initiative[]> {
   const ids = rows.map((r) => r.id);
   const deliverables = await countsBy(db, "deliverable", ids);
   const gapLinks = await countsBy(db, "initiative_gap_link", ids);
+  const flags = precomputedFlags ?? (await initiativeFlags(db, rows));
   const out: Initiative[] = [];
   for (const r of rows) {
     const fundingState = await fundingStateOf(db, r);
@@ -228,7 +248,7 @@ export async function presentInitiatives(db: DbOrTx, rows: readonly InitiativeRo
       cancelledBy: r.cancelled_by,
       cancelReason: r.cancel_reason,
       warnings: initiativeWarnings(r, deliverables.get(r.id) ?? 0, gapLinks.get(r.id) ?? 0),
-      flags: [],
+      flags: [...(flags.get(r.id) ?? [])],
       version: r.version,
       createdAt: iso(r.created_at),
       createdBy: r.created_by,

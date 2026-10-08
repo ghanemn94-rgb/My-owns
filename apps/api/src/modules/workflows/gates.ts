@@ -371,7 +371,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       .selectAll()
       .where("transformation_id", "=", transformationId)
       .execute();
-    const facts = await loadGateFacts(db, transformationId);
+    const facts = await loadGateFacts(db, transformationId, gateFacts);
     const items = [];
     for (const def of defs) {
       const instance = instances.find((i) => i.gate_code === def.code);
@@ -388,7 +388,15 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const defs = await loadGateDefinitions(db);
     const def = definitionOf(defs, gateCode);
     const instance = await instanceOf(db, transformationId, gateCode);
-    const view = await gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId), defs);
+    const view = await gateView(
+      db,
+      principal,
+      target,
+      instance,
+      def,
+      await loadGateFacts(db, transformationId, gateFacts),
+      defs,
+    );
     reply.header("ETag", `"${instance.version}"`);
     return view;
   });
@@ -457,7 +465,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const defs = await loadGateDefinitions(db);
     const def = definitionOf(defs, gateCode);
     reply.header("ETag", `"${instance.version}"`);
-    return gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId), defs);
+    return gateView(db, principal, target, instance, def, await loadGateFacts(db, transformationId, gateFacts), defs);
   });
 
   app.get(`${G}/:gateCode/submissions`, { config: read }, async (request) => {
@@ -580,7 +588,7 @@ async function submitGate(
   if (outOfSequence) throw outOfSequence;
 
   // Re-evaluate every criterion INSIDE this transaction and freeze the result (ADR-0015 §2 step 2).
-  const facts = await loadGateFacts(tx, transformationId);
+  const facts = await loadGateFacts(tx, transformationId, gateFacts);
   const criteria = evaluateGate(def, facts);
   const incomplete = criteria.filter((c) => c.mandatory && c.completeness === "incomplete");
   if (incomplete.length > 0)

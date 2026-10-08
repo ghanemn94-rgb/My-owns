@@ -10,21 +10,19 @@
 // Schedule flags come from schedule.ts (ADR-0023 §5): on dependencies and on the successor initiatives. This file also
 // supplies them to the T08 dependency routes of the workflows module (which cannot import portfolio) as the
 // T08ScheduleFlagsProvider `t08ScheduleFlags`, which server.ts passes in explicitly. No critical-path claim (ADR-0023 §5).
-import type { DbOrTx, DependencyTable, InitiativeTable } from "@mth/db";
-import type { FundingState, Initiative, ScheduleFlag, Warning } from "@mth/shared/schemas";
+import type { DbOrTx, DependencyTable } from "@mth/db";
+import type { ScheduleFlag } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import type { Selectable } from "kysely";
 import { z } from "zod";
 import { principalOf, requireTransformationRead } from "../access/index.ts";
 import { iso, isoOrNull, parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
 import type { T08Dependency, T08ScheduleFlagsProvider } from "../workflows/index.ts";
-import { deliverableCountWarning, loadDeliverables, toDeliverable } from "./deliverables.ts";
-import { latestFundingState } from "./funding.ts";
+import { loadDeliverables, toDeliverable } from "./deliverables.ts";
 import { loadMilestones, toMilestone } from "./milestones.ts";
+import { presentInitiatives } from "./repository.ts";
 import { computeScheduleFlags, type ScheduleDependency, type ScheduleFacts } from "./schedule.ts";
 import { dateText, loadWaves, toRoadmapWave } from "./waves.ts";
-
-type InitiativeRow = Selectable<InitiativeTable>;
 
 // ------------------------------------------------------------------------------------------------ schedule facts
 
@@ -126,75 +124,6 @@ export const toRoadmapDependency = (r: DependencyRow, flags: readonly ScheduleFl
   updatedBy: r.updated_by,
 });
 
-// ------------------------------------------------------------------------------------------------ initiatives
-
-const FUNDING_RELEVANT = new Set(["selected", "funded", "launched", "completed"]);
-
-/**
- * The Initiative representation for the read model: the T05 fields, funding state (latestFundingState), the display
- * status ('Selected - unfunded'), the readiness warnings (ADR-0021 §2) and the schedule flags. Warnings and flags are
- * hints, never rejections.
- */
-async function presentInitiatives(
-  db: DbOrTx,
-  rows: readonly InitiativeRow[],
-  activeDeliverables: ReadonlyMap<string, number>,
-  gapLinked: ReadonlySet<string>,
-  flags: ReadonlyMap<string, readonly ScheduleFlag[]>,
-): Promise<Initiative[]> {
-  const out: Initiative[] = [];
-  for (const r of rows) {
-    const fundingState: FundingState = FUNDING_RELEVANT.has(r.status)
-      ? await latestFundingState(db, r.id)
-      : "not_applicable";
-    const warnings: Warning[] = [];
-    const count = deliverableCountWarning(activeDeliverables.get(r.id) ?? 0);
-    if (count !== null) warnings.push(count);
-    if (!gapLinked.has(r.id))
-      warnings.push({ code: "initiative.no_gap_link", message: "The initiative is not linked to a gap or finding." });
-    if (r.executive_owner_user_id === null)
-      warnings.push({ code: "initiative.no_owner", message: "The initiative has no executive owner." });
-    out.push({
-      id: r.id,
-      organizationId: r.organization_id,
-      transformationId: r.transformation_id,
-      code: r.code,
-      name: r.name,
-      executiveOwnerUserId: r.executive_owner_user_id,
-      workstreamLeadUserId: r.workstream_lead_user_id,
-      problemStatement: r.problem_statement,
-      objective: r.objective,
-      scopeIn: r.scope_in,
-      scopeOut: r.scope_out,
-      financialBenefitSummary: r.financial_benefit_summary,
-      customerBenefitSummary: r.customer_benefit_summary,
-      risksSummary: r.risks_summary,
-      waveId: r.wave_id,
-      plannedStart: dateText(r.planned_start),
-      plannedEnd: dateText(r.planned_end),
-      status: r.status as Initiative["status"],
-      fundingState,
-      displayStatus:
-        r.status === "selected" && fundingState !== "funded"
-          ? "initiative.status.selected_unfunded"
-          : `initiative.status.${r.status}`,
-      launchedAt: isoOrNull(r.launched_at),
-      launchedBy: r.launched_by,
-      cancelledAt: isoOrNull(r.cancelled_at),
-      cancelledBy: r.cancelled_by,
-      cancelReason: r.cancel_reason,
-      warnings,
-      flags: [...(flags.get(r.id) ?? [])],
-      version: r.version,
-      createdAt: iso(r.created_at),
-      createdBy: r.created_by,
-      updatedAt: iso(r.updated_at),
-      updatedBy: r.updated_by,
-    });
-  }
-  return out;
-}
-
 // ------------------------------------------------------------------------------------------------ the read model
 
 async function loadRoadmap(db: DbOrTx, transformationId: string) {
@@ -216,26 +145,13 @@ async function loadRoadmap(db: DbOrTx, transformationId: string) {
     .where("to_initiative_id", "is not", null)
     .orderBy("code")
     .execute();
-  const gapLinks = await db
-    .selectFrom("initiative_gap_link")
-    .select("initiative_id")
-    .where("transformation_id", "=", transformationId)
-    .where("status", "=", "active")
-    .execute();
   const schedule = computeScheduleFlags(await loadScheduleFacts(db, transformationId));
-  const activeDeliverables = new Map<string, number>();
-  for (const d of deliverables)
-    activeDeliverables.set(d.initiative_id, (activeDeliverables.get(d.initiative_id) ?? 0) + 1);
   return {
     transformationId,
     waves: waves.map(toRoadmapWave),
-    initiatives: await presentInitiatives(
-      db,
-      initiatives,
-      activeDeliverables,
-      new Set(gapLinks.map((g) => g.initiative_id)),
-      schedule.byInitiative,
-    ),
+    // The one initiative presenter (repository.ts; p3-work-split §9 item 13): warnings, funding state, the i18n display
+    // status and the schedule and capacity flags.
+    initiatives: await presentInitiatives(db, initiatives),
     milestones: milestones.map(toMilestone),
     deliverables: deliverables.map(toDeliverable),
     dependencies: dependencies.map((d) => toRoadmapDependency(d, schedule.byDependency.get(d.id) ?? [])),

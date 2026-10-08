@@ -114,6 +114,8 @@ const P3_CHECK_POINTERS: ReadonlyMap<string, string> = new Map([
   ["business_case_line_one_class", "/investmentClass"],
   ["business_case_line_period_range", "/periodEnd"],
   ["benefit_calculation_period_range", "/periodEnd"],
+  // The contribution's KPI must belong to its outcome (0020 trigger; BE-B handback §7 item 1, T-DG3-BE-E).
+  ["initiative_contribution_kpi_matches_outcome", "/outcomeKpiId"],
 ]);
 
 const SQLSTATE = /^[0-9A-Z]{5}$/;

@@ -31,6 +31,20 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows).toEqual([{ tgname: "gate_decision_g1_agreements", deferrable: true, deferred: true }]);
   });
 
+  it("0026: product gate G4 is submittable; G5 and G6 stay closed (ADR-0021 §7)", async () => {
+    const rows = await q<{ code: string; submission_enabled: boolean }>(
+      `SELECT code, submission_enabled FROM gate_definition ORDER BY ordinal`,
+    );
+    expect(rows.map((r) => [r.code, r.submission_enabled])).toEqual([
+      ["G1", true],
+      ["G2", true],
+      ["G3", true],
+      ["G4", true],
+      ["G5", false],
+      ["G6", false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,

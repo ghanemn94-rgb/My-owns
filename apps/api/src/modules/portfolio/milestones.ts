@@ -38,6 +38,7 @@ import {
   type LooseRow,
 } from "../transformations/index.ts";
 import { readableInitiative } from "./deliverables.ts";
+import { assertInitiativeEditable } from "./repository.ts";
 import { checkVersion, dateText, JSON_BODY, lockForWrite, rule } from "./waves.ts";
 
 export type MilestoneRow = Selectable<MilestoneTable>;
@@ -143,6 +144,7 @@ async function createMilestone(tx: Tx, request: FastifyRequest, initiativeId: st
     { atCommit: true },
   );
   const body = parseBody(milestoneCreate, request.body);
+  await assertInitiativeEditable(tx, initiativeId);
   await assertSameTransformation(tx, "roadmap_wave", ini.transformation_id, body.waveId, "/waveId");
   await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }]);
   const id = uuidv7();
@@ -189,6 +191,7 @@ async function updateMilestone(tx: Tx, request: FastifyRequest, id: string): Pro
   );
   const body = parseBody(milestoneUpdate, request.body);
   checkVersion(request, current);
+  await assertInitiativeEditable(tx, current.initiative_id);
   const status = body.status ?? current.status;
   const actual = body.actualDate !== undefined ? body.actualDate : dateText(current.actual_date);
   assertAchievedShape(status, actual);
@@ -234,6 +237,7 @@ async function approveMilestoneDate(tx: Tx, request: FastifyRequest, id: string)
   );
   const body = parseBody(milestoneDateApproval, request.body);
   checkVersion(request, current);
+  await assertInitiativeEditable(tx, current.initiative_id);
   if (current.status === "cancelled")
     throw rule("milestone.cancelled", "A cancelled milestone has no approved date to set.", "/approvedDate");
   const reapproval = current.approved_date !== null;
