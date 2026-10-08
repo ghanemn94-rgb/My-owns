@@ -15,7 +15,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
 - **DG3 state: REVIEWING, gate round 4** on candidate `sha256:8376d762…` (757 files, source `171a0b5`, frozen 2026-10-08).
   - **Rounds 1–3** (D-080 to D-084):
-    - five findings raised: F-DG3-100, 120, 170, 180, plus one duplicate pair;
+    - four findings raised: F-DG3-100, 120, 170 and 180 (170 and 180 describe the same defect);
     - F-120, F-170 and F-180 are CLOSED_VERIFIED;
     - F-DG3-100 (Low, the formula engine's no-dynamic-code guard) failed verification twice and has had three repairs: KBE-D, KBE-E and KBE-F.
   - **Incidents:**
