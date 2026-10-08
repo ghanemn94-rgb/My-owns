@@ -1,0 +1,691 @@
+# git diff of the T-DG3-KBE-F changes against HEAD 1f02d3bcbb08aa978c1901ab2f84380c06de6c5a (Thu Oct  8 13:57:27 UTC 2026)
+ ...0024-p3-business-case-and-formula-foundation.md |  36 ++--
+ docs/architecture/p3-work-split.md                 |   8 +
+ eslint.config.js                                   |  36 +++-
+ .../shared/src/formula/codegen.nocodegen.test.ts   |  54 +++++-
+ packages/shared/src/formula/evaluate.ts            |   5 +-
+ packages/shared/src/formula/formula.test.ts        |  73 +++++++-
+ packages/shared/src/formula/fuzz.test.ts           | 198 +++++++++++++++++++--
+ packages/shared/src/formula/index.ts               |  18 +-
+ packages/shared/src/value.ts                       |   5 +-
+ 9 files changed, 401 insertions(+), 32 deletions(-)
+diff --git a/docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md b/docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+index 7657f3d..0e2cb8a 100644
+--- a/docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
++++ b/docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+@@ -88,36 +88,52 @@ G4 `g4.finance_validation` is complete only when every in-scope case (and the tr
+ 
+ **No dynamic code.** The engine is a hand-written tokenizer, recursive-descent parser and AST walker. `eval`, `new Function`, `Function(...)`, `vm`/`node:vm`, `setTimeout(string)`, dynamic `import()` and `with` are forbidden in `packages/shared/src/formula/**`; an ESLint override (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports: vm, node:vm`, `no-restricted-syntax: ImportExpression`, `WithStatement`, timer calls `setTimeout`/`setInterval`/`setImmediate`/`execScript` as plain or member calls, and `.constructor(...)` calls) enforces it. The timer selectors are needed because core `no-implied-eval` only recognises declared globals (T-DG3-KBE-A lint probe); a source scan in `fuzz.test.ts` backs the rule up.
+ 
+-**Extended guard (F-DG3-100; T-DG3-KBE-D, rewritten by T-DG3-KBE-E).** There are three layers, and each one guarantees only what is stated here.
+-
+-1. **Static layer: ESLint (`eslint.config.js`, two formula blocks).**
+-   - For every file under `packages/shared/src/formula/**`:
++**Extended guard (F-DG3-100; T-DG3-KBE-D, rewritten by T-DG3-KBE-E, corrected by T-DG3-KBE-F).** There are three layers, and each one guarantees only what is stated here.
++
++**Scope: the engine's import closure.** The guarded code is the engine's transitive static import closure from `formula/index.ts`: the six sources in `packages/shared/src/formula/` (`evaluate.ts`, `index.ts`, `parse.ts`, `tokenize.ts`, `typecheck.ts`, `types.ts`) and `packages/shared/src/value.ts`, plus the package `decimal.js`. Below, "the engine sources" means all seven files. `value.ts` is the closure's only file outside `formula/` (`FORMULA_CLOSURE_OUTSIDE` in `eslint.config.js`).
++- **Pinned by a test.** `fuzz.test.ts` computes the closure from `formula/index.ts`, following every static `import` and `export … from` (type-only included), and asserts four things:
++  - every relative specifier resolves to a file;
++  - `decimal.js` is the only package;
++  - every file of the closure is in the source scan's file set (layer 2);
++  - ESLint's computed configuration for every file of the closure carries the engine-source rules of layer 1 (`ESLint.calculateConfigForFile`). These include `no-eval`, `no-implied-eval`, `no-new-func`, the host globals, an import allowlist that refuses `node:vm`, `node:module`, `node:inspector`, `node:fs`, `zod` and `@mth/shared`, and the engine-source syntax selectors.
++- **What this means.** A file the engine starts to import, directly or through another file, fails this test until it is added to both static layers.
++- **One exception to the both-projects rule.** The ESLint assertion runs in `unit-node` only. ESLint validates rule options with ajv, which compiles schemas with `new Function`, so ESLint cannot run under `--disallow-code-generation-from-strings`. Lint coverage is a property of the configuration, not of the process. The other three closure assertions run in both projects.
++- **decimal.js.** It is a pinned third-party package (10.6.0) and is outside layers 1–2. Its 10.6.0 sources contain no `eval(` or `Function(` call. Layer 3 covers whatever part of it the tests exercise.
++
++1. **Static layer: ESLint (`eslint.config.js`, the formula blocks).**
++   - For every file under `packages/shared/src/formula/**`, and for `packages/shared/src/value.ts`:
+      - `no-eval`, `no-implied-eval` and `no-new-func`;
+      - `no-restricted-globals` for `Function`, `eval` and `Reflect`;
+      - `no-restricted-syntax` for any `Function` identifier, computed `["constructor"]`/`["Function"]` members, any `.constructor` read or destructuring, `require`/`createRequire`, `Reflect.*`, `import()`, `with`, and timer calls;
+      - `no-restricted-imports` for `vm`, `module`, `worker_threads`, `child_process`, `inspector` and `repl`, with and without `node:`.
+-   - For the engine sources only (the non-test files, excluding `test-support/`), these rules as well:
+-     - **An import allowlist.** `no-restricted-imports` refuses every specifier except `./<name>.ts`, `../value.ts` and `decimal.js`, for `import`, `import type` and `export … from`. That refuses every `node:*` built-in and every npm or workspace package. The engine uses no `@mth/*` workspace import. Separately, run-time module loading is refused: `import()`, `require`, `createRequire`, `import.meta`, and `process` (which carries `getBuiltinModule`).
++   - For the engine sources only (the non-test files of `formula/`, excluding `test-support/`, and `value.ts`), these rules as well:
++     - **An import allowlist.** `no-restricted-imports` refuses every specifier except `./<name>.ts`, `../value.ts` and `decimal.js`, for `import`, `import type` and `export … from`. For `value.ts` the allowlist is narrower: `decimal.js` only, so it cannot pull a further module into the closure. That refuses every `node:*` built-in and every npm or workspace package. The engine uses no `@mth/*` workspace import. Separately, run-time module loading is refused: `import()`, `require`, `createRequire`, `import.meta`, and `process` (which carries `getBuiltinModule`).
+      - **Host globals.** `process`, `global`, `globalThis`, `self`, `window`, `frames`, `parent`, `top`, `opener` and `document` are refused both through `no-restricted-globals` and as any identifier, so a shadowing `declare const global` is refused too. The engine uses none of them.
+      - **Constructor keys.** Any string literal, template element or identifier equal to `constructor` is refused, except the name of a class constructor declaration.
+      - **Prototype reflection and assembled keys.** Also refused: prototype reflection (`getPrototypeOf`, `getOwnPropertyDescriptor(s)`, `setPrototypeOf`, `defineProperty`, `__proto__`, …), a computed key assembled from a string literal (`["con" + k]`, or a template with substitutions), and a computed member read directly off a function expression.
+    - **Guarantee and limit.** This layer is a best-effort denylist for the common spellings, plus the import allowlist. It is not complete, and it cannot be: JavaScript can assemble a property key at run time from values that no static rule sees.
+ 2. **Static layer: the source scan (`fuzz.test.ts`, `scanSource`).**
+-   - It mirrors layer 1 on the engine sources, with comments stripped. It checks the same denylist words, the host globals, the word `constructor` outside a class constructor declaration, prototype reflection, string-assembled keys, `import.meta`, hex and Unicode escapes, and the same import allowlist.
++   - It mirrors layer 1 on the engine sources, with comments stripped. Its file set is the six `formula/` sources and `value.ts`, and the closure test asserts that this set contains the whole closure. It checks the same denylist words, the host globals, the word `constructor` outside a class constructor declaration, prototype reflection, string-assembled keys, `import.meta`, hex and Unicode escapes, and the same import allowlists (`decimal.js` only for `value.ts`).
+    - A probe table pins that each F-DG3-100 form is a hit: the round-1 forms O1–O6, the round-2 forms N1–N12, and other non-allowlisted imports.
+    - Its guarantee and its limit are the same as layer 1's.
+ 3. **Run-time layer, independent of spelling (`vitest.config.ts`, project `unit-formula-nocodegen`).**
+    - `pnpm test` runs the whole formula test corpus a second time: every `*.test.ts` under `packages/shared/src/formula/`, including `formula.test.ts` and `fuzz.test.ts`. It runs in forked Node processes started with `--disallow-code-generation-from-strings`.
+    - In those processes, `eval` and every construction of `Function`, `AsyncFunction` or `GeneratorFunction` from a string throw `EvalError`, however the constructor was reached and however its key was spelled.
+-   - **Guarantee.** Any engine path that generates code from a string fails the engine's tests, provided a test exercises it.
++   - **Guarantee.** Any engine path that generates code from a string fails the engine's tests, provided a test exercises it. Two rules make this true, whatever the exercising test asserts:
++     - **The engine rethrows `EvalError` (F-DG3-100 round 4).** Every catch in the closure rethrows `EvalError` instead of converting it into a problem or a null. There are four: `validateFormula`, `evaluateFormula`, the tree walk in `evaluateAst`, and `formatDecimal` in `value.ts`. So the exception reaches the test.
++     - **An internal failure fails the tests.** Every outcome check in `fuzz.test.ts` refuses a problem with `params.reason: "internal"`, through the helper `internalProblems`. That covers `checkOutcome` (all 40,000 generated inputs, for both `validateFormula` and `evaluateFormula`) and the code-shaped-payload test. Every row of `formula.test.ts`'s rejection table refuses one too.
++     - **Regression.** `codegen.nocodegen.test.ts` runs a real string code generation inside each of the four catches, through the public entry points (a caller-supplied getter, or a crafted checked formula). It requires the `EvalError` to come out. In both projects, `formula.test.ts` pins the other half: a `TypeError` at the same four points is still converted.
++     - **Production behaviour.** A genuinely unexpected error is unchanged: it is a 422 `formula.syntax` problem with `reason: "internal"` (`formatDecimal`: null, shown as Unknown). An `EvalError` cannot occur in production, because nothing in the engine generates code. If one ever did occur, it would propagate: the API's error handler answers with the generic 500 `internal` problem, and the web formula builder would show its error boundary. It is never shown as a user's syntax error.
+    - **Canary.** `codegen.nocodegen.test.ts` runs only in this project. It asserts that the flag is in the process's `execArgv`, and that each of these throws `EvalError`: `new Function`, direct and indirect `eval`, and the AsyncFunction and GeneratorFunction constructors reached through a prototype. If the flag is ever lost, the canary fails, so the guard cannot disappear silently.
+-   - **Not covered by the flag.** It does not cover `node:vm`, `node:inspector`, or a module loaded with `process.getBuiltinModule`. Layers 1–2 refuse those, through the import allowlist and the `process` ban.
++   - **Not covered by the flag.** It does not cover `node:vm`, `node:inspector`, or a module loaded with `process.getBuiltinModule`. Layers 1–2 refuse those in every file of the engine's import closure, `value.ts` included, through the import allowlists and the `process` ban. The closure test ensures that no file of the closure is outside them. `decimal.js` is outside layers 1–2 (see "Scope").
+    - **Mechanics**, recorded because they are not obvious:
+      - Vitest 3.2 honours the forks pool's `execArgv` only at the root, so the project runs in its own Vitest invocation, the second command of `pnpm test`. The config refuses to combine it with another project.
+      - Neither the `threads` pool nor `vmForks` can carry the flag: worker threads refuse it (`ERR_WORKER_INVALID_EXEC_ARGV`), and `node:vm` contexts re-enable code generation.
+      - tinypool 1.1.1 resolves its warm-up handler through `new Function` when the handler name is not exported. So `test-support/nocodegen-preload.mjs`, loaded with `--import`, renames that one warm-up message to the worker's `run` export. The preload enables no code generation.
+ 
+-**Residual.** The run-time layer covers only what the tests exercise: the unit tests, and the fuzz tests with 40,000 generated inputs through `validateFormula` and `evaluateFormula`. No coverage figure is claimed. A code-generating path that no test exercises is caught only by the static layers, which are best effort. For example, `f[k](…)`, where `f` is an ordinary function variable and `k` is assembled at run time from non-literal parts, passes both static layers.
++**Residual.** The run-time layer covers only what the tests exercise: the unit tests, and the fuzz tests with 40,000 generated inputs through `validateFormula` and `evaluateFormula`. No coverage figure is claimed. A code-generating path that no test exercises is caught only by the static layers, which are best effort.
++- **The example.** `f[k](…)`, where `f` is an ordinary function variable and `k` is assembled at run time from non-literal parts, passes both static layers. Examples of such a `k`: a key harvested with `Object.getOwnPropertyNames`, or built with `String.fromCharCode`, `atob`, `decodeURIComponent` or a reversed string (the reviewer's Q1–Q5).
++- **Where it is refused.** Such a form fails the tests only on a path a test exercises. Wherever it sits in the closure, an exercised one fails every test that reaches it, through the `EvalError` rethrow. A future catch that converted it into an internal problem would still fail every `fuzz.test.ts` outcome check and every rejection-table row that reaches it, through the internal-failure rule.
+ 
+ **Production.**
+ - **Browser.** The web bundle, which includes this engine, is served by the API through `@fastify/static`. It carries the CSP from `HELMET_OPTIONS` in `apps/api/src/server.ts` (`useDefaults: false`): `script-src 'self'` with no `'unsafe-eval'`. The browser therefore refuses `eval` and string `Function` construction for that document. This was verified on the emitted header (T-DG3-KBE-E evidence). It holds only where the API serves the web bundle; a different web host must send an equivalent CSP.
+diff --git a/docs/architecture/p3-work-split.md b/docs/architecture/p3-work-split.md
+index d43bb4d..30aae37 100644
+--- a/docs/architecture/p3-work-split.md
++++ b/docs/architecture/p3-work-split.md
+@@ -278,3 +278,11 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
+     - **Fork preload.** `packages/shared/src/formula/test-support/nocodegen-preload.mjs` lets tinypool start a fork under the flag.
+     - **Engine sources.** ESLint and the `fuzz.test.ts` scan now apply an import allowlist (`./*.ts`, `../value.ts`, `decimal.js`). They also refuse the host globals (`process`, `global`, `globalThis`, `self`, `window`, …), any `constructor` literal or identifier other than a class constructor, prototype reflection, and string-assembled computed keys.
+     - The engine code is unchanged.
++
++### Amendments in the DG3 round-4 repair (T-DG3-KBE-F, 2026-10-08)
++
++26. **Formula no-dynamic-code guard: an exercised `EvalError` fails, and the whole import closure is guarded (F-DG3-100 third pass; ADR-0024 §6 "Extended guard").**
++    - **The engine rethrows `EvalError`.** Every catch in the engine's import closure rethrows a refused code generation instead of converting it: `validateFormula`, `evaluateFormula`, `evaluateAst`'s tree walk and `packages/shared/src/value.ts` `formatDecimal`. Every other unexpected error is unchanged: a 422 `formula.syntax` `internal` problem, or null in `formatDecimal`. An `EvalError` cannot occur in production. If it ever did, the API would answer with its generic 500 `internal` problem.
++    - **Internal failures fail the tests.** In `fuzz.test.ts` (`checkOutcome` and the payload test) and in `formula.test.ts`'s rejection table, every outcome check refuses a `params.reason: "internal"` problem. `codegen.nocodegen.test.ts` adds a regression that generates code inside each of the four catches under the flag and requires the `EvalError`.
++    - **The import closure.** `value.ts` gets every engine-source ESLint rule (`FORMULA_CLOSURE_OUTSIDE`), with a `decimal.js`-only import allowlist, and joins the source scan's file set. A test computes the static import closure from `formula/index.ts` and checks that every file in it is covered by the scan and by the ESLint rules (the ESLint check runs in `unit-node` only).
++    - **API and web.** No API or web contract changes.
+diff --git a/eslint.config.js b/eslint.config.js
+index 02e4228..ae2b867 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -137,6 +137,15 @@ const FORMULA_SOURCE_SYNTAX = [
+  * uses no @mth/* workspace import.
+  */
+ const FORMULA_IMPORT_ALLOWLIST = /^(?!(?:\.\/[A-Za-z0-9_-]+\.ts|\.\.\/value\.ts|decimal\.js)$)/.source;
++
++/**
++ * F-DG3-100 (round 4): the files of the engine's transitive import closure (from formula/index.ts) that live outside
++ * packages/shared/src/formula. Each gets every engine-source rule below, and fuzz.test.ts scans it and asserts that the
++ * closure contains no other file. Today that is ../value.ts alone.
++ */
++const FORMULA_CLOSURE_OUTSIDE = ["packages/shared/src/value.ts"];
++/** ../value.ts's own allowlist is narrower: decimal.js only, so it cannot pull a further module into the closure. */
++const FORMULA_CLOSURE_OUTSIDE_IMPORT_ALLOWLIST = /^(?!decimal\.js$)/.source;
+ export default tseslint.config(
+   {
+     ignores: [
+@@ -172,8 +181,9 @@ export default tseslint.config(
+     // ADR-0024 §6 "No dynamic code" (T-DG3-KBE-A, F-DG3-100): every file under packages/shared/src/formula, engine
+     // sources and tests. no-restricted-syntax replaces the generic list for these files, so the parseFloat ban is
+     // repeated in FORMULA_SYNTAX. The tests keep the access they need (fuzz.test.ts's globalThis.Function tripwire, the
+-    // no-codegen canary) through justified eslint-disable comments.
+-    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}"],
++    // no-codegen canary) through justified eslint-disable comments. F-DG3-100 round 4: also the engine's import closure
++    // outside formula/ (FORMULA_CLOSURE_OUTSIDE).
++    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}", ...FORMULA_CLOSURE_OUTSIDE],
+     rules: {
+       "no-eval": "error",
+       "no-implied-eval": "error",
+@@ -207,8 +217,8 @@ export default tseslint.config(
+     // F-DG3-100 (round 3): the engine sources (non-test files) additionally get the import allowlist, the host-object
+     // globals and the constructor-key, prototype-reflection and assembled-key rules. Tests and test-support/ (the
+     // no-codegen fork preload, never built or imported by the engine) are excluded so they keep node:fs, node:url,
+-    // process and their tripwires.
+-    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}"],
++    // process and their tripwires. F-DG3-100 round 4: also the engine's import closure outside formula/.
++    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}", ...FORMULA_CLOSURE_OUTSIDE],
+     ignores: ["packages/shared/src/formula/**/*.test.{ts,tsx,js,mjs}", "packages/shared/src/formula/test-support/**"],
+     rules: {
+       "no-restricted-globals": [
+@@ -233,6 +243,24 @@ export default tseslint.config(
+       "no-restricted-syntax": ["error", ...FORMULA_SYNTAX, ...FORMULA_SOURCE_SYNTAX],
+     },
+   },
++  {
++    // F-DG3-100 (round 4): the closure files outside formula/ keep every rule of the block above, with the narrower
++    // import allowlist (a later block's no-restricted-imports replaces the earlier one for these files).
++    files: FORMULA_CLOSURE_OUTSIDE,
++    rules: {
++      "no-restricted-imports": [
++        "error",
++        {
++          patterns: [
++            {
++              regex: FORMULA_CLOSURE_OUTSIDE_IMPORT_ALLOWLIST,
++              message: `The formula engine's import closure outside formula/ imports only decimal.js ${FORMULA_MSG}.`,
++            },
++          ],
++        },
++      ],
++    },
++  },
+   {
+     files: ["apps/web/**/*.{ts,tsx}"],
+     plugins: { "react-hooks": reactHooks },
+diff --git a/packages/shared/src/formula/codegen.nocodegen.test.ts b/packages/shared/src/formula/codegen.nocodegen.test.ts
+index 232885d..28f5907 100644
+--- a/packages/shared/src/formula/codegen.nocodegen.test.ts
++++ b/packages/shared/src/formula/codegen.nocodegen.test.ts
+@@ -5,7 +5,8 @@
+ // change or a Vitest upgrade that ignores execArgv makes these tests fail). Each attempt below would return 1 in a
+ // normal process; here every one must throw EvalError before any code runs.
+ import { describe, expect, it } from "vitest";
+-import { evaluateFormula } from "./index.ts";
++import { formatDecimal } from "../value.ts";
++import { evaluateAst, evaluateFormula, validateFormula, type CheckedFormula } from "./index.ts";
+ 
+ describe("no-codegen canary: string code generation is disabled in this process", () => {
+   it("the process was started with --disallow-code-generation-from-strings", () => {
+@@ -48,3 +49,54 @@ describe("no-codegen canary: string code generation is disabled in this process"
+     expect(r.result).toBe("42");
+   });
+ });
++
++// F-DG3-100 (round 4) regression. An engine path that generates code from a string, and that a test exercises, must FAIL
++// here. Round 3 showed the engine's own catch-all turning the EvalError into an ordinary formula.syntax "internal"
++// problem, which the tests accepted. Each case below runs a real code generation (the GeneratorFunction constructor,
++// reached by a key assembled at run time, as in the reviewer's S1/S3 forms) INSIDE one of the engine's catches, through
++// the public entry points, and requires the EvalError to come out. Before round 4 every one of them returned a problem
++// (or null) instead.
++describe("no-codegen regression: an exercised code generation inside the engine surfaces as EvalError", () => {
++  /** Generates code from a string: throws EvalError in this process, before any code runs. */
++  const generateCode = (): never => {
++    const key = ["con", "struc", "tor"].join("");
++    const proto = Object.getPrototypeOf(function* () {}) as Record<string, (body: string) => unknown>;
++    proto[key]!("yield 1");
++    throw new Error("unreachable: code generation was not refused");
++  };
++
++  it("validateFormula (parse/type-check catch): code generated while the variables are read", () => {
++    const variables = [
++      Object.defineProperty({ kind: "number", period: "none", value: "1" }, "name", {
++        enumerable: true,
++        get: generateCode,
++      }),
++    ];
++    expect(() => validateFormula("a", variables)).toThrow(EvalError);
++  });
++
++  it("evaluateFormula (evaluation catch): code generated while an input is read", () => {
++    const inputs = Object.defineProperty({}, "a", { enumerable: true, get: generateCode });
++    expect(() =>
++      evaluateFormula(
++        "a",
++        [{ name: "a", kind: "number", period: "none", value: "1" }],
++        inputs as Record<string, string>,
++      ),
++    ).toThrow(EvalError);
++  });
++
++  it("evaluateAst (tree-walk catch): code generated while a node is walked", () => {
++    const v = validateFormula("1", []);
++    expect(v.ok).toBe(true);
++    if (!v.ok) return;
++    const root = Object.defineProperty({ type: "number", start: 0, end: 1 }, "value", { get: generateCode });
++    const checked = { ...v.checked, ast: { ...v.checked.ast, root } as CheckedFormula["ast"] };
++    expect(() => evaluateAst(checked)).toThrow(EvalError);
++  });
++
++  it("../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read", () => {
++    const value = { toString: generateCode } as unknown as string;
++    expect(() => formatDecimal(value, { locale: "en" })).toThrow(EvalError);
++  });
++});
+diff --git a/packages/shared/src/formula/evaluate.ts b/packages/shared/src/formula/evaluate.ts
+index fafa8d5..64dd073 100644
+--- a/packages/shared/src/formula/evaluate.ts
++++ b/packages/shared/src/formula/evaluate.ts
+@@ -112,7 +112,8 @@ const plain = (d: Dec): string => (d.isZero() ? "0" : d.toFixed());
+ 
+ /**
+  * Evaluates a checked formula (from validateFormula). `inputs` (own properties only) override the declared values.
+- * Never throws: every failure is a problem with a null (Unknown) result.
++ * Never throws except EvalError (a refused code generation, which cannot occur; see index.ts internalProblem): every
++ * failure is a problem with a null (Unknown) result.
+  */
+ export function evaluateAst(checked: CheckedFormula, inputs: FormulaInputs = {}): FormulaEvaluation {
+   const { ast, resultType, variables, conversions } = checked;
+@@ -254,6 +255,8 @@ export function evaluateAst(checked: CheckedFormula, inputs: FormulaInputs = {})
+     exactValue = walk(ast.root);
+   } catch (e) {
+     if (e instanceof EvalFailure) return fail([e.problem], inexact);
++    // ADR-0024 §6 (F-DG3-100 round 4): a refused code generation is rethrown, never converted (see index.ts internalProblem).
++    if (e instanceof EvalError) throw e;
+     return fail([internal(e instanceof Error ? e.name : "error")], inexact);
+   }
+ 
+diff --git a/packages/shared/src/formula/formula.test.ts b/packages/shared/src/formula/formula.test.ts
+index 2812cce..1e40107 100644
+--- a/packages/shared/src/formula/formula.test.ts
++++ b/packages/shared/src/formula/formula.test.ts
+@@ -1,7 +1,7 @@
+ // T09 formula engine unit tests (ADR-0024 §6 "Verification"; T-DG3-KBE-A). Worked fixtures are the two seeded
+ // playbook examples (B0087): Δ attach × customers × ARPU and volume × Δ unit cost. Synthetic, illustrative values.
+ import { describe, expect, it } from "vitest";
+-import { compareDecimal } from "../value.ts";
++import { compareDecimal, formatDecimal } from "../value.ts";
+ import {
+   ENGINE_VERSION,
+   evaluateAst,
+@@ -12,6 +12,8 @@ import {
+   parseFormula,
+   tokenize,
+   validateFormula,
++  type CheckedFormula,
++  type FormulaProblem,
+   type FormulaVariable,
+ } from "./index.ts";
+ 
+@@ -31,6 +33,14 @@ const costVars: FormulaVariable[] = [
+   { name: "target_unit_cost", kind: "currency", currency: "SAR", period: "none", value: "10.00" },
+ ];
+ 
++/**
++ * F-DG3-100 (round 4): the problems that report an internal engine failure (params.reason "internal"). An expected
++ * rejection is never an internal failure, so every rejection row refuses one. The same helper is in fuzz.test.ts.
++ */
++function internalProblems(problems: readonly FormulaProblem[]): string[] {
++  return problems.filter((p) => p.params["reason"] === "internal").map((p) => `${p.code}: ${p.message}`);
++}
++
+ /** Variables a..z (and any other listed name) as dimensionless numbers with value 1. */
+ function numbers(...names: string[]): FormulaVariable[] {
+   return names.map((name) => ({ name, kind: "number", period: "none", value: "1" }));
+@@ -157,6 +167,8 @@ describe("grammar table (ADR-0024 §6 EBNF)", () => {
+       const r = validateFormula(expr, ABC);
+       expect(r.ok).toBe(false);
+       if (r.ok) return;
++      expect(internalProblems(r.errors)).toEqual([]);
++      expect(internalProblems(evaluateFormula(expr, ABC).errors)).toEqual([]);
+       expect(r.errors).toHaveLength(1);
+       expect(r.errors[0]!.code).toBe("formula.syntax");
+       expect(r.errors[0]!.offset).toBe(offset);
+@@ -757,3 +769,62 @@ describe("display by kind (ADR-0024 §6 table)", () => {
+     expect(displayNumber("garbage", "fraction")).toBeNull();
+   });
+ });
++
++// F-DG3-100 (round 4), ADR-0024 §6: every catch in the engine's import closure converts a genuinely unexpected error
++// into a problem (the API's 422 formula.syntax "internal", never 500), but RETHROWS EvalError, the host's refusal of a
++// code generation. Each catch is reached here through a caller-supplied getter or a crafted checked formula; nothing
++// generates code (codegen.nocodegen.test.ts does that, under the flag).
++describe("internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6)", () => {
++  type Thrower = () => never;
++  const typeError: Thrower = () => {
++    throw new TypeError("simulated defect");
++  };
++  const evalError: Thrower = () => {
++    throw new EvalError("simulated refused code generation");
++  };
++  /** A variables list whose first entry's name getter throws (read by checkVariables inside validateFormula's catch). */
++  const hostileVariables = (thrower: Thrower) => [
++    Object.defineProperty({ kind: "number", period: "none", value: "1" }, "name", { enumerable: true, get: thrower }),
++  ];
++  /** Inputs whose own value for `a` throws when read (evaluateAst step 1, inside evaluateFormula's second catch). */
++  const hostileInputs = (thrower: Thrower) => Object.defineProperty({}, "a", { enumerable: true, get: thrower });
++  /** A checked formula whose literal node throws when walked (inside evaluateAst's own catch). */
++  const hostileChecked = (thrower: Thrower): CheckedFormula => {
++    const v = validateFormula("1", []);
++    if (!v.ok) throw new Error("fixture");
++    const root = Object.defineProperty({ type: "number", start: 0, end: 1 }, "value", { get: thrower });
++    return { ...v.checked, ast: { ...v.checked.ast, root } as CheckedFormula["ast"] };
++  };
++  /** A value whose string conversion throws (fromStored inside ../value.ts formatDecimal's catch). */
++  const hostileValue = (thrower: Thrower) => ({ toString: thrower }) as unknown as string;
++
++  it("validateFormula: a TypeError is a formula.syntax 'internal' problem; an EvalError is rethrown", T, () => {
++    const r = validateFormula("a", hostileVariables(typeError));
++    expect(r.ok).toBe(false);
++    if (!r.ok) {
++      expect(r.errors[0]).toMatchObject({ code: "formula.syntax", offset: 0, params: { reason: "internal" } });
++      expect(r.errors[0]!.params["detail"]).toBe("TypeError");
++    }
++    expect(() => validateFormula("a", hostileVariables(evalError))).toThrow(EvalError);
++  });
++
++  it("evaluateFormula: a TypeError is an 'internal' problem with a null result; an EvalError is rethrown", T, () => {
++    const vars = numbers("a");
++    const r = evaluateFormula("a", vars, hostileInputs(typeError));
++    expect(r).toMatchObject({ ok: false, result: null, errorCode: "formula.syntax" });
++    expect(r.errors[0]!.params).toMatchObject({ reason: "internal", detail: "TypeError" });
++    expect(() => evaluateFormula("a", vars, hostileInputs(evalError))).toThrow(EvalError);
++  });
++
++  it("evaluateAst: a TypeError while walking is an 'internal' problem; an EvalError is rethrown", T, () => {
++    const r = evaluateAst(hostileChecked(typeError));
++    expect(r).toMatchObject({ ok: false, result: null, errorCode: "formula.syntax" });
++    expect(r.errors[0]!.params).toMatchObject({ reason: "internal", detail: "TypeError" });
++    expect(() => evaluateAst(hostileChecked(evalError))).toThrow(EvalError);
++  });
++
++  it("../value.ts formatDecimal: a TypeError is null (Unknown); an EvalError is rethrown", T, () => {
++    expect(formatDecimal(hostileValue(typeError), { locale: "en" })).toBeNull();
++    expect(() => formatDecimal(hostileValue(evalError), { locale: "en" })).toThrow(EvalError);
++  });
++});
+diff --git a/packages/shared/src/formula/fuzz.test.ts b/packages/shared/src/formula/fuzz.test.ts
+index 5fd0773..62b9282 100644
+--- a/packages/shared/src/formula/fuzz.test.ts
++++ b/packages/shared/src/formula/fuzz.test.ts
+@@ -6,10 +6,17 @@
+ //     only allowlisted modules, and names no global object, process, 'constructor' or prototype reflection.
+ //  This file also runs in the Vitest project unit-formula-nocodegen (node --disallow-code-generation-from-strings), the
+ //  spelling-independent run-time layer of ADR-0024 §6 (F-DG3-100).
+-import { readdirSync, readFileSync } from "node:fs";
+-import { fileURLToPath } from "node:url";
++import { existsSync, readdirSync, readFileSync } from "node:fs";
++import { fileURLToPath, pathToFileURL } from "node:url";
++import { ESLint } from "eslint";
+ import { afterEach, beforeEach, describe, expect, it } from "vitest";
+-import { evaluateFormula, validateFormula, type FormulaErrorCode, type FormulaVariable } from "./index.ts";
++import {
++  evaluateFormula,
++  validateFormula,
++  type FormulaErrorCode,
++  type FormulaProblem,
++  type FormulaVariable,
++} from "./index.ts";
+ 
+ /** Deterministic PRNG (mulberry32), so a failure reproduces from its seed. */
+ function rng(seed: number) {
+@@ -46,20 +53,32 @@ const VARS: FormulaVariable[] = [
+   { name: "u", kind: "currency", currency: "USD", period: "none", value: null },
+ ];
+ 
++const T10 = { timeout: 10_000 };
+ const DECIMAL_OR_NULL = /^-?[0-9]{1,18}(\.[0-9]{1,6})?$/;
+ 
++/**
++ * F-DG3-100 (round 4): the problems that report an internal engine failure (params.reason "internal"; index.ts
++ * internalProblem and evaluate.ts internal). No input, however random, may produce one: an internal failure is an
++ * engine defect, never an acceptable outcome. The same helper is in formula.test.ts.
++ */
++function internalProblems(problems: readonly FormulaProblem[]): string[] {
++  return problems.filter((p) => p.params["reason"] === "internal").map((p) => `${p.code}: ${p.message}`);
++}
++
+ function checkOutcome(expr: string) {
+   const v = validateFormula(expr, VARS);
+   if (v.ok) {
+     expect(v.resultType.kind).toBeTypeOf("string");
+   } else {
+     expect(v.errors.length).toBeGreaterThan(0);
++    expect(internalProblems(v.errors), JSON.stringify(expr)).toEqual([]);
+     for (const e of v.errors) {
+       expect(CODES).toContain(e.code);
+       expect(e.message).toBeTypeOf("string");
+     }
+   }
+   const e = evaluateFormula(expr, VARS);
++  expect(internalProblems(e.errors), JSON.stringify(expr)).toEqual([]);
+   if (e.result !== null) {
+     expect(e.result).toMatch(DECIMAL_OR_NULL);
+     expect(e.ok).toBe(true);
+@@ -209,8 +228,13 @@ describe("fuzz: no uncaught exception, no code execution", () => {
+     for (const p of payloads) {
+       const v = validateFormula(p, VARS);
+       expect(v.ok, p).toBe(false);
+-      if (!v.ok) expect(["formula.syntax", "formula.undefined_variable"]).toContain(v.errors[0]!.code);
+-      expect(evaluateFormula(p, VARS).result).toBeNull();
++      if (!v.ok) {
++        expect(["formula.syntax", "formula.undefined_variable"]).toContain(v.errors[0]!.code);
++        expect(internalProblems(v.errors), p).toEqual([]);
++      }
++      const e = evaluateFormula(p, VARS);
++      expect(e.result).toBeNull();
++      expect(internalProblems(e.errors), p).toEqual([]);
+     }
+     expect(g["__mth_pwned"]).toBeUndefined();
+     expect(tripped).toEqual([]);
+@@ -266,6 +290,8 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
+  * re-export only a sibling module (./x.ts), the shared value helpers (../value.ts) and decimal.js.
+  */
+ const IMPORT_ALLOWLIST = /^(?:\.\/[A-Za-z0-9_-]+\.ts|\.\.\/value\.ts|decimal\.js)$/;
++/** F-DG3-100 (round 4): ../value.ts, in the closure but outside formula/, may import decimal.js only (eslint.config.js). */
++const CLOSURE_OUTSIDE_IMPORT_ALLOWLIST = /^decimal\.js$/;
+ /** Static import/export-from specifiers, including multi-line braces, type-only imports and side-effect imports. */
+ const IMPORT_SPECIFIER = /\b(?:import|export)\s+(?:type\s+)?(?:[\w*$\s{},]+?\s+from\s+)?(["'`])([^"'`]*)\1/g;
+ /** A class constructor declaration (constructor(params) { on one line), the only allowed use of the word. */
+@@ -277,23 +303,171 @@ function stripComments(text: string): string {
+ }
+ 
+ /** The names of the forbidden forms found in `text` (empty when clean). */
+-function scanSource(text: string): string[] {
++function scanSource(text: string, allowlist: RegExp = IMPORT_ALLOWLIST): string[] {
+   const code = stripComments(text).replace(CLASS_CONSTRUCTOR, "$1$2__class_ctor__$3");
+   const hits = FORBIDDEN.filter(([, re]) => re.test(code)).map(([what]) => what);
+-  const imports = [...code.matchAll(IMPORT_SPECIFIER)].map((m) => m[2]!);
+-  if (imports.some((spec) => !IMPORT_ALLOWLIST.test(spec))) hits.push("non-allowlisted import");
++  if (staticImports(text).some((spec) => !allowlist.test(spec))) hits.push("non-allowlisted import");
+   return hits;
+ }
+ 
++/** The static import/export-from specifiers of a source (comments removed). */
++function staticImports(text: string): string[] {
++  return [...stripComments(text).matchAll(IMPORT_SPECIFIER)].map((m) => m[2]!);
++}
++
++/** packages/shared/src/ (absolute, with a trailing separator); engine files are named relative to it. */
++const SRC_DIR = fileURLToPath(new URL("../", import.meta.url));
++const FORMULA_DIR = fileURLToPath(new URL(".", import.meta.url));
++/** The files of the engine's import closure that live outside formula/ (mirrors FORMULA_CLOSURE_OUTSIDE in eslint.config.js). */
++const CLOSURE_OUTSIDE = ["value.ts"];
++
++/**
++ * F-DG3-100 (round 4): the file set the source scan reads, relative to packages/shared/src: every engine source in
++ * formula/ (not tests, not test-support/) and the closure files outside formula/, each with the allowlist that applies.
++ */
++function scannedFiles(): { readonly file: string; readonly allowlist: RegExp }[] {
++  const engine = readdirSync(FORMULA_DIR)
++    .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
++    .map((f) => ({ file: `formula/${f}`, allowlist: IMPORT_ALLOWLIST }));
++  return [...engine, ...CLOSURE_OUTSIDE.map((file) => ({ file, allowlist: CLOSURE_OUTSIDE_IMPORT_ALLOWLIST }))];
++}
++
++/**
++ * F-DG3-100 (round 4): the engine's transitive STATIC import closure from formula/index.ts (import and export-from,
++ * type-only included). Relative specifiers are followed (files named relative to packages/shared/src); a bare specifier
++ * is a package and is recorded, not followed. A relative specifier that does not resolve to an existing file is
++ * recorded as unresolved, so the test fails rather than silently missing a file.
++ */
++function engineImportClosure(): { files: string[]; packages: string[]; unresolved: string[] } {
++  const files = new Set<string>();
++  const packages = new Set<string>();
++  const unresolved: string[] = [];
++  const queue = ["formula/index.ts"];
++  while (queue.length > 0) {
++    const file = queue.shift()!;
++    if (files.has(file)) continue;
++    files.add(file);
++    const from = pathToFileURL(`${SRC_DIR}${file}`);
++    for (const spec of staticImports(readFileSync(from, "utf8"))) {
++      if (!spec.startsWith(".")) {
++        packages.add(spec);
++        continue;
++      }
++      const target = fileURLToPath(new URL(spec, from));
++      if (!target.startsWith(SRC_DIR) || !existsSync(target)) {
++        unresolved.push(`${file} -> ${spec}`);
++        continue;
++      }
++      queue.push(target.slice(SRC_DIR.length).split("\\").join("/"));
++    }
++  }
++  return { files: [...files].sort(), packages: [...packages].sort(), unresolved };
++}
++
++/** True in the unit-formula-nocodegen project (vitest.config.ts). */
++const NOCODEGEN = process.execArgv.includes("--disallow-code-generation-from-strings");
++
+ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)", () => {
+   it(
+     "engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules",
+     { timeout: 10_000 },
+     () => {
+-      const dir = fileURLToPath(new URL(".", import.meta.url));
+-      const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+-      expect(files.sort()).toEqual(["evaluate.ts", "index.ts", "parse.ts", "tokenize.ts", "typecheck.ts", "types.ts"]);
+-      for (const f of files) expect(scanSource(readFileSync(`${dir}${f}`, "utf8")), f).toEqual([]);
++      const files = scannedFiles();
++      expect(files.map((f) => f.file).sort()).toEqual([
++        "formula/evaluate.ts",
++        "formula/index.ts",
++        "formula/parse.ts",
++        "formula/tokenize.ts",
++        "formula/typecheck.ts",
++        "formula/types.ts",
++        "value.ts",
++      ]);
++      for (const { file, allowlist } of files) {
++        expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), allowlist), file).toEqual([]);
++      }
++    },
++  );
++
++  // F-DG3-100 (round 4): a new import can never escape the guard. The closure is computed from formula/index.ts, so a
++  // file the engine starts to import (directly or through another file) fails here until it is added to the scan's file
++  // set and to the engine-source lint blocks (FORMULA_CLOSURE_OUTSIDE in eslint.config.js).
++  it(
++    "the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside",
++    T10,
++    () => {
++      const closure = engineImportClosure();
++      expect(closure.unresolved).toEqual([]);
++      expect(closure.packages).toEqual(["decimal.js"]);
++      expect(closure.files).toContain("value.ts"); // the closure does leave formula/: the test is not vacuous
++      const scanned = new Set(scannedFiles().map((f) => f.file));
++      expect(closure.files.filter((f) => !scanned.has(f))).toEqual([]);
++    },
++  );
++
++  // ESLint validates rule options with ajv, which compiles each schema with new Function, so ESLint itself cannot run
++  // in the no-codegen process (EvalError, "Code generation from strings disallowed"). Lint coverage is a property of
++  // eslint.config.js, not of the process, so this one assertion runs in unit-node only; the closure test above runs in
++  // both projects.
++  it.skipIf(NOCODEGEN)(
++    "every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)",
++    { timeout: 60_000 },
++    async () => {
++      const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
++      const eslint = new ESLint({ cwd: repoRoot });
++      const severity = (rule: unknown) => (Array.isArray(rule) ? rule[0] : rule);
++      const files = engineImportClosure().files;
++      expect(files.length).toBeGreaterThan(6);
++      for (const file of files) {
++        const config = (await eslint.calculateConfigForFile(`${SRC_DIR}${file}`)) as {
++          rules: Record<string, unknown[]>;
++        };
++        const rules = config.rules;
++        for (const r of ["no-eval", "no-implied-eval", "no-new-func"])
++          expect(severity(rules[r]), `${file} ${r}`).toBe(2);
++        const globals = (rules["no-restricted-globals"] ?? []).slice(1).map((g) => (g as { name: string }).name);
++        for (const g of [
++          "Function",
++          "eval",
++          "Reflect",
++          "process",
++          "global",
++          "globalThis",
++          "self",
++          "window",
++          "document",
++        ]) {
++          expect(globals, `${file} no-restricted-globals`).toContain(g);
++        }
++        const patterns = (rules["no-restricted-imports"] ?? [])
++          .slice(1)
++          .flatMap((o) => (o as { patterns?: { regex?: string }[] }).patterns ?? [])
++          .map((p) => new RegExp(p.regex ?? "^$"));
++        const refused = (spec: string) => patterns.some((re) => re.test(spec));
++        expect(patterns.length, `${file} import allowlist`).toBeGreaterThan(0);
++        for (const spec of ["node:vm", "vm", "node:module", "node:inspector", "node:fs", "zod", "@mth/shared"]) {
++          expect(refused(spec), `${file} refuses ${spec}`).toBe(true);
++        }
++        expect(refused("decimal.js"), `${file} allows decimal.js`).toBe(false);
++        if (!file.startsWith("formula/")) expect(refused("./other.ts"), `${file} refuses ./other.ts`).toBe(true);
++        const selectors = (rules["no-restricted-syntax"] ?? [])
++          .slice(1)
++          .map((o) => (typeof o === "string" ? o : (o as { selector: string }).selector))
++          .join("\n");
++        for (const sel of [
++          "CallExpression[callee.name='parseFloat']",
++          "ImportExpression",
++          "WithStatement",
++          "Identifier[name='Function']",
++          "MemberExpression[object.name='Reflect']",
++          "MemberExpression[property.name='constructor']",
++          "Literal[value='constructor']",
++          "Identifier[name=/^(process|",
++          "getPrototypeOf",
++          "MetaProperty[meta.name='import']",
++        ]) {
++          expect(selectors, `${file} no-restricted-syntax`).toContain(sel);
++        }
++      }
+     },
+   );
+ 
+diff --git a/packages/shared/src/formula/index.ts b/packages/shared/src/formula/index.ts
+index ae38b6b..5c6e490 100644
+--- a/packages/shared/src/formula/index.ts
++++ b/packages/shared/src/formula/index.ts
+@@ -56,7 +56,8 @@ export type FormulaValidation =
+   | { readonly ok: false; readonly errors: readonly FormulaProblem[]; readonly engineVersion: typeof ENGINE_VERSION };
+ 
+ /**
+- * Parses and type-checks an expression against its typed variables (ADR-0024 §6). Never throws and never runs code:
++ * Parses and type-checks an expression against its typed variables (ADR-0024 §6). Never runs code, and never throws
++ * except EvalError (a refused code generation, which cannot occur; see internalProblem):
+  * a syntax error or limit is `formula.syntax` with an offset; type-rule violations carry their ADR codes.
+  */
+ export function validateFormula(
+@@ -99,6 +100,7 @@ export function validateFormula(
+       engineVersion: ENGINE_VERSION,
+     };
+   } catch (e) {
++    if (e instanceof EvalError) throw e; // ADR-0024 §6: a refused code generation is never a formula problem
+     return { ok: false, errors: [internalProblem(e)], engineVersion: ENGINE_VERSION };
+   }
+ }
+@@ -130,6 +132,7 @@ export function evaluateFormula(
+   try {
+     return evaluateAst(v.checked, typeof inputs === "object" && inputs !== null ? inputs : {});
+   } catch (e) {
++    if (e instanceof EvalError) throw e; // ADR-0024 §6: see internalProblem
+     const problem = internalProblem(e);
+     return {
+       ok: false,
+@@ -144,7 +147,18 @@ export function evaluateFormula(
+   }
+ }
+ 
+-/** A defect inside the engine is reported as a problem (never an uncaught exception, never a value). */
++/**
++ * A defect inside the engine is reported as a problem (never an uncaught exception, never a value): the API answers 422
++ * `formula.syntax` with `reason: "internal"`, never 500.
++ *
++ * The one exception is EvalError (ADR-0024 §6 "No dynamic code", F-DG3-100 round 4). The host throws it when code is
++ * generated from a string and code generation is refused: Node under --disallow-code-generation-from-strings, a
++ * browser under a CSP without 'unsafe-eval'. The engine never generates code, so in production it cannot occur; if it
++ * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine (here, in
++ * evaluateAst and in ../value.ts formatDecimal) therefore RETHROWS EvalError instead of converting it, so an exercised
++ * code-generating path fails every test that reaches it in the unit-formula-nocodegen project, whatever that test
++ * asserts. Reporting it as a user's syntax error at offset 0 would hide a security defect.
++ */
+ function internalProblem(e: unknown): FormulaProblem {
+   const detail = e instanceof Error ? e.name : "error";
+   return {
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 2b5cd1c..961b148 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -151,7 +151,10 @@ export function formatDecimal(value: string | null | undefined, options: FormatD
+   let d: Dec;
+   try {
+     d = fromStored(value);
+-  } catch {
++  } catch (e) {
++    // ADR-0024 §6 (F-DG3-100 round 4): this module is in the formula engine's import closure, and the engine rethrows a
++    // refused code generation (EvalError) instead of converting it. It cannot occur: nothing here generates code.
++    if (e instanceof EvalError) throw e;
+     return null;
+   }
+   const max = options.maxFractionDigits ?? 2;

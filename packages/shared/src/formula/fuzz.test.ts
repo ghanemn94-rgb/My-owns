@@ -6,10 +6,17 @@
 //     only allowlisted modules, and names no global object, process, 'constructor' or prototype reflection.
 //  This file also runs in the Vitest project unit-formula-nocodegen (node --disallow-code-generation-from-strings), the
 //  spelling-independent run-time layer of ADR-0024 §6 (F-DG3-100).
-import { readdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { ESLint } from "eslint";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { evaluateFormula, validateFormula, type FormulaErrorCode, type FormulaVariable } from "./index.ts";
+import {
+  evaluateFormula,
+  validateFormula,
+  type FormulaErrorCode,
+  type FormulaProblem,
+  type FormulaVariable,
+} from "./index.ts";
 
 /** Deterministic PRNG (mulberry32), so a failure reproduces from its seed. */
 function rng(seed: number) {
@@ -46,7 +53,17 @@ const VARS: FormulaVariable[] = [
   { name: "u", kind: "currency", currency: "USD", period: "none", value: null },
 ];
 
+const T10 = { timeout: 10_000 };
 const DECIMAL_OR_NULL = /^-?[0-9]{1,18}(\.[0-9]{1,6})?$/;
+
+/**
+ * F-DG3-100 (round 4): the problems that report an internal engine failure (params.reason "internal"; index.ts
+ * internalProblem and evaluate.ts internal). No input, however random, may produce one: an internal failure is an
+ * engine defect, never an acceptable outcome. The same helper is in formula.test.ts.
+ */
+function internalProblems(problems: readonly FormulaProblem[]): string[] {
+  return problems.filter((p) => p.params["reason"] === "internal").map((p) => `${p.code}: ${p.message}`);
+}
 
 function checkOutcome(expr: string) {
   const v = validateFormula(expr, VARS);
@@ -54,12 +71,14 @@ function checkOutcome(expr: string) {
     expect(v.resultType.kind).toBeTypeOf("string");
   } else {
     expect(v.errors.length).toBeGreaterThan(0);
+    expect(internalProblems(v.errors), JSON.stringify(expr)).toEqual([]);
     for (const e of v.errors) {
       expect(CODES).toContain(e.code);
       expect(e.message).toBeTypeOf("string");
     }
   }
   const e = evaluateFormula(expr, VARS);
+  expect(internalProblems(e.errors), JSON.stringify(expr)).toEqual([]);
   if (e.result !== null) {
     expect(e.result).toMatch(DECIMAL_OR_NULL);
     expect(e.ok).toBe(true);
@@ -209,8 +228,13 @@ describe("fuzz: no uncaught exception, no code execution", () => {
     for (const p of payloads) {
       const v = validateFormula(p, VARS);
       expect(v.ok, p).toBe(false);
-      if (!v.ok) expect(["formula.syntax", "formula.undefined_variable"]).toContain(v.errors[0]!.code);
-      expect(evaluateFormula(p, VARS).result).toBeNull();
+      if (!v.ok) {
+        expect(["formula.syntax", "formula.undefined_variable"]).toContain(v.errors[0]!.code);
+        expect(internalProblems(v.errors), p).toEqual([]);
+      }
+      const e = evaluateFormula(p, VARS);
+      expect(e.result).toBeNull();
+      expect(internalProblems(e.errors), p).toEqual([]);
     }
     expect(g["__mth_pwned"]).toBeUndefined();
     expect(tripped).toEqual([]);
@@ -266,6 +290,8 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
  * re-export only a sibling module (./x.ts), the shared value helpers (../value.ts) and decimal.js.
  */
 const IMPORT_ALLOWLIST = /^(?:\.\/[A-Za-z0-9_-]+\.ts|\.\.\/value\.ts|decimal\.js)$/;
+/** F-DG3-100 (round 4): ../value.ts, in the closure but outside formula/, may import decimal.js only (eslint.config.js). */
+const CLOSURE_OUTSIDE_IMPORT_ALLOWLIST = /^decimal\.js$/;
 /** Static import/export-from specifiers, including multi-line braces, type-only imports and side-effect imports. */
 const IMPORT_SPECIFIER = /\b(?:import|export)\s+(?:type\s+)?(?:[\w*$\s{},]+?\s+from\s+)?(["'`])([^"'`]*)\1/g;
 /** A class constructor declaration (constructor(params) { on one line), the only allowed use of the word. */
@@ -277,23 +303,171 @@ function stripComments(text: string): string {
 }
 
 /** The names of the forbidden forms found in `text` (empty when clean). */
-function scanSource(text: string): string[] {
+function scanSource(text: string, allowlist: RegExp = IMPORT_ALLOWLIST): string[] {
   const code = stripComments(text).replace(CLASS_CONSTRUCTOR, "$1$2__class_ctor__$3");
   const hits = FORBIDDEN.filter(([, re]) => re.test(code)).map(([what]) => what);
-  const imports = [...code.matchAll(IMPORT_SPECIFIER)].map((m) => m[2]!);
-  if (imports.some((spec) => !IMPORT_ALLOWLIST.test(spec))) hits.push("non-allowlisted import");
+  if (staticImports(text).some((spec) => !allowlist.test(spec))) hits.push("non-allowlisted import");
   return hits;
 }
+
+/** The static import/export-from specifiers of a source (comments removed). */
+function staticImports(text: string): string[] {
+  return [...stripComments(text).matchAll(IMPORT_SPECIFIER)].map((m) => m[2]!);
+}
+
+/** packages/shared/src/ (absolute, with a trailing separator); engine files are named relative to it. */
+const SRC_DIR = fileURLToPath(new URL("../", import.meta.url));
+const FORMULA_DIR = fileURLToPath(new URL(".", import.meta.url));
+/** The files of the engine's import closure that live outside formula/ (mirrors FORMULA_CLOSURE_OUTSIDE in eslint.config.js). */
+const CLOSURE_OUTSIDE = ["value.ts"];
+
+/**
+ * F-DG3-100 (round 4): the file set the source scan reads, relative to packages/shared/src: every engine source in
+ * formula/ (not tests, not test-support/) and the closure files outside formula/, each with the allowlist that applies.
+ */
+function scannedFiles(): { readonly file: string; readonly allowlist: RegExp }[] {
+  const engine = readdirSync(FORMULA_DIR)
+    .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
+    .map((f) => ({ file: `formula/${f}`, allowlist: IMPORT_ALLOWLIST }));
+  return [...engine, ...CLOSURE_OUTSIDE.map((file) => ({ file, allowlist: CLOSURE_OUTSIDE_IMPORT_ALLOWLIST }))];
+}
+
+/**
+ * F-DG3-100 (round 4): the engine's transitive STATIC import closure from formula/index.ts (import and export-from,
+ * type-only included). Relative specifiers are followed (files named relative to packages/shared/src); a bare specifier
+ * is a package and is recorded, not followed. A relative specifier that does not resolve to an existing file is
+ * recorded as unresolved, so the test fails rather than silently missing a file.
+ */
+function engineImportClosure(): { files: string[]; packages: string[]; unresolved: string[] } {
+  const files = new Set<string>();
+  const packages = new Set<string>();
+  const unresolved: string[] = [];
+  const queue = ["formula/index.ts"];
+  while (queue.length > 0) {
+    const file = queue.shift()!;
+    if (files.has(file)) continue;
+    files.add(file);
+    const from = pathToFileURL(`${SRC_DIR}${file}`);
+    for (const spec of staticImports(readFileSync(from, "utf8"))) {
+      if (!spec.startsWith(".")) {
+        packages.add(spec);
+        continue;
+      }
+      const target = fileURLToPath(new URL(spec, from));
+      if (!target.startsWith(SRC_DIR) || !existsSync(target)) {
+        unresolved.push(`${file} -> ${spec}`);
+        continue;
+      }
+      queue.push(target.slice(SRC_DIR.length).split("\\").join("/"));
+    }
+  }
+  return { files: [...files].sort(), packages: [...packages].sort(), unresolved };
+}
+
+/** True in the unit-formula-nocodegen project (vitest.config.ts). */
+const NOCODEGEN = process.execArgv.includes("--disallow-code-generation-from-strings");
 
 describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)", () => {
   it(
     "engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules",
     { timeout: 10_000 },
     () => {
-      const dir = fileURLToPath(new URL(".", import.meta.url));
-      const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
-      expect(files.sort()).toEqual(["evaluate.ts", "index.ts", "parse.ts", "tokenize.ts", "typecheck.ts", "types.ts"]);
-      for (const f of files) expect(scanSource(readFileSync(`${dir}${f}`, "utf8")), f).toEqual([]);
+      const files = scannedFiles();
+      expect(files.map((f) => f.file).sort()).toEqual([
+        "formula/evaluate.ts",
+        "formula/index.ts",
+        "formula/parse.ts",
+        "formula/tokenize.ts",
+        "formula/typecheck.ts",
+        "formula/types.ts",
+        "value.ts",
+      ]);
+      for (const { file, allowlist } of files) {
+        expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), allowlist), file).toEqual([]);
+      }
+    },
+  );
+
+  // F-DG3-100 (round 4): a new import can never escape the guard. The closure is computed from formula/index.ts, so a
+  // file the engine starts to import (directly or through another file) fails here until it is added to the scan's file
+  // set and to the engine-source lint blocks (FORMULA_CLOSURE_OUTSIDE in eslint.config.js).
+  it(
+    "the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside",
+    T10,
+    () => {
+      const closure = engineImportClosure();
+      expect(closure.unresolved).toEqual([]);
+      expect(closure.packages).toEqual(["decimal.js"]);
+      expect(closure.files).toContain("value.ts"); // the closure does leave formula/: the test is not vacuous
+      const scanned = new Set(scannedFiles().map((f) => f.file));
+      expect(closure.files.filter((f) => !scanned.has(f))).toEqual([]);
+    },
+  );
+
+  // ESLint validates rule options with ajv, which compiles each schema with new Function, so ESLint itself cannot run
+  // in the no-codegen process (EvalError, "Code generation from strings disallowed"). Lint coverage is a property of
+  // eslint.config.js, not of the process, so this one assertion runs in unit-node only; the closure test above runs in
+  // both projects.
+  it.skipIf(NOCODEGEN)(
+    "every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)",
+    { timeout: 60_000 },
+    async () => {
+      const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
+      const eslint = new ESLint({ cwd: repoRoot });
+      const severity = (rule: unknown) => (Array.isArray(rule) ? rule[0] : rule);
+      const files = engineImportClosure().files;
+      expect(files.length).toBeGreaterThan(6);
+      for (const file of files) {
+        const config = (await eslint.calculateConfigForFile(`${SRC_DIR}${file}`)) as {
+          rules: Record<string, unknown[]>;
+        };
+        const rules = config.rules;
+        for (const r of ["no-eval", "no-implied-eval", "no-new-func"])
+          expect(severity(rules[r]), `${file} ${r}`).toBe(2);
+        const globals = (rules["no-restricted-globals"] ?? []).slice(1).map((g) => (g as { name: string }).name);
+        for (const g of [
+          "Function",
+          "eval",
+          "Reflect",
+          "process",
+          "global",
+          "globalThis",
+          "self",
+          "window",
+          "document",
+        ]) {
+          expect(globals, `${file} no-restricted-globals`).toContain(g);
+        }
+        const patterns = (rules["no-restricted-imports"] ?? [])
+          .slice(1)
+          .flatMap((o) => (o as { patterns?: { regex?: string }[] }).patterns ?? [])
+          .map((p) => new RegExp(p.regex ?? "^$"));
+        const refused = (spec: string) => patterns.some((re) => re.test(spec));
+        expect(patterns.length, `${file} import allowlist`).toBeGreaterThan(0);
+        for (const spec of ["node:vm", "vm", "node:module", "node:inspector", "node:fs", "zod", "@mth/shared"]) {
+          expect(refused(spec), `${file} refuses ${spec}`).toBe(true);
+        }
+        expect(refused("decimal.js"), `${file} allows decimal.js`).toBe(false);
+        if (!file.startsWith("formula/")) expect(refused("./other.ts"), `${file} refuses ./other.ts`).toBe(true);
+        const selectors = (rules["no-restricted-syntax"] ?? [])
+          .slice(1)
+          .map((o) => (typeof o === "string" ? o : (o as { selector: string }).selector))
+          .join("\n");
+        for (const sel of [
+          "CallExpression[callee.name='parseFloat']",
+          "ImportExpression",
+          "WithStatement",
+          "Identifier[name='Function']",
+          "MemberExpression[object.name='Reflect']",
+          "MemberExpression[property.name='constructor']",
+          "Literal[value='constructor']",
+          "Identifier[name=/^(process|",
+          "getPrototypeOf",
+          "MetaProperty[meta.name='import']",
+        ]) {
+          expect(selectors, `${file} no-restricted-syntax`).toContain(sel);
+        }
+      }
     },
   );
 

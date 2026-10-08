@@ -1,7 +1,7 @@
 // T09 formula engine unit tests (ADR-0024 §6 "Verification"; T-DG3-KBE-A). Worked fixtures are the two seeded
 // playbook examples (B0087): Δ attach × customers × ARPU and volume × Δ unit cost. Synthetic, illustrative values.
 import { describe, expect, it } from "vitest";
-import { compareDecimal } from "../value.ts";
+import { compareDecimal, formatDecimal } from "../value.ts";
 import {
   ENGINE_VERSION,
   evaluateAst,
@@ -12,6 +12,8 @@ import {
   parseFormula,
   tokenize,
   validateFormula,
+  type CheckedFormula,
+  type FormulaProblem,
   type FormulaVariable,
 } from "./index.ts";
 
@@ -30,6 +32,14 @@ const costVars: FormulaVariable[] = [
   { name: "baseline_unit_cost", kind: "currency", currency: "SAR", period: "none", value: "12.50" },
   { name: "target_unit_cost", kind: "currency", currency: "SAR", period: "none", value: "10.00" },
 ];
+
+/**
+ * F-DG3-100 (round 4): the problems that report an internal engine failure (params.reason "internal"). An expected
+ * rejection is never an internal failure, so every rejection row refuses one. The same helper is in fuzz.test.ts.
+ */
+function internalProblems(problems: readonly FormulaProblem[]): string[] {
+  return problems.filter((p) => p.params["reason"] === "internal").map((p) => `${p.code}: ${p.message}`);
+}
 
 /** Variables a..z (and any other listed name) as dimensionless numbers with value 1. */
 function numbers(...names: string[]): FormulaVariable[] {
@@ -157,6 +167,8 @@ describe("grammar table (ADR-0024 §6 EBNF)", () => {
       const r = validateFormula(expr, ABC);
       expect(r.ok).toBe(false);
       if (r.ok) return;
+      expect(internalProblems(r.errors)).toEqual([]);
+      expect(internalProblems(evaluateFormula(expr, ABC).errors)).toEqual([]);
       expect(r.errors).toHaveLength(1);
       expect(r.errors[0]!.code).toBe("formula.syntax");
       expect(r.errors[0]!.offset).toBe(offset);
@@ -755,5 +767,64 @@ describe("display by kind (ADR-0024 §6 table)", () => {
     expect(formatFormulaValue(null, "fraction_delta")).toBeNull();
     expect(displayNumber(null, "fraction")).toBeNull();
     expect(displayNumber("garbage", "fraction")).toBeNull();
+  });
+});
+
+// F-DG3-100 (round 4), ADR-0024 §6: every catch in the engine's import closure converts a genuinely unexpected error
+// into a problem (the API's 422 formula.syntax "internal", never 500), but RETHROWS EvalError, the host's refusal of a
+// code generation. Each catch is reached here through a caller-supplied getter or a crafted checked formula; nothing
+// generates code (codegen.nocodegen.test.ts does that, under the flag).
+describe("internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6)", () => {
+  type Thrower = () => never;
+  const typeError: Thrower = () => {
+    throw new TypeError("simulated defect");
+  };
+  const evalError: Thrower = () => {
+    throw new EvalError("simulated refused code generation");
+  };
+  /** A variables list whose first entry's name getter throws (read by checkVariables inside validateFormula's catch). */
+  const hostileVariables = (thrower: Thrower) => [
+    Object.defineProperty({ kind: "number", period: "none", value: "1" }, "name", { enumerable: true, get: thrower }),
+  ];
+  /** Inputs whose own value for `a` throws when read (evaluateAst step 1, inside evaluateFormula's second catch). */
+  const hostileInputs = (thrower: Thrower) => Object.defineProperty({}, "a", { enumerable: true, get: thrower });
+  /** A checked formula whose literal node throws when walked (inside evaluateAst's own catch). */
+  const hostileChecked = (thrower: Thrower): CheckedFormula => {
+    const v = validateFormula("1", []);
+    if (!v.ok) throw new Error("fixture");
+    const root = Object.defineProperty({ type: "number", start: 0, end: 1 }, "value", { get: thrower });
+    return { ...v.checked, ast: { ...v.checked.ast, root } as CheckedFormula["ast"] };
+  };
+  /** A value whose string conversion throws (fromStored inside ../value.ts formatDecimal's catch). */
+  const hostileValue = (thrower: Thrower) => ({ toString: thrower }) as unknown as string;
+
+  it("validateFormula: a TypeError is a formula.syntax 'internal' problem; an EvalError is rethrown", T, () => {
+    const r = validateFormula("a", hostileVariables(typeError));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.errors[0]).toMatchObject({ code: "formula.syntax", offset: 0, params: { reason: "internal" } });
+      expect(r.errors[0]!.params["detail"]).toBe("TypeError");
+    }
+    expect(() => validateFormula("a", hostileVariables(evalError))).toThrow(EvalError);
+  });
+
+  it("evaluateFormula: a TypeError is an 'internal' problem with a null result; an EvalError is rethrown", T, () => {
+    const vars = numbers("a");
+    const r = evaluateFormula("a", vars, hostileInputs(typeError));
+    expect(r).toMatchObject({ ok: false, result: null, errorCode: "formula.syntax" });
+    expect(r.errors[0]!.params).toMatchObject({ reason: "internal", detail: "TypeError" });
+    expect(() => evaluateFormula("a", vars, hostileInputs(evalError))).toThrow(EvalError);
+  });
+
+  it("evaluateAst: a TypeError while walking is an 'internal' problem; an EvalError is rethrown", T, () => {
+    const r = evaluateAst(hostileChecked(typeError));
+    expect(r).toMatchObject({ ok: false, result: null, errorCode: "formula.syntax" });
+    expect(r.errors[0]!.params).toMatchObject({ reason: "internal", detail: "TypeError" });
+    expect(() => evaluateAst(hostileChecked(evalError))).toThrow(EvalError);
+  });
+
+  it("../value.ts formatDecimal: a TypeError is null (Unknown); an EvalError is rethrown", T, () => {
+    expect(formatDecimal(hostileValue(typeError), { locale: "en" })).toBeNull();
+    expect(() => formatDecimal(hostileValue(evalError), { locale: "en" })).toThrow(EvalError);
   });
 });

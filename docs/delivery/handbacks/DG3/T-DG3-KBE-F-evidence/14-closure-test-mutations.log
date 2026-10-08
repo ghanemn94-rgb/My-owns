@@ -1,0 +1,44 @@
+# Thu Oct  8 13:54:06 UTC 2026 node v24.21.0. Mutation checks of the import-closure tests, disposable clone /var/tmp/mth-run.6Ztcw9/claude-0/review-p2-kbef (HEAD 1f02d3b + T-DG3-KBE-F diff); each mutation is reverted before the next.
+## M0 baseline (no mutation)
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (50 tests | 48 skipped) 995ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  990ms
+      Tests  2 passed | 48 skipped (50)
+vitest exit=0
+## M1 eslint.config.js: FORMULA_CLOSURE_OUTSIDE emptied (value.ts loses the engine-source lint rules)
+146:const FORMULA_CLOSURE_OUTSIDE = [];
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 5ms
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js) 1094ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 48 skipped (50)
+vitest exit=1
+## M2 value.ts imports a new sibling ./zz-extra.ts (a new file in the closure, outside formula/)
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 13ms
+     → expected [ 'zz-extra.ts' ] to deeply equal []
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js) 1043ms
+     → zz-extra.ts no-eval: expected undefined to be 2 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'zz-extra.ts' ] to deeply equal []
+AssertionError: zz-extra.ts no-eval: expected undefined to be 2 // Object.is equality
+      Tests  2 failed | 48 skipped (50)
+vitest exit=1
+eslint on value.ts:
+  16:1  error  './zz-extra.ts' import is restricted from being used by a pattern. The formula engine's import closure outside formula/ imports only decimal.js (ADR-0024 §6)  no-restricted-imports
+✖ 1 problem (1 error, 0 warnings)
+## M3 formula/types.ts re-exports a new package (zod) (a second package in the closure)
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 13ms
+     → expected [ 'decimal.js', 'zod' ] to deeply equal [ 'decimal.js' ]
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  943ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'decimal.js', 'zod' ] to deeply equal [ 'decimal.js' ]
+      Tests  1 failed | 1 passed | 48 skipped (50)
+vitest exit=1
+## after: git status --porcelain
+ M docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+ M docs/architecture/p3-work-split.md
+ M eslint.config.js
+ M packages/shared/src/formula/codegen.nocodegen.test.ts
+ M packages/shared/src/formula/evaluate.ts
+ M packages/shared/src/formula/formula.test.ts
+ M packages/shared/src/formula/fuzz.test.ts
+ M packages/shared/src/formula/index.ts
+ M packages/shared/src/value.ts

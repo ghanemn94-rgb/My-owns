@@ -137,6 +137,15 @@ const FORMULA_SOURCE_SYNTAX = [
  * uses no @mth/* workspace import.
  */
 const FORMULA_IMPORT_ALLOWLIST = /^(?!(?:\.\/[A-Za-z0-9_-]+\.ts|\.\.\/value\.ts|decimal\.js)$)/.source;
+
+/**
+ * F-DG3-100 (round 4): the files of the engine's transitive import closure (from formula/index.ts) that live outside
+ * packages/shared/src/formula. Each gets every engine-source rule below, and fuzz.test.ts scans it and asserts that the
+ * closure contains no other file. Today that is ../value.ts alone.
+ */
+const FORMULA_CLOSURE_OUTSIDE = ["packages/shared/src/value.ts"];
+/** ../value.ts's own allowlist is narrower: decimal.js only, so it cannot pull a further module into the closure. */
+const FORMULA_CLOSURE_OUTSIDE_IMPORT_ALLOWLIST = /^(?!decimal\.js$)/.source;
 export default tseslint.config(
   {
     ignores: [
@@ -172,8 +181,9 @@ export default tseslint.config(
     // ADR-0024 §6 "No dynamic code" (T-DG3-KBE-A, F-DG3-100): every file under packages/shared/src/formula, engine
     // sources and tests. no-restricted-syntax replaces the generic list for these files, so the parseFloat ban is
     // repeated in FORMULA_SYNTAX. The tests keep the access they need (fuzz.test.ts's globalThis.Function tripwire, the
-    // no-codegen canary) through justified eslint-disable comments.
-    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}"],
+    // no-codegen canary) through justified eslint-disable comments. F-DG3-100 round 4: also the engine's import closure
+    // outside formula/ (FORMULA_CLOSURE_OUTSIDE).
+    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}", ...FORMULA_CLOSURE_OUTSIDE],
     rules: {
       "no-eval": "error",
       "no-implied-eval": "error",
@@ -207,8 +217,8 @@ export default tseslint.config(
     // F-DG3-100 (round 3): the engine sources (non-test files) additionally get the import allowlist, the host-object
     // globals and the constructor-key, prototype-reflection and assembled-key rules. Tests and test-support/ (the
     // no-codegen fork preload, never built or imported by the engine) are excluded so they keep node:fs, node:url,
-    // process and their tripwires.
-    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}"],
+    // process and their tripwires. F-DG3-100 round 4: also the engine's import closure outside formula/.
+    files: ["packages/shared/src/formula/**/*.{ts,tsx,js,mjs}", ...FORMULA_CLOSURE_OUTSIDE],
     ignores: ["packages/shared/src/formula/**/*.test.{ts,tsx,js,mjs}", "packages/shared/src/formula/test-support/**"],
     rules: {
       "no-restricted-globals": [
@@ -231,6 +241,24 @@ export default tseslint.config(
         },
       ],
       "no-restricted-syntax": ["error", ...FORMULA_SYNTAX, ...FORMULA_SOURCE_SYNTAX],
+    },
+  },
+  {
+    // F-DG3-100 (round 4): the closure files outside formula/ keep every rule of the block above, with the narrower
+    // import allowlist (a later block's no-restricted-imports replaces the earlier one for these files).
+    files: FORMULA_CLOSURE_OUTSIDE,
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: FORMULA_CLOSURE_OUTSIDE_IMPORT_ALLOWLIST,
+              message: `The formula engine's import closure outside formula/ imports only decimal.js ${FORMULA_MSG}.`,
+            },
+          ],
+        },
+      ],
     },
   },
   {

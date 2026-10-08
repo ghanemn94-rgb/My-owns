@@ -151,7 +151,10 @@ export function formatDecimal(value: string | null | undefined, options: FormatD
   let d: Dec;
   try {
     d = fromStored(value);
-  } catch {
+  } catch (e) {
+    // ADR-0024 §6 (F-DG3-100 round 4): this module is in the formula engine's import closure, and the engine rethrows a
+    // refused code generation (EvalError) instead of converting it. It cannot occur: nothing here generates code.
+    if (e instanceof EvalError) throw e;
     return null;
   }
   const max = options.maxFractionDigits ?? 2;
