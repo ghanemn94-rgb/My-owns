@@ -13,7 +13,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Rounds 11-13** fixed operational server defects (D-071 to D-073): connection hygiene, pool bounds, the three-phase upload, commit-time re-authorisation and graceful shutdown.
   - **Rounds 13-17** closed session and identity edge cases in the web client (D-074 to D-077). The D-077 2 s residual for non-navigation GETs was judged acceptable as declared.
   - **Auditor observation (non-blocking), an orchestrator error:** the D-067 summary in the round-9 to round-17 auditor assignments said the unreproduced setup failure was "later attributed to port collisions and fixed by F-DG2-310". The records say the opposite: F-DG2-310's EADDRINUSE mechanism does not explain the D-067 symptom, and the symptom simply never recurred (D-068). The records are accurate; only the assignment text was wrong. Future assignment templates must quote decisions from `decisions.md`, not paraphrase them from memory.
-- **DG3 state: REVIEWING, gate round 6** on candidate `sha256:7049d793…` (757 files, source `c40232b`). Rounds 4–5: domain and qa PASS, code-security FAIL on F-DG3-100; repairs KBE-G (D-085) and KBE-H (D-086, meets the reviewer's final closure criterion).
+- **DG3 state: REVIEWING, gate round 7** on candidate `sha256:f55095db…` (757 files, source `d3e6fe6`). Round 6 (`7049d793`): 3× PASS, F-DG3-100 CLOSED_VERIFIED, new Low F-DG3-280 repaired by KBE-I (D-087). Rounds 4–5: domain and qa PASS, code-security FAIL on F-DG3-100; repairs KBE-G (D-085) and KBE-H (D-086, meets the reviewer's final closure criterion).
   - **Rounds 1–3** (D-080 to D-084):
     - four findings raised: F-DG3-100, 120, 170 and 180 (170 and 180 describe the same defect);
     - F-120, F-170 and F-180 are CLOSED_VERIFIED;
@@ -26,7 +26,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - integration 793;
     - e2e 178 in both locale settings;
     - register and pipeline PASS.
-  - **Round 6:** a full re-review by all three reviewers. code-security verifies F-DG3-100 against its final criterion (ids: code-security F-DG3-280–289, domain 290–299, qa 300–309).
+  - **Round 7:** a full re-review; code-security verifies F-DG3-280 (ids: code-security F-DG3-310–319, domain 320–329, qa 330–339).
     - New finding ids: code-security F-DG3-220–229, domain 230–239, qa 240–249.
 - **Next action:**
   1. When the three round-4 records return, check each run's `meta.json` (exit 0, no config change). Commit the evidence and import (`--round 4`).

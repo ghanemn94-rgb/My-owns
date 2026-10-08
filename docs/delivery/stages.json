@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG2"
       ],
@@ -1265,10 +1265,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96",
-        "source_commit": "c40232b01b7ec3cbf24759617bc645847a517a7e",
-        "frozen_at": "2026-10-08T19:38:29Z",
-        "manifest_path": "docs/delivery/candidates/DG3/7049d793cd20ed77.manifest.json"
+        "candidate_id": "sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0",
+        "source_commit": "d3e6fe62d9a4a3a0e8d08fcf273aef74857b3e81",
+        "frozen_at": "2026-10-08T21:47:45Z",
+        "manifest_path": "docs/delivery/candidates/DG3/f55095dbec364594.manifest.json"
       },
       "review_rounds": [
         {
@@ -1342,6 +1342,18 @@
             "qa-verifier": "docs/delivery/reviews/DG3/round-6/qa-verifier.json"
           },
           "note": "DG3 gate review round 6 on candidate 7049d793 (757 files, source c40232b). Repair since round 5 (D-086): T-DG3-KBE-H (F-DG3-100 fifth pass, meeting both options of the reviewer's final closure criterion; lint and scan only, ADR-0024 §6 rewritten; no engine source changed). Orchestrator pre-freeze verification of 43ca734: static checks; pnpm test 1651 + 256/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
+        },
+        {
+          "round": 7,
+          "candidate_id": "sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0",
+          "frozen_at": "2026-10-08T21:47:45Z",
+          "source_commit": "d3e6fe62d9a4a3a0e8d08fcf273aef74857b3e81",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG3/round-7/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG3/round-7/qa-verifier.json"
+          },
+          "note": "DG3 gate review round 7 on candidate f55095db (757 files, source d3e6fe6). Repair since round 6 (D-087): T-DG3-KBE-I (F-DG3-280: the lintText test lints every probe row; ADR-0024 §6 sentence exact). Orchestrator pre-freeze verification of e1764e8: static checks; pnpm test 1654 + 259/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
         }
       ],
       "gate_record": "docs/delivery/gates/DG3.json",
@@ -1415,6 +1427,11 @@
           "state": "FIXING",
           "at": "2026-10-08T20:53:01Z",
           "note": "Round 6 on candidate 7049d793: 3x PASS (domain, code-security, qa). code-security verified F-DG3-100 CLOSED against its final criterion and raised F-DG3-280 (Low, non-mandatory, not blocking: ADR-0024 §6 'Pinned by tests' overstates the lintText test, 48 of 99 probe rows linted). All runs exit 0, no configuration change. F-280 is OPEN, so the gate cannot pass; it is repaired (T-DG3-KBE-I) rather than accepted, since acceptance needs the user's approval."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-08T21:47:45Z",
+          "note": "KBE-I merged and verified (D-087). Candidate frozen as f55095db (757 files, source d3e6fe6) for DG3 gate review round 7: code-security verifies F-DG3-280 and confirms F-DG3-100 still holds; domain and qa re-review in full."
         }
       ]
     },
