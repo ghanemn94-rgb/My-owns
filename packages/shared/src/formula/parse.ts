@@ -65,6 +65,9 @@ export function parseFormula(expression: unknown): ParseResult {
       }),
     };
   } catch (e) {
+    // ADR-0024 §6 (F-DG3-100 round 5): the first statement of every catch in the engine's import closure (lint and scan
+    // enforce it). It changes nothing here: anything that is not a ParseFailure was already rethrown.
+    if (e instanceof EvalError) throw e;
     if (e instanceof ParseFailure) return { ok: false, error: e.problem };
     throw e;
   }

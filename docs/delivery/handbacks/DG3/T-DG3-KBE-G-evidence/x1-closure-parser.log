@@ -1,0 +1,27 @@
+# X1 closure-parser check (T-DG3-KBE-G), clone /var/tmp/mth-run.3QlXXf/claude-0/review-p3, node v22.22.2, 2026-10-08T16:30:46Z
+# formula/types.ts gains: export { "weightedScore" as zzX } from "../scoring.ts";
+## eslint packages/shared/src/formula/types.ts
+
+/var/tmp/mth-run.3QlXXf/claude-0/review-p3/packages/shared/src/formula/types.ts
+  157:1  error  '../scoring.ts' import is restricted from being used by a pattern. The formula engine imports only ./<sibling>.ts, ../value.ts and decimal.js (ADR-0024 §6)  no-restricted-imports
+
+✖ 1 problem (1 error, 0 warnings)
+
+# eslint exit 1
+## scan + closure tests (unit-node)
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 18ms
+     → formula/types.ts: expected [ 'non-allowlisted import' ] to deeply equal []
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 3ms
+     → expected [ 'scoring.ts' ] to deeply equal []
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js) 849ms
+     → scoring.ts no-eval: expected undefined to be 2 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: formula/types.ts: expected [ 'non-allowlisted import' ] to deeply equal []
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside
+AssertionError: expected [ 'scoring.ts' ] to deeply equal []
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)
+AssertionError: scoring.ts no-eval: expected undefined to be 2 // Object.is equality
+      Tests  3 failed | 68 skipped (71)
+# vitest exit 1
+# restored; git status of types.ts: ''

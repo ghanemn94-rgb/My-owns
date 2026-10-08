@@ -283,7 +283,48 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
   ["import.meta", /\bimport\s*\.\s*meta\b/],
   // A hex or Unicode escape spells a name without its letters ("\x63onstructor", "\u0065val"); the engine needs none.
   ["escape sequence", /\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F{])/],
+  // F-DG3-100 (round 5): the engine is synchronous (mirrors eslint.config.js). A promise reaction, an async function or a
+  // microtask moves a refused code generation (EvalError) off the exercising test's call stack, where it can be swallowed.
+  ["Promise", /\b(Promise|queueMicrotask)\b/],
+  ["async", /\basync\b/],
+  ["await", /\bawait\b/],
+  [".then/.catch/.finally", /\.\s*(then|catch|finally)\b|\[\s*(["'`])(then|catch|finally)\2\s*\]/],
 ];
+
+/**
+ * F-DG3-100 (round 5): the one allowed catch shape, `catch (e) { if (e instanceof EvalError) throw e; …` with no else
+ * (mirrors CATCH_RETHROWS_EVAL_ERROR in eslint.config.js). Matched at every `catch` keyword of the comment-free code.
+ */
+const CATCH_RETHROW =
+  /^catch\s*\(\s*e\s*\)\s*\{\s*if\s*\(\s*e\s+instanceof\s+EvalError\s*\)\s*throw\s+e\s*;(?!\s*else\b)/;
+
+/** The text of the balanced `{ … }` block that starts at `open` (to the end of `code` if unbalanced). */
+function blockAt(code: string, open: number): string {
+  let depth = 0;
+  for (let i = open; i < code.length; i++) {
+    if (code[i] === "{") depth++;
+    else if (code[i] === "}" && --depth === 0) return code.slice(open, i + 1);
+  }
+  return code.slice(open);
+}
+
+/**
+ * F-DG3-100 (round 5): the EvalError-rethrow rule of ADR-0024 §6 layer 3 (mirrors eslint.config.js): every catch starts
+ * with the rethrow, no finally block contains return/throw/break/continue (no-unsafe-finally; the scan is stricter and
+ * also counts one inside a nested function), and EvalError appears only after instanceof.
+ */
+function rethrowRuleHits(code: string): string[] {
+  const hits: string[] = [];
+  const catches = [...code.matchAll(/\bcatch\b/g)].map((m) => m.index);
+  if (catches.some((i) => !CATCH_RETHROW.test(code.slice(i)))) hits.push("catch without EvalError rethrow");
+  const finallies = [...code.matchAll(/\bfinally\s*\{/g)].map((m) => m.index + m[0].length - 1);
+  if (finallies.some((i) => /\b(return|throw|break|continue)\b/.test(blockAt(code, i))))
+    hits.push("finally with return/throw/break/continue");
+  const evalErrors = code.match(/\bEvalError\b/g)?.length ?? 0;
+  if (evalErrors !== (code.match(/\binstanceof\s+EvalError\b/g)?.length ?? 0))
+    hits.push("EvalError outside instanceof");
+  return hits;
+}
 
 /**
  * F-DG3-100 (round 3): module loading is an ALLOWLIST, mirroring the ESLint override. An engine source may import or
@@ -292,8 +333,12 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
 const IMPORT_ALLOWLIST = /^(?:\.\/[A-Za-z0-9_-]+\.ts|\.\.\/value\.ts|decimal\.js)$/;
 /** F-DG3-100 (round 4): ../value.ts, in the closure but outside formula/, may import decimal.js only (eslint.config.js). */
 const CLOSURE_OUTSIDE_IMPORT_ALLOWLIST = /^decimal\.js$/;
-/** Static import/export-from specifiers, including multi-line braces, type-only imports and side-effect imports. */
-const IMPORT_SPECIFIER = /\b(?:import|export)\s+(?:type\s+)?(?:[\w*$\s{},]+?\s+from\s+)?(["'`])([^"'`]*)\1/g;
+/**
+ * Static import/export-from specifiers, including multi-line braces, type-only imports, side-effect imports and (F-DG3-100
+ * round 5) string-named specifiers: `export { "x" as y } from "…"`, `import { "x" as y } from "…"`, `export * as "n" from "…"`.
+ */
+const IMPORT_SPECIFIER =
+  /\b(?:import|export)\s+(?:type\s+)?(?:(?:[\w*$\s{},]|"[^"\n]*"|'[^'\n]*')+?\s+from\s+)?(["'`])([^"'`]*)\1/g;
 /** A class constructor declaration (constructor(params) { on one line), the only allowed use of the word. */
 const CLASS_CONSTRUCTOR = /(^|[{};])(\s*)constructor(\s*\([^)]*\)[ \t]*\{)/gm;
 
@@ -306,6 +351,7 @@ function stripComments(text: string): string {
 function scanSource(text: string, allowlist: RegExp = IMPORT_ALLOWLIST): string[] {
   const code = stripComments(text).replace(CLASS_CONSTRUCTOR, "$1$2__class_ctor__$3");
   const hits = FORBIDDEN.filter(([, re]) => re.test(code)).map(([what]) => what);
+  hits.push(...rethrowRuleHits(code));
   if (staticImports(text).some((spec) => !allowlist.test(spec))) hits.push("non-allowlisted import");
   return hits;
 }
@@ -464,9 +510,16 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
           "Identifier[name=/^(process|",
           "getPrototypeOf",
           "MetaProperty[meta.name='import']",
+          // F-DG3-100 (round 5): the EvalError-rethrow rule and the synchronous-engine rule.
+          "CatchClause:not([param.type='Identifier'][param.name='e']",
+          "[body.body.0.test.right.name='EvalError']",
+          "Identifier[name='EvalError']:not(BinaryExpression[operator='instanceof'] > Identifier.right)",
+          "Identifier[name=/^(Promise|queueMicrotask)$/], :function[async=true], AwaitExpression",
+          "MemberExpression[property.name=/^(then|catch|finally)$/]",
         ]) {
           expect(selectors, `${file} no-restricted-syntax`).toContain(sel);
         }
+        expect(severity(rules["no-unsafe-finally"]), `${file} no-unsafe-finally`).toBe(2);
       }
     },
   );
@@ -528,6 +581,48 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
     ['import {\n  a,\n  type B,\n} from "zod";', "non-allowlisted import"],
     ['const k = "\\x63onstructor";', "escape sequence"],
     ["window.eval", "host global"],
+    // F-DG3-100 round 4 (code-security-reviewer, swallow-probe.mjs): W1, W2 and W4 handle their own refused code
+    // generation, so an exercised path no longer fails the no-codegen run. The helpers are verbatim; `codegen` stands for
+    // the probe's generation line, which the rules here do not depend on.
+    [
+      "function __w(): void {\n  try {\n    codegen();\n  } catch {\n    // refused: carry on\n  }\n}",
+      "catch without EvalError rethrow",
+    ],
+    [
+      "function __w(): void {\n  try {\n    codegen();\n  } finally {\n    // no-unsafe-finally is not enabled\n    return;\n  }\n}",
+      "finally with return/throw/break/continue",
+    ],
+    [
+      "function __w(): void {\n  void Promise.resolve()\n    .then(() => {\n      codegen();\n    })\n    .catch(() => undefined);\n}",
+      "Promise",
+    ],
+    [
+      "function __w(): void {\n  void Promise.resolve()\n    .then(() => {\n      codegen();\n    })\n    .catch(() => undefined);\n}",
+      ".then/.catch/.finally",
+    ],
+    // W5 (wrapped EvalError) stays refused at run time by the internal-failure rule; statically, it is a non-rethrowing catch.
+    [
+      'try {\n  codegen();\n} catch (e) {\n  throw new Error("wrapped", { cause: e });\n}',
+      "catch without EvalError rethrow",
+    ],
+    // The other spellings the lint selector refuses.
+    ["try { a(); } catch (err) { if (err instanceof EvalError) throw err; }", "catch without EvalError rethrow"],
+    ["try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); }", "catch without EvalError rethrow"],
+    ["try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } }", "catch without EvalError rethrow"],
+    ["try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; }", "catch without EvalError rethrow"],
+    ["try { a(); } catch ({ message }) { b(message); }", "catch without EvalError rethrow"],
+    ["for (;;) { try { a(); } finally { break; } }", "finally with return/throw/break/continue"],
+    ["try { a(); } finally { throw new RangeError(); }", "finally with return/throw/break/continue"],
+    ["const EvalError = RangeError;", "EvalError outside instanceof"],
+    ["async function f(): Promise<void> {}", "async"],
+    ["await a();", "await"],
+    ["queueMicrotask(a);", "Promise"],
+    ["p.finally(a);", ".then/.catch/.finally"],
+    ['p["then"](a);', ".then/.catch/.finally"],
+    // F-DG3-100 round 4 X1 (closure-parser-probe.log): a string-named specifier is now followed, so it is a module import.
+    ['export { "weightedScore" as zzX } from "../scoring.ts";', "non-allowlisted import"],
+    ["import { 'x' as y } from 'node:vm';", "non-allowlisted import"],
+    ['export * as "ns" from "../scoring.ts";', "non-allowlisted import"],
   ];
   it.each(PROBES)("flags %s as %s", (probe, what) => {
     expect(scanSource(probe)).toContain(what);
@@ -549,6 +644,10 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
       "// the parent expression at the top level; a global constructor",
       'const note = "ISO 4217 code; required for kind currency";',
       'const url = "https://example.invalid/a"; // trailing comment with Function(',
+      // F-DG3-100 (round 5): the allowed catch shape, a finally without control flow, and comments naming the banned forms.
+      "try {\n  x = walk();\n} catch (e) {\n  if (e instanceof EvalError) throw e; // rethrow first\n  return null;\n}",
+      "try { a(); } finally { b(); }",
+      "// a Promise, async/await or .then(...) is banned; so is catch { } and finally { return; }",
     ].join("\n");
     expect(scanSource(clean)).toEqual([]);
   });

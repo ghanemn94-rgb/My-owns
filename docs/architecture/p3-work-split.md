@@ -286,3 +286,16 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
     - **Internal failures fail the tests.** In `fuzz.test.ts` (`checkOutcome` and the payload test) and in `formula.test.ts`'s rejection table, every outcome check refuses a `params.reason: "internal"` problem. `codegen.nocodegen.test.ts` adds a regression that generates code inside each of the four catches under the flag and requires the `EvalError`.
     - **The import closure.** `value.ts` gets every engine-source ESLint rule (`FORMULA_CLOSURE_OUTSIDE`), with a `decimal.js`-only import allowlist, and joins the source scan's file set. A test computes the static import closure from `formula/index.ts` and checks that every file in it is covered by the scan and by the ESLint rules (the ESLint check runs in `unit-node` only).
     - **API and web.** No API or web contract changes.
+
+### Amendments in the DG3 round-5 repair (T-DG3-KBE-G, 2026-10-08)
+
+27. **Formula no-dynamic-code guard: the `EvalError`-rethrow rule is enforced statically (F-DG3-100 fourth pass; ADR-0024 §6 "Extended guard").**
+    - **Lint.** For every engine source in the import closure (the non-test `formula/` sources and `value.ts`), `eslint.config.js` adds three `no-restricted-syntax` rules and turns on `no-unsafe-finally` (error):
+      - every `catch` binds `e`, and its first statement is `if (e instanceof EvalError) throw e;`. An optional-binding `catch { }` and every other shape are refused;
+      - `EvalError` appears only after `instanceof`;
+      - the engine stays synchronous: no `Promise`, `queueMicrotask`, `async`, `await` or `.then`/`.catch`/`.finally`.
+    - **Scan.** `fuzz.test.ts` `scanSource()` mirrors these rules. It also refuses a `finally` block containing `return`, `throw`, `break` or `continue`. Its probe table adds the reviewer's W1, W2, W4 and W5, the other refused spellings, and the string-named specifiers.
+    - **Closure parser.** The closure test now follows string-named specifiers (`export { "x" as y } from "…"`, X1). ESLint stays the backstop for any declaration the regular expression misses.
+    - **Engine.** The engine changes mechanically, with no behaviour change: `parse.ts`'s catch gains the rethrow as its first statement, and `evaluate.ts`'s catch moves its rethrow ahead of the `EvalFailure` check. Formula results are unchanged.
+    - **ADR-0024 §6** is corrected on three points: there are five catch clauses, including `parse.ts`; the web shows React Router's default error element, because the app defines no error boundary (this is unreachable in practice); and §6 now states exactly what the closure parser follows.
+    - **API and web.** No API or web contract changes.
