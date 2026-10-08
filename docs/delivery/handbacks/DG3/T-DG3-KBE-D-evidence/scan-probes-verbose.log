@@ -1,0 +1,42 @@
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts --reporter=verbose
+env: node v24.21.0, 2026-10-08T08:10:14Z
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg3-kbe-d
+
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 996ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates 970ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 1948ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing 1ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers 3ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+__F("return 1") as Function identifier 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 0ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  08:10:14
+   Duration  4.35s (transform 145ms, setup 0ms, collect 175ms, tests 3.92s, environment 0ms, prepare 70ms)
+
+EXIT=0

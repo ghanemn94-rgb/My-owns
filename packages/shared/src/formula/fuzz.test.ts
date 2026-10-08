@@ -71,6 +71,7 @@ describe("fuzz: no uncaught exception, no code execution", () => {
   const tripped: string[] = [];
   // eslint-disable-next-line no-eval -- tripwire: saves the global eval to restore it; never calls it
   const realEval = globalThis.eval;
+  // eslint-disable-next-line no-restricted-syntax -- tripwire (F-DG3-100 rule): saves/replaces/restores globalThis.Function; never calls it
   const realFunction = globalThis.Function;
   beforeEach(() => {
     tripped.length = 0;
@@ -79,6 +80,7 @@ describe("fuzz: no uncaught exception, no code execution", () => {
       tripped.push("eval");
       return undefined;
     }) as typeof eval; // eslint-disable-line no-eval -- type position only; never calls eval
+    // eslint-disable-next-line no-restricted-syntax -- tripwire (F-DG3-100 rule): saves/replaces/restores globalThis.Function; never calls it
     globalThis.Function = new Proxy(realFunction, {
       apply() {
         tripped.push("Function()");
@@ -93,6 +95,7 @@ describe("fuzz: no uncaught exception, no code execution", () => {
   afterEach(() => {
     // eslint-disable-next-line no-eval -- tripwire: restores the original global eval; never calls it
     globalThis.eval = realEval;
+    // eslint-disable-next-line no-restricted-syntax -- tripwire (F-DG3-100 rule): saves/replaces/restores globalThis.Function; never calls it
     globalThis.Function = realFunction;
   });
 
@@ -211,29 +214,95 @@ describe("fuzz: no uncaught exception, no code execution", () => {
   });
 });
 
+/**
+ * The source-scan patterns (ADR-0024 §6; extended for F-DG3-100). Applied to engine source with comments removed, so
+ * prose such as "eval, Function, vm … are forbidden" in a header comment is not a hit. String literals are not removed:
+ * the engine needs none of these words in a string either.
+ */
+const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
+  ["eval(", /\beval\s*\(/],
+  ["eval identifier", /\beval\b/],
+  ["new Function", /\bnew\s+Function\b/],
+  ["Function(", /(^|[^.\w])Function\s*\(/m],
+  ["Function identifier", /(^|[^\w$])Function(?![\w$])/m],
+  ["Reflect.construct", /\bReflect\s*(\.\s*construct\b|\[)/],
+  ["Reflect.apply", /\bReflect\s*\.\s*apply\b/],
+  ["Reflect", /\bReflect\b/],
+  ['["constructor"]', /\[\s*(["'`])constructor\1\s*\]/],
+  [".constructor access", /\.\s*constructor\b/],
+  ["constructor key", /\bconstructor\s*:/],
+  ["createRequire", /\bcreateRequire\b/],
+  ["require(", /(^|[^\w$])require\s*\(/m],
+  ["node:module", /["'`](node:)?module["'`]/],
+  ["vm import", /from\s+["'](node:)?vm["']/],
+  ["vm require", /require\s*\(\s*["'](node:)?vm["']/],
+  ["worker_threads/child_process", /["'`](node:)?(worker_threads|child_process)["'`]/],
+  ["dynamic import", /\bimport\s*\(/],
+  ["with statement", /\bwith\s*\(/],
+  ["timers", /\b(setTimeout|setInterval|setImmediate)\b/],
+  ["globalThis", /\bglobalThis\b/],
+];
+
+/** Removes block and line comments (a line comment starts at `//` not preceded by `:`, so "https://" in a string stays). */
+function stripComments(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:\\])\/\/.*$/gm, "$1");
+}
+
+/** The names of the forbidden forms found in `text` (empty when clean). */
+function scanSource(text: string): string[] {
+  const code = stripComments(text);
+  return FORBIDDEN.filter(([, re]) => re.test(code)).map(([what]) => what);
+}
+
 describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)", () => {
   it(
-    "engine sources contain no eval, Function constructor, vm, dynamic import, with, or string timers",
+    "engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers",
     { timeout: 10_000 },
     () => {
       const dir = fileURLToPath(new URL(".", import.meta.url));
       const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
       expect(files.sort()).toEqual(["evaluate.ts", "index.ts", "parse.ts", "tokenize.ts", "typecheck.ts", "types.ts"]);
-      const forbidden: [string, RegExp][] = [
-        ["eval(", /\beval\s*\(/],
-        ["new Function", /\bnew\s+Function\b/],
-        ["Function(", /(^|[^.\w])Function\s*\(/m],
-        ["vm import", /from\s+["'](node:)?vm["']/],
-        ["vm require", /require\s*\(\s*["'](node:)?vm["']/],
-        ["dynamic import", /\bimport\s*\(/],
-        ["with statement", /\bwith\s*\(/],
-        ["timers", /\b(setTimeout|setInterval|setImmediate)\b/],
-        ["globalThis", /\bglobalThis\b/],
-      ];
-      for (const f of files) {
-        const text = readFileSync(`${dir}${f}`, "utf8");
-        for (const [what, re] of forbidden) expect(re.test(text), `${f}: ${what}`).toBe(false);
-      }
+      for (const f of files) expect(scanSource(readFileSync(`${dir}${f}`, "utf8")), f).toEqual([]);
     },
   );
+
+  // F-DG3-100: every bypass form from the finding, and the forms the scan already caught, are hits. Each probe is a
+  // string handed to the scan; nothing here is executed.
+  const PROBES: readonly (readonly [string, string])[] = [
+    ['Reflect.construct(Function, ["return 1"])', "Reflect.construct"],
+    ['Reflect.apply(Function, null, ["return 1"])', "Reflect.apply"],
+    ['const F = Function; F("return 1")', "Function identifier"],
+    ['const __F = Function;\n__F("return 1")', "Function identifier"],
+    ['Object.getPrototypeOf(function* () {})["constructor"]("yield 1")', '["constructor"]'],
+    ["Object.getPrototypeOf(function* () {})['constructor']('yield 1')", '["constructor"]'],
+    ["const C = (async () => {}).constructor; C('return 1')", ".constructor access"],
+    ["const { constructor: D } = function* () {}; D('yield 1')", "constructor key"],
+    ['import { createRequire } from "node:module"', "createRequire"],
+    ['import { createRequire } from "node:module"', "node:module"],
+    ['createRequire(import.meta.url)("vm")', "createRequire"],
+    ['const fs = require("fs")', "require("],
+    ['import m from "module"', "node:module"],
+    ['import { Worker } from "node:worker_threads"', "worker_threads/child_process"],
+    ['eval("1")', "eval("],
+    ['new Function("return 1")', "new Function"],
+    ['import("node:fs")', "dynamic import"],
+    ['import vm from "node:vm"', "vm import"],
+    ['setTimeout("x()", 0)', "timers"],
+    ["globalThis.x = 1", "globalThis"],
+  ];
+  it.each(PROBES)("flags %s as %s", (probe, what) => {
+    expect(scanSource(probe)).toContain(what);
+  });
+
+  it("does not flag the engine's own names, comments or the word 'required'", () => {
+    const clean = [
+      "// eval, Function, vm and Reflect are forbidden here",
+      "/* new Function(...) and require('vm') are banned */",
+      "type FormulaFunction = string; const isFunctionName = (s: string) => s.length > 0;",
+      "class FormulaError extends Error { constructor(p: string) { super(p); } }",
+      'const note = "ISO 4217 code; required for kind currency";',
+      'const url = "https://example.invalid/a"; // trailing comment with Function(',
+    ].join("\n");
+    expect(scanSource(clean)).toEqual([]);
+  });
 });

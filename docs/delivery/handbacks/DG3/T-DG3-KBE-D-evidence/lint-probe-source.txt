@@ -1,0 +1,17 @@
+     1	// TEMPORARY lint probe for F-DG3-100 (T-DG3-KBE-D). Deleted after the run. Every line below must fail lint.
+     2	import { createRequire } from "node:module"; // L2  form: node:module import
+     3	import * as mod from "module"; // L3  form: bare module import
+     4	export const p1 = Reflect.construct(Function, ["return 1"]); // L4  form: Reflect.construct(Function, …)
+     5	export const p2 = Reflect.apply(Function, null, ["return 1"]); // L5  form: Reflect.apply(Function, null, …)
+     6	const __F = Function; // L6  form: aliased Function
+     7	export const p3 = __F("return 1"); // L7  (call of the alias; the alias line is the guard hit)
+     8	export const p4 = Object.getPrototypeOf(function* () {})["constructor"]("yield 1"); // L8  form: computed ["constructor"]
+     9	export const p5 = Object.getPrototypeOf(function* () {})[`constructor`]("yield 1"); // L9  form: template [`constructor`]
+    10	export const p6 = createRequire(import.meta.url)("vm"); // L10 form: createRequire(import.meta.url)("vm")
+    11	declare const require: (id: string) => unknown;
+    12	export const p7 = require("vm"); // L12 form: require(...)
+    13	const C = (async () => {}).constructor; // L13 form: .constructor read then aliased
+    14	export const p8 = (C as (s: string) => unknown)("return 1");
+    15	const { constructor: D } = function* () {}; // L15 form: destructured constructor
+    16	export const p9 = [D, mod];
+    17	export const p10 = globalThis["Function"]; // L17 form: computed ["Function"]

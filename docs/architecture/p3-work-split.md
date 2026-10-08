@@ -264,3 +264,7 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
 ### Amendments in wave 6 (T-DG3-BE-F, 2026-10-08)
 
 22. **G4 lists an Unknown schedule (D-079).** `g4.roadmap` adds `g4.schedule_unknown` → 'Schedule unknown: {dependency code}' (pointer `/dependencies/{id}`) for each unresolved dependency into an in-scope initiative with the T08 flag `schedule.unknown` and a blank mitigation; a mitigation or the missing dates clear it (ADR-0021 §7, §11 item 3). ADR-0023 §1 is corrected to the built wave model: no label overrides in P3.
+
+### Amendments in DG3 repair round 2 (T-DG3-KBE-D, 2026-10-08)
+
+22. **Formula no-dynamic-code guard extended (F-DG3-100, ADR-0024 §6 "Extended guard"):** the `packages/shared/src/formula/**` ESLint override and the `fuzz.test.ts` source scan now also refuse `Reflect.construct`/`Reflect.apply` with `Function`, an aliased `Function`, computed `["constructor"]`, `.constructor` reads, `require`/`createRequire` and `node:module`; the engine code is unchanged.
