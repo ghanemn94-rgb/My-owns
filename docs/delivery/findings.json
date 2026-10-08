@@ -11330,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11381,6 +11381,11 @@
           "at": "2026-10-08T19:00:12Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 53ac073480337ea96952f8c80b957b2a60827c49"
+        },
+        {
+          "at": "2026-10-08T20:12:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 6: PASS"
         }
       ],
       "fix_revision": "53ac073480337ea96952f8c80b957b2a60827c49",
@@ -11389,29 +11394,32 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG3-T-DG3-REV-SEC-R5-code-security-reviewer-20261008T171531Z-17bcf3e5",
-          "session_id": "17bcf3e5-ee24-42d8-a9a5-dfc59c98cf9b"
+          "run_id": "DG3-T-DG3-REV-SEC-R6-code-security-reviewer-20261008T194040Z-4bb03630",
+          "session_id": "4bb03630-fba2-4292-999a-fbf58b9446ed"
         },
-        "at": "2026-10-08T17:50:00Z",
-        "result": "FAIL",
+        "at": "2026-10-08T20:12:00Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG3/code-security/round-5/rethrow-rule-attack-probe.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/rethrow-rule-attack-probe-2.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/probes/rethrow-rule-attack-probe.mjs",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/probes/rethrow-rule-attack-probe-2.mjs",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/generator-swallow-demo.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/probes/generator-swallow-demo.mjs",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/swallow-probe.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/guard-layers-probe.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/guard-bypass-probe.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/probes-summary.txt",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/run-probes.sh",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/adr-claims.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/diff-scan.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/probe-C-nocodegen-node22.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-5/probe-C-unit-node-node24.log"
+          "docs/delivery/test-evidence/DG3/code-security/round-6/rethrow-rule-attack-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/rethrow-rule-attack-probe-2.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/swallow-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/guard-layers-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/guard-bypass-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/probes-summary.txt",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/run-probes.sh",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/residual-probe-r6.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/probes/residual-probe-r6.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/spellings-r6.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/probes/spellings-r6.append.ts",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/run-spellings-r6.sh",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/word-claims.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/probes/word-claims.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/probe-C-unit-node-node22.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/probe-C-nocodegen-node24.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-6/diff-scan.log",
+          "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md"
         ],
-        "note": "Not closed on candidate sha256:dfedd62f… (source 21e2742e). Severity stays Low and non-mandatory: the shipped engine generates no code, lints clean, and its formula results are unchanged (probe C, exact oracle, 65/65 and 75/75 on Node 22 and 24).\n\nWHAT THE REPAIR (T-DG3-KBE-G, 10472b4) CLOSES. Verified in a disposable clone at 40c84e8, Node 22.\n- My round-4 swallow-probe.mjs, run verbatim (sha256 d9989e67…):\n  - W1 (catch { }), W2 (finally { return; }) and W4 (Promise….then(…).catch(…)) are now refused by lint AND the scan. In round 4 all three passed every layer.\n  - W3, W5 and W6 are refused by lint, the scan and the run-time layer.\n- My round-3 guard-layers-probe.mjs, run verbatim: V1 is refused by lint and the scan; V2 by all three layers; S1, S2 and S3 at run time. These match round 4.\n- My round-2 guard-bypass-probe.mjs, run verbatim: all 18 forms (O1–O6, N1–N12) are eslint=1 and scan=1.\n- The catch selector holds against the shapes I tried:\n  - a renamed or destructured parameter, a rethrow after other code, a rethrow in a block or with an else: all refused;\n  - shadowing or rebinding EvalError: refused (identifier rule);\n  - a later `var e` in the block (S1): it cannot defeat the rethrow, which runs first; refused at run time;\n  - an Error[Symbol.hasInstance] hijack that makes `e instanceof EvalError` false (H3 literal key, H4 run-time key): refused at run time, because the hijack is process-wide and breaks the canary's and the injection tests' EvalError assertions. The scan also catches H3; lint does not see Object[\"defineProperty\"] with a string-literal key.\n- Event-listener routes (E1 EventTarget, E2 AbortSignal.onabort) are refused at run time: the host reports the listener's EvalError as an unhandled error (7,656 errors, exit 1).\n- The other statements check out:\n  - the five catch clauses (evaluate.ts, index.ts ×2, parse.ts, value.ts);\n  - parse.ts and evaluate.ts change no behaviour;\n  - the web (no error boundary or errorElement; React Router 7.9.0's 'Unexpected Application Error!');\n  - string-named specifiers;\n  - decimal.js (no try/catch/finally/Promise/async/yield);\n  - no-unsafe-finally = 2 on all seven closure files.\n\nWHY IT IS NOT CLOSED. My round-4 criterion (a) said that, with the rule enforced statically, 'a self-handled codegen is then refused unless it uses an unexercised path, which is the stated residual'. ADR-0024 §6 now claims exactly that:\n- residual, 'Its own handler. It cannot handle its own refusal.';\n- layer 3, 'No swallowing. No finally in the closure discards an exception, and the closure has no asynchronous code. So the exception reaches the test on the exercising test's call stack.';\n- 'A synchronous engine … This closes a promise reaction that would move the refusal off the exercising test's call stack'.\n\nThese statements are not true for new code. On the same exercised path (round-3 S1, tokenize.ts describe(), proved exercised by W5 and G3), two self-handling forms pass ALL THREE layers: lint exit 0, scan exit 0, unit-formula-nocodegen 220 passed + 1 skipped, exit 0, 0 EvalError lines.\n- G1: `function* g() { try { codegen } finally { yield 0; } }`, consumed by `g().next()`. The in-flight EvalError is held at the suspended yield and never surfaces.\n- G2: the same, then `it.return(0)`. A return completion replaces the pending throw (the 'iterator return()' route).\n- A1: asynchrony without any refused spelling. `const p = Array.fromAsync([0]); const { then: t } = p; const d = t.call(p, () => { codegen }); t.call(d, undefined, () => undefined);`. No `Promise` identifier, no `.then` member and no `[\"then\"]`. The rejection is swallowed by the second reaction. A2, the same without the handler, is refused at run time (unhandled rejection), which proves the path runs.\n\nWhy no layer sees them:\n- Neither lint nor the scan has a rule for generator functions or `yield`.\n- no-unsafe-finally covers only return/throw/break/continue, and so does the scan.\n- A destructured `then` is neither a MemberExpression nor a `.then`/`[\"then\"]` text match.\n\nIn production (no flag), the generated code runs. generator-swallow-demo.log shows the semantics in plain Node 22 and 24: with the flag, nothing reaches the caller; without it, 'generated code ran'.\n\nMinor, same section: 'stricter than no-unsafe-finally' is not quite true. The scan's brace matcher misses `finally { const s = \"}\"; return; }` (F1), which lint refuses. Layer 1 holds there.\n\nCLOSURE CRITERION (final; I will not ask for further enumeration). Either is enough:\n(b) Make §6 exactly true by narrowing the absolute statements:\n  - replace 'It cannot handle its own refusal', the 'So the exception reaches the test…' conclusion and the 'This closes a promise reaction…' sentence with an enumerated claim: lint and the scan refuse the listed handler forms (catch shape, finally control flow, Promise/async/.then spellings);\n  - state the residual: a self-handling form outside that list, even on an exercised path, is refused by no layer. It is the run-time analogue of Q1–Q5. Examples: generator suspension in a finally (G1/G2), and a promise obtained without the Promise name with a destructured then (A1).\n(a) Or ALSO refuse G1/G2/A1 statically, in lint and mirrored in the scan (for example `:function[generator=true]`, `YieldExpression`, a then/catch/finally property key or destructured name, `fromAsync`), and still drop the absolute wording, since another spelling can always exist.\nOptionally, correct the 'stricter' sentence (F1).\n\nReproduction (disposable clone only; files restored, git status empty):\n- node docs/delivery/test-evidence/DG3/code-security/round-5/probes/rethrow-rule-attack-probe.mjs $TMPDIR/review-p3 G1 G2\n- node docs/delivery/test-evidence/DG3/code-security/round-5/probes/rethrow-rule-attack-probe-2.mjs $TMPDIR/review-p3 A1 A2\n- Use a clone at 40c84e8 with deps installed offline (--frozen-lockfile) on Node 22.22.2."
+        "note": "Verified closed on candidate sha256:7049d793cd20ed7718e84ff4aa3bf940f99b5e2507e964660ef3b3545c1f3c96 (757 files, recomputed in a complete clone at the freeze commit 36411df; source c40232b). The repair is T-DG3-KBE-H (53ac073, merged in a5c4f5e). My round-5 FINAL criterion was option (b) or option (a). Both are met.\n\n(b) ADR-0024 section 6 no longer makes absolute claims.\n- The three statements I named are gone:\n  - 'It cannot handle its own refusal';\n  - 'So the exception reaches the test on the exercising test's call stack';\n  - 'This closes a promise reaction ...'.\n- They are replaced by an enumerated claim. Lint refuses exactly L1-L7, and the scan's mirror is enumerated per item.\n- 'What it refuses' is now conditional: the test fails if the EvalError reaches it.\n- The residual is stated in my wording: 'A self-handling form outside the list L1-L7, even on an exercised path, is refused by no layer', with G1, G2 and A1 as historical examples.\n\n(a) G1, G2 and A1 are also refused statically. My round-5 probes, run verbatim in a disposable clone on Node 22.22.2 (sha256 values in probes-summary.txt; every probe restored its files, and the clone's git status was empty at the end):\n- G1 and G2: lint + scan (L4: generator, yield);\n- A1: lint + scan (L6/L7: the destructured then, fromAsync);\n- F1 (finally { const s = \"}\"; return; }): now lint + scan; in round 5 only lint refused it;\n- the controls behave as in round 5:\n  - G3 and A2: lint + scan + run time;\n  - E1, E2, H2, H4 and S2: run time;\n  - H1, H3 and F2: scan + run time;\n  - S1: lint + run time.\n- No earlier form lost a layer:\n  - W1, W2 and W4: lint + scan;\n  - W3, W5 and W6: all three layers;\n  - V1: lint + scan; V2: all three layers;\n  - S1, S2 and S3 (round 3): run time;\n  - all 18 round-2 forms (O1-O6, N1-N12): 'BLOCKED BY BOTH'.\n\nIndependent confirmation of section 6's sentences:\n- An AST walk with the TypeScript parser (word-claims.log) confirms:\n  - decimal.js 10.6.0 (decimal.js and decimal.mjs) has none of try, catch, finally, Promise, async, await, then, yield, fromAsync or asyncIterator outside comments, and no function*;\n  - the seven engine sources contain exactly five try/catch statements and no finally block, generator, yield, async, await, then, fromAsync or asyncIterator.\n- spellings-r6.log covers 53 independent L1-L7 spellings of my own:\n  - every one is refused by no-restricted-syntax or no-unsafe-finally;\n  - the four allowed shapes (the engine's catch, try/finally, try/catch/finally and \"thenable\") lint clean;\n  - the scan flags 52 of the 53.\n- The one spelling the scan misses is 'class C { private *g() {} }'. This matches section 6's enumerated scan claim for L4 (a '*' after { } , ; static or async), and lint refuses it. A generator needs yield to hold an exception, and the scan refuses yield anywhere. So no sentence is false.\n- The residual is real and correctly stated. A3, A1 with fromAsync and then assembled at run time by String.fromCharCode, passes all three layers on the exercised path (residual-probe-r6.log). Its control, A4, is refused at run time (unhandled rejection), which proves that the code generation runs. A3 falls inside the stated residual, so it meets my criterion and is not a reason to fail.\n\nThe engine is unchanged.\n- Probe C (round-1 formula fuzz with the exact oracle) gives 65/65 in unit-node and 75/75 in unit-formula-nocodegen, on Node 22 and on Node 24, identical to round 5.\n- The repair diff touches no engine source, API, web, db or contract file (diff-scan.log D2, D3 and D5 are empty).\n\nOne sentence about test coverage is not exact, and I raise it separately as F-DG3-280 (Low, non-mandatory, non-blocking). ADR line 126 says fuzz.test.ts lints 'the probe-table spellings below' and requires a rule to refuse each. The test lints only the 48 of 99 rows that its name filter selects. I widened the filter to all 97 lintable rows, and lint refused every one. So the behaviour the sentence describes is true; only the description of the test overstates it. My closure criterion concerned the refusal and guarantee claims and the residual, and those are now exact."
       }
     },
     {
@@ -11569,6 +11577,36 @@
         ],
         "note": "Verified fixed on candidate sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d (source ce988e20, repair T-DG3-FE-G 6b30768 merged in 3dcb41f), on the real stack (disposable PostgreSQL 16, migrations, seed-dev, built API + SPA; synthetic data) in chromium-en (LTR) and chromium-ar (RTL), with LANG/LC_ALL unset and with C.UTF-8. (1) My round-2 probe 'F180 layout probe', unchanged, PASSES in all 4 project/setting combinations: 7 of 7 badges (M1 list accepted+counts / revoked / accepted-not-counting, M2 list pending_verification / rejected, M1 and M2 G1 view) lie inside their li.gate-card or dd at 1280x720; in round 2 7/7 (en) and 4/7 (ar) were outside. (2) My added probe F180b measures every badge state on the Gates list and the G1 view at 320, 390, 768, 900, 901, 1024, 1280, 1366 and 1920 px plus 200% root text at 1280 and 390 px (77 measurements per project and setting). In ALL 77 x 4 measurements the badge lies inside its card/field horizontally and vertically, wraps (white-space normal), is not clipped (scrollWidth <= clientWidth) and overlaps no other text-bearing element of its card; every other .status-chip keeps white-space nowrap (the fix is scoped). In 70 of 77 (every width 320-1920 at 100%, and 1280 px at 200%) the rendered rectangles of the clause '(does not approve this gate)' / '(لا يعتمد هذه البوابة)' also lie inside the viewport and the document does not scroll horizontally. The 7 remaining rows are the one state 390 px + 200% root text: the badge and its clause are inside the card, but the card itself is wider than the viewport because the pre-existing gate grid is minmax(18rem, 1fr) (app.css:1506, since DG2 ea72d86; 576 px at 32 px root), so the page scrolls horizontally. That is about 195 CSS px of effective width, below WCAG 1.4.10's 320 px reflow requirement, and 1.4.4 permits scrolling; the clause is reachable, never hidden under a neighbour or overlapped, which was the F-DG3-180 defect. This makes F180b exit non-zero by my own stricter criterion (disclosed in RUN-NOTES item 6); it is an observation about the grid, not a residual of this finding. (3) The product spec p3-inherited-approval.spec.ts passes 5/5 per project in both settings (axe clean), the unit assertion of status-chip--wrap passes, and the repair diff touches only the badge's class, a span wrapper and the opt-in .status-chip--wrap CSS: nothing else on the Gates screens changed (U3 13/13 checks: states, text, neutral chip, source line, link, dir/lang, AUD read-only). Screenshots at 320 px (AR) and 1280 px (EN) show the full clause wrapped inside the card and the field."
       }
+    },
+    {
+      "id": "F-DG3-280",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-056",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0024 §6 'Pinned by tests' overstates the lintText test: only 48 of the 99 probe-table rows are linted (4 of the unlinted rows are L2/L5 handler spellings)",
+      "reproduction": "Candidate sha256:7049d793… (source c40232b).\n(1) Read ADR-0024 §6, line 126. It says that fuzz.test.ts 'also lints the reviewer's G1, G2, A1, A2 and F1 helpers and the probe-table spellings below with ESLint.lintText … and requires a rule to refuse each one'.\n(2) Read fuzz.test.ts lines 829-831. The lintText test lints only the PROBES rows whose scan-hit name matches /^(catch|finally|\\.then|Promise|generator|then|fromAsync)/.\n(3) Count the rows: node docs/delivery/test-evidence/DG3/code-security/round-6/probes/count-lint-pinned-rows.mjs <clone>. The result is 99 rows, of which 48 are linted and 51 are not. The unlinted rows include the L5 rows 'async' (×1) and 'await' (×2), the L2 row 'EvalError outside instanceof' (×1), the round-1/round-2 forms and the 10 non-allowlisted imports.\n(4) Control. In a disposable clone, widen the filter to every row except the two 'unbalanced' rows (bash run-spellings-r6.sh). The test still passes, so lint does refuse all 97 lintable rows.",
+      "expected": "§6 describes what the test pins. Either the test lints every probe-table spelling (for example, filter out only the two 'unbalanced' rows, which are not valid modules; with that filter the test passes on this candidate), or the sentence names the subset it lints (the L1, L3, L4, L6 and L7 rows, plus the round-4 and round-5 helpers).",
+      "actual": "The sentence claims that the lintText test covers every probe-table spelling. It covers 48 of the 99 rows, so no rule's refusal of the other 51 rows is exercised by an ESLint run. The config assertion checks selector substrings. Some partial removals would therefore fail neither test, for example dropping 'ForOfStatement[await=true]' from the async selector, or the 'PrivateIdentifier[…]' part of the round-6 name selector. Removing ':function[async=true]' or 'AwaitExpression' would still fail the config assertion. There is no behavioural effect today: lint refuses every row on this candidate (spellings-r6.log). This is documentation drift and is not blocking.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md",
+        "packages/shared/src/formula/fuzz.test.ts",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/count-lint-pinned-rows.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/probes/count-lint-pinned-rows.mjs",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/spellings-r6.log",
+        "docs/delivery/test-evidence/DG3/code-security/round-6/run-spellings-r6.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG3/round-6/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T20:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG3 round 6 by code-security-reviewer. Low, non-mandatory and non-blocking: a documentation drift about test scope. Lint itself refuses every probe-table row on this candidate."
+        }
+      ]
     }
   ]
 }
