@@ -1,0 +1,23 @@
+Thu Oct  8 17:16:42 UTC 2026
+$ git rev-parse HEAD
+40c84e8d5487ce5d2ec811e9b37ddbb90aa94c9a
+$ git rev-parse --is-shallow-repository
+false
+$ git merge-base --is-ancestor 21e2742 HEAD
+EXIT 0
+$ git diff --name-only 21e2742..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG3
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3","files":757}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG3 --ref 21e2742
+{"stage":"DG3","source":"21e2742","candidate_id":"sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3","files":757}
+EXIT 0
+$ manifest
+sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3 21e2742e4b0f6800e379a4d935d5592a873b1c59 757
+
+$ (clone $TMPDIR/review-dg3) git rev-parse HEAD; is-shallow; candidate.mjs --stage DG3
+21e2742e4b0f6800e379a4d935d5592a873b1c59
+false
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3","files":757}
+EXIT 0

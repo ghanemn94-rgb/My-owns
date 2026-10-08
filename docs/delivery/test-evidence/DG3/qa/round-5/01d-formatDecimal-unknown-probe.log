@@ -1,0 +1,35 @@
+$ node $TMPDIR/qa/fd.mts (formatDecimal from packages/shared/src/value.ts @21e2742, clone review-dg3, v24.21.0)
+"abc" en: null ar: null
+"" en: null ar: null
+" " en: null ar: null
+"1e5" en: null ar: null
+"NaN" en: null ar: null
+"Infinity" en: null ar: null
+"0x10" en: null ar: null
+"1,000" en: null ar: null
+"--1" en: null ar: null
+"12.345678901" en: "12.35" ar: "12.35"
+"100000" en: "100,000" ar: "100,000"
+"0" en: "0" ar: "0"
+"-0.5" en: "-0.5" ar: "‎-0.5"
+null en: null ar: null
+undefined en: null ar: null
+"<hostile toString TypeError>" en: null ar: null
+EXIT 0
+
+=== probe script:
+const m = await import(process.cwd() + "/src/value.ts");
+for (const v of ["abc", "", " ", "1e5", "NaN", "Infinity", "0x10", "1,000", "--1", "12.345678901", "100000", "0", "-0.5", null, undefined, {toString(){throw new TypeError("x")}} as any]) {
+  let out; try { out = JSON.stringify(m.formatDecimal(v, { locale: "en" })); } catch (e) { out = "THROW " + (e as Error).name; }
+  let ar; try { ar = JSON.stringify(m.formatDecimal(v, { locale: "ar" })); } catch (e) { ar = "THROW " + (e as Error).name; }
+  console.log(JSON.stringify(typeof v === "object" && v ? "<hostile toString TypeError>" : v), "en:", out, "ar:", ar);
+}
+
+=== Amount.tsx: rendering of a null formatDecimal result
+2:// @mth/shared value.ts (never a JavaScript number). A missing amount is Unknown; an unquantified value pool is labelled
+5:import { formatDecimal, isPartialTotal, totalValuePools, type ValuePoolForTotal } from "@mth/shared/schemas";
+7:import { Unknown } from "./Badges.tsx";
+20:  const text = formatDecimal(value, { locale, currency: currency ?? null, maxFractionDigits });
+21:  if (text === null) return <Unknown />;
+69:        {t("kpi.valuePool.totalLabel")}: <Unknown hint={t("kpi.valuePool.noPools")} />
+79:            <Unknown hint={t("kpi.valuePool.noneQuantified")} />

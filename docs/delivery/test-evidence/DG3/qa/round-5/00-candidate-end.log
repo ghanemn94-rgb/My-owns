@@ -1,0 +1,27 @@
+Thu Oct  8 18:16:24 UTC 2026
+$ git rev-parse HEAD
+40b422ed2b8ce12b7528c39385e61b14e9f51887
+$ git diff --name-only 40c84e8..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ git log --oneline 40c84e8..HEAD
+40b422e DG3: repair assignment T-DG3-KBE-H for F-DG3-100 (round-5 final closure criterion: (a) and (b))
+6f2a992 DG3 round 5: code-security test evidence
+3a3cd9e run: DG3-T-DG3-REV-SEC-R5-code-security-reviewer-20261008T171531Z-17bcf3e5 (review evidence, auto-committed by run-agent.sh)
+5c86f9b DG3 round 5: domain test evidence
+8d6a705 run: DG3-T-DG3-REV-DOM-R5-domain-reviewer-20261008T171551Z-a603edd0 (review evidence, auto-committed by run-agent.sh)
+$ node tools/gates/candidate.mjs --stage DG3
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3","files":757}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG3 --ref HEAD
+{"stage":"DG3","source":"HEAD","candidate_id":"sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3","files":757}
+EXIT 0
+$ (clone review-dg3) git status --short; candidate.mjs
+?? e2e/dg3-qa-r5.spec.ts
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:8a8aa373b6ae7ef3a4e3e4ed4ebdcdb19448e4db545dcde8ada427890a02aa0c","files":758}
+EXIT 0
+$ (clone probe-dg3) git status --short
+(end)
+$ (clone review-dg3) the 758th file is my untracked spec copy e2e/dg3-qa-r5.spec.ts (e2e/** is in the stage manifest); after the runs: rm e2e/dg3-qa-r5.spec.ts; git status --short; candidate.mjs
+{"stage":"DG3","source":"working-tree","candidate_id":"sha256:dfedd62f05412fd7888b7d13d2391c6ab5df7d56563ab946502e53c558689ed3","files":757}
+EXIT 0
+clones removed 2026-10-08T18:20:11Z

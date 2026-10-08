@@ -1,0 +1,366 @@
+=================== forms appended to packages/shared/src/formula/parse.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/formula/parse.ts b/packages/shared/src/formula/parse.ts
+index f95b339..ddb15d5 100644
+--- a/packages/shared/src/formula/parse.ts
++++ b/packages/shared/src/formula/parse.ts
+@@ -248,3 +248,25 @@ class Parser {
+       this.fail(at, `${node.fn} takes at least two arguments`, "arity");
+   }
+ }
++// QA PROBE (throwaway, round 5): handler forms that would keep a refused code generation (EvalError) from the test.
++declare const qaGen: () => number;
++declare const qaP: { then(f: () => void): typeof qaP; catch(f: () => void): typeof qaP; finally(f: () => void): typeof qaP };
++export function qaW1(): number { try { return qaGen(); } catch { return 0; } }
++export function qaW2(): number { try { return qaGen(); } finally { return 0; } }
++export function qaW4(): void { void Promise.resolve().then(() => qaGen()).catch(() => undefined); }
++export function qaW5(): number { try { return qaGen(); } catch (e) { throw new Error("wrapped", { cause: e }); } }
++export function qaR1(): number { try { return qaGen(); } catch (err) { if (err instanceof EvalError) throw err; return 0; } }
++export function qaR2(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; else return 0; } }
++export function qaR3(): number { try { return qaGen(); } catch (e) { const z = 1; if (e instanceof EvalError) throw e; return z; } }
++export function qaR4(): number { try { return qaGen(); } catch (e) { if (e instanceof TypeError) throw e; return 0; } }
++export function qaR5(): number { for (;;) { try { return qaGen(); } finally { break; } } return 0; }
++export function qaR6(): number { try { return qaGen(); } finally { throw new RangeError("x"); } }
++export const qaR7 = (): void => { const EvalError = RangeError; void EvalError; };
++export async function qaR8(): Promise<number> { return await Promise.resolve(qaGen()); }
++export function qaR9(): void { queueMicrotask(() => { qaGen(); }); }
++export function qaR10(): void { qaP["then"](() => undefined); qaP?.catch(() => undefined); qaP.finally(() => undefined); }
++export const qaR11 = async (): Promise<void> => {};
++export function qaR12(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) { throw e; } return 0; } }
++export function qaR13(): number { try { return qaGen(); } catch (e) { if (!(e instanceof EvalError)) return 0; throw e; } }
++// Allowed shape (must NOT be reported):
++export function qaOK(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; return 0; } }
+$ npx eslint packages/shared/src/formula/parse.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+/var/tmp/mth-run.MytTNd/claude-0/probe-dg3/packages/shared/src/formula/parse.ts
+  254:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  255:68  error  Unsafe usage of ReturnStatement                                                                                                                 no-unsafe-finally
+  256:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  256:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  256:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  257:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  258:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  259:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  260:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  261:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  262:79  error  Unsafe usage of BreakStatement                                                                                                                  no-unsafe-finally
+  263:68  error  Unsafe usage of ThrowStatement                                                                                                                  no-unsafe-finally
+  264:41  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  264:70  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  265:8   error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  265:31  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  265:56  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  265:62  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  266:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:33  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:63  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  267:92  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  268:22  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  268:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  269:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  270:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+
+✖ 26 problems (26 errors, 0 warnings)
+
+EXIT 1
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 18ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 3ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1782ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 1ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 1ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (err) { if (err instanceof EvalError) throw err; } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; } as catch without EvalError rethrow 1ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch ({ message }) { b(message); } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for (;;) { try { a(); } finally { break; } } as finally with return/throw/break/continue 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } finally { throw new RangeError(); } as finally with return/throw/break/continue 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const EvalError = RangeError; as EvalError outside instanceof 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags async function f(): Promise<void> {} as async 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags await a(); as await 0ms
+EXIT 1
+=================== forms-edge appended to packages/shared/src/formula/parse.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/formula/parse.ts b/packages/shared/src/formula/parse.ts
+index f95b339..ae74ff7 100644
+--- a/packages/shared/src/formula/parse.ts
++++ b/packages/shared/src/formula/parse.ts
+@@ -248,3 +248,10 @@ class Parser {
+       this.fail(at, `${node.fn} takes at least two arguments`, "arity");
+   }
+ }
++// QA PROBE (throwaway, round 5): edge forms outside the documented denylist (observation only).
++declare const qaGen: () => number;
++declare const qaThrows: () => void;
++export function qaE1(): number { try { return qaGen(); } finally { qaThrows(); } }
++export function qaE2(): number { using qaD = { [Symbol.dispose]() { qaThrows(); } }; void qaD; return qaGen(); }
++export function* qaE3(): Generator<number> { try { yield qaGen(); } finally { qaThrows(); } }
++export function qaOK2(): number { try { return qaGen(); } finally { void 0; } }
+$ npx eslint packages/shared/src/formula/parse.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+EXIT 0
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (71 tests | 4 skipped) 1558ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1536ms
+ Test Files  1 passed (1)
+      Tests  67 passed | 4 skipped (71)
+EXIT 0
+=================== forms appended to packages/shared/src/value.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 961b148..d0ab936 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -293,3 +293,25 @@ export function totalValuePoolsIn(
+ export function isPartialTotal(total: ValuePoolTotal): boolean {
+   return total.unquantifiedCount > 0;
+ }
++// QA PROBE (throwaway, round 5): handler forms that would keep a refused code generation (EvalError) from the test.
++declare const qaGen: () => number;
++declare const qaP: { then(f: () => void): typeof qaP; catch(f: () => void): typeof qaP; finally(f: () => void): typeof qaP };
++export function qaW1(): number { try { return qaGen(); } catch { return 0; } }
++export function qaW2(): number { try { return qaGen(); } finally { return 0; } }
++export function qaW4(): void { void Promise.resolve().then(() => qaGen()).catch(() => undefined); }
++export function qaW5(): number { try { return qaGen(); } catch (e) { throw new Error("wrapped", { cause: e }); } }
++export function qaR1(): number { try { return qaGen(); } catch (err) { if (err instanceof EvalError) throw err; return 0; } }
++export function qaR2(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; else return 0; } }
++export function qaR3(): number { try { return qaGen(); } catch (e) { const z = 1; if (e instanceof EvalError) throw e; return z; } }
++export function qaR4(): number { try { return qaGen(); } catch (e) { if (e instanceof TypeError) throw e; return 0; } }
++export function qaR5(): number { for (;;) { try { return qaGen(); } finally { break; } } return 0; }
++export function qaR6(): number { try { return qaGen(); } finally { throw new RangeError("x"); } }
++export const qaR7 = (): void => { const EvalError = RangeError; void EvalError; };
++export async function qaR8(): Promise<number> { return await Promise.resolve(qaGen()); }
++export function qaR9(): void { queueMicrotask(() => { qaGen(); }); }
++export function qaR10(): void { qaP["then"](() => undefined); qaP?.catch(() => undefined); qaP.finally(() => undefined); }
++export const qaR11 = async (): Promise<void> => {};
++export function qaR12(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) { throw e; } return 0; } }
++export function qaR13(): number { try { return qaGen(); } catch (e) { if (!(e instanceof EvalError)) return 0; throw e; } }
++// Allowed shape (must NOT be reported):
++export function qaOK(): number { try { return qaGen(); } catch (e) { if (e instanceof EvalError) throw e; return 0; } }
+$ npx eslint packages/shared/src/value.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+/var/tmp/mth-run.MytTNd/claude-0/probe-dg3/packages/shared/src/value.ts
+  299:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  300:68  error  Unsafe usage of ReturnStatement                                                                                                                 no-unsafe-finally
+  301:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  301:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  301:37  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  302:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  303:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  304:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  305:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  306:58  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  307:79  error  Unsafe usage of BreakStatement                                                                                                                  no-unsafe-finally
+  308:68  error  Unsafe usage of ThrowStatement                                                                                                                  no-unsafe-finally
+  309:41  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  309:70  error  EvalError appears only in `e instanceof EvalError` in the formula engine (ADR-0024 §6)                                                          no-restricted-syntax
+  310:8   error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  310:31  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  310:56  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  310:62  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  311:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:33  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:63  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  312:92  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  313:22  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  313:32  error  No Promise, async, await, microtask or .then/.catch/.finally in the formula engine: it is synchronous (ADR-0024 §6)                             no-restricted-syntax
+  314:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+  315:59  error  Every catch in the formula engine starts with `if (e instanceof EvalError) throw e;`: a refused code generation is never handled (ADR-0024 §6)  no-restricted-syntax
+
+✖ 26 problems (26 errors, 0 warnings)
+
+EXIT 1
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+   × source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 21ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 6ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1397ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 1ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try {
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (err) { if (err instanceof EvalError) throw err; } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; } as catch without EvalError rethrow 1ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch ({ message }) { b(message); } as catch without EvalError rethrow 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for (;;) { try { a(); } finally { break; } } as finally with return/throw/break/continue 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } finally { throw new RangeError(); } as finally with return/throw/break/continue 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const EvalError = RangeError; as EvalError outside instanceof 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags async function f(): Promise<void> {} as async 0ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags await a(); as await 0ms
+EXIT 1
+=================== forms-edge appended to packages/shared/src/value.ts (probe clone, throwaway):
+diff --git a/packages/shared/src/value.ts b/packages/shared/src/value.ts
+index 961b148..95359e9 100644
+--- a/packages/shared/src/value.ts
++++ b/packages/shared/src/value.ts
+@@ -293,3 +293,10 @@ export function totalValuePoolsIn(
+ export function isPartialTotal(total: ValuePoolTotal): boolean {
+   return total.unquantifiedCount > 0;
+ }
++// QA PROBE (throwaway, round 5): edge forms outside the documented denylist (observation only).
++declare const qaGen: () => number;
++declare const qaThrows: () => void;
++export function qaE1(): number { try { return qaGen(); } finally { qaThrows(); } }
++export function qaE2(): number { using qaD = { [Symbol.dispose]() { qaThrows(); } }; void qaD; return qaGen(); }
++export function* qaE3(): Generator<number> { try { yield qaGen(); } finally { qaThrows(); } }
++export function qaOK2(): number { try { return qaGen(); } finally { void 0; } }
+$ npx eslint packages/shared/src/value.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+EXIT 0
+$ npx vitest run --project unit-node packages/shared/src/formula/fuzz.test.ts -t 'source scan'
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (71 tests | 4 skipped) 1567ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1545ms
+ Test Files  1 passed (1)
+      Tests  67 passed | 4 skipped (71)
+EXIT 0
+$ restored; git status --short
+$ npx eslint packages/shared/src/formula packages/shared/src/value.ts (restored)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+EXIT 0
+=================== (detail) forms appended to packages/shared/src/formula/parse.ts: scan assertion output
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: formula/parse.ts: expected [ 'Promise', 'async', 'await', …(4) ] to deeply equal []
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- [][39m
+[31m+ [[39m
+[31m+   "Promise",[39m
+[31m+   "async",[39m
+[31m+   "await",[39m
+[31m+   ".then/.catch/.finally",[39m
+[31m+   "catch without EvalError rethrow",[39m
+[31m+   "finally with return/throw/break/continue",[39m
+[31m+   "EvalError outside instanceof",[39m
+[31m+ ][39m
+ ❯ packages/shared/src/formula/fuzz.test.ts:432:88
+    430|       ]);
+    431|       for (const { file, allowlist } of files) {
+    432|         expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), a…
+       |                                                                                        ^
+    433|       }
+    434|     },
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+=================== (detail) forms appended to packages/shared/src/value.ts: scan assertion output
+ FAIL  |unit-node| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules
+AssertionError: value.ts: expected [ 'Promise', 'async', 'await', …(4) ] to deeply equal []
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- [][39m
+[31m+ [[39m
+[31m+   "Promise",[39m
+[31m+   "async",[39m
+[31m+   "await",[39m
+[31m+   ".then/.catch/.finally",[39m
+[31m+   "catch without EvalError rethrow",[39m
+[31m+   "finally with return/throw/break/continue",[39m
+[31m+   "EvalError outside instanceof",[39m
+[31m+ ][39m
+ ❯ packages/shared/src/formula/fuzz.test.ts:432:88
+    430|       ]);
+    431|       for (const { file, allowlist } of files) {
+    432|         expect(scanSource(readFileSync(`${SRC_DIR}${file}`, "utf8"), a…
+       |                                                                                        ^
+    433|       }
+    434|     },
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)

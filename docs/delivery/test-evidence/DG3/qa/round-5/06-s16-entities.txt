@@ -1,0 +1,16 @@
+$ python3 s16.py (clone @21e2742; independent re-derivation of the REQ-S16-016 entity table)
+initiative | 0020_p3_portfolio_roadmap.sql | PK True | owner ['executive_owner_user_id'] | status ['status'] | erd mentions 29 | ALTERs []
+deliverable | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id', 'decided_by'] | status ['acceptance_status', 'status'] | erd mentions 5 | ALTERs []
+milestone | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 5 | ALTERs []
+roadmap_wave | 0020_p3_portfolio_roadmap.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 6 | ALTERs []
+dependency | 0017_p2_decisions_gates.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 12 | ALTERs ['0022_p3_dependency_capacity_funding.sql']
+resource_demand | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 5 | ALTERs []
+capacity | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['owner_user_id'] | status ['status'] | erd mentions 8 | ALTERs []
+funding_decision | 0022_p3_dependency_capacity_funding.sql | PK True | owner ['decided_by'] | status ['outcome'] | erd mentions 6 | ALTERs ['0023_p3_business_case_formula.sql']
+
+$ git diff --stat 171a0b57..21e2742 -- packages/db docs/architecture/erd.md
+(empty = no migration/ERD change in the round-5 repair)
+$ ls packages/db/migrations/*.sql | wc -l
+27
+packages/db/migrations/0001_identity_access.sql
+packages/db/migrations/0027_p3_calculation_rounding.sql
