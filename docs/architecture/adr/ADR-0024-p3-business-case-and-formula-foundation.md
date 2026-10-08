@@ -88,7 +88,40 @@ G4 `g4.finance_validation` is complete only when every in-scope case (and the tr
 
 **No dynamic code.** The engine is a hand-written tokenizer, recursive-descent parser and AST walker. `eval`, `new Function`, `Function(...)`, `vm`/`node:vm`, `setTimeout(string)`, dynamic `import()` and `with` are forbidden in `packages/shared/src/formula/**`; an ESLint override (`no-eval`, `no-implied-eval`, `no-new-func`, `no-restricted-imports: vm, node:vm`, `no-restricted-syntax: ImportExpression`, `WithStatement`, timer calls `setTimeout`/`setInterval`/`setImmediate`/`execScript` as plain or member calls, and `.constructor(...)` calls) enforces it. The timer selectors are needed because core `no-implied-eval` only recognises declared globals (T-DG3-KBE-A lint probe); a source scan in `fuzz.test.ts` backs the rule up.
 
-**Extended guard (F-DG3-100, T-DG3-KBE-D).** The override also refuses the forms that reach the Function constructor or a module loader without those names: `no-restricted-globals` `Function`, `eval`, `Reflect` (the engine uses no `Reflect`); `no-restricted-syntax` for any `Function` identifier (aliases, `globalThis.Function`, `Reflect.construct/apply(Function, …)`), computed `["constructor"]`/`["Function"]` members (string or template), any `.constructor` read or destructuring, `require`/`createRequire` calls and the `createRequire` name; and `no-restricted-imports` `module`, `node:module`, `worker_threads`, `child_process` (with and without `node:`). The `fuzz.test.ts` scan (`scanSource`, comments stripped) checks the same forms in the engine sources, and a table of in-memory probes pins that each form is a hit. The fuzz tripwire's three `globalThis.Function` lines carry a justified `eslint-disable-next-line`.
+**Extended guard (F-DG3-100; T-DG3-KBE-D, rewritten by T-DG3-KBE-E).** There are three layers, and each one guarantees only what is stated here.
+
+1. **Static layer: ESLint (`eslint.config.js`, two formula blocks).**
+   - For every file under `packages/shared/src/formula/**`:
+     - `no-eval`, `no-implied-eval` and `no-new-func`;
+     - `no-restricted-globals` for `Function`, `eval` and `Reflect`;
+     - `no-restricted-syntax` for any `Function` identifier, computed `["constructor"]`/`["Function"]` members, any `.constructor` read or destructuring, `require`/`createRequire`, `Reflect.*`, `import()`, `with`, and timer calls;
+     - `no-restricted-imports` for `vm`, `module`, `worker_threads`, `child_process`, `inspector` and `repl`, with and without `node:`.
+   - For the engine sources only (the non-test files, excluding `test-support/`), these rules as well:
+     - **An import allowlist.** `no-restricted-imports` refuses every specifier except `./<name>.ts`, `../value.ts` and `decimal.js`, for `import`, `import type` and `export … from`. That refuses every `node:*` built-in and every npm or workspace package. The engine uses no `@mth/*` workspace import. Separately, run-time module loading is refused: `import()`, `require`, `createRequire`, `import.meta`, and `process` (which carries `getBuiltinModule`).
+     - **Host globals.** `process`, `global`, `globalThis`, `self`, `window`, `frames`, `parent`, `top`, `opener` and `document` are refused both through `no-restricted-globals` and as any identifier, so a shadowing `declare const global` is refused too. The engine uses none of them.
+     - **Constructor keys.** Any string literal, template element or identifier equal to `constructor` is refused, except the name of a class constructor declaration.
+     - **Prototype reflection and assembled keys.** Also refused: prototype reflection (`getPrototypeOf`, `getOwnPropertyDescriptor(s)`, `setPrototypeOf`, `defineProperty`, `__proto__`, …), a computed key assembled from a string literal (`["con" + k]`, or a template with substitutions), and a computed member read directly off a function expression.
+   - **Guarantee and limit.** This layer is a best-effort denylist for the common spellings, plus the import allowlist. It is not complete, and it cannot be: JavaScript can assemble a property key at run time from values that no static rule sees.
+2. **Static layer: the source scan (`fuzz.test.ts`, `scanSource`).**
+   - It mirrors layer 1 on the engine sources, with comments stripped. It checks the same denylist words, the host globals, the word `constructor` outside a class constructor declaration, prototype reflection, string-assembled keys, `import.meta`, hex and Unicode escapes, and the same import allowlist.
+   - A probe table pins that each F-DG3-100 form is a hit: the round-1 forms O1–O6, the round-2 forms N1–N12, and other non-allowlisted imports.
+   - Its guarantee and its limit are the same as layer 1's.
+3. **Run-time layer, independent of spelling (`vitest.config.ts`, project `unit-formula-nocodegen`).**
+   - `pnpm test` runs the whole formula test corpus a second time: every `*.test.ts` under `packages/shared/src/formula/`, including `formula.test.ts` and `fuzz.test.ts`. It runs in forked Node processes started with `--disallow-code-generation-from-strings`.
+   - In those processes, `eval` and every construction of `Function`, `AsyncFunction` or `GeneratorFunction` from a string throw `EvalError`, however the constructor was reached and however its key was spelled.
+   - **Guarantee.** Any engine path that generates code from a string fails the engine's tests, provided a test exercises it.
+   - **Canary.** `codegen.nocodegen.test.ts` runs only in this project. It asserts that the flag is in the process's `execArgv`, and that each of these throws `EvalError`: `new Function`, direct and indirect `eval`, and the AsyncFunction and GeneratorFunction constructors reached through a prototype. If the flag is ever lost, the canary fails, so the guard cannot disappear silently.
+   - **Not covered by the flag.** It does not cover `node:vm`, `node:inspector`, or a module loaded with `process.getBuiltinModule`. Layers 1–2 refuse those, through the import allowlist and the `process` ban.
+   - **Mechanics**, recorded because they are not obvious:
+     - Vitest 3.2 honours the forks pool's `execArgv` only at the root, so the project runs in its own Vitest invocation, the second command of `pnpm test`. The config refuses to combine it with another project.
+     - Neither the `threads` pool nor `vmForks` can carry the flag: worker threads refuse it (`ERR_WORKER_INVALID_EXEC_ARGV`), and `node:vm` contexts re-enable code generation.
+     - tinypool 1.1.1 resolves its warm-up handler through `new Function` when the handler name is not exported. So `test-support/nocodegen-preload.mjs`, loaded with `--import`, renames that one warm-up message to the worker's `run` export. The preload enables no code generation.
+
+**Residual.** The run-time layer covers only what the tests exercise: the unit tests, and the fuzz tests with 40,000 generated inputs through `validateFormula` and `evaluateFormula`. No coverage figure is claimed. A code-generating path that no test exercises is caught only by the static layers, which are best effort. For example, `f[k](…)`, where `f` is an ordinary function variable and `k` is assembled at run time from non-literal parts, passes both static layers.
+
+**Production.**
+- **Browser.** The web bundle, which includes this engine, is served by the API through `@fastify/static`. It carries the CSP from `HELMET_OPTIONS` in `apps/api/src/server.ts` (`useDefaults: false`): `script-src 'self'` with no `'unsafe-eval'`. The browser therefore refuses `eval` and string `Function` construction for that document. This was verified on the emitted header (T-DG3-KBE-E evidence). It holds only where the API serves the web bundle; a different web host must send an equivalent CSP.
+- **Server.** No run-time flag is set in the API or worker processes, so there the engine relies on the static layers and on its tests.
 
 **Grammar (EBNF).**
 
