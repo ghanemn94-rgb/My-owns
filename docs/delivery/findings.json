@@ -11330,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11366,10 +11366,15 @@
           "at": "2026-10-08T15:30:00Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 4: FAIL"
+        },
+        {
+          "at": "2026-10-08T16:34:10Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 10472b4c2a1d400f3a50908b2f3fc55d290cffa9"
         }
       ],
-      "fix_revision": "0fb892c891ebafee30f194f805a46a4fd5a67f3b",
-      "fix_summary": "T-DG3-KBE-F 0fb892c (third pass, after the round-3 verification FAILED): every catch in the engine's import closure (validateFormula, evaluateFormula, evaluateAst, value.ts formatDecimal) rethrows EvalError, so an exercised code-generating path fails every no-codegen test that reaches it; independently, every fuzz.test.ts outcome check and every formula.test.ts rejection row refuses params.reason 'internal'; regression tests in the no-codegen project. value.ts gets the engine-source lint block with a decimal.js-only allowlist and joins the scan; engineImportClosure() pins the transitive closure (six formula sources + value.ts, decimal.js only) to the guarded set, with a lint-coverage test (unit-node). Reviewer probes: S1 and S3 now refused at run time, V1 by lint+scan, V2 by all three; the 18 earlier forms stay refused. ADR-0024 §6 corrected. Production behaviour for non-EvalError internal errors unchanged (422 formula.syntax 'internal'); integration 793/793.",
+      "fix_revision": "10472b4c2a1d400f3a50908b2f3fc55d290cffa9",
+      "fix_summary": "T-DG3-KBE-G 10472b4 (fourth pass, after the round-4 verification FAILED; reviewer's closure criterion (a)): the EvalError-rethrow rule is enforced statically in the engine's import closure -- every CatchClause must bind e and have 'if (e instanceof EvalError) throw e;' first (lint selector, mirrored by the scan); no-unsafe-finally; Promise, async, await and .then/.catch/.finally refused; parse.ts given the same first statement; engineImportClosure() follows string-named specifiers (X1). Reviewer probes: W1, W2, W4 now refused by lint+scan; W3, W5, W6 by all three layers; S1-S3, V1, V2 and the 18 earlier forms stay refused. ADR-0024 §6 corrected (five catch clauses; React Router's default error element, unreachable in practice; closure-parser scope). pnpm test 1614 + 220 (1 skip) x4; integration 793.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
