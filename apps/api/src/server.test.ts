@@ -123,7 +123,9 @@ describe("module composition (D-048, P2)", () => {
         deliversIn: "P5",
         routes: [],
       });
-      expect(routes.filter((r) => /report|formula/i.test(r.url))).toEqual([]);
+      // P3 (T-DG3-KBE-C): kpi routes the T09 benefit formulas (/benefit-formulas, /benefit-formula-examples); the
+      // reporting module stays route-free until P5.
+      expect(routes.filter((r) => /report/i.test(r.url))).toEqual([]);
     } finally {
       await pool.end();
     }
