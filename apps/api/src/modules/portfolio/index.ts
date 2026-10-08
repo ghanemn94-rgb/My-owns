@@ -36,6 +36,7 @@ import { registerInitiativeTransitionRoutes } from "./transitions.ts";
 import { registerWaveRoutes } from "./waves.ts";
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
+export { t08ScheduleFlags } from "./roadmap.ts";
 export { latestFundingState } from "./funding.ts";
 export { loadDispensations, loadSequencingFacts } from "./dispensations.ts";
 export {

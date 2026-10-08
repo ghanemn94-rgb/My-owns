@@ -68,7 +68,32 @@ The proposed ranking is advisory. Selection is a separate human decision (`portf
 
 ### 7. Comparison and ranked table (REQ-S09-004)
 
-`GET /transformations/{id}/prioritization` returns, per eligible initiative: the latest result for the active set, the 0–100 value, the *value* axis (`financial_value` and `customer_impact` combined as `(fv×w_fv + ci×w_ci)/(w_fv + w_ci)`, documented) and the *feasibility* axis (`feasibility` and `time_to_value` likewise), rank, selection and funding state, wave, sequencing flags (ADR-0023 §5) and capacity flags (ADR-0023 §6). Filters (query): `status`, `waveId`, `completeness`, `funding`, `flag`. Cursor pagination does not apply (one transformation's portfolio, at most 500 initiatives, `limit` refused above that with 422 `prioritization.portfolio_too_large`).
+`GET /transformations/{id}/prioritization` returns, per eligible initiative: the latest result for the active set, the 0–100 value, the *value* axis (`financial_value` and `customer_impact` combined as `(fv×w_fv + ci×w_ci)/(w_fv + w_ci)`, documented) and the *feasibility* axis (`feasibility` and `time_to_value` likewise), rank, selection and funding state, wave, sequencing flags (ADR-0023 §5) and capacity flags (ADR-0023 §6). Filters (query): `status`, `waveId`, `completeness`, `funding` (`not_applicable` | `unfunded` | `funded` | `revoked`), `flag`. Cursor pagination does not apply: the view covers one transformation's portfolio of at most 500 eligible initiatives, and above that it is refused with 422 `prioritization.portfolio_too_large`. *(T-DG3-ARCH-03: the frozen contract lacked the `funding` query parameter and the 422 on `getPrioritization`. Both are now declared in `docs/api/openapi.yaml` and exercised over HTTP in `p3-exercises-be-d.ts`. The earlier wording "`limit` refused" was wrong: the view has no `limit`, and the count of eligible initiatives is what is checked.)*
+
+### 8. Design choices recorded after build (T-DG3-BE-D handback §7; confirmed T-DG3-ARCH-03)
+
+**Problem codes and their English texts.** These codes are part of the code set and the i18n keys. FE-B translates them from `code`; the Arabic texts are the web's and are provisional.
+
+| Code | Status / type | English `detail` (exact) |
+|---|---|---|
+| `prioritization.score_exists` | 409 | "This criterion already has a score for the initiative; change it with PATCH." |
+| `prioritization.weight_set_not_proposed` | 422 invalid-transition | "Only a proposed weight set can be approved." (approve) / "Only a proposed weight set can be withdrawn." (withdraw) |
+| `prioritization.override_not_proposed` | 422 invalid-transition | "Only a proposed override can be approved or rejected." |
+| `prioritization.override_not_revocable` | 422 invalid-transition | "Only an approved override can be revoked." |
+| `prioritization.override_exists` | 409 | "The initiative already has a proposed or approved override; revoke or decide it first." |
+| `prioritization.override_not_eligible` | 422 validation, `/initiativeId` | "Only an initiative in the portfolio (submitted or later, not cancelled) can be given a rank override." |
+| `prioritization.override_reason_required` | 422 validation, `/reason` | "An override needs a reason." |
+| `prioritization.on_behalf_not_supported` | 422 validation, `/onBehalfOfUserId` | "A ranking override is decided by the approver in person; deciding on someone's behalf is not available." (the P3 rule, ADR-0021 §6) |
+| `prioritization.portfolio_too_large` | 422 validation | "The prioritization view covers at most 500 initiatives (got {n})." |
+| `approval.approver_is_proposer` | 403 | "The person who proposed this cannot approve it (separation of duties)." (shared with `db-errors.ts`; weight sets and overrides) |
+
+**Ranked but now incomplete keeps `ranked`.** A `ranked` initiative whose score becomes incomplete (a score cleared, or a criterion added by a new active set) keeps the status `ranked`; nothing demotes it. In the next snapshot and in the view it appears as an `incomplete` entry with rank `null`, listed after the ranked ones. The status records that the initiative entered a proposed ranking; the snapshot says where it stands now. A demotion would be a status change without a human action, so it was not added.
+
+**Scoring a draft is allowed.** The score routes check no initiative status, so scores (and their appended results) may be recorded for a `draft` initiative, and a team can prepare scores before submission. (They are not refused for a `cancelled` or `completed` initiative either. That is the open point in ADR-0021 §2.) Only the eligible statuses (`submitted`, `ranked`, `selected`, `funded`, `launched`) enter weight-set activation rescoring, rankings and the view. If an eligible initiative has no result under the active set, ranking computes one and appends it with cause `initial`.
+
+**The prioritization lock.** Weight-set proposal and activation, ranking-snapshot creation and score-result writes of one transformation serialize on `pg_advisory_xact_lock(730222, hashtext(transformation_id))` (`PRIORITIZATION_LOCK_CLASS`). The next `version_no` or `snapshot_no` and the "latest result" are then never computed from a concurrent, uncommitted state. It is API-only (no trigger shares it). The class is registered in **ADR-0016 §6**; until T-DG3-ARCH-03 it collided with dependency-type creation, which now uses 730223.
+
+**Shared mirrors.** The zod mirrors of this ADR's contract components live in `packages/shared/src/schemas/prioritization.ts` and are exported by `@mth/shared/schemas`. The API routes, the contract seam and FE-B import that one definition. Weights, weighted scores, axes and the 0–100 view are decimal strings. A single criterion score is the contract's integer 1–5.
 
 ## Alternatives considered
 

@@ -16,7 +16,19 @@
 // business record that approves nothing real, and nothing touches the engineering gates DG0-DG7.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { latestFundingState } from "../../../src/modules/portfolio/funding.ts";
-import { auditOf, auditOfRequest, call, seedWorld, startApi, type TestApi, type World } from "../../support/harness.ts";
+import { v7 as uuidv7 } from "uuid";
+import {
+  auditOf,
+  auditOfRequest,
+  call,
+  createUser,
+  grant,
+  seedWorld,
+  signIn,
+  startApi,
+  type TestApi,
+  type World,
+} from "../../support/harness.ts";
 import { ifm, setupP2World, type P2World } from "../../support/p2-fixtures.ts";
 import {
   addMeasurableContribution,
@@ -343,6 +355,62 @@ describe("selection (REQ-S09-003): a recorded business approval; ranking never s
     await act(l, "launch", x.p.lead.session);
     const launched = await act(l, "deselect", x.p.sponsor.session, { rationale: "Synthetic: too late." });
     expect([launched.status, launched.body.code]).toEqual([422, "initiative.not_deselectable"]);
+  });
+
+  it("ADR-0021 §6 (T-DG3-ARCH-03): select/deselect on someone's behalf -> 422 selection.on_behalf_not_supported, even under an active delegation; nothing written", async () => {
+    const x = await world({ g1: true });
+    // A second Sponsor-role holder (holds portfolio.select) with an active delegation from the Sponsor.
+    const delegate = await createUser(api.db, w.orgA.id);
+    await grant(
+      api.db,
+      w.grantor.id,
+      delegate.id,
+      "SP",
+      { type: "transformation", id: x.p.transformationId },
+      w.orgA.id,
+    );
+    const dSession = await signIn(api.app, delegate.subject);
+    await api.owner.query(
+      `insert into delegation (id, organization_id, delegator_user_id, delegate_user_id, scope_type, scope_id, record_types,
+         reason_code, effective_from, effective_to)
+       values ($1, $2, $3, $4, 'transformation', $5, null, 'absence', now() - interval '1 day', now() + interval '7 days')`,
+      [uuidv7(), w.orgA.id, x.p.sponsor.id, delegate.id, x.p.transformationId],
+    );
+    const detail =
+      "A portfolio selection is decided by the approver in person; deciding on someone's behalf is not available.";
+    const refused = {
+      status: 422,
+      type: "urn:mth:problem:validation",
+      code: "selection.on_behalf_not_supported",
+      detail,
+      errors: [{ pointer: "/onBehalfOfUserId", code: "selection.on_behalf_not_supported", message: detail }],
+    };
+    const shape = (r: { status: number; body: Record<string, unknown> }) => ({
+      status: r.status,
+      type: r.body["type"],
+      code: r.body["code"],
+      detail: r.body["detail"],
+      errors: r.body["errors"],
+    });
+    const rows = async (id: string) =>
+      (await api.db.selectFrom("portfolio_selection").select("id").where("initiative_id", "=", id).execute()).length;
+
+    const r = await ranked(x);
+    const v = await version(r);
+    const sel = await act(r, "select", dSession, { ...RATIONALE, onBehalfOfUserId: x.p.sponsor.id });
+    expect(shape(sel)).toEqual(refused);
+    expect([await status(r), await version(r), await rows(r), await newAudit(sel)]).toEqual(["ranked", v, 0, []]);
+    // The same delegate selecting in their own name (they hold portfolio.select) succeeds: only the on-behalf form is refused.
+    expect((await act(r, "select", dSession, RATIONALE)).status).toBe(200);
+
+    const s = await selected(x);
+    const before = await rows(s);
+    const des = await act(s, "deselect", x.p.sponsor.session, {
+      rationale: "Synthetic: on behalf.",
+      onBehalfOfUserId: delegate.id,
+    });
+    expect(shape(des)).toEqual(refused);
+    expect([await status(s), await rows(s), await newAudit(des)]).toEqual(["selected", before, []]);
   });
 });
 

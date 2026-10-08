@@ -1,7 +1,7 @@
 // organization module data access: the only writer of organization and business_unit.
 import { sql, type BusinessUnitRow, type DbOrTx, type OrganizationRow } from "@mth/db";
 import type { BusinessUnit, Organization } from "@mth/shared/schemas";
-import { iso } from "../platform/index.ts";
+import { ADVISORY_LOCK_CLASSES, iso } from "../platform/index.ts";
 
 export function toOrganization(r: OrganizationRow): Organization {
   return {
@@ -68,9 +68,10 @@ export async function isDescendant(db: DbOrTx, ancestorId: string, candidateId: 
 
 /**
  * Advisory-lock class of the business-unit hierarchy, shared with the database trigger business_unit_hierarchy_guard
- * (migration 0009, F-DG1-140). Same (class, hashtext(organization_id)) key on both sides.
+ * (migration 0009, F-DG1-140). Same (class, hashtext(organization_id)) key on both sides. The number lives in the
+ * platform registry (ADVISORY_LOCK_CLASSES, ADR-0016).
  */
-export const HIERARCHY_LOCK_CLASS = 730219;
+export const HIERARCHY_LOCK_CLASS = ADVISORY_LOCK_CLASSES.businessUnitHierarchy;
 
 /**
  * Serialize hierarchy changes of one organization for the rest of the transaction (F-DG1-140). Taken BEFORE the

@@ -686,6 +686,19 @@ describe("overrides (REQ-S09-005)", () => {
 
     const D = `${O}/${o.body.id}/decision`;
     const decision = { result: "approved", note: "Synthetic demo decision." };
+    // ADR-0021 §6 (T-DG3-ARCH-03): a P3 business approval is decided in person; nothing is written (the If-Match 1
+    // approval below still succeeds).
+    const onBehalf = await call(api.app, "POST", D, {
+      session: p.sponsor.session,
+      headers: ifm(1),
+      body: { ...decision, onBehalfOfUserId: p.office.id },
+    });
+    expect([onBehalf.status, onBehalf.body.type, onBehalf.body.code, onBehalf.body.errors[0].pointer]).toEqual([
+      422,
+      "urn:mth:problem:validation",
+      "prioritization.on_behalf_not_supported",
+      "/onBehalfOfUserId",
+    ]);
     const self = await call(api.app, "POST", D, { session: p.lead.session, headers: ifm(1), body: decision });
     expect([self.status, self.body.code]).toEqual([403, "approval.approver_is_proposer"]);
     expect(

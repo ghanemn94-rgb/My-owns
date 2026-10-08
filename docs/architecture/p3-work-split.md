@@ -210,3 +210,27 @@ Recorded from the T-DG3-BE-A and T-DG3-KBE-A handbacks; wave 2 (BE-B, BE-C, BE-D
 4. **`0024` audit shape:** the `scoring_weight_set.create` event now writes `{"weights": {"from": null, "to": {…}}}` in `0024` itself (function and backfill path); `0025`'s identical `CREATE OR REPLACE` is kept and marked redundant. A database that applied the earlier `0024` must be rebuilt, because the migrator refuses checksum drift (unreleased and ungated, so only scratch and dev databases are affected).
 5. **Pinned contract counts:** `[90, 89, 1]` and `>= 167` (§5).
 6. **Dispensation decisions:** `POST …/gate-dispensations/{dispensationId}/decision` with `AcceptanceDecision`; delegated decisions are refused with 422 `dispensation.on_behalf_not_supported` (ADR-0021 §5).
+
+### Amendments after wave 2 (T-DG3-ARCH-03, 2026-10-08)
+
+Recorded from the BE-B, BE-C, BE-D and KBE-B handbacks. Wave 3 (BE-E, KBE-C, FE-A0, then FE-B and FE-C) builds on them.
+
+7. **Delegation, one rule (ADR-0021 §6).** Every P3 business approval is decided in person. `onBehalfOfUserId` is refused with 422 `{domain}.on_behalf_not_supported` at `/onBehalfOfUserId`, and nothing is written:
+   - selection: `selection.on_behalf_not_supported`, **changed** in `selections.ts`;
+   - funding: `funding.on_behalf_not_supported`, **for BE-E to implement**;
+   - override decisions: `prioritization.on_behalf_not_supported`;
+   - dispensations: `dispensation.on_behalf_not_supported`.
+
+   Weight-set approval and the revokes have no such property (strict schema, 400). Record-owner decisions (design decision, `gate_decision` incl. G4, deliverable acceptance) keep the ADR-0015 one-hop path. Delegation for the P3 approvals arrives with REQ-S10-010 (P4).
+8. **`getPrioritization` contract:** the `funding` query parameter and `"422": BusinessRule` (`prioritization.portfolio_too_large`) are now declared in `docs/api/openapi.yaml` and exercised over HTTP in `p3-exercises-be-d.ts` (ADR-0022 §7). No other path changed.
+9. **Advisory-lock registry (ADR-0016 §6).** The classes are 730219 BU hierarchy, 730220 outcome, 730221 dependency graph, 730222 prioritization and **730223 dependency type** (was 730222: the collision is fixed). The numbers live only in `platform/advisory-locks.ts` (`ADVISORY_LOCK_CLASSES`), which `platform/advisory-locks.test.ts` pins. A new class takes 730224 and adds a row to both.
+10. **Shared prioritization mirrors:** `packages/shared/src/schemas/prioritization.ts`, exported by `@mth/shared/schemas`. It holds `criterionCode`, `WeightSet*`, `ScoreResult`, `InitiativeScore*`, `RankingEntry`, `RankingSnapshot*`, `RankingChange`, `RankingOverride*`, `ApprovalDecision`, `PrioritizationItem`/`View` and `prioritizationQuery`. BE-D's route files import them; **FE-B imports from there** and defines no copy.
+11. **One cycle-problem class:** `DependencyCycleProblem` (and `CycleNode`) are on `platform/index.ts`. `T08CycleProblem` is deleted. The 422 body is byte-identical (ADR-0023 §8).
+12. **T08 schedule flags are injected explicitly** (ADR-0023 §8): `server.ts` passes `t08ScheduleFlags` (exported by `portfolio/index.ts`) to `registerWorkflowsModule`. The Fastify decorator is gone. **BE-E and KBE-C:** the `registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags })` line in `server.ts` changed. The `kpi:` line of `gateFacts` just above it did not.
+13. **BE-E consolidates the three initiative presenters.** BE-B's `presentInitiatives` (`portfolio/repository.ts`) is **the** single presenter. BE-E replaces the local copies in BE-C's `portfolio/roadmap.ts` and in BE-D's prioritization view (`portfolio/prioritization.ts` `presentInitiative`) with calls to it, and wires the schedule and capacity `flags[]` there once (BE-B §7.5). The contract tests must keep passing with the shared `initiative` mirror. Note that BE-D's local `displayStatus` (`'Selected - unfunded'`) differs from BE-B's i18n key (`initiative.status.selected_unfunded`); BE-B's form is the contract's.
+14. **Open point (ADR-0021 §2):** `assertEditable` (cancelled or completed initiative → 422 `initiative.read_only`) covers the T05 card and BE-B's links only. Scores, deliverables and milestones on a closed initiative are not refused yet. BE-E applies the guard to its resource-demand writes, and the integrator or a repair round extends it to scores (BE-D files) and deliverables and milestones (BE-C files).
+15. **ADR alignment, as built:**
+    - ADR-0021 §2: no `archived_*` columns on `initiative`; `cancelled` is the terminal retirement.
+    - ADR-0022 §8: BE-D's codes and texts; "ranked but now incomplete keeps `ranked`"; scoring a draft is allowed; the prioritization lock.
+    - ADR-0023 §8: `GET /dependency-types` is `authenticated`; `varianceDays` stays in calendar days, and the working-day slip of REQ-S09-007 waits for the business calendar.
+    - ADR-0024 §9: KBE-B's interpretations and texts.

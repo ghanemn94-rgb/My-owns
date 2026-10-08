@@ -8,15 +8,14 @@
 // order); selection never funds (an initiative selected without a current approved funding decision is shown as
 // 'Selected - unfunded' and cannot launch). Nothing here approves by itself, and nothing touches DG0-DG7.
 //
-// Delegation (`onBehalfOfUserId`): one hop only (actsOnBehalfOf: an active, effective delegation from that person to
-// the caller covering portfolio_selection in this scope; a delegate never re-delegates, so no approval loop). The caller
-// must hold portfolio.select too (the write gate), and the person acted for must hold portfolio.select here.
+// Delegation (`onBehalfOfUserId`): NOT offered. One rule for every P3 business approval (ADR-0021 §6, T-DG3-ARCH-03):
+// the approver decides in person; `onBehalfOfUserId` is refused with 422 selection.on_behalf_not_supported at
+// /onBehalfOfUserId and nothing is written. Uniform delegation arrives with REQ-S10-010 (P4).
 import type { InitiativeRow, PortfolioSelectionRow } from "@mth/db";
 import { selectionRequest, type PortfolioSelection, type Warning } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { actsOnBehalfOf, grantApplies, loadGrants } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -75,21 +74,19 @@ async function currentRankingOf(ctx: WriteContext, initiativeId: string): Promis
   return row?.id ?? null;
 }
 
-/** Acting on someone's behalf: one hop, covering portfolio_selection, and that person holds portfolio.select here. */
-async function assertDelegation(ctx: WriteContext, onBehalfOf: string | undefined): Promise<void> {
+/** ADR-0021 §6: a P3 business approval is decided in person; acting on someone's behalf is refused (422). */
+function refuseOnBehalf(onBehalfOf: string | undefined): void {
   if (onBehalfOf === undefined) return;
-  const delegated = await actsOnBehalfOf(ctx.tx, ctx.principal, onBehalfOf, "portfolio_selection", ctx.target);
-  const holds =
-    delegated && (await loadGrants(ctx.tx, onBehalfOf)).some((g) => grantApplies(g, "portfolio.select", ctx.target));
-  if (!holds)
-    throw new HttpProblem({
-      status: 403,
-      type: "urn:mth:problem:forbidden",
-      code: "selection.not_delegated",
-      title: "Forbidden",
-      detail:
-        "You can decide on someone's behalf only under an active delegation from a person who holds portfolio selection here.",
-    });
+  const detail =
+    "A portfolio selection is decided by the approver in person; deciding on someone's behalf is not available.";
+  throw new HttpProblem({
+    status: 422,
+    type: "urn:mth:problem:validation",
+    code: "selection.on_behalf_not_supported",
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer: "/onBehalfOfUserId", code: "selection.on_behalf_not_supported", message: detail }],
+  });
 }
 
 async function writeSelection(
@@ -144,7 +141,7 @@ async function select(
   current: InitiativeRow,
   body: { rationale: string; onBehalfOfUserId?: string | undefined },
 ): Promise<void> {
-  await assertDelegation(ctx, body.onBehalfOfUserId);
+  refuseOnBehalf(body.onBehalfOfUserId);
   const snapshot = current.status === "ranked" ? await currentRankingOf(ctx, current.id) : null;
   const failures: Warning[] = [];
   if (snapshot === null)
@@ -165,7 +162,7 @@ async function deselect(
   current: InitiativeRow,
   body: { rationale: string; onBehalfOfUserId?: string | undefined },
 ): Promise<void> {
-  await assertDelegation(ctx, body.onBehalfOfUserId);
+  refuseOnBehalf(body.onBehalfOfUserId);
   if (current.status !== "selected" && current.status !== "funded")
     throw transitionProblem("initiative.not_deselectable", SELECTION_REASONS["initiative.not_deselectable"]);
   await writeSelection(ctx, current, "deselected", body.rationale, null, body.onBehalfOfUserId);

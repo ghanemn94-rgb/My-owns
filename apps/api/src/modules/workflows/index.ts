@@ -15,7 +15,7 @@ import { registerDependencyTypeRoutes } from "./dependency-types.ts";
 import { actionItemRegister, dependencyRegister, tomWorkshopRegister } from "./design-registers.ts";
 import { UNWIRED_GATE_FACTS, type GateFactsProvider } from "./g4.ts";
 import { registerGateRoutes } from "./gates.ts";
-import { registerT08DependencyRoutes } from "./t08-dependencies.ts";
+import { registerT08DependencyRoutes, type T08ScheduleFlagsProvider } from "./t08-dependencies.ts";
 import { registerWorkshopRoutes } from "./workshops.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
@@ -23,7 +23,7 @@ export { isGateApprover } from "./gates.ts";
 // P3 (ADR-0021 §1, T-DG3-BE-A): the interface through which the G4 evaluators read portfolio and kpi facts.
 export type { GateFactsProvider, KpiP3GateFacts, PortfolioGateFacts } from "./g4.ts";
 // P3 (ADR-0023 §4-§5, T-DG3-BE-C): the seam through which portfolio supplies the T08 schedule flags.
-// Types only: the provider is supplied through the Fastify decorator `t08ScheduleFlags` (declared in t08-dependencies.ts).
+// Types only: the composition root passes the provider in registerWorkflowsModule's options (T-DG3-ARCH-03).
 export type { T08Dependency, T08ScheduleFlagsProvider } from "./t08-dependencies.ts";
 
 /** The playbook's product gates (business approvals), in order. Not the engineering gates DG0-DG7. */
@@ -33,11 +33,14 @@ export type ProductGate = (typeof PRODUCT_GATES)[number];
 /** The gate whose business approval is required before a transformation may be closed (P4). */
 export const CLOSURE_GATE: ProductGate = "G6";
 
-/** Wiring hook called by the composition root (server.ts), which passes the P3 GateFactsProvider (ADR-0021 §1). */
+/**
+ * Wiring hook called by the composition root (server.ts), which passes the P3 GateFactsProvider (ADR-0021 §1) and the
+ * T08 schedule-flags provider (ADR-0023 §5). Either one missing fails closed (incomplete G4 criteria; schedule.unknown).
+ */
 export function registerWorkflowsModule(
   app: FastifyInstance,
   { db }: ModuleDeps,
-  options: { readonly gateFacts?: GateFactsProvider } = {},
+  options: { readonly gateFacts?: GateFactsProvider; readonly t08ScheduleFlags?: T08ScheduleFlagsProvider } = {},
 ): ModuleRegistration {
   const routes = [
     ...registerDecisionRoutes(app, db),
@@ -48,7 +51,7 @@ export function registerWorkflowsModule(
     ...registerCanvasRoutes(app, db),
     ...registerGateRoutes(app, db, options.gateFacts ?? UNWIRED_GATE_FACTS),
     // P3 T08 dependency map and dependency types (ADR-0023 §4, T-DG3-BE-C).
-    ...registerT08DependencyRoutes(app, db),
+    ...registerT08DependencyRoutes(app, db, options.t08ScheduleFlags),
     ...registerDependencyTypeRoutes(app, db),
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });

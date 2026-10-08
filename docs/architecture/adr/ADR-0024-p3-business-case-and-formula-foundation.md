@@ -189,6 +189,32 @@ None of items 4–13 is changed, so **KBE-C has no code change to make** to the 
 
 The canonical benefit register with allocations, shared-benefit groups, contribution allocations ≤ 100% and unallocated shares; planned/forecast/measured/validated value tracking; scenarios (base/upside/downside) as data; NPV/ROI/payback. These are P4 (REQ rows with final gate DG4). P3 prevents double counting only through §2 (one formula → one line) and §3 (one line → one case; set-based roll-up).
 
+### 9. Interpretations and texts recorded after build (T-DG3-KBE-B handback §3, §7; confirmed T-DG3-ARCH-03, 2026-10-08)
+
+These are the rule, and reviewers test against this text.
+
+- **Sections 5 and 6 of a transformation case count its roll-up set.** For the "≥ 1 active line" condition (§1), a **transformation** case counts the lines of its roll-up set (§3): its own lines plus the lines of its active initiative cases, each distinct line once. Costs and benefits normally sit at initiative level, so a transformation case with no own lines is still complete there when its initiatives carry lines. An **initiative** case counts its own lines only.
+- **Net is Unknown without both sides.** `netValue` (per currency) is `null` (Unknown) unless both `grossBenefits` and `implementationCost` have a known amount in that currency. It is never computed against an implied `0`.
+- **The baseline author is `created_by`.** For the separation-of-duties rule of §5 ("did not author the record"), the author of a case's baseline is the case's `created_by`, matching the DB CHECK. Someone who only edited the baseline later is not barred from validating it. Tightening this to "the last baseline editor" would need a new column (`baseline_updated_by`) and a migration. It is not done in P3; if Finance policy requires it, it is a later-stage change to this ADR.
+- **`rejected` stays `rejected`.** A baseline edit turns only a `validated` baseline into **Stale** (the stored SHA-256 no longer matches). A `rejected` baseline stays `rejected` after an edit, because the DB requires the hash exactly when the status is `validated`. A new validation decision is needed either way.
+
+**Problem codes and English texts** (KBE-B's wording, as built; FE-C translates from `code`, Arabic provisional):
+
+| Code | Status | English `detail` |
+|---|---|---|
+| `business_case.line_class_mismatch` | 422 | "The class {class} is not a {lineKind} class." |
+| `business_case.value_basis_mismatch` | 422 | "The value basis {valueBasis} does not fit the class {class}." |
+| `business_case.non_financial_amount` | 422 | "A strategic or non-financial benefit has no amount: it is not monetised without an approved valuation method." |
+| `business_case.formula_already_linked` | 409 | "This benefit formula already backs another active line; one benefit is counted in one line only." |
+| `business_case.not_initiative_lead` | 403 | "A Workstream Lead edits only the business cases of initiatives they lead." |
+| `finance.validator_is_author` | 403 | "Finance validation is done by someone other than the record's author (separation of duties)." (the `db-errors.ts` text) |
+| `business_case.amount_negative`, `.fte_only_internal`, `.fte_positive`, `.period_range`, `.formula_only_benefit` | 422 | as written in `apps/api/src/modules/kpi/business-case-lines.ts` |
+| `business_case.transformation_case_exists`, `.initiative_case_exists` | 409 | as written in `kpi/business-cases.ts` |
+| `business_case.transformation_case_required`, `.initiative_required`, `.initiative_not_allowed`, `.has_initiative_cases`, `.baseline_missing`, `.archived`, `.already_archived`; `business_case_line.archived`, `.already_archived` | 422 | as written in `kpi/business-cases.ts` and `kpi/business-case-lines.ts` |
+| warnings `business_case.revenue_and_margin`, `business_case.possible_duplicate` | — | as written in `kpi/totals.ts` |
+
+The source files are the single place for the texts marked "as written". This ADR fixes the codes and their meaning, not a second copy of every sentence.
+
 ## Alternatives considered
 
 1. **A third-party expression library** (for example `expr-eval`, `mathjs`). Rejected: they evaluate floats, carry far more surface than needed, and some compile to `Function`; a 300-line parser is auditable and has no new licence or supply-chain risk.

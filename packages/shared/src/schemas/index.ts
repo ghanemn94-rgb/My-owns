@@ -22,3 +22,5 @@ export * from "./team.ts";
 export * from "./portfolio.ts";
 // P3 business-case mirrors (kpi-benefits-engineer, T-DG3-KBE-B; p3-work-split §3). Line added by KBE-B, see its handback.
 export * from "./business-case.ts";
+// P3 prioritization mirrors (solution-architect, T-DG3-ARCH-03; moved from the BE-D route files for FE-B).
+export * from "./prioritization.ts";

@@ -25,18 +25,16 @@ import {
   type CriterionWeight,
 } from "@mth/shared/calc";
 import {
-  freeText,
-  initiative as initiativeSchema,
-  initiativeStatus,
+  prioritizationQuery,
   reasonRequest,
-  scheduleFlag,
-  timestamp,
   transitionNote,
-  uuid,
-  version,
+  weightSetCreate,
   type FundingState,
   type Initiative,
+  type PrioritizationQuery,
+  type PrioritizationView,
   type ScheduleFlag,
+  type WeightSet,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
@@ -60,7 +58,6 @@ import { latestFundingState } from "./funding.ts";
 import {
   appendResult,
   compareScoreDesc,
-  criterionCode,
   ELIGIBLE_STATUSES,
   latestResults,
   loadActiveWeightSet,
@@ -68,7 +65,6 @@ import {
   loadWeights,
   lockPrioritization,
   resultOrLive,
-  scoreResult,
   type WeightSetWithWeights,
 } from "./scores.ts";
 
@@ -86,61 +82,7 @@ const vParams = z.strictObject({
 
 // ------------------------------------------------------------------------------------------------ schemas (contract)
 
-const WEIGHT_PATTERN = /^(100(\.0{1,2})?|[0-9]{1,2}(\.[0-9]{1,2})?)$/;
-/** Contract `WeightSetWeight`. "0" passes the pattern and is refused with 422 prioritization.weight_range (§2a). */
-export const weightSetWeight = z.strictObject({ criterionCode, weightPercent: z.string().regex(WEIGHT_PATTERN) });
-/** Contract `WeightSetCreate` (strict). */
-export const weightSetCreate = z.strictObject({
-  weights: z.array(weightSetWeight).min(2).max(6),
-  rationale: freeText(1, 4000),
-});
-/** Contract `WeightSet`. */
-export const weightSet = z.strictObject({
-  id: uuid,
-  organizationId: uuid,
-  transformationId: uuid,
-  versionNo: z.number().int().min(1),
-  status: z.enum(["proposed", "active", "superseded", "withdrawn"]),
-  approvalBasis: z.enum(["source_default", "approved"]).nullable(),
-  rationale: z.string().min(1).max(4000).nullable(),
-  weights: z.array(weightSetWeight).min(2).max(6),
-  approvedBy: uuid.nullable(),
-  approvedAt: timestamp.nullable(),
-  activatedAt: timestamp.nullable(),
-  supersededAt: timestamp.nullable(),
-  version,
-  createdAt: timestamp,
-  createdBy: uuid,
-  updatedAt: timestamp,
-  updatedBy: uuid,
-});
-export type WeightSet = z.infer<typeof weightSet>;
-export const weightSetList = z.strictObject({ items: z.array(weightSet) });
-
-/** Contract `PrioritizationItem` / `PrioritizationView`. */
-export const prioritizationItem = z.strictObject({
-  initiative: initiativeSchema,
-  result: scoreResult,
-  rank: z.number().int().min(1).nullable(),
-  valueAxis: z
-    .string()
-    .regex(/^[1-5]\.[0-9]{4}$/)
-    .nullable(),
-  feasibilityAxis: z
-    .string()
-    .regex(/^[1-5]\.[0-9]{4}$/)
-    .nullable(),
-  selection: z.enum(["not_selected", "selected"]),
-  funding: z.enum(["not_applicable", "unfunded", "funded", "revoked"]),
-  flags: z.array(scheduleFlag),
-});
-export const prioritizationView = z.strictObject({
-  transformationId: uuid,
-  weightSet,
-  conversionLabel: z.string(),
-  items: z.array(prioritizationItem),
-});
-export type PrioritizationView = z.infer<typeof prioritizationView>;
+// Moved to @mth/shared/schemas (prioritization.ts; T-DG3-ARCH-03): WeightSet*, PrioritizationItem/View and the query.
 
 // ------------------------------------------------------------------------------------------------ presenters
 
@@ -451,19 +393,6 @@ export const DEFAULT_FLAG_SOURCES: PrioritizationFlagSources = {
 
 /** ADR-0022 §7: one transformation's portfolio, at most 500 initiatives; cursor pagination does not apply. */
 export const PORTFOLIO_VIEW_MAX = 500;
-
-export const prioritizationQuery = z.strictObject({
-  status: initiativeStatus.optional(),
-  waveId: z.uuid().optional(),
-  completeness: z.enum(["complete", "incomplete"]).optional(),
-  funding: z.enum(["not_applicable", "unfunded", "funded", "revoked"]).optional(),
-  flag: z
-    .string()
-    .regex(/^[a-z][a-z0-9_.]*$/)
-    .max(64)
-    .optional(),
-});
-export type PrioritizationQuery = z.infer<typeof prioritizationQuery>;
 
 const SELECTED_STATUSES = new Set(["selected", "funded", "launched"]);
 

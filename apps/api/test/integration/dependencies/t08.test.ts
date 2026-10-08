@@ -12,6 +12,7 @@
 import { v7 as uuidv7 } from "uuid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { record } from "../../../src/modules/audit/index.ts";
+import { DEPENDENCY_TYPE_LOCK_CLASS } from "../../../src/modules/workflows/dependency-types.ts";
 import { DEPENDENCY_GRAPH_LOCK_CLASS, findCycle } from "../../../src/modules/workflows/t08-dependencies.ts";
 import {
   auditOf,
@@ -277,7 +278,7 @@ describe("dependency types (REQ-PB-052)", () => {
     const res = await whileBlocked(
       api,
       "select pg_advisory_xact_lock($1::integer, hashtext($2::text))",
-      [730222, code],
+      [DEPENDENCY_TYPE_LOCK_CLASS, code],
       () => call<Body>(api.app, "POST", TYPES, { session, body: { code, labelEn: "Synthetic", labelAr: "اصطناعي" } }),
       async () => {
         await api.owner.query(

@@ -17,6 +17,7 @@ import { z } from "zod";
 import { auditContextOf, denialOf, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  ADVISORY_LOCK_CLASSES,
   HttpProblem,
   parse,
   parseBody,
@@ -27,8 +28,12 @@ import {
 } from "../platform/index.ts";
 
 const JSON_BODY = ["application/json"] as const;
-/** Advisory-lock class serialising the creation of one type code (a friendly 409 instead of a unique violation). */
-export const DEPENDENCY_TYPE_LOCK_CLASS = 730222;
+/**
+ * Advisory-lock class serialising the creation of one type code (a friendly 409 instead of a unique violation). Its own
+ * class `dependencyType` (T-DG3-ARCH-03: it used to share the prioritization class); registry ADVISORY_LOCK_CLASSES,
+ * ADR-0016.
+ */
+export const DEPENDENCY_TYPE_LOCK_CLASS = ADVISORY_LOCK_CLASSES.dependencyType;
 
 const typeCode = z.string().regex(/^[a-z][a-z0-9_]{1,47}$/);
 const label = freeText(1, 100);

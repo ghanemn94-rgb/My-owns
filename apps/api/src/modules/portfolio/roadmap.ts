@@ -8,8 +8,8 @@
 // If-Match (milestones.ts); a stale version is 409 with currentVersion.
 //
 // Schedule flags come from schedule.ts (ADR-0023 §5): on dependencies and on the successor initiatives. This file also
-// supplies them to the T08 dependency routes of the workflows module (which cannot import portfolio) by decorating
-// the Fastify instance with the T08ScheduleFlagsProvider. No critical-path claim (ADR-0023 §5).
+// supplies them to the T08 dependency routes of the workflows module (which cannot import portfolio) as the
+// T08ScheduleFlagsProvider `t08ScheduleFlags`, which server.ts passes in explicitly. No critical-path claim (ADR-0023 §5).
 import type { DbOrTx, DependencyTable, InitiativeTable } from "@mth/db";
 import type { FundingState, Initiative, ScheduleFlag, Warning } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
@@ -81,7 +81,10 @@ export async function loadScheduleFacts(db: DbOrTx, transformationId: string): P
   };
 }
 
-/** The T08 provider (workflows reads it through the Fastify decorator): flags by dependency id. */
+/**
+ * The T08 provider: flags by dependency id. Exported on the portfolio public interface; server.ts passes it to
+ * registerWorkflowsModule (explicit injection, T-DG3-ARCH-03), so workflows never imports portfolio.
+ */
 export const t08ScheduleFlags: T08ScheduleFlagsProvider = async (db, transformationId) =>
   computeScheduleFlags(await loadScheduleFacts(db, transformationId)).byDependency;
 
@@ -246,10 +249,6 @@ const PATH = "/api/v1/transformations/:transformationId/roadmap";
 
 /** Registers the roadmap route, supplies the T08 schedule flags, and returns the routes as "METHOD /path". */
 export function registerRoadmapRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
-  // The T08 routes (workflows) read their schedule flags through this decorator (declared in workflows'
-  // t08-dependencies.ts); workflows never imports portfolio, so the module graph stays acyclic.
-  if (!app.hasDecorator("t08ScheduleFlags")) app.decorate("t08ScheduleFlags", t08ScheduleFlags);
-
   app.get(PATH, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
     parseQuery(z.strictObject({}), request.query);

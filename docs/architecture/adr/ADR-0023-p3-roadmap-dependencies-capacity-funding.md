@@ -25,7 +25,7 @@
 
 ### 2. Milestones and deliverables
 
-- **`milestone`**: `initiative_id`, optional `wave_id`, `title`, `owner_user_id`, **`approved_date`** (the baseline, set only by `POST /milestones/{id}/approve-date`, `roadmap.approve`, with `approved_by`/`approved_at`), **`forecast_date`** (editable; "moving a milestone" changes it), `actual_date`, `status` (`planned` | `achieved` | `missed` | `cancelled`). Variance = forecast − approved, in days, computed (never stored). Re-approval overwrites `approved_date` with a mandatory reason and its own audit event; formal rebaseline through change control is P4.
+- **`milestone`**: `initiative_id`, optional `wave_id`, `title`, `owner_user_id`, **`approved_date`** (the baseline, set only by `POST /milestones/{id}/approve-date`, `roadmap.approve`, with `approved_by`/`approved_at`), **`forecast_date`** (editable; "moving a milestone" changes it), `actual_date`, `status` (`planned` | `achieved` | `missed` | `cancelled`). Variance = forecast − approved, in **calendar** days, computed (never stored); see §8 for the working-day slip. Re-approval overwrites `approved_date` with a mandatory reason and its own audit event; formal rebaseline through change control is P4.
 - **`deliverable`**: `initiative_id`, `title`, `description`, `owner_user_id`, `due_date`, **`acceptance_status`** `pending` → `submitted` → `accepted` | `rejected` (`rejected` → `submitted` again), `submitted_by/at`, `accepted_by/at` (or rejected), `acceptance_note`; CHECK `accepted_by <> submitted_by`. Accepting needs `deliverable.accept` **and** record-level ownership: the initiative's executive owner (or a delegate). `status` `active` | `archived` (archive, never delete).
 
 ### 3. One data source for timeline, table and board (REQ-S09-006)
@@ -53,7 +53,7 @@
 
 **Race-freedom (the F-DG1-140 pattern).**
 
-1. The API takes `pg_advisory_xact_lock(730221, hashtext(transformation_id))` (`DEPENDENCY_GRAPH_LOCK_CLASS`) at the start of the write transaction, then runs its friendly check, then writes.
+1. The API takes `pg_advisory_xact_lock(730221, hashtext(transformation_id))` (`DEPENDENCY_GRAPH_LOCK_CLASS`) at the start of the write transaction, then runs its friendly check, then writes. Every advisory-lock class (730219–730223) is listed in the registry in **ADR-0016 §6**; dependency-type creation (§4) uses its own class **730223**.
 2. The **database guard** `dependency_cycle_guard()` (AFTER INSERT OR UPDATE OF `from_initiative_id`, `to_initiative_id`, `status`, `transformation_id`) takes the **same** lock and re-runs the search with fresh READ COMMITTED snapshots, so two concurrent inserts (A→B and B→A) serialize and the second fails. Under REPEATABLE READ/SERIALIZABLE (where the snapshot can predate the lock) the guard refuses to run and raises `40001` so it fails closed; the application uses READ COMMITTED.
 3. Error: SQLSTATE `23514`, constraint `dependency_acyclic`, message `dependency cycle: <code> -> <code> -> … -> <code>` (initiative codes).
 
@@ -81,6 +81,19 @@
 - **`portfolio_selection`** (append-only): `initiative_id`, `action` (`selected` | `deselected`), `rationale`, `ranking_snapshot_id`, `decided_by`, `on_behalf_of_user_id`, `decided_at`. The latest row per initiative is the selection state.
 - **`funding_decision`** (append-only): `initiative_id`, `decision_id` → a canonical **`decision` row of kind `executive`** (code `DEC-nn`, status `decided`, one decision model, ADR-0015) via the composite FK `(decision_id, 'executive')`; `outcome` (`approved` | `rejected` | `deferred` | `revoked`), `amount numeric(20,4)` (null = Unknown), `currency`, `funding_source`, `conditions`, `rationale` (required), `business_case_id` (optional), `decided_by`, `on_behalf_of_user_id`, `decided_at`, `approver_role_code`. The latest row per initiative decides the funding state; `revoked` needs a prior `approved`.
 - Recording one is `POST /api/v1/funding-decisions` (`funding.approve`, business approval, FIN and SP by default). The product records a person's decision; nothing auto-approves or auto-funds. An approved decision moves `selected → funded` in the same transaction (ADR-0021 §3); recording a decision for an initiative that is not selected is 422 `funding.not_selected`.
+
+### 8. Decisions recorded after build (T-DG3-BE-C handback §7; T-DG3-ARCH-03, 2026-10-08)
+
+- **`GET /api/v1/dependency-types` is `authenticated`.** The dependency-type catalogue is global reference data (labels for a closed-plus-configurable code set) with no transformation scope. Every signed-in user may read it, as the frozen contract says: the operation declares no 403. Writes stay behind `dependency_type.configure` (ADM_METHOD). `workflows.test.ts` pins this one GET as `authenticated`; every other workflows GET stays `transformation.read`.
+- **`varianceDays` is in calendar days, and stays so.** `Milestone.varianceDays` is `forecastDate − approvedDate` in calendar days, as the contract ("in days") and §2 define it. REQ-S09-007 asks for the forecast slip "in working days". P3 has no business-calendar model (working week, holidays, Asia/Riyadh default, configurable), so a working-day figure cannot be computed honestly now. The field is **not relabelled**. A separate working-day slip, on the configurable calendar with no hard-coded holidays, is added when the business calendar lands in a later stage. REQ-S09-007 (increments P3 and P4, final gate DG4) keeps its working-day part open until then, and P3 does not claim it.
+- **T08 schedule flags: explicit injection, not a Fastify decoration.** `workflows` may not import `portfolio`, so the T08 routes read their flags through `T08ScheduleFlagsProvider`. BE-C built this as a Fastify decorator that `portfolio/roadmap.ts` set at registration (`t08ScheduleFlags`, first decorator wins). T-DG3-ARCH-03 switched it to the pattern the G4 `GateFactsProvider` already uses:
+  - `portfolio/index.ts` exports `t08ScheduleFlags`;
+  - `server.ts` passes it in `registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags })`;
+  - `registerT08DependencyRoutes(app, db, scheduleFlags?)` uses it.
+
+  The wiring is now visible in the composition root, does not depend on Fastify encapsulation or on the order modules register in, and has no "first decorator wins" branch. Unwired still fails closed: every scheduled dependency gets `schedule.unknown`, never "no conflict". The behaviour and the contract are unchanged, and the T08 integration tests (`needed_by_conflict`, `schedule.unknown`) run through `server.ts`.
+- **One cycle-problem class.** The T08 friendly check throws the platform's `DependencyCycleProblem` (now on `platform/index.ts`; its `CycleNode.name` is filled by T08), the same class the mapped database error uses. BE-C's copy `T08CycleProblem` is deleted. The §5 422 body is byte-identical: `workflows/t08-cycle-problem.test.ts` compares the JSON with a frozen copy of the deleted class, and the T08 integration test checks it over HTTP.
+- **Dependency-type creation lock.** Creating a type code serializes on `pg_advisory_xact_lock(730223, hashtext(code))` (`DEPENDENCY_TYPE_LOCK_CLASS`), so that a race answers the friendly 409 rather than a unique violation. Until T-DG3-ARCH-03 it used 730222, which collided with prioritization. Registry: ADR-0016 §6.
 
 ## Alternatives considered
 
