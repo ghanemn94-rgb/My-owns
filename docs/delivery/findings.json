@@ -11599,7 +11599,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-6/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-08T20:10:00Z",
@@ -11610,10 +11610,42 @@
           "at": "2026-10-08T21:10:37Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1cd89e6b08f2d8283496f2445536d334e41dde81"
+        },
+        {
+          "at": "2026-10-08T22:19:56Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "1cd89e6b08f2d8283496f2445536d334e41dde81",
-      "fix_summary": "T-DG3-KBE-I 1cd89e6: the ESLint.lintText test now lints every probe-table row except two named LINT_EXCLUDED rows (not valid modules; the test requires each to be a fatal parse error and pins the exclusion list), and requires a formula-block guard rule (not any rule) to refuse each linted row; two private-name rows added. Mutations: removing ForOfStatement[await=true] (M1) and the PrivateIdentifier selector (M2) each now fail a test; the clean run passes. ADR-0024 §6 'Pinned by tests' states exactly what is linted. No lint gap found; eslint.config.js unchanged. pnpm test 1654 + 259/2 skipped x4."
+      "fix_summary": "T-DG3-KBE-I 1cd89e6: the ESLint.lintText test now lints every probe-table row except two named LINT_EXCLUDED rows (not valid modules; the test requires each to be a fatal parse error and pins the exclusion list), and requires a formula-block guard rule (not any rule) to refuse each linted row; two private-name rows added. Mutations: removing ForOfStatement[await=true] (M1) and the PrivateIdentifier selector (M2) each now fail a test; the clean run passes. ADR-0024 §6 'Pinned by tests' states exactly what is linted. No lint gap found; eslint.config.js unchanged. pnpm test 1654 + 259/2 skipped x4.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG3-T-DG3-REV-SEC-R7-code-security-reviewer-20261008T214948Z-2c76861e",
+          "session_id": "2c76861e-55c1-469b-b8cc-5e53ea7d6245"
+        },
+        "at": "2026-10-08T22:19:56Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG3/code-security/round-7/lint-mutation-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/probes/lint-mutation-probe.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/independent-row-lint.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/probes/independent-row-lint.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/probes/probes-table-runtime-dump.json",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/lint-ablation-2.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/lint-ablation-full.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/probe-verdicts-r6-vs-r7.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/probes-summary.txt",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/spellings-r7.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/residual-probe-r7.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-7/diff-scan.log",
+          "docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md",
+          "packages/shared/src/formula/fuzz.test.ts"
+        ],
+        "note": "Verified closed on candidate sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0 (757 files, recomputed in a complete clone at the freeze commit d22938f; source d3e6fe6). The repair is T-DG3-KBE-I (1cd89e6, merged in e210987). The product diff c40232b0..d3e6fe62 is exactly fuzz.test.ts, the ADR-0024 section 6 'Pinned by tests' sentence and the p3-work-split amendment 29. eslint.config.js and every engine source are unchanged (diff-scan.log D1-D5).\n\n1. Re-run of my round-6 check of the test.\n- independent-row-lint.mjs is my own linter, run outside the candidate's test. It takes the 101 PROBES rows from a runtime dump made in a separate disposable copy, and lints each with ESLint as packages/shared/src/formula/tokenize.ts.\n- Result: 99 rows are refused by a formula-block guard rule. The two 'unbalanced' rows (`const s = \"unclosed;` and `function f() {`) are fatal parse errors. No row is unguarded.\n- In round 6 the test linted 48 of 99 rows and accepted any rule. It now lints 99 of 101, requires a guard rule, and pins the count (linted === PROBES.length - LINT_EXCLUDED.size). A separate test pins the exclusion list.\n\n2. Mutations M1 and M2, in a disposable clone (lint-mutation-probe.mjs, Node 22.22.2).\n- Control: the candidate test is green.\n- M1 (removes `ForOfStatement[await=true]`): exit 1. The failing assertion is 'for await (const x of xs) a(x); (await): expected [] to not deeply equal []'.\n- M2 (removes the `PrivateIdentifier[...]` part): exit 1. The `class C { #then() {} }` row fails.\n- The same two mutations against the PRE-REPAIR test (c40232b0) both survive (exit 0). So the repair is what closes the round-6 gap.\n- The clone's git status is '' afterwards.\n\n3. The section 6 sentence is exactly true. Each element checked against the code and the evidence:\n- 'lints with ESLint.lintText as if they were formula/tokenize.ts': yes.\n- 'G1, G2, A1, A2 and F1 helpers (each must be refused by its named rule)': yes. ROUND5_HANDLER_FORMS gives no-restricted-syntax for each form; F1_FORMS gives no-unsafe-finally.\n- 'every row of the probe table except the two unbalanced rows, which must instead be parse errors': yes, 101 rows, 99 linted and 2 fatal.\n- The seven guard rules listed are exactly the formula block's own rules (eslint.config.js no-eval .. no-unsafe-finally). A parse error or a general rule does not count: the filter is `r !== null && GUARD_RULES.has(r)`.\n- p3-work-split amendment 29 ('99 of 101', the two private-name rows, M1/M2) is also exact.\n\nObservation, not a finding. My informational ablation (lint-mutation-probe ABL-*, lint-ablation-2, lint-ablation-full) removed each selector part of the formula block in turn and ran the whole fuzz.test.ts.\n- Every L1-L7 form stays pinned by some test.\n- The only L-part pinned by no test is the computed `[\"then\"]` member part. That part is redundant: the pinned `Literal[value=then]` part still refuses `p[\"then\"]`.\n- Several layer-1 constructor/timer/require/computed-key parts are pinned by no unit-node test. The 'Pinned by tests' bullet sits inside the L1-L7 list and makes no claim about them. The source scan (layer 2) and the no-codegen run (layer 3) cover those forms (the 18 round-2 forms are still 'BLOCKED BY BOTH').\n- So no sentence is false, and there is no behavioural gap.\n\n4. F-DG3-100 does not regress. All five F-DG3-100 probes were re-run VERBATIM; their sha256 values are in probes-summary.txt:\n- G1 G2 G3 E1 E2 H1 H2 S1 S2;\n- A1 A2 F1 F2 H3 H4;\n- W1-W6;\n- S1-S3 V1 V2;\n- the 18 round-2 forms.\nEvery verdict line is byte-identical to round 6 (probe-verdicts-r6-vs-r7.log). The spellings (53/53 refused by lint) and the residual A3/A4 are also identical to round 6."
+      }
     }
   ]
 }
