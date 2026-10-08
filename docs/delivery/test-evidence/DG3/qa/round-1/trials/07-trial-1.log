@@ -1,0 +1,89 @@
+port-policy: PostgreSQL listening on port 26560 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applied 27 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26570 (attempt 1)
+API:     http://localhost:26570
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 13 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/dg3-qa-r1.spec.ts:184:1 › A0 setup: End-to-End transformation; distinct synthetic SP, FIN and capacity owner (BO) (522ms)
+  ✓   2 [chromium-en] › e2e/dg3-qa-r1.spec.ts:217:1 › A1 sequencing before G1 (REQ-PB-007, REQ-PB-022): draft allowed, submit 422 invalid-transition, readiness lists missing areas (159ms)
+  ✓   3 [chromium-en] › e2e/dg3-qa-r1.spec.ts:253:1 › A2 G1: approval without the three agreements is refused; with them approved (REQ-PB-022) (512ms)
+  ✘   4 [chromium-en] › e2e/dg3-qa-r1.spec.ts:293:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) (598ms)
+  -   5 [chromium-en] › e2e/dg3-qa-r1.spec.ts:363:1 › A4 T05 deliverables 3-7 warning (REQ-PB-045) and REQ-S16-016 create+read with authorization
+  -   6 [chromium-en] › e2e/dg3-qa-r1.spec.ts:415:1 › A5 T06 scoring, weights, ranking history, overrides (REQ-PB-047/048/049, REQ-S09-001/005, REQ-DLV-035)
+  -   7 [chromium-en] › e2e/dg3-qa-r1.spec.ts:581:1 › A6 selection, 'Selected - unfunded', launch sequencing (REQ-S09-003, REQ-PB-004)
+  -   8 [chromium-en] › e2e/dg3-qa-r1.spec.ts:664:1 › A7 roadmap: four waves verbatim, overlap accepted, milestone move, conflict (REQ-PB-050, REQ-S09-006)
+  -   9 [chromium-en] › e2e/dg3-qa-r1.spec.ts:736:1 › A8 T08 dependencies (REQ-PB-051/052, REQ-S09-008, REQ-S09-004, REQ-DLV-035)
+  -  10 [chromium-en] › e2e/dg3-qa-r1.spec.ts:857:1 › A9 business case and T09 formulas (REQ-PB-053/054/056/057, REQ-S05-005, REQ-S08-007)
+  -  11 [chromium-en] › e2e/dg3-qa-r1.spec.ts:1095:1 › A10 capacity and G4 (REQ-PB-059, REQ-S09-004, REQ-PB-019, REQ-PB-046, REQ-PB-055, REQ-S04-006, REQ-DLV-035)
+  -  12 [chromium-en] › e2e/dg3-qa-r1.spec.ts:1278:1 › U1 the approved G4, prioritization and roadmap render in the project's language (dir, lang), axe-clean
+  -  13 [chromium-en] › e2e/dg3-qa-r1.spec.ts:1308:1 › U2 the read-only auditor: G4 and P3 screens show no enabled write control and send only GETs
+
+
+  1) [chromium-en] › e2e/dg3-qa-r1.spec.ts:293:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) 
+
+    Error: A3-G3-completeness-unchanged-by-initiative [REQ-PB-040] {"before":["complete","complete","complete","complete","complete"],"after":["complete","incomplete","complete","complete","complete"]}
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      84 |   const d = typeof detail === "string" ? detail : JSON.stringify(detail);
+      85 |   checks.push({ id, req, pass, detail: d.slice(0, 1500) });
+    > 86 |   expect.soft(pass, `${id} [${req}] ${d.slice(0, 600)}`).toBe(true);
+         |                                                          ^
+      87 | }
+      88 | const brief = (r: Res) => ({ status: r.status, type: r.body?.type, code: r.body?.code, detail: r.body?.detail });
+      89 | const num = (s: unknown) => (s === null || s === undefined ? null : Number(String(s)));
+        at check (/var/tmp/mth-run.mxY96d/claude-0/review-dg3/e2e/dg3-qa-r1.spec.ts:86:58)
+        at /var/tmp/mth-run.mxY96d/claude-0/review-dg3/e2e/dg3-qa-r1.spec.ts:349:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg3-qa-r1-A3-outcome-h-179b3--006-REQ-PB-032-REQ-PB-040--chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg3-qa-r1-A3-outcome-h-179b3--006-REQ-PB-032-REQ-PB-040--chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-en] › e2e/dg3-qa-r1.spec.ts:293:1 › A3 outcome hierarchy and 'Outcome before activity' (REQ-PB-006, REQ-PB-032, REQ-PB-040) 
+  9 did not run
+  3 passed (3.8s)
+---- api.log (tail)
