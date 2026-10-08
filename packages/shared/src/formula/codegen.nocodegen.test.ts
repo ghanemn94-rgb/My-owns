@@ -5,7 +5,8 @@
 // change or a Vitest upgrade that ignores execArgv makes these tests fail). Each attempt below would return 1 in a
 // normal process; here every one must throw EvalError before any code runs.
 import { describe, expect, it } from "vitest";
-import { evaluateFormula } from "./index.ts";
+import { formatDecimal } from "../value.ts";
+import { evaluateAst, evaluateFormula, validateFormula, type CheckedFormula } from "./index.ts";
 
 describe("no-codegen canary: string code generation is disabled in this process", () => {
   it("the process was started with --disallow-code-generation-from-strings", () => {
@@ -46,5 +47,56 @@ describe("no-codegen canary: string code generation is disabled in this process"
     ]);
     expect(r.ok).toBe(true);
     expect(r.result).toBe("42");
+  });
+});
+
+// F-DG3-100 (round 4) regression. An engine path that generates code from a string, and that a test exercises, must FAIL
+// here. Round 3 showed the engine's own catch-all turning the EvalError into an ordinary formula.syntax "internal"
+// problem, which the tests accepted. Each case below runs a real code generation (the GeneratorFunction constructor,
+// reached by a key assembled at run time, as in the reviewer's S1/S3 forms) INSIDE one of the engine's catches, through
+// the public entry points, and requires the EvalError to come out. Before round 4 every one of them returned a problem
+// (or null) instead.
+describe("no-codegen regression: an exercised code generation inside the engine surfaces as EvalError", () => {
+  /** Generates code from a string: throws EvalError in this process, before any code runs. */
+  const generateCode = (): never => {
+    const key = ["con", "struc", "tor"].join("");
+    const proto = Object.getPrototypeOf(function* () {}) as Record<string, (body: string) => unknown>;
+    proto[key]!("yield 1");
+    throw new Error("unreachable: code generation was not refused");
+  };
+
+  it("validateFormula (parse/type-check catch): code generated while the variables are read", () => {
+    const variables = [
+      Object.defineProperty({ kind: "number", period: "none", value: "1" }, "name", {
+        enumerable: true,
+        get: generateCode,
+      }),
+    ];
+    expect(() => validateFormula("a", variables)).toThrow(EvalError);
+  });
+
+  it("evaluateFormula (evaluation catch): code generated while an input is read", () => {
+    const inputs = Object.defineProperty({}, "a", { enumerable: true, get: generateCode });
+    expect(() =>
+      evaluateFormula(
+        "a",
+        [{ name: "a", kind: "number", period: "none", value: "1" }],
+        inputs as Record<string, string>,
+      ),
+    ).toThrow(EvalError);
+  });
+
+  it("evaluateAst (tree-walk catch): code generated while a node is walked", () => {
+    const v = validateFormula("1", []);
+    expect(v.ok).toBe(true);
+    if (!v.ok) return;
+    const root = Object.defineProperty({ type: "number", start: 0, end: 1 }, "value", { get: generateCode });
+    const checked = { ...v.checked, ast: { ...v.checked.ast, root } as CheckedFormula["ast"] };
+    expect(() => evaluateAst(checked)).toThrow(EvalError);
+  });
+
+  it("../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read", () => {
+    const value = { toString: generateCode } as unknown as string;
+    expect(() => formatDecimal(value, { locale: "en" })).toThrow(EvalError);
   });
 });

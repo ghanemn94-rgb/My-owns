@@ -278,3 +278,11 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
     - **Fork preload.** `packages/shared/src/formula/test-support/nocodegen-preload.mjs` lets tinypool start a fork under the flag.
     - **Engine sources.** ESLint and the `fuzz.test.ts` scan now apply an import allowlist (`./*.ts`, `../value.ts`, `decimal.js`). They also refuse the host globals (`process`, `global`, `globalThis`, `self`, `window`, …), any `constructor` literal or identifier other than a class constructor, prototype reflection, and string-assembled computed keys.
     - The engine code is unchanged.
+
+### Amendments in the DG3 round-4 repair (T-DG3-KBE-F, 2026-10-08)
+
+26. **Formula no-dynamic-code guard: an exercised `EvalError` fails, and the whole import closure is guarded (F-DG3-100 third pass; ADR-0024 §6 "Extended guard").**
+    - **The engine rethrows `EvalError`.** Every catch in the engine's import closure rethrows a refused code generation instead of converting it: `validateFormula`, `evaluateFormula`, `evaluateAst`'s tree walk and `packages/shared/src/value.ts` `formatDecimal`. Every other unexpected error is unchanged: a 422 `formula.syntax` `internal` problem, or null in `formatDecimal`. An `EvalError` cannot occur in production. If it ever did, the API would answer with its generic 500 `internal` problem.
+    - **Internal failures fail the tests.** In `fuzz.test.ts` (`checkOutcome` and the payload test) and in `formula.test.ts`'s rejection table, every outcome check refuses a `params.reason: "internal"` problem. `codegen.nocodegen.test.ts` adds a regression that generates code inside each of the four catches under the flag and requires the `EvalError`.
+    - **The import closure.** `value.ts` gets every engine-source ESLint rule (`FORMULA_CLOSURE_OUTSIDE`), with a `decimal.js`-only import allowlist, and joins the source scan's file set. A test computes the static import closure from `formula/index.ts` and checks that every file in it is covered by the scan and by the ESLint rules (the ESLint check runs in `unit-node` only).
+    - **API and web.** No API or web contract changes.

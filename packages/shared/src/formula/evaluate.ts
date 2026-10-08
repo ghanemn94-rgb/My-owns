@@ -112,7 +112,8 @@ const plain = (d: Dec): string => (d.isZero() ? "0" : d.toFixed());
 
 /**
  * Evaluates a checked formula (from validateFormula). `inputs` (own properties only) override the declared values.
- * Never throws: every failure is a problem with a null (Unknown) result.
+ * Never throws except EvalError (a refused code generation, which cannot occur; see index.ts internalProblem): every
+ * failure is a problem with a null (Unknown) result.
  */
 export function evaluateAst(checked: CheckedFormula, inputs: FormulaInputs = {}): FormulaEvaluation {
   const { ast, resultType, variables, conversions } = checked;
@@ -254,6 +255,8 @@ export function evaluateAst(checked: CheckedFormula, inputs: FormulaInputs = {})
     exactValue = walk(ast.root);
   } catch (e) {
     if (e instanceof EvalFailure) return fail([e.problem], inexact);
+    // ADR-0024 §6 (F-DG3-100 round 4): a refused code generation is rethrown, never converted (see index.ts internalProblem).
+    if (e instanceof EvalError) throw e;
     return fail([internal(e instanceof Error ? e.name : "error")], inexact);
   }
 

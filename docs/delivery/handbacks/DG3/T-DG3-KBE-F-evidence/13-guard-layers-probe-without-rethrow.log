@@ -1,0 +1,78 @@
+# Thu Oct  8 13:54:06 UTC 2026 node v24.21.0. DEFENCE-IN-DEPTH run (not the delivered code): clone /var/tmp/mth-run.6Ztcw9/claude-0/review-p3-norethrow = HEAD 1f02d3b + T-DG3-KBE-F diff, then every 'if (e instanceof EvalError) throw e;' line deleted (index.ts x2, evaluate.ts, value.ts), so the engine converts EvalError to an internal problem as in round 3. Shows what the internal-failure rule alone refuses.
+# command: node $TMPDIR/probes/guard-layers-probe.mjs $TMPDIR/review-p3-norethrow S1 S2 S3
+
+=== S1: tokenize.ts describe(): code generation for a disallowed character U+00C0..U+1FFF (key from fromCharCode); exercised by fuzz + 'été'
+--- modified: packages/shared/src/formula/tokenize.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=0  Tests  1 passed | 49 skipped (50)
+  RUN (unit-formula-nocodegen) exit=1  Tests  11 failed | 188 passed | 1 skipped (200)  EvalError lines=24
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read 6ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read 1ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked 1ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > ../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read 0ms
+  RUN-only failures (fail under the flag, pass without it): 7
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  4 failed | 186 passed (190)
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 5ms
+  ==> REFUSED BY: run-time
+
+=== S2: evaluate.ts: evaluation-time code generation only when a used value has a trailing fraction zero (e.g. '12.50')
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=0  Tests  1 passed | 49 skipped (50)
+  RUN (unit-formula-nocodegen) exit=1  Tests  15 failed | 184 passed | 1 skipped (200)  EvalError lines=27
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read 5ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read 1ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked 1ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > ../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read 1ms
+  RUN-only failures (fail under the flag, pass without it): 11
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  4 failed | 186 passed (190)
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+  ==> REFUSED BY: run-time
+
+=== S3: evaluate.ts: evaluation-time code generation only when the variable named m has the value 50 (the fuzz VARS' monthly SAR value)
+--- modified: packages/shared/src/formula/evaluate.ts
+  LINT exit=0  0 error line(s)
+  SCAN exit=0  Tests  1 passed | 49 skipped (50)
+  RUN (unit-formula-nocodegen) exit=1  Tests  10 failed | 189 passed | 1 skipped (200)  EvalError lines=23
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read 5ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read 1ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked 1ms
+      × no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > ../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read 1ms
+  RUN-only failures (fail under the flag, pass without it): 6
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read
+      packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked
+  CTRL (unit-node, formula dir, no flag) exit=1  Tests  4 failed | 186 passed (190)
+      ✓ grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+      ✓ grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+      ✓ type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+      ✓ type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+  ==> REFUSED BY: run-time
+
+# files restored; git status --porcelain: 'M docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+ M docs/architecture/p3-work-split.md
+ M eslint.config.js
+ M packages/shared/src/formula/codegen.nocodegen.test.ts
+ M packages/shared/src/formula/evaluate.ts
+ M packages/shared/src/formula/formula.test.ts
+ M packages/shared/src/formula/fuzz.test.ts
+ M packages/shared/src/formula/index.ts
+ M packages/shared/src/value.ts'
+
+# SUMMARY (refused at run time = at least one test fails in unit-formula-nocodegen that passes in the unit-node control)
+S1   lint=0 scan=0 run=1 ctrl=1 run-only-fails=7  REFUSED BY: run-time  (tokenize.ts describe(): code generation for a disallowed character U+00C0..U+1FFF (key from fromCharCode); exercised by fuzz + 'été')
+S2   lint=0 scan=0 run=1 ctrl=1 run-only-fails=11  REFUSED BY: run-time  (evaluate.ts: evaluation-time code generation only when a used value has a trailing fraction zero (e.g. '12.50'))
+S3   lint=0 scan=0 run=1 ctrl=1 run-only-fails=6  REFUSED BY: run-time  (evaluate.ts: evaluation-time code generation only when the variable named m has the value 50 (the fuzz VARS' monthly SAR value))
+# probe exit_status: 0

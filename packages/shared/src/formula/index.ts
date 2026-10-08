@@ -56,7 +56,8 @@ export type FormulaValidation =
   | { readonly ok: false; readonly errors: readonly FormulaProblem[]; readonly engineVersion: typeof ENGINE_VERSION };
 
 /**
- * Parses and type-checks an expression against its typed variables (ADR-0024 §6). Never throws and never runs code:
+ * Parses and type-checks an expression against its typed variables (ADR-0024 §6). Never runs code, and never throws
+ * except EvalError (a refused code generation, which cannot occur; see internalProblem):
  * a syntax error or limit is `formula.syntax` with an offset; type-rule violations carry their ADR codes.
  */
 export function validateFormula(
@@ -99,6 +100,7 @@ export function validateFormula(
       engineVersion: ENGINE_VERSION,
     };
   } catch (e) {
+    if (e instanceof EvalError) throw e; // ADR-0024 §6: a refused code generation is never a formula problem
     return { ok: false, errors: [internalProblem(e)], engineVersion: ENGINE_VERSION };
   }
 }
@@ -130,6 +132,7 @@ export function evaluateFormula(
   try {
     return evaluateAst(v.checked, typeof inputs === "object" && inputs !== null ? inputs : {});
   } catch (e) {
+    if (e instanceof EvalError) throw e; // ADR-0024 §6: see internalProblem
     const problem = internalProblem(e);
     return {
       ok: false,
@@ -144,7 +147,18 @@ export function evaluateFormula(
   }
 }
 
-/** A defect inside the engine is reported as a problem (never an uncaught exception, never a value). */
+/**
+ * A defect inside the engine is reported as a problem (never an uncaught exception, never a value): the API answers 422
+ * `formula.syntax` with `reason: "internal"`, never 500.
+ *
+ * The one exception is EvalError (ADR-0024 §6 "No dynamic code", F-DG3-100 round 4). The host throws it when code is
+ * generated from a string and code generation is refused: Node under --disallow-code-generation-from-strings, a
+ * browser under a CSP without 'unsafe-eval'. The engine never generates code, so in production it cannot occur; if it
+ * ever did, the engine would have broken its "never runs code" guarantee. Every catch in the engine (here, in
+ * evaluateAst and in ../value.ts formatDecimal) therefore RETHROWS EvalError instead of converting it, so an exercised
+ * code-generating path fails every test that reaches it in the unit-formula-nocodegen project, whatever that test
+ * asserts. Reporting it as a user's syntax error at offset 0 would hide a security defect.
+ */
 function internalProblem(e: unknown): FormulaProblem {
   const detail = e instanceof Error ? e.name : "error";
   return {
