@@ -11330,7 +11330,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-08T07:30:00Z",
@@ -11351,6 +11351,11 @@
           "at": "2026-10-08T10:28:37Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at de0613850e94c06e7fafaad1a2ffca4b7cb23cd2"
+        },
+        {
+          "at": "2026-10-08T12:55:00Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 3: FAIL"
         }
       ],
       "fix_revision": "de0613850e94c06e7fafaad1a2ffca4b7cb23cd2",
@@ -11359,25 +11364,31 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG3-T-DG3-REV-SEC-R2-code-security-reviewer-20261008T090956Z-1fcbceaa",
-          "session_id": "1fcbceaa-ab9e-4c48-98f4-fdacbf497b23"
+          "run_id": "DG3-T-DG3-REV-SEC-R3B-code-security-reviewer-20261008T120638Z-87eaf9d2",
+          "session_id": "87eaf9d2-90f1-4e65-baab-8712782ed9bf"
         },
-        "at": "2026-10-08T09:34:58Z",
+        "at": "2026-10-08T12:55:00Z",
         "result": "FAIL",
         "evidence": [
-          "docs/delivery/test-evidence/DG3/code-security/round-2/guard-bypass-probe.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe.mjs",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/guard-bypass-probe-supplement.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe-supplement.mjs",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/residual-runtime.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/probes/residual-runtime.mjs",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/residual-runtime-disallow-codegen.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/probe-C-formula-fuzz-node22.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/probe-C-formula-fuzz-node24.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/diff-scan.log",
-          "docs/delivery/test-evidence/DG3/code-security/round-2/lint.log"
+          "docs/delivery/test-evidence/DG3/code-security/round-3/guard-layers-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/guard-layers-probe.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/exercised-probe.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/exercised-probe-rerun.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/exercised-probe.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/guard-bypass-probe-r2-verbatim.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/guard-bypass-probe.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/runtime-layer-attack.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/runtime-layer-attack.sh",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/adr-mechanics-and-residual-runtime.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/adr-mechanics-probe.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/residual-runtime.mjs",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes-ABD-CSP-node22-lang-unset.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/probes/sec-r3-csp.test.ts",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/diff-scan.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/guard-layers-probe-rev1-CONTAMINATED.log",
+          "docs/delivery/test-evidence/DG3/code-security/round-3/guard-layers-probe-rev2-CONTAMINATED.log"
         ],
-        "note": "Not closed.\n\nWhat the fix does close. On the frozen candidate 58ef3f47 (disposable clone $TMPDIR/review-p2 at f20bdef, Node 22.22.2), I appended each of my six round-1 forms to packages/shared/src/formula/evaluate.ts, one at a time. Five of them now fail BOTH eslint (exit 1) and the engine's own source-scan test (exit 1): O1 Reflect.construct(Function, ...), O3 createRequire(import.meta.url)('vm'), O4 Reflect.apply(Function, ...), O5 a computed [\"constructor\"] on a generator prototype, and O6 the alias F = Function. The sixth, O2 globalThis['ev'+'al'], still passes eslint (exit 0) and is caught only by the scan's globalThis pattern, as in round 1. The assignment's step-1 test ('every one of the six must now fail lint AND the scan') is therefore not met for O2. I also checked three refusals the fix claims (guard-bypass-probe-supplement.log), and each fails both guards: X1 plain destructuring { constructor }, X2 Object.getOwnPropertyDescriptors(...).constructor, and X3 globalThis.Function.\n\nWhy it is not closed. The finding's expected result was that ANY reference to the Function constructor should fail lint or the scan, whether direct, aliased, through Reflect, or as a computed ['constructor'] member, and so should any module loading other than static imports. ADR-0024 §6 'Extended guard' now says the override 'refuses the forms that reach the Function constructor or a module loader without those names'. Both guards are still denylists keyed on literal spellings, and one-token variants of the round-1 forms pass both of them (eslint exit 0, source scan exit 0, tsc exit 0):\n- N1: f[k](...) with const k = 'constructor'. The selector tests property.value, and an identifier key has none.\n- N2: f['con' + 'structor']. This is O5 with the string split.\n- N3: Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), 'constructor').value(...).\n- N4: const { [k]: C } = Object.getPrototypeOf(function* () {}).\n- N5: the AsyncFunction constructor reached through the prototype, with the key built by ['con','structor'].join('').\n- N6: a tagged template, f[k]`return 6*7`.\n- N7: global['ev' + 'al']. Node's global is neither a restricted global nor a scan pattern.\n- N8: self['ev' + 'al']. This is a browser or worker form, and it matters because the engine is bundled into apps/web.\n- N9: process.getBuiltinModule('node:vm').runInThisContext(...). This is a run-time module load with no import and no require.\n- N10: a static import of node:inspector, then Session.post('Runtime.evaluate').\n- N11: a static import of node:repl.\nN12, import.meta.resolve, also passes, but it only resolves a specifier and loads nothing, so it is not a vector.\n\nRun-time confirmation (residual-runtime.log). On both Node 22.22.2 and Node 24.21.0, each of N1-N7, N9 and N10 evaluates the text '6*7' and returns 42. N8 throws ReferenceError in Node, which has no self; it is a browser-only form.\n\nEngine impact: none. The engine sources are byte-identical to round 1 (diff-scan S1) and the shipped engine lints clean. All 26 fuzz.test.ts tests pass. My round-1 probe C also passes unchanged on both Node versions: 65 tests covering injection, limits, division by zero, 20,000 fuzz strings and a BigInt-rational oracle. Severity stays Low and non-mandatory.\n\nSuggested direction (not prescriptive):\n1. Add a run-time guard that does not depend on spelling: run the engine's fuzz and unit project under node --disallow-code-generation-from-strings, which turns N1-N7 into EvalError (residual-runtime-disallow-codegen.log). The existing tripwire proxies only globalThis.Function, which N1-N6 never touch.\n2. Use an import allowlist for formula/**, allowing only decimal.js and relative paths through no-restricted-imports patterns. This covers N10 and N11.\n3. Add no-restricted-globals for process, global, self and window; the engine uses none of them.\n4. For N1-N6, refuse computed member access on functions, or refuse any 'constructor' string literal (Literal[value='constructor'], plus the scan equivalent).\nThen correct ADR-0024 §6's claim to match what is actually enforced.\n\nReproduction: docs/delivery/test-evidence/DG3/code-security/round-2/probes/guard-bypass-probe.mjs. Run node guard-bypass-probe.mjs $TMPDIR/review-p2 in a disposable clone; it restores evaluate.ts afterwards. The output is in guard-bypass-probe.log."
+        "note": "Not closed on candidate sha256:f2b4c77a… (source ce988e20). Severity stays Low and non-mandatory. The shipped engine has no dynamic code, so the defect is in the guard and in ADR-0024 §6's description of it.\n\nWHAT THE REPAIR DOES CLOSE (verified):\n- O1–O6 and N1–N12 are all refused by lint and by the scan. My round-2 guard-bypass-probe.mjs, run verbatim (sha256 934c62b1…), gives eslint=1 and scan=1 for all 18 forms.\n- At run time (guard-layers-probe.log, clean run in a fresh clone):\n  - O1, O2, O4–O6 and N1–N7 also fail unit-formula-nocodegen with EvalError, each with 20 tests that fail only under the flag.\n  - O3, N9, N10 and N11 are outside the flag by design (vm, inspector, repl). N8 (`self`) and N12 (`import.meta.resolve`) throw in Node with or without the flag, so the run-time layer does not apply to them.\n- The run-time layer is mechanically sound (runtime-layer-attack.log):\n  - The flag is in every fork: 8 extra files ran in 8 distinct pids.\n  - A file switching to `@vitest-environment jsdom` stays under the flag.\n  - `--pool=vmForks`, `threads` and `vmThreads`, and a per-project vmForks config, each make the canary fail (exit 1).\n  - The preload enables no code generation.\n  - `pnpm test` exits 1 when the flag is removed from the config.\n  - A non-matching file filter exits 1.\n  - A wildcard `--project 'unit-formula-*'` fails safe.\n  - Combining the project with another is refused.\n  - unit-node and unit-web do not inherit the flag.\n- New static-class forms Q1–Q5 (a key harvested with getOwnPropertyNames, fromCharCode, atob, decodeURIComponent or a reversed string, on an ordinary function variable) pass lint and the scan. Each is refused at run time (20 flag-only failures), and they are the residual that §6 states honestly.\n- The CSP claim is true on the emitted headers (sec-r3-csp.test.ts): `script-src 'self'`, no `unsafe-eval`, on `/`, a deep SPA route, the engine chunk and locale-boot.js.\n- The §6 mechanics claims are true (adr-mechanics-and-residual-runtime.log, Node 22 and 24): vm contexts re-enable code generation, Worker refuses the flag, and tinypool 1.1.1 has the `new Function` fallback.\n\nWHY IT IS NOT CLOSED: two reproducible paths defeat all three layers, and each contradicts an explicit ADR-0024 §6 statement.\n\n(1) The run-time layer misses exercised paths. The engine's own catch-all swallows the EvalError.\n- validateFormula and evaluateFormula (packages/shared/src/formula/index.ts, the try/catch around parse/typecheck and around evaluateAst) turn any thrown error into `formula.syntax` with params.reason 'internal' and detail 'EvalError'.\n- fuzz.test.ts accepts that outcome: checkOutcome accepts any code in CODES, which includes formula.syntax, and the code-shaped-payload test accepts formula.syntax. So does every formula.test.ts 'rejects … at offset 0' row, because the internal problem has offset 0.\n- S1: tokenize.ts describe() generates code from a string for a disallowed character U+00C0–U+1FFF, using a key built with String.fromCharCode. Lint exit 0, scan exit 0, unit-formula-nocodegen exit 0 (190/190), control exit 0.\n- exercised-probe.log, and its clean rerun exercised-probe-rerun.log, show that this path DOES run under the flag:\n  - validateFormula('été') returns 'the formula could not be processed (EvalError)';\n  - fuzz.test.ts's own 10,000 seeded byte strings hit the EvalError 2,805 times, every one swallowed.\n- S3 is evaluation-time code generation, taken when the variable m = '50' (the fuzz VARS). It is exercised 41 times by fuzz.test.ts's own 20,000-string grammar fuzz, and all three layers pass.\n- (S2, a path that formula.test.ts asserts exact values on, IS refused at run time: 6 flag-only failures.)\n- ADR-0024 §6 layer 3 states: 'Guarantee. Any engine path that generates code from a string fails the engine's tests, provided a test exercises it.' S1 and S3 are counter-examples. The residual paragraph names only unexercised paths.\n\n(2) The import allowlist admits ../value.ts, which no formula rule covers.\n- ../value.ts is the engine's one import from outside formula/**. It gets only the generic lint block (diff-scan.log S1e: no-eval, no-new-func, no-implied-eval, no-restricted-imports and no-restricted-globals are all unset), and the scan reads only the six files in formula/.\n- V1: `import { runInThisContext } from \"node:vm\"` in value.ts, called from checkDecimal, which the engine calls on every evaluation. Lint exit 0, scan exit 0, unit-formula-nocodegen exit 0 (vm is outside the flag, adr-mechanics B1), control exit 0.\n- ADR-0024 §6 states that vm, inspector and getBuiltinModule are 'Not covered by the flag … Layers 1–2 refuse those, through the import allowlist and the process ban'. One allowlisted hop makes that untrue.\n- (V2, `new Function` in value.ts, is refused at run time only.)\n\nSUGGESTED DIRECTION (not prescriptive):\n- Make an internal engine failure fatal in the engine's tests. For example, checkOutcome, the payload test and the formula.test.ts rejected table could refuse params.reason === 'internal', or the no-codegen project could fail on any 'internal' problem. Then an exercised EvalError always fails.\n- Put ../value.ts under the engine-source lint block and the scan's file set, or remove it from the allowlist.\n- Correct the §6 guarantee and the not-covered sentence to match.\n\nReproduction (disposable clone only):\n- node docs/delivery/test-evidence/DG3/code-security/round-3/probes/guard-layers-probe.mjs $TMPDIR/review-p3b S1 S3 V1\n- node docs/delivery/test-evidence/DG3/code-security/round-3/probes/exercised-probe.mjs $TMPDIR/review-p3b\nBoth restore the files they change.\n\nDISCLOSED HARNESS INCIDENT: the first two runs of guard-layers-probe.mjs (guard-layers-probe-rev1/rev2-CONTAMINATED.log) are invalid and not cited. A pkill meant for run 1 killed my own shell instead, and run 1 kept rewriting evaluate.ts in the same clone while run 2 ran. The valid run is guard-layers-probe.log, in a fresh clone with no other writer."
       }
     },
     {
@@ -11407,7 +11418,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG3/round-2/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-08T09:35:00Z",
@@ -11418,10 +11429,47 @@
           "at": "2026-10-08T10:28:37Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6b30768d599b61845d1819e6b4b6a2fdb783f659"
+        },
+        {
+          "at": "2026-10-08T11:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
         }
       ],
       "fix_revision": "6b30768d599b61845d1819e6b4b6a2fdb783f659",
-      "fix_summary": "T-DG3-FE-G 6b30768: InheritedApprovalBadge gains the scoped modifier status-chip--wrap (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties) with its text in a span; the global .status-chip nowrap rule is unchanged. New real-browser spec apps/web/e2e/p3-inherited-approval.spec.ts asserts, at 1024/1366/1920/390 in EN and AR, the badge inside its card/row, no clipping, no horizontal document scroll, the full disclaimer, the neutral draft status and axe 0 serious/critical. The domain probe dg3-ui-overflow.mjs goes from 2/12 to 12/12."
+      "fix_summary": "T-DG3-FE-G 6b30768: InheritedApprovalBadge gains the scoped modifier status-chip--wrap (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties) with its text in a span; the global .status-chip nowrap rule is unchanged. New real-browser spec apps/web/e2e/p3-inherited-approval.spec.ts asserts, at 1024/1366/1920/390 in EN and AR, the badge inside its card/row, no clipping, no horizontal document scroll, the full disclaimer, the neutral draft status and axe 0 serious/critical. The domain probe dg3-ui-overflow.mjs goes from 2/12 to 12/12.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG3-T-DG3-REV-DOM-R3-domain-reviewer-20261008T111024Z-60f6afce",
+          "session_id": "60f6afce-1722-41fa-b878-27217e7736b1"
+        },
+        "at": "2026-10-08T11:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.mjs",
+          "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow.log",
+          "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.mjs",
+          "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-overflow-r3.log",
+          "docs/delivery/test-evidence/DG3/domain/round-3/dg3-ui-inherited.log",
+          "docs/delivery/test-evidence/DG3/domain/round-3/dg3-api-extra.log",
+          "docs/delivery/test-evidence/DG3/domain/round-3/stack-run-1.log",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1366-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-1366-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-390-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-390-gates-list.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-390-gates-list-g1card.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-390-gates-list-g1card.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-1024-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-1024-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-r3-320-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-r3-320-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/en-overflow-1366-gate-view.png",
+          "docs/delivery/test-evidence/DG3/domain/round-3/screens/ar-overflow-1366-gate-view.png"
+        ],
+        "note": "Verified fixed on candidate sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d (source ce988e20, freeze 0e820ae), live in Chromium on a disposable PostgreSQL 16 + API stack built from a complete clone, with synthetic data. The fix (T-DG3-FE-G, 6b30768) adds the opt-in .status-chip--wrap modifier (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties only), wraps the text in a <span>, and leaves the base .status-chip nowrap. (1) My round-2 probe dg3-ui-overflow.mjs, byte-identical, is now 12/12 PASS (round 2: 2/12). EN 1366 list: badge [310,619] inside card [297,632] (was [310,828]); EN 1366 view: doc scrollWidth 1366 = viewport (was 1604); AR 1366 view: badge [41,280] inside [24,1086], doc 1366 (was 1439). (2) The new adversarial probe dg3-ui-overflow-r3.mjs is 155/155 PASS at 320, 390, 768, 1024, 1280, 1366 and 1920 px, in EN and AR, on the Gates list and the G1 view: the badge stays within its card/row and the viewport; the document never scrolls horizontally; the badge is not clipped (scrollWidth = clientWidth, scrollHeight = clientHeight); every rendered text line lies inside the badge; the visible text is the full string ending '(does not approve this gate)' / '(لا يعتمد هذه البوابة)'; it overlaps no sibling chip; the info icon sits at the inline start of the first line (left in LTR, right in RTL, dir ltr/rtl); the chip stays status-chip--unknown with no check icon; G1 reads 'Not submitted' / 'لم تُقدَّم' (data-gate-status draft), and no element is approved. (3) dg3-ui-inherited.mjs, byte-identical, is 94/94 with the same ids and results as round 2, so the states and semantics are unchanged. (4) I looked at the screenshots myself (EN/AR 1366 list, 390 list and G1 card crop, 1024 and 320 view, the AR revoked list, the EN pending view): the whole disclaimer is legible on two lines, the badge sits inside the card/row, and the Arabic wraps naturally in RTL with the icon at the start. F-DG3-120 still holds (dg3-api-extra.mjs 33/33, identical to round 2): pending_verification, then accepted/counts true, then revoked/rejected counts false; G1 stays draft with 0 gate_submission and 0 gate_decision rows (psql) at every step."
+      }
     },
     {
       "id": "F-DG3-180",
@@ -11449,7 +11497,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG3/round-2/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-08T10:25:00Z",
@@ -11460,10 +11508,44 @@
           "at": "2026-10-08T10:28:37Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6b30768d599b61845d1819e6b4b6a2fdb783f659"
+        },
+        {
+          "at": "2026-10-08T13:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "6b30768d599b61845d1819e6b4b6a2fdb783f659",
-      "fix_summary": "T-DG3-FE-G 6b30768: InheritedApprovalBadge gains the scoped modifier status-chip--wrap (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties) with its text in a span; the global .status-chip nowrap rule is unchanged. New real-browser spec apps/web/e2e/p3-inherited-approval.spec.ts asserts, at 1024/1366/1920/390 in EN and AR, the badge inside its card/row, no clipping, no horizontal document scroll, the full disclaimer, the neutral draft status and axe 0 serious/critical. The domain probe dg3-ui-overflow.mjs goes from 2/12 to 12/12."
+      "fix_summary": "T-DG3-FE-G 6b30768: InheritedApprovalBadge gains the scoped modifier status-chip--wrap (white-space normal, overflow-wrap anywhere, max-inline-size 100%, logical properties) with its text in a span; the global .status-chip nowrap rule is unchanged. New real-browser spec apps/web/e2e/p3-inherited-approval.spec.ts asserts, at 1024/1366/1920/390 in EN and AR, the badge inside its card/row, no clipping, no horizontal document scroll, the full disclaimer, the neutral draft status and axe 0 serious/critical. The domain probe dg3-ui-overflow.mjs goes from 2/12 to 12/12.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG3-T-DG3-REV-QA-R3B-qa-verifier-20261008T120708Z-7b0434bc",
+          "session_id": "7b0434bc-6fac-48a5-ad35-044d3d1a995b"
+        },
+        "at": "2026-10-08T13:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180-layout-en.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180-layout-ar.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180-layout-en.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180-layout-ar.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180b-layout-en.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-unset-f180b-layout-ar.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180b-layout-en.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/results/e2e-cutf8-f180b-layout-ar.json",
+          "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-unset.log",
+          "docs/delivery/test-evidence/DG3/qa/round-3/04-e2e-cutf8.log",
+          "docs/delivery/test-evidence/DG3/qa/round-3/RUN-NOTES.md",
+          "docs/delivery/test-evidence/DG3/qa/tests/round-3/e2e/dg3-qa-r3.spec.ts",
+          "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/ar/f180b-m1-list-320.png",
+          "docs/delivery/test-evidence/DG3/qa/round-3/screens/unset/en/f180-m1-G1-view.png",
+          "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/en/f180b-m1-list-320.png",
+          "docs/delivery/test-evidence/DG3/qa/round-3/screens/cutf8/ar/f180-m1-G1-view.png"
+        ],
+        "note": "Verified fixed on candidate sha256:f2b4c77a026c6825d323cdc89782d63410ec9ead05666e06d90a4d51988d1d1d (source ce988e20, repair T-DG3-FE-G 6b30768 merged in 3dcb41f), on the real stack (disposable PostgreSQL 16, migrations, seed-dev, built API + SPA; synthetic data) in chromium-en (LTR) and chromium-ar (RTL), with LANG/LC_ALL unset and with C.UTF-8. (1) My round-2 probe 'F180 layout probe', unchanged, PASSES in all 4 project/setting combinations: 7 of 7 badges (M1 list accepted+counts / revoked / accepted-not-counting, M2 list pending_verification / rejected, M1 and M2 G1 view) lie inside their li.gate-card or dd at 1280x720; in round 2 7/7 (en) and 4/7 (ar) were outside. (2) My added probe F180b measures every badge state on the Gates list and the G1 view at 320, 390, 768, 900, 901, 1024, 1280, 1366 and 1920 px plus 200% root text at 1280 and 390 px (77 measurements per project and setting). In ALL 77 x 4 measurements the badge lies inside its card/field horizontally and vertically, wraps (white-space normal), is not clipped (scrollWidth <= clientWidth) and overlaps no other text-bearing element of its card; every other .status-chip keeps white-space nowrap (the fix is scoped). In 70 of 77 (every width 320-1920 at 100%, and 1280 px at 200%) the rendered rectangles of the clause '(does not approve this gate)' / '(لا يعتمد هذه البوابة)' also lie inside the viewport and the document does not scroll horizontally. The 7 remaining rows are the one state 390 px + 200% root text: the badge and its clause are inside the card, but the card itself is wider than the viewport because the pre-existing gate grid is minmax(18rem, 1fr) (app.css:1506, since DG2 ea72d86; 576 px at 32 px root), so the page scrolls horizontally. That is about 195 CSS px of effective width, below WCAG 1.4.10's 320 px reflow requirement, and 1.4.4 permits scrolling; the clause is reachable, never hidden under a neighbour or overlapped, which was the F-DG3-180 defect. This makes F180b exit non-zero by my own stricter criterion (disclosed in RUN-NOTES item 6); it is an observation about the grid, not a residual of this finding. (3) The product spec p3-inherited-approval.spec.ts passes 5/5 per project in both settings (axe clean), the unit assertion of status-chip--wrap passes, and the repair diff touches only the badge's class, a span wrapper and the opt-in .status-chip--wrap CSS: nothing else on the Gates screens changed (U3 13/13 checks: states, text, neutral chip, source line, link, dir/lang, AUD read-only). Screenshots at 320 px (AR) and 1280 px (EN) show the full clause wrapped inside the card and the field."
+      }
     }
   ]
 }

@@ -1247,7 +1247,7 @@
       "id": "DG3",
       "stage": "P3",
       "name": "Mobilization and portfolio",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG2"
       ],
@@ -1344,6 +1344,11 @@
           "state": "REVIEWING",
           "at": "2026-10-08T11:07:45Z",
           "note": "Round-3 repairs merged and verified (D-083). Candidate frozen as f2b4c77a (757 files, source ce988e2) for DG3 gate review round 3: code-security verifies F-DG3-100, domain verifies F-DG3-170, qa verifies F-DG3-180 and runs the full regression; each re-reviews in full. No worktree or install activity while reviewers run (D-082)."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-08T13:38:40Z",
+          "note": "Round 3 on candidate f2b4c77a. A container restart (~12:00Z) killed the first code-security and qa runs; their material is kept under test-evidence/DG3/{code-security,qa}-r3-orphaned/ and both were re-run from round-3/*-rerun.md (as D-075). domain PASS (F-DG3-170 CLOSED_VERIFIED); qa (rerun) PASS (F-DG3-180 CLOSED_VERIFIED; 32/32 acceptance, e2e 182/182 product per setting); code-security (rerun) FAIL: F-DG3-100 verification failed again (the engine's catch-all turns an exercised EvalError into an accepted 'internal' formula.syntax; ../value.ts is outside every formula rule); no new finding. All three round-3 runs report no configuration change. Repair: T-DG3-KBE-F."
         }
       ]
     },
