@@ -1,0 +1,64 @@
+## certification / official PMI claims (apps, packages, docs/api)
+apps/web/src/i18n/en/common.json
+apps/api/src/modules/admin/branding.test.ts
+130:esis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+## #0078FF
+apps/web/src/i18n/en/common.json:127:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0
+apps/web/src/i18n/ar/common.json:127:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيً
+apps/api/src/modules/admin/branding.test.ts:15:  ["brand.primary", "#0078FF", "Primary accents and selected elements"],
+apps/api/src/modules/admin/branding.test.ts:88:    const ok = { provenance: "provisional", tokens: [{ name: "brand.primary", value: "#0078FF", provisional: true }] };
+apps/api/src/modules/admin/branding.ts:4:// #0078FF is a provisional brand token, not a verified Mobily colour; nothing here claims official brand compliance.
+apps/api/test/integration/contract/contract.test.ts:476:    // #0078FF is a provisional brand token, not a verified Mobily colour: the API must never call the set official.
+apps/api/test/integration/contract/contract.test.ts:479:    expect(res.body.tokens.some((t) => t.value.toUpperCase() === "#0078FF" && t.provisional)).toBe(true);
+packages/shared/src/schemas/branding.ts:3:// are unverified. #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colour
+packages/design-tokens/src/tokens.json:5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+packages/design-tokens/src/tokens.json:18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed wit
+packages/design-tokens/src/tokens.json:220:        "why": "white small text on #0078FF is about 4.09:1; action buttons use action.primary instead"
+packages/design-tokens/src/tokens.test.ts:21:      "brand.primary": "#0078FF",
+packages/design-tokens/src/tokens.test.ts:36:    expect(contrastRatio("#0078FF", "#FFFFFF")).toBeCloseTo(4.09, 2);
+packages/design-tokens/src/tokens.test.ts:37:    expect(contrastRatio("#0078FF", "#F5F8FC")).toBeCloseTo(3.84, 2);
+packages/design-tokens/src/tokens.test.ts:48:  it("never puts small white text on #0078FF: the action shade passes 4.5:1 on card and page", () => {
+packages/design-tokens/src/tokens.test.ts:51:    expect(action).not.toBe("#0078FF");
+packages/design-tokens/src/tokens.test.ts:56:    const shade = deriveDarkerShade("#0078FF", ["#FFFFFF", "#F5F8FC"], 4.5);
+packages/design-tokens/src/tokens.test.ts:85:    expect(css).toContain("--mth-brand-primary: #0078FF;");
+packages/design-tokens/src/index.ts:4:// (REQ-S15-002/003). #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/index.ts:160:    "/* PROVISIONAL tokens (master prompt §15): #0078FF is not a verified Mobily colour. */",
+## repair diff: all changed files (product)
+docs/architecture/adr/ADR-0024-p3-business-case-and-formula-foundation.md
+docs/architecture/p3-work-split.md
+eslint.config.js
+packages/shared/src/formula/fuzz.test.ts
+## repair diff: new i18n strings
+(none above = no i18n change)
+## repair diff: apps/ and packages/db, packages/shared/src/schemas
+(none above = no API/DB/web/contract change)
+## repair diff: formula engine non-test sources (+/- lines)
+## repair diff: every non-test file under packages/ and apps/ (empty = only tests changed in code)
+(end)
+## repair diff: commits
+c40232b DG3: D-086 (round-5 results, KBE-H integration, verification); pre-freeze evidence
+43ca734 DG3: F-DG3-100 FIXED_PENDING_VERIFICATION (KBE-H)
+a5c4f5e Merge T-DG3-KBE-H (DG3 round-6 repair) into the DG3 integration branch
+c8f0c0c DG3 run evidence: T-DG3-KBE-H
+53ac073 T-DG3-KBE-H: repair F-DG3-100, fifth pass (reviewer's final criterion: (a) and (b))
+26c0ea4 DG3 round 5 imported: domain and qa PASS; F-DG3-100 reopened; FIXING
+4ea1129 DG3 round 5: qa test evidence
+7212969 run: DG3-T-DG3-REV-QA-R5-qa-verifier-20261008T171611Z-6d1029df (review evidence, auto-committed by run-agent.sh)
+40b422e DG3: repair assignment T-DG3-KBE-H for F-DG3-100 (round-5 final closure criterion: (a) and (b))
+6f2a992 DG3 round 5: code-security test evidence
+3a3cd9e run: DG3-T-DG3-REV-SEC-R5-code-security-reviewer-20261008T171531Z-17bcf3e5 (review evidence, auto-committed by run-agent.sh)
+5c86f9b DG3 round 5: domain test evidence
+8d6a705 run: DG3-T-DG3-REV-DOM-R5-domain-reviewer-20261008T171551Z-a603edd0 (review evidence, auto-committed by run-agent.sh)
+40c84e8 DG3 round 5 frozen: candidate dfedd62f (757 files, source 21e2742); REVIEWING; reviewer assignments
+## provisional wordmark / provisional Arabic strings in i18n
+    "provisionalAr": "Provisional Arabic translation of the source text; the English source t
+    "provisional": "Provisional",
+    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are p
+    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not offici
+    "brandTitle": "Provisional branding",
+rified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are prov
+    "provisionalAr": "ترجمة عربية مؤقتة لنص المصدر؛ ويظهر نص المصدر الإنجليز
+    "provisional": "مؤقت",
+    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تص
+    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل 
