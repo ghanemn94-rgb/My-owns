@@ -1,0 +1,427 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG3",
+  "round": 1,
+  "candidate_id": "sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33",
+  "source_commit": "928b765419e7e84feeaae1a60724a11c318799a8",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG3-T-DG3-REV-DOM-R1-domain-reviewer-20261008T064710Z-213865e7",
+    "session_id": "213865e7-6a8a-41a5-aa8c-307ea33aac97"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG3 implementation, test, register row or ADR in the reviewed candidate. I formed this verdict from my own runs in a complete disposable clone of the freeze commit ec45ef1 (source 928b7654), with my own probes (dg3-api.mjs, dg3-api-extra.mjs, dg3-ui-world.mjs, dg3-ui.mjs). I read the implementers' specs and integration tests only to learn request shapes. I did not open any other reviewer's round-1 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG3/round-1/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-004",
+    "REQ-PB-006",
+    "REQ-PB-007",
+    "REQ-PB-019",
+    "REQ-PB-022",
+    "REQ-PB-032",
+    "REQ-PB-040",
+    "REQ-PB-045",
+    "REQ-PB-046",
+    "REQ-PB-047",
+    "REQ-PB-048",
+    "REQ-PB-049",
+    "REQ-PB-050",
+    "REQ-PB-051",
+    "REQ-PB-052",
+    "REQ-PB-053",
+    "REQ-PB-054",
+    "REQ-PB-055",
+    "REQ-PB-056",
+    "REQ-PB-057",
+    "REQ-PB-059",
+    "REQ-S04-006",
+    "REQ-S05-005",
+    "REQ-S09-001",
+    "REQ-S09-003",
+    "REQ-S09-004",
+    "REQ-S09-005",
+    "REQ-S09-006"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R1-00-candidate",
+      "procedure": "Verify the assignment sha256, HEAD lineage and the candidate ID on the repo and on a complete disposable clone, before and after the runs.",
+      "command": "sha256sum <assignment>; git log --oneline -3; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG3 (repo + clone)",
+      "environment": "Node 24.21.0; repo /home/user/My-owns at ec45ef1; clone $TMPDIR/review-dom at ec45ef1 (not shallow)",
+      "expected": "Assignment sha e78176ce…; ec45ef1 is the freeze commit on 928b7654; candidate sha256:873115d9… with 753 files everywhere.",
+      "actual": "The assignment sha256 matches. HEAD ec45ef1 has parent 928b765 and adds only the round-1 assignments, the manifest, progress.md and stages.json. The candidate ID is sha256:873115d9bc84f763d8ec0670f0e5e320b013dc26faba6e3026395b09ed5c9f33 with 753 files on the repo and on the clone, before and after the runs (rv/ removed). The repo HEAD did not move during my run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/candidate.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R1-01-validators",
+      "procedure": "Run the register validator for DG3 and the historical validators for DG2 and DG1, as the assignment requires.",
+      "command": "node tools/gates/validate.mjs --register DG3; node tools/gates/validate.mjs --historical --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Node 24.21.0, repo at ec45ef1",
+      "expected": "Each passes, exit 0.",
+      "actual": "'PASS register rules at DG3', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)', each exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-02-install",
+      "procedure": "Offline frozen install in the clone. If the store cannot satisfy it, use the repo's installed tree and prove that it matches the lockfile.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir <store copy>; diff pnpm-lock.yaml node_modules/.pnpm/lock.yaml; cp -a <repo node_modules trees> <clone>",
+      "environment": "Node 24.21.0, pnpm 10.33.0, no network",
+      "expected": "A clean install, or a disclosed equivalent tree that matches the lockfile.",
+      "actual": "The offline install FAILED with exit 1 (install.log): ERR_PNPM_NO_OFFLINE_TARBALL for @fastify/cookie 11.0.2, because the local store lacks that tarball and the sandbox has no network. A second offline install failed with EROFS (pnpm writes a project link into the read-only store). Neither is a candidate defect. The repo's node_modules/.pnpm/lock.yaml is byte-identical to pnpm-lock.yaml, so I copied the repo's node_modules trees into the clone with cp -a, and every later check ran on that lockfile-identical tree.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/install.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R1-03-typecheck-build-lint-test-contrast",
+      "procedure": "pnpm -r typecheck, pnpm -r build, pnpm lint, pnpm test and the contrast check on Node 22 and on Node 24, in the clone.",
+      "command": "bash docs/delivery/test-evidence/DG3/domain/round-1/checks.sh",
+      "environment": "Node 22.22.2 and 24.21.0, pnpm 10.33.0, clone at ec45ef1",
+      "expected": "Every log ends '### exit=0'.",
+      "actual": "All ten logs end '### exit=0'. Tests: 80 files, 1528/1528 passed on both versions. Disclosed non-failure lines: the Fastify FSTDEP022 deprecation warning in the test logs, Vite's chunk-size advisory in the build logs, and the three documented prohibited contrast pairs ('PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'). Lint ran before any probe was added to the clone.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/checks.sh",
+        "docs/delivery/test-evidence/DG3/domain/round-1/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/build-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/build-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/lint-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/lint-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/test-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/test-node24.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/contrast-node22.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/contrast-node24.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-04-sequencing",
+      "procedure": "Live API, End-to-End transformation with distinct synthetic people (TL, SP, FIN, WL). Check: submit, select and launch before G1; readiness before and after the diagnostic; G1 decision without, with partial, with false and with all three agreements; Outcome before activity (no link, an outcome without a KPI, then with a KPI); launch before G2, after G2 only, and after G2+G3 while selected-unfunded and once funded.",
+      "command": "bash with-stack.sh bash run-all.sh (dg3-api.mjs), stack-run-2",
+      "environment": "PostgreSQL 16 on 127.0.0.1:26401, API AUTH_MODE=dev on :26402, Node 24.21.0",
+      "expected": "B0009/B0011/B0012/B0032 and ADR-0021 §3/§8/§9 literally: 422 invalid-transition g1_not_approved before G1; readiness lists economics … technology; G1 approve without the three agreements 422 and nothing written; 'Outcome before activity' validation; launch 422 'North Star, outcomes and target state not yet approved' until G2+G3, then 422 selected_unfunded, then 200 once funded.",
+      "actual": "All as expected. Submit before G1: 422 urn:mth:problem:invalid-transition initiative.g1_not_approved, and the detail names the leadership agreement on problem, baseline and material value pools. Select and launch of a draft: 422. Readiness: missingDiagnosticAreas = the five B0012 areas, then [] after the T01 items. G1 approve without agreements: 422 gate.g1_agreements_required, with the three pointers. Partial or false agreements: 422. G1 stays submitted at the same version. With all three: 201, recording the three agreement rows. Submit without a link: 422 validation 'Outcome before activity…'. An outcome without a KPI is still refused, and with a KPI the submit is 200. A contribution without an outcome: 400 /outcomeId. Launch before G2/G3, and after G2 only: 422 direction_not_approved with the exact B0009 text. After G3: 422 initiative.selected_unfunded. Once FIN funds it: 200 launched.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004",
+        "REQ-PB-006",
+        "REQ-PB-007",
+        "REQ-PB-022",
+        "REQ-PB-032"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/stack-run-2.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-05-modular-and-waiver",
+      "procedure": "Modular transformation: inherited approval of G1 (pending, recorder self-accept, delegated accept, unverified evidence, verified + accepted by the SP); gate list, gate view and readiness. End-to-End: G3 waiver (blank reason, self-accept, SP accept) and readiness.",
+      "command": "dg3-api.mjs (REQ-PB-004.modular-*) and dg3-api-extra.mjs, stack-run-2",
+      "environment": "as DOM-R1-04",
+      "expected": "ADR-0021 §5: captured, never fabricated. The approval counts only when the evidence is verified and another person with gate.decide accepts it. The gate stays draft with no gate decision, and the gate list shows an inheritedApproval annotation. A waiver unblocks only its own gate and never approves it.",
+      "actual": "Captured and never fabricated. While pending, submit is still 422 g1_not_approved. The recorder's self-accept: 403. A delegated accept: 422 dispensation.on_behalf_not_supported. An accept with unverified evidence: 422 dispensation.evidence_not_verified. Once verified and accepted by the SP, sequencing counts it (canSubmitInitiatives true; submit then fails only on outcome_before_activity). G1 stays draft with latestSubmissionNo 0 and no decision, and readiness shows the dispensation with counts/pending. The waiver: blank reason 400, self-accept 403. Accepted, it leaves G3 draft and launch still blocked on G1/G2. DEVIATION: the gate list item carries no inheritedApproval annotation, and the contract defines none (F-DG3-120, Low, not blocking). dg3-api-extra exit 1 comes solely from that assertion.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-06-t05-outcomes-tom",
+      "procedure": "T05: create with all narrative fields and read them back; deliverable counts 0/2/3/8/5 and the warnings. Gap links: tom_canvas_cell, capability, journey and tom_dimension as targets; initiative as an evidence_link record type; 2 TOM gaps + 1 finding. G3 view: does it contain initiative ids? Outcome hierarchy: does it show five levels?",
+      "command": "dg3-api.mjs (REQ-PB-045, REQ-PB-040, REQ-PB-032); dg3-ui.mjs (t05 cards)",
+      "environment": "as DOM-R1-04; Chromium for the UI",
+      "expected": "B0072: 14 fields; outside 3–7 a warning, never a rejection. B0059: an initiative is refused as TOM evidence and links to 1..n gaps. B0048: five levels.",
+      "actual": "Draft created before G1 (201). Every narrative field round-trips verbatim. The deliverable_count warning appears at 0, 2 and 8 (all 8 accepted) and not at 3 or 5, and the message reads 'Key deliverables: 3 to 7 are recommended'. Every non-gap TOM target: 422 initiative.not_tom_evidence 'A project portfolio is not a Target Operating Model…'. An initiative as an evidence record: 400 /recordType. Three active links (2 gaps + 1 finding). G3 view: no initiative id. The hierarchy shows the North Star, outcome, KPI, target and initiative contribution. UI EN/AR: all 14 T05 labels and the values on A's card, and C's card shows the 3–7 warning.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-045",
+        "REQ-PB-040",
+        "REQ-PB-032",
+        "REQ-PB-046"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-t05-card-A.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-t05-card-A.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-t05-card-C-deliverable-warning.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-t05-card-C-deliverable-warning.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-07-t06-prioritization",
+      "procedure": "T06: score 6; a weightedScore in the request; four of five scores; then 5,4,3,2,1; the v1 weights; the 0–100 view; weights totalling 95 and 105; v2 with risk/compliance 10 and strategic fit 15 (self-approve, SP approve); rescoring; whether snapshot 1 keeps v1; ranking history; override without a reason, with a blank reason, self-approval, approval; value/feasibility axes and filters. UI EN/AR on a separate world scored under v1.",
+      "command": "dg3-api.mjs, dg3-ui-world.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "B0076/B0077/M0176/M0177: 25/25/20/15/15; 5,4,3,2,1 → 3.30 exact; 6 rejected; missing → 'incomplete'; 0–100 labelled 57.5; 95/105 rejected; v2 accepted and used; v1 references kept; 'weight version 2' explains a rank change; no override without a reason.",
+      "actual": "Score 6: 400 /score. weightedScore input: 400, nothing written. Four of five scores: incomplete, weightedScore null, missing time_to_value. 5,4,3,2,1: '3.3000', display '3.30', under v1. display100 '57.5' with conversion '(score-1)/4*100'. v1 is active at 25/25/20/15/15 (source default, approvedBy null). 95: 422 'Weights must total 100% (got 95.00%)'. 105: 422 likewise. Nothing written. v2: proposed; self-approve 403; SP approve 200 active. A is incomplete under v2 until risk is scored, then 3.2000 (independently computed). Snapshot 1 still references v1. History: 'weight version 2' on two rank changes. Overrides: no reason 400 /reason, blank 422 override_reason_required, self-approval 403. Approved, it puts C at rank 1 with 'override: Synthetic: regulatory deadline'. Axes and filters: 200. UI EN/AR: 3.30 and 'incomplete', the 0–100 view 57.5 under the label '0–100 view = (weighted score − 1) ÷ 4 × 100' (AR translated), and the history shows 'weight version 2' and the override reason.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-047",
+        "REQ-PB-048",
+        "REQ-PB-049",
+        "REQ-S09-001",
+        "REQ-S09-004",
+        "REQ-S09-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-prioritization-3.30-incomplete.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-prioritization-3.30-incomplete.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-prioritization-0-100-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-prioritization-0-100-view.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-prioritization-history-v2.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-prioritization-history-v2.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-08-selection-funding",
+      "procedure": "Select a ranked initiative and check the API state and the UI label; fund a not-selected initiative (TL, then FIN); fund A; deselect then reselect B; portfolio screens EN/AR.",
+      "command": "dg3-api.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "M0177: ranking ≠ selection ≠ funding; 'Selected - unfunded' cannot launch; funding is a separate FIN/SP decision.",
+      "actual": "Selected: status selected, fundingState unfunded, displayStatus = i18n key initiative.status.selected_unfunded (the web renders 'Selected - unfunded' / 'مختارة - غير ممولة'). Its launch: 422 selected_unfunded. Funding a not-selected initiative: TL 403, FIN 422 funding.not_selected. FIN funds A: 201, funded. A reselected B is unfunded again. UI EN/AR: the selected-unfunded label, and A Launched.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S09-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-portfolio-selected-unfunded.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-portfolio-selected-unfunded.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-portfolio-main.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-portfolio-main.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-09-t07-t08-roadmap",
+      "procedure": "Waves compared value by value with B0079; overlapping planned dates; a PATCH of the source text; milestone approve/move, the roadmap read model, a stale If-Match. T08: the seven columns, External From, the four system types (DELETE as ADM_METHOD), a custom type, an unknown type, cycles A→B→A and three-node, the before-predecessor, needed-by and External-unknown flags. UI EN/AR.",
+      "command": "dg3-api.mjs, dg3-api-extra.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "B0079 verbatim and overlap accepted; B0081 seven columns, External, Decision/Tech/Data/Vendor undeletable plus configurable types; cycles reported; one data source for timeline/table/board; a conflicting edit shows a conflict.",
+      "actual": "All 20 wave values equal B0079 byte for byte (e.g. 'Wave 0 — Mobilize', '0-6 weeks', 'Sponsor + charter'). Note: the register's master-prompt wording 'Sponsor and charter' (M0180) differs from the playbook; the seed correctly uses B0079. Overlapping wave dates: 200/200. A source-text PATCH: 400. Moving a milestone shows forecast 2027-03-01 and approved 2027-02-15 in /roadmap, and a stale If-Match gets 409. T08: the seven columns persist, and External From is accepted. The four system types are present, and their DELETE gets 422 system_undeletable. A custom type: 201. An unknown type: 422 dependency.unknown_type. A→B→A and a three-node cycle: 422 dependency.cycle, naming the codes. Flags: schedule.before_predecessor on A, needed_by_conflict on DEP-01, schedule.unknown on the External predecessor. UI EN/AR: the timeline, table and board on one page, the provisional-Arabic note with the English source names (screens/ar-roadmap-waves.png), and 'External: …' on the T08 map.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-050",
+        "REQ-PB-051",
+        "REQ-PB-052",
+        "REQ-S09-004",
+        "REQ-S09-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-roadmap-waves.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-roadmap-waves.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-dependencies-t08.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-dependencies-t08.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-10-capacity-owners",
+      "procedure": "Role capacity 1.50 FTE, demand 2×1.00 in the same month; demand with no capacity row; commit by TL and by TO; UI EN/AR.",
+      "command": "dg3-api.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "B0023/B0079: role-based capacity with a conflict indicator; Unknown never reads as no conflict; G4 lists initiatives without owners.",
+      "actual": "Plan cell: demand 2.00 > available 1.50, shortfall 0.50, flag capacity.over_allocated. The initiative carries a capacity flag. Demand with no capacity row: capacity.unknown. TL commit: 403. TO commit: 200 committed. G4 lists the owner-less initiatives as 'Owners: INI-02 …'. UI EN/AR capacity screens shown.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-059",
+        "REQ-S09-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-capacity-conflict.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-capacity-conflict.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-11-business-case",
+      "procedure": "Transformation case with the ten sections; an initiative case under it; a line with two classes (array and two properties); a class/kind mismatch; the five investment classes with decimals; an unknown class; the same formula on a second line; revenue vs margin; avoided vs cash; non-financial with an amount; totals; an initiative line edited and the roll-up re-read; an Unknown amount. UI EN/AR.",
+      "command": "dg3-api.mjs, dg3-api-extra.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "B0083–B0085/B0088/M0148/M0172: ten sections; one class per line; transformation case + lighter linked initiative cases; each line counted once; revenue kept separate from margin and avoided cost from cash savings; Unknown never 0.",
+      "actual": "The ten sections round-trip, in SAR. The initiative case's parentCaseId is the transformation case. Two classes: 400 for both forms. A mismatch: 422 line_class_mismatch. Each of capex, opex, internal_fte, vendor_cost and opportunity_cost: 201 with amount '1000.2500'. Unknown class: 400. The same formula twice: 409 formula_already_linked. The wrong basis: 422 value_basis_mismatch. Non-financial with an amount: 422. Totals: gross 650000; by value basis revenue_uplift 100000 / margin_uplift 30000 / avoided_cost 20000 / cash_saving 500000; warning revenue_and_margin. Implementation 5001.25 (cash 3000.75, non-cash 2000.5); net 644998.75. The roll-up goes from 650000 to 660000 after the edit, with no duplication. An Unknown amount gives total null with unknownLineCount 1, never '0'. UI EN/AR: the ten section titles.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-053",
+        "REQ-PB-054",
+        "REQ-S05-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-business-case-ten-sections.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-business-case-ten-sections.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-12-t09-formulas-finance",
+      "procedure": "T09: confidence X; an undefined variable; the six columns; the revenue and cost examples (fractions, preview, calculation and rounding record); the delta 0.12−0.10; monthly ARPU × annual population and to_period; the illustrative marker. Finance: TL and FIN self-validation of a baseline or formula; staleness after a baseline edit; formula-less benefit lines at G4. UI EN/AR.",
+      "command": "dg3-api.mjs, dg3-api-extra.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "B0087/M0168–M0171/B0084/B0139: six columns; H/M/L only; attach rate stored as a fraction, 0.02 = 2 pp; 100000 SAR exact; 500000 exact; monthly × annual refused; Finance validates early and the author never validates their own record.",
+      "actual": "Confidence X: 400. Undefined variable: 422 formula.undefined_variable naming unit_cost_delta. The six columns persist. Revenue example: 0.1/0.12 stored as kind fraction, preview '100000' SAR per year, calculation '100000' with rounding {exact 100000, rounded false}. Delta: '0.02', fraction_delta. Monthly ARPU: 422 'Period mismatch: arpu is per month but eligible_customers is per year…'; with to_period, 200. Cost example: 500000. The instantiated example is illustrative and unvalidated. TL self-validation of a baseline or formula: 403. FIN cannot author cases or formulas (403), so self-validation is impossible. A baseline edit after validation makes the validation 'stale'. G4 lists 'Finance validation' for each formula-less financial line (ADR-0024 §5). UI EN/AR: the 'Illustrative calculation, synthetic values' marker and the revenue formula shows 100,000.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-055",
+        "REQ-PB-056",
+        "REQ-PB-057"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-benefit-formulas-examples.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-benefit-formulas-examples.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-benefit-formula-revenue.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-benefit-formula-revenue.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-13-g4",
+      "procedure": "Real G1–G3 approvals by the synthetic SP, then G4 submit with gaps (B without owners, C without a gap link, no funding or commitments, no Finance validation). Fix the gaps, resubmit, then decide as FIN (non-approver), as the submitter, on a superseded submission (changes_requested + resubmission), and as the SP. Also the G4 view of a second world in EN/AR.",
+      "command": "dg3-api.mjs, dg3-ui-world.mjs, dg3-ui.mjs",
+      "environment": "as DOM-R1-04",
+      "expected": "B0023/M0121/M0125/ADR-0021 §7: a refusal naming 'Owners', 'Finance validation' and the initiatives, with nothing written; 403/403/409; approval moves the phase to transform.",
+      "actual": "422 gate_criteria_incomplete. The errors include 'Owners: INI-02 Synthetic partner rate engine', 'Finance validation', 'Gap link missing: INI-03 …', 'Funding decision missing: INI-01 …' and 'Capacity commitment missing: INI-01 …'. G4 stays draft at the same version. After the fixes: 201. FIN: 403 gate.not_approver. Submitter: 403. Superseded #2 while #3 pending: 409 gate.submission_superseded. SP: 201 approved, and the phase becomes transform. Launching A then gives 200. UI EN/AR: the G4 view names the initiative with translated labels, and the Arabic view has no English labels (screens/ar-g4-missing-items.png).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-019",
+        "REQ-PB-046",
+        "REQ-PB-055",
+        "REQ-PB-059",
+        "REQ-S04-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui-world.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-g4-missing-items.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-g4-missing-items.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-g4-approved.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-g4-approved.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-14-ui-bilingual-and-hygiene",
+      "procedure": "Every UI claim in EN (LTR) and AR (RTL), with screenshots; the readiness screen of a fresh transformation; no foreign requests; header brand marker; grep shipped strings and the P3 ADRs/migrations for certification or official-PMI claims and #0078FF usage.",
+      "command": "dg3-ui.mjs (stack-run-2); grep (hygiene.log)",
+      "environment": "Chromium /opt/pw-browsers, locale en-US/ar-SA, Asia/Riyadh",
+      "expected": "dir ltr/rtl; translated labels; the provisional wordmark marker; no certification or official claims; #0078FF only as provisional.",
+      "actual": "dg3-ui 42/42 PASS, exit 0: dir ltr/rtl; the header shows the 'Provisional' / 'مؤقت' marker; readiness lists the five areas in both languages; no foreign requests. Arabic provisional translations are labelled where the ADRs require it (the roadmap waves note). Grep: the only matches are the explicit disclaimers (not an official PMI standard, not certified) and a test asserting their absence. #0078FF appears only in the provisional-branding text. An earlier attempt (dg3-ui-attempt1.log, 41/42) failed only on my over-strict Arabic wave expectation, corrected as explained in env.txt.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-007",
+        "REQ-PB-050"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.mjs",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui-attempt1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/hygiene.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/en-readiness-missing-areas.png",
+        "docs/delivery/test-evidence/DG3/domain/round-1/screens/ar-readiness-missing-areas.png"
+      ]
+    },
+    {
+      "id": "DOM-R1-15-probe-attempts-disclosure",
+      "procedure": "Disclose every failing run in the evidence directory.",
+      "command": "see env.txt",
+      "environment": "as DOM-R1-04",
+      "expected": "Every non-zero exit explained.",
+      "actual": "api-run-1..4 (exit 1) failed solely on my probe's mistakes: baseline scope enum, deliverable archive body, ADM_METHOD role, 201 vs 200, missing If-Match, by-design G4 items, submission number 0. Each is detailed in env.txt. api-run-5: 139/139, exit 0. stack-run-1-attempt1: a relative script path (exit 127, nothing ran), then the attempt-1 logs (UI 41/42, explained in DOM-R1-14). stack-run-2 exits 1 solely because dg3-api-extra asserts F-DG3-120.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/env.txt",
+        "docs/delivery/test-evidence/DG3/domain/round-1/api-run-1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/api-run-2.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/api-run-3.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/api-run-4.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/api-run-5.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/api-extra-run-1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/stack-run-1-attempt1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-attempt1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra-attempt1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui-world-attempt1.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/stack-run-2.log"
+      ]
+    },
+    {
+      "id": "DOM-R1-16-environmental-residuals",
+      "procedure": "Record the assignment's environmental residuals on the offline/config surface.",
+      "environment": "offline sandbox",
+      "expected": "Recorded as PASS on the offline/config surface, with the residual noted.",
+      "actual": "Not exercised live: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak/OIDC sign-in (D-049). The dev sign-in and offline install surfaces were used. These are residuals, not domain defects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/env.txt"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG3-120"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG3/domain/round-1/env.txt",
+    "docs/delivery/test-evidence/DG3/domain/round-1/candidate.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/validators.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui-world.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/dg3-ui.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/stack-run-2.log",
+    "docs/delivery/test-evidence/DG3/domain/round-1/hygiene.log",
+    "docs/delivery/reviews/DG3/round-1/domain-reviewer.findings.json"
+  ],
+  "reviewed_at": "2026-10-08T07:12:00Z",
+  "summary": "PASS. The P3 Mobilize logic matches the playbook and master prompt on the live stack, in EN and AR. The four probes ran 139/139 API checks, 9/10 supplementary checks and 42/42 UI checks. One Low, non-blocking finding: F-DG3-120 (the ADR promises an inheritedApproval annotation on the gate list; none exists, and nothing is fabricated)."
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG3-120",
+      "stage_id": "DG3",
+      "requirement": "REQ-PB-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Modular inherited approval: the gate list has no inheritedApproval annotation, although ADR-0021 §5 says it shows one",
+      "reproduction": "Disposable stack (docs/delivery/test-evidence/DG3/domain/round-1/with-stack.sh), probe dg3-api-extra.mjs step 'modular': create a Modular transformation (entryPhase mobilize); record an inherited_approval dispensation for G1 with VERIFIED evidence; the synthetic Sponsor accepts it (200); GET /api/v1/transformations/{id}/gates and inspect the G1 item. Also grep docs/api/openapi.yaml, packages/shared/src/schemas and apps/api/src for 'inheritedApproval': no match.",
+      "expected": "ADR-0021 §5: the inherited approval 'never changes gate_instance.status, and the gate list keeps showing the gate as draft with an inheritedApproval annotation'.",
+      "actual": "G1 stays 'draft' with latestSubmissionNo 0 and no gate decision (correct: nothing is fabricated), and readiness and the Dispensations page show the accepted inherited approval. But the gate list item (and the gate view) carry no inheritedApproval annotation, and the contract defines none, so the Gates screen shows G1 as an unqualified draft. No behavioural or approval-integrity effect: sequencing counts the accepted, verified inherited approval correctly (canSubmitInitiatives true). Either the ADR sentence should be corrected to the built design (the annotation lives on readiness/dispensations), or the additive annotation should be added to the gate list.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.log",
+        "docs/delivery/test-evidence/DG3/domain/round-1/dg3-api-extra.mjs",
+        "docs/architecture/adr/ADR-0021-p3-portfolio-initiative-lifecycle-g4.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG3/round-1/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-08T07:07:10Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG3 round 1. Low, non-mandatory documentation/presentation drift; not blocking."
+        }
+      ]
+    }
+  ]
+}
