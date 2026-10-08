@@ -299,3 +299,14 @@ Recorded from the T-DG3-BE-E handback (built in wave 3, integrated with wave 4 i
     - **Engine.** The engine changes mechanically, with no behaviour change: `parse.ts`'s catch gains the rethrow as its first statement, and `evaluate.ts`'s catch moves its rethrow ahead of the `EvalFailure` check. Formula results are unchanged.
     - **ADR-0024 §6** is corrected on three points: there are five catch clauses, including `parse.ts`; the web shows React Router's default error element, because the app defines no error boundary (this is unreachable in practice); and §6 now states exactly what the closure parser follows.
     - **API and web.** No API or web contract changes.
+
+### Amendments in the DG3 round-6 repair (T-DG3-KBE-H, 2026-10-08)
+
+28. **Formula no-dynamic-code guard: the round-5 self-handling forms are refused statically, and §6 claims only an enumerated list (F-DG3-100 fifth pass; ADR-0024 §6 "Extended guard").**
+    - **Lint.** For every engine source in the import closure, `eslint.config.js` adds two `no-restricted-syntax` rules:
+      - no generator function, method or expression, and no `yield` (the reviewer's G1 and G2);
+      - no `then`, `catch` or `finally` name in any position (member, property key, computed or string key, destructured name, variable, private name, template), and no `fromAsync` or `asyncIterator` (the reviewer's A1 and A2). The `try`/`catch`/`finally` statement keywords stay allowed.
+    - **Scan.** `fuzz.test.ts` `scanSource()` mirrors both rules. It also refuses a `catch` or `finally` word outside a `try` statement. Its brace matcher now skips strings, templates and regular-expression literals, and it reports a hit when a source does not balance. So the reviewer's F1 (`finally { const s = "}"; return; }`) is now a hit. The probe table adds G1, G2, A1, A2 (built as in the reviewer's probes), F1 with four relatives, and the other new spellings.
+    - **Lint proof.** A new `unit-node` test lints G1, G2, A1, A2, F1 and the probe-table spellings with `ESLint.lintText` as an engine source, and requires a rule to refuse each one.
+    - **ADR-0024 §6.** The absolute claims are gone. Lint and the scan refuse an enumerated list of handler and asynchrony forms, L1–L7. The residual is stated: a self-handling form outside that list, even on an exercised path, is refused by no layer (the run-time analogue of Q1–Q5; G1, G2 and A1 are historical examples, now refused statically). The "stricter than `no-unsafe-finally`" sentence is replaced with the exact difference.
+    - **Engine, API and web.** No change. Formula results are unchanged.

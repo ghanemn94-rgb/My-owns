@@ -289,6 +289,13 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
   ["async", /\basync\b/],
   ["await", /\bawait\b/],
   [".then/.catch/.finally", /\.\s*(then|catch|finally)\b|\[\s*(["'`])(then|catch|finally)\2\s*\]/],
+  // F-DG3-100 (round 6; the reviewer's G1, G2 and A1). No generators: a `function*`, a generator method (`*name(` after
+  // `{`, `}`, `,`, `;`, `static` or `async`) or a `yield`. The word then in any position (a key, a member, a destructured
+  // name, a string), and the asynchronous sources fromAsync and asyncIterator. The words catch and finally outside a
+  // try statement are refused by rethrowRuleHits below.
+  ["generator", /\bfunction\s*\*|(?:^|[{},;]|\bstatic|\basync)\s*\*\s*[\w$#[]|\byield\b/m],
+  ["then", /\bthen\b/],
+  ["fromAsync/asyncIterator", /\b(fromAsync|asyncIterator)\b/],
 ];
 
 /**
@@ -298,32 +305,117 @@ const FORBIDDEN: readonly (readonly [string, RegExp])[] = [
 const CATCH_RETHROW =
   /^catch\s*\(\s*e\s*\)\s*\{\s*if\s*\(\s*e\s+instanceof\s+EvalError\s*\)\s*throw\s+e\s*;(?!\s*else\b)/;
 
-/** The text of the balanced `{ … }` block that starts at `open` (to the end of `code` if unbalanced). */
-function blockAt(code: string, open: number): string {
-  let depth = 0;
-  for (let i = open; i < code.length; i++) {
-    if (code[i] === "{") depth++;
-    else if (code[i] === "}" && --depth === 0) return code.slice(open, i + 1);
+/**
+ * F-DG3-100 (round 6): the brace pairs of comment-free code (open → close and close → open). A brace inside a string
+ * literal, a template literal (outside its `${…}` substitutions) or a regular-expression literal is not counted, so a
+ * `}` in a string does not end a block (the reviewer's F1). A `/` starts a regular-expression literal when the previous
+ * significant character is an operator or punctuator (a heuristic; a real parser is ESLint, layer 1). Returns null when
+ * the braces, quotes or templates do not balance; the scan then reports a hit, so it fails closed.
+ */
+function bracePairs(code: string): Map<number, number> | null {
+  const pairs = new Map<number, number>();
+  const opens: { at: number; substitution: boolean }[] = [];
+  let inTemplate = false;
+  let prev = "";
+  for (let i = 0; i < code.length; i++) {
+    const c = code[i]!;
+    if (inTemplate) {
+      if (c === "\\") i++;
+      else if (c === "`") {
+        inTemplate = false;
+        prev = c;
+      } else if (c === "$" && code[i + 1] === "{") {
+        opens.push({ at: ++i, substitution: true });
+        inTemplate = false;
+        prev = "{";
+      }
+      continue;
+    }
+    if (/\s/.test(c)) continue;
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < code.length && code[j] !== c && code[j] !== "\n") j += code[j] === "\\" ? 2 : 1;
+      if (code[j] !== c) return null;
+      i = j;
+      prev = c;
+      continue;
+    }
+    if (c === "`") {
+      inTemplate = true;
+      continue;
+    }
+    if (c === "/" && (prev === "" || /[(,=:[!&|?{};+\-*%<>~^]/.test(prev))) {
+      let j = i + 1;
+      let inClass = false;
+      while (j < code.length && code[j] !== "\n" && (inClass || code[j] !== "/")) {
+        if (code[j] === "\\") j++;
+        else if (code[j] === "[") inClass = true;
+        else if (code[j] === "]") inClass = false;
+        j++;
+      }
+      if (code[j] !== "/") return null;
+      i = j;
+      prev = "/";
+      continue;
+    }
+    if (c === "{") opens.push({ at: i, substitution: false });
+    else if (c === "}") {
+      const open = opens.pop();
+      if (!open) return null;
+      pairs.set(open.at, i).set(i, open.at);
+      if (open.substitution) {
+        inTemplate = true;
+        continue;
+      }
+    }
+    prev = c;
   }
-  return code.slice(open);
+  return opens.length === 0 && !inTemplate ? pairs : null;
 }
 
 /**
- * F-DG3-100 (round 5): the EvalError-rethrow rule of ADR-0024 §6 layer 3 (mirrors eslint.config.js): every catch starts
- * with the rethrow, no finally block contains return/throw/break/continue (no-unsafe-finally; the scan is stricter and
- * also counts one inside a nested function), and EvalError appears only after instanceof.
+ * F-DG3-100 (round 5, extended in round 6): the EvalError-rethrow rule of ADR-0024 §6 (mirrors eslint.config.js).
+ * - Every `catch` word is the catch clause of a try statement (it follows the `}` of a block that follows `try`) and
+ *   starts with the rethrow. A `catch` anywhere else (a key, a member, a destructured name, a method, a string) is a hit.
+ * - Every `finally` word is the finally clause of a try statement (it follows the `}` of a try or catch block and opens
+ *   a block), and that block contains no return, throw, break or continue, also not inside a nested function (lint's
+ *   no-unsafe-finally does not count those). A `finally` anywhere else is a hit.
+ * - EvalError appears only after instanceof.
+ * - The braces balance (bracePairs); otherwise the scan cannot place a block and reports a hit.
  */
 function rethrowRuleHits(code: string): string[] {
   const hits: string[] = [];
-  const catches = [...code.matchAll(/\bcatch\b/g)].map((m) => m.index);
-  if (catches.some((i) => !CATCH_RETHROW.test(code.slice(i)))) hits.push("catch without EvalError rethrow");
-  const finallies = [...code.matchAll(/\bfinally\s*\{/g)].map((m) => m.index + m[0].length - 1);
-  if (finallies.some((i) => /\b(return|throw|break|continue)\b/.test(blockAt(code, i))))
-    hits.push("finally with return/throw/break/continue");
+  const pairs = bracePairs(code);
+  if (!pairs) return ["unbalanced braces, quotes or templates"];
+  /** The text before the `{` that the `}` ending just before `at` closes, or null if no `}` ends there. */
+  const beforeBlock = (at: number): string | null => {
+    const close = code.slice(0, at).trimEnd().length - 1;
+    const open = code[close] === "}" ? pairs.get(close) : undefined;
+    return open === undefined ? null : code.slice(0, open).trimEnd();
+  };
+  for (const m of code.matchAll(/\bcatch\b/g)) {
+    const before = beforeBlock(m.index);
+    if (before === null || !/\btry$/.test(before)) hits.push("catch outside a try statement");
+    else if (!CATCH_RETHROW.test(code.slice(m.index))) hits.push("catch without EvalError rethrow");
+  }
+  for (const m of code.matchAll(/\bfinally\b/g)) {
+    const before = beforeBlock(m.index);
+    const open = m.index + m[0].length + (/^\s*/.exec(code.slice(m.index + m[0].length))?.[0].length ?? 0);
+    const close = pairs.get(open);
+    if (
+      before === null ||
+      !/(\btry|\bcatch\s*(\([^()]*\))?)$/.test(before) ||
+      code[open] !== "{" ||
+      close === undefined
+    )
+      hits.push("finally outside a try statement");
+    else if (/\b(return|throw|break|continue)\b/.test(code.slice(open, close + 1)))
+      hits.push("finally with return/throw/break/continue");
+  }
   const evalErrors = code.match(/\bEvalError\b/g)?.length ?? 0;
   if (evalErrors !== (code.match(/\binstanceof\s+EvalError\b/g)?.length ?? 0))
     hits.push("EvalError outside instanceof");
-  return hits;
+  return [...new Set(hits)];
 }
 
 /**
@@ -412,6 +504,57 @@ function engineImportClosure(): { files: string[]; packages: string[]; unresolve
 
 /** True in the unit-formula-nocodegen project (vitest.config.ts). */
 const NOCODEGEN = process.execArgv.includes("--disallow-code-generation-from-strings");
+
+/**
+ * F-DG3-100 (round 6): the code-security reviewer's round-5 self-handling forms, built exactly as its probes build them
+ * (docs/delivery/test-evidence/DG3/code-security/round-5/probes/rethrow-rule-attack-probe.mjs and -2.mjs): the helper
+ * text that the probe appends to tokenize.ts, with the same code-generation line. Each passed every layer in round 5
+ * (A2 was refused at run time only). Entries: id, helper text, the scan hit, the lint rule.
+ */
+const PROBE_KEY = "String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)";
+const PROBE_R = "as unknown as Record<string, (s: string) => () => unknown>";
+const probeGen = (fn: string) => `void (${fn} ${PROBE_R})[${PROBE_KEY}]!("return 1")()`;
+const PROBE_T = "(this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object";
+const ROUND5_HANDLER_FORMS: readonly (readonly [string, string, string, string])[] = [
+  [
+    "G1",
+    `function* __g(): Generator<number> {\n  try {\n    ${probeGen("__w")};\n  } finally {\n    yield 0;\n  }\n}\nfunction __w(): void {\n  void __g().next();\n}`,
+    "generator",
+    "no-restricted-syntax",
+  ],
+  [
+    "G2",
+    `function* __g(): Generator<number> {\n  try {\n    ${probeGen("__w")};\n  } finally {\n    yield 0;\n  }\n}\nfunction __w(): void {\n  const it = __g();\n  it.next();\n  it.return(0);\n}`,
+    "generator",
+    "no-restricted-syntax",
+  ],
+  [
+    "A1",
+    `function __w(): void {\n  const p = Array.fromAsync([0]) as unknown as { then: ${PROBE_T} };\n  const { then: t } = p;\n  const d = t.call(p, () => {\n    ${probeGen("__w")};\n  });\n  t.call(d, undefined, () => undefined);\n}`,
+    "then",
+    "no-restricted-syntax",
+  ],
+  [
+    "A1",
+    `function __w(): void {\n  const p = Array.fromAsync([0]) as unknown as { then: ${PROBE_T} };\n  const { then: t } = p;\n  const d = t.call(p, () => {\n    ${probeGen("__w")};\n  });\n  t.call(d, undefined, () => undefined);\n}`,
+    "fromAsync/asyncIterator",
+    "no-restricted-syntax",
+  ],
+  [
+    "A2",
+    `function __w(): void {\n  const p = Array.fromAsync([0]) as unknown as { then: ${PROBE_T} };\n  const { then: t } = p;\n  t.call(p, () => {\n    ${probeGen("__w")};\n  });\n}`,
+    "then",
+    "no-restricted-syntax",
+  ],
+];
+/** F1 and its relatives: a `}` inside a string, a template, a substitution or a regular expression in a finally block. */
+const F1_FORMS: readonly string[] = [
+  `function __w(): void {\n  try {\n    ${probeGen("__w")};\n  } finally {\n    const s = "}";\n    void s;\n    return;\n  }\n}`,
+  "function f(): void {\n  try {\n    a();\n  } finally {\n    const s = '}';\n    return;\n  }\n}",
+  "function f(): void {\n  try {\n    a();\n  } finally {\n    const s = `}`;\n    return;\n  }\n}",
+  'function f(): void {\n  try {\n    a();\n  } finally {\n    const s = `${"}"}`;\n    return;\n  }\n}',
+  "function f(): void {\n  try {\n    a();\n  } finally {\n    const r = /}/;\n    return;\n  }\n}",
+];
 
 describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)", () => {
   it(
@@ -516,6 +659,11 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
           "Identifier[name='EvalError']:not(BinaryExpression[operator='instanceof'] > Identifier.right)",
           "Identifier[name=/^(Promise|queueMicrotask)$/], :function[async=true], AwaitExpression",
           "MemberExpression[property.name=/^(then|catch|finally)$/]",
+          // F-DG3-100 (round 6): generators, then/catch/finally in any position, fromAsync and asyncIterator.
+          ":function[generator=true], YieldExpression",
+          "Identifier[name=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
+          "Literal[value=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
+          "TemplateElement[value.cooked=/^(then|catch|finally|fromAsync|asyncIterator)$/]",
         ]) {
           expect(selectors, `${file} no-restricted-syntax`).toContain(sel);
         }
@@ -623,10 +771,75 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
     ['export { "weightedScore" as zzX } from "../scoring.ts";', "non-allowlisted import"],
     ["import { 'x' as y } from 'node:vm';", "non-allowlisted import"],
     ['export * as "ns" from "../scoring.ts";', "non-allowlisted import"],
+    // F-DG3-100 round 6: the reviewer's round-5 forms (rethrow-rule-attack-probe.mjs, -2.mjs), built as there.
+    ...ROUND5_HANDLER_FORMS.map(([, text, what]) => [text, what] as const),
+    // F1 (rethrow-rule-attack-probe-2.mjs): a "}" in a string no longer ends the finally block for the scan.
+    ...F1_FORMS.map((text) => [text, "finally with return/throw/break/continue"] as const),
+    // The other spellings of the round-6 rules.
+    ["function* g() {}", "generator"],
+    ["const g = function* () {};", "generator"],
+    ["class C {\n  *g() {}\n}", "generator"],
+    ["const o = { a: 1, *g() {} };", "generator"],
+    ["class C {\n  static *g() {}\n}", "generator"],
+    ["const o = { *[k]() {} };", "generator"],
+    ["const o = { async *g() {} };", "generator"],
+    ["function* g() {\n  const x = yield 1;\n}", "generator"],
+    ["x = yield 1;", "generator"],
+    ["const { then: t } = p;", "then"],
+    ["const { then } = p;", "then"],
+    ['const { ["then"]: t } = p;', "then"],
+    ["const o = { then() {} };", "then"],
+    ['const k = "then";', "then"],
+    ["const { catch: c } = p;", "catch outside a try statement"],
+    ["const { finally: f } = p;", "finally outside a try statement"],
+    ["const o = { catch: 1, finally: 2 };", "catch outside a try statement"],
+    ["const o = { catch: 1, finally: 2 };", "finally outside a try statement"],
+    [
+      "class C {\n  m() {}\n  catch(e) {\n    if (e instanceof EvalError) throw e;\n  }\n}",
+      "catch outside a try statement",
+    ],
+    ["class C {\n  m() {}\n  finally() {}\n}", "finally outside a try statement"],
+    ["const k = `catch`;", "catch outside a try statement"],
+    ["void Array.fromAsync([0]);", "fromAsync/asyncIterator"],
+    ["const i = o[Symbol.asyncIterator];", "fromAsync/asyncIterator"],
+    ["for await (const x of xs) a(x);", "await"],
+    ['const s = "unclosed;', "unbalanced braces, quotes or templates"],
+    ["function f() {", "unbalanced braces, quotes or templates"],
   ];
   it.each(PROBES)("flags %s as %s", (probe, what) => {
     expect(scanSource(probe)).toContain(what);
   });
+
+  // F-DG3-100 round 6: layer 1 refuses the same forms. ESLint lints each probe as if it were an engine source, so the
+  // test proves the rule fires, not only that it is configured. unit-node only (ESLint cannot run without codegen).
+  it.skipIf(NOCODEGEN)(
+    "ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and the round-4 forms (W1, W2, W4) in an engine source",
+    { timeout: 60_000 },
+    async () => {
+      const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
+      const eslint = new ESLint({ cwd: repoRoot });
+      const lint = async (text: string) => {
+        const [result] = await eslint.lintText(text, { filePath: `${SRC_DIR}formula/tokenize.ts` });
+        return result!.messages.filter((m) => m.severity === 2).map((m) => m.ruleId);
+      };
+      for (const [id, text, , rule] of ROUND5_HANDLER_FORMS) {
+        expect(await lint(text), id).toContain(rule);
+      }
+      for (const text of F1_FORMS) expect(await lint(text), text).toContain("no-unsafe-finally");
+      for (const [text] of PROBES.filter(([, what]) =>
+        /^(catch|finally|\.then|Promise|generator|then|fromAsync)/.test(what),
+      )) {
+        // A rule refuses it (a parse error, ruleId null, does not count).
+        expect((await lint(text)).filter((r) => r !== null).length, text).toBeGreaterThan(0);
+      }
+      // The engine's own shapes stay allowed.
+      expect(
+        await lint(
+          "export function f(a: () => void): void {\n  try {\n    a();\n  } catch (e) {\n    if (e instanceof EvalError) throw e;\n  } finally {\n    a();\n  }\n}\n",
+        ),
+      ).toEqual([]);
+    },
+  );
 
   it("does not flag the engine's own names, comments or the word 'required'", () => {
     const clean = [
@@ -647,6 +860,10 @@ describe("source scan: no dynamic code in packages/shared/src/formula (ADR-0024 
       // F-DG3-100 (round 5): the allowed catch shape, a finally without control flow, and comments naming the banned forms.
       "try {\n  x = walk();\n} catch (e) {\n  if (e instanceof EvalError) throw e; // rethrow first\n  return null;\n}",
       "try { a(); } finally { b(); }",
+      // F-DG3-100 (round 6): the full try/catch/finally shape, braces in strings, templates and regular expressions.
+      "try {\n  a();\n} catch (e) {\n  if (e instanceof EvalError) throw e;\n} finally {\n  b();\n}",
+      'const NAME = /^[a-z][a-z0-9_]{0,47}$/; const s = "{"; const t = `}${"{"}`; const q = a / b / c;',
+      "const r = x.filter((v) => /[{}]/.test(v));",
       "// a Promise, async/await or .then(...) is banned; so is catch { } and finally { return; }",
     ].join("\n");
     expect(scanSource(clean)).toEqual([]);
