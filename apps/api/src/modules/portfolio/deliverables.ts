@@ -37,6 +37,7 @@ import {
 } from "../platform/index.ts";
 import { assertActiveUsers, bumpStamps, loose, openWrite, type LooseRow } from "../transformations/index.ts";
 import { checkVersion, dateText, forbiddenProblem, JSON_BODY, lockForWrite, transitionProblem } from "./waves.ts";
+import { assertInitiativeEditable } from "./repository.ts";
 
 export type DeliverableRow = Selectable<DeliverableTable>;
 
@@ -115,6 +116,7 @@ async function createDeliverable(tx: Tx, request: FastifyRequest, initiativeId: 
   await tx.selectFrom("initiative").select("id").where("id", "=", initiativeId).forUpdate().execute();
   const ctx = await openWrite(tx, request, ini.transformation_id, EDIT_RULES, null, { atCommit: true });
   const body = parseBody(deliverableCreate, request.body);
+  await assertInitiativeEditable(tx, initiativeId);
   await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }]);
   let ordinal = body.ordinal;
   if (ordinal === undefined) {
@@ -166,6 +168,7 @@ async function updateDeliverable(tx: Tx, request: FastifyRequest, id: string): P
   }));
   const body = parseBody(deliverableUpdate, request.body);
   checkVersion(request, current);
+  await assertInitiativeEditable(tx, current.initiative_id);
   if (current.status === "archived") throw problems.businessRule("record.archived", "Archived records are read-only.");
   await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }]);
   const changes: LooseRow = {
@@ -211,6 +214,7 @@ async function submitDeliverable(tx: Tx, request: FastifyRequest, id: string): P
   }));
   const body = parseBody(transitionNote, request.body);
   checkVersion(request, current);
+  await assertInitiativeEditable(tx, current.initiative_id);
   if (current.status === "archived") throw problems.businessRule("record.archived", "Archived records are read-only.");
   if (current.acceptance_status !== "pending" && current.acceptance_status !== "rejected")
     throw transitionProblem(
@@ -260,6 +264,7 @@ async function decideDeliverable(tx: Tx, request: FastifyRequest, id: string): P
   );
   const body = parseBody(acceptanceDecision, request.body);
   checkVersion(request, current);
+  await assertInitiativeEditable(tx, current.initiative_id);
   // Record-level ownership (ADR-0023 §2): the initiative's executive owner, or a delegate acting on their behalf.
   const ini = await tx
     .selectFrom("initiative")

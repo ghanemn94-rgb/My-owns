@@ -28,7 +28,7 @@ import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
 import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
 import { RateLimitSubjects, registerIdentity, sessionCookieName, type OidcService } from "./modules/identity/index.ts";
 import { registerEvidenceModule } from "./modules/evidence/index.ts";
-import { registerKpiModule } from "./modules/kpi/index.ts";
+import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes } from "./modules/organization/index.ts";
 import { loadPortfolioGateFacts, registerPortfolioModule, t08ScheduleFlags } from "./modules/portfolio/index.ts";
@@ -274,11 +274,10 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerAccessP2Routes(app, deps);
   registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
-  // injection; workflows never imports portfolio). The kpi part is wired with kpi's P3 loader when it lands (KBE-C,
-  // kpi/p3-gate-facts.ts); until then it yields no facts and every G4 criterion stays incomplete (fail closed).
+  // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
   const gateFacts: GateFactsProvider = {
     portfolio: loadPortfolioGateFacts,
-    kpi: async (_db, transformationId) => ({ transformationId }),
+    kpi: loadKpiP3GateFacts,
   };
   // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
   // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no

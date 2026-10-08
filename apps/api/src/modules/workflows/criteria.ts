@@ -21,6 +21,7 @@ import {
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
 import { findCharter, findCurrentNorthStar, hasExclusions, loadGoodOutcomeFacts } from "../transformations/index.ts";
+import { G4_EVALUATORS, loadG4Facts, type G4Facts, type GateFactsProvider } from "./g4.ts";
 
 /** Everything the G1-G3 evaluators read, loaded once per evaluation (inside the submitting transaction on submit). */
 export interface GateFacts {
@@ -68,9 +69,18 @@ export interface GateFacts {
   readonly futureJourneys: number;
   readonly openDesignDecisions: ReadonlyArray<{ id: string; code: string; hasOwner: boolean }>;
   readonly evidence: readonly EvidenceFact[];
+  /**
+   * P3: the G4 facts (portfolio and kpi halves) read through the GateFactsProvider (g4.ts). Absent when no provider
+   * was passed, so every g4.* criterion is incomplete (fail closed).
+   */
+  readonly g4?: G4Facts;
 }
 
-export async function loadGateFacts(db: DbOrTx, transformationId: string): Promise<GateFacts> {
+export async function loadGateFacts(
+  db: DbOrTx,
+  transformationId: string,
+  provider?: GateFactsProvider,
+): Promise<GateFacts> {
   const items = await db
     .selectFrom("diagnostic_item")
     .select([
@@ -198,6 +208,7 @@ export async function loadGateFacts(db: DbOrTx, transformationId: string): Promi
     futureJourneys: Number(journeys?.n ?? 0),
     openDesignDecisions: openDecisions.map((d) => ({ id: d.id, code: d.code, hasOwner: d.owner_user_id !== null })),
     evidence,
+    ...(provider !== undefined ? { g4: await loadG4Facts(db, provider, transformationId) } : {}),
   };
 }
 
@@ -231,6 +242,8 @@ function goodOutcomeMessage(
 const T01_SEEDED = 6;
 
 export const EVALUATORS: ReadonlyMap<string, Evaluator> = new Map<string, Evaluator>([
+  // ---------------------------------------------------------------- G4 Mobilize (ADR-0021 §7; workflows/g4.ts)
+  ...G4_EVALUATORS.map(([key, evaluate]): [string, Evaluator] => [key, (f) => evaluate(f.g4)]),
   // ---------------------------------------------------------------- G1 Case for Change
   [
     "g1.diagnostic",

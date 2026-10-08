@@ -15,7 +15,7 @@
 // result under the new version for every eligible initiative. Results computed under the old version keep their
 // weight_set_id forever (append-only). Ranking != selection != funding: the view shows three separate columns.
 // Nothing here touches the engineering delivery gates DG0-DG7.
-import type { DbOrTx, InitiativeRow, ScoringWeightSetRow, Tx } from "@mth/db";
+import type { DbOrTx, ScoringWeightSetRow, Tx } from "@mth/db";
 import {
   axisScore,
   DISPLAY100_LABEL_EN,
@@ -30,7 +30,6 @@ import {
   transitionNote,
   weightSetCreate,
   type FundingState,
-  type Initiative,
   type PrioritizationQuery,
   type PrioritizationView,
   type ScheduleFlag,
@@ -54,7 +53,9 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { bumpStamps, openWrite } from "../transformations/index.ts";
+import { capacityFlagSource, scheduleFlagSource } from "./capacity.ts";
 import { latestFundingState } from "./funding.ts";
+import { presentInitiatives } from "./repository.ts";
 import {
   appendResult,
   compareScoreDesc,
@@ -380,60 +381,19 @@ export interface PrioritizationFlagSources {
   readonly capacityFlags: FlagSource;
 }
 
-const noFlags: FlagSource = async () => new Map();
-
 /**
  * The flag sources the view uses. Defaults return no flags; BE-E replaces ONLY these two lines with the schedule
  * (BE-C `schedule.ts`) and capacity (BE-E `capacity.ts`) sources after integration (p3-work-split §2 BE-E).
  */
 export const DEFAULT_FLAG_SOURCES: PrioritizationFlagSources = {
-  scheduleFlags: noFlags,
-  capacityFlags: noFlags,
+  scheduleFlags: scheduleFlagSource,
+  capacityFlags: capacityFlagSource,
 };
 
 /** ADR-0022 §7: one transformation's portfolio, at most 500 initiatives; cursor pagination does not apply. */
 export const PORTFOLIO_VIEW_MAX = 500;
 
 const SELECTED_STATUSES = new Set(["selected", "funded", "launched"]);
-
-function presentInitiative(row: InitiativeRow, fundingState: FundingState, flags: readonly ScheduleFlag[]): Initiative {
-  const displayStatus = row.status === "selected" && fundingState !== "funded" ? "Selected - unfunded" : row.status;
-  const dateText = (d: unknown) => (d === null || d === undefined ? null : String(d).slice(0, 10));
-  return {
-    id: row.id,
-    organizationId: row.organization_id,
-    transformationId: row.transformation_id,
-    code: row.code,
-    name: row.name,
-    executiveOwnerUserId: row.executive_owner_user_id,
-    workstreamLeadUserId: row.workstream_lead_user_id,
-    problemStatement: row.problem_statement,
-    objective: row.objective,
-    scopeIn: row.scope_in,
-    scopeOut: row.scope_out,
-    financialBenefitSummary: row.financial_benefit_summary,
-    customerBenefitSummary: row.customer_benefit_summary,
-    risksSummary: row.risks_summary,
-    waveId: row.wave_id,
-    plannedStart: dateText(row.planned_start),
-    plannedEnd: dateText(row.planned_end),
-    status: row.status as Initiative["status"],
-    fundingState,
-    displayStatus,
-    launchedAt: isoOrNull(row.launched_at),
-    launchedBy: row.launched_by,
-    cancelledAt: isoOrNull(row.cancelled_at),
-    cancelledBy: row.cancelled_by,
-    cancelReason: row.cancel_reason,
-    warnings: [],
-    flags: [...flags],
-    version: row.version,
-    createdAt: iso(row.created_at),
-    createdBy: row.created_by,
-    updatedAt: iso(row.updated_at),
-    updatedBy: row.updated_by,
-  };
-}
 
 /**
  * The prioritization view (ADR-0022 §7) of every eligible initiative: the latest result under the active set (or the
@@ -492,18 +452,23 @@ export async function buildPrioritizationView(
       .execute();
     for (const e of entries) if (e.rank !== null) ranks.set(e.initiative_id, e.rank);
   }
+  // One initiative presenter (repository.ts; p3-work-split §9 item 13), given the flags computed above.
+  const flagsById = new Map(
+    rows.map((r) => [r.id, [...(schedule.get(r.id) ?? []), ...(capacity.get(r.id) ?? [])]] as const),
+  );
+  const presented = new Map((await presentInitiatives(db, rows, flagsById)).map((i) => [i.id, i]));
   const items: PrioritizationView["items"] = [];
   for (const row of rows) {
     const scores = scoreMaps.get(row.id) ?? {};
     const result = resultOrLive(stored.get(row.id), scores, active);
     const selected = SELECTED_STATUSES.has(row.status);
     const funding: FundingState = selected ? await latestFundingState(db, row.id) : "not_applicable";
-    const flags = [...(schedule.get(row.id) ?? []), ...(capacity.get(row.id) ?? [])];
+    const flags = [...(flagsById.get(row.id) ?? [])];
     if (query.completeness !== undefined && result.completeness !== query.completeness) continue;
     if (query.funding !== undefined && funding !== query.funding) continue;
     if (query.flag !== undefined && !flags.some((f) => f.code === query.flag)) continue;
     items.push({
-      initiative: presentInitiative(row, funding, flags),
+      initiative: presented.get(row.id)!,
       result,
       rank: ranks.get(row.id) ?? null,
       valueAxis: axisScore(scores, active.weights, VALUE_AXIS_CRITERIA),

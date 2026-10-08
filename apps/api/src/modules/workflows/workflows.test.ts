@@ -200,8 +200,18 @@ const completeness = (code: "G1" | "G2" | "G3", facts: Facts) =>
   Object.fromEntries(mod.evaluateGate(defOf(code), facts).map((c) => [c.key, c.completeness]));
 
 describe("G1-G3 criterion evaluators (ADR-0015 §2)", () => {
-  it("has exactly one evaluator per seeded G1-G3 criterion (16)", () => {
-    expect([...mod.EVALUATORS.keys()].sort()).toEqual([...ALL_KEYS.G1, ...ALL_KEYS.G2, ...ALL_KEYS.G3].sort());
+  it("has exactly one evaluator per seeded G1-G4 criterion (16 + the eight g4.* of 0024, T-DG3-BE-E)", () => {
+    const g4 = [
+      "g4.initiative_cards",
+      "g4.business_cases",
+      "g4.finance_validation",
+      "g4.prioritization",
+      "g4.roadmap",
+      "g4.owners",
+      "g4.funding",
+      "g4.capacity",
+    ];
+    expect([...mod.EVALUATORS.keys()].sort()).toEqual([...ALL_KEYS.G1, ...ALL_KEYS.G2, ...ALL_KEYS.G3, ...g4].sort());
   });
 
   it("complete facts make every criterion complete", () => {

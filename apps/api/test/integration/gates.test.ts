@@ -48,7 +48,7 @@ const decide = (p: P2World, session: P2World["lead"]["session"], submissionNo: n
   });
 
 describe("starter structure and live readiness", () => {
-  it("a new transformation has six gate instances (G1-G6), draft, approver SP; G4-G6 are not submittable in P2", async () => {
+  it("a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are not submittable (G4 opens in P3, 0026)", async () => {
     const p = await setupP2World(api, w);
     const list = await call<{
       items: {
@@ -64,13 +64,15 @@ describe("starter structure and live readiness", () => {
       ["G1", "draft", "SP", true],
       ["G2", "draft", "SP", true],
       ["G3", "draft", "SP", true],
-      ["G4", "draft", "SP", false],
+      ["G4", "draft", "SP", true],
       ["G5", "draft", "SP", false],
       ["G6", "draft", "SP", false],
     ]);
     expect(list.body.items.every((i) => !i.canSubmit)).toBe(true);
-    const g4 = await submit(p, p.lead.session, "G4");
-    expect([g4.status, g4.body.code]).toEqual([422, "gate_not_enabled"]);
+    for (const gateCode of ["G5", "G6"]) {
+      const closed = await submit(p, p.lead.session, gateCode);
+      expect([gateCode, closed.status, closed.body.code]).toEqual([gateCode, 422, "gate_not_enabled"]);
+    }
   });
 
   it("G1 submission without an initial charter is refused (422 gate_criteria_incomplete) and writes nothing", async () => {

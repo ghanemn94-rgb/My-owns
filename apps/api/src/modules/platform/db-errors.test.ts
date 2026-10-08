@@ -99,6 +99,7 @@ describe("P3 database guard mapping", { timeout: 5_000 }, () => {
       ["gate_dispensation_waiver_shape", "/reason"],
       ["gate_dispensation_inherited_shape", "/evidenceId"],
       ["dependency_not_self", "/toInitiativeId"],
+      ["initiative_contribution_kpi_matches_outcome", "/outcomeKpiId"],
     ];
     for (const [constraint, pointer] of cases) {
       const p = mapDatabaseGuardError({ code: "23514", constraint, table: "initiative" })!;

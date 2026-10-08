@@ -47,6 +47,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { bumpStamps, openWrite } from "../transformations/index.ts";
+import { assertInitiativeEditable } from "./repository.ts";
 
 const JSON_BODY = ["application/json"] as const;
 
@@ -310,6 +311,7 @@ async function createScore(tx: Tx, request: FastifyRequest, initiativeId: string
     atCommit: true,
   });
   const body = parseBody(initiativeScoreCreate, request.body);
+  await assertInitiativeEditable(tx, initiativeId);
   await lockPrioritization(tx, home.transformation_id);
   const existing = await tx
     .selectFrom("initiative_score")
@@ -376,6 +378,7 @@ async function updateScore(tx: Tx, request: FastifyRequest, initiativeId: string
     .executeTakeFirst();
   if (!current) throw problems.notFound();
   if (current.version !== expected) throw problems.versionConflict(current.version);
+  await assertInitiativeEditable(tx, initiativeId);
   const note = body.note === undefined ? current.note : body.note;
   const updated = await tx
     .updateTable("initiative_score")
