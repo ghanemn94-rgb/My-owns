@@ -442,7 +442,145 @@ export async function handleGateDecided(db: Db, data: unknown, jobId: string): P
     : { outcome: "done", ...r.result };
 }
 
+// ------------------------------------------------------------------------------------------------ BE-K2: expiry scan
+// T-DG4-BE-K2 (ADR-0035 §4 "Expiry notification"; REQ-S04-013 "an expired waiver no longer satisfies the item and the
+// owner is notified"; p4-work-split §H H.2). The daily job gate.exception_expiry_scan (0054, 00:30 Asia/Riyadh) selects
+// the ACCEPTED exceptions whose expires_on is before today's business date (the transformation's timezone, or the
+// injected `asOf`) and whose expiry_notified_at is NULL, and per exception in one runOnce transaction (key
+// gate.exception_expired:<exceptionId>): one `gate_exception_expired` work item for the requester (dedupe
+// gate_exception_expired:<exceptionId>; it carries the requester's inbox notification), one inbox notification to each
+// gate approver (the configured user, else the approver-role holders with gate.decide; dedupe
+// gate_exception_expired:<exceptionId>:approver:<userId>), and expiry_notified_at set once (0051 trigger
+// gate_exception_expiry_notified_once). The job ONLY notifies: it changes no exception status and no gate, decides no
+// business approval, and the criterion is missing again on the day after expires_on whether or not it has run.
+
+export const GATE_EXCEPTION_EXPIRY_SCAN_QUEUE = "gate.exception_expiry_scan";
+export const GATE_EXCEPTION_EXPIRED_KIND = "gate_exception_expired";
+export const GATE_EXCEPTION_EXPIRED_MESSAGE = "gates.task.gate_exception_expired";
+export const GATE_EXCEPTION_EXPIRED_NOTICE = "gates.notice.gate_exception_expired";
+
+export interface ExpiryScanOptions {
+  /** The business date the scan treats as today for every transformation (tests, an operator's catch-up). */
+  readonly asOf?: string;
+}
+
+export interface ExpiryScanStep {
+  readonly exceptionId: string;
+  readonly outcome: "notified" | "duplicate" | "skipped";
+  readonly approverUserIds: readonly string[];
+}
+
+export interface ExpiryScanResult {
+  readonly steps: readonly ExpiryScanStep[];
+  readonly notified: number;
+}
+
+/** The gate approvers of one gate instance: the configured user, else the approver-role holders (API isGateApprover). */
+async function gateApprovers(tx: Tx, gateInstanceId: string): Promise<string[]> {
+  const i = await tx
+    .selectFrom("gate_instance")
+    .select(["transformation_id", "approver_role_code", "approver_user_id"])
+    .where("id", "=", gateInstanceId)
+    .executeTakeFirstOrThrow();
+  if (i.approver_user_id !== null) return [i.approver_user_id];
+  return approverRoleHolders(tx, i.transformation_id, i.approver_role_code);
+}
+
+export async function runGateExceptionExpiryScan(
+  db: Db,
+  jobId: string,
+  opts: ExpiryScanOptions = {},
+): Promise<ExpiryScanResult> {
+  const actor = jobActor(jobId);
+  const today =
+    opts.asOf !== undefined ? sql<string>`${opts.asOf}::date` : sql<string>`p4_business_date(now(), t.timezone)`;
+  const due = await db
+    .selectFrom("gate_exception as e")
+    .innerJoin("transformation as t", "t.id", "e.transformation_id")
+    .select("e.id")
+    .where("e.status", "=", "accepted")
+    .where("e.expiry_notified_at", "is", null)
+    .where(sql<boolean>`e.expires_on < ${today}`)
+    .orderBy("e.id")
+    .execute();
+  const steps: ExpiryScanStep[] = [];
+  for (const { id } of due) {
+    const r = await runOnce(db, GATE_EXCEPTION_EXPIRY_SCAN_QUEUE, `gate.exception_expired:${id}`, async (tx) => {
+      const e = await tx
+        .selectFrom("gate_exception")
+        .select([
+          "id",
+          "organization_id",
+          "transformation_id",
+          "gate_instance_id",
+          "gate_code",
+          "criterion_key",
+          "requested_by",
+          "status",
+          "expiry_notified_at",
+          "version",
+          sql<string>`expires_on::text`.as("expires_on"),
+        ])
+        .where("id", "=", id)
+        .forUpdate()
+        .executeTakeFirstOrThrow();
+      // Revoked meanwhile, or already notified: nothing to do (the ledger still records the key).
+      if (e.status !== "accepted" || e.expiry_notified_at !== null) return null;
+      const linkPath = `/transformations/${e.transformation_id}/gate-exceptions/${e.id}`;
+      const params = { gateCode: e.gate_code, criterionKey: e.criterion_key, expiresOn: e.expires_on };
+      await createWorkItemOnce(tx, actor, {
+        organizationId: e.organization_id,
+        transformationId: e.transformation_id,
+        kind: GATE_EXCEPTION_EXPIRED_KIND,
+        assigneeUserId: e.requested_by,
+        subjectType: "gate_exception",
+        subjectId: e.id,
+        linkPath,
+        messageKey: GATE_EXCEPTION_EXPIRED_MESSAGE,
+        messageParams: params,
+        dedupeKey: `gate_exception_expired:${e.id}`,
+      });
+      const approvers = await gateApprovers(tx, e.gate_instance_id);
+      for (const userId of approvers)
+        await notifyOnce(tx, actor, {
+          organizationId: e.organization_id,
+          transformationId: e.transformation_id,
+          recipientUserId: userId,
+          linkPath,
+          messageKey: GATE_EXCEPTION_EXPIRED_NOTICE,
+          messageParams: params,
+          dedupeKey: `gate_exception_expired:${e.id}:approver:${userId}`,
+        });
+      // updated_by keeps the last person who changed the row (a job is not a person; the audit actor is `service`).
+      const marked = await tx
+        .updateTable("gate_exception")
+        .set({ expiry_notified_at: sql<Date>`now()`, version: e.version + 1, updated_at: sql<Date>`now()` })
+        .where("id", "=", e.id)
+        .where("version", "=", e.version)
+        .returning("expiry_notified_at")
+        .executeTakeFirstOrThrow();
+      await insertAuditEvent(tx, actor, {
+        action: "gate_exception.expiry_notified",
+        recordType: "gate_exception",
+        recordId: e.id,
+        organizationId: e.organization_id,
+        transformationId: e.transformation_id,
+        priorVersion: e.version,
+        newVersion: e.version + 1,
+        changes: { expiry_notified_at: { from: null, to: marked.expiry_notified_at?.toISOString() ?? null } },
+      });
+      return approvers;
+    });
+    if (r.outcome === "duplicate") steps.push({ exceptionId: id, outcome: "duplicate", approverUserIds: [] });
+    else if (r.result === null) steps.push({ exceptionId: id, outcome: "skipped", approverUserIds: [] });
+    else steps.push({ exceptionId: id, outcome: "notified", approverUserIds: r.result });
+  }
+  return { steps, notified: steps.filter((s) => s.outcome === "notified").length };
+}
+
 export const GATES_HANDLERS: readonly JobHandler[] = [
   { queue: GATES_SUBMITTED_QUEUE, handle: handleGateSubmitted },
   { queue: GATES_DECIDED_QUEUE, handle: handleGateDecided },
+  // T-DG4-BE-K2: started by its job_schedule row (0054); it consumes no outbox event.
+  { queue: GATE_EXCEPTION_EXPIRY_SCAN_QUEUE, handle: (db, _data, jobId) => runGateExceptionExpiryScan(db, jobId) },
 ];

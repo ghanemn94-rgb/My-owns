@@ -6,7 +6,13 @@
 // queue for the same event in its own file). BE-K2 appends its gate.exception_expiry_scan queue (p4-work-split §H H.2).
 import type { QueueSpec } from "./spec.ts";
 
-export const GATES_QUEUES: readonly QueueSpec[] = [{ name: "gates.submitted" }, { name: "gates.decided" }];
+// T-DG4-BE-K2: gate.exception_expiry_scan, started daily by its job_schedule row (0054); it consumes no outbox event,
+// so it adds no event -> queue entry.
+export const GATES_QUEUES: readonly QueueSpec[] = [
+  { name: "gates.submitted" },
+  { name: "gates.decided" },
+  { name: "gate.exception_expiry_scan" },
+];
 export const GATES_EVENT_QUEUES: Readonly<Record<string, string>> = {
   "gate.submitted": "gates.submitted",
   "gate.decided": "gates.decided",
