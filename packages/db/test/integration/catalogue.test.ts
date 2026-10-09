@@ -213,6 +213,72 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0044-0045: the P4 slice D guards are attached (deferred audit, status guards, frozen meetings, append-only logs)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname IN ('forum', 'forum_participant', 'meeting_series', 'meeting', 'agenda_item',
+         'meeting_attendance', 'meeting_output', 'meeting_action_link', 'meeting_minutes', 'governance_escalation_rule',
+         'decision_escalation', 'blocker_status') OR t.tgname IN ('decision_ask_guard', 'decision_ask_options'))
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["agenda_item", "agenda_item_audit_required", true, true],
+      ["agenda_item", "agenda_item_guard", false, false],
+      ["agenda_item", "agenda_item_meeting_editable", false, false],
+      ["agenda_item", "agenda_item_row_guard", false, false],
+      ["blocker_status", "blocker_status_append_only", false, false],
+      ["blocker_status", "blocker_status_append_only_truncate", false, false],
+      ["blocker_status", "blocker_status_audit_required", true, true],
+      ["blocker_status", "blocker_status_guard", false, false],
+      ["blocker_status", "blocker_status_meeting_editable", false, false],
+      ["blocker_status", "blocker_status_row_guard", false, false],
+      ["decision", "decision_ask_guard", false, false],
+      ["decision", "decision_ask_options", true, true],
+      ["decision_escalation", "decision_escalation_append_only", false, false],
+      ["decision_escalation", "decision_escalation_append_only_truncate", false, false],
+      ["decision_escalation", "decision_escalation_audit_required", true, true],
+      ["decision_escalation", "decision_escalation_guard", false, false],
+      ["decision_escalation", "decision_escalation_row_guard", false, false],
+      ["forum", "forum_audit_required", true, true],
+      ["forum", "forum_guard", false, false],
+      ["forum", "forum_row_guard", false, false],
+      ["forum_participant", "forum_participant_audit_required", true, true],
+      ["forum_participant", "forum_participant_guard", false, false],
+      ["forum_participant", "forum_participant_row_guard", false, false],
+      ["governance_escalation_rule", "governance_escalation_rule_audit_required", true, true],
+      ["governance_escalation_rule", "governance_escalation_rule_guard", false, false],
+      ["governance_escalation_rule", "governance_escalation_rule_row_guard", false, false],
+      ["meeting", "meeting_audit_required", true, true],
+      ["meeting", "meeting_guard", false, false],
+      ["meeting", "meeting_row_guard", false, false],
+      ["meeting", "meeting_timezone_known", false, false],
+      ["meeting_action_link", "meeting_action_link_append_only", false, false],
+      ["meeting_action_link", "meeting_action_link_append_only_truncate", false, false],
+      ["meeting_action_link", "meeting_action_link_audit_required", true, true],
+      ["meeting_action_link", "meeting_action_link_meeting_editable", false, false],
+      ["meeting_action_link", "meeting_action_link_row_guard", false, false],
+      ["meeting_attendance", "meeting_attendance_audit_required", true, true],
+      ["meeting_attendance", "meeting_attendance_guard", false, false],
+      ["meeting_attendance", "meeting_attendance_meeting_editable", false, false],
+      ["meeting_attendance", "meeting_attendance_row_guard", false, false],
+      ["meeting_minutes", "meeting_minutes_audit_required", true, true],
+      ["meeting_minutes", "meeting_minutes_guard", false, false],
+      ["meeting_minutes", "meeting_minutes_no_delete", false, false],
+      ["meeting_minutes", "meeting_minutes_row_guard", false, false],
+      ["meeting_output", "meeting_output_append_only", false, false],
+      ["meeting_output", "meeting_output_append_only_truncate", false, false],
+      ["meeting_output", "meeting_output_audit_required", true, true],
+      ["meeting_output", "meeting_output_guard", false, false],
+      ["meeting_output", "meeting_output_meeting_editable", false, false],
+      ["meeting_output", "meeting_output_row_guard", false, false],
+      ["meeting_series", "meeting_series_audit_required", true, true],
+      ["meeting_series", "meeting_series_guard", false, false],
+      ["meeting_series", "meeting_series_row_guard", false, false],
+      ["meeting_series", "meeting_series_timezone_known", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -352,6 +418,15 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "corrective_case",
       "budget_line",
       "initiative_schedule",
+      // P4 slice D (0044-0046, T-DG4-ARCH-05; ADR-0032).
+      "forum",
+      "forum_participant",
+      "meeting_series",
+      "meeting",
+      "agenda_item",
+      "meeting_attendance",
+      "meeting_minutes",
+      "governance_escalation_rule",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -541,6 +616,22 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       corrective_signal: "INSERT,SELECT",
       budget_line: SIU,
       initiative_schedule: SIU,
+      // P4 slice D (0044-0046): still no DELETE anywhere; outputs, action links, escalations and blocker statuses are
+      // append-only (INSERT,SELECT); the forum template and the T16 view are read-only.
+      forum_template: "SELECT",
+      forum: SIU,
+      forum_participant: SIU,
+      meeting_series: SIU,
+      meeting: SIU,
+      agenda_item: SIU,
+      meeting_attendance: SIU,
+      meeting_output: "INSERT,SELECT",
+      meeting_action_link: "INSERT,SELECT",
+      meeting_minutes: SIU,
+      governance_escalation_rule: SIU,
+      decision_escalation: "INSERT,SELECT",
+      blocker_status: "INSERT,SELECT",
+      executive_decision_log: "SELECT",
     });
   });
 

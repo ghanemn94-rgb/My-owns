@@ -6172,3 +6172,683 @@ Written by T-DG4-ARCH-04 (solution-architect), 2026-10-09. Binding design: ADR-0
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slice E schemas; `type` outside the four T15 values is 400 `raid.type_invalid`), free-text rules, strict UTF-8, request media types, `If-Match`, decimal strings with at most 16 + 4 digits |
 | Service | Permissions (ADR-0031 §9; a Dependency entry needs `raid.edit` and `dependency.edit`), commit-time re-authorization, the T08 port for Dependency entries, the exact refusal codes and English texts of ADR-0031 §11, the working-day slip on the business calendar, the critical path method (no claim with a missing duration), decimal.js totals per currency |
 | Worker | `raid.corrective_kpi`, `raid.corrective_benefit`, `raid.corrective_adoption`, `raid.corrective_control`: the severity and persistence rule under lock 730236, one case created or updated (never duplicated), replay-safe (`processed_message` and `corrective_signal_event_key`), follow-up work item through `createWorkItemOnce` |
+
+# P4 tables, slice D (migrations 0044–0046, DG4)
+
+Written by T-DG4-ARCH-05 (solution-architect), 2026-10-09. Binding design: ADR-0032 (forums and meeting series, meetings and the committee workflow, agenda items with executive asks, attendance and quorum, minutes, meeting outputs and action links, the T16 Executive Decision Log, decision-SLA escalation, blocker-red escalation). The table sections below are generated from the catalogue of a freshly migrated disposable PostgreSQL 16 by `docs/delivery/handbacks/DG4/T-DG4-ARCH-05-evidence/gen-dictionary.ts`, so they match the migrations exactly. Slice D stores no money, rate or FTE value.
+
+## Changes to existing tables (0044, 0045)
+
+- **`decision`** (DG2 `0017`, the one decision model): new nullable columns `why_now text` (1–4000), `impact_of_delay text` (1–4000), `ask_origin text` (`api`, `agenda`, `blocker_escalation`), `created_source text` (`api`, `worker`), `source_agenda_item_id uuid` (FK `decision_source_agenda_item_fkey` (transformation_id, source_agenda_item_id) → agenda_item), `decision_right_id uuid` (FK `decision_decision_right_fkey` (transformation_id, decision_right_id) → transformation_decision_right), `sla_due_date date`, `sla_unknown_reason text` (`calendar_not_configured`, `no_steerco_scheduled`, `no_release_date`), `decided_on_behalf_of_user_id uuid` (FK → app_user), `blocker_record_type text` (`raid_entry`, `dependency`, `corrective_case`, `initiative`, `milestone`), `blocker_record_id uuid`. CHECKs: `decision_ask_executive_only` (`ask_origin IS NULL OR kind = 'executive'`); `decision_ask_columns` (the ask columns are NULL when `ask_origin` is NULL); `decision_ask_complete` (an `api`/`agenda` ask has why now, impact of delay, due date, owner and a recommendation); `decision_ask_source` (`agenda` ⇔ `source_agenda_item_id`; `blocker_escalation` ⇔ `created_source = 'worker'`, with a blocker and a due date); `decision_blocker_pair`; `decision_ask_sla_known_or_reason`; `decision_ask_outcome_recorded` (a decided ask has `outcome_text`). Partial unique index `decision_one_open_blocker_ask` (transformation_id, blocker_record_type, blocker_record_id) WHERE `blocker_record_id IS NOT NULL AND status IN ('open', 'deferred')`; index `decision_executive_sla_idx` (sla_due_date) on open or deferred asks. Triggers `decision_ask_guard` (BEFORE INSERT OR UPDATE: origin, creation source, agenda link and blocker immutable; the blocker exists in the transformation) and `decision_ask_options` (CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED: a person-raised ask has at least two active options at commit). Existing rows (T04 design, gate and DG3 funding decisions) keep `ask_origin` NULL and are unchanged; the DG2 `Decision` representation is unchanged.
+- **`p4_instantiate_transformation`** (`0030`): redefined by `0044` with one added line at its end that calls `p4_instantiate_forums`; the rest of the body is the `0030` text.
+
+## forum_template
+
+- **Purpose:** The five operating-system layers of B0093, verbatim (Layer, Cadence, Purpose, Participants, Outputs), with provisional Arabic and the platform's structured reading (chair party, participant parties, output kinds, publication rule, default recurrence) (REQ-PB-060; ADR-0032 §1).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** none (seed, read-only). **Lifecycle:** seed.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| key | text | NOT NULL |  | `CHECK ((key ~ '^[a-z_]+$'))`; PK |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 99)))` |
+| source_layer_en | text | NOT NULL |  |  |
+| source_cadence_en | text | NOT NULL |  |  |
+| source_purpose_en | text | NOT NULL |  |  |
+| source_participants_en | text | NOT NULL |  |  |
+| source_outputs_en | text | NOT NULL |  |  |
+| layer_ar | text | NOT NULL |  |  |
+| cadence_ar | text | NOT NULL |  |  |
+| purpose_ar | text | NOT NULL |  |  |
+| participants_ar | text | NOT NULL |  |  |
+| outputs_ar | text | NOT NULL |  |  |
+| ar_provisional | boolean | NOT NULL | `true` |  |
+| chair_party_code | text | NULL |  | FK → governance_party(code) |
+| participant_parties | text[] | NOT NULL |  | `CHECK (p4_parties_known(participant_parties))` |
+| output_kinds | text[] | NOT NULL |  | `CHECK (((cardinality(output_kinds) >= 1) AND p4_meeting_output_kinds_valid(output_kinds)))` |
+| publish_requires_any_output | text[] | NOT NULL | `'{}'[]` |  |
+| executive_asks_only | boolean | NOT NULL |  |  |
+| default_frequency | text | NOT NULL |  | `CHECK ((default_frequency = ANY (ARRAY['daily', 'weekly', 'monthly'])))` |
+| default_interval | smallint | NOT NULL |  | `CHECK (((default_interval >= 1) AND (default_interval <= 12)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+**Table constraints:**
+
+- `forum_template_check` (CHECK): `CHECK ((publish_requires_any_output <@ output_kinds))`
+- `forum_template_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+
+## forum
+
+- **Purpose:** A governance forum of a transformation (REQ-S16-019 Forum): the five layers copied at instantiation, plus forums a team adds; participants, quorum, cut-off and agenda rules are configuration (REQ-S10-005; ADR-0032 §1.1).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `forum.configure` (TO); `p4_instantiate_forums` (instantiation and backfill). **Lifecycle:** active → archived (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| template_key | text | NULL |  | FK → forum_template(key) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| name_en | text | NOT NULL |  | `CHECK (((char_length(name_en) >= 1) AND (char_length(name_en) <= 200)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 200)))` |
+| cadence_label | text | NOT NULL |  | `CHECK (((char_length(cadence_label) >= 1) AND (char_length(cadence_label) <= 200)))` |
+| purpose | text | NOT NULL |  | `CHECK (((char_length(purpose) >= 1) AND (char_length(purpose) <= 2000)))` |
+| participants_label | text | NOT NULL |  | `CHECK (((char_length(participants_label) >= 1) AND (char_length(participants_label) <= 500)))` |
+| outputs_label | text | NOT NULL |  | `CHECK (((char_length(outputs_label) >= 1) AND (char_length(outputs_label) <= 500)))` |
+| chair_party_code | text | NULL |  | FK → governance_party(code) |
+| secretary_user_id | uuid | NULL |  | FK → app_user(id) |
+| participant_parties | text[] | NOT NULL | `'{}'[]` |  |
+| output_kinds | text[] | NOT NULL |  |  |
+| publish_requires_any_output | text[] | NOT NULL | `'{}'[]` |  |
+| executive_asks_only | boolean | NOT NULL | `false` |  |
+| quorum_min | smallint | NULL |  | `CHECK (((quorum_min IS NULL) OR ((quorum_min >= 1) AND (quorum_min <= 100))))` |
+| cutoff_working_days | smallint | NOT NULL | `2` | `CHECK (((cutoff_working_days >= 0) AND (cutoff_working_days <= 20)))` |
+| agenda_max_items | smallint | NULL |  | `CHECK (((agenda_max_items IS NULL) OR ((agenda_max_items >= 1) AND (agenda_max_items <= 50))))` |
+| late_items_rule | text | NOT NULL | `'flag'` | `CHECK ((late_items_rule = ANY (ARRAY['flag', 'refuse'])))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `forum_output_kinds_valid` (CHECK): `CHECK (((cardinality(output_kinds) >= 1) AND p4_meeting_output_kinds_valid(output_kinds)))`
+- `forum_participant_parties_known` (CHECK): `CHECK (p4_parties_known(participant_parties))`
+- `forum_publish_outputs_subset` (CHECK): `CHECK ((publish_requires_any_output <@ output_kinds))`
+- `forum_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `forum_template_key`: `UNIQUE (transformation_id, template_key) WHERE (template_key IS NOT NULL)`
+- `forum_transformation_ordinal_idx`: `(transformation_id, ordinal, id)`
+
+**Triggers:**
+
+- `forum_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `forum_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `forum_guard()`
+- `forum_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## forum_participant
+
+- **Purpose:** A named participant of a forum, a person or a governed group, and whether it counts for quorum (REQ-S10-005; ADR-0032 §1.2). Grants no permission.
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `forum.configure` (TO). **Lifecycle:** active → removed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| forum_id | uuid | NOT NULL |  |  |
+| user_id | uuid | NULL |  | FK → app_user(id) |
+| group_id | uuid | NULL |  | FK → access_group(id) |
+| counts_for_quorum | boolean | NOT NULL | `true` |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `forum_participant_forum_id_fkey` (FK): `FOREIGN KEY (transformation_id, forum_id) REFERENCES forum(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `forum_participant_one_target` (CHECK): `CHECK (((user_id IS NULL) <> (group_id IS NULL)))`
+- `forum_participant_removed_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL))))`
+
+**Indexes:**
+
+- `forum_participant_active_group_key`: `UNIQUE (forum_id, group_id) WHERE ((status = 'active') AND (group_id IS NOT NULL))`
+- `forum_participant_active_user_key`: `UNIQUE (forum_id, user_id) WHERE ((status = 'active') AND (user_id IS NOT NULL))`
+
+**Triggers:**
+
+- `forum_participant_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `forum_participant_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `forum_participant_guard()`
+- `forum_participant_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## meeting_series
+
+- **Purpose:** The recurrence of a forum's meetings; rule_version steps by 1 on every recurrence change; a change regenerates future meetings only (REQ-PB-060, REQ-S10-005; ADR-0032 §2).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `forum.configure` (TO); the generation job advances generated_through only. **Lifecycle:** active → ended (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| forum_id | uuid | NOT NULL |  |  |
+| frequency | text | NOT NULL |  | `CHECK ((frequency = ANY (ARRAY['daily', 'weekly', 'monthly'])))` |
+| interval_count | smallint | NOT NULL |  | `CHECK (((interval_count >= 1) AND (interval_count <= 12)))` |
+| weekdays | smallint[] | NULL |  |  |
+| month_day | smallint | NULL |  | `CHECK (((month_day IS NULL) OR ((month_day >= 1) AND (month_day <= 28))))` |
+| start_date | date | NOT NULL |  |  |
+| end_date | date | NULL |  |  |
+| start_time | time without time zone | NOT NULL |  |  |
+| duration_minutes | smallint | NOT NULL |  | `CHECK (((duration_minutes >= 15) AND (duration_minutes <= 480)))` |
+| timezone | text | NOT NULL | `'Asia/Riyadh'` | `CHECK (((char_length(timezone) >= 1) AND (char_length(timezone) <= 64)))` |
+| non_working_day_rule | text | NOT NULL | `'next_working_day'` | `CHECK ((non_working_day_rule = ANY (ARRAY['next_working_day', 'skip', 'keep'])))` |
+| horizon_days | smallint | NOT NULL | `90` | `CHECK (((horizon_days >= 7) AND (horizon_days <= 366)))` |
+| location | text | NULL |  | `CHECK (((location IS NULL) OR ((char_length(location) >= 1) AND (char_length(location) <= 300))))` |
+| rule_version | integer | NOT NULL | `1` | `CHECK ((rule_version >= 1))` |
+| generated_through | date | NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'ended'])))` |
+| ended_at | timestamp with time zone | NULL |  |  |
+| ended_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `meeting_series_dates` (CHECK): `CHECK (((end_date IS NULL) OR (end_date >= start_date)))`
+- `meeting_series_ended_complete` (CHECK): `CHECK (((status = 'ended') = (ended_at IS NOT NULL)))`
+- `meeting_series_forum_id_fkey` (FK): `FOREIGN KEY (transformation_id, forum_id) REFERENCES forum(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_series_rule_shape` (CHECK): `CHECK ((((frequency = 'weekly') AND (weekdays IS NOT NULL) AND p4_valid_workweek(weekdays) AND (month_day IS NULL)) OR ((frequency = 'monthly') AND (weekdays IS NULL) AND (month_day IS NOT NULL)) OR ((frequency = 'daily') AND (weekdays IS NULL) AND (month_day IS NULL))))`
+- `meeting_series_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `meeting_series_one_active_key`: `UNIQUE (forum_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `meeting_series_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `meeting_series_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `meeting_series_guard()`
+- `meeting_series_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `meeting_series_timezone_known`: BEFORE INSERT OR UPDATE OF timezone FOR EACH ROW → `p4_timezone_known()`
+
+## meeting
+
+- **Purpose:** One forum meeting (REQ-S16-019 Meeting): generated from a series by the worker (no human author) or created ad hoc (ADR-0032 §3.1).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** the generation job; `meeting.prepare` (TL, TO, SEC); `meeting.chair` (agenda publication); minutes publication. **Lifecycle:** scheduled → agenda_published → in_session → held → minutes_published; scheduled → in_session; scheduled | agenda_published → cancelled (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| forum_id | uuid | NOT NULL |  |  |
+| series_id | uuid | NULL |  |  |
+| series_rule_version | integer | NULL |  |  |
+| occurrence_date | date | NULL |  |  |
+| scheduled_date | date | NOT NULL |  |  |
+| starts_at | timestamp with time zone | NOT NULL |  |  |
+| ends_at | timestamp with time zone | NOT NULL |  |  |
+| timezone | text | NOT NULL | `'Asia/Riyadh'` | `CHECK (((char_length(timezone) >= 1) AND (char_length(timezone) <= 64)))` |
+| location | text | NULL |  | `CHECK (((location IS NULL) OR ((char_length(location) >= 1) AND (char_length(location) <= 300))))` |
+| chair_user_id | uuid | NULL |  | FK → app_user(id) |
+| secretary_user_id | uuid | NULL |  | FK → app_user(id) |
+| quorum_min | smallint | NULL |  | `CHECK (((quorum_min IS NULL) OR ((quorum_min >= 1) AND (quorum_min <= 100))))` |
+| cutoff_date | date | NULL |  |  |
+| cutoff_unknown_reason | text | NULL |  | `CHECK (((cutoff_unknown_reason IS NULL) OR (cutoff_unknown_reason = 'calendar_not_configured')))` |
+| status | text | NOT NULL | `'scheduled'` | `CHECK ((status = ANY (ARRAY['scheduled', 'agenda_published', 'in_session', 'held', 'minutes_published', 'cancelled'])))` |
+| cancel_reason | text | NULL |  | `CHECK (((cancel_reason IS NULL) OR (cancel_reason = ANY (ARRAY['series_regenerated', 'series_ended', 'manual']))))` |
+| cancel_note | text | NULL |  | `CHECK (((cancel_note IS NULL) OR ((char_length(cancel_note) >= 3) AND (char_length(cancel_note) <= 2000))))` |
+| cancelled_at | timestamp with time zone | NULL |  |  |
+| cancelled_by | uuid | NULL |  | FK → app_user(id) |
+| started_at | timestamp with time zone | NULL |  |  |
+| held_at | timestamp with time zone | NULL |  |  |
+| created_source | text | NOT NULL |  | `CHECK ((created_source = ANY (ARRAY['api', 'worker'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `meeting_cancelled_complete` (CHECK): `CHECK ((((status = 'cancelled') = (cancelled_at IS NOT NULL)) AND ((status = 'cancelled') = (cancel_reason IS NOT NULL)) AND ((cancel_reason IS DISTINCT FROM 'manual') OR ((cancelled_by IS NOT NULL) AND (cancel_note IS NOT NULL)))))`
+- `meeting_created_source` (CHECK): `CHECK ((((created_source = 'worker') AND (series_id IS NOT NULL) AND (created_by IS NULL)) OR ((created_source = 'api') AND (created_by IS NOT NULL))))`
+- `meeting_cutoff_known_or_reason` (CHECK): `CHECK (((cutoff_date IS NULL) = (cutoff_unknown_reason IS NOT NULL)))`
+- `meeting_forum_id_fkey` (FK): `FOREIGN KEY (transformation_id, forum_id) REFERENCES forum(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_series_fields` (CHECK): `CHECK ((((series_id IS NULL) = (series_rule_version IS NULL)) AND ((series_id IS NULL) = (occurrence_date IS NULL))))`
+- `meeting_series_id_fkey` (FK): `FOREIGN KEY (transformation_id, series_id) REFERENCES meeting_series(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_series_rule_version_check1` (CHECK): `CHECK (((series_rule_version IS NULL) OR (series_rule_version >= 1)))`
+- `meeting_times` (CHECK): `CHECK ((ends_at > starts_at))`
+- `meeting_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `meeting_forum_date_idx`: `(forum_id, scheduled_date, id)`
+- `meeting_series_occurrence_key`: `UNIQUE (series_id, occurrence_date) WHERE ((status <> 'cancelled') AND (series_id IS NOT NULL))`
+- `meeting_transformation_date_idx`: `(transformation_id, scheduled_date DESC, id DESC)`
+
+**Triggers:**
+
+- `meeting_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `meeting_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `meeting_guard()`
+- `meeting_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `meeting_timezone_known`: BEFORE INSERT OR UPDATE OF timezone FOR EACH ROW → `p4_timezone_known()`
+
+## agenda_item
+
+- **Purpose:** One agenda item (REQ-S16-019 AgendaItem); an executive ask links its T16 decision or carries a draft brief, never both; publication needs the elements of B0102 and REQ-S10-012; quorum is enforced on a decided outcome (REQ-PB-068, REQ-S10-011; ADR-0032 §3.2, §3.3).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `meeting.prepare` (TL, TO, SEC); publish `meeting.chair`; outcome decided `executive_decision.decide`. **Lifecycle:** draft → published → closed; draft | published → withdrawn (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| meeting_id | uuid | NOT NULL |  |  |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| item_kind | text | NOT NULL |  | `CHECK ((item_kind = ANY (ARRAY['executive_ask', 'discussion', 'information'])))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 500)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 8000))))` |
+| presenter_user_id | uuid | NULL |  | FK → app_user(id) |
+| duration_minutes | smallint | NULL |  | `CHECK (((duration_minutes IS NULL) OR ((duration_minutes >= 1) AND (duration_minutes <= 480))))` |
+| materials_evidence_ids | uuid[] | NOT NULL | `'{}'::uuid[]` | `CHECK ((cardinality(materials_evidence_ids) <= 20))` |
+| decision_id | uuid | NULL |  |  |
+| ask_decision_required | text | NULL |  | `CHECK (((ask_decision_required IS NULL) OR ((char_length(ask_decision_required) >= 1) AND (char_length(ask_decision_required) <= 500))))` |
+| ask_why_now | text | NULL |  | `CHECK (((ask_why_now IS NULL) OR ((char_length(ask_why_now) >= 1) AND (char_length(ask_why_now) <= 4000))))` |
+| ask_options | text[] | NULL |  | `CHECK (((ask_options IS NULL) OR ((cardinality(ask_options) >= 1) AND (cardinality(ask_options) <= 26))))` |
+| ask_recommendation | text | NULL |  | `CHECK (((ask_recommendation IS NULL) OR ((char_length(ask_recommendation) >= 1) AND (char_length(ask_recommendation) <= 4000))))` |
+| ask_impact_of_delay | text | NULL |  | `CHECK (((ask_impact_of_delay IS NULL) OR ((char_length(ask_impact_of_delay) >= 1) AND (char_length(ask_impact_of_delay) <= 4000))))` |
+| ask_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| ask_required_date | date | NULL |  |  |
+| late | boolean | NOT NULL | `false` |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'published', 'closed', 'withdrawn'])))` |
+| published_at | timestamp with time zone | NULL |  |  |
+| published_by | uuid | NULL |  | FK → app_user(id) |
+| outcome | text | NULL |  | `CHECK (((outcome IS NULL) OR (outcome = ANY (ARRAY['decided', 'deferred', 'noted']))))` |
+| outcome_quorum_present | smallint | NULL |  | `CHECK (((outcome_quorum_present IS NULL) OR (outcome_quorum_present >= 0)))` |
+| outcome_recorded_at | timestamp with time zone | NULL |  |  |
+| outcome_recorded_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `agenda_item_ask_shape` (CHECK): `CHECK ((((item_kind = 'executive_ask') OR ((decision_id IS NULL) AND (ask_decision_required IS NULL) AND (ask_why_now IS NULL) AND (ask_options IS NULL) AND (ask_recommendation IS NULL) AND (ask_impact_of_delay IS NULL) AND (ask_owner_user_id IS NULL) AND (ask_required_date IS NULL))) AND ((decision_id IS NULL) OR ((ask_decision_required IS NULL) AND (ask_why_now IS NULL) AND (ask_options IS NULL) AND (ask_recommendation IS NULL) AND (ask_impact_of_delay IS NULL) AND (ask_owner_user_id IS NULL) AND (ask_required_date IS NULL)))))`
+- `agenda_item_decision_id_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `agenda_item_meeting_id_fkey` (FK): `FOREIGN KEY (transformation_id, meeting_id) REFERENCES meeting(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `agenda_item_ordinal_key` (UNIQUE): `UNIQUE (meeting_id, ordinal) DEFERRABLE INITIALLY DEFERRED`
+- `agenda_item_outcome_complete` (CHECK): `CHECK ((((outcome IS NULL) = (outcome_recorded_at IS NULL)) AND ((outcome_recorded_at IS NULL) = (outcome_recorded_by IS NULL)) AND ((outcome IS NULL) OR (status = 'closed')) AND ((outcome IS DISTINCT FROM 'decided') OR (item_kind = 'executive_ask'))))`
+- `agenda_item_published_ask_linked` (CHECK): `CHECK (((item_kind <> 'executive_ask') OR (status = ANY (ARRAY['draft', 'withdrawn'])) OR (decision_id IS NOT NULL)))`
+- `agenda_item_published_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['published', 'closed'])) = (published_at IS NOT NULL)) AND ((published_at IS NULL) = (published_by IS NULL))))`
+- `agenda_item_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `agenda_item_decision_idx`: `(decision_id) WHERE (decision_id IS NOT NULL)`
+- `agenda_item_meeting_idx`: `(meeting_id, ordinal)`
+
+**Triggers:**
+
+- `agenda_item_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `agenda_item_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `agenda_item_guard()`
+- `agenda_item_meeting_editable`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p4_meeting_child_editable()`
+- `agenda_item_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## meeting_attendance
+
+- **Purpose:** One person's attendance at one meeting (REQ-S16-019 Attendance); the quorum count is the present rows that count for quorum (REQ-S10-011; ADR-0032 §3.3).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `meeting.prepare` (TL, TO, SEC). **Lifecycle:** mutable until the meeting's minutes are published.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| meeting_id | uuid | NOT NULL |  |  |
+| user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| attendance | text | NOT NULL |  | `CHECK ((attendance = ANY (ARRAY['present', 'absent', 'apologies'])))` |
+| counts_for_quorum | boolean | NOT NULL | `true` |  |
+| on_behalf_of_user_id | uuid | NULL |  | FK → app_user(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `meeting_attendance_meeting_id_fkey` (FK): `FOREIGN KEY (transformation_id, meeting_id) REFERENCES meeting(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_attendance_not_self_proxy` (CHECK): `CHECK (((on_behalf_of_user_id IS NULL) OR (on_behalf_of_user_id <> user_id)))`
+- `meeting_attendance_person_key` (UNIQUE): `UNIQUE (meeting_id, user_id)`
+- `meeting_attendance_proxy_present` (CHECK): `CHECK (((on_behalf_of_user_id IS NULL) OR (attendance = 'present')))`
+
+**Triggers:**
+
+- `meeting_attendance_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `meeting_attendance_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `meeting_attendance_guard()`
+- `meeting_attendance_meeting_editable`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p4_meeting_child_editable()`
+- `meeting_attendance_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## meeting_output
+
+- **Purpose:** One output of a meeting as defined for its layer (B0093 Outputs), linked to the canonical record it is about (REQ-PB-061; ADR-0032 §4).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `meeting.prepare` (TL, TO, SEC). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| meeting_id | uuid | NOT NULL |  |  |
+| agenda_item_id | uuid | NULL |  |  |
+| output_kind | text | NOT NULL |  |  |
+| record_type | text | NULL |  |  |
+| record_id | uuid | NULL |  |  |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 4000))))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `meeting_output_agenda_item_id_fkey` (FK): `FOREIGN KEY (transformation_id, agenda_item_id) REFERENCES agenda_item(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_output_kind_valid` (CHECK): `CHECK (p4_meeting_output_kinds_valid(ARRAY[output_kind]))`
+- `meeting_output_meeting_id_fkey` (FK): `FOREIGN KEY (transformation_id, meeting_id) REFERENCES meeting(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_output_note_or_record` (CHECK): `CHECK (((record_id IS NOT NULL) OR (note IS NOT NULL)))`
+- `meeting_output_record_pair` (CHECK): `CHECK (((record_type IS NULL) = (record_id IS NULL)))`
+- `meeting_output_record_type` (CHECK): `CHECK (COALESCE(
+CASE output_kind
+    WHEN 'decision' THEN (record_type = 'decision')
+    WHEN 'decision_log' THEN ((record_type IS NULL) OR (record_type = 'decision'))
+    WHEN 'unblocker' THEN ((record_type IS NULL) OR (record_type = ANY (ARRAY['raid_entry', 'dependency', 'decision'])))
+    WHEN 'benefit_view' THEN ((record_type IS NULL) OR (record_type = 'benefit'))
+    WHEN 'integrated_status' THEN (record_type IS NULL)
+    WHEN 'milestone' THEN (record_type = 'milestone')
+    WHEN 'action' THEN (record_type = 'action_item')
+    WHEN 'raid' THEN (record_type = ANY (ARRAY['raid_entry', 'dependency']))
+    WHEN 'test' THEN ((record_type IS NULL) OR (record_type = 'evidence'))
+    WHEN 'evidence' THEN (record_type = 'evidence')
+    WHEN 'recommendation' THEN ((record_type IS NULL) OR (record_type = 'decision'))
+    WHEN 'benefit_evidence' THEN (record_type = ANY (ARRAY['benefit_evidence', 'benefit_measurement']))
+    WHEN 'forecast' THEN (record_type = ANY (ARRAY['benefit', 'benefit_measurement']))
+    WHEN 'corrective_action' THEN (record_type = 'corrective_case')
+    ELSE false
+END, false))`
+
+**Indexes:**
+
+- `meeting_output_meeting_idx`: `(meeting_id, output_kind, created_at, id)`
+
+**Triggers:**
+
+- `meeting_output_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `meeting_output_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `meeting_output_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `meeting_output_guard`: BEFORE INSERT FOR EACH ROW → `meeting_output_guard()`
+- `meeting_output_meeting_editable`: BEFORE INSERT FOR EACH ROW → `p4_meeting_child_editable()`
+- `meeting_output_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## meeting_action_link
+
+- **Purpose:** An action assigned or reviewed in a meeting (REQ-S16-019 MeetingActionLink); the action itself is the canonical action_item (ADR-0032 §5.4).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `meeting.prepare` (TL, TO, SEC). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| meeting_id | uuid | NOT NULL |  |  |
+| agenda_item_id | uuid | NULL |  |  |
+| action_item_id | uuid | NOT NULL |  |  |
+| link_kind | text | NOT NULL |  | `CHECK ((link_kind = ANY (ARRAY['assigned', 'reviewed'])))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `meeting_action_link_action_item_id_fkey` (FK): `FOREIGN KEY (transformation_id, action_item_id) REFERENCES action_item(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_action_link_agenda_item_id_fkey` (FK): `FOREIGN KEY (transformation_id, agenda_item_id) REFERENCES agenda_item(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_action_link_key` (UNIQUE): `UNIQUE (meeting_id, action_item_id)`
+- `meeting_action_link_meeting_id_fkey` (FK): `FOREIGN KEY (transformation_id, meeting_id) REFERENCES meeting(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `meeting_action_link_action_idx`: `(action_item_id)`
+
+**Triggers:**
+
+- `meeting_action_link_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `meeting_action_link_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `meeting_action_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `meeting_action_link_meeting_editable`: BEFORE INSERT FOR EACH ROW → `p4_meeting_child_editable()`
+- `meeting_action_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## meeting_minutes
+
+- **Purpose:** The minutes of one meeting (REQ-S16-019 Minutes); immutable once published; publication needs a held meeting and the forum's required outputs (REQ-S10-011, REQ-PB-061; ADR-0032 §5).
+- **Migration:** `0044_p4_forums_meetings.sql`. **API module:** `governance`. **Who writes:** `meeting.prepare` (draft); `meeting.chair` (approve, publish, return to draft). **Lifecycle:** draft → approved → published (final); approved → draft.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| meeting_id | uuid | NOT NULL |  |  |
+| body | text | NOT NULL |  | `CHECK (((char_length(body) >= 1) AND (char_length(body) <= 50000)))` |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'approved', 'published'])))` |
+| approved_at | timestamp with time zone | NULL |  |  |
+| approved_by | uuid | NULL |  | FK → app_user(id) |
+| published_at | timestamp with time zone | NULL |  |  |
+| published_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `meeting_minutes_approved_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'published'])) = (approved_at IS NOT NULL)) AND ((approved_at IS NULL) = (approved_by IS NULL))))`
+- `meeting_minutes_meeting_id_fkey` (FK): `FOREIGN KEY (transformation_id, meeting_id) REFERENCES meeting(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `meeting_minutes_meeting_key` (UNIQUE): `UNIQUE (meeting_id)`
+- `meeting_minutes_published_complete` (CHECK): `CHECK ((((status = 'published') = (published_at IS NOT NULL)) AND ((published_at IS NULL) = (published_by IS NULL))))`
+
+**Triggers:**
+
+- `meeting_minutes_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `meeting_minutes_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `meeting_minutes_guard()`
+- `meeting_minutes_no_delete`: BEFORE DELETE OR TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `meeting_minutes_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## governance_escalation_rule
+
+- **Purpose:** The decision-SLA and blocker-red escalation rules per transformation (M0231, M0233; ADR-0032 §8.1). Without a row the code defaults apply.
+- **Migration:** `0045_p4_t16_escalation.sql`. **API module:** `governance`. **Who writes:** `escalation_rule.configure` (TL, TO). **Lifecycle:** mutable, versioned; kind immutable.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| rule_kind | text | NOT NULL |  | `CHECK ((rule_kind = ANY (ARRAY['decision_sla', 'blocker_red'])))` |
+| enabled | boolean | NOT NULL | `true` |  |
+| escalation_chain | text[] | NULL |  | `CHECK (((escalation_chain IS NULL) OR (((cardinality(escalation_chain) >= 1) AND (cardinality(escalation_chain) <= 5)) AND p4_parties_known(escalation_chain))))` |
+| red_cycles | smallint | NULL |  | `CHECK (((red_cycles IS NULL) OR ((red_cycles >= 2) AND (red_cycles <= 12))))` |
+| deadline_working_days | smallint | NULL |  | `CHECK (((deadline_working_days IS NULL) OR ((deadline_working_days >= 1) AND (deadline_working_days <= 60))))` |
+| owner_party_code | text | NULL |  | FK → governance_party(code) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `governance_escalation_rule_kind_key` (UNIQUE): `UNIQUE (transformation_id, rule_kind)`
+- `governance_escalation_rule_shape` (CHECK): `CHECK ((((rule_kind = 'decision_sla') AND (escalation_chain IS NOT NULL) AND (red_cycles IS NULL) AND (deadline_working_days IS NULL) AND (owner_party_code IS NULL)) OR ((rule_kind = 'blocker_red') AND (escalation_chain IS NULL) AND (red_cycles IS NOT NULL) AND (deadline_working_days IS NOT NULL) AND (owner_party_code IS NOT NULL))))`
+
+**Triggers:**
+
+- `governance_escalation_rule_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `governance_escalation_rule_guard`: BEFORE UPDATE FOR EACH ROW → `governance_escalation_rule_guard()`
+- `governance_escalation_rule_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## decision_escalation
+
+- **Purpose:** One escalation of an executive ask whose SLA expired, with its target or routing error and the delay impact; once per (ask, SLA due date); never a decision (REQ-S12-011; ADR-0032 §7).
+- **Migration:** `0045_p4_t16_escalation.sql`. **API module:** `governance`. **Who writes:** the `governance.decision_sla_scan` job (actor service). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| decision_id | uuid | NOT NULL |  |  |
+| sla_due_date | date | NOT NULL |  |  |
+| business_date | date | NOT NULL |  |  |
+| level | smallint | NOT NULL |  | `CHECK (((level >= 1) AND (level <= 5)))` |
+| party_code | text | NULL |  | FK → governance_party(code) |
+| target_user_id | uuid | NULL |  | FK → app_user(id) |
+| target_group_id | uuid | NULL |  | FK → access_group(id) |
+| routing_error | text | NULL |  | `CHECK (((routing_error IS NULL) OR (routing_error = ANY (ARRAY['party_unmapped', 'party_not_executive', 'no_next_authority']))))` |
+| delay_impact | text | NULL |  | `CHECK (((delay_impact IS NULL) OR ((char_length(delay_impact) >= 1) AND (char_length(delay_impact) <= 4000))))` |
+| escalated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `decision_escalation_decision_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `decision_escalation_expired` (CHECK): `CHECK ((sla_due_date < business_date))`
+- `decision_escalation_once` (UNIQUE): `UNIQUE (decision_id, sla_due_date)`
+- `decision_escalation_party_error` (CHECK): `CHECK (((routing_error = 'no_next_authority') = ((routing_error IS NOT NULL) AND (party_code IS NULL))))`
+- `decision_escalation_target` (CHECK): `CHECK ((((routing_error IS NULL) AND (party_code IS NOT NULL) AND ((target_user_id IS NULL) <> (target_group_id IS NULL))) OR ((routing_error IS NOT NULL) AND (target_user_id IS NULL) AND (target_group_id IS NULL))))`
+
+**Indexes:**
+
+- `decision_escalation_decision_idx`: `(decision_id, escalated_at, id)`
+- `decision_escalation_transformation_idx`: `(transformation_id, escalated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `decision_escalation_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `decision_escalation_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `decision_escalation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `decision_escalation_guard`: BEFORE INSERT FOR EACH ROW → `decision_escalation_guard()`
+- `decision_escalation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## blocker_status
+
+- **Purpose:** A blocker's RAG in one review cycle (one meeting): the RAG history by cycle of REQ-PB-082 (ADR-0032 §8.2).
+- **Migration:** `0045_p4_t16_escalation.sql`. **API module:** `governance`. **Who writes:** `meeting.prepare` (TL, TO, SEC). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| meeting_id | uuid | NOT NULL |  |  |
+| forum_id | uuid | NOT NULL |  |  |
+| cycle_date | date | NOT NULL |  |  |
+| source_record_type | text | NOT NULL |  | `CHECK ((source_record_type = ANY (ARRAY['raid_entry', 'dependency', 'corrective_case', 'initiative', 'milestone'])))` |
+| source_record_id | uuid | NOT NULL |  |  |
+| rag | text | NOT NULL |  | `CHECK ((rag = ANY (ARRAY['red', 'amber', 'green', 'unknown'])))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `blocker_status_forum_fkey` (FK): `FOREIGN KEY (transformation_id, forum_id) REFERENCES forum(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `blocker_status_meeting_fkey` (FK): `FOREIGN KEY (transformation_id, meeting_id) REFERENCES meeting(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `blocker_status_once_per_cycle` (UNIQUE): `UNIQUE (meeting_id, source_record_type, source_record_id)`
+
+**Indexes:**
+
+- `blocker_status_source_idx`: `(transformation_id, source_record_type, source_record_id, forum_id, cycle_date DESC)`
+
+**Triggers:**
+
+- `blocker_status_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `blocker_status_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `blocker_status_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `blocker_status_guard`: BEFORE INSERT FOR EACH ROW → `blocker_status_guard()`
+- `blocker_status_meeting_editable`: BEFORE INSERT FOR EACH ROW → `p4_meeting_child_editable()`
+- `blocker_status_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## executive_decision_log
+
+- **Purpose:** View: the T16 Executive Decision Log (B0130) over the canonical decision rows of kind executive, with the nine T16 columns (REQ-PB-081; ADR-0032 §6). No copy.
+- **Migration:** `0045_p4_t16_escalation.sql`. **API module:** `governance`. **Who writes:** none (view). **Lifecycle:** derived.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NULL |  |  |
+| organization_id | uuid | NULL |  |  |
+| transformation_id | uuid | NULL |  |  |
+| t16_id | text | NULL |  |  |
+| decision | text | NULL |  |  |
+| why_now | text | NULL |  |  |
+| options | text | NULL |  |  |
+| recommendation | text | NULL |  |  |
+| owner_user_id | uuid | NULL |  |  |
+| decision_date | date | NULL |  |  |
+| impact_of_delay | text | NULL |  |  |
+| outcome | text | NULL |  |  |
+| status | text | NULL |  |  |
+| ask_origin | text | NULL |  |  |
+| sla_due_date | date | NULL |  |  |
+| sla_unknown_reason | text | NULL |  |  |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decided_by | uuid | NULL |  |  |
+| blocker_record_type | text | NULL |  |  |
+| blocker_record_id | uuid | NULL |  |  |
+| version | integer | NULL |  |  |
+| created_at | timestamp with time zone | NULL |  |  |
+| updated_at | timestamp with time zone | NULL |  |  |
+
+## P4 seeds (0044, 0046, slice D)
+
+- `forum_template`: the five B0093 rows, verbatim English, Arabic marked provisional (`ar_provisional = true`).
+- `forum`: five rows per existing transformation (the `0044` backfill), audited `system` on behalf of the transformation's creator; new transformations get them from `p4_instantiate_transformation`.
+- `work_item_kind` `meeting_action_due` (M0212), `executive_decision_due` (M0144), `executive_decision_escalated` (M0231) and `minutes_to_approve` (M0212), owner module `governance` (label_ar provisional wording).
+- `permission` (6 rows: `forum.configure` configure, `meeting.prepare` write, `meeting.chair` write, `executive_decision.create` write, `executive_decision.decide` business_approval, `escalation_rule.configure` configure) and `role_permission` (18 rows): exactly `P4_GOVERNANCE_PERMISSIONS` / `P4_GOVERNANCE_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). AUD and the technical-admin roles hold none; `executive_decision.decide` is held by SP, BO and FIN only.
+- No meeting, series, agenda item, executive ask, escalation or rule is seeded.
+
+## P4 functions (slice D)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `p4_meeting_output_kinds_valid(text[])` | 0044 | the closed set of B0093 output kinds | via CHECK |
+| `p4_instantiate_forums(uuid, uuid, text, text)` | 0044 | copy the five layers into a transformation; idempotent; audited | yes (EXECUTE) |
+| `p4_instantiate_transformation(uuid, uuid, text, text)` | 0030, redefined 0044 | the P4 starter structure, now including the forums | yes (EXECUTE) |
+| `forum_guard()` | 0044 | template key immutable; archived is final | via trigger |
+| `forum_participant_guard()` | 0044 | starts active; forum and participant immutable; removed is final; group of the same organization | via trigger |
+| `meeting_series_guard()` | 0044 | starts active at rule version 1; forum immutable; a recurrence change steps rule_version by 1 and is made by a person; ended is final | via trigger |
+| `meeting_guard()` | 0044 | starts scheduled; identity immutable; legal transitions; final states; future-only regeneration; minutes_published needs published minutes | via trigger |
+| `p4_meeting_child_editable()` | 0044 | children of a meeting are frozen once its minutes are published or it is cancelled | via trigger |
+| `agenda_item_guard()` | 0044 | starts draft; executive-asks-only forums; legal transitions; published items frozen; a decided outcome needs a session and the quorum | via trigger |
+| `meeting_attendance_guard()` | 0044 | meeting and person immutable | via trigger |
+| `meeting_output_guard()` | 0044 | the kind is one of the forum's outputs; the linked record exists in the transformation | via trigger |
+| `meeting_minutes_guard()` | 0044 | starts draft; legal transitions; approved minutes not edited in place; published minutes immutable; publication needs a held meeting and the forum's required outputs | via trigger |
+| `decision_ask_guard()` | 0045 | ask origin and source immutable; the blocker exists | via trigger |
+| `decision_ask_options()` | 0045 | at least two active options on a person-raised ask (deferred) | via constraint trigger |
+| `governance_escalation_rule_guard()` | 0045 | rule kind immutable | via trigger |
+| `decision_escalation_guard()` | 0045 | only an open or deferred ask whose current SLA date is escalated; levels step by 1 | via trigger |
+| `blocker_status_guard()` | 0045 | recorded in a meeting in session or held; the meeting's own forum and date; the blocker exists | via trigger |
+
+## P4 validation rules summary (slice D)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, organization = transformation's, deferred audit coverage; append-only outputs, action links, escalations and blocker statuses); closed sets (output kinds, frequencies, statuses, item kinds, attendance values, RAG values, rule kinds, routing errors); known governance parties; one copy of each layer per transformation; one active series per forum; no duplicate series occurrence; future-only regeneration; meeting and agenda state machines; frozen meetings after publication; the executive-ask shape (link xor brief) and the published-ask link; the quorum on a decided outcome; immutable published minutes; the forum's required outputs on publication; the T16 ask completeness, options, outcome and SLA-or-reason; one open ask per blocker; one escalation per ask and due date |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice D schemas; an executive ask without `whyNow` is 400 `executive_decision.field_required` at `/whyNow`), free-text rules, strict UTF-8, request media types, `If-Match` |
+| Service | Permissions and record-level rules (ADR-0032 §9: the meeting's chair; the decision owner or delegate), commit-time re-authorization, occurrence generation on the business calendar, the publication checks with the exact refusal codes and English texts of ADR-0032 §11, the quorum count, `NextForumDateProvider` |
+| Worker | `governance.meeting_series_generate` (lock 730238, idempotent), `governance.decision_sla_scan` (working days only, once per due date, lock 730240, never decides), `governance.blocker_escalation` and `governance.blocker_escalation_scan` (N red cycles → one open ask, lock 730239) |

@@ -135,7 +135,7 @@ describe("GET /api/v1/me", () => {
         scope: { type: "organization", id: w.orgA.id },
         inheritsDownward: true,
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
-        // defaults (0036) + P4 slice E defaults (0043), sorted.
+        // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -150,11 +150,16 @@ describe("GET /api/v1/me", () => {
           "delegation.create_own",
           "dependency.edit",
           "diagnostic.edit",
+          "escalation_rule.configure",
           "evidence.create",
           "evidence.review",
+          "executive_decision.create",
+          "forum.configure",
           "gate.configure",
           "group.manage",
           "initiative.edit",
+          "meeting.chair",
+          "meeting.prepare",
           "organization.read",
           "prioritization.edit",
           "raci.edit",

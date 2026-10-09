@@ -1327,6 +1327,62 @@ erDiagram
 | Budget line (S09-007) | `budget_line` | `id` | `owner_user_id` | `budget.edit` (TL, FIN) | `status` (active, archived) | yes | portfolio |
 | Initiative duration (S09-009) | `initiative_schedule` | `id` (one per initiative) | `created_by` | `roadmap.edit` (TL, WL, TO) | — | yes | portfolio |
 
+## 1h. P4 physical model, slice D (migrations 0044–0046, DG4)
+
+Written by T-DG4-ARCH-05 (ADR-0032). Columns, constraints and triggers: `data-dictionary.md` "P4 tables, slice D". Every new table except the read-only `forum_template` has `organization_id` and `transformation_id`, and its foreign keys to other transformation-scoped rows are composite `(transformation_id, id)`, except `meeting_output.record_id` and `blocker_status.source_record_id`/`decision.blocker_record_id` (polymorphic links named by their `record_type` column and checked by trigger to exist in the same transformation). No DELETE grant on any of them.
+
+### 1h.1 Forums, series, meetings and the committee workflow — `governance` module and worker
+
+```mermaid
+erDiagram
+    forum_template ||--o{ forum : "copied per transformation (five B0093 layers, verbatim)"
+    transformation ||--o{ forum : "governance forums"
+    forum }o--o| governance_party : "chair party"
+    forum ||--o{ forum_participant : "named participants (person or group; counts for quorum)"
+    forum ||--o| meeting_series : "active recurrence (one per forum; rule_version)"
+    forum ||--o{ meeting : holds
+    meeting_series ||--o{ meeting : "generated occurrences (unique per occurrence date)"
+    meeting ||--o{ agenda_item : "agenda (draft -> published -> closed)"
+    agenda_item }o--o| decision : "executive ask (T16 row, kind executive)"
+    meeting ||--o{ meeting_attendance : "attendance (quorum count)"
+    meeting ||--o{ meeting_output : "layer outputs (append-only), linked to canonical records"
+    meeting ||--o{ meeting_action_link : "actions assigned / reviewed (append-only)"
+    meeting_action_link }o--|| action_item : "the canonical action"
+    meeting ||--o| meeting_minutes : "minutes (immutable once published)"
+    meeting ||--o{ blocker_status : "blocker RAG in this cycle (append-only)"
+```
+
+### 1h.2 T16 and escalation — `governance` module and worker
+
+```mermaid
+erDiagram
+    transformation ||--o{ decision : "T16 executive decisions (kind executive, DEC-nn) + 0045 columns"
+    decision ||--o{ decision_option : "Options A/B/C"
+    decision }o--o| transformation_decision_right : "T11 row (SLA and escalation chain)"
+    decision }o--o| agenda_item : "raised from an agenda brief"
+    decision ||--o{ decision_escalation : "SLA escalations (once per due date; append-only)"
+    decision_escalation }o--o| app_user : "target person"
+    decision_escalation }o--o| access_group : "target group"
+    transformation ||--o{ governance_escalation_rule : "decision_sla / blocker_red rule"
+```
+
+Read view (0045): `executive_decision_log` = the `decision` rows of kind `executive` with the nine T16 columns (ID, Decision, Why now, Options, Rec., Owner, Decision date, Impact if delayed, Outcome); one decision model, no copy (REQ-PB-081, M0150).
+
+### 1h.3 P4 entity register (slice D): §16 S16-019 entities → tables
+
+| Entity (§16 S16-019, M0325) | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **Forum** | `forum` (+ `forum_template` seed, `forum_participant`) | `id` | `chair_party_code` (resolved per meeting) | `forum.configure` (TO) | `status` (active, archived) | yes | governance |
+| **Meeting** | `meeting` (+ `meeting_series`) | `id` | `chair_user_id`, `secretary_user_id` | worker generation; `meeting.prepare` (TL, TO, SEC); `meeting.chair` | `status` (scheduled, agenda_published, in_session, held, minutes_published, cancelled) | yes | governance / worker |
+| **AgendaItem** | `agenda_item` | `id` | `presenter_user_id` | `meeting.prepare`; publish `meeting.chair` | `status` (draft, published, closed, withdrawn) | yes | governance |
+| **Attendance** | `meeting_attendance` | `id` (one per meeting and person) | `user_id` | `meeting.prepare` | `attendance` (present, absent, apologies) | yes | governance |
+| **Minutes** | `meeting_minutes` | `id` (one per meeting) | the meeting's chair | `meeting.prepare` (draft); `meeting.chair` (approve, publish) | `status` (draft, approved, published) | yes | governance |
+| **MeetingActionLink** | `meeting_action_link` | `id` (one per meeting and action) | the action's `owner_user_id` | `meeting.prepare` | the action's status | append-only | governance |
+| Executive decision (T16, PB-081) | `decision` (kind `executive`, 0017 + 0045) via `executive_decision_log` | `id` (`DEC-nn`) | `owner_user_id` | `executive_decision.create` (TL, TO, SEC); Outcome `executive_decision.decide` (SP, BO, FIN; owner or delegate); worker (blocker escalation) | `status` (open, decided, deferred, cancelled) | yes | governance |
+| Decision escalation (S12-011) | `decision_escalation` | `id` (one per decision and SLA due date) | target user or group | worker only | — | append-only | governance / worker |
+| Blocker RAG by cycle (PB-082) | `blocker_status` | `id` (one per meeting and blocker) | `created_by` | `meeting.prepare` | `rag` (red, amber, green, unknown) | append-only | governance |
+| Escalation rule | `governance_escalation_rule` | `id` (one per transformation and kind) | `created_by` | `escalation_rule.configure` (TL, TO) | `enabled` | yes | governance |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1540,11 +1596,11 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| Forum | `forum` (five seeded forums) | P4 |
+| Forum | `forum` (five seeded forums; physical model §1h) | P4 |
 | Meeting | `meeting` | P4 |
 | AgendaItem | `agenda_item` | P4 |
-| Attendance | `attendance` | P4 |
-| Minutes | `minutes` (versioned; approve/publish) | P4 |
+| Attendance | `meeting_attendance` (named `attendance` in the P1 plan; built as `meeting_attendance`, §1h) | P4 |
+| Minutes | `meeting_minutes` (named `minutes` in the P1 plan; versioned; approve/publish; §1h) | P4 |
 | MeetingActionLink | `meeting_action_link` | P4 |
 
 ### 2.10 People and adoption (REQ-S16-020; DG4)

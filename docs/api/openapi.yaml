@@ -82,6 +82,11 @@ info:
     Dependency entry is the canonical T08 dependency (no copy); Probability is n/a except for a Risk. Corrective-action
     cases are opened or updated (never duplicated) by the configured severity and persistence rule. Budget amounts are
     decimal strings and Unknown is never 0. A critical path is claimed only when every duration is known.
+
+    **P4 additions, slice D (T-DG4-ARCH-05, ADR-0032).** Additive within v1: new paths, schemas and tags. The five
+    operating-system layers are seeded verbatim; a recurrence change regenerates future meetings only. An executive ask
+    states all seven elements, and T16 is a view of the one decision model (the DG2 decision operations are unchanged).
+    Recording a T16 Outcome is a person's business decision; an escalation never decides.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -183,6 +188,22 @@ tags:
     description: Initiative budget lines (budget, actual, forecast in decimal money) and execution tracking with the working-day slip (P4, ADR-0031).
   - name: schedule-network
     description: Initiative durations and the critical path from defined scheduling logic (P4, ADR-0031).
+  - name: forums
+    description: Governance forums - the five operating-system layers of B0093 seeded verbatim per transformation - with participants, quorum, cut-off and agenda rules (P4, ADR-0032).
+  - name: meeting-series
+    description: Forum meeting series on a configured recurrence; a change regenerates future meetings only (P4, ADR-0032).
+  - name: meetings
+    description: Meetings and the committee workflow, outputs linked to canonical records, and meeting actions (P4, ADR-0032).
+  - name: agenda-items
+    description: Agenda items; executive asks state the decision required, why now, options, recommendation, impact of delay, owner and required date before publication (P4, ADR-0032).
+  - name: attendance
+    description: Meeting attendance and quorum (P4, ADR-0032).
+  - name: minutes
+    description: Meeting minutes - draft, approve, publish; immutable once published (P4, ADR-0032).
+  - name: executive-decisions
+    description: The T16 Executive Decision Log on the canonical decision record (P4, ADR-0032).
+  - name: escalations
+    description: Decision-SLA escalations, blocker RAG by cycle and the escalation rules (P4, ADR-0032).
 security:
   - sessionCookie: []
 paths:
@@ -11487,6 +11508,1312 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/forums:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [forums]
+      operationId: listForums
+      summary: "The transformation's governance forums: the five operating-system layers of B0093 (verbatim source texts on the template; REQ-PB-060) and any forum the team added, with participants, quorum, cut-off and agenda rules (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ForumStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForumPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [forums]
+      operationId: createForum
+      summary: "Add a forum (forum.configure; TO). 422 forum.party_unknown, forum.output_kind_invalid, forum.publish_output_not_listed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForumCreate" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Forum" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/forums/{forumId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ForumId"
+    get:
+      tags: [forums]
+      operationId: getForum
+      summary: "Read one forum with its source layer texts (template forums) and configuration (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Forum" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [forums]
+      operationId: updateForum
+      summary: "Configure a forum: labels, chair party, secretary, participant parties, outputs, publication rule, quorum, cut-off and agenda rules, or archive it (forum.configure; REQ-S10-005). 422 forum.party_unknown, forum.output_kind_invalid, forum.publish_output_not_listed, forum.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForumUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Forum" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/forums/{forumId}/participants:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ForumId"
+    get:
+      tags: [forums]
+      operationId: listForumParticipants
+      summary: "The forum's named participants (people and governed groups) and whether each counts for quorum (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForumParticipantPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [forums]
+      operationId: addForumParticipant
+      summary: "Add a person or a governed group as a participant (forum.configure). 409 forum_participant.exists; 422 forum.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForumParticipantCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForumParticipant" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/forums/{forumId}/participants/{forumParticipantId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ForumId"
+      - $ref: "#/components/parameters/ForumParticipantId"
+    post:
+      tags: [forums]
+      operationId: removeForumParticipant
+      summary: "Remove a participant; final, the row stays as history (forum.configure). 422 forum_participant.removed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForumParticipant" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meeting-series:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [meeting-series]
+      operationId: listMeetingSeries
+      summary: "The meeting series of the transformation's forums (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ForumIdQuery"
+        - $ref: "#/components/parameters/MeetingSeriesStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingSeriesPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [meeting-series]
+      operationId: createMeetingSeries
+      summary: "Start a forum's meeting series on a recurrence rule; the meetings up to the horizon are generated in the same transaction, on the business calendar (forum.configure). 400 meeting_series.rule_invalid; 409 meeting_series.exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingSeriesCreate" }
+      responses:
+        "201":
+          description: "Created (active), with the generated meetings."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingSeriesResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meeting-series/{meetingSeriesId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingSeriesId"
+    get:
+      tags: [meeting-series]
+      operationId: getMeetingSeries
+      summary: "Read one meeting series (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingSeries" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [meeting-series]
+      operationId: updateMeetingSeries
+      summary: "Change the recurrence or other series fields. A recurrence change steps ruleVersion and regenerates FUTURE meetings only: future scheduled meetings without content are cancelled and replaced; past meetings and meetings with content are kept and listed (forum.configure; REQ-S10-005). 400 meeting_series.rule_invalid; 422 meeting_series.ended."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingSeriesUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingSeriesResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meeting-series/{meetingSeriesId}/end:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingSeriesId"
+    post:
+      tags: [meeting-series]
+      operationId: endMeetingSeries
+      summary: "End a series; its future scheduled meetings without content are cancelled; final (forum.configure). 422 meeting_series.ended."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingSeriesResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [meetings]
+      operationId: listMeetings
+      summary: "Meetings of the transformation, by forum, status and date range (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ForumIdQuery"
+        - $ref: "#/components/parameters/MeetingStatusQuery"
+        - $ref: "#/components/parameters/FromDateQuery"
+        - $ref: "#/components/parameters/ToDateQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [meetings]
+      operationId: createMeeting
+      summary: "Schedule an ad-hoc meeting of a forum; chair from the forum's chair party, quorum and cut-off from the forum (meeting.prepare; TL, TO, SEC). 422 forum.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingCreate" }
+      responses:
+        "201":
+          description: "Created (scheduled)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [meetings]
+      operationId: getMeeting
+      summary: "Read one meeting: the same record the presentation mode and printable pack use (M0212), with its present count and quorum state (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [meetings]
+      operationId: updateMeeting
+      summary: "Reschedule a meeting or change its location, chair, secretary or quorum (quorum until the session starts) (meeting.prepare). 422 meeting.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/publish-agenda:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [meetings]
+      operationId: publishMeetingAgenda
+      summary: "Publish the agenda: scheduled -> agenda_published (meeting.chair; the meeting's chair only). 422 meeting.agenda_empty, meeting.agenda_has_drafts, meeting.status_transition, meeting.chair_unassigned; 403 meeting.not_chair."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/start:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [meetings]
+      operationId: startMeeting
+      summary: "Open the session: scheduled or agenda_published -> in_session (meeting.prepare). 422 meeting.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/close:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [meetings]
+      operationId: closeMeeting
+      summary: "Close the session: in_session -> held (meeting.prepare). 422 meeting.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [meetings]
+      operationId: cancelMeeting
+      summary: "Cancel a scheduled meeting with a note; final (meeting.prepare). 422 meeting.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meeting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/agenda-items:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [agenda-items]
+      operationId: listAgendaItems
+      summary: "The meeting's agenda in order; an executive ask shows its T16 elements from the linked decision (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgendaItemPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [agenda-items]
+      operationId: createAgendaItem
+      summary: "Add a draft agenda item: an executive ask (linking an open T16 ask, or with a draft brief), a discussion or an information item (meeting.prepare). 422 agenda_item.executive_asks_only (Escalate decisions, not status), agenda_item.after_cutoff, agenda_item.max_items, agenda_item.decision_not_linkable, meeting.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgendaItemCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgendaItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/agenda-items/{agendaItemId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+      - $ref: "#/components/parameters/AgendaItemId"
+    patch:
+      tags: [agenda-items]
+      operationId: updateAgendaItem
+      summary: "Edit a draft agenda item or its brief (meeting.prepare). 422 agenda_item.not_draft, agenda_item.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgendaItemUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgendaItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/agenda-items/{agendaItemId}/publish:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+      - $ref: "#/components/parameters/AgendaItemId"
+    post:
+      tags: [agenda-items]
+      operationId: publishAgendaItem
+      summary: "Publish an agenda item (meeting.chair; the meeting's chair). An executive ask must state the decision required, why now, options, recommendation, impact of delay, decision owner and required date (REQ-PB-068, REQ-S10-012); publishing a brief creates its T16 executive decision. 422 agenda_item.executive_ask_incomplete, agenda_item.not_draft; 403 meeting.not_chair."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgendaItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/agenda-items/{agendaItemId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+      - $ref: "#/components/parameters/AgendaItemId"
+    post:
+      tags: [agenda-items]
+      operationId: withdrawAgendaItem
+      summary: "Withdraw a draft or published item; final (meeting.prepare). 422 agenda_item.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgendaItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/agenda-items/{agendaItemId}/outcome:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+      - $ref: "#/components/parameters/AgendaItemId"
+    post:
+      tags: [agenda-items]
+      operationId: recordAgendaItemOutcome
+      summary: "Record the item's outcome. 'decided' records the linked T16 decision's Outcome (executive_decision.decide; the decision owner or an active delegate) and needs the configured quorum (REQ-S10-011); 'deferred' and 'noted' need meeting.prepare. 422 meeting.quorum_not_met, meeting.not_in_session, agenda_item.final; 403 executive_decision.not_owner."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgendaItemOutcome" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgendaItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/attendance:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [attendance]
+      operationId: listMeetingAttendance
+      summary: "Attendance of the meeting, with the present count and the quorum state (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingAttendancePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [attendance]
+      operationId: recordMeetingAttendance
+      summary: "Record one person's attendance (meeting.prepare). 409 meeting_attendance.exists; 422 meeting.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingAttendanceCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingAttendance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/attendance/{meetingAttendanceId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+      - $ref: "#/components/parameters/MeetingAttendanceId"
+    patch:
+      tags: [attendance]
+      operationId: updateMeetingAttendance
+      summary: "Correct one person's attendance (meeting.prepare). 422 meeting.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingAttendanceUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingAttendance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/minutes:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [minutes]
+      operationId: getMeetingMinutes
+      summary: "The meeting's minutes; 404 when none are drafted (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingMinutes" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [minutes]
+      operationId: createMeetingMinutes
+      summary: "Draft the minutes (meeting.prepare). 409 meeting_minutes.exists; 422 meeting.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingMinutesCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingMinutes" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [minutes]
+      operationId: updateMeetingMinutes
+      summary: "Edit draft minutes, or return approved minutes to draft (meeting.prepare to edit; meeting.chair to return). 422 meeting_minutes.published, meeting_minutes.approved_frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingMinutesUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingMinutes" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/minutes/approve:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [minutes]
+      operationId: approveMeetingMinutes
+      summary: "Approve the minutes: draft -> approved (meeting.chair; the meeting's chair). 422 meeting_minutes.status_transition; 403 meeting.not_chair."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingMinutes" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/minutes/publish:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [minutes]
+      operationId: publishMeetingMinutes
+      summary: "Publish approved minutes for a held meeting; they become immutable and the meeting moves to minutes_published (meeting.chair). A forum's required outputs must be present: a Value Review needs a benefit evidence or forecast entry (REQ-PB-061). 422 meeting_minutes.required_output_missing, meeting_minutes.meeting_not_held, meeting_minutes.status_transition; 403 meeting.not_chair."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingMinutes" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/outputs:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [meetings]
+      operationId: listMeetingOutputs
+      summary: "The meeting's outputs, each linked to its canonical record (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingOutputPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [meetings]
+      operationId: createMeetingOutput
+      summary: "Record an output defined for the forum's layer, linked to a canonical record of the transformation; append-only (meeting.prepare). 422 meeting_output.kind_not_in_forum, meeting_output.record_required, meeting_output.record_not_found, meeting.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingOutputCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingOutput" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/actions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [meetings]
+      operationId: listMeetingActions
+      summary: "Actions assigned in the meeting with their current status and overdue flag (monitor closure; transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingActionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [meetings]
+      operationId: createMeetingAction
+      summary: "Assign an owned action in the meeting: creates the canonical action and its meeting link, and the owner's My Work item (meeting.prepare). 422 meeting.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingActionCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingAction" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/blocker-statuses:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [escalations]
+      operationId: listBlockerStatuses
+      summary: "Blocker RAGs recorded in this meeting (one review cycle; transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlockerStatusPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [escalations]
+      operationId: recordBlockerStatus
+      summary: "Record a blocker's RAG for this cycle; append-only. A blocker red for the configured number of consecutive cycles gets one open T16 ask (REQ-PB-082) (meeting.prepare). 409 blocker_status.exists; 422 meeting.not_in_session, blocker_status.record_not_found."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlockerStatusCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlockerStatus" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/executive-decisions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [executive-decisions]
+      operationId: listExecutiveDecisions
+      summary: "The T16 Executive Decision Log (REQ-PB-081): the nine T16 columns on the canonical decision records of kind executive; overdue=true lists open or deferred asks past their decision date (Asia/Riyadh business day) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ExecutiveDecisionStatusQuery"
+        - $ref: "#/components/parameters/OverdueQuery"
+        - $ref: "#/components/parameters/AskOriginQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutiveDecisionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [executive-decisions]
+      operationId: createExecutiveDecision
+      summary: "Raise an executive ask with decision, why now, options, recommendation, impact of delay, decision owner and required date (executive_decision.create; TL, TO, SEC; REQ-S10-012). 400 executive_decision.field_required (e.g. at /whyNow), executive_decision.options_too_few; 409 executive_decision.blocker_ask_open; 422 executive_decision.owner_not_executive, executive_decision.required_date_past."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExecutiveDecisionCreate" }
+      responses:
+        "201":
+          description: "Created (open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutiveDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/executive-decisions/{decisionId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/DecisionId"
+    get:
+      tags: [executive-decisions]
+      operationId: getExecutiveDecision
+      summary: "Read one T16 entry with its options, SLA, escalations and any missing elements (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutiveDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [executive-decisions]
+      operationId: updateExecutiveDecision
+      summary: "Complete or edit an open ask (executive_decision.create). 422 executive_decision.closed, executive_decision.owner_not_executive, executive_decision.option_unknown."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExecutiveDecisionUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutiveDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/executive-decisions/{decisionId}/outcome:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/DecisionId"
+    post:
+      tags: [executive-decisions]
+      operationId: recordExecutiveDecisionOutcome
+      summary: "Record the Outcome: decided (closes the ask; it leaves the overdue list), deferred (new date) or cancelled (executive_decision.decide; SP, BO, FIN; the decision owner or an active delegate). A business decision by a person; never automatic. 403 executive_decision.not_owner; 422 executive_decision.closed, executive_decision.option_unknown, executive_decision.defer_date_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExecutiveDecisionOutcome" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutiveDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/escalations:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [escalations]
+      operationId: listDecisionEscalations
+      summary: "Decision-SLA escalations of the transformation's executive asks, each with its target or routing error and the delay impact (REQ-S12-011; transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/DecisionIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionEscalationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/escalation-rules:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [escalations]
+      operationId: listEscalationRules
+      summary: "The decision-SLA and blocker-red rules in force; isDefault marks a kind without a stored rule (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EscalationRulePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [escalations]
+      operationId: createEscalationRule
+      summary: "Store the rule of one kind (escalation_rule.configure; TL, TO). 409 escalation_rule.exists; 422 escalation_rule.shape, forum.party_unknown."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EscalationRuleCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EscalationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/escalation-rules/{ruleKind}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/EscalationRuleKindPath"
+    patch:
+      tags: [escalations]
+      operationId: updateEscalationRule
+      summary: "Change the stored rule of one kind (escalation_rule.configure); 404 when the kind has no stored rule. 422 escalation_rule.shape, forum.party_unknown."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EscalationRuleUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EscalationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -11504,6 +12831,86 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    ForumId:
+      name: forumId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ForumParticipantId:
+      name: forumParticipantId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MeetingSeriesId:
+      name: meetingSeriesId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MeetingId:
+      name: meetingId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AgendaItemId:
+      name: agendaItemId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MeetingAttendanceId:
+      name: meetingAttendanceId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    EscalationRuleKindPath:
+      name: ruleKind
+      in: path
+      required: true
+      schema: { type: string, enum: [decision_sla, blocker_red] }
+    ForumStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, archived] }
+    ForumIdQuery:
+      name: forumId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MeetingSeriesStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, ended] }
+    MeetingStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/MeetingStatus" }
+    FromDateQuery:
+      name: from
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/BusinessDate" }
+    ToDateQuery:
+      name: to
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/BusinessDate" }
+    ExecutiveDecisionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, decided, deferred, cancelled] }
+    AskOriginQuery:
+      name: origin
+      in: query
+      required: false
+      schema: { type: string, enum: [api, agenda, blocker_escalation, earlier_record] }
+    DecisionIdQuery:
+      name: decisionId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
     RaidEntryId:
       name: raidEntryId
       in: path
@@ -12342,6 +13749,12 @@ components:
         - corrective_action.manage
         - corrective_rule.configure
         - budget.edit
+        - forum.configure
+        - meeting.prepare
+        - meeting.chair
+        - executive_decision.create
+        - executive_decision.decide
+        - escalation_rule.configure
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -19416,4 +20829,733 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/BudgetLine" } }
+        nextCursor: { type: [string, "null"] }
+
+    # ---- P4 slice D (T-DG4-ARCH-05; ADR-0032) --------------------------------------------------------------------
+    MeetingOutputKind:
+      type: string
+      enum: [decision, unblocker, benefit_view, integrated_status, decision_log, milestone, action, raid, test, evidence, recommendation, benefit_evidence, forecast, corrective_action]
+      description: "The outputs of the five operating-system layers (B0093 'Outputs'), one code per named output."
+    MeetingStatus:
+      type: string
+      enum: [scheduled, agenda_published, in_session, held, minutes_published, cancelled]
+    ForumSourceTexts:
+      type: object
+      description: "The B0093 row of a template forum, verbatim (English) and provisional Arabic (arProvisional)."
+      required: [layerEn, cadenceEn, purposeEn, participantsEn, outputsEn, layerAr, cadenceAr, purposeAr, participantsAr, outputsAr, arProvisional, sourceRef]
+      additionalProperties: false
+      properties:
+        layerEn: { type: string }
+        cadenceEn: { type: string }
+        purposeEn: { type: string }
+        participantsEn: { type: string }
+        outputsEn: { type: string }
+        layerAr: { type: string }
+        cadenceAr: { type: string }
+        purposeAr: { type: string }
+        participantsAr: { type: string }
+        outputsAr: { type: string }
+        arProvisional: { type: boolean }
+        sourceRef: { type: string }
+    Forum:
+      type: object
+      description: "A governance forum of a transformation (REQ-PB-060, REQ-S10-005, REQ-S16-019 Forum)."
+      required: [id, transformationId, templateKey, source, ordinal, nameEn, nameAr, cadenceLabel, purpose, participantsLabel, outputsLabel, chairPartyCode, secretaryUserId, participantParties, outputKinds, publishRequiresAnyOutput, executiveAsksOnly, quorumMin, cutoffWorkingDays, agendaMaxItems, lateItemsRule, status, activeSeriesId, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        templateKey: { type: [string, "null"], enum: [executive_steerco, transformation_review, workstream_review, rapid_response, value_review, null] }
+        source: { oneOf: [{ $ref: "#/components/schemas/ForumSourceTexts" }, { type: "null" }] }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        cadenceLabel: { type: string, minLength: 1, maxLength: 200 }
+        purpose: { type: string, minLength: 1, maxLength: 2000 }
+        participantsLabel: { type: string, minLength: 1, maxLength: 500 }
+        outputsLabel: { type: string, minLength: 1, maxLength: 500 }
+        chairPartyCode: { oneOf: [{ $ref: "#/components/schemas/PartyCode" }, { type: "null" }] }
+        secretaryUserId: { $ref: "#/components/schemas/NullableUuid" }
+        participantParties: { type: array, maxItems: 18, items: { $ref: "#/components/schemas/PartyCode" } }
+        outputKinds: { type: array, minItems: 1, maxItems: 14, items: { $ref: "#/components/schemas/MeetingOutputKind" } }
+        publishRequiresAnyOutput: { type: array, maxItems: 14, items: { $ref: "#/components/schemas/MeetingOutputKind" }, description: "Minutes are published only when at least one output of one of these kinds exists (Value Review: benefit_evidence, forecast)." }
+        executiveAsksOnly: { type: boolean, description: "Escalate decisions, not status (B0102): the agenda takes executive asks only." }
+        quorumMin: { type: [integer, "null"], minimum: 1, maximum: 100, description: "null = quorum not configured (no check), never 'met'." }
+        cutoffWorkingDays: { type: integer, minimum: 0, maximum: 20 }
+        agendaMaxItems: { type: [integer, "null"], minimum: 1, maximum: 50 }
+        lateItemsRule: { type: string, enum: [flag, refuse] }
+        status: { type: string, enum: [active, archived] }
+        activeSeriesId: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    ForumCreate:
+      type: object
+      required: [nameEn, nameAr, cadenceLabel, purpose, participantsLabel, outputsLabel, outputKinds]
+      additionalProperties: false
+      properties:
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        cadenceLabel: { type: string, minLength: 1, maxLength: 200 }
+        purpose: { type: string, minLength: 1, maxLength: 2000 }
+        participantsLabel: { type: string, minLength: 1, maxLength: 500 }
+        outputsLabel: { type: string, minLength: 1, maxLength: 500 }
+        chairPartyCode: { oneOf: [{ $ref: "#/components/schemas/PartyCode" }, { type: "null" }] }
+        secretaryUserId: { $ref: "#/components/schemas/NullableUuid" }
+        participantParties: { type: array, maxItems: 18, items: { $ref: "#/components/schemas/PartyCode" } }
+        outputKinds: { type: array, minItems: 1, maxItems: 14, items: { $ref: "#/components/schemas/MeetingOutputKind" } }
+        publishRequiresAnyOutput: { type: array, maxItems: 14, items: { $ref: "#/components/schemas/MeetingOutputKind" } }
+        executiveAsksOnly: { type: boolean }
+        quorumMin: { type: [integer, "null"], minimum: 1, maximum: 100 }
+        cutoffWorkingDays: { type: integer, minimum: 0, maximum: 20 }
+        agendaMaxItems: { type: [integer, "null"], minimum: 1, maximum: 50 }
+        lateItemsRule: { type: string, enum: [flag, refuse] }
+    ForumUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        cadenceLabel: { type: string, minLength: 1, maxLength: 200 }
+        purpose: { type: string, minLength: 1, maxLength: 2000 }
+        participantsLabel: { type: string, minLength: 1, maxLength: 500 }
+        outputsLabel: { type: string, minLength: 1, maxLength: 500 }
+        chairPartyCode: { oneOf: [{ $ref: "#/components/schemas/PartyCode" }, { type: "null" }] }
+        secretaryUserId: { $ref: "#/components/schemas/NullableUuid" }
+        participantParties: { type: array, maxItems: 18, items: { $ref: "#/components/schemas/PartyCode" } }
+        outputKinds: { type: array, minItems: 1, maxItems: 14, items: { $ref: "#/components/schemas/MeetingOutputKind" } }
+        publishRequiresAnyOutput: { type: array, maxItems: 14, items: { $ref: "#/components/schemas/MeetingOutputKind" } }
+        executiveAsksOnly: { type: boolean }
+        quorumMin: { type: [integer, "null"], minimum: 1, maximum: 100 }
+        cutoffWorkingDays: { type: integer, minimum: 0, maximum: 20 }
+        agendaMaxItems: { type: [integer, "null"], minimum: 1, maximum: 50 }
+        lateItemsRule: { type: string, enum: [flag, refuse] }
+        status: { type: string, enum: [archived], description: "Archiving is final." }
+    ForumParticipant:
+      type: object
+      required: [id, forumId, userId, groupId, countsForQuorum, status, removedAt, removedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        forumId: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/NullableUuid" }
+        groupId: { $ref: "#/components/schemas/NullableUuid" }
+        countsForQuorum: { type: boolean }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    ForumParticipantCreate:
+      type: object
+      additionalProperties: false
+      description: "Exactly one of userId and groupId."
+      oneOf:
+        - required: [userId]
+        - required: [groupId]
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        groupId: { $ref: "#/components/schemas/Uuid" }
+        countsForQuorum: { type: boolean }
+    MeetingSeries:
+      type: object
+      description: "The recurrence of a forum's meetings (REQ-S10-005). ruleVersion steps by 1 on every recurrence change."
+      required: [id, transformationId, forumId, frequency, intervalCount, weekdays, monthDay, startDate, endDate, startTime, durationMinutes, timezone, nonWorkingDayRule, horizonDays, location, ruleVersion, generatedThrough, status, endedAt, endedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        forumId: { $ref: "#/components/schemas/Uuid" }
+        frequency: { type: string, enum: [daily, weekly, monthly] }
+        intervalCount: { type: integer, minimum: 1, maximum: 12 }
+        weekdays: { type: [array, "null"], minItems: 1, maxItems: 7, uniqueItems: true, items: { $ref: "#/components/schemas/Weekday" } }
+        monthDay: { type: [integer, "null"], minimum: 1, maximum: 28 }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        endDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        startTime: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        durationMinutes: { type: integer, minimum: 15, maximum: 480 }
+        timezone: { type: string, minLength: 1, maxLength: 64 }
+        nonWorkingDayRule: { type: string, enum: [next_working_day, skip, keep] }
+        horizonDays: { type: integer, minimum: 7, maximum: 366 }
+        location: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        ruleVersion: { type: integer, minimum: 1 }
+        generatedThrough: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [active, ended] }
+        endedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        endedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    MeetingSeriesCreate:
+      type: object
+      required: [forumId, frequency, intervalCount, startDate, startTime, durationMinutes]
+      additionalProperties: false
+      properties:
+        forumId: { $ref: "#/components/schemas/Uuid" }
+        frequency: { type: string, enum: [daily, weekly, monthly] }
+        intervalCount: { type: integer, minimum: 1, maximum: 12 }
+        weekdays: { type: [array, "null"], minItems: 1, maxItems: 7, uniqueItems: true, items: { $ref: "#/components/schemas/Weekday" } }
+        monthDay: { type: [integer, "null"], minimum: 1, maximum: 28 }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        endDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        startTime: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        durationMinutes: { type: integer, minimum: 15, maximum: 480 }
+        timezone: { type: string, minLength: 1, maxLength: 64, description: "Default: the organization's calendar timezone (Asia/Riyadh)." }
+        nonWorkingDayRule: { type: string, enum: [next_working_day, skip, keep] }
+        horizonDays: { type: integer, minimum: 7, maximum: 366 }
+        location: { type: [string, "null"], minLength: 1, maxLength: 300 }
+    MeetingSeriesUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        frequency: { type: string, enum: [daily, weekly, monthly] }
+        intervalCount: { type: integer, minimum: 1, maximum: 12 }
+        weekdays: { type: [array, "null"], minItems: 1, maxItems: 7, uniqueItems: true, items: { $ref: "#/components/schemas/Weekday" } }
+        monthDay: { type: [integer, "null"], minimum: 1, maximum: 28 }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        endDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        startTime: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        durationMinutes: { type: integer, minimum: 15, maximum: 480 }
+        timezone: { type: string, minLength: 1, maxLength: 64 }
+        nonWorkingDayRule: { type: string, enum: [next_working_day, skip, keep] }
+        horizonDays: { type: integer, minimum: 7, maximum: 366 }
+        location: { type: [string, "null"], minLength: 1, maxLength: 300 }
+    MeetingSeriesResult:
+      type: object
+      description: "The series after the change, and the meetings the change created, cancelled (future, scheduled, without content) and kept (past, started or with content)."
+      required: [series, createdMeetingIds, cancelledMeetingIds, keptMeetingIds, generationUnknownReason]
+      additionalProperties: false
+      properties:
+        series: { $ref: "#/components/schemas/MeetingSeries" }
+        createdMeetingIds: { type: array, maxItems: 400, items: { $ref: "#/components/schemas/Uuid" } }
+        cancelledMeetingIds: { type: array, maxItems: 400, items: { $ref: "#/components/schemas/Uuid" } }
+        keptMeetingIds: { type: array, maxItems: 400, items: { $ref: "#/components/schemas/Uuid" } }
+        generationUnknownReason: { type: [string, "null"], enum: [calendar_not_configured, null], description: "No meeting could be generated because the working-day calendar is not configured." }
+    Meeting:
+      type: object
+      description: "One forum meeting (REQ-S16-019 Meeting). The presentation mode and the printable pack read this same record (M0212)."
+      required: [id, transformationId, forumId, seriesId, seriesRuleVersion, occurrenceDate, scheduledDate, startsAt, endsAt, timezone, location, chairUserId, secretaryUserId, quorumMin, presentCount, quorumState, cutoffDate, cutoffUnknownReason, status, cancelReason, cancelNote, cancelledAt, cancelledBy, startedAt, heldAt, createdSource, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        forumId: { $ref: "#/components/schemas/Uuid" }
+        seriesId: { $ref: "#/components/schemas/NullableUuid" }
+        seriesRuleVersion: { type: [integer, "null"], minimum: 1 }
+        occurrenceDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        scheduledDate: { $ref: "#/components/schemas/BusinessDate" }
+        startsAt: { $ref: "#/components/schemas/Timestamp" }
+        endsAt: { $ref: "#/components/schemas/Timestamp" }
+        timezone: { type: string }
+        location: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        chairUserId: { $ref: "#/components/schemas/NullableUuid" }
+        secretaryUserId: { $ref: "#/components/schemas/NullableUuid" }
+        quorumMin: { type: [integer, "null"], minimum: 1, maximum: 100 }
+        presentCount: { type: integer, minimum: 0, description: "Attendance rows present and counting for quorum." }
+        quorumState: { type: string, enum: [not_configured, met, not_met] }
+        cutoffDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        cutoffUnknownReason: { type: [string, "null"], enum: [calendar_not_configured, null] }
+        status: { $ref: "#/components/schemas/MeetingStatus" }
+        cancelReason: { type: [string, "null"], enum: [series_regenerated, series_ended, manual, null] }
+        cancelNote: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+        cancelledAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        cancelledBy: { $ref: "#/components/schemas/NullableUuid" }
+        startedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        heldAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        createdSource: { type: string, enum: [api, worker] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    MeetingCreate:
+      type: object
+      required: [forumId, scheduledDate, startTime, durationMinutes]
+      additionalProperties: false
+      properties:
+        forumId: { $ref: "#/components/schemas/Uuid" }
+        scheduledDate: { $ref: "#/components/schemas/BusinessDate" }
+        startTime: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        durationMinutes: { type: integer, minimum: 15, maximum: 480 }
+        location: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        chairUserId: { $ref: "#/components/schemas/NullableUuid" }
+        secretaryUserId: { $ref: "#/components/schemas/NullableUuid" }
+    MeetingUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        scheduledDate: { $ref: "#/components/schemas/BusinessDate" }
+        startTime: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        durationMinutes: { type: integer, minimum: 15, maximum: 480 }
+        location: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        chairUserId: { $ref: "#/components/schemas/NullableUuid" }
+        secretaryUserId: { $ref: "#/components/schemas/NullableUuid" }
+        quorumMin: { type: [integer, "null"], minimum: 1, maximum: 100 }
+    ExecutiveAskBrief:
+      type: object
+      description: "A draft executive ask on an agenda item; publication moves it into a T16 decision and clears it."
+      required: [decisionRequired, whyNow, options, recommendation, impactOfDelay, ownerUserId, requiredDate]
+      additionalProperties: false
+      properties:
+        decisionRequired: { type: [string, "null"], minLength: 1, maxLength: 500 }
+        whyNow: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        options: { type: [array, "null"], minItems: 1, maxItems: 26, items: { type: string, minLength: 1, maxLength: 300 } }
+        recommendation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        impactOfDelay: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        requiredDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    ExecutiveAskBriefInput:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        decisionRequired: { type: [string, "null"], minLength: 1, maxLength: 500 }
+        whyNow: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        options: { type: [array, "null"], minItems: 1, maxItems: 26, items: { type: string, minLength: 1, maxLength: 300 } }
+        recommendation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        impactOfDelay: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        requiredDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    AgendaItem:
+      type: object
+      description: "One agenda item (REQ-S16-019 AgendaItem). An executive ask links its T16 decision (decisionId) or, while a draft, carries a brief."
+      required: [id, meetingId, ordinal, itemKind, title, description, presenterUserId, durationMinutes, materialsEvidenceIds, decisionId, brief, missingElements, late, status, publishedAt, publishedBy, outcome, outcomeQuorumPresent, outcomeRecordedAt, outcomeRecordedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        itemKind: { type: string, enum: [executive_ask, discussion, information] }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        presenterUserId: { $ref: "#/components/schemas/NullableUuid" }
+        durationMinutes: { type: [integer, "null"], minimum: 1, maximum: 480 }
+        materialsEvidenceIds: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/Uuid" } }
+        decisionId: { $ref: "#/components/schemas/NullableUuid" }
+        brief: { oneOf: [{ $ref: "#/components/schemas/ExecutiveAskBrief" }, { type: "null" }] }
+        missingElements: { type: array, maxItems: 7, items: { type: string, enum: [decision_required, why_now, options, recommendation, impact_of_delay, decision_owner, required_date] }, description: "For an executive ask: the elements it does not state yet (empty when complete)." }
+        late: { type: boolean }
+        status: { type: string, enum: [draft, published, closed, withdrawn] }
+        publishedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        publishedBy: { $ref: "#/components/schemas/NullableUuid" }
+        outcome: { type: [string, "null"], enum: [decided, deferred, noted, null] }
+        outcomeQuorumPresent: { type: [integer, "null"], minimum: 0 }
+        outcomeRecordedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        outcomeRecordedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    AgendaItemCreate:
+      type: object
+      required: [itemKind, title]
+      additionalProperties: false
+      properties:
+        itemKind: { type: string, enum: [executive_ask, discussion, information] }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        presenterUserId: { $ref: "#/components/schemas/NullableUuid" }
+        durationMinutes: { type: [integer, "null"], minimum: 1, maximum: 480 }
+        materialsEvidenceIds: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/Uuid" } }
+        decisionId: { $ref: "#/components/schemas/Uuid", description: "An open executive ask of this transformation (executive_ask only; not with a brief)." }
+        brief: { $ref: "#/components/schemas/ExecutiveAskBriefInput" }
+    AgendaItemUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        presenterUserId: { $ref: "#/components/schemas/NullableUuid" }
+        durationMinutes: { type: [integer, "null"], minimum: 1, maximum: 480 }
+        materialsEvidenceIds: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/Uuid" } }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        decisionId: { $ref: "#/components/schemas/NullableUuid" }
+        brief: { oneOf: [{ $ref: "#/components/schemas/ExecutiveAskBriefInput" }, { type: "null" }] }
+    AgendaItemOutcome:
+      type: object
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [decided, deferred, noted] }
+        chosenOptionLabel: { type: string, pattern: "^[A-Z]$" }
+        outcomeText: { type: string, minLength: 1, maxLength: 8000, description: "Required for decided (the T16 Outcome)." }
+        decisionVersion: { type: integer, minimum: 1, description: "Required for decided: the T16 decision version the outcome applies to (stale -> 409)." }
+    MeetingAttendance:
+      type: object
+      description: "One person's attendance at one meeting (REQ-S16-019 Attendance)."
+      required: [id, meetingId, userId, attendance, countsForQuorum, onBehalfOfUserId, note, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        attendance: { type: string, enum: [present, absent, apologies] }
+        countsForQuorum: { type: boolean }
+        onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    MeetingAttendanceCreate:
+      type: object
+      required: [userId, attendance]
+      additionalProperties: false
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        attendance: { type: string, enum: [present, absent, apologies] }
+        onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    MeetingAttendanceUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        attendance: { type: string, enum: [present, absent, apologies] }
+        onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    MeetingMinutes:
+      type: object
+      description: "The minutes of one meeting (REQ-S16-019 Minutes); immutable once published."
+      required: [id, meetingId, body, status, approvedAt, approvedBy, publishedAt, publishedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        body: { type: string, minLength: 1, maxLength: 50000 }
+        status: { type: string, enum: [draft, approved, published] }
+        approvedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        approvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        publishedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        publishedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    MeetingMinutesCreate:
+      type: object
+      required: [body]
+      additionalProperties: false
+      properties:
+        body: { type: string, minLength: 1, maxLength: 50000 }
+    MeetingMinutesUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        body: { type: string, minLength: 1, maxLength: 50000 }
+        status: { type: string, enum: [draft], description: "Return approved minutes to draft (the meeting's chair)." }
+    MeetingOutput:
+      type: object
+      required: [id, meetingId, agendaItemId, outputKind, recordType, recordId, note, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        agendaItemId: { $ref: "#/components/schemas/NullableUuid" }
+        outputKind: { $ref: "#/components/schemas/MeetingOutputKind" }
+        recordType: { type: [string, "null"], enum: [decision, raid_entry, dependency, benefit, milestone, action_item, evidence, benefit_evidence, benefit_measurement, corrective_case, null] }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    MeetingOutputCreate:
+      type: object
+      required: [outputKind]
+      additionalProperties: false
+      properties:
+        outputKind: { $ref: "#/components/schemas/MeetingOutputKind" }
+        agendaItemId: { $ref: "#/components/schemas/Uuid" }
+        recordType: { type: string, enum: [decision, raid_entry, dependency, benefit, milestone, action_item, evidence, benefit_evidence, benefit_measurement, corrective_case] }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: string, minLength: 1, maxLength: 4000 }
+    MeetingAction:
+      type: object
+      description: "A meeting action link (REQ-S16-019 MeetingActionLink) with the canonical action it links."
+      required: [id, meetingId, agendaItemId, actionItemId, linkKind, overdue, action, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        agendaItemId: { $ref: "#/components/schemas/NullableUuid" }
+        actionItemId: { $ref: "#/components/schemas/Uuid" }
+        linkKind: { type: string, enum: [assigned, reviewed] }
+        overdue: { type: boolean, description: "Due date before today's business date and status open or in_progress." }
+        action: { $ref: "#/components/schemas/RaidAction" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    MeetingActionCreate:
+      type: object
+      required: [title, ownerUserId]
+      additionalProperties: false
+      properties:
+        agendaItemId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    BlockerStatus:
+      type: object
+      description: "A blocker's RAG in one review cycle (one meeting); append-only (REQ-PB-082)."
+      required: [id, meetingId, forumId, cycleDate, sourceRecordType, sourceRecordId, rag, note, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        forumId: { $ref: "#/components/schemas/Uuid" }
+        cycleDate: { $ref: "#/components/schemas/BusinessDate" }
+        sourceRecordType: { type: string, enum: [raid_entry, dependency, corrective_case, initiative, milestone] }
+        sourceRecordId: { $ref: "#/components/schemas/Uuid" }
+        rag: { type: string, enum: [red, amber, green, unknown] }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    BlockerStatusCreate:
+      type: object
+      required: [sourceRecordType, sourceRecordId, rag]
+      additionalProperties: false
+      properties:
+        sourceRecordType: { type: string, enum: [raid_entry, dependency, corrective_case, initiative, milestone] }
+        sourceRecordId: { $ref: "#/components/schemas/Uuid" }
+        rag: { type: string, enum: [red, amber, green, unknown] }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    ExecutiveDecisionOptionInput:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+    ExecutiveDecision:
+      type: object
+      description: "A T16 Executive Decision Log entry (B0130; REQ-PB-081) on the canonical decision record of kind executive. A null T16 column on an earlier record (askOrigin earlier_record) is Unknown."
+      required: [id, transformationId, code, decision, whyNow, options, recommendationOptionLabel, recommendationText, ownerUserId, ownerStatus, decisionDate, impactOfDelay, outcome, chosenOptionLabel, status, overdue, askOrigin, createdSource, sourceAgendaItemId, decisionRightId, slaDueDate, slaUnknownReason, blockerRecordType, blockerRecordId, missingElements, escalationLevel, decidedAt, decidedBy, decidedOnBehalfOfUserId, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^DEC-[0-9]{2,6}$" }
+        decision: { type: string, minLength: 1, maxLength: 500 }
+        whyNow: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        options: { type: array, maxItems: 26, items: { $ref: "#/components/schemas/DecisionOption" } }
+        recommendationOptionLabel: { type: [string, "null"], pattern: "^[A-Z]$" }
+        recommendationText: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerStatus: { type: string, enum: [assigned, unassigned] }
+        decisionDate: { oneOf: [{ $ref: "#/components/schemas/BusinessDate" }, { type: "null" }], description: "The required date (T16 'Decision date')." }
+        impactOfDelay: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        outcome: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        chosenOptionLabel: { type: [string, "null"], pattern: "^[A-Z]$" }
+        status: { type: string, enum: [open, decided, deferred, cancelled] }
+        overdue: { type: boolean, description: "Open or deferred and the decision date is before today's business date." }
+        askOrigin: { type: string, enum: [api, agenda, blocker_escalation, earlier_record] }
+        createdSource: { type: [string, "null"], enum: [api, worker, null] }
+        sourceAgendaItemId: { $ref: "#/components/schemas/NullableUuid" }
+        decisionRightId: { $ref: "#/components/schemas/NullableUuid" }
+        slaDueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        slaUnknownReason: { type: [string, "null"], enum: [calendar_not_configured, no_steerco_scheduled, no_release_date, null] }
+        blockerRecordType: { type: [string, "null"], enum: [raid_entry, dependency, corrective_case, initiative, milestone, null] }
+        blockerRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        missingElements: { type: array, maxItems: 7, items: { type: string, enum: [decision_required, why_now, options, recommendation, impact_of_delay, decision_owner, required_date] } }
+        escalationLevel: { type: integer, minimum: 0, maximum: 5 }
+        decidedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedOnBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    ExecutiveDecisionCreate:
+      type: object
+      description: "An executive ask states all seven elements (REQ-S10-012); a missing one is a 400 with the element's pointer."
+      required: [title, whyNow, options, recommendation, impactOfDelay, ownerUserId, requiredDate]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500, description: "The decision required." }
+        whyNow: { type: string, minLength: 1, maxLength: 4000 }
+        options: { type: array, minItems: 2, maxItems: 26, items: { $ref: "#/components/schemas/ExecutiveDecisionOptionInput" }, description: "Labelled A, B, C … in order." }
+        recommendation: { type: string, minLength: 1, maxLength: 4000, description: "An option label (A-Z) or a recommendation text." }
+        impactOfDelay: { type: string, minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        requiredDate: { $ref: "#/components/schemas/BusinessDate" }
+        context: { type: string, minLength: 1, maxLength: 20000 }
+        decisionRightId: { $ref: "#/components/schemas/Uuid" }
+        blockerRecordType: { type: string, enum: [raid_entry, dependency, corrective_case, initiative, milestone] }
+        blockerRecordId: { $ref: "#/components/schemas/Uuid" }
+    ExecutiveDecisionUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        whyNow: { type: string, minLength: 1, maxLength: 4000 }
+        options: { type: array, minItems: 2, maxItems: 26, items: { $ref: "#/components/schemas/ExecutiveDecisionOptionInput" }, description: "Replaces the active options (earlier ones are withdrawn, never deleted)." }
+        recommendation: { type: string, minLength: 1, maxLength: 4000 }
+        impactOfDelay: { type: string, minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        requiredDate: { $ref: "#/components/schemas/BusinessDate" }
+        context: { type: [string, "null"], minLength: 1, maxLength: 20000 }
+        decisionRightId: { $ref: "#/components/schemas/NullableUuid" }
+    ExecutiveDecisionOutcome:
+      type: object
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [decided, deferred, cancelled] }
+        chosenOptionLabel: { type: string, pattern: "^[A-Z]$" }
+        outcomeText: { type: string, minLength: 1, maxLength: 8000, description: "Required for decided and cancelled." }
+        deferUntil: { $ref: "#/components/schemas/BusinessDate", description: "Required for deferred; after today." }
+    DecisionEscalation:
+      type: object
+      description: "One escalation of an executive ask whose SLA expired (REQ-S12-011); never a decision."
+      required: [id, decisionId, decisionCode, slaDueDate, businessDate, level, partyCode, targetUserId, targetGroupId, routingError, delayImpact, escalatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        decisionId: { $ref: "#/components/schemas/Uuid" }
+        decisionCode: { type: string }
+        slaDueDate: { $ref: "#/components/schemas/BusinessDate" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        level: { type: integer, minimum: 1, maximum: 5 }
+        partyCode: { oneOf: [{ $ref: "#/components/schemas/PartyCode" }, { type: "null" }] }
+        targetUserId: { $ref: "#/components/schemas/NullableUuid" }
+        targetGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        routingError: { type: [string, "null"], enum: [party_unmapped, party_not_executive, no_next_authority, null] }
+        delayImpact: { type: [string, "null"], minLength: 1, maxLength: 4000, description: "null = Impact of delay not stated." }
+        escalatedAt: { $ref: "#/components/schemas/Timestamp" }
+    EscalationRule:
+      type: object
+      required: [id, ruleKind, isDefault, enabled, escalationChain, redCycles, deadlineWorkingDays, ownerPartyCode, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/NullableUuid" }
+        ruleKind: { type: string, enum: [decision_sla, blocker_red] }
+        isDefault: { type: boolean }
+        enabled: { type: boolean }
+        escalationChain: { type: [array, "null"], minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/PartyCode" } }
+        redCycles: { type: [integer, "null"], minimum: 2, maximum: 12 }
+        deadlineWorkingDays: { type: [integer, "null"], minimum: 1, maximum: 60 }
+        ownerPartyCode: { oneOf: [{ $ref: "#/components/schemas/PartyCode" }, { type: "null" }] }
+        version: { type: [integer, "null"], minimum: 1 }
+        createdAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        updatedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+    EscalationRuleCreate:
+      type: object
+      required: [ruleKind]
+      additionalProperties: false
+      properties:
+        ruleKind: { type: string, enum: [decision_sla, blocker_red] }
+        enabled: { type: boolean }
+        escalationChain: { type: array, minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/PartyCode" } }
+        redCycles: { type: integer, minimum: 2, maximum: 12 }
+        deadlineWorkingDays: { type: integer, minimum: 1, maximum: 60 }
+        ownerPartyCode: { $ref: "#/components/schemas/PartyCode" }
+    EscalationRuleUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean }
+        escalationChain: { type: array, minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/PartyCode" } }
+        redCycles: { type: integer, minimum: 2, maximum: 12 }
+        deadlineWorkingDays: { type: integer, minimum: 1, maximum: 60 }
+        ownerPartyCode: { $ref: "#/components/schemas/PartyCode" }
+    ForumPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Forum" } }
+        nextCursor: { type: [string, "null"] }
+    ForumParticipantPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ForumParticipant" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingSeriesPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MeetingSeries" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Meeting" } }
+        nextCursor: { type: [string, "null"] }
+    AgendaItemPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AgendaItem" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingAttendancePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MeetingAttendance" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingOutputPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MeetingOutput" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingActionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MeetingAction" } }
+        nextCursor: { type: [string, "null"] }
+    BlockerStatusPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BlockerStatus" } }
+        nextCursor: { type: [string, "null"] }
+    ExecutiveDecisionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ExecutiveDecision" } }
+        nextCursor: { type: [string, "null"] }
+    DecisionEscalationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/DecisionEscalation" } }
+        nextCursor: { type: [string, "null"] }
+    EscalationRulePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/EscalationRule" } }
         nextCursor: { type: [string, "null"] }
