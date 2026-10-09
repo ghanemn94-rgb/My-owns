@@ -169,3 +169,7 @@ A `rejected` or `changes_requested` gate can be resubmitted. That creates submis
   - A read-only auditor (AUD) gets 403 on submit and on decide.
   - Every mutation writes its audit event (the database refuses to commit otherwise, ADR-0016).
 - **Required e2e test (qa-verifier):** the G1 happy path with two distinct synthetic users (submitter TL, approver SP).
+
+## Correction note (2026-10-09, T-DG4-ARCH-07; D-089 R1)
+
+Two sentences of §2 were not true of the DG2/DG3 code: "Write all the audit events and an outbox event `gate.submitted`" (Submission, step 3) and "writes the audit events and an outbox event `gate.decided`" (Decision). As built through DG3, `workflows/gates.ts` writes the audit events and **no** outbox event; no migration or other module writes a gate event, so no backlog exists. The events are specified in ADR-0035 §7 (payloads, idempotency keys, consumers) and exist only once the slice H implementer (BE-K) merges them. Nothing else in this ADR changes. This note is wording only; whether it needs a DG2 record is the orchestrator's decision (D-089 R1).

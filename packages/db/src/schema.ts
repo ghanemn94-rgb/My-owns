@@ -1161,6 +1161,8 @@ export interface GateSubmissionCriterionTable {
   completeness: string;
   detail: JsonDefault;
   evaluated_at: TimestampDefault;
+  /** 0051 (D-089 Q2): the accepted gate exception that covers this incomplete mandatory criterion; NULL otherwise. */
+  gate_exception_id: string | null;
 }
 
 export interface GateDecisionTable {
@@ -4178,6 +4180,294 @@ export type LessonRow = Selectable<LessonTable>;
 export type ImprovementItemRow = Selectable<ImprovementItemTable>;
 export type ClosureRecordRow = Selectable<ClosureRecordTable>;
 
+// ---- P4 slice H (migrations 0051-0052; T-DG4-ARCH-07; ADR-0035, ADR-0036). Generated from the DDL by
+// docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/gen-schema.py. numeric -> string (decimal), date -> "YYYY-MM-DD".
+export interface PhaseDefinitionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  gate_code: string;
+  source_name_en: string;
+  name_ar: string;
+  source_title_en: string;
+  title_ar: string;
+  source_purpose_en: string;
+  purpose_ar: string;
+  source_key_outputs_en: string;
+  key_outputs_ar: string;
+  source_objective_en: string;
+  objective_ar: string;
+  source_ref: string;
+  ar_provisional: Generated<boolean>;
+  created_at: TimestampDefault;
+}
+
+export interface PhaseStepDefinitionTable {
+  id: string;
+  key: string;
+  phase_code: string;
+  ordinal: number;
+  source_procedure_en: string;
+  procedure_ar: string;
+  required_evidence_en: string;
+  required_evidence_ar: string;
+  default_owner_role_code: string;
+  reviewer_role_code: string;
+  completion_rule: string;
+  source_ref: string;
+  ar_provisional: Generated<boolean>;
+  created_at: TimestampDefault;
+}
+
+export interface PhaseStepTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  step_key: string;
+  phase_code: string;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  enabled_by_gate_decision_id: string | null;
+  review_requested_by: string | null;
+  review_requested_at: NullableTimestamp;
+  completion_check: NullableJson;
+  reviewed_by: string | null;
+  reviewed_at: NullableTimestamp;
+  review_outcome: string | null;
+  review_note: string | null;
+  completed_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface PhaseStepEvidenceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  phase_step_id: string;
+  evidence_id: string;
+  status: Generated<string>;
+  removed_by: string | null;
+  removed_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GateCriterionReviewTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_submission_id: string;
+  criterion_key: string;
+  review_no: number;
+  reviewer_user_id: string;
+  finding: string;
+  open_condition: string | null;
+  risk_note: string | null;
+  raid_entry_id: string | null;
+  recommendation: string;
+  rationale: string;
+  reviewed_at: TimestampDefault;
+}
+
+export interface GateExceptionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_instance_id: string;
+  gate_code: string;
+  criterion_key: string;
+  reason: string;
+  scope: string;
+  compensating_action: string;
+  compensating_owner_user_id: string;
+  expires_on: string;
+  status: Generated<string>;
+  requested_by: string;
+  requested_at: TimestampDefault;
+  decided_by: string | null;
+  decided_on_behalf_of: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  revoked_by: string | null;
+  revoked_at: NullableTimestamp;
+  revoke_reason: string | null;
+  expiry_notified_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GateDecisionScaleScopeTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_decision_id: string;
+  initiative_id: string;
+  business_unit_id: string;
+  note: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface GateDecisionConditionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_decision_id: string;
+  ordinal: number;
+  condition_text: string;
+  owner_user_id: string;
+  due_date: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ScaleTransitionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  business_unit_id: string;
+  gate_decision_id: string;
+  note: string | null;
+  transitioned_by: string;
+  transitioned_at: TimestampDefault;
+}
+
+export interface RiskDispositionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  raid_entry_id: string;
+  disposition: string;
+  rationale: string;
+  residual_owner_user_id: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ChangeControlPolicyTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  material_date_shift_working_days: number | null;
+  material_budget_change_ratio: string | null;
+  note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ChangeRequestTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  change_kind: string;
+  subject_type: string;
+  subject_id: string;
+  subject_version: number;
+  proposed_record_type: string | null;
+  proposed_record_id: string | null;
+  proposed_change: Json;
+  reason: string;
+  origin: Generated<string>;
+  materiality: string | null;
+  materiality_basis: NullableJson;
+  route_party_code: string | null;
+  decision_right_id: string | null;
+  status: Generated<string>;
+  raised_by: string;
+  submitted_by: string | null;
+  submitted_at: NullableTimestamp;
+  current_impact_assessment_id: string | null;
+  decided_at: NullableTimestamp;
+  applied_at: NullableTimestamp;
+  applied_record_type: string | null;
+  applied_record_id: string | null;
+  applied_version: number | null;
+  withdrawn_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ImpactAssessmentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  change_request_id: string;
+  change_request_version: number;
+  item_count: number;
+  content_sha256: string;
+  assessed_at: TimestampDefault;
+  assessed_by: string;
+}
+
+export interface ImpactAssessmentItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  impact_assessment_id: string;
+  ordinal: number;
+  item_type: string;
+  record_type: string | null;
+  record_id: string | null;
+  record_code: string | null;
+  label: string;
+  effect: string;
+  gate_submission_id: string | null;
+  gate_decision_id: string | null;
+  detail: JsonDefault;
+}
+
+export interface Database {
+  phase_definition: PhaseDefinitionTable;
+  phase_step_definition: PhaseStepDefinitionTable;
+  phase_step: PhaseStepTable;
+  phase_step_evidence: PhaseStepEvidenceTable;
+  gate_criterion_review: GateCriterionReviewTable;
+  gate_exception: GateExceptionTable;
+  gate_decision_scale_scope: GateDecisionScaleScopeTable;
+  gate_decision_condition: GateDecisionConditionTable;
+  scale_transition: ScaleTransitionTable;
+  risk_disposition: RiskDispositionTable;
+  change_control_policy: ChangeControlPolicyTable;
+  change_request: ChangeRequestTable;
+  impact_assessment: ImpactAssessmentTable;
+  impact_assessment_item: ImpactAssessmentItemTable;
+}
+
+export type PhaseDefinitionRow = Selectable<PhaseDefinitionTable>;
+export type PhaseStepDefinitionRow = Selectable<PhaseStepDefinitionTable>;
+export type PhaseStepRow = Selectable<PhaseStepTable>;
+export type PhaseStepEvidenceRow = Selectable<PhaseStepEvidenceTable>;
+export type GateCriterionReviewRow = Selectable<GateCriterionReviewTable>;
+export type GateExceptionRow = Selectable<GateExceptionTable>;
+export type GateDecisionScaleScopeRow = Selectable<GateDecisionScaleScopeTable>;
+export type GateDecisionConditionRow = Selectable<GateDecisionConditionTable>;
+export type ScaleTransitionRow = Selectable<ScaleTransitionTable>;
+export type RiskDispositionRow = Selectable<RiskDispositionTable>;
+export type ChangeControlPolicyRow = Selectable<ChangeControlPolicyTable>;
+export type ChangeRequestRow = Selectable<ChangeRequestTable>;
+export type ImpactAssessmentRow = Selectable<ImpactAssessmentTable>;
+export type ImpactAssessmentItemRow = Selectable<ImpactAssessmentItemTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -5235,6 +5525,7 @@ export const SCHEMA_COLUMNS = {
     "completeness",
     "detail",
     "evaluated_at",
+    "gate_exception_id",
   ],
   gate_decision: [
     "id",
@@ -7783,6 +8074,246 @@ export const SCHEMA_COLUMNS = {
     "version",
     "created_at",
     "updated_at",
+  ],
+  phase_definition: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "gate_code",
+    "source_name_en",
+    "name_ar",
+    "source_title_en",
+    "title_ar",
+    "source_purpose_en",
+    "purpose_ar",
+    "source_key_outputs_en",
+    "key_outputs_ar",
+    "source_objective_en",
+    "objective_ar",
+    "source_ref",
+    "ar_provisional",
+    "created_at",
+  ],
+  phase_step_definition: [
+    "id",
+    "key",
+    "phase_code",
+    "ordinal",
+    "source_procedure_en",
+    "procedure_ar",
+    "required_evidence_en",
+    "required_evidence_ar",
+    "default_owner_role_code",
+    "reviewer_role_code",
+    "completion_rule",
+    "source_ref",
+    "ar_provisional",
+    "created_at",
+  ],
+  phase_step: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "step_key",
+    "phase_code",
+    "owner_user_id",
+    "status",
+    "enabled_by_gate_decision_id",
+    "review_requested_by",
+    "review_requested_at",
+    "completion_check",
+    "reviewed_by",
+    "reviewed_at",
+    "review_outcome",
+    "review_note",
+    "completed_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  phase_step_evidence: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "phase_step_id",
+    "evidence_id",
+    "status",
+    "removed_by",
+    "removed_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_criterion_review: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_submission_id",
+    "criterion_key",
+    "review_no",
+    "reviewer_user_id",
+    "finding",
+    "open_condition",
+    "risk_note",
+    "raid_entry_id",
+    "recommendation",
+    "rationale",
+    "reviewed_at",
+  ],
+  gate_exception: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_instance_id",
+    "gate_code",
+    "criterion_key",
+    "reason",
+    "scope",
+    "compensating_action",
+    "compensating_owner_user_id",
+    "expires_on",
+    "status",
+    "requested_by",
+    "requested_at",
+    "decided_by",
+    "decided_on_behalf_of",
+    "decided_at",
+    "decision_note",
+    "revoked_by",
+    "revoked_at",
+    "revoke_reason",
+    "expiry_notified_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_decision_scale_scope: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_decision_id",
+    "initiative_id",
+    "business_unit_id",
+    "note",
+    "created_at",
+    "created_by",
+  ],
+  gate_decision_condition: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_decision_id",
+    "ordinal",
+    "condition_text",
+    "owner_user_id",
+    "due_date",
+    "created_at",
+    "created_by",
+  ],
+  scale_transition: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "business_unit_id",
+    "gate_decision_id",
+    "note",
+    "transitioned_by",
+    "transitioned_at",
+  ],
+  risk_disposition: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "raid_entry_id",
+    "disposition",
+    "rationale",
+    "residual_owner_user_id",
+    "version",
+    "created_at",
+    "created_by",
+  ],
+  change_control_policy: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "material_date_shift_working_days",
+    "material_budget_change_ratio",
+    "note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  change_request: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "change_kind",
+    "subject_type",
+    "subject_id",
+    "subject_version",
+    "proposed_record_type",
+    "proposed_record_id",
+    "proposed_change",
+    "reason",
+    "origin",
+    "materiality",
+    "materiality_basis",
+    "route_party_code",
+    "decision_right_id",
+    "status",
+    "raised_by",
+    "submitted_by",
+    "submitted_at",
+    "current_impact_assessment_id",
+    "decided_at",
+    "applied_at",
+    "applied_record_type",
+    "applied_record_id",
+    "applied_version",
+    "withdrawn_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  impact_assessment: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "change_request_id",
+    "change_request_version",
+    "item_count",
+    "content_sha256",
+    "assessed_at",
+    "assessed_by",
+  ],
+  impact_assessment_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "impact_assessment_id",
+    "ordinal",
+    "item_type",
+    "record_type",
+    "record_id",
+    "record_code",
+    "label",
+    "effect",
+    "gate_submission_id",
+    "gate_decision_id",
+    "detail",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
