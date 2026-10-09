@@ -19,6 +19,30 @@
 //   *_validator_not_author, *_approver_not_proposer, *_decider_not_recorder,
 //   deliverable_acceptor_not_submitter       -> 403 (separation of duties)
 //   named P3 CHECKs (date ranges, shapes)    -> 422 validation.constraint with the field pointer
+// P4 slices I and C (T-DG4-BE-A; p4-work-split §I+C.1; ADR-0025 §1, §3, §4; ADR-0026 §2-§7). The services check first;
+// these are the database's last line, with the slice ADRs' exact codes and English texts (S-11). Placeholders the
+// database cannot know (a person's name) are filled from the error message where it carries them, else generically:
+//   business_calendar_workweek_valid         -> 422 calendar.workweek_invalid
+//   business_calendar_timezone_known         -> 422 calendar.timezone_unknown ({timezone} from the message)
+//   job_schedule_timezone_known              -> 422 job.timezone_unknown ({timezone} from the message)
+//   business_calendar_org_code_key           -> 409 calendar.code_taken (duplicate)
+//   business_calendar_holiday_range          -> 422 calendar.holiday_range_invalid
+//   work_item_closed                         -> 422 work_item.closed
+//   inbox_notification_read_once             -> 422 inbox.already_read
+//   delegation_no_loop                       -> 422 delegation.loop
+//   role_mapping_active_key                  -> 409 role_mapping.already_mapped (duplicate)
+//   transformation_raci_assignment_value     -> 422 raci.invalid_value
+//   transformation_raci_one_accountable      -> 422 raci.accountable_count
+//   *_matrix_in_approval                     -> 422 governance_matrix.in_approval
+//   approval_one_open_per_subject            -> 409 approval.already_open (duplicate)
+//   approval_decision_stale,
+//   approval_subject_version_current         -> 409 approval.stale_version (versions from the message)
+//   approval_decision_sod                    -> 403 approval.sod_requester
+//   approval_decision_rationale_required     -> 422 approval.rationale_required
+//   approval_decision_defer_date             -> 422 approval.defer_date_required
+//   approval_decision_open,
+//   approval_final_immutable                 -> 422 approval.not_open ({status} from the message)
+//   work_item_identity, inbox_notification_identity -> 500 (immutable columns; a programming error)
 // Pure: no I/O, unit-tested in platform.test.ts and db-errors.test.ts.
 import { PROBLEM_TYPES, type ProblemDetails } from "@mth/shared";
 import { HttpProblem, problems } from "./problem.ts";
@@ -204,6 +228,138 @@ const BUSINESS_RULES: ReadonlyMap<string, { code: string; detail: string; pointe
   ],
 ]);
 
+const rule422 = (code: string, detail: string, pointer: string): HttpProblem =>
+  new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.validation,
+    code,
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer, code, message: detail }],
+  });
+
+/** The time zone named in a `p4_timezone_known` message ("<table>: unknown time zone <tz>"), or a neutral word. */
+function timezoneOfMessage(error: PgErrorLike): string {
+  return /unknown time zone (.+)$/.exec(error.message ?? "")?.[1]?.trim() ?? "given";
+}
+
+/** The two versions in an approval staleness message ("version 3 ... version 4" / "from version 3 to 4"). */
+function versionsOfMessage(error: PgErrorLike): { requested: string; current: string } {
+  const m = /version (\d+)\D+?(\d+)/.exec(error.message ?? "");
+  return { requested: m?.[1] ?? "?", current: m?.[2] ?? "?" };
+}
+
+/**
+ * P4 slices I and C (ADR-0025 §1, §3, §4; ADR-0026 §2-§7): the exact codes and English texts of the slice ADRs (S-11).
+ * Null when the error is not one of them.
+ */
+export function mapP4GuardError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    case "business_calendar_workweek_valid":
+      return rule422(
+        "calendar.workweek_invalid",
+        "The workweek must list one to seven different weekdays (1 = Monday … 7 = Sunday).",
+        "/workweek",
+      );
+    case "business_calendar_timezone_known":
+      return rule422(
+        "calendar.timezone_unknown",
+        `The time zone ${timezoneOfMessage(error)} is not a known time zone.`,
+        "/timezone",
+      );
+    case "job_schedule_timezone_known":
+      return rule422(
+        "job.timezone_unknown",
+        `The time zone ${timezoneOfMessage(error)} is not a known time zone.`,
+        "/timezone",
+      );
+    case "business_calendar_org_code_key": {
+      // DETAIL of a unique violation: "Key (organization_id, code)=(<uuid>, <code>) already exists."
+      const taken = /=\([^,]+, (.+)\) already exists/.exec(error.detail ?? "")?.[1] ?? "given";
+      return problems.duplicate(
+        "calendar.code_taken",
+        `A calendar with the code ${taken} already exists in this organization.`,
+      );
+    }
+    case "business_calendar_holiday_range":
+      return rule422(
+        "calendar.holiday_range_invalid",
+        "A holiday ends on or after its start date and spans at most 31 days.",
+        "/dateTo",
+      );
+    case "work_item_closed":
+      return rule422("work_item.closed", "This task is already closed.", "");
+    case "inbox_notification_read_once":
+      return rule422("inbox.already_read", "This reminder is already marked as read.", "");
+    case "delegation_no_loop":
+      return rule422(
+        "delegation.loop",
+        "This delegation would create a loop: the delegate already delegates, directly or through others, to the delegator.",
+        "/delegateUserId",
+      );
+    case "role_mapping_active_key":
+      return problems.duplicate(
+        "role_mapping.already_mapped",
+        "This party is already mapped in this transformation. End the current mapping first.",
+      );
+    case "transformation_raci_assignment_value":
+      return rule422("raci.invalid_value", "A RACI cell accepts A, R, C, I or A/R.", "/cells");
+    case "transformation_raci_one_accountable":
+      return rule422(
+        "raci.accountable_count",
+        "Each deliverable needs exactly one accountable (A or A/R), unless a documented governance rule permits otherwise.",
+        "/cells",
+      );
+    case "approval_one_open_per_subject":
+      return problems.duplicate("approval.already_open", "An approval for this record is already open.");
+    case "approval_decision_stale":
+    case "approval_subject_version_current": {
+      const v = versionsOfMessage(error);
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "approval.stale_version",
+        title: "Version conflict",
+        detail: `The record changed after this approval was requested: version ${v.requested} was submitted and the record is now at version ${v.current}. Review the changes before deciding.`,
+      });
+    }
+    case "approval_decision_sod":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "approval.sod_requester",
+        title: "Forbidden",
+        detail:
+          "You requested this change, so you cannot decide it. The separation-of-duties policy requires a different approver.",
+      });
+    case "approval_decision_rationale_required":
+      return rule422("approval.rationale_required", "Enter a rationale for this decision.", "/rationale");
+    case "approval_decision_defer_date":
+      return rule422("approval.defer_date_required", "A deferral needs a new date after today.", "/deferUntil");
+    case "approval_decision_open":
+    case "approval_final_immutable": {
+      const status = /is (\w+) and cannot be decided|a (\w+) approval is final/.exec(error.message ?? "");
+      return rule422(
+        "approval.not_open",
+        `This approval is ${status?.[1] ?? status?.[2] ?? "closed"} and can no longer be decided.`,
+        "",
+      );
+    }
+    case "work_item_identity":
+    case "inbox_notification_identity":
+      return problems.internal();
+    default:
+      if (constraint.endsWith("_matrix_in_approval"))
+        return rule422(
+          "governance_matrix.in_approval",
+          "This matrix is waiting for approval. It can change again once the approval is decided or withdrawn.",
+          "",
+        );
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -221,6 +377,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
       title: "Version conflict",
       detail: "The record was changed by someone else. Review the current version and re-apply your change.",
     });
+  const p4 = mapP4GuardError(error);
+  if (p4 !== null) return p4;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,

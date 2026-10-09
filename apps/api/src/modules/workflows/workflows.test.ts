@@ -20,13 +20,16 @@ import * as mod from "./index.ts";
 describe("workflows module (P2)", () => {
   it("is mapped with its declared dependency direction (reads kpi and evidence for the gate criteria)", () => {
     expect(P1_MODULES).toContain("workflows");
+    // P4 (T-DG4-BE-A, modules.ts): + organization (working-day due dates) and tasks (approval work items).
     expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
       "access",
       "audit",
       "evidence",
       "kpi",
       "methodology",
+      "organization",
       "platform",
+      "tasks",
       "transformations",
     ]);
   });

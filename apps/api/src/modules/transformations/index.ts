@@ -37,6 +37,8 @@ export {
 } from "./registers.ts";
 export { charterView, findCharter, findCurrentNorthStar, hasExclusions, toCharter, toNorthStar } from "./charter.ts";
 export { advancePhaseOnGateApproval } from "./phase.ts";
+// P4 (T-DG4-BE-A stub, KBE-G fills it; p4-plan §5.1): registered by server.ts.
+export { registerWorkspaceHeaderRoutes } from "./workspace-header.ts";
 export {
   activityLead,
   evaluateGoodOutcome,

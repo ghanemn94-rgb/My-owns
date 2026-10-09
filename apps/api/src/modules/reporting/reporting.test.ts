@@ -19,13 +19,22 @@ describe("reporting module (P1 scaffold, D-048)", () => {
   it("is mapped as a P1 scaffold module with its declared dependency direction", () => {
     expect(P1_MODULES).toContain("reporting");
     expect(P1_SCAFFOLD_MODULES).toContain("reporting");
+    // P4 (T-DG4-BE-A; p4-plan §5.1 BE-M, KBE-G): read-only views over every P4 engine; never workflows.
     expect([...API_MODULES.reporting.dependsOn].sort()).toEqual([
       "access",
+      "adoption",
       "audit",
+      "benefits",
+      "governance",
       "kpi",
       "platform",
+      "portfolio",
+      "raid",
+      "sustainment",
+      "tasks",
       "transformations",
     ]);
+    expect(API_MODULES.reporting.dependsOn as readonly string[]).not.toContain("workflows");
   });
 
   it("has a public index.ts exposing a typed interface and its wiring hook", () => {

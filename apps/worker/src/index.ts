@@ -9,9 +9,11 @@ export {
   QUEUES,
   RETRY_POLICY,
   schedulePurge,
+  DOMAIN_QUEUES,
   type QueueName,
   type QueuePolicyOverrides,
-} from "./queues.ts";
+  type QueueSpec,
+} from "./queues/index.ts";
 export { relayOnce, txExecutor, type RelayResult } from "./relay.ts";
 export {
   handleTransformationCreated,
@@ -19,5 +21,17 @@ export {
   STARTER_AUTOMATION_CONSUMER,
   type HandlerOutcome,
   type PurgeResult,
-} from "./handlers.ts";
+  DOMAIN_HANDLERS,
+  type JobHandler,
+} from "./handlers/index.ts";
+// P4 scheduled-job kit and schedule registration (ADR-0025 §3; T-DG4-BE-A).
+export {
+  createWorkItemOnce,
+  jobActor,
+  runOnce,
+  type RunOnceResult,
+  type WorkItemInput,
+  type WorkItemOnceResult,
+} from "./kit.ts";
+export { handleJobScheduleUpdated, syncSchedules, type ScheduleSyncResult } from "./schedules.ts";
 export { startWorker, type RunningWorker, type WorkerOptions } from "./worker.ts";

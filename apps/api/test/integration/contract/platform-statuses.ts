@@ -98,6 +98,9 @@ function urlFor(op: Operation): string {
     if (name === "gateCode") return "G1";
     if (name === "dimensionCode") return "strategy";
     if (name === "submissionNo" || name === "versionNo") return "1";
+    // P4 (T-DG4-BE-A): a seeded job schedule code and a governance matrix kind.
+    if (name === "jobCode") return "approval.escalation_scan";
+    if (name === "matrixKind") return "raci";
     return crypto.randomUUID();
   });
 }

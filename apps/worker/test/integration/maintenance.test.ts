@@ -2,8 +2,8 @@
 // with cron in the configured business time zone (default Asia/Riyadh). Not a business automation; not audited.
 import { randomBytes, randomUUID as uuidv7 } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { purgeExpired } from "../../src/handlers.ts";
-import { ensureQueues, PURGE_CRON, QUEUES, schedulePurge } from "../../src/queues.ts";
+import { purgeExpired } from "../../src/handlers/index.ts";
+import { DOMAIN_QUEUES, ensureQueues, PURGE_CRON, QUEUES, schedulePurge } from "../../src/queues/index.ts";
 import { bossFor, seedTransformationWithOutbox, workerEnv, type WorkerEnv } from "../support.ts";
 
 let env: WorkerEnv;
@@ -91,7 +91,16 @@ describe("schedule", () => {
         .map((q) => q.name)
         .filter((n) => !n.startsWith("__pgboss"))
         .sort();
-      expect(queues).toEqual([QUEUES.purge, QUEUES.failed, QUEUES.transformationCreated].sort());
+      // P4 (T-DG4-BE-A): + the job_schedule.updated queue and every domain queue (none until the domains fill theirs).
+      expect(queues).toEqual(
+        [
+          QUEUES.purge,
+          QUEUES.failed,
+          QUEUES.transformationCreated,
+          QUEUES.jobScheduleUpdated,
+          ...DOMAIN_QUEUES.map((q) => q.name),
+        ].sort(),
+      );
     } finally {
       await boss.stop({ graceful: false, wait: true, timeout: 5000 });
     }

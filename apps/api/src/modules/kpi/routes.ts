@@ -13,6 +13,17 @@ import { registerFormulaVersionRoutes } from "./formula-versions.ts";
 import { registerKpiDefinitionRoutes } from "./kpi-definitions.ts";
 import { registerOutcomeKpiRoutes } from "./outcome-kpis.ts";
 import { registerValuePoolRoutes } from "./value-pools.ts";
+// P4 route files (T-DG4-BE-A stubs; p4-plan §5.1): KBE-B's, then KBE-C's.
+import { registerAcceptPipelineRoutes } from "./accept-pipeline.ts";
+import { registerKpiActualRoutes } from "./actuals.ts";
+import { registerCalculationRunRoutes } from "./calculation-runs.ts";
+import { registerDataQualityRoutes } from "./data-quality.ts";
+import { registerKpiFormulaRoutes } from "./kpi-formulas.ts";
+import { registerKpiStatusRoutes } from "./kpi-status.ts";
+import { registerKpiVersionRoutes } from "./kpi-versions.ts";
+import { registerRagOverrideRoutes } from "./rag-overrides.ts";
+import { registerReportingPeriodRoutes } from "./reporting-periods.ts";
+import { registerTrajectoryRoutes } from "./trajectories.ts";
 
 export type RouteAdder = (
   app: FastifyInstance,
@@ -41,6 +52,22 @@ export function registerKpiRoutes(app: FastifyInstance, deps: ModuleDeps): reado
     ...registerCalculationRoutes(app, deps),
     ...registerBenefitFormulaRoutes(app, deps),
     ...registerFormulaVersionRoutes(app, deps),
+  );
+  // P4 KBE-B: KPI versions, trajectories, data quality, KPI formulas.
+  routes.push(
+    ...registerKpiVersionRoutes(app, deps),
+    ...registerTrajectoryRoutes(app, deps),
+    ...registerDataQualityRoutes(app, deps),
+    ...registerKpiFormulaRoutes(app, deps),
+  );
+  // P4 KBE-C: actuals, reporting periods, the accept pipeline, calculation runs, RAG overrides, KPI status.
+  routes.push(
+    ...registerKpiActualRoutes(app, deps),
+    ...registerReportingPeriodRoutes(app, deps),
+    ...registerAcceptPipelineRoutes(app, deps),
+    ...registerCalculationRunRoutes(app, deps),
+    ...registerRagOverrideRoutes(app, deps),
+    ...registerKpiStatusRoutes(app, deps),
   );
   return routes;
 }

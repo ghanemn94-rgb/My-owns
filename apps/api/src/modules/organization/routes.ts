@@ -37,6 +37,7 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
+import { ensureDefaultCalendar } from "./calendar.ts";
 import {
   findBusinessUnit,
   findOrganization,
@@ -160,6 +161,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
           ]),
         });
         await grantCreatorAdminRoles(tx, principal, audit, id, body.code);
+        await ensureDefaultCalendar(tx, id, principal.userId, audit.requestId); // ADR-0025 §1 (T-DG4-BE-A)
         return created;
       });
       return sendVersioned(reply, 201, toOrganization(row), `/api/v1/organizations/${row.id}`);

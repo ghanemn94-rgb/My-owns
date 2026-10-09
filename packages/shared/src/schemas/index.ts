@@ -29,3 +29,8 @@ export * from "./benefit-formula.ts";
 // P3 roadmap, T08 dependency and capacity view mirrors (solution-architect, T-DG3-ARCH-04; moved from the BE-C/BE-E
 // route files for FE-A/FE-B).
 export * from "./roadmap.ts";
+// P4 slice I mirrors (backend-workflow-engineer, T-DG4-BE-A; p4-work-split §I+C.1): calendars, job schedules, My Work
+// items and the inbox.
+export * from "./calendar.ts";
+export * from "./jobs.ts";
+export * from "./tasks.ts";

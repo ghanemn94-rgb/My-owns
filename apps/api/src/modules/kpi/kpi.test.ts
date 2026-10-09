@@ -118,11 +118,14 @@ async function registered() {
 describe("kpi module (P2)", () => {
   it("is mapped with its declared dependency direction", () => {
     expect(P1_MODULES).toContain("kpi");
+    // P4 (T-DG4-BE-A, modules.ts): + organization (business dates in the calendar timezone) and tasks (owner tasks).
     expect([...API_MODULES.kpi.dependsOn].sort()).toEqual([
       "access",
       "audit",
       "methodology",
+      "organization",
       "platform",
+      "tasks",
       "transformations",
     ]);
   });

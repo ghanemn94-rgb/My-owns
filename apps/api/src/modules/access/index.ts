@@ -51,3 +51,4 @@ export {
   type WriteRule,
 } from "./records.ts";
 export { registerAccessP2Routes } from "./team.ts";
+export { registerAccessP4Routes } from "./p4-routes.ts";
