@@ -3,6 +3,8 @@
 // the outbox row, and the worker validates it again on receipt. Payloads never carry secrets, tokens or evidence bytes.
 import { z } from "zod";
 import { phase, standaloneDeliverableType, timestamp, transformationMode, uuid } from "./common.ts";
+// P4 slice A (T-DG4-KBE-B; ADR-0027 §8 step 5): the three KPI change events; payloads defined with their mirrors.
+import { kpiThresholdChangedV1, kpiTrajectoryApprovedV1, kpiVersionActivatedV1 } from "./kpi-versions.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -36,6 +38,9 @@ export type JobScheduleUpdatedV1 = z.infer<typeof jobScheduleUpdatedV1>;
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
+  "kpi.threshold_changed": { 1: kpiThresholdChangedV1 },
+  "kpi.trajectory_approved": { 1: kpiTrajectoryApprovedV1 },
+  "kpi.version_activated": { 1: kpiVersionActivatedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 
