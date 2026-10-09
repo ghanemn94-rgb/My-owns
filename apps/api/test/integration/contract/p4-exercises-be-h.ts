@@ -1,13 +1,20 @@
 // P4 contract exercises of BE-H (T-DG4-BE-H; p4-work-split §F+G FG.1, §1 S-10): the 19 slice F operations of the T13
 // Stakeholder & Adoption Plan, champions, interventions, impacted-team involvement and champion constraints. Every call
 // goes through `ctx.mirrored` (OpenAPI status/body/headers + problem mirror) and every success body is parsed with the
-// zod mirror in P4_MIRRORS_BE_H. BE-H2 appends its forms, invitations, assessment and training exercises to this file
-// after BE-H (no new seam file). All data is synthetic; nothing here grants a business or Finance approval or touches
+// zod mirror in P4_MIRRORS_BE_H. BE-H2 (T-DG4-BE-H2) appends its 17 forms, invitations, assessment and training
+// exercises to this file after BE-H (no new seam file). All data is synthetic; nothing here grants a business or Finance approval or touches
 // the engineering gates DG0-DG7.
 import {
   adoptionIntervention,
   adoptionInterventionPage,
   adoptionPlan,
+  assessmentForm,
+  assessmentFormPage,
+  assessmentInvitation,
+  assessmentInvitationList,
+  assessmentInvitationPage,
+  assessmentRecord,
+  assessmentRecordPage,
   championConstraint,
   championConstraintPage,
   stakeholderChampion,
@@ -16,6 +23,8 @@ import {
   stakeholderGroupPage,
   stakeholderInvolvement,
   stakeholderInvolvementPage,
+  trainingRecord,
+  trainingRecordPage,
 } from "@mth/shared/schemas";
 import { expect } from "vitest";
 import type { z } from "zod";
@@ -43,6 +52,24 @@ export const P4_MIRRORS_BE_H: Readonly<Record<string, z.ZodType>> = {
   listChampionConstraints: championConstraintPage,
   createChampionConstraint: championConstraint,
   resolveChampionConstraint: championConstraint,
+  // T-DG4-BE-H2: forms, invitations, assessment records and training records.
+  listAssessmentForms: assessmentFormPage,
+  createAssessmentForm: assessmentForm,
+  getAssessmentForm: assessmentForm,
+  updateAssessmentForm: assessmentForm,
+  publishAssessmentForm: assessmentForm,
+  retireAssessmentForm: assessmentForm,
+  listAssessmentInvitations: assessmentInvitationPage,
+  createAssessmentInvitations: assessmentInvitationList,
+  cancelAssessmentInvitation: assessmentInvitation,
+  listAssessmentRecords: assessmentRecordPage,
+  createAssessmentRecord: assessmentRecord,
+  getAssessmentRecord: assessmentRecord,
+  reviewAssessmentRecord: assessmentRecord,
+  withdrawAssessmentRecord: assessmentRecord,
+  listTrainingRecords: trainingRecordPage,
+  createTrainingRecord: trainingRecord,
+  updateTrainingRecord: trainingRecord,
 };
 
 export async function exerciseP4BeHOperations(ctx: P4ExerciseContext): Promise<void> {
@@ -212,4 +239,176 @@ export async function exerciseP4BeHOperations(ctx: P4ExerciseContext): Promise<v
   expect([archived.status, archived.body.status]).toEqual([200, "archived"]);
   const frozen = await m("PATCH", G, { session: s.tl, headers: ifm(3), body: { headcount: 3 } });
   expect([frozen.status, frozen.body.code]).toEqual([422, "stakeholder_group.archived"]);
+
+  // T-DG4-BE-H2 (appended after BE-H, p4-work-split §F+G FG.2): forms, invitations, records and training.
+  await exerciseP4BeH2Operations(ctx, b, wl);
+}
+
+/**
+ * The 17 operations of T-DG4-BE-H2 (ADR-0033 §5, §6, §9, §10): feedback and assessment forms with their versions,
+ * invitations, assessment records (responses and proficiency observations) and training records. Synthetic data only.
+ */
+async function exerciseP4BeH2Operations(
+  ctx: P4ExerciseContext,
+  b: Awaited<ReturnType<typeof seedBenefitWorld>>,
+  wl: Awaited<ReturnType<typeof extraUser>>,
+): Promise<void> {
+  const m = ctx.mirrored;
+  const s = b.s;
+  const group = await m("POST", `${b.base}/stakeholder-groups`, {
+    session: s.tl,
+    body: {
+      name: "Synthetic branch advisers",
+      impact: "M",
+      currentStance: "neutral",
+      requiredBehavior: "Synthetic: book appointments in the new tool",
+      interventionTypes: ["training"],
+      ownerUserId: wl.id,
+    },
+  });
+  expect(group.status, JSON.stringify(group.body)).toBe(201);
+  const groupId = group.body.id as string;
+
+  // ------------------------------------------------------------------ forms (ADR-0033 §5)
+  const AF = `${b.base}/assessment-forms`;
+  const schema = {
+    questions: [
+      {
+        key: "can_book",
+        type: "yes_no",
+        label_en: "Booked an appointment unaided?",
+        label_ar: "هل حجز موعداً دون مساعدة؟",
+        required: true,
+        proficiency: true,
+      },
+    ],
+  };
+  const bad = await m("POST", AF, {
+    session: s.bo,
+    body: {
+      kind: "proficiency_assessment",
+      name: "Synthetic",
+      schema: { questions: [{ ...schema.questions[0], x: 1 }] },
+    },
+  });
+  expect([bad.status, bad.body.code, bad.body.errors[0].pointer]).toEqual([
+    400,
+    "assessment_form.schema_invalid",
+    "/schema/questions/0/x",
+  ]);
+  const form = await m("POST", AF, {
+    session: s.bo,
+    body: {
+      kind: "proficiency_assessment",
+      name: "Synthetic booking proficiency",
+      stakeholderGroupId: groupId,
+      schema,
+    },
+  });
+  expect([form.status, form.body.status, form.body.currentVersion.versionNo]).toEqual([201, "draft", 1]);
+  const F = `${AF}/${form.body.id}`;
+  expect((await m("GET", AF, { session: s.auditor })).status).toBe(200);
+  expect((await m("GET", F, { session: s.auditor })).status).toBe(200);
+  const draftResponse = await m("POST", `${b.base}/assessment-records`, {
+    session: s.bo,
+    body: {
+      formId: form.body.id,
+      stakeholderGroupId: groupId,
+      subjectUserId: b.users.fin.id,
+      observedOn: "2026-10-08",
+      answers: { can_book: true },
+    },
+  });
+  expect([draftResponse.status, draftResponse.body.code]).toEqual([422, "assessment_form.not_published"]);
+  const renamed = await m("PATCH", F, { session: s.bo, headers: ifm(2), body: { description: "Synthetic" } });
+  expect([renamed.status, renamed.body.version]).toEqual([200, 3]);
+  const published = await m("POST", `${F}/publish`, { session: s.bo, headers: ifm(3) });
+  expect([published.status, published.body.status, published.body.publishedVersionNo]).toEqual([200, "published", 1]);
+
+  // ------------------------------------------------------------------ invitations
+  const inv = await m("POST", `${F}/invitations`, {
+    session: s.bo,
+    body: { userIds: [b.users.fin.id, b.users.tl.id], stakeholderGroupId: groupId, subjectUserId: wl.id },
+  });
+  expect([inv.status, inv.body.items.length]).toEqual([201, 2]);
+  const dupInv = await m("POST", `${F}/invitations`, {
+    session: s.bo,
+    body: { userIds: [b.users.fin.id], stakeholderGroupId: groupId, subjectUserId: wl.id },
+  });
+  expect([dupInv.status, dupInv.body.code]).toEqual([409, "assessment_invitation.exists"]);
+  expect((await m("GET", `${F}/invitations`, { session: s.auditor })).status).toBe(200);
+  const tlInv = inv.body.items.find((i: { userId: string }) => i.userId === b.users.tl.id);
+  const cancelled = await m("POST", `${b.base}/assessment-invitations/${tlInv.id}/cancel`, {
+    session: s.bo,
+    headers: ifm(1),
+  });
+  expect([cancelled.status, cancelled.body.status]).toEqual([200, "cancelled"]);
+
+  // ------------------------------------------------------------------ records (REQ-S11-002)
+  const AR = `${b.base}/assessment-records`;
+  const notInvited = await m("POST", AR, {
+    session: s.tl,
+    body: {
+      formId: form.body.id,
+      stakeholderGroupId: groupId,
+      subjectUserId: wl.id,
+      observedOn: "2026-10-08",
+      answers: { can_book: true },
+    },
+  });
+  expect([notInvited.status, notInvited.body.code]).toEqual([403, "assessment_record.not_invited"]);
+  const rec = await m("POST", AR, {
+    session: s.fin,
+    body: {
+      formId: form.body.id,
+      stakeholderGroupId: groupId,
+      subjectUserId: wl.id,
+      observedOn: "2026-10-08",
+      answers: { can_book: true },
+    },
+  });
+  expect([rec.status, rec.body.stakeholderGroupId, rec.body.proficiencyResult]).toEqual([201, groupId, "proficient"]);
+  expect((await m("GET", `${AR}?stakeholderGroupId=${groupId}`, { session: s.auditor })).status).toBe(200);
+  expect((await m("GET", `${AR}/${rec.body.id}`, { session: s.auditor })).status).toBe(200);
+  const reviewed = await m("POST", `${AR}/${rec.body.id}/review`, {
+    session: s.bo,
+    headers: ifm(1),
+    body: { note: "Synthetic: confirmed" },
+  });
+  expect([reviewed.status, reviewed.body.status]).toEqual([200, "reviewed"]);
+  const notMine = await m("POST", `${AR}/${rec.body.id}/withdraw`, {
+    session: s.tl,
+    headers: ifm(2),
+    body: { reason: "Synthetic" },
+  });
+  expect([notMine.status, notMine.body.code]).toEqual([403, "assessment_record.not_withdrawable_by_caller"]);
+  const withdrawn = await m("POST", `${AR}/${rec.body.id}/withdraw`, {
+    session: s.fin,
+    headers: ifm(2),
+    body: { reason: "Synthetic: observed the wrong week" },
+  });
+  expect([withdrawn.status, withdrawn.body.status]).toEqual([200, "withdrawn"]);
+  const retired = await m("POST", `${F}/retire`, { session: s.bo, headers: ifm(4) });
+  expect([retired.status, retired.body.status]).toEqual([200, "retired"]);
+
+  // ------------------------------------------------------------------ training (REQ-PB-072)
+  const TR = `${b.base}/training-records`;
+  const tr = await m("POST", TR, {
+    session: s.bo,
+    body: { stakeholderGroupId: groupId, participantUserId: b.users.fin.id, trainingTitle: "Synthetic booking tool" },
+  });
+  expect([tr.status, tr.body.status]).toEqual([201, "enrolled"]);
+  const noDate = await m("PATCH", `${TR}/${tr.body.id}`, {
+    session: s.bo,
+    headers: ifm(1),
+    body: { status: "completed" },
+  });
+  expect([noDate.status, noDate.body.errors[0].pointer]).toEqual([400, "/completedOn"]);
+  const completed = await m("PATCH", `${TR}/${tr.body.id}`, {
+    session: s.bo,
+    headers: ifm(1),
+    body: { status: "completed", completedOn: "2026-10-09" },
+  });
+  expect([completed.status, completed.body.status]).toEqual([200, "completed"]);
+  expect((await m("GET", `${TR}?stakeholderGroupId=${groupId}`, { session: s.auditor })).status).toBe(200);
 }

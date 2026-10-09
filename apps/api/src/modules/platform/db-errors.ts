@@ -1475,6 +1475,94 @@ export function mapP4AdoptionSustainmentError(error: PgErrorLike): HttpProblem |
     case "champion_constraint_resolved_complete":
       // The API never sends such a write: a programming error.
       return problems.internal();
+    // ---- BE-H2 (T-DG4-BE-H2): feedback and assessment forms, invitations, assessment and training records.
+    case "assessment_form_retired_final":
+    case "assessment_form_version_form_open":
+      return rule422("assessment_form.retired", "This form is retired and can no longer be changed.", "");
+    case "assessment_form_transition": {
+      const m = /: ([a-z_]+) -> ([a-z_]+) is not a legal transition/.exec(message);
+      return rule422(
+        "assessment_form.status_transition",
+        `This form cannot move from ${m?.[1] ?? "its status"} to ${m?.[2] ?? "this status"}.`,
+        "",
+      );
+    }
+    case "assessment_form_version_schema_valid":
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "assessment_form.schema_invalid",
+        title: "Validation failed",
+        detail: "The form is not valid: the questions do not follow the form rules.",
+        errors: [
+          {
+            pointer: "/schema/questions",
+            code: "assessment_form.schema_invalid",
+            message: "The form is not valid: the questions do not follow the form rules.",
+          },
+        ],
+      });
+    case "assessment_invitation_form_published":
+    case "assessment_record_form_published":
+      return rule422("assessment_form.not_published", "Only a published form takes invitations and responses.", "");
+    case "assessment_invitation_open_key":
+      return problems.duplicate(
+        "assessment_invitation.exists",
+        "This person already has an open invitation to this form.",
+      );
+    case "assessment_invitation_final": {
+      const status = /a (responded|cancelled) invitation is final/.exec(message)?.[1] ?? "closed";
+      return rule422("assessment_invitation.final", `This invitation is ${status} and can no longer be changed.`, "");
+    }
+    case "assessment_record_invitation_key":
+      // A second response to the same invitation: the invitation is already answered.
+      return rule422("assessment_invitation.final", "This invitation is responded and can no longer be changed.", "");
+    case "assessment_record_invitation_matches":
+      return forbidden403("assessment_record.not_invited", "You are not invited to answer this form.");
+    case "assessment_record_withdrawn_final":
+      return rule422("assessment_record.withdrawn", "This response is withdrawn and can no longer be changed.", "");
+    case "assessment_record_transition": {
+      const m = /: ([a-z_]+) -> ([a-z_]+) is not a legal transition/.exec(message);
+      return rule422(
+        "assessment_record.status_transition",
+        `This response cannot move from ${m?.[1] ?? "its status"} to ${m?.[2] ?? "this status"}.`,
+        "",
+      );
+    }
+    case "training_record_final": {
+      const status = /a (completed|no_show|withdrawn) record is final/.exec(message)?.[1] ?? "closed";
+      return rule422("training_record.final", `This training record is ${status} and can no longer be changed.`, "");
+    }
+    case "training_record_intervention_training":
+    case "training_record_intervention_fkey":
+      return rule422(
+        "training_record.intervention_not_training",
+        "Only a training intervention can be linked to a training record.",
+        "/interventionId",
+      );
+    case "training_record_completed_complete":
+      return problems.validation([
+        { pointer: "/completedOn", code: "validation.required", message: "validation.required" },
+      ]);
+    case "assessment_form_starts_draft":
+    case "assessment_form_kind_immutable":
+    case "assessment_form_version_no_step":
+    case "assessment_form_published_version":
+    case "assessment_form_published_complete":
+    case "assessment_form_retired_complete":
+    case "assessment_invitation_starts_open":
+    case "assessment_invitation_identity":
+    case "assessment_record_starts_submitted":
+    case "assessment_record_kind_matches_form":
+    case "assessment_record_immutable":
+    case "assessment_record_respondent_is_creator":
+    case "assessment_record_proficiency_shape":
+    case "assessment_record_reviewed_complete":
+    case "assessment_record_withdrawn_complete":
+    case "training_record_identity":
+    case "training_record_participant":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
     default:
       return null;
   }

@@ -8,3 +8,6 @@ export * from "./schedule/index.ts";
 // P4 slice D meeting recurrence (T-DG4-BE-F; ADR-0032 §2-§3.1): nominal occurrences, the non-working-day rules and the
 // agenda cut-off over an injected working-day predicate.
 export * from "./governance/recurrence.ts";
+// P4 slice F forms (backend-workflow-engineer, T-DG4-BE-H2; p4-work-split §F+G FG.2; ADR-0033 §5): the validated form
+// JSON of feedback and assessment forms, answer validation and the derived proficiency result.
+export * from "./adoption/form-schema.ts";
