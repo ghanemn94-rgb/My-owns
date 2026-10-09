@@ -1,0 +1,48 @@
+port-policy: PostgreSQL listening on port 23400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-b2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv0jv5ve_1258b0e2 (server_encoding UTF8); applied 47 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/approvals/approvals.test.ts (17 tests) 2421ms
+ ✓ |integration| apps/api/test/integration/approvals/adm-not-approver.test.ts (4 tests) 1191ms
+   ✓ REQ-S10-003: an ADM-only user is never a business approver > decideApproval: 403, also as a member of the assignee group; nothing written  359ms
+ ✓ |integration| apps/api/test/integration/approvals/reminders.test.ts (7 tests) 1250ms
+   ✓ approval_overdue: the escalation timer's reminders (ADR-0026 §6 step 3) > a group assignee: the group's current approvers get the reminder, a non-approver member does not  326ms
+ ❯ |integration| apps/api/test/integration/approvals/escalation.test.ts (4 tests | 1 failed) 1116ms
+   × approval.escalation_scan (REQ-S10-019) > after the due date plus retries, the approval is escalated exactly once and remains undecided 141ms
+     → expected false to be true // Object.is equality
+   ✓ approval.escalation_scan (REQ-S10-019) > an exhausted chain is a visible routing error (no_next_authority); the approval stays pending, never approved 46ms
+   ✓ approval.escalation_scan (REQ-S10-019) > an unmapped next party is recorded as party_unmapped; a deferral to a new date allows one more escalation  327ms
+   ✓ approval.escalation_scan (REQ-S10-019) > an approval with an Unknown due date is never selected 248ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/approvals/escalation.test.ts > approval.escalation_scan (REQ-S10-019) > after the due date plus retries, the approval is escalated exactly once and remains undecided
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/approvals/escalation.test.ts:110:54
+    108|     expect([decided.status, decided.body.status, decided.body.decidedB…
+    109|     const closed = await api.db.selectFrom("work_item").select("status…
+    110|     expect(closed.every((t) => t.status === "done")).toBe(true);
+       |                                                      ^
+    111|   });
+    112| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 31 passed (32)
+   Start at  05:53:49
+   Duration  14.25s (transform 1.69s, setup 0ms, collect 6.52s, tests 5.98s, environment 0ms, prepare 63ms)
+

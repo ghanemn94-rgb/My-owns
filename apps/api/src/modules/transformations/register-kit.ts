@@ -15,6 +15,7 @@ import { diffFields, sql, type Db, type DbOrTx, type Tx } from "@mth/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Kysely } from "kysely";
 import { v7 as uuidv7 } from "uuid";
+import type { Permission } from "@mth/shared";
 import { reasonRequest } from "@mth/shared/schemas";
 import { z } from "zod";
 import {
@@ -24,6 +25,7 @@ import {
   refreshPrincipal,
   requireRecordWrite,
   requireTransformationRead,
+  technicalAdminRefusal,
   type Ownership,
   type Principal,
   type ResolvedTarget,
@@ -248,6 +250,12 @@ export interface OpenWriteOptions {
    * the record exists), audited as a failed mutation like any other denial.
    */
   readonly atCommit?: boolean;
+  /**
+   * REQ-S10-003 (D-094; T-DG4-BE-B2): set on a gate or Finance approval endpoint to the approval permission. A caller
+   * whose every grant in the organization is a technical-admin role and who fails the read gate gets 403 `forbidden`
+   * (access/technical-admin.ts), not 404 or the commit-time 403. Every other caller is unchanged.
+   */
+  readonly technicalAdminRefusal?: Permission;
 }
 
 /** The read + write gates of a mutation inside a transformation; returns the context for the write. */
@@ -265,6 +273,10 @@ export async function openWrite(
     target = await requireTransformationRead(tx, principal, transformationId);
     await requireRecordWrite(tx, principal, target, rules, ownership ?? { createdBy: principal.userId });
   } catch (err) {
+    if (options.technicalAdminRefusal !== undefined) {
+      const refused = technicalAdminRefusal(principal, err, options.technicalAdminRefusal);
+      if (refused !== err) throw refused;
+    }
     throw options.atCommit ? commitTimeDenial(err) : err;
   }
   const t = await writableTransformation(tx, transformationId);

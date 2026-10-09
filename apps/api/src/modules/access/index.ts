@@ -65,3 +65,5 @@ export {
   type RoutedParty,
 } from "./role-mappings.ts";
 export { actsFor, delegatorsOf } from "./delegations.ts";
+// REQ-S10-003 (D-094; T-DG4-BE-B2): the technical-admin-only 403 on gate and Finance approval endpoints.
+export { isTechnicalAdminOnly, TECHNICAL_ADMIN_ROLES, technicalAdminRefusal } from "./technical-admin.ts";
