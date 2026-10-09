@@ -63,6 +63,8 @@ import enRaciP4 from "./en/raci.json" with { type: "json" };
 // P4 slice A namespace (T-DG4-FE-B): the KPI engine screens (pages/kpi).
 import arKpiP4 from "./ar/kpiP4.json" with { type: "json" };
 import enKpiP4 from "./en/kpiP4.json" with { type: "json" };
+import arBenefitsP4 from "./ar/benefitsP4.json" with { type: "json" };
+import enBenefitsP4 from "./en/benefitsP4.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -105,6 +107,7 @@ export const catalogues = {
     decisionRights: arDecisionRightsP4,
     raci: arRaciP4,
     kpiP4: arKpiP4,
+    benefitsP4: arBenefitsP4,
   },
   en: {
     common: enCommon,
@@ -138,6 +141,7 @@ export const catalogues = {
     decisionRights: enDecisionRightsP4,
     raci: enRaciP4,
     kpiP4: enKpiP4,
+    benefitsP4: enBenefitsP4,
   },
 } as const;
 
