@@ -664,7 +664,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 7 T-DG3-KBE-B.
     // T-DG4-BE-A: + createBusinessCalendar, updateBusinessCalendar, createCalendarHoliday, updateCalendarHoliday,
     // updateJobSchedule (JSON bodies; completeWorkItem and markInboxNotificationRead are bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([155, 154, 1]);
+    // T-DG4-KBE-D: + createBenefit, updateBenefit, archiveBenefit, advanceBenefitLifecycle, createBenefitEnabler,
+    // removeBenefitEnabler, replaceBenefitAllocations, createBenefitGroup, updateBenefitGroup (9 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([164, 163, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
