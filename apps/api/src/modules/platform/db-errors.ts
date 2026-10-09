@@ -1962,6 +1962,66 @@ export function mapP4GovernanceMeetingError(error: PgErrorLike): HttpProblem | n
   }
 }
 
+// ---- P4 slice H block (ADR-0035 §11, ADR-0036 §10). BE-K's lines come first; BE-K2 and then BE-L append theirs
+// (p4-work-split §H.2, §H.3).
+
+const sliceHInvalidTransition = (code: string, detail: string): HttpProblem =>
+  new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.invalidTransition,
+    code,
+    title: "Invalid transition",
+    detail,
+  });
+
+/**
+ * P4 slice H, BE-K lines (T-DG4-BE-K; ADR-0035 §5, §6, §11): the database last lines behind the G5 scale scope and its
+ * conditions, scale transitions and risk dispositions (0051). The API refuses each case first with the same code and
+ * text; these mappings keep a race or a bypass from surfacing as a 500. Null when the error is not one of them.
+ */
+export function mapP4GateScaleError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "scale_transition_key":
+      return problems.duplicate("scale.already_scaled", "This initiative is already scaled into this business unit.");
+    case "scale_transition_g5_approved":
+      return sliceHInvalidTransition(
+        "gate.g5_not_approved",
+        "Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.",
+      );
+    case "scale_transition_in_approved_scope":
+      return sliceHInvalidTransition(
+        "scale.outside_approved_scope",
+        "This initiative and business unit are outside the scale scope approved at G5.",
+      );
+    case "scale_transition_initiative_fkey":
+      return rule422(
+        "scale.outside_approved_scope",
+        "This initiative and business unit are outside the scale scope approved at G5.",
+        "/initiativeId",
+      );
+    case "gate_decision_scale_scope_g5_approved":
+    case "gate_decision_condition_g5_approved":
+      return rule422(
+        "gate.scale_scope_not_applicable",
+        "A scale scope is recorded only with a G5 approval.",
+        "/scaleScope",
+      );
+    case "gate_decision_scale_scope_business_unit_org":
+    case "gate_decision_scale_scope_initiative_fkey":
+    case "gate_decision_scale_scope_key":
+      return rule422(
+        "gate.scale_scope_invalid",
+        "Each scope item names an initiative of this transformation and a business unit of its organization.",
+        "/scaleScope/items",
+      );
+    case "risk_disposition_open_risk":
+    case "risk_disposition_raid_fkey":
+      return rule422("risk_disposition.not_open_risk", "Only an open risk can be given a disposition.", "/raidEntryId");
+    default:
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -2004,6 +2064,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4SustainmentOperations !== null) return p4SustainmentOperations;
   const p4SustainmentClosure = mapP4SustainmentClosureError(error); // BE-J (slices F/G block)
   if (p4SustainmentClosure !== null) return p4SustainmentClosure;
+  const p4GateScale = mapP4GateScaleError(error); // BE-K (slice H block)
+  if (p4GateScale !== null) return p4GateScale;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,

@@ -209,7 +209,7 @@ const completeness = (code: "G1" | "G2" | "G3", facts: Facts) =>
   Object.fromEntries(mod.evaluateGate(defOf(code), facts).map((c) => [c.key, c.completeness]));
 
 describe("G1-G3 criterion evaluators (ADR-0015 §2)", () => {
-  it("has exactly one evaluator per seeded G1-G4 criterion (16 + the eight g4.* of 0024, T-DG3-BE-E)", () => {
+  it("has exactly one evaluator per seeded G1-G6 criterion (16 + the eight g4.* of 0024, T-DG3-BE-E + the eight g5.*/g6.* of 0051, T-DG4-BE-K)", () => {
     const g4 = [
       "g4.initiative_cards",
       "g4.business_cases",
@@ -220,7 +220,20 @@ describe("G1-G3 criterion evaluators (ADR-0015 §2)", () => {
       "g4.funding",
       "g4.capacity",
     ];
-    expect([...mod.EVALUATORS.keys()].sort()).toEqual([...ALL_KEYS.G1, ...ALL_KEYS.G2, ...ALL_KEYS.G3, ...g4].sort());
+    // T-DG4-BE-K (ADR-0035 §2): the G5/G6 evaluators of workflows/g5.ts and workflows/g6.ts.
+    const g5g6 = [
+      "g5.performance_evidence",
+      "g5.adoption",
+      "g5.risk_closure",
+      "g5.decision_log",
+      "g6.benefits_evidence",
+      "g6.ownership_transfer",
+      "g6.controls",
+      "g6.improvement_backlog",
+    ];
+    expect([...mod.EVALUATORS.keys()].sort()).toEqual(
+      [...ALL_KEYS.G1, ...ALL_KEYS.G2, ...ALL_KEYS.G3, ...g4, ...g5g6].sort(),
+    );
   });
 
   it("complete facts make every criterion complete", () => {
