@@ -102,3 +102,6 @@ export * from "./dashboards.ts";
 // P4 slice K mirrors of BE-M (backend-workflow-engineer, T-DG4-BE-M; p4-work-split §J+K JK.1): trace links, allocation
 // sets and contribution shares, the traceability graph, the orphan report and the downstream impact.
 export * from "./traceability.ts";
+// P4 slice H mirrors of BE-L2 (backend-workflow-engineer, T-DG4-BE-L2; p4-work-split §H H.4): the phase catalogue, the
+// phase workspace, guided phase steps, step evidence and the review queue (ADR-0035 §1).
+export * from "./phases.ts";
