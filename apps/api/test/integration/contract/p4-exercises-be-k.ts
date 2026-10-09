@@ -7,15 +7,30 @@
 // approvals of test data, made by test persons; they approve nothing real, and nothing here touches DG0-DG7.
 import { insertAuditEvent, sql } from "@mth/db";
 import {
+  gateCriterionReview,
+  gateCriterionReviewPage,
+  gateCriterionRowList,
+  gateException,
+  gateExceptionPage,
   riskDisposition,
   riskDispositionPage,
   scaleScope,
   scaleTransition,
   scaleTransitionPage,
 } from "@mth/shared/schemas";
+import { businessDateOf } from "@mth/shared/time";
 import { expect } from "vitest";
 import type { z } from "zod";
-import { call, type P4ExerciseContext, type Res, type TestApi, type World } from "../../support/harness.ts";
+import {
+  call,
+  createUser,
+  grant,
+  signIn,
+  type P4ExerciseContext,
+  type Res,
+  type TestApi,
+  type World,
+} from "../../support/harness.ts";
 import type { P2World } from "../../support/p2-fixtures.ts";
 import { extraUser, insertInitiative, type BenefitWorld, type Caller } from "../benefits/fixtures.ts";
 import { pendingSubmission, setGateStatus } from "../portfolio/fixtures.ts";
@@ -28,6 +43,16 @@ export const P4_MIRRORS_BE_K: Readonly<Record<string, z.ZodType>> = {
   listRiskDispositions: riskDispositionPage,
   createRiskDisposition: riskDisposition,
   getRiskDisposition: riskDisposition,
+  // T-DG4-BE-K2 (p4-work-split §H H.2): gate reviews and gate exceptions.
+  listGateSubmissionCriteria: gateCriterionRowList,
+  listGateCriterionReviews: gateCriterionReviewPage,
+  createGateCriterionReview: gateCriterionReview,
+  listGateExceptions: gateExceptionPage,
+  createGateException: gateException,
+  getGateException: gateException,
+  decideGateException: gateException,
+  withdrawGateException: gateException,
+  revokeGateException: gateException,
 };
 
 // ------------------------------------------------------------------------------------------------ shared fixtures
@@ -222,4 +247,216 @@ export async function exerciseP4BeKOperations(ctx: P4ExerciseContext): Promise<v
   expect([outside.status, outside.body.code]).toEqual([422, "scale.outside_approved_scope"]);
   const list = await m("GET", TRANS, { session: b.s.auditor });
   expect([list.status, list.body.items.length]).toEqual([200, 1]);
+
+  // T-DG4-BE-K2 (p4-work-split §H H.2): the gate-review and gate-exception operations, appended here (no new seam).
+  await exerciseP4BeK2Operations(ctx);
 }
+
+// ================================================================================================ T-DG4-BE-K2
+// Gate exceptions (waivers) and per-criterion gate reviews (ADR-0035 §3, §4; REQ-S04-009/010/012/013). The fixtures
+// below are shared with test/integration/workflows/{gate-exceptions,gate-reviews}.test.ts and the worker's gates test.
+// Every exception decision and gate submission here is a synthetic in-product action by a test person.
+
+/** The business date `n` calendar days after `date` (YYYY-MM-DD; UTC arithmetic on a plain date). */
+export const plusDays = (date: string, n: number): string =>
+  new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
+/** Today's business date in the transformation's timezone (the API's exception clock without injection). */
+export async function todayOf(api: TestApi, g: GateWorld): Promise<string> {
+  const t = await api.db
+    .selectFrom("transformation")
+    .select("timezone")
+    .where("id", "=", g.b.transformationId)
+    .executeTakeFirstOrThrow();
+  return businessDateOf(new Date(), t.timezone);
+}
+
+/** The live gate view's missing mandatory criterion keys (GET .../gates/{code}). */
+export async function missingMandatory(send: Caller, g: GateWorld, gateCode: string): Promise<string[]> {
+  const view = (await send("GET", `${g.gates}/${gateCode}`, { session: g.b.s.tl })) as Res<{
+    criteria: { key: string; mandatory: boolean; completeness: string }[];
+  }>;
+  expect(view.status, JSON.stringify(view.body)).toBe(200);
+  return view.body.criteria.filter((c) => c.mandatory && c.completeness !== "complete").map((c) => c.key);
+}
+
+/** The request body of an exception with all five REQ-S04-013 fields (synthetic). */
+export const exceptionBody = (
+  g: GateWorld,
+  gateCode: string,
+  criterionKey: string,
+  expiresOn: string,
+  extra: Record<string, unknown> = {},
+) => ({
+  gateCode,
+  criterionKey,
+  reason: "Synthetic: the evidence is produced by the vendor after the pilot.",
+  scope: `Synthetic: only ${criterionKey} for this ${gateCode} submission.`,
+  compensatingAction: "Synthetic: weekly interim report reviewed by the BO.",
+  compensatingOwnerUserId: g.b.users.bo.id,
+  expiresOn,
+  ...extra,
+});
+
+/** The TL requests an exception (201 asserted); returns the body. */
+export async function requestException(
+  send: Caller,
+  g: GateWorld,
+  gateCode: string,
+  criterionKey: string,
+  expiresOn: string,
+) {
+  const r = (await send("POST", `${g.b.base}/gate-exceptions`, {
+    session: g.b.s.tl,
+    body: exceptionBody(g, gateCode, criterionKey, expiresOn),
+  })) as Res<{ id: string; version: number; status: string }>;
+  expect(r.status, JSON.stringify(r.body)).toBe(201);
+  return r.body;
+}
+
+/** The gate's approver (the Sponsor by default) accepts a pending exception (200 asserted). */
+export async function acceptException(send: Caller, g: GateWorld, e: { id: string; version: number }) {
+  const r = (await send("POST", `${g.b.base}/gate-exceptions/${e.id}/decision`, {
+    session: g.sp.session,
+    headers: { "if-match": `"${e.version}"` },
+    body: { outcome: "accepted", note: "Synthetic: accepted with the compensating report." },
+  })) as Res<{ id: string; version: number; status: string; covering: boolean }>;
+  expect(r.status, JSON.stringify(r.body)).toBe(200);
+  return r.body;
+}
+
+/** Requests and accepts one exception per missing mandatory criterion of `gateCode`, expiring on `expiresOn`. */
+export async function coverGate(send: Caller, g: GateWorld, gateCode: string, expiresOn: string) {
+  const out: { key: string; id: string }[] = [];
+  for (const key of await missingMandatory(send, g, gateCode)) {
+    const e = await acceptException(send, g, await requestException(send, g, gateCode, key, expiresOn));
+    out.push({ key, id: e.id });
+  }
+  return out;
+}
+
+/** The TL submits `gateCode` through the API with the gate's current ETag. */
+export async function submitThroughApi(api: TestApi, send: Caller, g: GateWorld, gateCode: string) {
+  const v = await api.db
+    .selectFrom("gate_instance")
+    .select("version")
+    .where("transformation_id", "=", g.b.transformationId)
+    .where("gate_code", "=", gateCode)
+    .executeTakeFirstOrThrow();
+  return (await send("POST", `${g.gates}/${gateCode}/submissions`, {
+    session: g.b.s.tl,
+    headers: { "if-match": `"${v.version}"` },
+    body: { submissionNote: "Synthetic submission" },
+  })) as Res<{ id: string; submissionNo: number; snapshot: Record<string, unknown>; snapshotSha256: string }>;
+}
+
+/** A user holding TL and SP on the transformation (to prove the requester never decides their own exception). */
+export async function requesterApprover(api: TestApi, w: World, g: GateWorld) {
+  const u = await createUser(api.db, w.orgA.id);
+  for (const role of ["TL", "SP"])
+    await grant(api.db, w.grantor.id, u.id, role, { type: "transformation", id: g.b.transformationId }, w.orgA.id);
+  return { ...u, session: await signIn(api.app, u.subject) };
+}
+
+export async function exerciseP4BeK2Operations(ctx: P4ExerciseContext): Promise<void> {
+  const m = ctx.mirrored;
+  const g = await seedGateWorld(ctx.api, ctx.world, m);
+  const { b } = g;
+  const EXC = `${b.base}/gate-exceptions`;
+  const today = await todayOf(ctx.api, g);
+  const missing = await missingMandatory(m, g, "G1");
+  expect(missing.length).toBeGreaterThan(0);
+
+  // ------------------------------------------------------------------ exceptions (ADR-0035 §4)
+  const noExpiry = await m("POST", EXC, {
+    session: b.s.tl,
+    body: { ...exceptionBody(g, "G1", missing[0]!, today), expiresOn: undefined },
+  });
+  expect([noExpiry.status, noExpiry.body.code]).toEqual([400, "validation"]);
+  const audDenied = await m("POST", EXC, { session: b.s.auditor, body: exceptionBody(g, "G1", missing[0]!, today) });
+  expect(audDenied.status).toBe(403);
+  const created = await m("POST", EXC, { session: b.s.tl, body: exceptionBody(g, "G1", missing[0]!, today) });
+  expect([created.status, created.body.status, created.body.covering, created.body.version]).toEqual([
+    201,
+    "pending",
+    false,
+    1,
+  ]);
+  expect(created.headers.etag).toBe('"1"');
+  const dup = await m("POST", EXC, { session: b.s.tl, body: exceptionBody(g, "G1", missing[0]!, today) });
+  expect([dup.status, dup.body.code]).toEqual([409, "gate_exception.already_pending"]);
+  const one = await m("GET", `${EXC}/${created.body.id}`, { session: b.s.auditor });
+  expect([one.status, one.headers.etag]).toEqual([200, '"1"']);
+  const withdrawn = await m("POST", `${EXC}/${created.body.id}/withdraw`, { session: b.s.tl, headers: ifmOf(1) });
+  expect([withdrawn.status, withdrawn.body.status]).toEqual([200, "withdrawn"]);
+  const notApprover = await m("POST", `${EXC}/${created.body.id}/decision`, {
+    session: b.s.bo,
+    headers: ifmOf(2),
+    body: { outcome: "accepted", note: "Synthetic decision" },
+  });
+  expect([notApprover.status, notApprover.body.code]).toEqual([403, "gate_exception.not_approver"]);
+  const late = await m("POST", `${EXC}/${created.body.id}/decision`, {
+    session: g.sp.session,
+    headers: ifmOf(2),
+    body: { outcome: "accepted", note: "Synthetic decision" },
+  });
+  expect([late.status, late.body.code]).toEqual([422, "gate_exception.not_pending"]);
+  const covered = await coverGate(m, g, "G1", plusDays(today, 30));
+  expect(covered.map((c) => c.key)).toEqual(missing);
+  const revokeNoReason = await m("POST", `${EXC}/${covered[0]!.id}/revoke`, {
+    session: g.sp.session,
+    headers: ifmOf(2),
+    body: {},
+  });
+  expect([revokeNoReason.status, revokeNoReason.body.errors[0].code]).toEqual([
+    400,
+    "gate_exception.revoke_reason_required",
+  ]);
+  const list = await m("GET", `${EXC}?gateCode=G1&status=accepted`, { session: b.s.auditor });
+  expect([list.status, list.body.items.length]).toEqual([200, missing.length]);
+  expect(list.body.items.every((e: { covering: boolean }) => e.covering)).toBe(true);
+
+  // ------------------------------------------------------------------ a covered G1 submission, reviews (ADR-0035 §3)
+  const submitted = await submitThroughApi(ctx.api, m, g, "G1");
+  expect(submitted.status, JSON.stringify(submitted.body)).toBe(201);
+  const CRIT = `${g.gates}/G1/submissions/${submitted.body.submissionNo}/criteria`;
+  const table = await m("GET", CRIT, { session: b.s.auditor });
+  expect([table.status, table.body.gateStatus, table.body.items.length]).toEqual([200, "submitted", 6]);
+  const key = missing[0]!;
+  const gv = async () =>
+    (
+      await ctx.api.db
+        .selectFrom("gate_instance")
+        .select("version")
+        .where("transformation_id", "=", b.transformationId)
+        .where("gate_code", "=", "G1")
+        .executeTakeFirstOrThrow()
+    ).version;
+  const review = await m("POST", `${CRIT}/${key}/reviews`, {
+    session: b.s.bo,
+    headers: ifmOf(await gv()),
+    body: {
+      finding: "Synthetic: covered by an accepted exception until the vendor report.",
+      recommendation: "meets_with_conditions",
+      openCondition: "Synthetic: vendor report before the G2 submission.",
+      rationale: "Synthetic: the compensating report is adequate.",
+    },
+  });
+  expect([review.status, review.body.reviewNo]).toEqual([201, 1]);
+  const bySubmitter = await m("POST", `${CRIT}/${key}/reviews`, {
+    session: b.s.tl,
+    headers: ifmOf(await gv()),
+    body: { finding: "Synthetic", recommendation: "meets", rationale: "Synthetic" },
+  });
+  expect(bySubmitter.status).toBe(403);
+  const reviews = await m("GET", `${CRIT}/${key}/reviews`, { session: b.s.auditor });
+  expect([reviews.status, reviews.body.items.length]).toEqual([200, 1]);
+  const revoked = await m("POST", `${EXC}/${covered[0]!.id}/revoke`, {
+    session: g.sp.session,
+    headers: ifmOf(2),
+    body: { reason: "Synthetic: the vendor report was cancelled." },
+  });
+  expect([revoked.status, revoked.body.status, revoked.body.covering]).toEqual([200, "revoked", false]);
+}
+
+const ifmOf = (v: number) => ({ "if-match": `"${v}"` });

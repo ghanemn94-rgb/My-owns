@@ -1,0 +1,18 @@
+port-policy: PostgreSQL listening on port 24600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-k2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1bxbkr_7943e264 (server_encoding UTF8); applied 59 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/gate-reviews.test.ts (6 tests) 4065ms
+   ✓ the criteria review table (REQ-S04-009) > each criterion row returns all nine fields; unreviewed rows show the six review fields as 'not reviewed' (null)  939ms
+   ✓ the criteria review table (REQ-S04-009) > the latest review is shown; the review list is oldest first; a criterion outside the submission is 404  575ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > the first review moves Submitted -> Under Review (one audit event); the approver decides from Under Review  656ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > refusals: submitter 403, condition 422, foreign risk 422, AUD 403, If-Match 428; nothing written  866ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > the submitter holding a reviewer role is refused with 403 gate.reviewer_is_submitter (SoD)  551ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  18:59:19
+   Duration  14.08s (transform 3.44s, setup 0ms, collect 7.02s, tests 4.06s, environment 0ms, prepare 142ms)
+

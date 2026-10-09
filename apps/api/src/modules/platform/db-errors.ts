@@ -2023,6 +2023,73 @@ export function mapP4GateScaleError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P4 slice H, BE-K2 lines (T-DG4-BE-K2; ADR-0035 §3, §4, §11): the 0051 guards behind per-criterion gate reviews and
+ * gate exceptions. The API refuses each case first with the same code and text (workflows/gate-reviews.ts,
+ * gate-exceptions.ts); these mappings keep a race or a bypass from surfacing as a 500. Null when the error is not
+ * one of them. (Appended to the slice H block after BE-K, p4-work-split §H H.2.)
+ */
+export function mapP4GateReviewExceptionError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "gate_criterion_review_submission_pending":
+      return problems.businessRule(
+        "gate.review_not_open",
+        "Only a submitted or under-review gate submission can be reviewed.",
+      );
+    case "gate_criterion_review_not_submitter":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "gate.reviewer_is_submitter",
+        title: "Forbidden",
+        detail: "The submitter cannot review their own gate submission.",
+      });
+    case "gate_criterion_review_condition_required":
+      return rule422(
+        "gate.review_condition_required",
+        "An open condition is required when the criterion meets with conditions.",
+        "/openCondition",
+      );
+    case "gate_criterion_review_no_key":
+    case "gate_criterion_review_no_sequence":
+      // Two reviews of one criterion raced for the same number: the caller re-reads and retries.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "gate_exception_one_pending_key":
+      return problems.duplicate(
+        "gate_exception.already_pending",
+        "An exception for this criterion is already awaiting a decision.",
+      );
+    case "gate_exception_mandatory_criterion":
+      return rule422(
+        "gate_exception.criterion_not_mandatory",
+        "An exception can only cover a mandatory criterion of this gate.",
+        "/criterionKey",
+      );
+    case "gate_exception_decider_not_requester":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "gate_exception.requester_cannot_decide",
+        title: "Forbidden",
+        detail: "The requester cannot decide their own exception.",
+      });
+    case "gate_exception_status_step":
+    case "gate_exception_decision_final":
+      return sliceHInvalidTransition(
+        "gate_exception.not_pending",
+        "Only a pending exception can be decided or withdrawn.",
+      );
+    default:
+      return null;
+  }
+}
+
+/**
  * P4 slice H, BE-L lines (ADR-0036 §1, §10; T-DG4-BE-L): the 0052 change-control constraints. The API checks each rule
  * first with the exact ADR texts; these are the last line when a concurrent write slips past a check. Null when the
  * error is not one of them. (Appended to the slice H block after BE-K/BE-K2, p4-work-split §H.3.)
@@ -2128,6 +2195,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4SustainmentClosure !== null) return p4SustainmentClosure;
   const p4GateScale = mapP4GateScaleError(error); // BE-K (slice H block)
   if (p4GateScale !== null) return p4GateScale;
+  const p4GateReviewException = mapP4GateReviewExceptionError(error); // BE-K2 (slice H block)
+  if (p4GateReviewException !== null) return p4GateReviewException;
   const p4ChangeControl = mapP4ChangeControlError(error); // BE-L (slice H block)
   if (p4ChangeControl !== null) return p4ChangeControl;
   if (constraint === "gate_decision_not_submitter")
