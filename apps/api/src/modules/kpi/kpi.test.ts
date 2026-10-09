@@ -189,6 +189,8 @@ describe("kpi module (P2)", () => {
       // P3 T09 benefit formulas (T-DG3-KBE-C): the kpi half of the G4 GateFactsProvider.
       "buildKpiP3GateFacts",
       "computeTotals",
+      // P4 (T-DG4-KBE-R1): slice A's KPI create service (adoption's createKpi calls it).
+      "createKpiDefinitionRow",
       "includedCaseIds",
       "loadCaseTotals",
       // P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only dashboard facts through the slice A status service.
@@ -207,6 +209,7 @@ describe("kpi module (P2)", () => {
     expect(typeof mod.loadKpiGateFacts).toBe("function");
     expect(mod.loadKpiGateFacts.length).toBe(2); // (db, transformationId)
     expect(mod.loadKpiP3GateFacts.length).toBe(2); // (db, transformationId): the GateFactsProvider `kpi` signature
+    expect(mod.createKpiDefinitionRow.length).toBe(3); // (tx, audit, input)
   });
 
   it("models missing and outdated values as unknown / stale - never as zero or green", () => {
