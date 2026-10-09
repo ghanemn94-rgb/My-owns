@@ -22,12 +22,13 @@ import { record } from "../audit/index.ts";
 import {
   iso,
   isoOrNull,
+  materialChangePort,
+  type ModuleDeps,
   parse,
   parseBody,
   parseQuery,
   problems,
   sendVersioned,
-  type ModuleDeps,
 } from "../platform/index.ts";
 import {
   assertActiveUsers,
@@ -241,6 +242,16 @@ async function approveMilestoneDate(tx: Tx, request: FastifyRequest, id: string)
   if (current.status === "cancelled")
     throw rule("milestone.cancelled", "A cancelled milestone has no approved date to set.", "/approvedDate");
   const reapproval = current.approved_date !== null;
+  // T-DG4-BE-L (ADR-0036 §3, REQ-S09-010): a re-approval beyond a configured material threshold needs a change request.
+  const changeControl = materialChangePort();
+  if (changeControl === null) throw problems.internal();
+  await changeControl.assertMilestoneDateWithinThreshold(
+    tx,
+    ctx.organizationId,
+    ctx.transformationId,
+    dateText(current.approved_date),
+    body.approvedDate,
+  );
   const updated = await tx
     .updateTable("milestone")
     .set({

@@ -80,6 +80,11 @@ import { loadBenefitsGateFacts } from "./modules/benefits/gate-facts.ts";
 import { loadGovernanceGateFacts } from "./modules/governance/gate-facts.ts";
 import { loadRaidGateFacts } from "./modules/raid/gate-facts.ts";
 import { loadSustainmentGateFacts } from "./modules/sustainment/gate-facts.ts";
+// T-DG4-BE-L (ADR-0036 §3, §6): the material-change port (kpi's formula hook, portfolio's threshold refusals) and kpi's
+// change-request apply entry point, wired between workflows and kpi/portfolio (the KBE-C import precedent).
+import { activateKpiVersionByChangeRequest } from "./modules/kpi/kpi-versions.ts";
+import { setMaterialChangePort } from "./modules/platform/index.ts";
+import { materialChangePortImpl, setKpiVersionActivator } from "./modules/workflows/change-requests.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -322,6 +327,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   // T-DG4-BE-J (D-107): sustainment requests transition-decision approvals through workflows' approval service, passed
   // in as a port (sustainment cannot import workflows).
   wireTransitionDecisionApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
+  setMaterialChangePort(materialChangePortImpl);
+  setKpiVersionActivator(activateKpiVersionByChangeRequest);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed

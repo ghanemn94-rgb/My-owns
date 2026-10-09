@@ -344,37 +344,19 @@ describe("version lifecycle", () => {
       targetValue: "1200",
     });
     expect([v3.status, v3.body.versionNo]).toEqual([201, 3]);
-    const act = await call(api.app, "POST", `${k.base}/kpi-versions/${v3.body.id}/activate`, {
-      session: k.s.tl,
-      headers: ifMatch(1),
-    });
-    expect([act.status, act.body.status, act.body.activatedBy, act.body.version]).toEqual([
-      200,
-      "active",
-      k.users.tl.id,
-      2,
-    ]);
+    // ADR-0036 §6 item 2 (D-101): a KPI with an active version changes only through an approved change request; the
+    // direct second activation is refused and changes nothing. Activation through the request (supersede + activate,
+    // one audit event each, one kpi.version_activated event) is proven in workflows/change-requests.test.ts (BE-L).
+    problem(
+      await call(api.app, "POST", `${k.base}/kpi-versions/${v3.body.id}/activate`, { session: k.s.tl, headers: ifMatch(1) }),
+      422,
+      "kpi_version.change_request_required",
+      "This KPI already has an active version; changing its definition, baseline or target needs an approved change request.",
+    );
     const old = await call(api.app, "GET", `${k.base}/kpi-versions/${v1.id}`, { session: k.s.auditor });
-    expect([old.body.status, old.body.supersededAt === null]).toEqual(["superseded", false]);
-    expect((await auditOf(api.db, v3.body.id)).map((a) => a.action)).toEqual([
-      "kpi_version.create",
-      "kpi_version.activate",
-    ]);
-    expect((await auditOf(api.db, v1.id)).map((a) => a.action)).toEqual([
-      "kpi_version.create",
-      "kpi_version.activate",
-      "kpi_version.supersede",
-    ]);
-    const events = await api.db.selectFrom("outbox_event").selectAll().where("aggregate_id", "=", v3.body.id).execute();
-    expect(events.map((e) => [e.event_type, e.idempotency_key])).toEqual([
-      ["kpi.version_activated", `kpi.version_activated:${v3.body.id}:3`],
-    ]);
-    expect(events[0]!.payload).toMatchObject({
-      kpiVersionId: v3.body.id,
-      kpiDefinitionId: kpi.id,
-      versionNo: 3,
-      supersededKpiVersionId: v1.id,
-    });
+    expect([old.body.status, old.body.supersededAt]).toEqual(["active", null]);
+    expect((await auditOf(api.db, v3.body.id)).map((a) => a.action)).toEqual(["kpi_version.create"]);
+    expect(await api.db.selectFrom("outbox_event").selectAll().where("aggregate_id", "=", v3.body.id).execute()).toEqual([]);
     const list = await call(api.app, "GET", `${k.base}/kpi-definitions/${kpi.id}/versions?limit=2`, {
       session: k.s.auditor,
     });
