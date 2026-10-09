@@ -686,7 +686,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // closeReportingPeriod and submitKpiActualDraft are bodiless).
     // T-DG4-BE-D: + createRaidEntry, updateRaidEntry, closeRaidEntry, createRaidEntryAction, updateActionRegisterItem
     // (5 JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([210, 209, 1]);
+    // T-DG4-BE-E: + createBudgetLine, updateBudgetLine, archiveBudgetLine, createInitiativeSchedule,
+    // updateInitiativeSchedule (5 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([215, 214, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
