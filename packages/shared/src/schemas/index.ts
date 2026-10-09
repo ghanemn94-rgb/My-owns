@@ -75,3 +75,6 @@ export * from "./sustainment-areas.ts";
 // P4 slice D mirrors of BE-F (backend-workflow-engineer, T-DG4-BE-F; p4-work-split §D.1): forums and participants,
 // meeting series with their recurrence, and meetings.
 export * from "./governance-meetings.ts";
+// P4 slice F mirrors of KBE-F (kpi-benefits-engineer, T-DG4-KBE-F; p4-work-split §F+G FG.3): adoption indicator
+// templates, metric links and the indicator report.
+export * from "./adoption-indicators.ts";
