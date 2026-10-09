@@ -684,6 +684,173 @@ export function mapP4BenefitD2Error(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+// P4 slice B, KBE-E lines (T-DG4-KBE-E; p4-work-split §B.3; ADR-0030 §11 "Database last-line mappings", ADR-0029 §11
+// for the plan-value table): measurements, Finance validation, corrections and planned/forecast values. The services
+// check every rule first with the same code and text; these answer only when a request slips past an API check or two
+// requests race. Placeholders the database cannot know ({benefitCode}, {periodStart}, {missing}) are generic here.
+// benefit_measurement_run_key, finance_validation_one_per_measurement and finance_validation_idempotency_key are the
+// worker's "already done" signals (exactly-once queue items); through the API they can only mean a race: 409.
+
+/**
+ * P4 slice B measurement, Finance validation, correction and plan-value constraints (ADR-0030 §11): the exact codes and
+ * English texts (S-11). Null when the error is not one of them.
+ */
+export function mapP4BenefitValueError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    case "benefit_measurement_step":
+      return rule422(
+        "benefit_measurement.step",
+        "This benefit is not at the Measure step yet. Measurements start at Measure; a delivered enabler is not realized value.",
+        "",
+      );
+    case "benefit_measurement_period_required":
+      return rule422(
+        "benefit_measurement.period_required",
+        "A measurement needs its measurement period before it is submitted.",
+        "/periodStart",
+      );
+    case "benefit_measurement_period_key":
+      return problems.duplicate(
+        "benefit_measurement.period_taken",
+        "This benefit already has a live measurement for this period. Correct that one instead.",
+      );
+    case "benefit_measurement_value_present":
+    case "benefit_measurement_missing_shape":
+      return rule422(
+        "benefit_measurement.value_shape",
+        "Enter an amount, a KPI value, or why the value is not available.",
+        "/amount",
+      );
+    case "benefit_measurement_status_step":
+    case "benefit_measurement_final":
+    case "benefit_measurement_submitted_frozen":
+      return rule422("benefit_measurement.not_draft", "Only a draft measurement can be changed or submitted.", "");
+    case "benefit_measurement_validated_immutable":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "benefit_measurement.validated_immutable",
+        title: "Invalid transition",
+        detail: "A validated value is never edited. Record an amendment or a reversal.",
+      });
+    case "benefit_measurement_input_same_period":
+      return rule422(
+        "benefit_measurement.lineage_period",
+        "Every input is for the measurement period.",
+        "/periodStart",
+      );
+    case "benefit_measurement_basis_validated":
+      return rule422(
+        "finance_validation.basis_provisional",
+        "The comparison basis is not validated by Finance, so this value is provisional. Validate the benefit's baseline and its formula version first.",
+        "",
+      );
+    case "benefit_measurement_currency":
+    case "benefit_plan_value_currency":
+      return rule422(
+        "benefit_value.currency_mismatch",
+        "The value is in another currency than the benefit. Values are never converted.",
+        "/currency",
+      );
+    case "benefit_measurement_unmonetised":
+    case "benefit_plan_value_unmonetised":
+      return rule422(
+        "benefit_value.unmonetised",
+        "A non-financial benefit has no SAR value without an approved valuation method. Record its KPI value instead.",
+        "/amount",
+      );
+    case "benefit_measurement_leaf_only":
+    case "benefit_plan_value_leaf_only":
+      return rule422("benefit_value.parent_rollup", "This benefit is a parent: its values come from its children.", "");
+    case "benefit_measurement_benefit_active":
+    case "benefit_plan_value_benefit_active":
+      return rule422("benefit.archived", "This benefit is archived and read-only.", "");
+    case "benefit_plan_value_period_key":
+      return problems.duplicate(
+        "benefit_value.period_taken",
+        "This benefit already has a value of this kind for the period starting on this date.",
+      );
+    case "benefit_plan_value_period_range":
+    case "benefit_measurement_period_range":
+      return rule422("benefit_value.period_range", "The period end cannot be before the period start.", "/periodEnd");
+    case "benefit_plan_value_present":
+      return rule422(
+        "benefit_value.value_required",
+        "A planned or forecast value needs an amount or a KPI value.",
+        "/amount",
+      );
+    case "benefit_measurement_validator_not_submitter":
+    case "finance_validation_sod":
+      return forbidden403("finance_validation.sod_submitter", "You submitted this value, so you cannot validate it.");
+    case "finance_validation_period_required":
+    case "finance_validation_content_complete":
+      return rule422(
+        "finance_validation.content_incomplete",
+        "A Finance decision covers all six items: baseline, attribution/counterfactual, calculation, evidence, measurement period and assumptions.",
+        "/items",
+      );
+    case "finance_validation_status_step":
+      return rule422("finance_validation.not_queued", "Only a queued item can be decided.", "");
+    case "finance_validation_all_items_accepted":
+      return rule422(
+        "finance_validation.items_not_accepted",
+        "An approval needs every item accepted. Reject the value instead, with a note.",
+        "/items",
+      );
+    case "finance_validation_rejection_reason":
+      return rule422(
+        "finance_validation.rejection_note_required",
+        "A rejection needs a note and at least one rejected item.",
+        "/note",
+      );
+    case "finance_validation_amount_shape":
+      return rule422(
+        "finance_validation.approved_amount_required",
+        "Approving a financial value states the approved amount; a non-financial value has none.",
+        "/approvedAmount",
+      );
+    case "benefit_measurement_correction_target":
+      return rule422("finance_validation.not_approved", "Only an approved validation can be amended or reversed.", "");
+    case "benefit_measurement_already_reversed":
+    case "benefit_measurement_one_reversal_key":
+      return rule422("finance_validation.already_reversed", "This value is already reversed.", "");
+    case "finance_validation_kind_shape":
+    case "benefit_measurement_correction_shape":
+      return rule422("finance_validation.reason_required", "A correction needs a reason.", "/reason");
+    case "benefit_measurement_run_key":
+    case "finance_validation_one_per_measurement":
+    case "finance_validation_idempotency_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "benefit_measurement_decision_present":
+    case "benefit_measurement_no_step":
+    case "benefit_measurement_no_key":
+    case "benefit_measurement_identity_fixed":
+    case "benefit_measurement_reversal_amount":
+    case "benefit_measurement_correction_period":
+    case "benefit_measurement_kind_shape":
+    case "benefit_measurement_validated_amount":
+    case "benefit_measurement_submitted_stamps":
+    case "benefit_measurement_decided_stamps":
+    case "finance_validation_subject":
+    case "finance_validation_frozen":
+    case "finance_validation_decided_stamps":
+    case "finance_validation_items_open":
+    case "benefit_measurement_input_open":
+    case "benefit_evidence_measurement_open":
+    case "benefit_plan_value_frozen":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 /** "<what> % ... %" values of a slice A guard message, e.g. "measure type lower_is_better does not fit the KPI polarity higher_is_better". */
 function wordsAfter(error: PgErrorLike, pattern: RegExp): string[] {
   return (pattern.exec(error.message ?? "") ?? []).slice(1).map((v) => v ?? "given");
@@ -959,6 +1126,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4BenefitRegister !== null) return p4BenefitRegister;
   const p4BenefitD2 = mapP4BenefitD2Error(error);
   if (p4BenefitD2 !== null) return p4BenefitD2;
+  const p4BenefitValue = mapP4BenefitValueError(error);
+  if (p4BenefitValue !== null) return p4BenefitValue;
 
   const p4Kpi = mapP4KpiGuardError(error);
   if (p4Kpi !== null) return p4Kpi;

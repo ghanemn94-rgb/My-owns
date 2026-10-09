@@ -6,6 +6,8 @@ import { phase, standaloneDeliverableType, timestamp, transformationMode, uuid }
 // P4 slice A (T-DG4-KBE-B; ADR-0027 §8 step 5): the three KPI change events; payloads defined with their mirrors.
 import { kpiThresholdChangedV1, kpiTrajectoryApprovedV1, kpiVersionActivatedV1 } from "./kpi-versions.ts";
 import { kpiActualAcceptedV1, kpiDeviationEvaluatedV1, kpiValuesRecalculatedV1 } from "./kpi-actuals.ts";
+// P4 slice B (T-DG4-KBE-E; ADR-0030 §3, §4, §6): the measurement submission, Finance decision and variance events.
+import { benefitEvidenceSubmittedV1, benefitValueDecidedV1, benefitVarianceEvaluatedV1 } from "./benefit-values.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -46,6 +48,11 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "kpi.actual_accepted": { 1: kpiActualAcceptedV1 },
   "kpi.values_recalculated": { 1: kpiValuesRecalculatedV1 },
   "kpi.deviation_evaluated": { 1: kpiDeviationEvaluatedV1 },
+  // T-DG4-KBE-E (ADR-0030 §3, §4, §6): consumers benefits.finance_queue (evidence_submitted) and slice E (variance).
+  "benefit.evidence_submitted": { 1: benefitEvidenceSubmittedV1 },
+  "benefit.value_validated": { 1: benefitValueDecidedV1 },
+  "benefit.value_rejected": { 1: benefitValueDecidedV1 },
+  "benefit.variance_evaluated": { 1: benefitVarianceEvaluatedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

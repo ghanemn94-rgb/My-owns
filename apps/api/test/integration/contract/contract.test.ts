@@ -684,7 +684,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-KBE-C: + requestKpiVersionApproval, createReportingPeriod, submitKpiActual, addKpiActualValue,
     // acceptKpiActual, rejectKpiActual, createRagOverride, revokeRagOverride (8 JSON bodies; openReportingPeriod,
     // closeReportingPeriod and submitKpiActualDraft are bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([205, 204, 1]);
+    // T-DG4-KBE-E: + decideBenefitBaseline, createBenefitPlanValue, updateBenefitPlanValue, createBenefitMeasurement,
+    // updateBenefitMeasurement, decideFinanceValidation, amendFinanceValidation, reverseFinanceValidation (8 JSON bodies;
+    // submitBenefitMeasurement is bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([213, 212, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
