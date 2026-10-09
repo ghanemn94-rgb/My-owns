@@ -1,0 +1,221 @@
+
+> mobily-transformation-hub@0.1.0 test /home/user/wt/dg4-kbe-f
+> vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen
+
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-f
+
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 9160ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  1391ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  368ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  407ms
+   ✓ after create (F-DG1-004) > treats a 403 for the just-created record the same way  446ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  392ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option  309ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  523ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  1285ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  1242ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  703ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  414ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (125 tests) 150ms
+ ✓ |unit-web| src/auth/session-bound.test.tsx (34 tests) 19961ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  1830ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record  602ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  449ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > router state left in history (Back/Forward) never shows A's created record to B  407ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  654ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  951ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > a user create whose identity changes between its awaits: B is not navigated to A's new user  707ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: the organization and user creates under one identity still navigate to the new record  621ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state  318ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header  449ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  822ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > writes neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token  355ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  657ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record  600ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  457ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  544ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  912ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > a user create whose identity changes between its awaits: B is not navigated to A's new user  1206ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > sanity: the organization and user creates under one identity still navigate to the new record  681ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > N1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer  401ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  426ms
+   ✓ the convention: no raw navigate or cache write in app code (T-DG2-FE15) > the ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page  4540ms
+ ✓ |unit-web| src/auth/session-generation.test.tsx (26 tests) 18836ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  2149ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  1121ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache  1468ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B  999ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B  1721ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  805ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A  766ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates  435ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  736ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  530ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > a refocus whose /me finds the session ended navigates once to sign-in and refetches no page data  369ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  1083ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  998ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache  1176ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B  739ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B  929ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  679ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a language save retried after a 409 is never written for the identity that replaced A  540ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  434ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  481ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 46209ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  1687ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  389ms
+   ✓ Diagnose > renders the six workstreams with their key questions  569ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  1166ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  919ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  1700ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  2091ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  1103ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  1522ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  2475ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  2292ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  1014ms
+   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  591ms
+   ✓ Define > requires a target date on a T02 row before sending anything  980ms
+   ✓ Define > sets the North Star with one sentence and no If-Match the first time  802ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  767ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  1260ms
+   ✓ Define: KPI activation (F-DG2-201) > an active KPI shows Active and offers no Activate  1069ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  381ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  1668ms
+   ✓ Charter > thesis: an empty part is Incomplete and no sentence is composed (F-DG2-203)  615ms
+   ✓ Charter > thesis: a part the API flags incomplete is never shown as answered  384ms
+   ✓ Charter > thesis: the four parts compose the B0037 sentence (EN and AR)  633ms
+   ✓ Charter > compares a version with the previous one  545ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('en')  801ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('ar')  626ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  1561ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  800ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  871ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  1480ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  845ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  1703ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  1900ms
+   ✓ Decisions (T04) > reads the log with kind=design and shows D-codes, options A/B/C and Open status  334ms
+   ✓ Decisions (T04) > creates a design decision with inline options and an idempotency key  467ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  1390ms
+   ✓ Gates (business approval) > gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)  860ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  877ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  712ms
+   ✓ Evidence > never offers review to the creator; a filename reference can only be rejected  552ms
+   ✓ read-only auditor (AUD) > diagnose: no write control and a read-only note  311ms
+   ✓ read-only auditor (AUD) > design: no write control and a read-only note  328ms
+   ✓ read-only auditor (AUD) > gates: no write control and a read-only note  328ms
+   ✓ read-only auditor (AUD) > team: no write control and a read-only note  505ms
+ ✓ |unit-web| src/pages/portfolio/portfolio.test.tsx (32 tests) 25998ms
+   ✓ Portfolio (en) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  2755ms
+   ✓ Portfolio (en) > the proposed rank is Unknown (never 0) when the prioritization view is unavailable  779ms
+   ✓ Portfolio (en) > filters by status and wave on the server  759ms
+   ✓ Portfolio (en) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  1446ms
+   ✓ Portfolio (en) > the read-only auditor sees the list with no enabled write control  745ms
+   ✓ Portfolio (en) > outcome hierarchy: five levels, an Unknown target is Unknown (never 0)  449ms
+   ✓ Portfolio (ar) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  1079ms
+   ✓ Portfolio (ar) > the proposed rank is Unknown (never 0) when the prioritization view is unavailable  607ms
+   ✓ Portfolio (ar) > filters by status and wave on the server  377ms
+   ✓ Portfolio (ar) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  729ms
+   ✓ Portfolio (ar) > the read-only auditor sees the list with no enabled write control  644ms
+   ✓ Portfolio (ar) > outcome hierarchy: five levels, an Unknown target is Unknown (never 0)  530ms
+   ✓ Initiative Card (en) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  839ms
+   ✓ Initiative Card (en) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  688ms
+   ✓ Initiative Card (en) > submit refused: 'Outcome before activity…' (validation at /outcomeContributions) is translated  356ms
+   ✓ Initiative Card (en) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  1079ms
+   ✓ Initiative Card (en) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  1320ms
+   ✓ Initiative Card (en) > a 409 shows the conflict banner and reloads  998ms
+   ✓ Initiative Card (en) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  1488ms
+   ✓ Initiative Card (en) > an outcome contribution needs an outcome; the KPI is optional and labelled so  930ms
+   ✓ Initiative Card (en) > the read-only auditor sees the card with no enabled write control  419ms
+   ✓ Initiative Card (ar) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  443ms
+   ✓ Initiative Card (ar) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  545ms
+   ✓ Initiative Card (ar) > submit refused: 'Outcome before activity…' (validation at /outcomeContributions) is translated  1135ms
+   ✓ Initiative Card (ar) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  807ms
+   ✓ Initiative Card (ar) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  673ms
+   ✓ Initiative Card (ar) > a 409 shows the conflict banner and reloads  543ms
+   ✓ Initiative Card (ar) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  1217ms
+   ✓ Initiative Card (ar) > an outcome contribution needs an outcome; the KPI is optional and labelled so  509ms
+   ✓ Initiative Card (ar) > the read-only auditor sees the card with no enabled write control  454ms
+   ✓ Initiative Card (ar) > a cancelled initiative is read-only even for the lead  403ms
+ ✓ |unit-web| src/pages/team/team.test.tsx (10 tests) 11560ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  1360ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  641ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  750ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  1172ms
+   ✓ Team: read-only auditor (AUD) > sees the roles, accountabilities and members, a read-only note, and no assign control  605ms
+   ✓ Team (Arabic RTL) > shows Arabic role names and the provisional Arabic accountability text  744ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  1218ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  1122ms
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  1810ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  2129ms
+ ✓ |unit-web| src/pages/kpi/kpi.test.tsx (27 tests) 11280ms
+   ✓ KPI screens (en) > RAG panel: the seven elements, the threshold version named, and the override beside the calculated RAG  1082ms
+   ✓ KPI screens (en) > no actual for the current period: Unknown, grey and labelled, with its reason; never 0 and never green  489ms
+   ✓ KPI screens (en) > four-step update: submits once, then lists downstream views, 'review pending' and 'Finance review pending'  643ms
+   ✓ KPI screens (en) > a second entry f
+[... truncated by the agent: the volume was full; the original is 53 KB ...]
+sations (en) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  955ms
+   ✓ Dispensations (en) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  717ms
+   ✓ Dispensations (en) > revoking an accepted dispensation needs a reason and is a business approval  717ms
+   ✓ Dispensations (en) > the read-only auditor sees the register with no enabled write control  377ms
+   ✓ Dispensations (ar) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  473ms
+   ✓ Dispensations (ar) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  670ms
+   ✓ Dispensations (ar) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  476ms
+ ✓ |unit-web| src/pages/gates/g1-agreements.test.tsx (10 tests) 7594ms
+   ✓ G1 agreements step (en) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  1604ms
+   ✓ G1 agreements step (en) > a non-approve outcome on G1 sends no agreements (even after ticking them)  1179ms
+   ✓ G1 agreements step (en) > approving another gate (G2) shows no confirmations and sends no agreements  777ms
+   ✓ G1 agreements step (en) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  694ms
+   ✓ G1 agreements step (en) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  389ms
+   ✓ G1 agreements step (ar) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  748ms
+   ✓ G1 agreements step (ar) > a non-approve outcome on G1 sends no agreements (even after ticking them)  886ms
+   ✓ G1 agreements step (ar) > approving another gate (G2) shows no confirmations and sends no agreements  380ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  598ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  336ms
+ ✓ |unit-web| src/pages/raci/governance.test.tsx (15 tests) 5842ms
+   ✓ Governance (en) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match  997ms
+   ✓ Governance (en) > RACI: an auditor sees the matrix read-only (no cell editor, no save)  387ms
+   ✓ Governance (en) > role mapping: an unmapped governance role shows the visible routing error  359ms
+   ✓ Governance (en) > decision rights: seeded rows; the due-date preview shows Unknown with its reason  426ms
+   ✓ Governance (en) > decision rights: submits the matrix for business approval with If-Match  444ms
+   ✓ Governance (en) > decision rights: a field with an unknown party code is refused before sending  511ms
+   ✓ Governance (ar) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match  343ms
+   ✓ Governance (ar) > decision rights: seeded rows; the due-date preview shows Unknown with its reason  411ms
+   ✓ Governance (ar) > decision rights: submits the matrix for business approval with If-Match  387ms
+   ✓ Governance (ar) > decision rights: a field with an unknown party code is refused before sending  639ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 92ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 17 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/app/p3-seams.test.tsx [ apps/web/src/app/p3-seams.test.tsx ]
+ FAIL  |unit-web| src/components/LanguageSwitch.test.tsx [ apps/web/src/components/LanguageSwitch.test.tsx ]
+ FAIL  |unit-web| src/components/RecordForm.alerts.test.tsx [ apps/web/src/components/RecordForm.alerts.test.tsx ]
+ FAIL  |unit-web| src/components/States.test.tsx [ apps/web/src/components/States.test.tsx ]
+ FAIL  |unit-web| src/i18n/glossary.test.ts [ apps/web/src/i18n/glossary.test.ts ]
+ FAIL  |unit-web| src/i18n/i18n.test.ts [ apps/web/src/i18n/i18n.test.ts ]
+ FAIL  |unit-web| src/styles/styles.test.ts [ apps/web/src/styles/styles.test.ts ]
+ FAIL  |unit-web| src/test/harness-config.test.ts [ apps/web/src/test/harness-config.test.ts ]
+ FAIL  |unit-web| src/test/react-warning-guard.test.tsx [ apps/web/src/test/react-warning-guard.test.tsx ]
+ FAIL  |unit-web| src/pages/business-cases/problem-codes.test.ts [ apps/web/src/pages/business-cases/problem-codes.test.ts ]
+ FAIL  |unit-web| src/pages/capacity/capacity.test.tsx [ apps/web/src/pages/capacity/capacity.test.tsx ]
+ FAIL  |unit-web| src/pages/dependencies/dependencies.test.tsx [ apps/web/src/pages/dependencies/dependencies.test.tsx ]
+ FAIL  |unit-web| src/pages/gates/inherited-approval.test.tsx [ apps/web/src/pages/gates/inherited-approval.test.tsx ]
+ FAIL  |unit-web| src/pages/readiness/readiness.test.tsx [ apps/web/src/pages/readiness/readiness.test.tsx ]
+ FAIL  |unit-web| src/pages/roadmap/fe-e.test.tsx [ apps/web/src/pages/roadmap/fe-e.test.tsx ]
+ FAIL  |unit-web| src/pages/roadmap/roadmap.test.tsx [ apps/web/src/pages/roadmap/roadmap.test.tsx ]
+ FAIL  |unit-web| src/pages/transformations/modeGuidance.test.tsx [ apps/web/src/pages/transformations/modeGuidance.test.tsx ]
+Error: ENOSPC: no space left on device, write
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 77 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: ENOSPC: no space left on device, mkdir '/var/tmp/mth-run.Po8l6i/claude-0/y1Nq6qORxjUzCUeF0NEdL/ssr'
+ ❯ mkdirSync node:fs:1410:26
+ ❯ Proxy.fetch node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/coverage.DL5VHqXY.js:2471:5
+ ❯ EventEmitter.onMessage node_modules/.pnpm/vitest@3.2.4_@ty
