@@ -20,6 +20,21 @@ import { KpiActualPage, KpiReviewPage } from "../pages/kpi/KpiActualPage.tsx";
 import { KpiPage } from "../pages/kpi/KpiPage.tsx";
 import { KpisPage } from "../pages/kpi/KpisPage.tsx";
 import { KpiUpdatePage } from "../pages/kpi/KpiUpdatePage.tsx";
+import { BenefitPage } from "../pages/benefits/BenefitPage.tsx";
+import { BenefitsPage } from "../pages/benefits/BenefitsPage.tsx";
+import { MeasurementPage } from "../pages/benefits/MeasurementPage.tsx";
+import {
+  BenefitGroupsPage,
+  BenefitOverlapPage,
+  BenefitOverlapsPage,
+  BenefitScenariosPage,
+  ValuationMethodsPage,
+} from "../pages/benefits/RegisterPages.tsx";
+import {
+  FinanceValidationDetailPage,
+  FinanceValidationPage,
+  TransformationFinanceQueuePage,
+} from "../pages/finance-validation/FinanceValidationPages.tsx";
 import { MyWorkPage } from "../pages/my-work/MyWorkPage.tsx";
 import { RaciPage } from "../pages/raci/RaciPage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
@@ -71,11 +86,7 @@ const entryRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.workspaceTab).map((
  */
 export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
   // FE-B (slice A: KPI engine): built by T-DG4-FE-B, see the KPI routes below.
-  // FE-C (slice B: benefits and Finance validation)
-  { path: "transformations/:id/benefits", feature: "benefits", owner: "FE-C" },
-  { path: "transformations/:id/benefits/:benefitId", feature: "benefit", owner: "FE-C" },
-  { path: "transformations/:id/benefit-overlaps/:overlapId", feature: "benefitOverlap", owner: "FE-C" },
-  { path: "finance-validation", feature: "financeValidation", owner: "FE-C" },
+  // FE-C (slice B: benefits and Finance validation): built by T-DG4-FE-C, see the benefit routes below.
   // FE-D (slices E and D: RAID, actions, forums, meetings, T16)
   { path: "transformations/:id/raid", feature: "raid", owner: "FE-D" },
   { path: "transformations/:id/actions", feature: "actions", owner: "FE-D" },
@@ -135,6 +146,22 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/kpis/:kpiId/actuals/:actualId", element: <KpiActualPage /> },
       { path: "transformations/:id/kpi-review", element: <KpiReviewPage /> },
       { path: "transformations/:id/data-quality", element: <DataQualityPage /> },
+      // P4 slice B: benefits and Finance validation (T-DG4-FE-C; p4-work-split §B.5). The overlap path is KBE-D2's and
+      // the Finance validation path KBE-E's work-item link.
+      { path: "transformations/:id/benefits", element: <BenefitsPage /> },
+      { path: "transformations/:id/benefits/:benefitId", element: <BenefitPage /> },
+      { path: "transformations/:id/benefit-measurements/:measurementId", element: <MeasurementPage /> },
+      { path: "transformations/:id/benefit-groups", element: <BenefitGroupsPage /> },
+      { path: "transformations/:id/benefit-overlaps", element: <BenefitOverlapsPage /> },
+      { path: "transformations/:id/benefit-overlaps/:overlapId", element: <BenefitOverlapPage /> },
+      { path: "transformations/:id/benefit-scenarios", element: <BenefitScenariosPage /> },
+      { path: "transformations/:id/benefit-valuation-methods", element: <ValuationMethodsPage /> },
+      { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },
+      {
+        path: "transformations/:id/finance-validations/:financeValidationId",
+        element: <FinanceValidationDetailPage />,
+      },
+      { path: "finance-validation", element: <FinanceValidationPage /> },
       { path: "transformations", element: <TransformationListPage /> },
       { path: "transformations/new", element: <TransformationCreatePage /> },
       { path: "transformations/:id", element: <TransformationDetailPage /> },
