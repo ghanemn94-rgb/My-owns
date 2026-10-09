@@ -1261,6 +1261,13 @@ export interface InitiativeTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  // 0048 (slices F/G; ADR-0034 §1): delivery completion stamps and the business adoption status.
+  delivery_completed_at: NullableTimestamp;
+  delivery_completed_by: string | null;
+  adoption_status: Generated<string>;
+  adoption_status_note: string | null;
+  adoption_status_set_at: NullableTimestamp;
+  adoption_status_set_by: string | null;
 }
 
 export interface InitiativeGapLinkTable {
@@ -3312,6 +3319,514 @@ export interface ExecutiveDecisionLogView {
   updated_at: ColumnType<Date | null, never, never>;
 }
 
+// P4 slices F and G (T-DG4-ARCH-06; ADR-0033, ADR-0034; migrations 0047, 0048): the indicator templates, the T13
+// stakeholder register, champions, metric links, interventions, versioned forms, invitations, training and assessment
+// records, involvement, champion constraints; performance areas and cycles, controls and checks, BAU handovers and
+// evidence, transition decisions, sustainment reviews, lessons, improvement items and closure records.
+export interface AdoptionIndicatorTemplateTable {
+  key: string;
+  indicator_key: string;
+  indicator_ordinal: number;
+  measure_ordinal: number;
+  source_indicator_en: string;
+  indicator_ar: string;
+  measure_en: string;
+  measure_ar: string;
+  ar_provisional: Generated<boolean>;
+  unit_kind: string;
+  polarity: string;
+  value_nature: string;
+  aggregation_rule: string;
+  value_source: string;
+  source_ref: string;
+}
+
+export interface StakeholderGroupTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  influence: string | null;
+  impact: string;
+  current_stance: string;
+  required_behavior: string;
+  intervention_types: string[];
+  intervention_plan: string | null;
+  owner_user_id: string;
+  adoption_kpi_definition_id: string | null;
+  headcount: number | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface StakeholderChampionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  stakeholder_group_id: string;
+  user_id: string;
+  note: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AdoptionMetricLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  template_key: string;
+  kpi_definition_id: string | null;
+  target_kind: string;
+  outcome_id: string | null;
+  initiative_id: string | null;
+  stakeholder_group_id: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AdoptionInterventionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  stakeholder_group_id: string | null;
+  intervention_type: string;
+  title: string;
+  description: string | null;
+  owner_user_id: string | null;
+  due_date: string | null;
+  status: Generated<string>;
+  origin: string;
+  metric_link_id: string | null;
+  kpi_evaluation_id: string | null;
+  reporting_period_id: string | null;
+  scope_kind: string | null;
+  scope_id: string | null;
+  trigger_key: string | null;
+  outcome_note: string | null;
+  completed_at: NullableTimestamp;
+  completed_by: string | null;
+  created_source: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface AssessmentFormTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  name: string;
+  description: string | null;
+  stakeholder_group_id: string | null;
+  status: Generated<string>;
+  current_version_no: Generated<number>;
+  published_version_no: number | null;
+  published_at: NullableTimestamp;
+  published_by: string | null;
+  retired_at: NullableTimestamp;
+  retired_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AssessmentFormVersionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  form_id: string;
+  version_no: number;
+  schema: Json;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface AssessmentInvitationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  form_id: string;
+  user_id: string;
+  stakeholder_group_id: string;
+  subject_user_id: string | null;
+  due_date: string | null;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TrainingRecordTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  stakeholder_group_id: string;
+  intervention_id: string | null;
+  participant_user_id: string | null;
+  participant_label: string | null;
+  training_title: string;
+  scheduled_on: string | null;
+  status: Generated<string>;
+  completed_on: string | null;
+  recorded_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AssessmentRecordTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  form_id: string;
+  form_version_id: string;
+  invitation_id: string | null;
+  stakeholder_group_id: string;
+  kind: string;
+  respondent_user_id: string;
+  subject_user_id: string | null;
+  subject_label: string | null;
+  observed_on: string;
+  answers: Json;
+  proficiency_result: string | null;
+  status: Generated<string>;
+  reviewed_at: NullableTimestamp;
+  reviewed_by: string | null;
+  review_note: string | null;
+  withdrawn_at: NullableTimestamp;
+  withdrawn_by: string | null;
+  withdraw_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface StakeholderInvolvementTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  stakeholder_group_id: string;
+  involvement_kind: string;
+  workshop_id: string | null;
+  decision_id: string | null;
+  note: string | null;
+  withdraws_involvement_id: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ChampionConstraintTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  champion_id: string;
+  stakeholder_group_id: string;
+  decision_id: string;
+  constraint_text: string;
+  status: Generated<string>;
+  response_text: string | null;
+  resolved_at: NullableTimestamp;
+  resolved_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface PerformanceAreaTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  business_unit_id: string | null;
+  sponsor_user_id: string | null;
+  bau_owner_user_id: string | null;
+  kpi_owner_user_id: string | null;
+  review_frequency: Generated<string>;
+  review_interval: Generated<number>;
+  next_review_date: string | null;
+  cycle_no: Generated<number>;
+  status: Generated<string>;
+  current_handover_id: string | null;
+  retired_at: NullableTimestamp;
+  retired_by: string | null;
+  retire_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface PerformanceAreaCycleTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  performance_area_id: string;
+  cycle_no: number;
+  opened_at: TimestampDefault;
+  opened_by: string;
+  reopen_reason: string | null;
+  prior_handover_id: string | null;
+  prior_handover_accepted_at: NullableTimestamp;
+  prior_handover_accepted_by: string | null;
+  prior_closure_record_id: string | null;
+  prior_closed_at: NullableTimestamp;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface PerformanceAreaLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  performance_area_id: string;
+  link_kind: string;
+  kpi_definition_id: string | null;
+  benefit_id: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ControlTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  performance_area_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  owner_user_id: string | null;
+  frequency: string;
+  frequency_interval: Generated<number>;
+  next_check_date: string | null;
+  status: Generated<string>;
+  retired_at: NullableTimestamp;
+  retired_by: string | null;
+  retire_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ControlCheckTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  control_id: string;
+  performance_area_id: string;
+  due_date: string;
+  assignee_user_id: string | null;
+  status: Generated<string>;
+  performed_at: NullableTimestamp;
+  performed_by: string | null;
+  result_note: string | null;
+  created_source: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface BauHandoverTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  performance_area_id: string;
+  cycle_no: number;
+  code: string;
+  receiving_owner_user_id: string;
+  kpi_owner_user_id: string | null;
+  operating_procedures: string | null;
+  capability_readiness: string | null;
+  unresolved_accepted_risks: string | null;
+  benefit_monitoring_cadence: string | null;
+  data_access: string | null;
+  improvement_backlog_summary: string | null;
+  status: Generated<string>;
+  submitted_at: NullableTimestamp;
+  submitted_by: string | null;
+  accepted_at: NullableTimestamp;
+  accepted_by: string | null;
+  acceptance_note: string | null;
+  returned_at: NullableTimestamp;
+  returned_by: string | null;
+  return_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BauHandoverEvidenceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  handover_id: string;
+  evidence_id: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface TransitionDecisionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  benefit_id: string;
+  residual_owner_user_id: string;
+  rationale: string;
+  expected_realization_end: string;
+  monitoring_frequency: string;
+  monitoring_interval: Generated<number>;
+  first_monitoring_date: string;
+  next_monitoring_date: string | null;
+  status: Generated<string>;
+  approval_id: string | null;
+  decided_at: NullableTimestamp;
+  decided_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface SustainmentReviewTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  subject_kind: string;
+  performance_area_id: string | null;
+  cycle_no: number | null;
+  transition_decision_id: string | null;
+  due_date: string;
+  assignee_user_id: string;
+  status: Generated<string>;
+  completed_at: NullableTimestamp;
+  completed_by: string | null;
+  outcome_note: string | null;
+  performance_signal: string | null;
+  created_source: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface LessonTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  performance_area_id: string | null;
+  title: string;
+  context: string | null;
+  lesson_text: string;
+  recommendation: string | null;
+  tags: Generated<string[]>;
+  status: Generated<string>;
+  published_at: NullableTimestamp;
+  published_by: string | null;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  search_document: ColumnType<string, never, never>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ImprovementItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  performance_area_id: string | null;
+  title: string;
+  description: string | null;
+  source_kind: string;
+  lesson_id: string | null;
+  control_check_id: string | null;
+  review_id: string | null;
+  handover_id: string | null;
+  owner_user_id: string | null;
+  priority: string | null;
+  target_date: string | null;
+  status: Generated<string>;
+  resolution_note: string | null;
+  resolved_at: NullableTimestamp;
+  resolved_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ClosureRecordTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  subject_kind: string;
+  initiative_id: string | null;
+  basis: string;
+  snapshot: Json;
+  closure_note: string | null;
+  closed_at: TimestampDefault;
+  closed_by: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -3478,6 +3993,30 @@ export interface Database {
   governance_escalation_rule: GovernanceEscalationRuleTable;
   decision_escalation: DecisionEscalationTable;
   blocker_status: BlockerStatusTable;
+  adoption_indicator_template: AdoptionIndicatorTemplateTable;
+  stakeholder_group: StakeholderGroupTable;
+  stakeholder_champion: StakeholderChampionTable;
+  adoption_metric_link: AdoptionMetricLinkTable;
+  adoption_intervention: AdoptionInterventionTable;
+  assessment_form: AssessmentFormTable;
+  assessment_form_version: AssessmentFormVersionTable;
+  assessment_invitation: AssessmentInvitationTable;
+  training_record: TrainingRecordTable;
+  assessment_record: AssessmentRecordTable;
+  stakeholder_involvement: StakeholderInvolvementTable;
+  champion_constraint: ChampionConstraintTable;
+  performance_area: PerformanceAreaTable;
+  performance_area_cycle: PerformanceAreaCycleTable;
+  performance_area_link: PerformanceAreaLinkTable;
+  control: ControlTable;
+  control_check: ControlCheckTable;
+  bau_handover: BauHandoverTable;
+  bau_handover_evidence: BauHandoverEvidenceTable;
+  transition_decision: TransitionDecisionTable;
+  sustainment_review: SustainmentReviewTable;
+  lesson: LessonTable;
+  improvement_item: ImprovementItemTable;
+  closure_record: ClosureRecordTable;
   executive_decision_log: ExecutiveDecisionLogView;
 }
 
@@ -3614,6 +4153,30 @@ export type GovernanceEscalationRuleRow = Selectable<GovernanceEscalationRuleTab
 export type DecisionEscalationRow = Selectable<DecisionEscalationTable>;
 export type BlockerStatusRow = Selectable<BlockerStatusTable>;
 export type ExecutiveDecisionLogRow = Selectable<ExecutiveDecisionLogView>;
+export type AdoptionIndicatorTemplateRow = Selectable<AdoptionIndicatorTemplateTable>;
+export type StakeholderGroupRow = Selectable<StakeholderGroupTable>;
+export type StakeholderChampionRow = Selectable<StakeholderChampionTable>;
+export type AdoptionMetricLinkRow = Selectable<AdoptionMetricLinkTable>;
+export type AdoptionInterventionRow = Selectable<AdoptionInterventionTable>;
+export type AssessmentFormRow = Selectable<AssessmentFormTable>;
+export type AssessmentFormVersionRow = Selectable<AssessmentFormVersionTable>;
+export type AssessmentInvitationRow = Selectable<AssessmentInvitationTable>;
+export type TrainingRecordRow = Selectable<TrainingRecordTable>;
+export type AssessmentRecordRow = Selectable<AssessmentRecordTable>;
+export type StakeholderInvolvementRow = Selectable<StakeholderInvolvementTable>;
+export type ChampionConstraintRow = Selectable<ChampionConstraintTable>;
+export type PerformanceAreaRow = Selectable<PerformanceAreaTable>;
+export type PerformanceAreaCycleRow = Selectable<PerformanceAreaCycleTable>;
+export type PerformanceAreaLinkRow = Selectable<PerformanceAreaLinkTable>;
+export type ControlRow = Selectable<ControlTable>;
+export type ControlCheckRow = Selectable<ControlCheckTable>;
+export type BauHandoverRow = Selectable<BauHandoverTable>;
+export type BauHandoverEvidenceRow = Selectable<BauHandoverEvidenceTable>;
+export type TransitionDecisionRow = Selectable<TransitionDecisionTable>;
+export type SustainmentReviewRow = Selectable<SustainmentReviewTable>;
+export type LessonRow = Selectable<LessonTable>;
+export type ImprovementItemRow = Selectable<ImprovementItemTable>;
+export type ClosureRecordRow = Selectable<ClosureRecordTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -4763,6 +5326,12 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "delivery_completed_at",
+    "delivery_completed_by",
+    "adoption_status",
+    "adoption_status_note",
+    "adoption_status_set_at",
+    "adoption_status_set_by",
   ],
   initiative_gap_link: [
     "id",
@@ -6707,6 +7276,486 @@ export const SCHEMA_COLUMNS = {
     "source_record_id",
     "rag",
     "note",
+    "created_at",
+    "created_by",
+  ],
+  adoption_indicator_template: [
+    "key",
+    "indicator_key",
+    "indicator_ordinal",
+    "measure_ordinal",
+    "source_indicator_en",
+    "indicator_ar",
+    "measure_en",
+    "measure_ar",
+    "ar_provisional",
+    "unit_kind",
+    "polarity",
+    "value_nature",
+    "aggregation_rule",
+    "value_source",
+    "source_ref",
+  ],
+  stakeholder_group: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "name",
+    "description",
+    "influence",
+    "impact",
+    "current_stance",
+    "required_behavior",
+    "intervention_types",
+    "intervention_plan",
+    "owner_user_id",
+    "adoption_kpi_definition_id",
+    "headcount",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  stakeholder_champion: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "stakeholder_group_id",
+    "user_id",
+    "note",
+    "status",
+    "removed_at",
+    "removed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  adoption_metric_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "template_key",
+    "kpi_definition_id",
+    "target_kind",
+    "outcome_id",
+    "initiative_id",
+    "stakeholder_group_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  adoption_intervention: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "stakeholder_group_id",
+    "intervention_type",
+    "title",
+    "description",
+    "owner_user_id",
+    "due_date",
+    "status",
+    "origin",
+    "metric_link_id",
+    "kpi_evaluation_id",
+    "reporting_period_id",
+    "scope_kind",
+    "scope_id",
+    "trigger_key",
+    "outcome_note",
+    "completed_at",
+    "completed_by",
+    "created_source",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assessment_form: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "name",
+    "description",
+    "stakeholder_group_id",
+    "status",
+    "current_version_no",
+    "published_version_no",
+    "published_at",
+    "published_by",
+    "retired_at",
+    "retired_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assessment_form_version: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "form_id",
+    "version_no",
+    "schema",
+    "created_at",
+    "created_by",
+  ],
+  assessment_invitation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "form_id",
+    "user_id",
+    "stakeholder_group_id",
+    "subject_user_id",
+    "due_date",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  training_record: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "stakeholder_group_id",
+    "intervention_id",
+    "participant_user_id",
+    "participant_label",
+    "training_title",
+    "scheduled_on",
+    "status",
+    "completed_on",
+    "recorded_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assessment_record: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "form_id",
+    "form_version_id",
+    "invitation_id",
+    "stakeholder_group_id",
+    "kind",
+    "respondent_user_id",
+    "subject_user_id",
+    "subject_label",
+    "observed_on",
+    "answers",
+    "proficiency_result",
+    "status",
+    "reviewed_at",
+    "reviewed_by",
+    "review_note",
+    "withdrawn_at",
+    "withdrawn_by",
+    "withdraw_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  stakeholder_involvement: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "stakeholder_group_id",
+    "involvement_kind",
+    "workshop_id",
+    "decision_id",
+    "note",
+    "withdraws_involvement_id",
+    "created_at",
+    "created_by",
+  ],
+  champion_constraint: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "champion_id",
+    "stakeholder_group_id",
+    "decision_id",
+    "constraint_text",
+    "status",
+    "response_text",
+    "resolved_at",
+    "resolved_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  performance_area: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "name",
+    "description",
+    "business_unit_id",
+    "sponsor_user_id",
+    "bau_owner_user_id",
+    "kpi_owner_user_id",
+    "review_frequency",
+    "review_interval",
+    "next_review_date",
+    "cycle_no",
+    "status",
+    "current_handover_id",
+    "retired_at",
+    "retired_by",
+    "retire_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  performance_area_cycle: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "performance_area_id",
+    "cycle_no",
+    "opened_at",
+    "opened_by",
+    "reopen_reason",
+    "prior_handover_id",
+    "prior_handover_accepted_at",
+    "prior_handover_accepted_by",
+    "prior_closure_record_id",
+    "prior_closed_at",
+    "created_at",
+    "created_by",
+  ],
+  performance_area_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "performance_area_id",
+    "link_kind",
+    "kpi_definition_id",
+    "benefit_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  control: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "performance_area_id",
+    "code",
+    "name",
+    "description",
+    "owner_user_id",
+    "frequency",
+    "frequency_interval",
+    "next_check_date",
+    "status",
+    "retired_at",
+    "retired_by",
+    "retire_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  control_check: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "control_id",
+    "performance_area_id",
+    "due_date",
+    "assignee_user_id",
+    "status",
+    "performed_at",
+    "performed_by",
+    "result_note",
+    "created_source",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  bau_handover: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "performance_area_id",
+    "cycle_no",
+    "code",
+    "receiving_owner_user_id",
+    "kpi_owner_user_id",
+    "operating_procedures",
+    "capability_readiness",
+    "unresolved_accepted_risks",
+    "benefit_monitoring_cadence",
+    "data_access",
+    "improvement_backlog_summary",
+    "status",
+    "submitted_at",
+    "submitted_by",
+    "accepted_at",
+    "accepted_by",
+    "acceptance_note",
+    "returned_at",
+    "returned_by",
+    "return_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  bau_handover_evidence: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "handover_id",
+    "evidence_id",
+    "created_at",
+    "created_by",
+  ],
+  transition_decision: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "benefit_id",
+    "residual_owner_user_id",
+    "rationale",
+    "expected_realization_end",
+    "monitoring_frequency",
+    "monitoring_interval",
+    "first_monitoring_date",
+    "next_monitoring_date",
+    "status",
+    "approval_id",
+    "decided_at",
+    "decided_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  sustainment_review: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "subject_kind",
+    "performance_area_id",
+    "cycle_no",
+    "transition_decision_id",
+    "due_date",
+    "assignee_user_id",
+    "status",
+    "completed_at",
+    "completed_by",
+    "outcome_note",
+    "performance_signal",
+    "created_source",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  lesson: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "performance_area_id",
+    "title",
+    "context",
+    "lesson_text",
+    "recommendation",
+    "tags",
+    "status",
+    "published_at",
+    "published_by",
+    "archived_at",
+    "archived_by",
+    "search_document",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  improvement_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "performance_area_id",
+    "title",
+    "description",
+    "source_kind",
+    "lesson_id",
+    "control_check_id",
+    "review_id",
+    "handover_id",
+    "owner_user_id",
+    "priority",
+    "target_date",
+    "status",
+    "resolution_note",
+    "resolved_at",
+    "resolved_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  closure_record: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "subject_kind",
+    "initiative_id",
+    "basis",
+    "snapshot",
+    "closure_note",
+    "closed_at",
+    "closed_by",
     "created_at",
     "created_by",
   ],

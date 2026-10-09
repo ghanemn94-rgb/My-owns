@@ -87,6 +87,12 @@ info:
     operating-system layers are seeded verbatim; a recurrence change regenerates future meetings only. An executive ask
     states all seven elements, and T16 is a view of the one decision model (the DG2 decision operations are unchanged).
     Recording a T16 Outcome is a person's business decision; an escalation never decides.
+
+    **P4 additions, slices F and G (T-DG4-ARCH-06, ADR-0033, ADR-0034).** Additive within v1: new paths, schemas and
+    tags. The seven adoption indicators are seeded verbatim; proficiency without observations is Unknown, never 0.
+    Delivery, adoption, validated value and closure are separate statuses; a transformation closes only through the
+    governed closure action after its G6 business approval, and its performance areas, KPI actuals, backlog and lessons
+    continue. Accepting a BAU handover is the receiving owner's business decision; no job accepts or closes anything.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -204,6 +210,34 @@ tags:
     description: The T16 Executive Decision Log on the canonical decision record (P4, ADR-0032).
   - name: escalations
     description: Decision-SLA escalations, blocker RAG by cycle and the escalation rules (P4, ADR-0032).
+  - name: stakeholder-groups
+    description: T13 Stakeholder & Adoption Plan, stakeholder groups, champions, involvement in design and champion constraints (P4, ADR-0033).
+  - name: adoption-interventions
+    description: Adoption interventions; one corrective intervention per indicator, scope and period below trajectory (P4, ADR-0033).
+  - name: adoption-indicators
+    description: The seven leading adoption indicators as KPI templates, metric links and indicator values (P4, ADR-0033).
+  - name: assessment-forms
+    description: Short native feedback and assessment forms (validated, versioned form JSON) and invitations (P4, ADR-0033).
+  - name: assessment-records
+    description: Feedback and proficiency observations, and training records; completion is never adoption (P4, ADR-0033).
+  - name: status-model
+    description: Separate delivery, adoption, validated-value and closure statuses (P4, ADR-0034).
+  - name: closure
+    description: Governed closure of initiatives and transformations; G6 approval alone closes nothing (P4, ADR-0034).
+  - name: transition-decisions
+    description: Benefit transition decisions with residual ownership and monitoring; forecast stays forecast (P4, ADR-0034).
+  - name: performance-areas
+    description: Performance areas that continue after transformation closure, with cycle history on reopening (P4, ADR-0034).
+  - name: bau-handovers
+    description: BAU handovers with the M0217 content and receiving-owner acceptance (P4, ADR-0034).
+  - name: controls
+    description: BAU controls and their check cadence (P4, ADR-0034).
+  - name: control-checks
+    description: Periodic control checks and recurring sustainment reviews (P4, ADR-0034).
+  - name: improvement-items
+    description: The continuous-improvement backlog; persists after closure (P4, ADR-0034).
+  - name: lessons
+    description: Lessons, searchable across transformations (P4, ADR-0034).
 security:
   - sessionCookie: []
 paths:
@@ -12814,6 +12848,2254 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/adoption-indicator-templates:
+    get:
+      tags: [adoption-indicators]
+      operationId: listAdoptionIndicatorTemplates
+      summary: "The seven leading adoption indicators of B0109-B0115, verbatim, as KPI templates; indicator 4 has two measures (training completion, observed proficiency). Arabic labels carry arProvisional (REQ-PB-071; any signed-in user)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionIndicatorTemplateList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-groups:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [stakeholder-groups]
+      operationId: listStakeholderGroups
+      summary: "The transformation's stakeholder groups (T13 rows; REQ-PB-070, REQ-S11-001) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/StakeholderGroupStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderGroupPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [stakeholder-groups]
+      operationId: createStakeholderGroup
+      summary: "Add a T13 row: stakeholder group, impact H/M/L, influence H/M/L, current stance Support/Neutral/Resist ('Hostile' is 400), required behavior, intervention types (Comms/training/involvement/incentive), owner, adoption KPI (adoption.edit; BO, WL, TL). 409 stakeholder_group.name_taken; 422 stakeholder_group.kpi_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StakeholderGroupCreate" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-groups/{stakeholderGroupId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StakeholderGroupId"
+    get:
+      tags: [stakeholder-groups]
+      operationId: getStakeholderGroup
+      summary: "Read one stakeholder group with its champion and open-intervention counts (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [stakeholder-groups]
+      operationId: updateStakeholderGroup
+      summary: "Update a T13 row (adoption.edit). 400 stakeholder_group.stance_invalid, impact_invalid, intervention_invalid; 409 stakeholder_group.name_taken; 422 stakeholder_group.archived, kpi_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StakeholderGroupUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-groups/{stakeholderGroupId}/archive:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StakeholderGroupId"
+    post:
+      tags: [stakeholder-groups]
+      operationId: archiveStakeholderGroup
+      summary: "Archive a group with a reason; final (adoption.edit). 422 stakeholder_group.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionReason" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/adoption-plan:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [stakeholder-groups]
+      operationId: getAdoptionPlan
+      summary: "Template 13 Stakeholder & Adoption Plan as a register: the seven B0107 columns per active group, plus influence, champions, open interventions and open champion constraints (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionPlan" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-groups/{stakeholderGroupId}/champions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StakeholderGroupId"
+    get:
+      tags: [stakeholder-groups]
+      operationId: listStakeholderChampions
+      summary: "The group's champions, active and removed (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderChampionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [stakeholder-groups]
+      operationId: addStakeholderChampion
+      summary: "Name a champion of the group (adoption.edit). 409 stakeholder_champion.exists; 422 stakeholder_group.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StakeholderChampionCreate" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderChampion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-groups/{stakeholderGroupId}/champions/{stakeholderChampionId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StakeholderGroupId"
+      - $ref: "#/components/parameters/StakeholderChampionId"
+    post:
+      tags: [stakeholder-groups]
+      operationId: removeStakeholderChampion
+      summary: "Remove a champion; final, the row stays as history (adoption.edit)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderChampion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/adoption-interventions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [adoption-interventions]
+      operationId: listAdoptionInterventions
+      summary: "Adoption interventions: planned by people (comms, training, involvement, incentive) and corrective ones created once per indicator, scope and period below trajectory (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/StakeholderGroupIdQuery"
+        - $ref: "#/components/parameters/AdoptionInterventionStatusQuery"
+        - $ref: "#/components/parameters/AdoptionInterventionOriginQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionInterventionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [adoption-interventions]
+      operationId: createAdoptionIntervention
+      summary: "Plan an intervention with owner and due date; the owner gets a My Work item (adoption.edit; REQ-S11-001)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionInterventionCreate" }
+      responses:
+        "201":
+          description: "Created (planned)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionIntervention" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/adoption-interventions/{adoptionInterventionId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AdoptionInterventionId"
+    get:
+      tags: [adoption-interventions]
+      operationId: getAdoptionIntervention
+      summary: "Read one intervention (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionIntervention" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [adoption-interventions]
+      operationId: updateAdoptionIntervention
+      summary: "Update an intervention: title, description, owner, due date, status (planned -> in_progress -> done; -> cancelled) with the outcome note (adoption.edit). 422 adoption_intervention.status_transition, final, outcome_required, owner_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionInterventionUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionIntervention" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/adoption-metric-links:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [adoption-indicators]
+      operationId: listAdoptionMetricLinks
+      summary: "Indicator measures attached to outcomes, initiatives, stakeholder groups or the transformation (REQ-S16-020 AdoptionMetricLink) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AdoptionTargetKindQuery"
+        - $ref: "#/components/parameters/AdoptionTargetIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionMetricLinkPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [adoption-indicators]
+      operationId: createAdoptionMetricLink
+      summary: "Attach an indicator measure to a target; a KPI-fed measure names a KPI of the transformation or creates one from the template (createKpi) (adoption.edit). 409 adoption_metric_link.exists; 422 adoption_metric_link.kpi_required, kpi_not_applicable, kpi_mismatch."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionMetricLinkCreate" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionMetricLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/adoption-metric-links/{adoptionMetricLinkId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AdoptionMetricLinkId"
+    post:
+      tags: [adoption-indicators]
+      operationId: removeAdoptionMetricLink
+      summary: "Remove a link; final (adoption.edit)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionMetricLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/adoption-indicators:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [adoption-indicators]
+      operationId: getAdoptionIndicators
+      summary: "Adoption indicator values for a target and reporting period: KPI-fed measures with slice A's value and RAG; training completion and observed proficiency computed from records, Unknown (never 0) without records or observations (REQ-PB-072) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/AdoptionTargetKindQueryRequired"
+        - $ref: "#/components/parameters/AdoptionTargetIdQuery"
+        - $ref: "#/components/parameters/ReportingPeriodIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionIndicatorReport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-forms:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [assessment-forms]
+      operationId: listAssessmentForms
+      summary: "Feedback and proficiency-assessment forms (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AssessmentFormStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentFormPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [assessment-forms]
+      operationId: createAssessmentForm
+      summary: "Create a short native form with its first version; the questions are validated form JSON (assessment_form.manage; BO, WL). 400 assessment_form.schema_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentFormCreate" }
+      responses:
+        "201":
+          description: "Created (draft, version 1)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentForm" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentFormId"
+    get:
+      tags: [assessment-forms]
+      operationId: getAssessmentForm
+      summary: "Read a form with its current and published versions (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentForm" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [assessment-forms]
+      operationId: updateAssessmentForm
+      summary: "Edit a form; new questions insert the next version (the published version stays until published again) (assessment_form.manage). 400 assessment_form.schema_invalid; 422 assessment_form.retired."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentFormUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentForm" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}/publish:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentFormId"
+    post:
+      tags: [assessment-forms]
+      operationId: publishAssessmentForm
+      summary: "Publish the current version (assessment_form.manage). 422 assessment_form.retired, status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentForm" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}/retire:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentFormId"
+    post:
+      tags: [assessment-forms]
+      operationId: retireAssessmentForm
+      summary: "Retire a form; final (assessment_form.manage). 422 assessment_form.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentForm" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}/invitations:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentFormId"
+    get:
+      tags: [assessment-forms]
+      operationId: listAssessmentInvitations
+      summary: "Invitations to a form (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentInvitationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [assessment-forms]
+      operationId: createAssessmentInvitations
+      summary: "Invite respondents to a published form for a stakeholder group (optionally naming the observed person); each invitee gets a My Work item (assessment_form.manage). 409 assessment_invitation.exists; 422 assessment_form.not_published."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentInvitationCreate" }
+      responses:
+        "201":
+          description: "Created (open)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentInvitationList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-invitations/{assessmentInvitationId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentInvitationId"
+    post:
+      tags: [assessment-forms]
+      operationId: cancelAssessmentInvitation
+      summary: "Cancel an open invitation; final (assessment_form.manage). 422 assessment_invitation.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentInvitation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-records:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [assessment-records]
+      operationId: listAssessmentRecords
+      summary: "Submitted feedback and proficiency observations (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/StakeholderGroupIdQuery"
+        - $ref: "#/components/parameters/AssessmentFormIdQuery"
+        - $ref: "#/components/parameters/AssessmentRecordKindQuery"
+        - $ref: "#/components/parameters/AssessmentRecordStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentRecordPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [assessment-records]
+      operationId: createAssessmentRecord
+      summary: "Answer the published version of a form; a proficiency observation links to its stakeholder group and counts in the observed-proficiency measure; the result is derived from the proficiency answer (assessment.respond; invited, or an assessor holding proficiency.record). 400 assessment_record.answer_invalid, answer_required, subject_required; 403 assessment_record.not_invited; 422 assessment_form.not_published."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentRecordCreate" }
+      responses:
+        "201":
+          description: "Created (submitted)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-records/{assessmentRecordId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentRecordId"
+    get:
+      tags: [assessment-records]
+      operationId: getAssessmentRecord
+      summary: "Read one record (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-records/{assessmentRecordId}/review:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentRecordId"
+    post:
+      tags: [assessment-records]
+      operationId: reviewAssessmentRecord
+      summary: "Mark a record reviewed, with an optional note (assessment.review; BO). 422 assessment_record.status_transition, withdrawn."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssessmentReview" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-records/{assessmentRecordId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentRecordId"
+    post:
+      tags: [assessment-records]
+      operationId: withdrawAssessmentRecord
+      summary: "Withdraw a record with a reason; it stops counting (assessment.review or the respondent). 403 assessment_record.not_withdrawable_by_caller; 422 assessment_record.withdrawn."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionReason" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/training-records:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [assessment-records]
+      operationId: listTrainingRecords
+      summary: "Training attendance records (completion is attendance, never adoption; REQ-PB-072) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/StakeholderGroupIdQuery"
+        - $ref: "#/components/parameters/TrainingRecordStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrainingRecordPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [assessment-records]
+      operationId: createTrainingRecord
+      summary: "Enrol a participant in a training (proficiency.record; BO, WL). 422 training_record.intervention_not_training, stakeholder_group.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrainingRecordCreate" }
+      responses:
+        "201":
+          description: "Created (enrolled)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrainingRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/training-records/{trainingRecordId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/TrainingRecordId"
+    patch:
+      tags: [assessment-records]
+      operationId: updateTrainingRecord
+      summary: "Record completion (with its date), no-show or withdrawal; final (proficiency.record). 422 training_record.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrainingRecordUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrainingRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-involvements:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [stakeholder-groups]
+      operationId: listStakeholderInvolvements
+      summary: "Which impacted groups took part in design workshops and T04 design decisions, with withdrawals (REQ-PB-073) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/StakeholderGroupIdQuery"
+        - $ref: "#/components/parameters/DecisionIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderInvolvementPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [stakeholder-groups]
+      operationId: createStakeholderInvolvement
+      summary: "Record a group's involvement in a design workshop or T04 design decision (adoption.edit). 422 stakeholder_involvement.target_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StakeholderInvolvementCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderInvolvement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/stakeholder-involvements/{stakeholderInvolvementId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StakeholderInvolvementId"
+    post:
+      tags: [stakeholder-groups]
+      operationId: withdrawStakeholderInvolvement
+      summary: "Withdraw a mistaken involvement record by appending a withdrawal; history is kept (adoption.edit). 422 stakeholder_involvement.already_withdrawn."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionReason" }
+      responses:
+        "201":
+          description: "Withdrawal appended."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StakeholderInvolvement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/champion-constraints:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [stakeholder-groups]
+      operationId: listChampionConstraints
+      summary: "Constraints raised by champions; with decisionId, the constraints shown on that T04 decision (REQ-PB-073) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/DecisionIdQuery"
+        - $ref: "#/components/parameters/StakeholderGroupIdQuery"
+        - $ref: "#/components/parameters/ChampionConstraintStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChampionConstraintPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [stakeholder-groups]
+      operationId: createChampionConstraint
+      summary: "Raise a constraint on a T04 design decision as an active champion of the group (champion_constraint.raise). 403 champion_constraint.not_champion; 422 champion_constraint.decision_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChampionConstraintCreate" }
+      responses:
+        "201":
+          description: "Created (open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChampionConstraint" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/champion-constraints/{championConstraintId}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ChampionConstraintId"
+    post:
+      tags: [stakeholder-groups]
+      operationId: resolveChampionConstraint
+      summary: "Address a constraint with a response (decision.edit) or withdraw it (its champion); final. 403 champion_constraint.not_resolvable_by_caller; 422 champion_constraint.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChampionConstraintResolve" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChampionConstraint" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/complete-delivery:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    post:
+      tags: [status-model]
+      operationId: completeInitiativeDelivery
+      summary: "launched -> completed (delivery complete). Leaves adoption, validated value and closure unchanged (initiative.complete_delivery; WL, TL). 422 initiative.delivery_not_launched (invalid-transition)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusNote" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeStatusModel" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/adoption-status:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    post:
+      tags: [status-model]
+      operationId: setInitiativeAdoptionStatus
+      summary: "Set the business adoption status (on_track, at_risk, adopted) with a note; never derived from delivery (adoption_status.set; BO). 422 initiative.adoption_status_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InitiativeAdoptionStatusSet" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeStatusModel" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/status-model:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    get:
+      tags: [status-model]
+      operationId: getInitiativeStatusModel
+      summary: "The four separate statuses (delivery, adoption, validated value, closure) and the label, e.g. 'Delivered — value validation pending' (REQ-S03-003, REQ-PB-009) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeStatusModel" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/close:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    post:
+      tags: [closure]
+      operationId: closeInitiative
+      summary: "Close a delivery-complete initiative when each of its benefits is Finance-validated or covered by an approved transition decision, and each validated benefit has a BAU owner (initiative.close; TL). 422 invalid-transition closure.delivery_not_complete, closure.value_validation_pending, closure.sustainment_owner_missing; 409 closure.already_closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusNote" }
+      responses:
+        "201":
+          description: "Closed; the closure record."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClosureRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/status-model:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [status-model]
+      operationId: getTransformationStatusModel
+      summary: "Delivery complete, value validation pending and BAU accepted as separate states, with the label (never 'successful' from initiative completion; REQ-S11-006) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransformationStatusModel" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/close:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    post:
+      tags: [closure]
+      operationId: closeTransformation
+      summary: "Governed closure: an approved G6 (Sustain) business approval, each benefit validated or covered by an approved transition decision, and every performance area in BAU. Sets status closed, not archived: performance areas, KPI actuals, CI backlog and lessons continue (transformation.close; TL). 422 invalid-transition closure.transformation_not_open, closure.g6_not_approved, closure.value_validation_pending, closure.bau_not_accepted; 422 transformation.archived; 409 closure.already_closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusNote" }
+      responses:
+        "201":
+          description: "Closed; the closure record."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClosureRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/closure-records:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [closure]
+      operationId: listClosureRecords
+      summary: "The transformation's closure records (initiatives and the transformation), append-only (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClosureRecordPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/transition-decisions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [transition-decisions]
+      operationId: listTransitionDecisions
+      summary: "Benefit transition decisions for long-realization benefits (REQ-S11-007) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/BenefitIdQuery"
+        - $ref: "#/components/parameters/TransitionDecisionStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitionDecisionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [transition-decisions]
+      operationId: createTransitionDecision
+      summary: "Draft a transition decision: residual owner, rationale, expected realization end, monitoring cadence (transition_decision.propose; BO, FIN). 409 transition_decision.exists; 422 transition_decision.benefit_validated, monitoring_after_end."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransitionDecisionCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitionDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/transition-decisions/{transitionDecisionId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/TransitionDecisionId"
+    get:
+      tags: [transition-decisions]
+      operationId: getTransitionDecision
+      summary: "Read one decision with its approval (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitionDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [transition-decisions]
+      operationId: updateTransitionDecision
+      summary: "Edit a draft, or withdraw a draft or submitted decision (status withdrawn) (transition_decision.propose). 422 transition_decision.frozen, final, monitoring_after_end."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransitionDecisionUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitionDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/transition-decisions/{transitionDecisionId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/TransitionDecisionId"
+    post:
+      tags: [transition-decisions]
+      operationId: submitTransitionDecision
+      summary: "Submit for decision through the canonical approval (type benefit_transition_decision, assignee SP by default; the requester cannot approve). The benefit's forecast stays forecast (transition_decision.propose). 422 transition_decision.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitionDecision" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/performance-areas:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [performance-areas]
+      operationId: listPerformanceAreas
+      summary: "Performance areas of the transformation; they continue after the transformation closes (REQ-S03-002) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PerformanceAreaStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceAreaPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [performance-areas]
+      operationId: createPerformanceArea
+      summary: "Create a performance area (establishing, cycle 1) (performance_area.manage; BO, TO)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PerformanceAreaCreate" }
+      responses:
+        "201":
+          description: "Created (establishing)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceArea" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/performance-areas/{performanceAreaId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/PerformanceAreaId"
+    get:
+      tags: [performance-areas]
+      operationId: getPerformanceArea
+      summary: "Read an area with its cycle history: each cycle's prior accepted handover and the closure it followed, unchanged (REQ-S11-009) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceArea" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [performance-areas]
+      operationId: updatePerformanceArea
+      summary: "Update name, description, business unit, sponsor and review cadence (performance_area.manage). 422 performance_area.retired."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PerformanceAreaUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceArea" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/performance-areas/{performanceAreaId}/reopen:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/PerformanceAreaId"
+    post:
+      tags: [performance-areas]
+      operationId: reopenPerformanceArea
+      summary: "Reopen a deteriorating area in BAU: a new cycle linked to the prior handover and closure; nothing is overwritten (performance_area.reopen; BO, TL). 400 performance_area.reopen_reason_required; 422 performance_area.not_reopenable (invalid-transition)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionReason" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceArea" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/performance-areas/{performanceAreaId}/retire:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/PerformanceAreaId"
+    post:
+      tags: [performance-areas]
+      operationId: retirePerformanceArea
+      summary: "Retire an area with a reason; final (performance_area.manage). 422 performance_area.retired."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionReason" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceArea" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/performance-areas/{performanceAreaId}/links:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/PerformanceAreaId"
+    get:
+      tags: [performance-areas]
+      operationId: listPerformanceAreaLinks
+      summary: "The area's KPIs and benefits (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceAreaLinkPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [performance-areas]
+      operationId: createPerformanceAreaLink
+      summary: "Link a KPI or a benefit of the transformation (performance_area.manage). 409 performance_area_link.exists; 422 performance_area.retired."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PerformanceAreaLinkCreate" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceAreaLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/performance-areas/{performanceAreaId}/links/{performanceAreaLinkId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/PerformanceAreaId"
+      - $ref: "#/components/parameters/PerformanceAreaLinkId"
+    post:
+      tags: [performance-areas]
+      operationId: removePerformanceAreaLink
+      summary: "Remove a link; final (performance_area.manage)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceAreaLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/bau-handovers:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [bau-handovers]
+      operationId: listBauHandovers
+      summary: "BAU handovers of the transformation's performance areas (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PerformanceAreaIdQuery"
+        - $ref: "#/components/parameters/BauHandoverStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandoverPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [bau-handovers]
+      operationId: createBauHandover
+      summary: "Prepare a handover for the current cycle of an establishing or reopened area, naming the receiving owner (bau_handover.prepare; WL, TL). 409 bau_handover.exists; 422 bau_handover.area_not_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BauHandoverCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/bau-handovers/{bauHandoverId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BauHandoverId"
+    get:
+      tags: [bau-handovers]
+      operationId: getBauHandover
+      summary: "Read a handover with its controls, evidence and the area's open improvement items (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [bau-handovers]
+      operationId: updateBauHandover
+      summary: "Edit the M0217 content while draft or returned (bau_handover.prepare). 422 bau_handover.frozen, accepted_final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BauHandoverUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/bau-handovers/{bauHandoverId}/evidence:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BauHandoverId"
+    post:
+      tags: [bau-handovers]
+      operationId: addBauHandoverEvidence
+      summary: "Link an evidence item while draft or returned (bau_handover.prepare). 422 bau_handover.frozen."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BauHandoverEvidenceAdd" }
+      responses:
+        "201":
+          description: "Linked."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/bau-handovers/{bauHandoverId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BauHandoverId"
+    post:
+      tags: [bau-handovers]
+      operationId: submitBauHandover
+      summary: "Submit: every M0217 item is validated (a handover missing data access is rejected); the receiving owner gets a My Work item (bau_handover.prepare). 422 bau_handover.incomplete, status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/bau-handovers/{bauHandoverId}/accept:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BauHandoverId"
+    post:
+      tags: [bau-handovers]
+      operationId: acceptBauHandover
+      summary: "Receiving-owner acceptance: transfers routine ownership of the area's KPIs, controls and benefits, moves the area to BAU and creates the first recurring review exactly once (bau_handover.accept, business approval; only the receiving owner, else 403 bau_handover.not_receiving_owner). 422 bau_handover.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusNote" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/bau-handovers/{bauHandoverId}/return:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BauHandoverId"
+    post:
+      tags: [bau-handovers]
+      operationId: returnBauHandover
+      summary: "Return a submitted handover with a reason (bau_handover.accept; only the receiving owner, else 403 bau_handover.not_receiving_owner). 400 bau_handover.return_reason_required; 422 bau_handover.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdoptionReason" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BauHandover" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/controls:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [controls]
+      operationId: listControls
+      summary: "BAU controls and their check cadence (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PerformanceAreaIdQuery"
+        - $ref: "#/components/parameters/ControlStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ControlPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [controls]
+      operationId: createControl
+      summary: "Define a control of a performance area (control.manage; BO, TO). 422 performance_area.retired."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ControlCreate" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Control" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/controls/{controlId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ControlId"
+    patch:
+      tags: [controls]
+      operationId: updateControl
+      summary: "Update a control, or retire it (status retired, with a reason; final) (control.manage). 422 control.retired."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ControlUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Control" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/control-checks:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [control-checks]
+      operationId: listControlChecks
+      summary: "Periodic control checks (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PerformanceAreaIdQuery"
+        - $ref: "#/components/parameters/ControlCheckStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ControlCheckPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/control-checks/{controlCheckId}/record:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ControlCheckId"
+    post:
+      tags: [control-checks]
+      operationId: recordControlCheck
+      summary: "Record a check as passed or failed; a failed check (with its note) emits control_check.failed and slice E opens one recovery action (control_check.record; BO, TO). 400 control_check.result_note_required; 422 control_check.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ControlCheckRecord" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ControlCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/sustainment-reviews:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [control-checks]
+      operationId: listSustainmentReviews
+      summary: "Recurring performance-area reviews and benefit-monitoring reviews (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PerformanceAreaIdQuery"
+        - $ref: "#/components/parameters/SustainmentReviewStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SustainmentReviewPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/sustainment-reviews/{sustainmentReviewId}/complete:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/SustainmentReviewId"
+    post:
+      tags: [control-checks]
+      operationId: completeSustainmentReview
+      summary: "Complete a review assigned to you with its outcome note and performance signal (sustainment_review.complete). 403 sustainment_review.not_assignee; 422 sustainment_review.final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SustainmentReviewComplete" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SustainmentReview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/improvement-items:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [improvement-items]
+      operationId: listImprovementItems
+      summary: "The continuous-improvement backlog; it persists after transformation closure and is the list G6 shows (REQ-PB-084) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PerformanceAreaIdQuery"
+        - $ref: "#/components/parameters/ImprovementItemStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImprovementItemPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [improvement-items]
+      operationId: createImprovementItem
+      summary: "Add an improvement item with its source (improvement.edit; BO, TO)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImprovementItemCreate" }
+      responses:
+        "201":
+          description: "Created (open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImprovementItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/improvement-items/{improvementItemId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ImprovementItemId"
+    patch:
+      tags: [improvement-items]
+      operationId: updateImprovementItem
+      summary: "Update an item or move its status; done and rejected need a resolution note and are final (improvement.edit). 400 improvement_item.resolution_note_required; 422 improvement_item.final, status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImprovementItemUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImprovementItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/lessons:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [lessons]
+      operationId: listLessons
+      summary: "The transformation's lessons, drafts included (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/LessonStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [lessons]
+      operationId: createLesson
+      summary: "Record a lesson (draft) (lesson.edit; BO, TO)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LessonCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/lessons/{lessonId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/LessonId"
+    patch:
+      tags: [lessons]
+      operationId: updateLesson
+      summary: "Edit a lesson, or archive it (status archived; final) (lesson.edit). 422 lesson.archived, status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LessonUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/lessons/{lessonId}/publish:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/LessonId"
+    post:
+      tags: [lessons]
+      operationId: publishLesson
+      summary: "Publish a lesson; it becomes searchable from other transformations (lesson.edit). 422 lesson.status_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/lessons/search:
+    get:
+      tags: [lessons]
+      operationId: searchLessons
+      summary: "Full-text search over the published lessons of every transformation in the caller's scope, across transformations (REQ-S11-008) (lesson.search; every business role and AUD)."
+      parameters:
+        - $ref: "#/components/parameters/LessonSearchQ"
+        - $ref: "#/components/parameters/LessonTagQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonSearchPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -12831,6 +15113,226 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    StakeholderGroupId:
+      name: stakeholderGroupId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    StakeholderChampionId:
+      name: stakeholderChampionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AdoptionInterventionId:
+      name: adoptionInterventionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AdoptionMetricLinkId:
+      name: adoptionMetricLinkId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssessmentFormId:
+      name: assessmentFormId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssessmentInvitationId:
+      name: assessmentInvitationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssessmentRecordId:
+      name: assessmentRecordId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TrainingRecordId:
+      name: trainingRecordId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    StakeholderInvolvementId:
+      name: stakeholderInvolvementId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ChampionConstraintId:
+      name: championConstraintId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TransitionDecisionId:
+      name: transitionDecisionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    PerformanceAreaId:
+      name: performanceAreaId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    PerformanceAreaLinkId:
+      name: performanceAreaLinkId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BauHandoverId:
+      name: bauHandoverId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ControlId:
+      name: controlId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ControlCheckId:
+      name: controlCheckId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    SustainmentReviewId:
+      name: sustainmentReviewId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ImprovementItemId:
+      name: improvementItemId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    LessonId:
+      name: lessonId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    StakeholderGroupStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, archived] }
+    StakeholderGroupIdQuery:
+      name: stakeholderGroupId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AdoptionInterventionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [planned, in_progress, done, cancelled] }
+    AdoptionInterventionOriginQuery:
+      name: origin
+      in: query
+      required: false
+      schema: { type: string, enum: [manual, below_trajectory] }
+    AdoptionTargetKindQuery:
+      name: targetKind
+      in: query
+      required: false
+      schema: { type: string, enum: [transformation, outcome, initiative, stakeholder_group] }
+    AdoptionTargetKindQueryRequired:
+      name: targetKind
+      in: query
+      required: true
+      schema: { type: string, enum: [transformation, outcome, initiative, stakeholder_group] }
+    AdoptionTargetIdQuery:
+      name: targetId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssessmentFormStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [draft, published, retired] }
+    AssessmentFormIdQuery:
+      name: assessmentFormId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssessmentRecordKindQuery:
+      name: kind
+      in: query
+      required: false
+      schema: { type: string, enum: [feedback, proficiency_observation] }
+    AssessmentRecordStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [submitted, reviewed, withdrawn] }
+    TrainingRecordStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [enrolled, completed, no_show, withdrawn] }
+    ChampionConstraintStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, addressed, withdrawn] }
+    BenefitIdQuery:
+      name: benefitId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TransitionDecisionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [draft, submitted, approved, rejected, withdrawn] }
+    PerformanceAreaStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [establishing, bau, reopened, retired] }
+    PerformanceAreaIdQuery:
+      name: performanceAreaId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BauHandoverStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [draft, submitted, accepted, returned] }
+    ControlStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, retired] }
+    ControlCheckStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [due, passed, failed, cancelled] }
+    SustainmentReviewStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [due, done, cancelled] }
+    ImprovementItemStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, in_progress, done, rejected] }
+    LessonStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [draft, published, archived] }
+    LessonSearchQ:
+      name: q
+      in: query
+      required: false
+      schema: { type: string, minLength: 1, maxLength: 200 }
+    LessonTagQuery:
+      name: tag
+      in: query
+      required: false
+      schema: { type: string, minLength: 1, maxLength: 50 }
     ForumId:
       name: forumId
       in: path
@@ -13755,6 +16257,27 @@ components:
         - executive_decision.create
         - executive_decision.decide
         - escalation_rule.configure
+        - adoption.edit
+        - assessment_form.manage
+        - assessment.respond
+        - assessment.review
+        - proficiency.record
+        - champion_constraint.raise
+        - adoption_status.set
+        - initiative.complete_delivery
+        - initiative.close
+        - transformation.close
+        - performance_area.manage
+        - performance_area.reopen
+        - bau_handover.prepare
+        - bau_handover.accept
+        - control.manage
+        - control_check.record
+        - sustainment_review.complete
+        - improvement.edit
+        - lesson.edit
+        - lesson.search
+        - transition_decision.propose
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -21558,4 +24081,1188 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/EscalationRule" } }
+        nextCursor: { type: [string, "null"] }
+    # ---- P4 slices F and G (T-DG4-ARCH-06; ADR-0033, ADR-0034) ----------------------------------------------------
+    AdoptionReason:
+      type: object
+      description: "A reason (3-1000 characters; shared free-text rules)."
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    StatusNote:
+      type: object
+      description: "An optional note on a status action (shared free-text rules)."
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    AdoptionIndicatorTemplate:
+      type: object
+      description: "One measure of a seeded leading adoption indicator (B0109-B0115 verbatim in sourceIndicatorEn; Arabic provisional)."
+      required: [key, indicatorKey, indicatorOrdinal, measureOrdinal, sourceIndicatorEn, indicatorAr, measureEn, measureAr, arProvisional, unitKind, polarity, valueNature, aggregationRule, valueSource, sourceRef]
+      additionalProperties: false
+      properties:
+        key: { type: string }
+        indicatorKey: { type: string }
+        indicatorOrdinal: { type: integer, minimum: 1, maximum: 7 }
+        measureOrdinal: { type: integer, minimum: 1, maximum: 2 }
+        sourceIndicatorEn: { type: string }
+        indicatorAr: { type: string }
+        measureEn: { type: string }
+        measureAr: { type: string }
+        arProvisional: { type: boolean }
+        unitKind: { type: string, enum: [percentage, duration] }
+        polarity: { type: string, enum: [higher_is_better, lower_is_better] }
+        valueNature: { type: string, enum: [ratio, stock] }
+        aggregationRule: { type: string, enum: [weighted_ratio, last_value] }
+        valueSource: { type: string, enum: [kpi_actuals, training_records, assessment_records] }
+        sourceRef: { type: string }
+    AdoptionIndicatorTemplateList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdoptionIndicatorTemplate" } }
+    StakeholderGroup:
+      type: object
+      description: "A T13 row (REQ-PB-070, REQ-S11-001, REQ-S16-020 StakeholderGroup)."
+      required: [id, transformationId, code, name, description, influence, impact, currentStance, requiredBehavior, interventionTypes, interventionPlan, ownerUserId, adoptionKpiDefinitionId, headcount, championCount, openInterventionCount, status, archivedAt, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^SG-[0-9]{2,6}$" }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        influence: { type: [string, "null"], enum: [H, M, L, null] }
+        impact: { type: string, enum: [H, M, L] }
+        currentStance: { type: string, enum: [support, neutral, resist] }
+        requiredBehavior: { type: string, minLength: 1, maxLength: 2000 }
+        interventionTypes: { type: array, minItems: 1, maxItems: 4, uniqueItems: true, items: { type: string, enum: [comms, training, involvement, incentive] } }
+        interventionPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        adoptionKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        headcount: { type: [integer, "null"], minimum: 1, maximum: 10000000 }
+        championCount: { type: integer, minimum: 0 }
+        openInterventionCount: { type: integer, minimum: 0 }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archiveReason: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    StakeholderGroupCreate:
+      type: object
+      required: [name, impact, currentStance, requiredBehavior, interventionTypes, ownerUserId]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        influence: { type: [string, "null"], enum: [H, M, L, null] }
+        impact: { type: string, enum: [H, M, L] }
+        currentStance: { type: string, enum: [support, neutral, resist] }
+        requiredBehavior: { type: string, minLength: 1, maxLength: 2000 }
+        interventionTypes: { type: array, minItems: 1, maxItems: 4, uniqueItems: true, items: { type: string, enum: [comms, training, involvement, incentive] } }
+        interventionPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        adoptionKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        headcount: { type: [integer, "null"], minimum: 1, maximum: 10000000 }
+    StakeholderGroupUpdate:
+      type: object
+      description: "Every member optional; at least one."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        influence: { type: [string, "null"], enum: [H, M, L, null] }
+        impact: { type: string, enum: [H, M, L] }
+        currentStance: { type: string, enum: [support, neutral, resist] }
+        requiredBehavior: { type: string, minLength: 1, maxLength: 2000 }
+        interventionTypes: { type: array, minItems: 1, maxItems: 4, uniqueItems: true, items: { type: string, enum: [comms, training, involvement, incentive] } }
+        interventionPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        adoptionKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        headcount: { type: [integer, "null"], minimum: 1, maximum: 10000000 }
+    AdoptionPlanRow:
+      type: object
+      description: "The seven B0107 columns (Stakeholder, Impact, Current stance, Required behavior, Intervention, Owner, Adoption KPI) plus influence and counts."
+      required: [stakeholderGroupId, code, stakeholder, impact, influence, currentStance, requiredBehavior, intervention, ownerUserId, adoptionKpiDefinitionId, adoptionKpiName, championCount, openInterventionCount, openChampionConstraintCount]
+      additionalProperties: false
+      properties:
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        stakeholder: { type: string }
+        impact: { type: string, enum: [H, M, L] }
+        influence: { type: [string, "null"], enum: [H, M, L, null] }
+        currentStance: { type: string, enum: [support, neutral, resist] }
+        requiredBehavior: { type: string }
+        intervention: { type: array, items: { type: string, enum: [comms, training, involvement, incentive] } }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        adoptionKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        adoptionKpiName: { type: [string, "null"] }
+        championCount: { type: integer, minimum: 0 }
+        openInterventionCount: { type: integer, minimum: 0 }
+        openChampionConstraintCount: { type: integer, minimum: 0 }
+    AdoptionPlan:
+      type: object
+      description: "Template 13 Stakeholder & Adoption Plan of a transformation."
+      required: [transformationId, rows]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        rows: { type: array, items: { $ref: "#/components/schemas/AdoptionPlanRow" } }
+    StakeholderChampion:
+      type: object
+      required: [id, transformationId, stakeholderGroupId, userId, note, status, removedAt, removedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    StakeholderChampionCreate:
+      type: object
+      required: [userId]
+      additionalProperties: false
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    AdoptionIntervention:
+      type: object
+      description: "An adoption intervention (REQ-S16-020 AdoptionIntervention). origin below_trajectory: created once per indicator, scope and period by the worker; ownerStatus unassigned when no owner resolved; dueDate null = Unknown."
+      required: [id, transformationId, code, stakeholderGroupId, interventionType, title, description, ownerUserId, ownerStatus, dueDate, dueUnknownReason, status, origin, metricLinkId, kpiEvaluationId, reportingPeriodId, scopeKind, scopeId, outcomeNote, completedAt, completedBy, createdSource, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        stakeholderGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        interventionType: { type: string, enum: [comms, training, involvement, incentive, corrective] }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerStatus: { type: string, enum: [assigned, unassigned] }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        dueUnknownReason: { type: [string, "null"], enum: [calendar_not_configured, null] }
+        status: { type: string, enum: [planned, in_progress, done, cancelled] }
+        origin: { type: string, enum: [manual, below_trajectory] }
+        metricLinkId: { $ref: "#/components/schemas/NullableUuid" }
+        kpiEvaluationId: { $ref: "#/components/schemas/NullableUuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/NullableUuid" }
+        scopeKind: { type: [string, "null"], enum: [transformation, business_unit, initiative, null] }
+        scopeId: { $ref: "#/components/schemas/NullableUuid" }
+        outcomeNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedBy: { $ref: "#/components/schemas/NullableUuid" }
+        createdSource: { type: string, enum: [api, worker] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    AdoptionInterventionCreate:
+      type: object
+      required: [interventionType, title, ownerUserId, dueDate]
+      additionalProperties: false
+      properties:
+        stakeholderGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        interventionType: { type: string, enum: [comms, training, involvement, incentive] }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+    AdoptionInterventionUpdate:
+      type: object
+      description: "Every member optional; at least one. A worker intervention keeps its type."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        status: { type: string, enum: [in_progress, done, cancelled] }
+        outcomeNote: { type: string, minLength: 3, maxLength: 2000 }
+    AdoptionMetricLink:
+      type: object
+      description: "An indicator measure attached to a target (REQ-S16-020 AdoptionMetricLink)."
+      required: [id, transformationId, templateKey, kpiDefinitionId, targetKind, targetId, status, removedAt, removedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        templateKey: { type: string }
+        kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        targetKind: { type: string, enum: [transformation, outcome, initiative, stakeholder_group] }
+        targetId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    AdoptionMetricLinkCreate:
+      type: object
+      description: "Name kpiDefinitionId, or createKpi with kpiOwnerUserId, for a KPI-fed measure; neither for a record-fed measure. targetId is required unless targetKind is transformation."
+      required: [templateKey, targetKind]
+      additionalProperties: false
+      properties:
+        templateKey: { type: string, pattern: "^[a-z_]+$" }
+        targetKind: { type: string, enum: [transformation, outcome, initiative, stakeholder_group] }
+        targetId: { $ref: "#/components/schemas/Uuid" }
+        kpiDefinitionId: { $ref: "#/components/schemas/Uuid" }
+        createKpi: { type: boolean }
+        kpiOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+    AdoptionMeasureValue:
+      type: object
+      description: "One measure's value: a decimal string (fractions for percentages) or null when Unknown (never 0). calculatedRag is slice A's for KPI-fed measures and null for record-fed ones."
+      required: [templateKey, metricLinkId, kpiDefinitionId, value, valueStatus, valueReason, calculatedRag, trajectoryValue, numerator, denominator]
+      additionalProperties: false
+      properties:
+        templateKey: { type: string }
+        metricLinkId: { $ref: "#/components/schemas/NullableUuid" }
+        kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        value: { $ref: "#/components/schemas/NullableDecimal" }
+        valueStatus: { type: string, enum: [ok, unknown, stale, not_computable] }
+        valueReason: { type: [string, "null"] }
+        calculatedRag: { type: [string, "null"], enum: [green, amber, red, unknown, stale, not_computable, null] }
+        trajectoryValue: { $ref: "#/components/schemas/NullableDecimal" }
+        numerator: { type: [integer, "null"], minimum: 0 }
+        denominator: { type: [integer, "null"], minimum: 0 }
+    AdoptionIndicatorReport:
+      type: object
+      required: [targetKind, targetId, reportingPeriodId, measures]
+      additionalProperties: false
+      properties:
+        targetKind: { type: string, enum: [transformation, outcome, initiative, stakeholder_group] }
+        targetId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        measures: { type: array, items: { $ref: "#/components/schemas/AdoptionMeasureValue" } }
+    AssessmentQuestionOption:
+      type: object
+      required: [value, label_en, label_ar]
+      additionalProperties: false
+      properties:
+        value: { type: string, pattern: "^[a-z0-9_]{1,40}$" }
+        label_en: { type: string, minLength: 1, maxLength: 200 }
+        label_ar: { type: string, minLength: 1, maxLength: 200 }
+    AssessmentQuestion:
+      type: object
+      description: "One question of a versioned form (validated form JSON, ADR-0033 §5). options only for single_choice; min/max only for scale; pass_min only for a scale proficiency question."
+      required: [key, type, label_en, label_ar, required]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: "^[a-z][a-z0-9_]{0,39}$" }
+        type: { type: string, enum: [single_choice, scale, yes_no, text] }
+        label_en: { type: string, minLength: 1, maxLength: 500 }
+        label_ar: { type: string, minLength: 1, maxLength: 500 }
+        required: { type: boolean }
+        options: { type: array, minItems: 2, maxItems: 10, items: { $ref: "#/components/schemas/AssessmentQuestionOption" } }
+        min: { type: integer, minimum: 0, maximum: 10 }
+        max: { type: integer, minimum: 0, maximum: 10 }
+        proficiency: { type: boolean }
+        pass_min: { type: integer, minimum: 0, maximum: 10 }
+    AssessmentFormSchema:
+      type: object
+      required: [questions]
+      additionalProperties: false
+      properties:
+        questions: { type: array, minItems: 1, maxItems: 20, items: { $ref: "#/components/schemas/AssessmentQuestion" } }
+    AssessmentFormVersion:
+      type: object
+      description: "An append-only question set."
+      required: [versionNo, schema, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        versionNo: { type: integer, minimum: 1 }
+        schema: { $ref: "#/components/schemas/AssessmentFormSchema" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    AssessmentForm:
+      type: object
+      description: "A short native feedback or proficiency-assessment form (REQ-S11-002)."
+      required: [id, transformationId, kind, name, description, stakeholderGroupId, status, currentVersion, publishedVersionNo, publishedAt, publishedBy, retiredAt, retiredBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        kind: { type: string, enum: [feedback, proficiency_assessment] }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        stakeholderGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [draft, published, retired] }
+        currentVersion: { $ref: "#/components/schemas/AssessmentFormVersion" }
+        publishedVersionNo: { type: [integer, "null"], minimum: 1 }
+        publishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        publishedBy: { $ref: "#/components/schemas/NullableUuid" }
+        retiredAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        retiredBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    AssessmentFormCreate:
+      type: object
+      required: [kind, name, schema]
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [feedback, proficiency_assessment] }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        stakeholderGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        schema: { $ref: "#/components/schemas/AssessmentFormSchema" }
+    AssessmentFormUpdate:
+      type: object
+      description: "Every member optional; at least one. A schema inserts the next version."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        stakeholderGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        schema: { $ref: "#/components/schemas/AssessmentFormSchema" }
+    AssessmentInvitation:
+      type: object
+      required: [id, transformationId, formId, userId, stakeholderGroupId, subjectUserId, dueDate, status, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        formId: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        subjectUserId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [open, responded, cancelled] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    AssessmentInvitationCreate:
+      type: object
+      required: [userIds, stakeholderGroupId]
+      additionalProperties: false
+      properties:
+        userIds: { type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: { $ref: "#/components/schemas/Uuid" } }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        subjectUserId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    AssessmentInvitationList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AssessmentInvitation" } }
+    AssessmentRecord:
+      type: object
+      description: "A submitted response (REQ-S16-020 Training/AssessmentRecord, assessment half). proficiencyResult is derived from the proficiency answer."
+      required: [id, transformationId, formId, formVersionNo, invitationId, stakeholderGroupId, kind, respondentUserId, subjectUserId, subjectLabel, observedOn, answers, proficiencyResult, status, reviewedAt, reviewedBy, reviewNote, withdrawnAt, withdrawnBy, withdrawReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        formId: { $ref: "#/components/schemas/Uuid" }
+        formVersionNo: { type: integer, minimum: 1 }
+        invitationId: { $ref: "#/components/schemas/NullableUuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        kind: { type: string, enum: [feedback, proficiency_observation] }
+        respondentUserId: { $ref: "#/components/schemas/Uuid" }
+        subjectUserId: { $ref: "#/components/schemas/NullableUuid" }
+        subjectLabel: { type: [string, "null"], minLength: 1, maxLength: 200 }
+        observedOn: { $ref: "#/components/schemas/BusinessDate" }
+        answers: { type: object, additionalProperties: { type: [string, integer, boolean] } }
+        proficiencyResult: { type: [string, "null"], enum: [proficient, not_yet_proficient, null] }
+        status: { type: string, enum: [submitted, reviewed, withdrawn] }
+        reviewedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reviewedBy: { $ref: "#/components/schemas/NullableUuid" }
+        reviewNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        withdrawnAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        withdrawnBy: { $ref: "#/components/schemas/NullableUuid" }
+        withdrawReason: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    AssessmentRecordCreate:
+      type: object
+      description: "Answers keyed by question key: a string (single_choice value or text), an integer (scale) or a boolean (yes_no)."
+      required: [formId, stakeholderGroupId, observedOn, answers]
+      additionalProperties: false
+      properties:
+        formId: { $ref: "#/components/schemas/Uuid" }
+        invitationId: { $ref: "#/components/schemas/Uuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        subjectUserId: { $ref: "#/components/schemas/Uuid" }
+        subjectLabel: { type: string, minLength: 1, maxLength: 200 }
+        observedOn: { $ref: "#/components/schemas/BusinessDate" }
+        answers: { type: object, maxProperties: 20, additionalProperties: { type: [string, integer, boolean] } }
+    AssessmentReview:
+      type: object
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    TrainingRecord:
+      type: object
+      description: "A training attendance record (REQ-S16-020 Training/AssessmentRecord, training half). Completion is attendance, never adoption."
+      required: [id, transformationId, stakeholderGroupId, interventionId, participantUserId, participantLabel, trainingTitle, scheduledOn, status, completedOn, recordedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        interventionId: { $ref: "#/components/schemas/NullableUuid" }
+        participantUserId: { $ref: "#/components/schemas/NullableUuid" }
+        participantLabel: { type: [string, "null"], minLength: 1, maxLength: 200 }
+        trainingTitle: { type: string, minLength: 1, maxLength: 300 }
+        scheduledOn: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [enrolled, completed, no_show, withdrawn] }
+        completedOn: { $ref: "#/components/schemas/NullableBusinessDate" }
+        recordedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    TrainingRecordCreate:
+      type: object
+      description: "Exactly one of participantUserId and participantLabel."
+      required: [stakeholderGroupId, trainingTitle]
+      additionalProperties: false
+      properties:
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        interventionId: { $ref: "#/components/schemas/Uuid" }
+        participantUserId: { $ref: "#/components/schemas/Uuid" }
+        participantLabel: { type: string, minLength: 1, maxLength: 200 }
+        trainingTitle: { type: string, minLength: 1, maxLength: 300 }
+        scheduledOn: { $ref: "#/components/schemas/BusinessDate" }
+    TrainingRecordUpdate:
+      type: object
+      description: "completedOn is required exactly when status is completed."
+      required: [status]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [completed, no_show, withdrawn] }
+        completedOn: { $ref: "#/components/schemas/BusinessDate" }
+    StakeholderInvolvement:
+      type: object
+      required: [id, transformationId, stakeholderGroupId, involvementKind, workshopId, decisionId, note, withdrawsInvolvementId, withdrawn, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        involvementKind: { type: string, enum: [workshop, decision] }
+        workshopId: { $ref: "#/components/schemas/NullableUuid" }
+        decisionId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        withdrawsInvolvementId: { $ref: "#/components/schemas/NullableUuid" }
+        withdrawn: { type: boolean }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    StakeholderInvolvementCreate:
+      type: object
+      description: "Exactly one of workshopId and decisionId (a T04 design decision)."
+      required: [stakeholderGroupId]
+      additionalProperties: false
+      properties:
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        workshopId: { $ref: "#/components/schemas/Uuid" }
+        decisionId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    ChampionConstraint:
+      type: object
+      description: "A champion's constraint on a T04 design decision (REQ-PB-073)."
+      required: [id, transformationId, championId, stakeholderGroupId, decisionId, decisionCode, constraintText, status, responseText, resolvedAt, resolvedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        championId: { $ref: "#/components/schemas/Uuid" }
+        stakeholderGroupId: { $ref: "#/components/schemas/Uuid" }
+        decisionId: { $ref: "#/components/schemas/Uuid" }
+        decisionCode: { type: string }
+        constraintText: { type: string, minLength: 3, maxLength: 4000 }
+        status: { type: string, enum: [open, addressed, withdrawn] }
+        responseText: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        resolvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        resolvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    ChampionConstraintCreate:
+      type: object
+      required: [championId, decisionId, constraintText]
+      additionalProperties: false
+      properties:
+        championId: { $ref: "#/components/schemas/Uuid" }
+        decisionId: { $ref: "#/components/schemas/Uuid" }
+        constraintText: { type: string, minLength: 3, maxLength: 4000 }
+    ChampionConstraintResolve:
+      type: object
+      description: "responseText is required exactly when outcome is addressed."
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [addressed, withdrawn] }
+        responseText: { type: string, minLength: 3, maxLength: 4000 }
+    InitiativeAdoptionStatusSet:
+      type: object
+      required: [adoptionStatus]
+      additionalProperties: false
+      properties:
+        adoptionStatus: { type: string, enum: [on_track, at_risk, adopted] }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    InitiativeStatusModel:
+      type: object
+      description: "Four separate statuses (REQ-S03-003). label: Closed | Delivered — value validation pending | Delivered — value validated | In delivery."
+      required: [initiativeId, version, delivery, deliveryCompletedAt, deliveryCompletedBy, adoption, adoptionSource, value, closure, closureRecordId, label]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        delivery: { type: string }
+        deliveryCompletedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        deliveryCompletedBy: { $ref: "#/components/schemas/NullableUuid" }
+        adoption: { type: string, enum: [not_assessed, on_track, at_risk, adopted] }
+        adoptionSource: { type: string, enum: [owner, indicator] }
+        value: { type: string, enum: [no_benefit, validation_pending, validated, validated_with_transition] }
+        closure: { type: string, enum: [open, closed] }
+        closureRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        label: { type: string, enum: [Closed, "Delivered — value validation pending", "Delivered — value validated", "In delivery"] }
+    TransformationStatusModel:
+      type: object
+      description: "Delivery complete, value validation pending and BAU accepted as separate states (REQ-S11-006); no label says successful."
+      required: [transformationId, deliveryState, valueState, bauState, closureState, label, initiatives, performanceAreas]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        deliveryState: { type: string, enum: [in_delivery, delivery_complete] }
+        valueState: { type: string, enum: [no_benefit, validation_pending, validated, validated_with_transition] }
+        bauState: { type: string, enum: [no_performance_area, bau_pending, bau_accepted] }
+        closureState: { type: string, enum: [open, closed] }
+        label: { type: string, enum: [Closed, "Delivery complete - value validation pending", "Value validated - BAU acceptance pending", "Value validated - BAU accepted", "In delivery"] }
+        initiatives: { type: object, required: [total, completed], additionalProperties: false, properties: { total: { type: integer, minimum: 0 }, completed: { type: integer, minimum: 0 } } }
+        performanceAreas: { type: object, required: [total, bau], additionalProperties: false, properties: { total: { type: integer, minimum: 0 }, bau: { type: integer, minimum: 0 } } }
+    ClosureRecord:
+      type: object
+      description: "A governed closure (append-only)."
+      required: [id, transformationId, subjectKind, initiativeId, basis, snapshot, closureNote, closedAt, closedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        subjectKind: { type: string, enum: [initiative, transformation] }
+        initiativeId: { $ref: "#/components/schemas/NullableUuid" }
+        basis: { type: string, enum: [validated_value, transition_decision, validated_value_and_transition_decision] }
+        snapshot: { type: object }
+        closureNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        closedAt: { $ref: "#/components/schemas/Timestamp" }
+        closedBy: { $ref: "#/components/schemas/Uuid" }
+    TransitionDecision:
+      type: object
+      description: "A documented transition decision for a long-realization benefit (REQ-S11-007). The benefit's forecast stays forecast."
+      required: [id, transformationId, code, benefitId, residualOwnerUserId, rationale, expectedRealizationEnd, monitoringFrequency, monitoringInterval, firstMonitoringDate, nextMonitoringDate, status, approvalId, decidedAt, decidedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        residualOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+        expectedRealizationEnd: { $ref: "#/components/schemas/BusinessDate" }
+        monitoringFrequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        monitoringInterval: { type: integer, minimum: 1, maximum: 12 }
+        firstMonitoringDate: { $ref: "#/components/schemas/BusinessDate" }
+        nextMonitoringDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [draft, submitted, approved, rejected, withdrawn] }
+        approvalId: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    TransitionDecisionCreate:
+      type: object
+      required: [benefitId, residualOwnerUserId, rationale, expectedRealizationEnd, monitoringFrequency, firstMonitoringDate]
+      additionalProperties: false
+      properties:
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        residualOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+        expectedRealizationEnd: { $ref: "#/components/schemas/BusinessDate" }
+        monitoringFrequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        monitoringInterval: { type: integer, minimum: 1, maximum: 12 }
+        firstMonitoringDate: { $ref: "#/components/schemas/BusinessDate" }
+    TransitionDecisionUpdate:
+      type: object
+      description: "Every member optional; at least one. status withdrawn withdraws a draft or submitted decision."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        residualOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+        expectedRealizationEnd: { $ref: "#/components/schemas/BusinessDate" }
+        monitoringFrequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        monitoringInterval: { type: integer, minimum: 1, maximum: 12 }
+        firstMonitoringDate: { $ref: "#/components/schemas/BusinessDate" }
+        status: { type: string, enum: [withdrawn] }
+    PerformanceAreaCycle:
+      type: object
+      description: "One cycle of an area (append-only): the prior accepted handover and the closure it followed, as they were."
+      required: [cycleNo, openedAt, openedBy, reopenReason, priorHandoverId, priorHandoverAcceptedAt, priorHandoverAcceptedBy, priorClosureRecordId, priorClosedAt]
+      additionalProperties: false
+      properties:
+        cycleNo: { type: integer, minimum: 1 }
+        openedAt: { $ref: "#/components/schemas/Timestamp" }
+        openedBy: { $ref: "#/components/schemas/Uuid" }
+        reopenReason: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        priorHandoverId: { $ref: "#/components/schemas/NullableUuid" }
+        priorHandoverAcceptedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        priorHandoverAcceptedBy: { $ref: "#/components/schemas/NullableUuid" }
+        priorClosureRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        priorClosedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+    PerformanceArea:
+      type: object
+      description: "A performance area; it continues after its transformation closes (REQ-S03-002). transformationId is the origin."
+      required: [id, transformationId, code, name, description, businessUnitId, sponsorUserId, reviewFrequency, reviewInterval, bauOwnerUserId, kpiOwnerUserId, nextReviewDate, cycleNo, status, currentHandoverId, cycles, retiredAt, retireReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        businessUnitId: { $ref: "#/components/schemas/NullableUuid" }
+        sponsorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        reviewFrequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        reviewInterval: { type: integer, minimum: 1, maximum: 12 }
+        bauOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        kpiOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        nextReviewDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        cycleNo: { type: integer, minimum: 1 }
+        status: { type: string, enum: [establishing, bau, reopened, retired] }
+        currentHandoverId: { $ref: "#/components/schemas/NullableUuid" }
+        cycles: { type: array, items: { $ref: "#/components/schemas/PerformanceAreaCycle" } }
+        retiredAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        retireReason: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    PerformanceAreaCreate:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        businessUnitId: { $ref: "#/components/schemas/NullableUuid" }
+        sponsorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        reviewFrequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        reviewInterval: { type: integer, minimum: 1, maximum: 12 }
+    PerformanceAreaUpdate:
+      type: object
+      description: "Every member optional; at least one."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        businessUnitId: { $ref: "#/components/schemas/NullableUuid" }
+        sponsorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        reviewFrequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        reviewInterval: { type: integer, minimum: 1, maximum: 12 }
+    PerformanceAreaLink:
+      type: object
+      required: [id, transformationId, performanceAreaId, linkKind, kpiDefinitionId, benefitId, status, removedAt, removedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        performanceAreaId: { $ref: "#/components/schemas/Uuid" }
+        linkKind: { type: string, enum: [kpi, benefit] }
+        kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    PerformanceAreaLinkCreate:
+      type: object
+      description: "Exactly one of kpiDefinitionId and benefitId, matching linkKind."
+      required: [linkKind]
+      additionalProperties: false
+      properties:
+        linkKind: { type: string, enum: [kpi, benefit] }
+        kpiDefinitionId: { $ref: "#/components/schemas/Uuid" }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+    BauHandover:
+      type: object
+      description: "A BAU handover with the M0217 content and receiving-owner acceptance (REQ-PB-083, REQ-S11-005)."
+      required: [id, transformationId, performanceAreaId, cycleNo, code, receivingOwnerUserId, kpiOwnerUserId, operatingProcedures, capabilityReadiness, unresolvedAcceptedRisks, benefitMonitoringCadence, dataAccess, improvementBacklogSummary, controlIds, evidenceIds, openImprovementItemIds, missingItems, status, submittedAt, submittedBy, acceptedAt, acceptedBy, acceptanceNote, returnedAt, returnedBy, returnReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        performanceAreaId: { $ref: "#/components/schemas/Uuid" }
+        cycleNo: { type: integer, minimum: 1 }
+        code: { type: string }
+        receivingOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        kpiOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        operatingProcedures: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        capabilityReadiness: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        unresolvedAcceptedRisks: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        benefitMonitoringCadence: { type: [string, "null"], enum: [weekly, monthly, quarterly, semi_annual, annual, null] }
+        dataAccess: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        improvementBacklogSummary: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        controlIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        evidenceIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        openImprovementItemIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        missingItems: { type: array, items: { type: string, enum: [kpi_owner, operating_procedures, controls, evidence, capability_readiness, unresolved_accepted_risks, benefit_monitoring_cadence, data_access, improvement_backlog] } }
+        status: { type: string, enum: [draft, submitted, accepted, returned] }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        submittedBy: { $ref: "#/components/schemas/NullableUuid" }
+        acceptedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        acceptedBy: { $ref: "#/components/schemas/NullableUuid" }
+        acceptanceNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        returnedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        returnedBy: { $ref: "#/components/schemas/NullableUuid" }
+        returnReason: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    BauHandoverCreate:
+      type: object
+      required: [performanceAreaId, receivingOwnerUserId]
+      additionalProperties: false
+      properties:
+        performanceAreaId: { $ref: "#/components/schemas/Uuid" }
+        receivingOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        kpiOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        operatingProcedures: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        capabilityReadiness: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        unresolvedAcceptedRisks: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        benefitMonitoringCadence: { type: [string, "null"], enum: [weekly, monthly, quarterly, semi_annual, annual, null] }
+        dataAccess: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        improvementBacklogSummary: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+    BauHandoverUpdate:
+      type: object
+      description: "Every member optional; at least one."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        receivingOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        kpiOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        operatingProcedures: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        capabilityReadiness: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        unresolvedAcceptedRisks: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        benefitMonitoringCadence: { type: [string, "null"], enum: [weekly, monthly, quarterly, semi_annual, annual, null] }
+        dataAccess: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        improvementBacklogSummary: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+    BauHandoverEvidenceAdd:
+      type: object
+      required: [evidenceId]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+    Control:
+      type: object
+      description: "A BAU control and its check cadence."
+      required: [id, transformationId, performanceAreaId, code, name, description, ownerUserId, frequency, frequencyInterval, nextCheckDate, status, retiredAt, retireReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        performanceAreaId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        frequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        frequencyInterval: { type: integer, minimum: 1, maximum: 12 }
+        nextCheckDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [active, retired] }
+        retiredAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        retireReason: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    ControlCreate:
+      type: object
+      required: [performanceAreaId, name, frequency]
+      additionalProperties: false
+      properties:
+        performanceAreaId: { $ref: "#/components/schemas/Uuid" }
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        frequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        frequencyInterval: { type: integer, minimum: 1, maximum: 12 }
+        nextCheckDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    ControlUpdate:
+      type: object
+      description: "Every member optional; at least one. status retired needs retireReason."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        frequency: { type: string, enum: [weekly, monthly, quarterly, semi_annual, annual] }
+        frequencyInterval: { type: integer, minimum: 1, maximum: 12 }
+        nextCheckDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [retired] }
+        retireReason: { type: string, minLength: 3, maxLength: 1000 }
+    ControlCheck:
+      type: object
+      description: "One periodic check of a control for one due date."
+      required: [id, transformationId, controlId, performanceAreaId, dueDate, assigneeUserId, status, performedAt, performedBy, resultNote, correctiveCaseId, createdSource, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        controlId: { $ref: "#/components/schemas/Uuid" }
+        performanceAreaId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        assigneeUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [due, passed, failed, cancelled] }
+        performedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        performedBy: { $ref: "#/components/schemas/NullableUuid" }
+        resultNote: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        correctiveCaseId: { $ref: "#/components/schemas/NullableUuid" }
+        createdSource: { type: string, enum: [api, worker] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    ControlCheckRecord:
+      type: object
+      description: "resultNote is required when result is failed."
+      required: [result]
+      additionalProperties: false
+      properties:
+        result: { type: string, enum: [passed, failed] }
+        resultNote: { type: string, minLength: 3, maxLength: 4000 }
+    SustainmentReview:
+      type: object
+      description: "A recurring performance-area review or benefit-monitoring review."
+      required: [id, transformationId, subjectKind, performanceAreaId, cycleNo, transitionDecisionId, dueDate, assigneeUserId, status, completedAt, completedBy, outcomeNote, performanceSignal, createdSource, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        subjectKind: { type: string, enum: [performance_area, transition_decision] }
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        cycleNo: { type: [integer, "null"], minimum: 1 }
+        transitionDecisionId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        assigneeUserId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [due, done, cancelled] }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedBy: { $ref: "#/components/schemas/NullableUuid" }
+        outcomeNote: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        performanceSignal: { type: [string, "null"], enum: [on_track, deteriorating, unknown, null] }
+        createdSource: { type: string, enum: [api, worker] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    SustainmentReviewComplete:
+      type: object
+      required: [outcomeNote, performanceSignal]
+      additionalProperties: false
+      properties:
+        outcomeNote: { type: string, minLength: 3, maxLength: 4000 }
+        performanceSignal: { type: string, enum: [on_track, deteriorating, unknown] }
+    ImprovementItem:
+      type: object
+      description: "A continuous-improvement backlog item (REQ-PB-084)."
+      required: [id, transformationId, code, performanceAreaId, title, description, ownerUserId, priority, targetDate, sourceKind, sourceId, status, resolutionNote, resolvedAt, resolvedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        priority: { type: [string, "null"], enum: [H, M, L, null] }
+        targetDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        sourceKind: { type: string, enum: [manual, lesson, control_check, review, handover] }
+        sourceId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [open, in_progress, done, rejected] }
+        resolutionNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        resolvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        resolvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    ImprovementItemCreate:
+      type: object
+      description: "sourceId names the lesson, control check, review or handover; absent for manual."
+      required: [title, sourceKind]
+      additionalProperties: false
+      properties:
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        priority: { type: [string, "null"], enum: [H, M, L, null] }
+        targetDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        sourceKind: { type: string, enum: [manual, lesson, control_check, review, handover] }
+        sourceId: { $ref: "#/components/schemas/Uuid" }
+    ImprovementItemUpdate:
+      type: object
+      description: "Every member optional; at least one."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        priority: { type: [string, "null"], enum: [H, M, L, null] }
+        targetDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [open, in_progress, done, rejected] }
+        resolutionNote: { type: string, minLength: 3, maxLength: 2000 }
+    Lesson:
+      type: object
+      description: "A lesson; published lessons are searchable across transformations (REQ-S11-008)."
+      required: [id, transformationId, code, performanceAreaId, title, context, lessonText, recommendation, tags, status, publishedAt, publishedBy, archivedAt, archivedBy, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        context: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        lessonText: { type: string, minLength: 3, maxLength: 8000 }
+        recommendation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        tags: { type: array, maxItems: 10, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 50 } }
+        status: { type: string, enum: [draft, published, archived] }
+        publishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        publishedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    LessonCreate:
+      type: object
+      required: [title, lessonText]
+      additionalProperties: false
+      properties:
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        context: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        lessonText: { type: string, minLength: 3, maxLength: 8000 }
+        recommendation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        tags: { type: array, maxItems: 10, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 50 } }
+    LessonUpdate:
+      type: object
+      description: "Every member optional; at least one. status archived archives (final)."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        performanceAreaId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        context: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        lessonText: { type: string, minLength: 3, maxLength: 8000 }
+        recommendation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        tags: { type: array, maxItems: 10, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 50 } }
+        status: { type: string, enum: [archived] }
+    LessonSearchHit:
+      type: object
+      description: "A published lesson found across transformations."
+      required: [lesson, transformationCode, transformationName]
+      additionalProperties: false
+      properties:
+        lesson: { $ref: "#/components/schemas/Lesson" }
+        transformationCode: { type: string }
+        transformationName: { type: string }
+    StakeholderGroupPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/StakeholderGroup" } }
+        nextCursor: { type: [string, "null"] }
+    StakeholderChampionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/StakeholderChampion" } }
+        nextCursor: { type: [string, "null"] }
+    AdoptionInterventionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdoptionIntervention" } }
+        nextCursor: { type: [string, "null"] }
+    AdoptionMetricLinkPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdoptionMetricLink" } }
+        nextCursor: { type: [string, "null"] }
+    AssessmentFormPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AssessmentForm" } }
+        nextCursor: { type: [string, "null"] }
+    AssessmentInvitationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AssessmentInvitation" } }
+        nextCursor: { type: [string, "null"] }
+    AssessmentRecordPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AssessmentRecord" } }
+        nextCursor: { type: [string, "null"] }
+    TrainingRecordPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/TrainingRecord" } }
+        nextCursor: { type: [string, "null"] }
+    StakeholderInvolvementPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/StakeholderInvolvement" } }
+        nextCursor: { type: [string, "null"] }
+    ChampionConstraintPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ChampionConstraint" } }
+        nextCursor: { type: [string, "null"] }
+    ClosureRecordPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ClosureRecord" } }
+        nextCursor: { type: [string, "null"] }
+    TransitionDecisionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/TransitionDecision" } }
+        nextCursor: { type: [string, "null"] }
+    PerformanceAreaPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PerformanceArea" } }
+        nextCursor: { type: [string, "null"] }
+    PerformanceAreaLinkPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PerformanceAreaLink" } }
+        nextCursor: { type: [string, "null"] }
+    BauHandoverPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BauHandover" } }
+        nextCursor: { type: [string, "null"] }
+    ControlPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Control" } }
+        nextCursor: { type: [string, "null"] }
+    ControlCheckPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ControlCheck" } }
+        nextCursor: { type: [string, "null"] }
+    SustainmentReviewPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/SustainmentReview" } }
+        nextCursor: { type: [string, "null"] }
+    ImprovementItemPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ImprovementItem" } }
+        nextCursor: { type: [string, "null"] }
+    LessonPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Lesson" } }
+        nextCursor: { type: [string, "null"] }
+    LessonSearchPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/LessonSearchHit" } }
         nextCursor: { type: [string, "null"] }

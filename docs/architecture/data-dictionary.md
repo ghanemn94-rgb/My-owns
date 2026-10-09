@@ -6852,3 +6852,1131 @@ END, false))`
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slice D schemas; an executive ask without `whyNow` is 400 `executive_decision.field_required` at `/whyNow`), free-text rules, strict UTF-8, request media types, `If-Match` |
 | Service | Permissions and record-level rules (ADR-0032 §9: the meeting's chair; the decision owner or delegate), commit-time re-authorization, occurrence generation on the business calendar, the publication checks with the exact refusal codes and English texts of ADR-0032 §11, the quorum count, `NextForumDateProvider` |
 | Worker | `governance.meeting_series_generate` (lock 730238, idempotent), `governance.decision_sla_scan` (working days only, once per due date, lock 730240, never decides), `governance.blocker_escalation` and `governance.blocker_escalation_scan` (N red cycles → one open ask, lock 730239) |
+
+# P4 tables, slices F and G (migrations 0047–0050, DG4)
+
+Written by T-DG4-ARCH-06 (solution-architect), 2026-10-09. Binding design: ADR-0033 (adoption: indicators as KPI templates, T13, champions, interventions, forms, training versus proficiency, involvement and champion constraints) and ADR-0034 (sustainment: separate statuses, transition decisions, performance areas beyond closure, BAU handover and receiving-owner acceptance, controls and checks, reviews, CI backlog, lessons, governed closure). The table sections below are generated from the catalogue of a freshly migrated disposable PostgreSQL 16 by `docs/delivery/handbacks/DG4/T-DG4-ARCH-06-evidence/gen-dictionary.ts`, so they match the migrations exactly. Slices F and G store no money, rate or FTE value; the two record-fed adoption measures are computed decimals at read time (ADR-0033 §6), never stored.
+
+## Changes to existing tables (0047, 0048)
+
+- **`record_code_counter`** (DG2): the CHECK `record_code_counter_prefix_check` is widened (dropped and re-added) to add the prefixes `SG`, `AI` (`0047`) and `PA`, `HO`, `CTL`, `CI`, `LL`, `TD` (`0048`); every earlier prefix stays.
+- **`initiative`** (DG3 `0020`): new columns `delivery_completed_at timestamptz NULL`, `delivery_completed_by uuid NULL` (FK → app_user), `adoption_status text NOT NULL DEFAULT 'not_assessed'` (CHECK `initiative_adoption_status_valid`: `not_assessed`, `on_track`, `at_risk`, `adopted`), `adoption_status_note text NULL` (1–2000), `adoption_status_set_at timestamptz NULL`, `adoption_status_set_by uuid NULL` (FK → app_user). CHECKs `initiative_delivery_completed_stamps` (both delivery stamps or neither) and `initiative_adoption_status_stamps` (both adoption stamps or neither; a status other than `not_assessed` has them). Trigger `initiative_delivery_complete_guard` (BEFORE UPDATE: the move to `completed` needs the delivery stamps; the stamps are set once, with that move). Existing rows take the defaults (NULL stamps, `not_assessed`) and keep their version; the DG3 status edges (`initiative_status_step`) are unchanged.
+- **`transformation`** (DG1 `0002`): trigger `transformation_closure_guard` (BEFORE UPDATE OF status: `closed` needs the transformation's `closure_record`). The DG1 `PATCH` keeps refusing closure in the API; no existing row is touched.
+
+## adoption_indicator_template
+
+- **Purpose:** The seven leading adoption indicators of B0109-B0115, verbatim, one row per measure (indicator 4 has two: training completion and observed proficiency), with provisional Arabic and the platform's KPI-template reading (REQ-PB-071, REQ-PB-072; ADR-0033 §2).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** none (seed, read-only). **Lifecycle:** seed.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| key | text | NOT NULL |  | `CHECK ((key ~ '^[a-z_]+$'))`; PK |
+| indicator_key | text | NOT NULL |  | `CHECK ((indicator_key ~ '^[a-z_]+$'))` |
+| indicator_ordinal | smallint | NOT NULL |  | `CHECK (((indicator_ordinal >= 1) AND (indicator_ordinal <= 7)))` |
+| measure_ordinal | smallint | NOT NULL |  | `CHECK (((measure_ordinal >= 1) AND (measure_ordinal <= 2)))` |
+| source_indicator_en | text | NOT NULL |  | `CHECK (((char_length(source_indicator_en) >= 1) AND (char_length(source_indicator_en) <= 200)))` |
+| indicator_ar | text | NOT NULL |  | `CHECK (((char_length(indicator_ar) >= 1) AND (char_length(indicator_ar) <= 200)))` |
+| measure_en | text | NOT NULL |  | `CHECK (((char_length(measure_en) >= 1) AND (char_length(measure_en) <= 200)))` |
+| measure_ar | text | NOT NULL |  | `CHECK (((char_length(measure_ar) >= 1) AND (char_length(measure_ar) <= 200)))` |
+| ar_provisional | boolean | NOT NULL | `true` |  |
+| unit_kind | text | NOT NULL |  | `CHECK ((unit_kind = ANY (ARRAY['percentage', 'duration'])))` |
+| polarity | text | NOT NULL |  | `CHECK ((polarity = ANY (ARRAY['higher_is_better', 'lower_is_better'])))` |
+| value_nature | text | NOT NULL |  | `CHECK ((value_nature = ANY (ARRAY['ratio', 'stock'])))` |
+| aggregation_rule | text | NOT NULL |  | `CHECK ((aggregation_rule = ANY (ARRAY['weighted_ratio', 'last_value'])))` |
+| value_source | text | NOT NULL |  | `CHECK ((value_source = ANY (ARRAY['kpi_actuals', 'training_records', 'assessment_records'])))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+**Table constraints:**
+
+- `adoption_indicator_template_measure_key` (UNIQUE): `UNIQUE (indicator_ordinal, measure_ordinal)`
+- `adoption_indicator_template_nature_rule` (CHECK): `CHECK (((value_nature = 'ratio') = (aggregation_rule = 'weighted_ratio')))`
+
+## stakeholder_group
+
+- **Purpose:** One T13 row (B0107; REQ-PB-070) with the M0215 additions: influence and impact separately, stance, required behavior, intervention types, intervention plan, owner, adoption KPI (REQ-S11-001; REQ-S16-020 StakeholderGroup; ADR-0033 §1, §3).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `adoption.edit` (TL, BO, WL). **Lifecycle:** active → archived (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^SG-[0-9]{2,6}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 200)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| influence | text | NULL |  | `CHECK (((influence IS NULL) OR (influence = ANY (ARRAY['H', 'M', 'L']))))` |
+| impact | text | NOT NULL |  | `CHECK ((impact = ANY (ARRAY['H', 'M', 'L'])))` |
+| current_stance | text | NOT NULL |  | `CHECK ((current_stance = ANY (ARRAY['support', 'neutral', 'resist'])))` |
+| required_behavior | text | NOT NULL |  | `CHECK (((char_length(required_behavior) >= 1) AND (char_length(required_behavior) <= 2000)))` |
+| intervention_types | text[] | NOT NULL |  |  |
+| intervention_plan | text | NULL |  | `CHECK (((intervention_plan IS NULL) OR ((char_length(intervention_plan) >= 1) AND (char_length(intervention_plan) <= 8000))))` |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| adoption_kpi_definition_id | uuid | NULL |  |  |
+| headcount | integer | NULL |  | `CHECK (((headcount IS NULL) OR ((headcount >= 1) AND (headcount <= 10000000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `stakeholder_group_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `stakeholder_group_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `stakeholder_group_intervention_types_distinct` (CHECK): `CHECK (p4_text_array_distinct(intervention_types))`
+- `stakeholder_group_intervention_types_valid` (CHECK): `CHECK ((((cardinality(intervention_types) >= 1) AND (cardinality(intervention_types) <= 4)) AND (intervention_types <@ ARRAY['comms', 'training', 'involvement', 'incentive'])))`
+- `stakeholder_group_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, adoption_kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `stakeholder_group_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `stakeholder_group_name_key`: `UNIQUE (transformation_id, lower(name)) WHERE (status = 'active')`
+- `stakeholder_group_transformation_idx`: `(transformation_id, code)`
+
+**Triggers:**
+
+- `stakeholder_group_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `stakeholder_group_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `stakeholder_group_guard()`
+- `stakeholder_group_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## stakeholder_champion
+
+- **Purpose:** A named champion of a stakeholder group (M0215; B0116; ADR-0033 §7).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `adoption.edit` (TL, BO, WL). **Lifecycle:** active → removed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| stakeholder_group_id | uuid | NOT NULL |  |  |
+| user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 1000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `stakeholder_champion_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `stakeholder_champion_removed_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL))))`
+- `stakeholder_champion_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `stakeholder_champion_active_key`: `UNIQUE (stakeholder_group_id, user_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `stakeholder_champion_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `stakeholder_champion_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `stakeholder_champion_guard()`
+- `stakeholder_champion_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## adoption_metric_link
+
+- **Purpose:** An indicator measure attached to an outcome, initiative, stakeholder group or the transformation; a KPI-fed measure names its KPI (REQ-S16-020 AdoptionMetricLink; ADR-0033 §3).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `adoption.edit` (TL, BO, WL). **Lifecycle:** active → removed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| template_key | text | NOT NULL |  | FK → adoption_indicator_template(key) |
+| kpi_definition_id | uuid | NULL |  |  |
+| target_kind | text | NOT NULL |  | `CHECK ((target_kind = ANY (ARRAY['transformation', 'outcome', 'initiative', 'stakeholder_group'])))` |
+| outcome_id | uuid | NULL |  |  |
+| initiative_id | uuid | NULL |  |  |
+| stakeholder_group_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `adoption_metric_link_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `adoption_metric_link_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `adoption_metric_link_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `adoption_metric_link_outcome_fkey` (FK): `FOREIGN KEY (transformation_id, outcome_id) REFERENCES outcome(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `adoption_metric_link_removed_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL))))`
+- `adoption_metric_link_target` (CHECK): `CHECK ((((target_kind = 'outcome') = (outcome_id IS NOT NULL)) AND ((target_kind = 'initiative') = (initiative_id IS NOT NULL)) AND ((target_kind = 'stakeholder_group') = (stakeholder_group_id IS NOT NULL))))`
+- `adoption_metric_link_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `adoption_metric_link_active_key`: `UNIQUE (transformation_id, template_key, target_kind, COALESCE(outcome_id, initiative_id, stakeholder_group_id, transformation_id)) WHERE (status = 'active')`
+- `adoption_metric_link_kpi_idx`: `(kpi_definition_id) WHERE (kpi_definition_id IS NOT NULL)`
+
+**Triggers:**
+
+- `adoption_metric_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `adoption_metric_link_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `adoption_metric_link_guard()`
+- `adoption_metric_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## adoption_intervention
+
+- **Purpose:** An adoption intervention: planned by a person (comms, training, involvement, incentive) or created by the worker exactly once per indicator, scope and period below trajectory (REQ-PB-069, REQ-S11-001; REQ-S16-020 AdoptionIntervention; ADR-0033 §4).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `adoption.edit` (TL, BO, WL); the `adoption.indicator_evaluated` consumer (actor service). **Lifecycle:** planned → in_progress → done; planned → done; planned | in_progress → cancelled (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^AI-[0-9]{2,6}$'))` |
+| stakeholder_group_id | uuid | NULL |  |  |
+| intervention_type | text | NOT NULL |  | `CHECK ((intervention_type = ANY (ARRAY['comms', 'training', 'involvement', 'incentive', 'corrective'])))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 500)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 8000))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| due_date | date | NULL |  |  |
+| status | text | NOT NULL | `'planned'` | `CHECK ((status = ANY (ARRAY['planned', 'in_progress', 'done', 'cancelled'])))` |
+| origin | text | NOT NULL |  | `CHECK ((origin = ANY (ARRAY['manual', 'below_trajectory'])))` |
+| metric_link_id | uuid | NULL |  |  |
+| kpi_evaluation_id | uuid | NULL |  | FK → kpi_evaluation(id) |
+| reporting_period_id | uuid | NULL |  | FK → reporting_period(id) |
+| scope_kind | text | NULL |  | `CHECK (((scope_kind IS NULL) OR (scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative']))))` |
+| scope_id | uuid | NULL |  |  |
+| trigger_key | text | NULL |  | `CHECK (((trigger_key IS NULL) OR ((char_length(trigger_key) >= 1) AND (char_length(trigger_key) <= 200))))` |
+| outcome_note | text | NULL |  | `CHECK (((outcome_note IS NULL) OR ((char_length(outcome_note) >= 3) AND (char_length(outcome_note) <= 2000))))` |
+| completed_at | timestamp with time zone | NULL |  |  |
+| completed_by | uuid | NULL |  | FK → app_user(id) |
+| created_source | text | NOT NULL |  | `CHECK ((created_source = ANY (ARRAY['api', 'worker'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `adoption_intervention_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `adoption_intervention_done_complete` (CHECK): `CHECK ((((status = 'done') = (completed_at IS NOT NULL)) AND ((completed_at IS NULL) = (completed_by IS NULL)) AND ((status <> ALL (ARRAY['done', 'cancelled'])) OR (outcome_note IS NOT NULL))))`
+- `adoption_intervention_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `adoption_intervention_link_fkey` (FK): `FOREIGN KEY (transformation_id, metric_link_id) REFERENCES adoption_metric_link(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `adoption_intervention_origin_shape` (CHECK): `CHECK ((((origin = 'manual') = (created_source = 'api')) AND ((origin <> 'manual') OR ((created_by IS NOT NULL) AND (updated_by IS NOT NULL) AND (owner_user_id IS NOT NULL) AND (due_date IS NOT NULL) AND (intervention_type <> 'corrective'))) AND ((origin <> 'below_trajectory') OR ((created_by IS NULL) AND (intervention_type = 'corrective') AND (metric_link_id IS NOT NULL) AND (kpi_evaluation_id IS NOT NULL) AND (reporting_period_id IS NOT NULL) AND (scope_kind IS NOT NULL) AND (scope_id IS NOT NULL) AND (trigger_key IS NOT NULL))) AND ((origin = 'below_trajectory') OR ((metric_link_id IS NULL) AND (kpi_evaluation_id IS NULL) AND (reporting_period_id IS NULL) AND (scope_kind IS NULL) AND (scope_id IS NULL) AND (trigger_key IS NULL)))))`
+- `adoption_intervention_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `adoption_intervention_group_idx`: `(stakeholder_group_id) WHERE (stakeholder_group_id IS NOT NULL)`
+- `adoption_intervention_owner_idx`: `(owner_user_id, due_date) WHERE (status = ANY (ARRAY['planned', 'in_progress']))`
+- `adoption_intervention_trigger_key`: `UNIQUE (transformation_id, trigger_key) WHERE (trigger_key IS NOT NULL)`
+
+**Triggers:**
+
+- `adoption_intervention_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `adoption_intervention_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `adoption_intervention_guard()`
+- `adoption_intervention_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## assessment_form
+
+- **Purpose:** A short native feedback or proficiency-assessment form (REQ-S11-002; ADR-0033 §5).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `assessment_form.manage` (BO, WL). **Lifecycle:** draft → published → retired (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['feedback', 'proficiency_assessment'])))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 200)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 2000))))` |
+| stakeholder_group_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'published', 'retired'])))` |
+| current_version_no | integer | NOT NULL | `0` | `CHECK ((current_version_no >= 0))` |
+| published_version_no | integer | NULL |  | `CHECK (((published_version_no IS NULL) OR (published_version_no >= 1)))` |
+| published_at | timestamp with time zone | NULL |  |  |
+| published_by | uuid | NULL |  | FK → app_user(id) |
+| retired_at | timestamp with time zone | NULL |  |  |
+| retired_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assessment_form_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_form_published_complete` (CHECK): `CHECK ((((status = 'draft') = (published_at IS NULL)) AND ((published_at IS NULL) = (published_by IS NULL)) AND ((published_at IS NULL) = (published_version_no IS NULL)) AND ((published_version_no IS NULL) OR (published_version_no <= current_version_no))))`
+- `assessment_form_retired_complete` (CHECK): `CHECK ((((status = 'retired') = (retired_at IS NOT NULL)) AND ((retired_at IS NULL) = (retired_by IS NULL))))`
+- `assessment_form_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `assessment_form_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assessment_form_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `assessment_form_guard()`
+- `assessment_form_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## assessment_form_version
+
+- **Purpose:** The validated, versioned question set of a form (validated form JSON; ADR-0014; ADR-0033 §5).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `assessment_form.manage` (BO, WL). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| form_id | uuid | NOT NULL |  |  |
+| version_no | integer | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| schema | jsonb | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assessment_form_version_form_fkey` (FK): `FOREIGN KEY (transformation_id, form_id) REFERENCES assessment_form(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_form_version_no_key` (UNIQUE): `UNIQUE (form_id, version_no)`
+- `assessment_form_version_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `assessment_form_version_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `assessment_form_version_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `assessment_form_version_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assessment_form_version_guard`: BEFORE INSERT FOR EACH ROW → `assessment_form_version_guard()`
+- `assessment_form_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## assessment_invitation
+
+- **Purpose:** An invited respondent of a published form, for a stakeholder group and optionally an observed person (REQ-S11-002 respond:invited users; ADR-0033 §5).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `assessment_form.manage` (BO, WL); the response marks it responded. **Lifecycle:** open → responded | cancelled (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| form_id | uuid | NOT NULL |  |  |
+| user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| stakeholder_group_id | uuid | NOT NULL |  |  |
+| subject_user_id | uuid | NULL |  | FK → app_user(id) |
+| due_date | date | NULL |  |  |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'responded', 'cancelled'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assessment_invitation_form_fkey` (FK): `FOREIGN KEY (transformation_id, form_id) REFERENCES assessment_form(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_invitation_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_invitation_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `assessment_invitation_open_key`: `UNIQUE (form_id, user_id, COALESCE(subject_user_id, user_id)) WHERE (status = 'open')`
+
+**Triggers:**
+
+- `assessment_invitation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assessment_invitation_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `assessment_invitation_guard()`
+- `assessment_invitation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## training_record
+
+- **Purpose:** One participant's training attendance; completion is attendance, never adoption (REQ-PB-072; REQ-S16-020 Training/AssessmentRecord, training half; ADR-0033 §6).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `proficiency.record` (BO, WL). **Lifecycle:** enrolled → completed | no_show | withdrawn (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| stakeholder_group_id | uuid | NOT NULL |  |  |
+| intervention_id | uuid | NULL |  |  |
+| participant_user_id | uuid | NULL |  | FK → app_user(id) |
+| participant_label | text | NULL |  | `CHECK (((participant_label IS NULL) OR ((char_length(participant_label) >= 1) AND (char_length(participant_label) <= 200))))` |
+| training_title | text | NOT NULL |  | `CHECK (((char_length(training_title) >= 1) AND (char_length(training_title) <= 300)))` |
+| scheduled_on | date | NULL |  |  |
+| status | text | NOT NULL | `'enrolled'` | `CHECK ((status = ANY (ARRAY['enrolled', 'completed', 'no_show', 'withdrawn'])))` |
+| completed_on | date | NULL |  |  |
+| recorded_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `training_record_completed_complete` (CHECK): `CHECK ((((status = 'completed') = (completed_on IS NOT NULL)) AND ((status = 'enrolled') = (recorded_by IS NULL))))`
+- `training_record_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `training_record_intervention_fkey` (FK): `FOREIGN KEY (transformation_id, intervention_id) REFERENCES adoption_intervention(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `training_record_participant` (CHECK): `CHECK (((participant_user_id IS NULL) <> (participant_label IS NULL)))`
+- `training_record_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `training_record_group_idx`: `(stakeholder_group_id, status)`
+
+**Triggers:**
+
+- `training_record_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `training_record_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `training_record_guard()`
+- `training_record_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## assessment_record
+
+- **Purpose:** A submitted feedback response or proficiency observation, linked to its stakeholder group; observations count in the observed-proficiency measure until withdrawn (REQ-S11-002, REQ-PB-072; REQ-S16-020 Training/AssessmentRecord, assessment half; ADR-0033 §5, §6).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `assessment.respond` (the respondent); review `assessment.review` (BO). **Lifecycle:** submitted → reviewed | withdrawn; reviewed → withdrawn (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| form_id | uuid | NOT NULL |  |  |
+| form_version_id | uuid | NOT NULL |  |  |
+| invitation_id | uuid | NULL |  |  |
+| stakeholder_group_id | uuid | NOT NULL |  |  |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['feedback', 'proficiency_observation'])))` |
+| respondent_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| subject_user_id | uuid | NULL |  | FK → app_user(id) |
+| subject_label | text | NULL |  | `CHECK (((subject_label IS NULL) OR ((char_length(subject_label) >= 1) AND (char_length(subject_label) <= 200))))` |
+| observed_on | date | NOT NULL |  |  |
+| answers | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(answers) = 'object'))` |
+| proficiency_result | text | NULL |  | `CHECK (((proficiency_result IS NULL) OR (proficiency_result = ANY (ARRAY['proficient', 'not_yet_proficient']))))` |
+| status | text | NOT NULL | `'submitted'` | `CHECK ((status = ANY (ARRAY['submitted', 'reviewed', 'withdrawn'])))` |
+| reviewed_at | timestamp with time zone | NULL |  |  |
+| reviewed_by | uuid | NULL |  | FK → app_user(id) |
+| review_note | text | NULL |  | `CHECK (((review_note IS NULL) OR ((char_length(review_note) >= 1) AND (char_length(review_note) <= 2000))))` |
+| withdrawn_at | timestamp with time zone | NULL |  |  |
+| withdrawn_by | uuid | NULL |  | FK → app_user(id) |
+| withdraw_reason | text | NULL |  | `CHECK (((withdraw_reason IS NULL) OR ((char_length(withdraw_reason) >= 3) AND (char_length(withdraw_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assessment_record_form_fkey` (FK): `FOREIGN KEY (transformation_id, form_id) REFERENCES assessment_form(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_record_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_record_invitation_fkey` (FK): `FOREIGN KEY (transformation_id, invitation_id) REFERENCES assessment_invitation(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_record_proficiency_shape` (CHECK): `CHECK ((((kind = 'proficiency_observation') = (proficiency_result IS NOT NULL)) AND ((kind = 'feedback') OR ((subject_user_id IS NULL) <> (subject_label IS NULL))) AND ((kind = 'proficiency_observation') OR ((subject_user_id IS NULL) AND (subject_label IS NULL)))))`
+- `assessment_record_respondent_is_creator` (CHECK): `CHECK ((respondent_user_id = created_by))`
+- `assessment_record_reviewed_complete` (CHECK): `CHECK ((((reviewed_at IS NULL) = (reviewed_by IS NULL)) AND ((status <> 'reviewed') OR (reviewed_at IS NOT NULL)) AND ((status <> 'submitted') OR (reviewed_at IS NULL))))`
+- `assessment_record_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `assessment_record_version_fkey` (FK): `FOREIGN KEY (transformation_id, form_version_id) REFERENCES assessment_form_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assessment_record_withdrawn_complete` (CHECK): `CHECK ((((status = 'withdrawn') = (withdrawn_at IS NOT NULL)) AND ((withdrawn_at IS NULL) = (withdrawn_by IS NULL)) AND ((withdrawn_at IS NULL) = (withdraw_reason IS NULL))))`
+
+**Indexes:**
+
+- `assessment_record_group_idx`: `(stakeholder_group_id, kind, observed_on) WHERE (status <> 'withdrawn')`
+- `assessment_record_invitation_key`: `UNIQUE (invitation_id) WHERE (invitation_id IS NOT NULL)`
+
+**Triggers:**
+
+- `assessment_record_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assessment_record_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `assessment_record_guard()`
+- `assessment_record_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## stakeholder_involvement
+
+- **Purpose:** An impacted group's involvement in a design workshop or a T04 design decision; corrections are withdrawal rows (REQ-PB-073; ADR-0033 §7).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `adoption.edit` (TL, BO, WL). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| stakeholder_group_id | uuid | NOT NULL |  |  |
+| involvement_kind | text | NOT NULL |  | `CHECK ((involvement_kind = ANY (ARRAY['workshop', 'decision'])))` |
+| workshop_id | uuid | NULL |  |  |
+| decision_id | uuid | NULL |  |  |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| withdraws_involvement_id | uuid | NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `stakeholder_involvement_decision_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `stakeholder_involvement_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `stakeholder_involvement_target` (CHECK): `CHECK ((((involvement_kind = 'workshop') = (workshop_id IS NOT NULL)) AND ((involvement_kind = 'decision') = (decision_id IS NOT NULL))))`
+- `stakeholder_involvement_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `stakeholder_involvement_withdraws_fkey` (FK): `FOREIGN KEY (transformation_id, withdraws_involvement_id) REFERENCES stakeholder_involvement(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `stakeholder_involvement_workshop_fkey` (FK): `FOREIGN KEY (transformation_id, workshop_id) REFERENCES tom_workshop(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `stakeholder_involvement_withdraws_key`: `UNIQUE (withdraws_involvement_id) WHERE (withdraws_involvement_id IS NOT NULL)`
+
+**Triggers:**
+
+- `stakeholder_involvement_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `stakeholder_involvement_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `stakeholder_involvement_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `stakeholder_involvement_guard`: BEFORE INSERT FOR EACH ROW → `stakeholder_involvement_guard()`
+- `stakeholder_involvement_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## champion_constraint
+
+- **Purpose:** A constraint raised in person by an active champion on a T04 design decision, shown on that decision (REQ-PB-073; ADR-0033 §7).
+- **Migration:** `0047_p4_adoption.sql`. **API module:** `adoption`. **Who writes:** `champion_constraint.raise` (BO, WL; the champion); address `decision.edit`; withdraw the champion. **Lifecycle:** open → addressed | withdrawn (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| champion_id | uuid | NOT NULL |  |  |
+| stakeholder_group_id | uuid | NOT NULL |  |  |
+| decision_id | uuid | NOT NULL |  |  |
+| constraint_text | text | NOT NULL |  | `CHECK (((char_length(constraint_text) >= 3) AND (char_length(constraint_text) <= 4000)))` |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'addressed', 'withdrawn'])))` |
+| response_text | text | NULL |  | `CHECK (((response_text IS NULL) OR ((char_length(response_text) >= 3) AND (char_length(response_text) <= 4000))))` |
+| resolved_at | timestamp with time zone | NULL |  |  |
+| resolved_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `champion_constraint_champion_fkey` (FK): `FOREIGN KEY (transformation_id, champion_id) REFERENCES stakeholder_champion(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `champion_constraint_decision_fkey` (FK): `FOREIGN KEY (transformation_id, decision_id) REFERENCES decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `champion_constraint_group_fkey` (FK): `FOREIGN KEY (transformation_id, stakeholder_group_id) REFERENCES stakeholder_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `champion_constraint_resolved_complete` (CHECK): `CHECK ((((status = 'open') = (resolved_at IS NULL)) AND ((resolved_at IS NULL) = (resolved_by IS NULL)) AND ((status = 'addressed') = (response_text IS NOT NULL))))`
+- `champion_constraint_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `champion_constraint_decision_idx`: `(decision_id, status)`
+
+**Triggers:**
+
+- `champion_constraint_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `champion_constraint_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `champion_constraint_guard()`
+- `champion_constraint_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## performance_area
+
+- **Purpose:** A performance area that continues after its origin transformation closes; BAU owner, KPI owner, review cadence and cycle (REQ-S03-002, REQ-S11-004, REQ-S11-009; ADR-0034 §4).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `performance_area.manage` (BO, TO); `performance_area.reopen` (BO, TL); handover acceptance; the review scan advances next_review_date. **Lifecycle:** establishing → bau → reopened → bau; any non-retired → retired (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^PA-[0-9]{2,6}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 200)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| business_unit_id | uuid | NULL |  | FK → business_unit(id) |
+| sponsor_user_id | uuid | NULL |  | FK → app_user(id) |
+| bau_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| kpi_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| review_frequency | text | NOT NULL | `'monthly'` |  |
+| review_interval | smallint | NOT NULL | `1` | `CHECK (((review_interval >= 1) AND (review_interval <= 12)))` |
+| next_review_date | date | NULL |  |  |
+| cycle_no | integer | NOT NULL | `1` | `CHECK ((cycle_no >= 1))` |
+| status | text | NOT NULL | `'establishing'` | `CHECK ((status = ANY (ARRAY['establishing', 'bau', 'reopened', 'retired'])))` |
+| current_handover_id | uuid | NULL |  |  |
+| retired_at | timestamp with time zone | NULL |  |  |
+| retired_by | uuid | NULL |  | FK → app_user(id) |
+| retire_reason | text | NULL |  | `CHECK (((retire_reason IS NULL) OR ((char_length(retire_reason) >= 3) AND (char_length(retire_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `performance_area_bau_complete` (CHECK): `CHECK (((status <> 'bau') OR ((bau_owner_user_id IS NOT NULL) AND (current_handover_id IS NOT NULL) AND (next_review_date IS NOT NULL))))`
+- `performance_area_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `performance_area_current_handover_fkey` (FK): `FOREIGN KEY (transformation_id, current_handover_id) REFERENCES bau_handover(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_retired_complete` (CHECK): `CHECK ((((status = 'retired') = (retired_at IS NOT NULL)) AND ((retired_at IS NULL) = (retired_by IS NULL)) AND ((retired_at IS NULL) = (retire_reason IS NULL))))`
+- `performance_area_review_frequency_valid` (CHECK): `CHECK (p4_sustain_frequency_valid(review_frequency))`
+- `performance_area_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `performance_area_org_idx`: `(organization_id, status, code)`
+- `performance_area_review_due_idx`: `(next_review_date) WHERE (status = ANY (ARRAY['bau', 'reopened']))`
+
+**Triggers:**
+
+- `performance_area_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `performance_area_cycle_present`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `performance_area_cycle_present()`
+- `performance_area_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `performance_area_guard()`
+- `performance_area_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## performance_area_cycle
+
+- **Purpose:** The append-only cycle history of an area: each reopening's reason and the prior accepted handover and closure, as they were (REQ-S11-009; ADR-0034 §4).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `performance_area.manage` (cycle 1, with the area); `performance_area.reopen`. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| performance_area_id | uuid | NOT NULL |  |  |
+| cycle_no | integer | NOT NULL |  | `CHECK ((cycle_no >= 1))` |
+| opened_at | timestamp with time zone | NOT NULL | `now()` |  |
+| opened_by | uuid | NOT NULL |  | FK → app_user(id) |
+| reopen_reason | text | NULL |  | `CHECK (((reopen_reason IS NULL) OR ((char_length(reopen_reason) >= 3) AND (char_length(reopen_reason) <= 2000))))` |
+| prior_handover_id | uuid | NULL |  |  |
+| prior_handover_accepted_at | timestamp with time zone | NULL |  |  |
+| prior_handover_accepted_by | uuid | NULL |  | FK → app_user(id) |
+| prior_closure_record_id | uuid | NULL |  |  |
+| prior_closed_at | timestamp with time zone | NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `performance_area_cycle_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_cycle_first` (CHECK): `CHECK ((((cycle_no = 1) = (reopen_reason IS NULL)) AND ((cycle_no > 1) OR (prior_handover_id IS NULL)) AND ((cycle_no = 1) OR (prior_handover_id IS NOT NULL))))`
+- `performance_area_cycle_no_key` (UNIQUE): `UNIQUE (performance_area_id, cycle_no)`
+- `performance_area_cycle_prior_closure_fkey` (FK): `FOREIGN KEY (transformation_id, prior_closure_record_id) REFERENCES closure_record(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_cycle_prior_handover_fkey` (FK): `FOREIGN KEY (transformation_id, prior_handover_id) REFERENCES bau_handover(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_cycle_prior_stamps` (CHECK): `CHECK ((((prior_handover_id IS NULL) = (prior_handover_accepted_at IS NULL)) AND ((prior_handover_accepted_at IS NULL) = (prior_handover_accepted_by IS NULL)) AND ((prior_closure_record_id IS NULL) = (prior_closed_at IS NULL))))`
+- `performance_area_cycle_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `performance_area_cycle_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `performance_area_cycle_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `performance_area_cycle_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `performance_area_cycle_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## performance_area_link
+
+- **Purpose:** A KPI or benefit an area carries on after closure (REQ-S03-002; ADR-0034 §4).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `performance_area.manage` (BO, TO). **Lifecycle:** active → removed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| performance_area_id | uuid | NOT NULL |  |  |
+| link_kind | text | NOT NULL |  | `CHECK ((link_kind = ANY (ARRAY['kpi', 'benefit'])))` |
+| kpi_definition_id | uuid | NULL |  |  |
+| benefit_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `performance_area_link_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_link_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_link_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `performance_area_link_removed_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL))))`
+- `performance_area_link_target` (CHECK): `CHECK ((((link_kind = 'kpi') = (kpi_definition_id IS NOT NULL)) AND ((link_kind = 'benefit') = (benefit_id IS NOT NULL))))`
+- `performance_area_link_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `performance_area_link_active_key`: `UNIQUE (performance_area_id, link_kind, COALESCE(kpi_definition_id, benefit_id)) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `performance_area_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `performance_area_link_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `performance_area_link_guard()`
+- `performance_area_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## control
+
+- **Purpose:** A BAU control of a performance area and its check cadence (REQ-PB-083, REQ-S11-008; ADR-0034 §6).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `control.manage` (BO, TO); handover acceptance (owner); the check scan advances next_check_date. **Lifecycle:** active → retired (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| performance_area_id | uuid | NOT NULL |  |  |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^CTL-[0-9]{2,6}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| frequency | text | NOT NULL |  |  |
+| frequency_interval | smallint | NOT NULL | `1` | `CHECK (((frequency_interval >= 1) AND (frequency_interval <= 12)))` |
+| next_check_date | date | NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'retired'])))` |
+| retired_at | timestamp with time zone | NULL |  |  |
+| retired_by | uuid | NULL |  | FK → app_user(id) |
+| retire_reason | text | NULL |  | `CHECK (((retire_reason IS NULL) OR ((char_length(retire_reason) >= 3) AND (char_length(retire_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `control_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `control_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `control_frequency_valid` (CHECK): `CHECK (p4_sustain_frequency_valid(frequency))`
+- `control_retired_complete` (CHECK): `CHECK ((((status = 'retired') = (retired_at IS NOT NULL)) AND ((retired_at IS NULL) = (retired_by IS NULL)) AND ((retired_at IS NULL) = (retire_reason IS NULL))))`
+- `control_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `control_area_idx`: `(performance_area_id, status)`
+- `control_check_due_idx`: `(next_check_date) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `control_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `control_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `control_guard()`
+- `control_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## control_check
+
+- **Purpose:** One periodic check of a control for one due date; a failed check emits control_check.failed (REQ-S11-008; ADR-0034 §6).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** the `sustainment.control_check_scan` job (actor service); `control_check.record` (BO, TO). **Lifecycle:** due → passed | failed | cancelled (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| control_id | uuid | NOT NULL |  |  |
+| performance_area_id | uuid | NOT NULL |  |  |
+| due_date | date | NOT NULL |  |  |
+| assignee_user_id | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'due'` | `CHECK ((status = ANY (ARRAY['due', 'passed', 'failed', 'cancelled'])))` |
+| performed_at | timestamp with time zone | NULL |  |  |
+| performed_by | uuid | NULL |  | FK → app_user(id) |
+| result_note | text | NULL |  | `CHECK (((result_note IS NULL) OR ((char_length(result_note) >= 3) AND (char_length(result_note) <= 4000))))` |
+| created_source | text | NOT NULL |  | `CHECK ((created_source = ANY (ARRAY['api', 'worker'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `control_check_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `control_check_control_fkey` (FK): `FOREIGN KEY (transformation_id, control_id) REFERENCES control(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `control_check_created_source` (CHECK): `CHECK (((created_source = 'api') = (created_by IS NOT NULL)))`
+- `control_check_due_key` (UNIQUE): `UNIQUE (control_id, due_date)`
+- `control_check_performed_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['passed', 'failed'])) = (performed_at IS NOT NULL)) AND ((performed_at IS NULL) = (performed_by IS NULL)) AND ((status <> 'failed') OR (result_note IS NOT NULL))))`
+- `control_check_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `control_check_open_idx`: `(assignee_user_id, due_date) WHERE (status = 'due')`
+
+**Triggers:**
+
+- `control_check_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `control_check_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `control_check_guard()`
+- `control_check_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## bau_handover
+
+- **Purpose:** The BAU handover of one area cycle with the M0217 content and receiving-owner acceptance (REQ-PB-083, REQ-S11-005; REQ-S16-021 BAUHandover; ADR-0034 §5).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `bau_handover.prepare` (WL, TL); accept / return `bau_handover.accept` (BO, the receiving owner only). **Lifecycle:** draft → submitted → accepted (final) | returned; returned → submitted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| performance_area_id | uuid | NOT NULL |  |  |
+| cycle_no | integer | NOT NULL |  | `CHECK ((cycle_no >= 1))` |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^HO-[0-9]{2,6}$'))` |
+| receiving_owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| kpi_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| operating_procedures | text | NULL |  | `CHECK (((operating_procedures IS NULL) OR ((char_length(operating_procedures) >= 1) AND (char_length(operating_procedures) <= 8000))))` |
+| capability_readiness | text | NULL |  | `CHECK (((capability_readiness IS NULL) OR ((char_length(capability_readiness) >= 1) AND (char_length(capability_readiness) <= 8000))))` |
+| unresolved_accepted_risks | text | NULL |  | `CHECK (((unresolved_accepted_risks IS NULL) OR ((char_length(unresolved_accepted_risks) >= 1) AND (char_length(unresolved_accepted_risks) <= 8000))))` |
+| benefit_monitoring_cadence | text | NULL |  |  |
+| data_access | text | NULL |  | `CHECK (((data_access IS NULL) OR ((char_length(data_access) >= 1) AND (char_length(data_access) <= 8000))))` |
+| improvement_backlog_summary | text | NULL |  | `CHECK (((improvement_backlog_summary IS NULL) OR ((char_length(improvement_backlog_summary) >= 1) AND (char_length(improvement_backlog_summary) <= 8000))))` |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'accepted', 'returned'])))` |
+| submitted_at | timestamp with time zone | NULL |  |  |
+| submitted_by | uuid | NULL |  | FK → app_user(id) |
+| accepted_at | timestamp with time zone | NULL |  |  |
+| accepted_by | uuid | NULL |  | FK → app_user(id) |
+| acceptance_note | text | NULL |  | `CHECK (((acceptance_note IS NULL) OR ((char_length(acceptance_note) >= 1) AND (char_length(acceptance_note) <= 2000))))` |
+| returned_at | timestamp with time zone | NULL |  |  |
+| returned_by | uuid | NULL |  | FK → app_user(id) |
+| return_reason | text | NULL |  | `CHECK (((return_reason IS NULL) OR ((char_length(return_reason) >= 3) AND (char_length(return_reason) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `bau_handover_accepted_complete` (CHECK): `CHECK ((((status = 'accepted') = (accepted_at IS NOT NULL)) AND ((accepted_at IS NULL) = (accepted_by IS NULL)) AND ((accepted_by IS NULL) OR (accepted_by = receiving_owner_user_id))))`
+- `bau_handover_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `bau_handover_cadence_valid` (CHECK): `CHECK (((benefit_monitoring_cadence IS NULL) OR p4_sustain_frequency_valid(benefit_monitoring_cadence)))`
+- `bau_handover_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `bau_handover_content_complete` (CHECK): `CHECK (((status = 'draft') OR ((kpi_owner_user_id IS NOT NULL) AND (operating_procedures IS NOT NULL) AND (capability_readiness IS NOT NULL) AND (unresolved_accepted_risks IS NOT NULL) AND (benefit_monitoring_cadence IS NOT NULL) AND (data_access IS NOT NULL) AND (improvement_backlog_summary IS NOT NULL))))`
+- `bau_handover_returned_stamps` (CHECK): `CHECK ((((returned_at IS NULL) = (returned_by IS NULL)) AND ((returned_at IS NULL) = (return_reason IS NULL)) AND ((status <> 'returned') OR (returned_at IS NOT NULL)) AND ((returned_by IS NULL) OR (returned_by = receiving_owner_user_id))))`
+- `bau_handover_submitted_stamps` (CHECK): `CHECK ((((submitted_at IS NULL) = (submitted_by IS NULL)) AND ((status = 'draft') = (submitted_at IS NULL))))`
+- `bau_handover_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `bau_handover_accepted_key`: `UNIQUE (performance_area_id, cycle_no) WHERE (status = 'accepted')`
+- `bau_handover_open_key`: `UNIQUE (performance_area_id, cycle_no) WHERE (status = ANY (ARRAY['draft', 'submitted', 'returned']))`
+
+**Triggers:**
+
+- `bau_handover_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `bau_handover_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `bau_handover_guard()`
+- `bau_handover_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## bau_handover_evidence
+
+- **Purpose:** The evidence items of a handover (M0217 evidence; ADR-0034 §5).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `bau_handover.prepare` (WL, TL). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| handover_id | uuid | NOT NULL |  |  |
+| evidence_id | uuid | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `bau_handover_evidence_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `bau_handover_evidence_handover_fkey` (FK): `FOREIGN KEY (transformation_id, handover_id) REFERENCES bau_handover(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `bau_handover_evidence_key` (UNIQUE): `UNIQUE (handover_id, evidence_id)`
+
+**Triggers:**
+
+- `bau_handover_evidence_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `bau_handover_evidence_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `bau_handover_evidence_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `bau_handover_evidence_guard`: BEFORE INSERT FOR EACH ROW → `bau_handover_evidence_guard()`
+- `bau_handover_evidence_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## transition_decision
+
+- **Purpose:** A documented transition decision for a long-realization benefit: residual owner and scheduled monitoring; decided through the canonical approval; writes no benefit value (REQ-S11-007; ADR-0034 §3).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `transition_decision.propose` (BO, FIN); the approval provider (approve, reject, changes requested); the review scan advances next_monitoring_date. **Lifecycle:** draft → submitted → approved | rejected; submitted → draft; draft | submitted → withdrawn (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^TD-[0-9]{2,6}$'))` |
+| benefit_id | uuid | NOT NULL |  |  |
+| residual_owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| rationale | text | NOT NULL |  | `CHECK (((char_length(rationale) >= 3) AND (char_length(rationale) <= 4000)))` |
+| expected_realization_end | date | NOT NULL |  |  |
+| monitoring_frequency | text | NOT NULL |  |  |
+| monitoring_interval | smallint | NOT NULL | `1` | `CHECK (((monitoring_interval >= 1) AND (monitoring_interval <= 12)))` |
+| first_monitoring_date | date | NOT NULL |  |  |
+| next_monitoring_date | date | NULL |  |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'approved', 'rejected', 'withdrawn'])))` |
+| approval_id | uuid | NULL |  | FK → approval(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `transition_decision_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `transition_decision_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `transition_decision_decided_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'rejected'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL)) AND ((status <> ALL (ARRAY['submitted', 'approved', 'rejected'])) OR (approval_id IS NOT NULL))))`
+- `transition_decision_frequency_valid` (CHECK): `CHECK (p4_sustain_frequency_valid(monitoring_frequency))`
+- `transition_decision_monitoring_dates` (CHECK): `CHECK (((first_monitoring_date <= expected_realization_end) AND ((status <> 'approved') OR (next_monitoring_date IS NOT NULL))))`
+- `transition_decision_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `transition_decision_live_key`: `UNIQUE (benefit_id) WHERE (status = ANY (ARRAY['draft', 'submitted', 'approved']))`
+- `transition_decision_monitoring_idx`: `(next_monitoring_date) WHERE (status = 'approved')`
+
+**Triggers:**
+
+- `transition_decision_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `transition_decision_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `transition_decision_guard()`
+- `transition_decision_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## sustainment_review
+
+- **Purpose:** One recurring review task: a performance-area review in BAU, or a benefit-monitoring review for a transition decision's residual owner; once per subject and due date (REQ-PB-083, REQ-S11-004, REQ-S11-007; ADR-0034 §5, §6).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** handover acceptance (first review); the `sustainment.review_scan` job (actor service); `sustainment_review.complete` (the assignee). **Lifecycle:** due → done | cancelled (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| subject_kind | text | NOT NULL |  | `CHECK ((subject_kind = ANY (ARRAY['performance_area', 'transition_decision'])))` |
+| performance_area_id | uuid | NULL |  |  |
+| cycle_no | integer | NULL |  | `CHECK (((cycle_no IS NULL) OR (cycle_no >= 1)))` |
+| transition_decision_id | uuid | NULL |  |  |
+| due_date | date | NOT NULL |  |  |
+| assignee_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'due'` | `CHECK ((status = ANY (ARRAY['due', 'done', 'cancelled'])))` |
+| completed_at | timestamp with time zone | NULL |  |  |
+| completed_by | uuid | NULL |  | FK → app_user(id) |
+| outcome_note | text | NULL |  | `CHECK (((outcome_note IS NULL) OR ((char_length(outcome_note) >= 3) AND (char_length(outcome_note) <= 4000))))` |
+| performance_signal | text | NULL |  | `CHECK (((performance_signal IS NULL) OR (performance_signal = ANY (ARRAY['on_track', 'deteriorating', 'unknown']))))` |
+| created_source | text | NOT NULL |  | `CHECK ((created_source = ANY (ARRAY['api', 'worker'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `sustainment_review_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `sustainment_review_created_source` (CHECK): `CHECK (((created_source = 'api') = (created_by IS NOT NULL)))`
+- `sustainment_review_decision_fkey` (FK): `FOREIGN KEY (transformation_id, transition_decision_id) REFERENCES transition_decision(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `sustainment_review_done_complete` (CHECK): `CHECK ((((status = 'done') = (completed_at IS NOT NULL)) AND ((completed_at IS NULL) = (completed_by IS NULL)) AND ((status <> 'done') OR ((outcome_note IS NOT NULL) AND (performance_signal IS NOT NULL)))))`
+- `sustainment_review_subject` (CHECK): `CHECK ((((subject_kind = 'performance_area') = (performance_area_id IS NOT NULL)) AND ((performance_area_id IS NULL) = (cycle_no IS NULL)) AND ((subject_kind = 'transition_decision') = (transition_decision_id IS NOT NULL))))`
+- `sustainment_review_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `sustainment_review_assignee_idx`: `(assignee_user_id, due_date) WHERE (status = 'due')`
+- `sustainment_review_due_key`: `UNIQUE (subject_kind, COALESCE(performance_area_id, transition_decision_id), due_date)`
+
+**Triggers:**
+
+- `sustainment_review_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `sustainment_review_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `sustainment_review_guard()`
+- `sustainment_review_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## lesson
+
+- **Purpose:** A lesson; published lessons are searchable across the organization's transformations in the caller's scope (REQ-S11-008; REQ-S16-021 Lesson; ADR-0034 §8).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `lesson.edit` (BO, TO). **Lifecycle:** draft → published → archived; draft → archived (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^LL-[0-9]{2,6}$'))` |
+| performance_area_id | uuid | NULL |  |  |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| context | text | NULL |  | `CHECK (((context IS NULL) OR ((char_length(context) >= 1) AND (char_length(context) <= 4000))))` |
+| lesson_text | text | NOT NULL |  | `CHECK (((char_length(lesson_text) >= 3) AND (char_length(lesson_text) <= 8000)))` |
+| recommendation | text | NULL |  | `CHECK (((recommendation IS NULL) OR ((char_length(recommendation) >= 1) AND (char_length(recommendation) <= 4000))))` |
+| tags | text[] | NOT NULL | `'{}'[]` |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'published', 'archived'])))` |
+| published_at | timestamp with time zone | NULL |  |  |
+| published_by | uuid | NULL |  | FK → app_user(id) |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| search_document | tsvector | NULL | `p4_lesson_document(title, context, lesson_text, recommendation, tags)` |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `lesson_archived_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL))))`
+- `lesson_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `lesson_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `lesson_published_complete` (CHECK): `CHECK ((((status = 'draft') = (published_at IS NULL)) AND ((published_at IS NULL) = (published_by IS NULL))))`
+- `lesson_tags_valid` (CHECK): `CHECK (((cardinality(tags) <= 10) AND p4_tags_valid(tags)))`
+- `lesson_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `lesson_org_published_idx`: `(organization_id, published_at DESC, id DESC) WHERE (status = 'published')`
+- `lesson_search_idx`: `CREATE INDEX lesson_search_idx ON public.lesson USING gin (search_document) WHERE (status = 'published')`
+
+**Triggers:**
+
+- `lesson_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `lesson_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `lesson_guard()`
+- `lesson_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## improvement_item
+
+- **Purpose:** A continuous-improvement backlog item with its source; persists after closure (REQ-PB-084, REQ-S11-008; REQ-S16-021 ImprovementItem; ADR-0034 §8).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `improvement.edit` (BO, TO). **Lifecycle:** open ⇄ in_progress → done | rejected (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^CI-[0-9]{2,6}$'))` |
+| performance_area_id | uuid | NULL |  |  |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 8000))))` |
+| source_kind | text | NOT NULL |  | `CHECK ((source_kind = ANY (ARRAY['manual', 'lesson', 'control_check', 'review', 'handover'])))` |
+| lesson_id | uuid | NULL |  |  |
+| control_check_id | uuid | NULL |  |  |
+| review_id | uuid | NULL |  |  |
+| handover_id | uuid | NULL |  |  |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| priority | text | NULL |  | `CHECK (((priority IS NULL) OR (priority = ANY (ARRAY['H', 'M', 'L']))))` |
+| target_date | date | NULL |  |  |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'in_progress', 'done', 'rejected'])))` |
+| resolution_note | text | NULL |  | `CHECK (((resolution_note IS NULL) OR ((char_length(resolution_note) >= 3) AND (char_length(resolution_note) <= 2000))))` |
+| resolved_at | timestamp with time zone | NULL |  |  |
+| resolved_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `improvement_item_area_fkey` (FK): `FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `improvement_item_check_fkey` (FK): `FOREIGN KEY (transformation_id, control_check_id) REFERENCES control_check(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `improvement_item_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `improvement_item_handover_fkey` (FK): `FOREIGN KEY (transformation_id, handover_id) REFERENCES bau_handover(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `improvement_item_lesson_fkey` (FK): `FOREIGN KEY (transformation_id, lesson_id) REFERENCES lesson(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `improvement_item_resolved_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['done', 'rejected'])) = (resolved_at IS NOT NULL)) AND ((resolved_at IS NULL) = (resolved_by IS NULL)) AND ((resolved_at IS NULL) = (resolution_note IS NULL))))`
+- `improvement_item_review_fkey` (FK): `FOREIGN KEY (transformation_id, review_id) REFERENCES sustainment_review(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `improvement_item_source_fields` (CHECK): `CHECK ((((source_kind = 'lesson') = (lesson_id IS NOT NULL)) AND ((source_kind = 'control_check') = (control_check_id IS NOT NULL)) AND ((source_kind = 'review') = (review_id IS NOT NULL)) AND ((source_kind = 'handover') = (handover_id IS NOT NULL))))`
+- `improvement_item_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `improvement_item_area_idx`: `(performance_area_id, status) WHERE (performance_area_id IS NOT NULL)`
+- `improvement_item_transformation_idx`: `(transformation_id, status, code)`
+
+**Triggers:**
+
+- `improvement_item_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `improvement_item_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `improvement_item_guard()`
+- `improvement_item_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## closure_record
+
+- **Purpose:** The governed closure of an initiative or a transformation with the basis checked (validated value and/or transition decisions; G6 for a transformation) (REQ-PB-009, REQ-S03-003; ADR-0034 §7).
+- **Migration:** `0048_p4_sustainment.sql`. **API module:** `sustainment`. **Who writes:** `initiative.close`, `transformation.close` (TL). **Lifecycle:** append-only; one per subject.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| subject_kind | text | NOT NULL |  | `CHECK ((subject_kind = ANY (ARRAY['initiative', 'transformation'])))` |
+| initiative_id | uuid | NULL |  |  |
+| basis | text | NOT NULL |  | `CHECK ((basis = ANY (ARRAY['validated_value', 'transition_decision', 'validated_value_and_transition_decision'])))` |
+| snapshot | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(snapshot) = 'object'))` |
+| closure_note | text | NULL |  | `CHECK (((closure_note IS NULL) OR ((char_length(closure_note) >= 3) AND (char_length(closure_note) <= 2000))))` |
+| closed_at | timestamp with time zone | NOT NULL | `now()` |  |
+| closed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `closure_record_closer_is_creator` (CHECK): `CHECK ((closed_by = created_by))`
+- `closure_record_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `closure_record_subject` (CHECK): `CHECK (((subject_kind = 'initiative') = (initiative_id IS NOT NULL)))`
+- `closure_record_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `closure_record_initiative_key`: `UNIQUE (initiative_id) WHERE (subject_kind = 'initiative')`
+- `closure_record_transformation_key`: `UNIQUE (transformation_id) WHERE (subject_kind = 'transformation')`
+
+**Triggers:**
+
+- `closure_record_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `closure_record_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `closure_record_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `closure_record_guard`: BEFORE INSERT FOR EACH ROW → `closure_record_guard()`
+- `closure_record_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P4 seeds (0047, 0049, 0050, slices F and G)
+
+- `adoption_indicator_template`: 8 measure rows for the seven B0109–B0115 indicators, verbatim English indicator names, Arabic marked provisional (`ar_provisional = true`).
+- `approval_type` `benefit_transition_decision` (subject `transition_decision`, SoD `requester_excluded`, owner module `sustainment`, M0218).
+- `work_item_kind` `adoption_intervention_due` (M0215), `assessment_invitation` (M0215), `assessment_to_review` (M0215) — owner module `adoption`; `bau_handover_to_accept` (M0217), `performance_review_due` (M0217), `benefit_monitoring_due` (M0218), `control_check_due` (M0219) — owner module `sustainment` (label_ar provisional wording).
+- `permission` (21 rows: 19 write, `bau_handover.accept` business_approval, `lesson.search` read) and `role_permission` (56 rows): exactly `P4_ADOPTION_SUSTAINMENT_PERMISSIONS` / `P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). No technical-admin role holds any; AUD holds only `lesson.search`; `bau_handover.accept` is held by BO only.
+- No stakeholder group, intervention, form, area, handover, control, review, lesson, CI item, transition decision or closure is seeded. The recurring-job schedules (`sustainment.review_scan`, daily 00:20, and `sustainment.control_check_scan`, daily 00:25, both `Asia/Riyadh`) are seeded by `0050_p4_sustainment_schedules.sql`, audited `system`; the worker reports them `unhandled` and schedules nothing until BE-I2 registers the handlers.
+
+## P4 functions (slices F and G)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `p4_text_array_distinct(text[])` | 0047 | no repeated element (a CHECK cannot hold a subquery) | via CHECK |
+| `p4_assessment_form_schema_valid(text, jsonb)` | 0047 | the validated form JSON of ADR-0033 §5 | via trigger |
+| `stakeholder_group_guard()`, `stakeholder_champion_guard()`, `adoption_metric_link_guard()`, `adoption_intervention_guard()`, `assessment_form_guard()`, `assessment_form_version_guard()`, `assessment_invitation_guard()`, `training_record_guard()`, `assessment_record_guard()`, `stakeholder_involvement_guard()`, `champion_constraint_guard()` | 0047 | starting states, legal transitions, final states, immutable identity and source fields, the cross-row rules of ADR-0033 | via trigger |
+| `p4_sustain_frequency_valid(text)` | 0048 | the recurrence vocabulary (weekly, monthly, quarterly, semi_annual, annual) | via CHECK |
+| `p4_tags_valid(text[])` | 0048 | lesson tags: distinct, 1–50 characters | via CHECK |
+| `p4_lesson_document(text, text, text, text, text[])` | 0048 | the lesson search document (`simple` tsvector), IMMUTABLE for the stored generated column | via generated column |
+| `initiative_delivery_complete_guard()`, `transformation_closure_guard()` | 0048 | delivery stamps with `completed`; `closed` needs a closure record | via trigger |
+| `performance_area_guard()`, `performance_area_cycle_present()` (deferred), `performance_area_link_guard()`, `control_guard()`, `control_check_guard()`, `bau_handover_guard()`, `bau_handover_evidence_guard()`, `transition_decision_guard()`, `sustainment_review_guard()`, `lesson_guard()`, `improvement_item_guard()`, `closure_record_guard()` | 0048 | starting states, legal transitions, final states, the M0217 submission content, receiving-owner acceptance, the cycle history, the closure preconditions of ADR-0034 | via trigger / constraint trigger |
+
+## P4 validation rules summary (slices F and G)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, organization = transformation's, deferred audit coverage; append-only form versions, involvement, area cycles, handover evidence and closure records); closed sets (H/M/L, stances, intervention types, statuses, kinds, frequencies, signals, bases); a T13 stance of 'hostile' refused; one intervention per indicator, scope and period below trajectory; validated form JSON; responses only to the published version of a published form; proficiency result exactly for observations; constraints raised only by the champion on a design decision; the cycle row of every area cycle; BAU only with the current cycle's accepted handover; the M0217 content, a control and evidence before submission; acceptance only by the receiving owner; accepted handovers final; one review per subject and due date; one check per control and due date; one live transition decision per benefit; one closure per subject; G6 approved for a transformation closure; `closed` only with a closure record |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice F and G schemas), the form schema and answers, free-text rules, strict UTF-8, request media types, `If-Match` |
+| Service | Permissions and record-level rules (ADR-0033 §9, ADR-0034 §9: invitation or assessor; the champion; the receiving owner; the review assignee), commit-time re-authorization, the exact refusal codes and English texts (ADR-0033 §10, ADR-0034 §12), the value-status and closure checks, ownership transfer on acceptance, the record-fed measures with Unknown |
+| Worker | `adoption.indicator_evaluated` (below trajectory → one intervention, lock 730242, `adoption.check_failed`); `sustainment.review_scan` and `sustainment.control_check_scan` (once per due date; `control_check.failed` from `recordControlCheck`) |

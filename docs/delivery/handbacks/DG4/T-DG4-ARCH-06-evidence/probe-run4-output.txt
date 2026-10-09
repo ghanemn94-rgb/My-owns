@@ -1,0 +1,110 @@
+port-policy: PostgreSQL listening on port 23707 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 50 (0001_identity_access.sql .. 0058_p4_approval_reminder_kinds.sql)
+PASS  G00 migration ids below the repair range are contiguous 1..n and 0047-0049 are present (0058+ is the repair range, D-094)  -- last below 0058: 49; repair: 58
+PASS  G01 fresh database: 0001..last apply  -- applied 50: 0045_p4_t16_escalation.sql, 0046_p4_governance_permissions.sql, 0047_p4_adoption.sql, 0048_p4_sustainment.sql, 0049_p4_adoption_sustainment_permissions.sql, 0058_p4_approval_reminder_kinds.sql
+PASS  G02 P3 database populated (0001-0027, a synthetic transformation and a P3 initiative)  -- applied 27
+PASS  G03 P4 over the P3 database: 0028..last apply  -- applied 23: 0047_p4_adoption.sql, 0048_p4_sustainment.sql, 0049_p4_adoption_sustainment_permissions.sql, 0058_p4_approval_reminder_kinds.sql
+PASS  G04 the existing P3 initiative keeps its values (version 1, draft); new columns are not_assessed / NULL  -- {"version":1,"status":"draft","adoption_status":"not_assessed","delivery_completed_at":null,"adoption_status_set_at":null}
+PASS  G05 an existing transformation still takes a DG1 status edit (draft -> active) after 0048  -- updated
+PASS  S01 the seven B0109-B0115 indicators are seeded verbatim (8 measure rows; the fourth has two measures), Arabic provisional  -- ["Usage / activation rate","Compliance with new process","Cycle-time shift","Training completion + observed proficiency","Decision turnaround time","Percentage of transactions handled through the new journey","Exception / workaround rate"]
+PASS  S02 21 slice F/G permissions; bau_handover.accept is business_approval held by BO only; AUD holds only the read code lesson.search; no technical admin holds any  -- [0,"lesson.search","BO","BO,TL,WL"]
+PASS  S03 the seven slice F/G work-item kinds and the benefit_transition_decision approval type are seeded  -- ["adoption_intervention_due","assessment_invitation","assessment_to_review","bau_handover_to_accept","benefit_monitoring_due","control_check_due","performance_review_due"]
+PASS  S04 a technical admin cannot be granted bau_handover.accept (0001 trigger)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission bau_handover.accept (separation of duties)
+PASS  S05 mth_app cannot write the indicator template (SELECT only)  -- 42501 permission denied for table adoption_indicator_template
+PASS  SG01 a T13 row persists all seven columns (stakeholder, impact, stance, behaviour, intervention, owner, adoption KPI)  -- {"name":"Synthetic group 106","impact":"M","current_stance":"neutral","required_behavior":"Use the new journey for every case","intervention_types":["comms","training","involvement","incentive"],"owner_user_id":"01990000-0000-7000-8000-000000000006","adoption_kpi_definition_id":"01990000-0000-7000-8000-000000000066"}
+PASS  SG02 a new group without its audit event fails at COMMIT (deferred audit-coverage constraint)  -- 23000 stakeholder_group_audit_required no audit_event for stakeholder_group 01990000-0000-7000-8000-00000000006b at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  SG03 stance 'hostile' is rejected (closed set Support / Neutral / Resist)  -- 23514 stakeholder_group_current_stance_check new row for relation "stakeholder_group" violates check constraint "stakeholder_group_current_stance_check"
+PASS  SG04 an intervention type outside Comms / training / involvement / incentive is rejected  -- 23514 stakeholder_group_intervention_types_valid new row for relation "stakeholder_group" violates check constraint "stakeholder_group_intervention_types_valid"
+PASS  SG05 a repeated intervention type is rejected  -- 23514 stakeholder_group_intervention_types_distinct new row for relation "stakeholder_group" violates check constraint "stakeholder_group_intervention_types_distinct"
+PASS  SG06 impact outside H/M/L is rejected  -- 23514 stakeholder_group_impact_check new row for relation "stakeholder_group" violates check constraint "stakeholder_group_impact_check"
+PASS  SG07 influence and impact are separate columns (influence may be Unknown while impact is H)  -- {"influence":null,"impact":"H"}
+PASS  SG08 an update that does not step the version by 1 is refused  -- 23514 stakeholder_group_version_step stakeholder_group: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  SG09 the adoption KPI must belong to the same transformation  -- 23503 stakeholder_group_kpi_fkey insert or update on table "stakeholder_group" violates foreign key constraint "stakeholder_group_kpi_fkey"
+PASS  CC01 an active champion raises a constraint linked to a T04 design decision; it is listed on that decision  -- 01990000-0000-7000-8000-000000000079 on decision: 1
+PASS  CC02 a constraint raised by someone who is not that champion is refused  -- 23514 champion_constraint_raised_by_champion champion_constraint: only an active champion of the group raises a constraint, in person
+PASS  CC03 a constraint on a non-design (executive) decision is refused  -- 23514 champion_constraint_design_decision champion_constraint: a constraint links to a T04 design decision
+PASS  CC04 the decision link of a constraint never moves  -- 23514 champion_constraint_identity champion_constraint 01990000-0000-7000-8000-000000000079: champion, group, decision and text are immutable
+PASS  CC05 a removed champion is final  -- 23514 stakeholder_champion_removed_final stakeholder_champion 01990000-0000-7000-8000-000000000081: a removed champion is final
+PASS  IV01 involvement history is append-only (UPDATE refused)  -- 42501 stakeholder_involvement is append-only: UPDATE is not allowed
+PASS  IV02 involvement history is append-only (DELETE refused)  -- 42501 stakeholder_involvement is append-only: DELETE is not allowed
+PASS  ML01 a KPI-fed measure without its KPI is refused  -- 23514 adoption_metric_link_kpi_matches_source adoption_metric_link: a KPI-fed measure names its KPI; a record-fed measure (usage_activation_rate) names none
+PASS  ML02 a record-fed measure (observed proficiency) naming a KPI is refused  -- 23514 adoption_metric_link_kpi_matches_source adoption_metric_link: a KPI-fed measure names its KPI; a record-fed measure (observed_proficiency) names none
+PASS  ML03 a link whose target does not match target_kind is refused  -- 23514 adoption_metric_link_target new row for relation "adoption_metric_link" violates check constraint "adoption_metric_link_target"
+PASS  AI01 a manual intervention without an owner and a due date is refused  -- 23514 adoption_intervention_origin_shape new row for relation "adoption_intervention" violates check constraint "adoption_intervention_origin_shape"
+PASS  AI02 a new intervention starts planned  -- 23514 adoption_intervention_starts_planned adoption_intervention: a new intervention is planned
+FAIL  AI03-setup KPI evaluation chain  -- new row for relation "kpi_evaluation" violates check constraint "kpi_evaluation_deviation_check"
+FAIL  AI03 an evaluation below trajectory creates one worker intervention (origin below_trajectory, audited as the service)  -- 22P02 invalid input syntax for type uuid: ""
+FAIL  AI04 a second intervention for the same indicator, scope and period is refused (exactly one)  -- 22P02 invalid input syntax for type uuid: ""
+FAIL  AI05 a worker intervention whose evaluation is of another KPI/scope/period is refused  -- 22P02 invalid input syntax for type uuid: ""
+PASS  AI06 a done intervention is final  -- 23514 adoption_intervention_final adoption_intervention 01990000-0000-7000-8000-0000000000a2: a done intervention is final
+FAIL  AI07 the trigger fields of an intervention are immutable  --  Cannot read properties of undefined (reading 'id')
+PASS  FM01 a valid proficiency form (one required yes/no proficiency question) and a valid feedback form are accepted and published  -- 01990000-0000-7000-8000-0000000000a5
+PASS  FM02 a proficiency form without a proficiency question is refused (validated form JSON)  -- 23514 assessment_form_version_schema_valid assessment_form_version: the form schema is not valid for a proficiency_assessment form (ADR-0033 §5)
+PASS  FM03 a schema with an unknown member is refused  -- 23514 assessment_form_version_schema_valid assessment_form_version: the form schema is not valid for a feedback form (ADR-0033 §5)
+PASS  FM04 duplicate question keys are refused  -- 23514 assessment_form_version_schema_valid assessment_form_version: the form schema is not valid for a feedback form (ADR-0033 §5)
+PASS  FM05 a form version that skips a number is refused  -- 23514 assessment_form_version_step assessment_form_version: version_no must be 2 (the form's current version + 1)
+PASS  FM06 a form version is append-only (UPDATE refused)  -- 42501 assessment_form_version is append-only: UPDATE is not allowed
+PASS  AR01 a proficiency observation submitted via the form links to the stakeholder group  -- counted observations for the group: 1
+PASS  AR02 a proficiency observation without a result is refused  -- 23514 assessment_record_proficiency_shape new row for relation "assessment_record" violates check constraint "assessment_record_proficiency_shape"
+PASS  AR03 a respondent other than the author is refused  -- 23514 assessment_record_respondent_is_creator new row for relation "assessment_record" violates check constraint "assessment_record_respondent_is_creator"
+PASS  AR04 the answers of a submitted record are immutable  -- 23514 assessment_record_immutable assessment_record 01990000-0000-7000-8000-0000000000bb: a submitted response is immutable (only review and withdrawal change it)
+PASS  AR05 a response to an unpublished form is refused  -- 23514 assessment_record_form_published assessment_record: a response answers the published version of a published form
+PASS  TR01 training completion is a separate record: 100% completion with no observation leaves the observation count 0 (Unknown)  -- completed 1/1; observations 0
+PASS  TR02 a completed training record without its completion date is refused  -- 23514 training_record_completed_complete new row for relation "training_record" violates check constraint "training_record_completed_complete"
+PASS  PA01 a new area without its cycle-1 row fails at COMMIT  -- 23000 performance_area_cycle_present performance_area 01990000-0000-7000-8000-0000000000cb: no performance_area_cycle row for cycle 1
+PASS  PA02 a new area must start establishing in cycle 1  -- 23514 performance_area_starts_establishing performance_area: a new area is establishing, in cycle 1, without a handover
+PASS  PA03 an area cannot enter BAU without the accepted handover of its current cycle  -- 23514 performance_area_bau_handover_accepted performance_area 01990000-0000-7000-8000-0000000000ce: BAU requires the accepted handover of the current cycle
+PASS  HO01 a handover missing data access cannot be submitted  -- 23514 bau_handover_content_complete new row for relation "bau_handover" violates check constraint "bau_handover_content_complete"
+PASS  HO02 a handover without an active control cannot be submitted  -- 23514 bau_handover_controls_required bau_handover 01990000-0000-7000-8000-0000000000e5: a handover names at least one active control of the area
+PASS  HO03 a handover without evidence cannot be submitted  -- 23514 bau_handover_evidence_required bau_handover 01990000-0000-7000-8000-0000000000f2: a handover carries at least one evidence item
+PASS  HO04 acceptance by anyone other than the receiving owner is refused  -- 23514 bau_handover_accepted_complete new row for relation "bau_handover" violates check constraint "bau_handover_accepted_complete"
+PASS  HO05 the receiving owner accepts a complete handover and the area enters BAU  -- {"a":"01990000-0000-7000-8000-000000000103","h":"01990000-0000-7000-8000-000000000109"}
+PASS  HO06 an accepted handover is final and immutable  -- 23514 bau_handover_accepted_final bau_handover 01990000-0000-7000-8000-000000000109: an accepted handover is final and immutable
+PASS  HO07 a second accepted handover for the same area and cycle is refused  -- 23514 bau_handover_area_open bau_handover: a handover is prepared for the current cycle of an establishing or reopened area
+PASS  HO08 a submitted handover's content is frozen until it is returned  -- 23514 bau_handover_content_frozen bau_handover 01990000-0000-7000-8000-00000000011a: a submitted handover's content is frozen until it is returned
+PASS  HO09 handover evidence is append-only (DELETE refused)  -- 42501 bau_handover_evidence is append-only: DELETE is not allowed
+PASS  HO10 a handover update without its audit event fails at COMMIT  -- 23000 bau_handover_audit_required no audit_event for bau_handover 01990000-0000-7000-8000-000000000126 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RO01 a reopening without its new cycle row fails at COMMIT  -- 23000 performance_area_cycle_present performance_area 01990000-0000-7000-8000-000000000103: no performance_area_cycle row for cycle 2
+PASS  RO02 a reopening cannot skip a cycle  -- 23514 performance_area_cycle_step performance_area 01990000-0000-7000-8000-000000000103: the cycle steps by 1 only when the area is reopened
+PASS  RO03 a reopening writes cycle 2 with the reason and the prior accepted handover, which stays unchanged  -- {"status":"accepted","accepted_at":"2026-10-09T07:20:48.397Z","accepted_by":"01990000-0000-7000-8000-000000000006","version":4}
+PASS  RO04 the cycle history is append-only (UPDATE refused)  -- 42501 performance_area_cycle is append-only: UPDATE is not allowed
+PASS  RO05 the cycle history is append-only (DELETE refused)  -- 42501 performance_area_cycle is append-only: DELETE is not allowed
+PASS  RO06 an accepted handover of the prior cycle cannot be re-accepted for the new cycle (accepted is final)  -- 23514 bau_handover_accepted_final bau_handover 01990000-0000-7000-8000-000000000109: an accepted handover is final and immutable
+PASS  RO07 a handover for cycle 2 can be prepared; the area returns to BAU only with it accepted  -- [{"cycle_no":1,"prior_handover_id":null},{"cycle_no":2,"prior_handover_id":"01990000-0000-7000-8000-000000000109"}]
+PASS  CK01 the worker creates a due control check (audited as the service)  -- 01990000-0000-7000-8000-000000000136
+PASS  CK02 a second check of the same control for the same due date is refused (no duplicate on restart)  -- 23505 control_check_due_key duplicate key value violates unique constraint "control_check_due_key"
+PASS  CK03 a failed check without a result note is refused  -- 23514 control_check_performed_complete new row for relation "control_check" violates check constraint "control_check_performed_complete"
+PASS  CK04 a failed check with its note is recorded  -- failed
+PASS  CK05 a performed check is final  -- 23514 control_check_final control_check 01990000-0000-7000-8000-000000000136: a failed check is final
+PASS  CK06 a check of a retired control is refused  -- 23514 control_check_control_active control_check: a check belongs to an active control of the same performance area
+PASS  RV01 a recurring review is created for the BAU area's current cycle  -- 01990000-0000-7000-8000-00000000013e
+PASS  RV02 a second review for the same area and due date is refused (exactly once)  -- 23505 sustainment_review_due_key duplicate key value violates unique constraint "sustainment_review_due_key"
+PASS  RV03 a review for an area that is not in BAU is refused  -- 23514 sustainment_review_area_bau sustainment_review: a performance-area review is scheduled for an area in BAU, in its current cycle
+PASS  RV04 completing a review needs the outcome note and the performance signal  -- 23514 sustainment_review_done_complete new row for relation "sustainment_review" violates check constraint "sustainment_review_done_complete"
+PASS  TD01 a transition decision is drafted, submitted through the canonical approval and approved; the benefit's values are not touched  -- measurements 0->0; benefit version 1->1
+PASS  TD02 a second live transition decision for the same benefit is refused  -- 23505 transition_decision_live_key duplicate key value violates unique constraint "transition_decision_live_key"
+PASS  TD03 an approved decision's content is final  -- 23514 transition_decision_final transition_decision 01990000-0000-7000-8000-000000000148: a approved decision is final (only its next monitoring date advances)
+PASS  TD04 monitoring reviews are scheduled for the residual owner of an approved decision  -- 01990000-0000-7000-8000-00000000014f
+PASS  TD05 monitoring assigned to someone other than the residual owner is refused  -- 23514 sustainment_review_decision_approved sustainment_review: monitoring is scheduled for an approved transition decision, for its residual owner
+PASS  TD06 a submitted decision without its approval is refused  -- 23514 transition_decision_decided_complete new row for relation "transition_decision" violates check constraint "transition_decision_decided_complete"
+PASS  CI01 an improvement item's source fields must match its source kind  -- 23514 improvement_item_source_fields new row for relation "improvement_item" violates check constraint "improvement_item_source_fields"
+PASS  CI02 a failed control check can seed an improvement item  -- 01990000-0000-7000-8000-000000000157
+PASS  CI03 a done item needs its resolution note  -- 23514 improvement_item_resolved_complete new row for relation "improvement_item" violates check constraint "improvement_item_resolved_complete"
+PASS  LL01 a published lesson of transformation 1 is found by a full-text search scoped to the organization (as from transformation 2)  -- [{"code":"LL-01","transformation_id":"01990000-0000-7000-8000-000000000005"}]
+PASS  LL02 a repeated lesson tag is refused  -- 23514 lesson_tags_valid new row for relation "lesson" violates check constraint "lesson_tags_valid"
+PASS  ST01 moving an initiative to completed without recording who completed delivery is refused  -- 23514 initiative_delivery_completed_recorded initiative 01990000-0000-7000-8000-00000000015d: delivery completion records who completed it and when
+PASS  ST02 delivery complete leaves adoption status untouched (not_assessed) and writes no closure  -- {"status":"completed","adoption_status":"not_assessed","closures":0}
+PASS  ST03 an adoption status without who set it is refused  -- 23514 initiative_adoption_status_stamps new row for relation "initiative" violates check constraint "initiative_adoption_status_stamps"
+PASS  ST04 a closure record for an initiative that is not delivery-complete is refused  -- 23514 closure_record_initiative_completed closure_record: only a delivery-complete initiative can be closed (REQ-PB-009)
+PASS  ST05 a delivery-complete initiative gets one closure record (the service checks the value basis)  -- 01990000-0000-7000-8000-000000000163
+PASS  ST06 a second closure of the same initiative is refused  -- 23505 closure_record_initiative_key duplicate key value violates unique constraint "closure_record_initiative_key"
+PASS  ST07 a closure record is append-only (UPDATE refused)  -- 42501 closure_record is append-only: UPDATE is not allowed
+PASS  ST08 a transformation closure record is refused without an approved G6  -- 23514 closure_record_g6_approved closure_record: a transformation closes only after its G6 (Sustain) business approval
+PASS  ST09 setting a transformation to closed without its closure record is refused  -- 23514 transformation_closure_recorded transformation 01990000-0000-7000-8000-000000000005: closure requires the governed closure record (ADR-0034 §7)
+PASS  ST10 with an approved G6, the transformation closes through its closure record  -- 01990000-0000-7000-8000-000000000169
+PASS  ST11 after closure the performance area still takes a scheduled review and a control check, and the CI backlog stays editable  -- transformation closed; review 01990000-0000-7000-8000-00000000016b; check 01990000-0000-7000-8000-00000000016d
+FAIL  ST12 after closure a KPI actual is still accepted for the closed transformation (no P4 guard reads the closed status)  --  Cannot read properties of undefined (reading 'id')
+PASS  P01 mth_app has INSERT/SELECT only on the append-only tables and SELECT only on the template  -- [{"table_name":"adoption_indicator_template","p":"SELECT"},{"table_name":"assessment_form_version","p":"INSERT,SELECT"},{"table_name":"bau_handover_evidence","p":"INSERT,SELECT"},{"table_name":"closure_record","p":"INSERT,SELECT"},{"table_name":"performance_area_cycle","p":"INSERT,SELECT"},{"table_name":"stakeholder_involvement","p":"INSERT,SELECT"}]
+
+6 FAIL

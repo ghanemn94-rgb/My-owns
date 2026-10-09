@@ -16,6 +16,8 @@ let boss: PgBoss;
 const ESCALATION = "approval.escalation_scan";
 const SWEEP = "delegation.expiry_sweep";
 const PERIODS = "kpi.reporting_period_open";
+// Seeded by 0050 (T-DG4-ARCH-06); unhandled until BE-I2 registers the sustainment handlers (rows are listed by code).
+const SUSTAINMENT_SCANS = ["sustainment.control_check_scan", "sustainment.review_scan"];
 
 beforeAll(async () => {
   env = await workerEnv();
@@ -82,7 +84,11 @@ describe("job schedule registration (ADR-0025 §3)", () => {
   it("registers enabled, handled rows in their timezone; reports rows without a handler; idempotent", async () => {
     const handled = new Set([ESCALATION, SWEEP]);
     const first = await syncSchedules(env.db, boss, handled);
-    expect(first).toEqual({ scheduled: [ESCALATION, SWEEP], unscheduled: [], unhandled: [PERIODS] });
+    expect(first).toEqual({
+      scheduled: [ESCALATION, SWEEP],
+      unscheduled: [],
+      unhandled: [PERIODS, ...SUSTAINMENT_SCANS],
+    });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/15 * * * *", timezone: "Asia/Riyadh" });
     expect(s.get(SWEEP)).toEqual({ cron: "*/15 * * * *", timezone: "Asia/Riyadh" });
@@ -97,7 +103,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     await change(SWEEP, { enabled: false });
     await change(ESCALATION, { cron: "*/5 * * * *" });
     const r = await handleJobScheduleUpdated(env.db, boss, handled, envelope(SWEEP));
-    expect(r).toEqual({ scheduled: [ESCALATION], unscheduled: [SWEEP], unhandled: [PERIODS] });
+    expect(r).toEqual({ scheduled: [ESCALATION], unscheduled: [SWEEP], unhandled: [PERIODS, ...SUSTAINMENT_SCANS] });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/5 * * * *", timezone: "Asia/Riyadh" });
     expect(s.has(SWEEP)).toBe(false);
