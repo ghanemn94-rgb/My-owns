@@ -1,0 +1,105 @@
+port-policy: PostgreSQL listening on port 23711 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 46 (0001_identity_access.sql .. 0046_p4_governance_permissions.sql)
+PASS  G00 migration ids are contiguous 1..n  -- last 46
+PASS  G01 fresh database: 0001..last apply  -- applied 46: 0042_p4_budget_schedule.sql, 0043_p4_raid_permissions.sql, 0044_p4_forums_meetings.sql, 0045_p4_t16_escalation.sql, 0046_p4_governance_permissions.sql
+PASS  G02 P3 database populated (0001-0027, a synthetic transformation, a DG3-style funding executive decision)  -- applied 27
+PASS  G03 P4 over the P3 database: 0028+ apply  -- applied 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql, 0032_p4_slice_i_c_reserved.sql, 0033_p4_kpi_dictionary_versions.sql, 0034_p4_kpi_trajectories_actuals.sql, 0035_p4_kpi_calculation_runs_quality.sql, 0036_p4_kpi_permissions_backfill.sql, 0037_p4_benefit_register.sql, 0038_p4_benefit_measurem
+PASS  G04 backfill: the existing transformation has the five forums (audited 'system' on behalf of its creator)  -- [5,[["executive_steerco","Monthly"],["transformation_review","Bi-weekly"],["workstream_review","Weekly"],["rapid_response","Daily / 2-3x week"],["value_review","Monthly"]]]
+PASS  G05 the pre-P4 executive (funding) decision is unchanged by 0045 (version 1, T16 columns NULL) and is listed in the T16 view  -- [[{"version":1,"ask_origin":null,"why_now":null,"impact_of_delay":null,"sla_due_date":null}],[{"t16_id":"DEC-01","decision":"Funding decision: INI-01 Synthetic","outcome":"approved: synthetic","ask_origin":null}]]
+PASS  G06 p4_instantiate_forums is idempotent (a second run creates nothing)  -- created 0
+PASS  S01 the five B0093 layers are seeded verbatim (Layer, Cadence, Purpose, Participants, Outputs), Arabic marked provisional  -- ["Monthly","Bi-weekly","Weekly","Daily / 2-3x week","Monthly"]
+PASS  S02 six slice D permissions; executive_decision.decide is business_approval held by BO,FIN,SP only; none held by AUD or a technical admin  -- [{"escalation_rule.configure":"configure","executive_decision.create":"write","executive_decision.decide":"business_approval","forum.configure":"configure","meeting.chair":"write","meeting.prepare":"write"},{"escalation_rule.configure":"TL,TO","executive_decision.create":"SEC,TL,TO","executive_decision.decide":"BO,FIN,SP","forum.configure":"TO","meeting.chair":"BO,FIN,SP,TL,TO,WL","meeting.prepare
+PASS  S03 the four slice D work-item kinds are seeded  -- [{"code":"executive_decision_due"},{"code":"executive_decision_escalated"},{"code":"meeting_action_due"},{"code":"minutes_to_approve"}]
+PASS  S04 a technical admin cannot be granted executive_decision.decide (0001 trigger)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission executive_decision.decide (separation of duties)
+PASS  S05 mth_app cannot write the forum template (SELECT only)  -- 42501 permission denied for table forum_template
+PASS  G07 p4_instantiate_transformation (redefined by 0044) also creates the five forums, and a second call creates nothing  -- first call created 81 rows (incl. 5 forums); second 0
+PASS  F01 a forum without its audit event fails at COMMIT  -- 23000 forum_audit_required no audit_event for forum 01990000-0000-7000-8000-000000000066 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  F02 a forum update that does not step the version by 1 is refused  -- 23514 forum_version_step forum: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  F03 a forum's quorum, cut-off and agenda rules are configurable (versioned, audited)  -- workstream review: quorum 2, cut-off 3 working days
+PASS  F04 an unknown governance party is refused  -- 23514 forum_participant_parties_known new row for relation "forum" violates check constraint "forum_participant_parties_known"
+PASS  F05 an output kind outside the B0093 set is refused  -- 23514 forum_output_kinds_valid new row for relation "forum" violates check constraint "forum_output_kinds_valid"
+PASS  F06 a publication requirement must be one of the forum's outputs  -- 23514 forum_publish_outputs_subset new row for relation "forum" violates check constraint "forum_publish_outputs_subset"
+PASS  F07 the template key of a forum is immutable  -- 23514 forum_template_immutable forum 01a11efb-1783-769c-8820-9c7b299a4213: the template key is immutable
+PASS  F08 a second copy of a template layer in one transformation is refused  -- 23505 forum_template_key duplicate key value violates unique constraint "forum_template_key"
+PASS  FP01 a forum participant names exactly one person or group  -- 23514 forum_participant_one_target new row for relation "forum_participant" violates check constraint "forum_participant_one_target"
+PASS  FP02 one active participation per person and forum  -- 23505 forum_participant_active_user_key duplicate key value violates unique constraint "forum_participant_active_user_key"
+PASS  MS01 a weekly series needs its weekdays  -- 23514 meeting_series_rule_shape new row for relation "meeting_series" violates check constraint "meeting_series_rule_shape"
+PASS  MS02 a series without its audit event fails at COMMIT  -- 23000 meeting_series_audit_required no audit_event for meeting_series 01990000-0000-7000-8000-00000000006e at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  MS03 one active series per forum  -- 23505 meeting_series_one_active_key duplicate key value violates unique constraint "meeting_series_one_active_key"
+PASS  MS04 a recurrence change that does not step rule_version is refused  -- 23514 meeting_series_rule_version_step meeting_series 01990000-0000-7000-8000-00000000006f: a recurrence change steps rule_version by exactly 1
+PASS  MS05 weekly -> fortnightly with rule_version + 1 is accepted (REQ-S10-005 A06)  -- rule_version 2
+PASS  MS06 the job may not change the recurrence (a person changes it)  -- 23514 meeting_series_author_required meeting_series 01990000-0000-7000-8000-00000000006f: a recurrence change is made by a person
+PASS  MS07 the job may advance generated_through (actor service)  -- generated_through set
+PASS  M01 a worker meeting must come from a series  -- 23514 meeting_created_source new row for relation "meeting" violates check constraint "meeting_created_source"
+PASS  M02 a meeting without its audit event fails at COMMIT  -- 23000 meeting_audit_required no audit_event for meeting 01990000-0000-7000-8000-000000000075 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  M03 a second meeting for the same series occurrence is refused (idempotent generation)  -- 23505 meeting_series_occurrence_key duplicate key value violates unique constraint "meeting_series_occurrence_key"
+PASS  M04 a new meeting starts scheduled  -- 23514 meeting_starts_scheduled meeting: a new meeting starts scheduled
+PASS  M05 regeneration never cancels a past meeting (future only, REQ-S10-005)  -- 23514 meeting_regenerate_future_only meeting 01990000-0000-7000-8000-00000000007a: only a future, still scheduled series meeting is replaced when the series changes
+PASS  M06 regeneration cancels a future scheduled series meeting and a new one takes the date under the new rule  -- cancelled + regenerated
+PASS  M07 a cancelled meeting is final  -- 23514 meeting_final meeting 01990000-0000-7000-8000-000000000076: a cancelled meeting is final
+PASS  M08 scheduled -> held skips the session and is refused  -- 23514 meeting_status_transition meeting 01990000-0000-7000-8000-00000000007f: scheduled -> held is not a legal transition (ADR-0032)
+PASS  M09 a manual cancellation needs who and a note  -- 23514 meeting_cancelled_complete new row for relation "meeting" violates check constraint "meeting_cancelled_complete"
+PASS  M10 minutes_published needs published minutes  -- 23514 meeting_minutes_required meeting 01990000-0000-7000-8000-00000000007f: minutes_published needs published minutes
+PASS  A01 an executive forum takes executive asks only ('Escalate decisions, not status', B0102)  -- 23514 agenda_item_executive_asks_only agenda_item: this forum's agenda takes executive asks only
+PASS  A02 an agenda item without its audit event fails at COMMIT  -- 23000 agenda_item_audit_required no audit_event for agenda_item 01990000-0000-7000-8000-000000000086 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  A03 an ask links a T16 decision or carries a brief, never both (one copy of an ask)  -- 23514 agenda_item_ask_shape new row for relation "agenda_item" violates check constraint "agenda_item_ask_shape"
+PASS  A04 REQ-PB-068: an executive ask cannot be published while its elements are still an unlinked brief (e.g. no Impact of delay)  -- 23514 agenda_item_published_ask_linked new row for relation "agenda_item" violates check constraint "agenda_item_published_ask_linked"
+PASS  A05 a linked executive ask is published  -- published
+PASS  A06 a published agenda item is frozen  -- 23514 agenda_item_published_frozen agenda_item 01990000-0000-7000-8000-000000000090: a published item is frozen
+PASS  A07 a decision is recorded only while the meeting is in session or held  -- 23514 agenda_item_meeting_not_in_session agenda_item 01990000-0000-7000-8000-000000000090: decisions are recorded while the meeting is in session or held
+PASS  A08 REQ-S10-011: with quorum 2 configured and 1 counted present, a decision cannot be recorded  -- 23514 agenda_item_quorum_met agenda_item 01990000-0000-7000-8000-000000000090: quorum 2 not met (1 counted present)
+PASS  A09 with a second person present the quorum is met and the decision is recorded  -- quorum 2/2
+PASS  A10 a closed agenda item is final  -- 23514 agenda_item_final agenda_item 01990000-0000-7000-8000-000000000090: a closed item is final
+PASS  AT01 one attendance row per person and meeting  -- 23505 meeting_attendance_person_key duplicate key value violates unique constraint "meeting_attendance_person_key"
+PASS  AT02 an absent person represents nobody  -- 23514 meeting_attendance_proxy_present new row for relation "meeting_attendance" violates check constraint "meeting_attendance_proxy_present"
+PASS  O01 an output must be one of the forum's outputs (Value Review has no 'milestone')  -- 23514 meeting_output_kind_of_forum meeting_output: milestone is not an output of this forum
+PASS  O02 a forecast entry links a canonical benefit or measurement  -- 23514 meeting_output_record_type new row for relation "meeting_output" violates check constraint "meeting_output_record_type"
+PASS  O03 a linked record must exist in the same transformation  -- 23503 meeting_output_record_ref meeting_output: benefit 01990000-0000-7000-8000-0000000000a4 does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  MN01 approved minutes are not edited in place  -- 23514 meeting_minutes_approved_frozen meeting_minutes 01990000-0000-7000-8000-0000000000a5: approved minutes are edited only after returning them to draft
+PASS  MN02 REQ-PB-061: a Value Review meeting cannot be published without a benefit evidence or forecast entry  -- 23514 meeting_minutes_required_output meeting_minutes 01990000-0000-7000-8000-0000000000a5: the forum requires at least one output of {benefit_evidence,forecast}
+PASS  MN03 with a forecast entry linked to a benefit the minutes are published, and the meeting moves to minutes_published  -- published
+PASS  MN04 published minutes are immutable  -- 23514 meeting_minutes_published_immutable meeting_minutes 01990000-0000-7000-8000-0000000000a5: published minutes are immutable
+PASS  MN05 after publication the meeting's records are frozen (a new attendance row is refused)  -- 23514 meeting_attendance_meeting_frozen meeting_attendance: the meeting is minutes_published and its records are frozen
+PASS  MN06 a meeting with published minutes is final  -- 23514 meeting_final meeting 01990000-0000-7000-8000-00000000009d: a minutes_published meeting is final
+PASS  MN07 minutes need a held meeting to be published (the SteerCo meeting is still in session)  -- 23514 meeting_minutes_meeting_held meeting_minutes 01990000-0000-7000-8000-0000000000af: minutes are published for a held meeting
+PASS  O04 meeting outputs are append-only (UPDATE refused)  -- 42501 meeting_output is append-only: UPDATE is not allowed
+PASS  O05 meeting outputs are append-only (DELETE refused)  -- 42501 meeting_output is append-only: DELETE is not allowed
+PASS  O06 a meeting output without its audit event fails at COMMIT  -- 23000 meeting_output_audit_required no audit_event for meeting_output 01990000-0000-7000-8000-0000000000b2 at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  L01 one link per meeting and action  -- 23505 meeting_action_link_key duplicate key value violates unique constraint "meeting_action_link_key"
+PASS  L02 meeting action links are append-only  -- 42501 meeting_action_link is append-only: UPDATE is not allowed
+PASS  D01 REQ-S10-012: an ask without 'why now' is refused  -- 23514 decision_ask_complete new row for relation "decision" violates check constraint "decision_ask_complete"
+PASS  D02 an ask without 'impact of delay' is refused  -- 23514 decision_ask_complete new row for relation "decision" violates check constraint "decision_ask_complete"
+PASS  D03 an ask with one option fails at COMMIT (Options A/B/C)  -- 23514 decision_ask_options decision 01990000-0000-7000-8000-0000000000ba: an executive ask states at least two options (A/B/C)
+PASS  D04 an executive ask without its audit event fails at COMMIT  -- 23000 decision_audit_required no audit_event for decision 01990000-0000-7000-8000-0000000000be at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  D05 only an executive decision carries the ask columns  -- 23514 decision_ask_executive_only new row for relation "decision" violates check constraint "decision_ask_executive_only"
+PASS  D06 a decided ask has its Outcome recorded  -- 23514 decision_ask_outcome_recorded new row for relation "decision" violates check constraint "decision_ask_outcome_recorded"
+PASS  D07 the ask origin is immutable  -- 23514 decision_ask_origin_immutable decision 01990000-0000-7000-8000-000000000087: the ask origin and its source are immutable
+PASS  D08 the SLA due date is known or carries its Unknown reason  -- 23514 decision_ask_sla_known_or_reason new row for relation "decision" violates check constraint "decision_ask_sla_known_or_reason"
+PASS  D09 REQ-PB-082: a second open ask for the same blocker is refused  -- 23505 decision_one_open_blocker_ask duplicate key value violates unique constraint "decision_one_open_blocker_ask"
+PASS  D10 only the worker raises a blocker escalation  -- 23514 decision_ask_source new row for relation "decision" violates check constraint "decision_ask_source"
+PASS  D11 a blocker escalation names an existing blocker  -- 23503 decision_blocker_ref decision: blocker raid_entry 01990000-0000-7000-8000-0000000000cb does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  E01 an ask whose SLA has not expired is not escalated  -- 23514 decision_escalation_expired new row for relation "decision_escalation" violates check constraint "decision_escalation_expired"
+PASS  E02 an escalation names the ask's current SLA due date  -- 23514 decision_escalation_open_ask decision_escalation: only an open executive ask whose current SLA due date expired is escalated
+PASS  E03 an escalation without its audit event fails at COMMIT  -- 23000 decision_escalation_audit_required no audit_event for decision_escalation 01990000-0000-7000-8000-0000000000cf at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  E04 a second escalation for the same SLA due date is refused (escalates once)  -- 23505 decision_escalation_once duplicate key value violates unique constraint "decision_escalation_once"
+PASS  E05 escalations are append-only (UPDATE refused)  -- 42501 decision_escalation is append-only: UPDATE is not allowed
+PASS  E06 a routing error carries no target  -- 23514 decision_escalation_target new row for relation "decision_escalation" violates check constraint "decision_escalation_target"
+PASS  E07 levels step by exactly 1  -- 23514 decision_escalation_level_step decision_escalation: the level steps by exactly 1 (previous 0)
+PASS  E08 recording the Outcome closes the ask (status decided with outcome)  -- decided
+PASS  E09 a decided ask is never escalated  -- 23514 decision_escalation_open_ask decision_escalation: only an open executive ask whose current SLA due date expired is escalated
+PASS  E10 after the blocker ask is decided, a new open ask for the same blocker is allowed  -- second ask after the first closed
+PASS  B01 a blocker RAG is recorded in a meeting in session or held  -- 23514 blocker_status_meeting_in_session blocker_status: a blocker RAG is recorded in a meeting that is in session or held
+PASS  B02 the cycle date and forum are the meeting's own  -- 23514 blocker_status_cycle_of_meeting blocker_status: forum and cycle date are the meeting's own
+PASS  B03 a blocker RAG without its audit event fails at COMMIT  -- 23000 blocker_status_audit_required no audit_event for blocker_status 01990000-0000-7000-8000-0000000000e0 at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  B04 one RAG per blocker and meeting  -- 23505 blocker_status_once_per_cycle duplicate key value violates unique constraint "blocker_status_once_per_cycle"
+PASS  B05 blocker observations are append-only  -- 42501 blocker_status is append-only: UPDATE is not allowed
+PASS  R01 a blocker rule needs cycles, deadline and owner party; no chain  -- 23514 governance_escalation_rule_shape new row for relation "governance_escalation_rule" violates check constraint "governance_escalation_rule_shape"
+PASS  R02 'multiple cycles': fewer than 2 red cycles is refused  -- 23514 governance_escalation_rule_red_cycles_check new row for relation "governance_escalation_rule" violates check constraint "governance_escalation_rule_red_cycles_check"
+PASS  R03 one rule per kind and transformation  -- 23505 governance_escalation_rule_kind_key duplicate key value violates unique constraint "governance_escalation_rule_kind_key"
+PASS  R04 the rule kind is immutable  -- 23514 governance_escalation_rule_kind_immutable governance_escalation_rule 01990000-0000-7000-8000-0000000000e6: the rule kind is immutable
+PASS  V01 REQ-PB-081: the T16 view shows all nine columns of a decided ask (ID, Decision, Why now, Options, Rec., Owner, Decision date, Impact if delayed, Outcome)  -- {"t16_id":"DEC-51","decision":"Synthetic executive ask","why_now":"Synthetic trigger","options":"A/B","recommendation":"Option A","owner_user_id":"01990000-0000-7000-8000-000000000004","decision_date":"2026-10-30","impact_of_delay":"Synthetic delay impact","outcome":"Option A chosen","status":"decided"}
+PASS  P01 mth_app cannot DELETE minutes (no DELETE grant)  -- 42501 permission denied for table meeting_minutes
+PASS  P02 mth_app cannot UPDATE an escalation (INSERT, SELECT only)  -- 42501 permission denied for table decision_escalation
+PASS  P03 mth_app cannot write the T16 view (SELECT only)  -- 42501 permission denied for view executive_decision_log
+PROBE RESULT: PASS (all guards fired as specified)

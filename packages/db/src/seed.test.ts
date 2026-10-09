@@ -1,6 +1,6 @@
 // Unit test (no database): the role/permission seed migrations equal packages/shared/src/permissions.ts
 // (data dictionary "role" seed rule, ADR-0006, ADR-0020): 0005 seeds the P1 part, 0018 the P2 part, 0024 the P3 part,
-// 0031 the P4 part of slices I and C (ADR-0026 §8), 0036 the P4 part of slice A (ADR-0027 §11), 0040 the P4 part of slice B (ADR-0029 §9), 0043 the P4 part of slice E (ADR-0031 §9). The integration
+// 0031 the P4 part of slices I and C (ADR-0026 §8), 0036 the P4 part of slice A (ADR-0027 §11), 0040 the P4 part of slice B (ADR-0029 §9), 0043 the P4 part of slice E (ADR-0031 §9), 0046 the P4 part of slice D (ADR-0032 §9). The integration
 // tests check the seeded ROWS too.
 import { readFileSync } from "node:fs";
 import {
@@ -11,6 +11,8 @@ import {
   P3_ROLE_PERMISSIONS,
   P4_BENEFIT_PERMISSIONS,
   P4_BENEFIT_ROLE_PERMISSIONS,
+  P4_GOVERNANCE_PERMISSIONS,
+  P4_GOVERNANCE_ROLE_PERMISSIONS,
   P4_KPI_PERMISSIONS,
   P4_KPI_ROLE_PERMISSIONS,
   P4_PERMISSIONS,
@@ -30,6 +32,7 @@ const sqlP4 = readFileSync(`${defaultMigrationsDir()}/0031_p4_approvals_permissi
 const sqlP4Kpi = readFileSync(`${defaultMigrationsDir()}/0036_p4_kpi_permissions_backfill.sql`, "utf8");
 const sqlP4Benefit = readFileSync(`${defaultMigrationsDir()}/0040_p4_benefit_permissions.sql`, "utf8");
 const sqlP4Raid = readFileSync(`${defaultMigrationsDir()}/0043_p4_raid_permissions.sql`, "utf8");
+const sqlP4Governance = readFileSync(`${defaultMigrationsDir()}/0046_p4_governance_permissions.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -37,6 +40,7 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P4_KPI_PERMISSIONS),
   ...Object.keys(P4_BENEFIT_PERMISSIONS),
   ...Object.keys(P4_RAID_PERMISSIONS),
+  ...Object.keys(P4_GOVERNANCE_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -114,6 +118,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P4_KPI_PERMISSIONS,
       ...P4_BENEFIT_PERMISSIONS,
       ...P4_RAID_PERMISSIONS,
+      ...P4_GOVERNANCE_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -297,6 +302,46 @@ describe("0043 seed equals the P4 part of permissions.ts (slice E)", () => {
     for (const [p, c] of Object.entries(P4_RAID_PERMISSIONS))
       expect([p, c]).toEqual([p, expect.stringMatching(/^(write|configure)$/)]);
     for (const code of Object.keys(P4_RAID_ROLE_PERMISSIONS)) {
+      expect(code).not.toBe("AUD");
+      expect(ROLES[code as keyof typeof ROLES].kind).not.toBe("technical_admin");
+    }
+  });
+});
+
+describe("0046 seed equals the P4 part of permissions.ts (slice D)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP4Governance).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P4_GOVERNANCE_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P4_GOVERNANCE_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP4Governance).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(Object.entries(o).map(([c, p]) => [c, [...p].sort()]));
+    expect(sorted(byRole)).toEqual(sorted(P4_GOVERNANCE_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P4_GOVERNANCE_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("the one business_approval code is held only by SP, BO and FIN; nothing for AUD or a technical admin", () => {
+    const approval = Object.entries(P4_GOVERNANCE_PERMISSIONS).filter(([, c]) => c === "business_approval");
+    expect(approval.map(([p]) => p)).toEqual(["executive_decision.decide"]);
+    const holders = Object.entries(P4_GOVERNANCE_ROLE_PERMISSIONS)
+      .filter(([, perms]) => (perms as readonly string[]).includes("executive_decision.decide"))
+      .map(([r]) => r)
+      .sort();
+    expect(holders).toEqual(["BO", "FIN", "SP"]);
+    for (const code of Object.keys(P4_GOVERNANCE_ROLE_PERMISSIONS)) {
       expect(code).not.toBe("AUD");
       expect(ROLES[code as keyof typeof ROLES].kind).not.toBe("technical_admin");
     }

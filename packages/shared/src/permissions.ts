@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -137,6 +137,21 @@ export const P4_RAID_PERMISSIONS = {
   "budget.edit": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 catalogue, slice D (forums, meetings, T16 executive decisions, escalation; ADR-0032 §9). Seeded by migration 0046.
+ * One code is a business approval: executive_decision.decide (recording a T16 Outcome), granted only to SP, BO and FIN,
+ * which already hold a business_approval or finance_validation code, so the DG1/DG2 rules keyed on "a role holding an
+ * approval permission" (F-DG1-106; ADR-0020 §3; ADR-0026 §8) are unchanged. Every other code is 'write' or 'configure'.
+ */
+export const P4_GOVERNANCE_PERMISSIONS = {
+  "forum.configure": "configure",
+  "meeting.prepare": "write",
+  "meeting.chair": "write",
+  "executive_decision.create": "write",
+  "executive_decision.decide": "business_approval",
+  "escalation_rule.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -145,6 +160,7 @@ export const PERMISSIONS = {
   ...P4_KPI_PERMISSIONS,
   ...P4_BENEFIT_PERMISSIONS,
   ...P4_RAID_PERMISSIONS,
+  ...P4_GOVERNANCE_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -341,6 +357,23 @@ export const P4_RAID_ROLE_PERMISSIONS = {
   TO: ["raid.edit", "corrective_rule.configure"],
 } as const satisfies Record<string, readonly (keyof typeof P4_RAID_PERMISSIONS)[]>;
 
+/**
+ * P4 role defaults, slice D (seeded by 0046; ADR-0032 §9, permissions matrix §14). Owner roles of REQ-PB-060 and
+ * REQ-S10-005 ("configure:TO"), REQ-S10-011 ("prepare:SEC"; "approve-minutes:chair"), REQ-PB-068 and REQ-PB-081
+ * ("create:TL,SEC"; "decide:Owner(executive)"). Chairing is a record-level right: holding meeting.chair is necessary,
+ * and the caller must also be the meeting's chair. Deciding needs executive_decision.decide AND being the decision's
+ * owner or that owner's active delegate. AUD, KDS, TD, CM and the technical admins get none.
+ */
+export const P4_GOVERNANCE_ROLE_PERMISSIONS = {
+  SP: ["meeting.chair", "executive_decision.decide"],
+  TL: ["meeting.prepare", "meeting.chair", "executive_decision.create", "escalation_rule.configure"],
+  BO: ["meeting.chair", "executive_decision.decide"],
+  WL: ["meeting.chair"],
+  FIN: ["meeting.chair", "executive_decision.decide"],
+  TO: ["forum.configure", "meeting.prepare", "meeting.chair", "executive_decision.create", "escalation_rule.configure"],
+  SEC: ["meeting.prepare", "executive_decision.create"],
+} as const satisfies Record<string, readonly (keyof typeof P4_GOVERNANCE_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -352,6 +385,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.SP,
       ...P4_ROLE_PERMISSIONS.SP,
       ...P4_KPI_ROLE_PERMISSIONS.SP,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -369,6 +403,7 @@ export const ROLES = {
       ...P4_KPI_ROLE_PERMISSIONS.TL,
       ...P4_BENEFIT_ROLE_PERMISSIONS.TL,
       ...P4_RAID_ROLE_PERMISSIONS.TL,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -383,6 +418,7 @@ export const ROLES = {
       ...P4_KPI_ROLE_PERMISSIONS.BO,
       ...P4_BENEFIT_ROLE_PERMISSIONS.BO,
       ...P4_RAID_ROLE_PERMISSIONS.BO,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -395,6 +431,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.WL,
       ...P4_BENEFIT_ROLE_PERMISSIONS.WL,
       ...P4_RAID_ROLE_PERMISSIONS.WL,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -408,6 +445,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.FIN,
       ...P4_BENEFIT_ROLE_PERMISSIONS.FIN,
       ...P4_RAID_ROLE_PERMISSIONS.FIN,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -424,6 +462,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.TO,
       ...P4_KPI_ROLE_PERMISSIONS.TO,
       ...P4_RAID_ROLE_PERMISSIONS.TO,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -444,7 +483,11 @@ export const ROLES = {
     permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.TD, ...P4_ROLE_PERMISSIONS.TD],
   },
   CM: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.CM] },
-  SEC: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.SEC] },
+  SEC: {
+    kind: "implementation",
+    inheritsDownward: false,
+    permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.SEC, ...P4_GOVERNANCE_ROLE_PERMISSIONS.SEC],
+  },
   AUD: {
     kind: "implementation",
     inheritsDownward: true,

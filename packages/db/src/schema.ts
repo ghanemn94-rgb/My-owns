@@ -959,6 +959,18 @@ export interface DecisionTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  // 0045 (slice D, T16; ADR-0032 §5): NULL on every pre-P4 row.
+  why_now: string | null;
+  impact_of_delay: string | null;
+  ask_origin: string | null;
+  created_source: string | null;
+  source_agenda_item_id: string | null;
+  decision_right_id: string | null;
+  sla_due_date: string | null;
+  sla_unknown_reason: string | null;
+  decided_on_behalf_of_user_id: string | null;
+  blocker_record_type: string | null;
+  blocker_record_id: string | null;
 }
 
 export interface DecisionOptionTable {
@@ -2994,6 +3006,312 @@ export interface BenefitValueLineView {
   record_id: ColumnType<string | null, never, never>;
 }
 
+// P4 slice D (T-DG4-ARCH-05; ADR-0032; migrations 0044, 0045): forums, meeting series, meetings, agenda items,
+// attendance, outputs, action links, minutes, escalation rules, decision escalations, blocker statuses; the T16 view.
+export interface ForumTemplateTable {
+  key: string;
+  ordinal: number;
+  source_layer_en: string;
+  source_cadence_en: string;
+  source_purpose_en: string;
+  source_participants_en: string;
+  source_outputs_en: string;
+  layer_ar: string;
+  cadence_ar: string;
+  purpose_ar: string;
+  participants_ar: string;
+  outputs_ar: string;
+  ar_provisional: Generated<boolean>;
+  chair_party_code: string | null;
+  participant_parties: string[];
+  output_kinds: string[];
+  publish_requires_any_output: Generated<string[]>;
+  executive_asks_only: boolean;
+  default_frequency: string;
+  default_interval: number;
+  source_ref: string;
+}
+
+export interface ForumTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  template_key: string | null;
+  ordinal: number;
+  name_en: string;
+  name_ar: string;
+  cadence_label: string;
+  purpose: string;
+  participants_label: string;
+  outputs_label: string;
+  chair_party_code: string | null;
+  secretary_user_id: string | null;
+  participant_parties: Generated<string[]>;
+  output_kinds: string[];
+  publish_requires_any_output: Generated<string[]>;
+  executive_asks_only: Generated<boolean>;
+  quorum_min: number | null;
+  cutoff_working_days: Generated<number>;
+  agenda_max_items: number | null;
+  late_items_rule: Generated<string>;
+  status: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ForumParticipantTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  forum_id: string;
+  user_id: string | null;
+  group_id: string | null;
+  counts_for_quorum: Generated<boolean>;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface MeetingSeriesTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  forum_id: string;
+  frequency: string;
+  interval_count: number;
+  weekdays: number[] | null;
+  month_day: number | null;
+  start_date: string;
+  end_date: string | null;
+  start_time: string;
+  duration_minutes: number;
+  timezone: Generated<string>;
+  non_working_day_rule: Generated<string>;
+  horizon_days: Generated<number>;
+  location: string | null;
+  rule_version: Generated<number>;
+  generated_through: string | null;
+  status: Generated<string>;
+  ended_at: NullableTimestamp;
+  ended_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface MeetingTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  forum_id: string;
+  series_id: string | null;
+  series_rule_version: number | null;
+  occurrence_date: string | null;
+  scheduled_date: string;
+  starts_at: Timestamp;
+  ends_at: Timestamp;
+  timezone: Generated<string>;
+  location: string | null;
+  chair_user_id: string | null;
+  secretary_user_id: string | null;
+  quorum_min: number | null;
+  cutoff_date: string | null;
+  cutoff_unknown_reason: string | null;
+  status: Generated<string>;
+  cancel_reason: string | null;
+  cancel_note: string | null;
+  cancelled_at: NullableTimestamp;
+  cancelled_by: string | null;
+  started_at: NullableTimestamp;
+  held_at: NullableTimestamp;
+  created_source: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface AgendaItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  ordinal: number;
+  item_kind: string;
+  title: string;
+  description: string | null;
+  presenter_user_id: string | null;
+  duration_minutes: number | null;
+  materials_evidence_ids: Generated<string[]>;
+  decision_id: string | null;
+  ask_decision_required: string | null;
+  ask_why_now: string | null;
+  ask_options: string[] | null;
+  ask_recommendation: string | null;
+  ask_impact_of_delay: string | null;
+  ask_owner_user_id: string | null;
+  ask_required_date: string | null;
+  late: Generated<boolean>;
+  status: Generated<string>;
+  published_at: NullableTimestamp;
+  published_by: string | null;
+  outcome: string | null;
+  outcome_quorum_present: number | null;
+  outcome_recorded_at: NullableTimestamp;
+  outcome_recorded_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface MeetingAttendanceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  user_id: string;
+  attendance: string;
+  counts_for_quorum: Generated<boolean>;
+  on_behalf_of_user_id: string | null;
+  note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface MeetingOutputTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  agenda_item_id: string | null;
+  output_kind: string;
+  record_type: string | null;
+  record_id: string | null;
+  note: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface MeetingActionLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  agenda_item_id: string | null;
+  action_item_id: string;
+  link_kind: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface MeetingMinutesTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  body: string;
+  status: Generated<string>;
+  approved_at: NullableTimestamp;
+  approved_by: string | null;
+  published_at: NullableTimestamp;
+  published_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface GovernanceEscalationRuleTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  rule_kind: string;
+  enabled: Generated<boolean>;
+  escalation_chain: string[] | null;
+  red_cycles: number | null;
+  deadline_working_days: number | null;
+  owner_party_code: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DecisionEscalationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  decision_id: string;
+  sla_due_date: string;
+  business_date: string;
+  level: number;
+  party_code: string | null;
+  target_user_id: string | null;
+  target_group_id: string | null;
+  routing_error: string | null;
+  delay_impact: string | null;
+  escalated_at: TimestampDefault;
+}
+
+export interface BlockerStatusTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  forum_id: string;
+  cycle_date: string;
+  source_record_type: string;
+  source_record_id: string;
+  rag: string;
+  note: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ExecutiveDecisionLogView {
+  id: ColumnType<string | null, never, never>;
+  organization_id: ColumnType<string | null, never, never>;
+  transformation_id: ColumnType<string | null, never, never>;
+  t16_id: ColumnType<string | null, never, never>;
+  decision: ColumnType<string | null, never, never>;
+  why_now: ColumnType<string | null, never, never>;
+  options: ColumnType<string | null, never, never>;
+  recommendation: ColumnType<string | null, never, never>;
+  owner_user_id: ColumnType<string | null, never, never>;
+  decision_date: ColumnType<string | null, never, never>;
+  impact_of_delay: ColumnType<string | null, never, never>;
+  outcome: ColumnType<string | null, never, never>;
+  status: ColumnType<string | null, never, never>;
+  ask_origin: ColumnType<string | null, never, never>;
+  sla_due_date: ColumnType<string | null, never, never>;
+  sla_unknown_reason: ColumnType<string | null, never, never>;
+  decided_at: ColumnType<Date | null, never, never>;
+  decided_by: ColumnType<string | null, never, never>;
+  blocker_record_type: ColumnType<string | null, never, never>;
+  blocker_record_id: ColumnType<string | null, never, never>;
+  version: ColumnType<number | null, never, never>;
+  created_at: ColumnType<Date | null, never, never>;
+  updated_at: ColumnType<Date | null, never, never>;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -3147,6 +3465,20 @@ export interface Database {
   corrective_signal: CorrectiveSignalTable;
   budget_line: BudgetLineTable;
   initiative_schedule: InitiativeScheduleTable;
+  forum_template: ForumTemplateTable;
+  forum: ForumTable;
+  forum_participant: ForumParticipantTable;
+  meeting_series: MeetingSeriesTable;
+  meeting: MeetingTable;
+  agenda_item: AgendaItemTable;
+  meeting_attendance: MeetingAttendanceTable;
+  meeting_output: MeetingOutputTable;
+  meeting_action_link: MeetingActionLinkTable;
+  meeting_minutes: MeetingMinutesTable;
+  governance_escalation_rule: GovernanceEscalationRuleTable;
+  decision_escalation: DecisionEscalationTable;
+  blocker_status: BlockerStatusTable;
+  executive_decision_log: ExecutiveDecisionLogView;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
@@ -3156,6 +3488,7 @@ export const VIEW_NAMES = [
   "benefit_counting",
   "benefit_value_line",
   "business_unit_closure",
+  "executive_decision_log",
   "raid_register",
   "scope_node",
 ] as const;
@@ -3267,6 +3600,20 @@ export type CorrectiveCaseRow = Selectable<CorrectiveCaseTable>;
 export type CorrectiveSignalRow = Selectable<CorrectiveSignalTable>;
 export type BudgetLineRow = Selectable<BudgetLineTable>;
 export type InitiativeScheduleRow = Selectable<InitiativeScheduleTable>;
+export type ForumTemplateRow = Selectable<ForumTemplateTable>;
+export type ForumRow = Selectable<ForumTable>;
+export type ForumParticipantRow = Selectable<ForumParticipantTable>;
+export type MeetingSeriesRow = Selectable<MeetingSeriesTable>;
+export type MeetingRow = Selectable<MeetingTable>;
+export type AgendaItemRow = Selectable<AgendaItemTable>;
+export type MeetingAttendanceRow = Selectable<MeetingAttendanceTable>;
+export type MeetingOutputRow = Selectable<MeetingOutputTable>;
+export type MeetingActionLinkRow = Selectable<MeetingActionLinkTable>;
+export type MeetingMinutesRow = Selectable<MeetingMinutesTable>;
+export type GovernanceEscalationRuleRow = Selectable<GovernanceEscalationRuleTable>;
+export type DecisionEscalationRow = Selectable<DecisionEscalationTable>;
+export type BlockerStatusRow = Selectable<BlockerStatusTable>;
+export type ExecutiveDecisionLogRow = Selectable<ExecutiveDecisionLogView>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -4141,6 +4488,17 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "why_now",
+    "impact_of_delay",
+    "ask_origin",
+    "created_source",
+    "source_agenda_item_id",
+    "decision_right_id",
+    "sla_due_date",
+    "sla_unknown_reason",
+    "decided_on_behalf_of_user_id",
+    "blocker_record_type",
+    "blocker_record_id",
   ],
   decision_option: [
     "id",
@@ -6086,6 +6444,296 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+  ],
+  forum_template: [
+    "key",
+    "ordinal",
+    "source_layer_en",
+    "source_cadence_en",
+    "source_purpose_en",
+    "source_participants_en",
+    "source_outputs_en",
+    "layer_ar",
+    "cadence_ar",
+    "purpose_ar",
+    "participants_ar",
+    "outputs_ar",
+    "ar_provisional",
+    "chair_party_code",
+    "participant_parties",
+    "output_kinds",
+    "publish_requires_any_output",
+    "executive_asks_only",
+    "default_frequency",
+    "default_interval",
+    "source_ref",
+  ],
+  forum: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "template_key",
+    "ordinal",
+    "name_en",
+    "name_ar",
+    "cadence_label",
+    "purpose",
+    "participants_label",
+    "outputs_label",
+    "chair_party_code",
+    "secretary_user_id",
+    "participant_parties",
+    "output_kinds",
+    "publish_requires_any_output",
+    "executive_asks_only",
+    "quorum_min",
+    "cutoff_working_days",
+    "agenda_max_items",
+    "late_items_rule",
+    "status",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  forum_participant: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "forum_id",
+    "user_id",
+    "group_id",
+    "counts_for_quorum",
+    "status",
+    "removed_at",
+    "removed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  meeting_series: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "forum_id",
+    "frequency",
+    "interval_count",
+    "weekdays",
+    "month_day",
+    "start_date",
+    "end_date",
+    "start_time",
+    "duration_minutes",
+    "timezone",
+    "non_working_day_rule",
+    "horizon_days",
+    "location",
+    "rule_version",
+    "generated_through",
+    "status",
+    "ended_at",
+    "ended_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  meeting: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "forum_id",
+    "series_id",
+    "series_rule_version",
+    "occurrence_date",
+    "scheduled_date",
+    "starts_at",
+    "ends_at",
+    "timezone",
+    "location",
+    "chair_user_id",
+    "secretary_user_id",
+    "quorum_min",
+    "cutoff_date",
+    "cutoff_unknown_reason",
+    "status",
+    "cancel_reason",
+    "cancel_note",
+    "cancelled_at",
+    "cancelled_by",
+    "started_at",
+    "held_at",
+    "created_source",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  agenda_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "ordinal",
+    "item_kind",
+    "title",
+    "description",
+    "presenter_user_id",
+    "duration_minutes",
+    "materials_evidence_ids",
+    "decision_id",
+    "ask_decision_required",
+    "ask_why_now",
+    "ask_options",
+    "ask_recommendation",
+    "ask_impact_of_delay",
+    "ask_owner_user_id",
+    "ask_required_date",
+    "late",
+    "status",
+    "published_at",
+    "published_by",
+    "outcome",
+    "outcome_quorum_present",
+    "outcome_recorded_at",
+    "outcome_recorded_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  meeting_attendance: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "user_id",
+    "attendance",
+    "counts_for_quorum",
+    "on_behalf_of_user_id",
+    "note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  meeting_output: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "agenda_item_id",
+    "output_kind",
+    "record_type",
+    "record_id",
+    "note",
+    "created_at",
+    "created_by",
+  ],
+  meeting_action_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "agenda_item_id",
+    "action_item_id",
+    "link_kind",
+    "created_at",
+    "created_by",
+  ],
+  meeting_minutes: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "body",
+    "status",
+    "approved_at",
+    "approved_by",
+    "published_at",
+    "published_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  governance_escalation_rule: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "rule_kind",
+    "enabled",
+    "escalation_chain",
+    "red_cycles",
+    "deadline_working_days",
+    "owner_party_code",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  decision_escalation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "decision_id",
+    "sla_due_date",
+    "business_date",
+    "level",
+    "party_code",
+    "target_user_id",
+    "target_group_id",
+    "routing_error",
+    "delay_impact",
+    "escalated_at",
+  ],
+  blocker_status: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "forum_id",
+    "cycle_date",
+    "source_record_type",
+    "source_record_id",
+    "rag",
+    "note",
+    "created_at",
+    "created_by",
+  ],
+  executive_decision_log: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "t16_id",
+    "decision",
+    "why_now",
+    "options",
+    "recommendation",
+    "owner_user_id",
+    "decision_date",
+    "impact_of_delay",
+    "outcome",
+    "status",
+    "ask_origin",
+    "sla_due_date",
+    "sla_unknown_reason",
+    "decided_at",
+    "decided_by",
+    "blocker_record_type",
+    "blocker_record_id",
+    "version",
+    "created_at",
+    "updated_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

@@ -52,6 +52,14 @@ export const ADVISORY_LOCK_CLASSES = {
   // allocated to another block, and listed here only once a resource uses it.
   /** Corrective-action case of one source (raid corrective cases: the event consumers and the API; one open case is also held by the unique index corrective_case_one_open_key). Key: "<transformationId>:<sourceKind>:<sourceScopeKey>". */
   correctiveCase: 730236,
+  // P4 block of T-DG4-ARCH-05 (730238-730241; p4-plan §4, ADR-0032 §10). 730241 is RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it.
+  /** Generation and regeneration of one meeting series (governance: the generation job and updateMeetingSeries; no duplicate occurrence is also held by the unique index meeting_series_occurrence_key). Key: "<meetingSeriesId>". */
+  meetingSeriesGeneration: 730238,
+  /** The executive ask of one blocker (governance: the blocker-escalation consumer and scan; one open ask per blocker is also held by the unique index decision_one_open_blocker_ask). Key: "<transformationId>:<blockerRecordType>:<blockerRecordId>". */
+  executiveAskBlocker: 730239,
+  /** The SLA escalation of one executive decision (governance: the decision-SLA scan; one escalation per due date is also held by the unique constraint decision_escalation_once). Key: "<decisionId>". */
+  decisionEscalation: 730240,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

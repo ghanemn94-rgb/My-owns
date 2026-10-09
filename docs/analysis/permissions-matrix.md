@@ -497,3 +497,56 @@ Legend as in 8.3. **close** = close with a note (final). Every cell is checked s
 - **Worker:** the corrective-case consumers act as the service actor, hold no permission and never decide anything; they create or update cases, signals and work items only (ADR-0031 §5.4).
 - **SoD:** no slice E operation is an approval, so no separation-of-duties rule applies.
 - **Changes against sections 1–6, flagged as assumptions:** REQ-PB-079 "create/edit:WL,TL,TO" (`raid.edit`); REQ-PB-085 "create:BO,TL,FIN" (`corrective_action.manage`, which also covers update and close); REQ-S09-007 "budget:FIN,TL" (`budget.edit`); the corrective-action rule (no source role) is given to TL and TO, the transformation configurers; durations reuse `roadmap.edit` (REQ-S09-009 owner TL).
+
+## 14. P4 implementation, slice D (DG4): forums, meetings, T16 executive decisions and escalation permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-05 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for governance forums and their participants, meeting series, meetings and the committee workflow (agenda items, attendance and quorum, outputs, minutes, meeting actions), the T16 Executive Decision Log on the canonical decision record, decision-SLA escalations, blocker RAG by cycle and the escalation rules (ADR-0032). The seed is migration `0046_p4_governance_permissions.sql`, equal to `P4_GOVERNANCE_PERMISSIONS` / `P4_GOVERNANCE_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. Recording a T16 Outcome is a business decision made by a person in the product; it is not a G1–G6 gate decision. No engineering agent, seed or job records an Outcome or grants a real business, Finance or IT approval.
+
+### 14.1 P4 permission catalogue (slice D)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `forum.configure` | configure | Configure forums (participants, quorum, cut-off, agenda rules, outputs), add or archive forums, and create, change and end meeting series | TO |
+| `meeting.prepare` | write | Prepare and run meetings: ad-hoc meetings, start/close/cancel, agenda items and briefs, attendance, outputs, blocker status, draft minutes, meeting actions; agenda outcomes `deferred` and `noted` | TL, TO, SEC |
+| `meeting.chair` | write | As the meeting's chair only: publish agenda items and the agenda, approve and publish minutes, return approved minutes to draft | SP, TL, BO, WL, FIN, TO |
+| `executive_decision.create` | write | Raise and complete executive asks in the T16 log | TL, TO, SEC |
+| `executive_decision.decide` | **business_approval** | Record the Outcome of an executive decision the caller owns, or as the owner's active delegate (also the `decided` agenda outcome) | SP, BO, FIN |
+| `escalation_rule.configure` | configure | Store and change the decision-SLA and blocker-red escalation rules | TL, TO |
+
+`executive_decision.decide` is the only approval-category code; it is granted only to SP, BO and FIN, which already hold a `business_approval` or `finance_validation` code, so the creator-derived assignment (F-DG1-106) and the team view (ADR-0020 §3) are unchanged (ADR-0026 §8). AUD and the technical-admin roles (ADM_TECH, ADM_ACCESS, ADM_METHOD) hold none of the six codes; the `0001` trigger refuses `executive_decision.decide` for a technical-admin role.
+
+### 14.2 Per-entity rights in P4 (slice D)
+
+Legend as in 8.3. **chair** = only as the meeting's chair; **owner** = only as the decision's owner or the owner's active delegate. Every cell is checked server-side by the one policy function and re-authorised at commit.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Forums and participants (`forum`, `forum_participant`; template read-only) | V | V | V | V | V | C E archive | V | V | V | V | V | — |
+| Meeting series (`meeting_series`) | V | V | V | V | V | C E end | V | V | V | V | V | — |
+| Meetings (`meeting`): create ad hoc, update, start, close, cancel | V | C E | V | V | V | C E | V | V | V | C E | V | — |
+| Meetings: publish the agenda | V, chair | chair | V, chair | V, chair | V, chair | chair | V | V | V | V | V | — |
+| Agenda items (`agenda_item`): create, edit, withdraw | V | C E | V | V | V | C E | V | V | V | C E | V | — |
+| Agenda items: publish | V, chair | chair | V, chair | V, chair | V, chair | chair | V | V | V | V | V | — |
+| Agenda outcome `decided` (records the T16 Outcome) | owner | V | owner | V | owner | V | V | V | V | V | V | — |
+| Agenda outcome `deferred` / `noted` | V | E | V | V | V | E | V | V | V | E | V | — |
+| Attendance (`meeting_attendance`) | V | C E | V | V | V | C E | V | V | V | C E | V | — |
+| Meeting outputs (`meeting_output`; append-only) | V | C | V | V | V | C | V | V | V | C | V | — |
+| Meeting actions (`meeting_action_link` + `action_item`) | V | C | V | V | V | C | V | V | V | C | V | — |
+| Minutes (`meeting_minutes`): draft, edit | V | C E | V | V | V | C E | V | V | V | C E | V | — |
+| Minutes: approve, publish, return to draft | V, chair | chair | V, chair | V, chair | V, chair | chair | V | V | V | V | V | — |
+| Blocker RAG by cycle (`blocker_status`; append-only) | V | C | V | V | V | C | V | V | V | C | V | — |
+| T16 executive decisions (`decision` kind executive; `executive_decision_log`): create, update | V | C E | V | V | V | C E | V | V | V | C E | V | — |
+| T16: record the Outcome (decided, deferred, cancelled) | owner | V | owner | V | owner | V | V | V | V | V | V | — |
+| Decision escalations (`decision_escalation`; worker only) | V | V | V | V | V | V | V | V | V | V | V | — |
+| Escalation rules (`governance_escalation_rule`) | V | C E | V | V | V | C E | V | V | V | V | V | — |
+
+**Rules (binding for the slice D implementers):**
+
+- **AUD (read-only auditor):** every mutating slice D operation returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. BE-F, BE-F2 and BE-G test this on each of their operations (p4-work-split S-4).
+- **Technical admins:** ADM-only users hold no `transformation.read`, so every slice D operation answers 404 for them (ADR-0006 non-disclosure), never a success; REQ-S10-003's 403 on approval endpoints is met by `executive_decision.decide` never being held by a technical-admin role (an ADM user who also has a business scope gets 403 on the Outcome endpoints).
+- **Chair and owner:** holding `meeting.chair` is necessary but not sufficient; the caller must be the meeting's `chair_user_id` (403 `meeting.not_chair`). Holding `executive_decision.decide` is necessary but not sufficient; the caller must be the decision's owner or the owner's active delegate (403 `executive_decision.not_owner`), and an ask's owner must hold `executive_decision.decide` (422 `executive_decision.owner_not_executive`).
+- **Worker:** the series generation, decision-SLA scan and blocker escalation act as the service actor (the blocker ask's `created_by` is the person whose red observation triggered it, audited `system` on their behalf; ADR-0032 §8.3); they hold no permission and never record an Outcome.
+- **SoD:** an Outcome is recorded by the owner; minutes are approved by the chair. No separation-of-duties rule beyond these record-level rules applies (ADR-0032 §9).
+- **Changes against sections 1–6, flagged as assumptions:** REQ-PB-060 "configure:TO,ADM" → TO only (technical admins hold no transformation records); REQ-S10-011 "prepare:SEC; attend:CM; approve-minutes:chair" → `meeting.prepare` SEC plus TL and TO, CM attends (read and attendance recorded by the secretary), chair by record-level rule; REQ-PB-068 / REQ-PB-081 "create:TL,SEC" → `executive_decision.create` TL, SEC plus TO; "decide:Owner(executive)" → `executive_decision.decide` SP, BO, FIN with the owner rule; escalation rules (no source role) → TL and TO, the transformation configurers.
