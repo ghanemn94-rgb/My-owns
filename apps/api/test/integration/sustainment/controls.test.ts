@@ -13,9 +13,13 @@
 //  - reviews: only the assignee completes (403 sustainment_review.not_assignee for a FIN who holds the permission),
 //    with outcome note and performance signal (`unknown` is valid); a completed review is final (422
 //    sustainment_review.final); its work item is closed; AUD 403, ADM 404, If-Match 428/409;
-//  - parity (D-102 (2)): the worker's scheduleAreaReviewInTx writes the same rows as the API's scheduleAreaReview.
+//  - parity (D-102 (2)): the worker's scheduleAreaReviewInTx writes the same rows as the API's scheduleAreaReview;
+//  - S-4 commit-time authorization on createControl, updateControl and completeSustainmentReview too (a caller revoked
+//    after the identity hook gets 403 and nothing is written), and S-1 free text (a blank name or note is 400
+//    validation.blank at its pointer, U+0000 is 400 validation.invalid_character).
 // All data is SYNTHETIC; nothing here is a business approval, and nothing touches DG0-DG7.
-import { sql } from "@mth/db";
+import { insertAuditEvent, sql } from "@mth/db";
+import { randomUUID } from "node:crypto";
 import { checkFailedPayload } from "@mth/shared/schemas";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runControlCheckScan, scheduleAreaReviewInTx } from "../../../../worker/src/handlers/sustainment.ts";
@@ -451,5 +455,132 @@ describe("sustainment reviews: the assignee completes (ADR-0034 §6, §9)", () =
       };
     };
     expect(await shape(viaWorker.reviewId, a2.id)).toEqual(await shape(viaApi.reviewId, a1.id));
+  });
+});
+
+describe("S-4 commit-time authorization and S-1 free text on the other mutations of this file", () => {
+  const revokedMidRequest = async (userId: string, sendIt: () => ReturnType<typeof call>) =>
+    afterIdentity(api, userId, sendIt, () => revokeAll(api, w.grantor.id, userId));
+
+  it("createControl and updateControl: a manager revoked mid-request gets 403 and nothing is written", async () => {
+    const area = await createArea(send, s);
+    const to2 = await extraUser(api, w, s.b, "TO");
+    const created = await revokedMidRequest(to2.id, () =>
+      call(api.app, "POST", controls(), {
+        session: to2.session,
+        body: { performanceAreaId: area.id, name: "Synthetic revoked", frequency: "monthly" },
+        contract: false,
+      }),
+    );
+    expect(created.status).toBe(403);
+    expect(
+      await api.db.selectFrom("control").select("id").where("performance_area_id", "=", area.id).execute(),
+    ).toEqual([]);
+    const c = await newControl(area.id);
+    const to3 = await extraUser(api, w, s.b, "TO");
+    const edited = await revokedMidRequest(to3.id, () =>
+      call(api.app, "PATCH", `${controls()}/${c.id}`, {
+        session: to3.session,
+        headers: ifm(1),
+        body: { name: "Synthetic revoked edit" },
+        contract: false,
+      }),
+    );
+    expect(edited.status).toBe(403);
+    const row = await api.db
+      .selectFrom("control")
+      .select(["name", "version"])
+      .where("id", "=", c.id)
+      .executeTakeFirstOrThrow();
+    expect([row.name, row.version]).toEqual(["Synthetic SIM-swap review", 1]);
+    expect((await auditOf(api.db, c.id)).map((e) => e.action)).toEqual(["control.create"]);
+  });
+
+  it("completeSustainmentReview: the assignee revoked mid-request gets 403 (not not_assignee); the review stays due", async () => {
+    const { area } = await areaInBau(api, s);
+    const bo2 = await extraUser(api, w, s.b, "BO");
+    // A review assigned to bo2, written as the worker's scan writes one (service actor, with its audit event).
+    const reviewId = randomUUID();
+    await api.db.transaction().execute(async (tx) => {
+      const a = await tx
+        .selectFrom("performance_area")
+        .select(["organization_id", "cycle_no"])
+        .where("id", "=", area.id)
+        .executeTakeFirstOrThrow();
+      await tx
+        .insertInto("sustainment_review")
+        .values({
+          id: reviewId,
+          organization_id: a.organization_id,
+          transformation_id: s.b.transformationId,
+          subject_kind: "performance_area",
+          performance_area_id: area.id,
+          cycle_no: a.cycle_no,
+          due_date: "2032-01-15",
+          assignee_user_id: bo2.id,
+          created_source: "worker",
+          created_by: null,
+          updated_by: null,
+        })
+        .execute();
+      await insertAuditEvent(tx, jobActor("fixture-review"), {
+        action: "sustainment_review.create",
+        recordType: "sustainment_review",
+        recordId: reviewId,
+        organizationId: a.organization_id,
+        transformationId: s.b.transformationId,
+        newVersion: 1,
+      });
+    });
+    const res = await revokedMidRequest(bo2.id, () =>
+      call(api.app, "POST", `${reviews()}/${reviewId}/complete`, {
+        session: bo2.session,
+        headers: ifm(1),
+        body: { outcomeNote: "Synthetic: stable", performanceSignal: "on_track" },
+        contract: false,
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect((res.body as { code?: string }).code).not.toBe("sustainment_review.not_assignee");
+    const row = await api.db
+      .selectFrom("sustainment_review")
+      .select(["status", "version"])
+      .where("id", "=", reviewId)
+      .executeTakeFirstOrThrow();
+    expect([row.status, row.version]).toEqual(["due", 1]);
+  });
+
+  it("free text: a blank name or outcome note is 400 validation.blank at its pointer; U+0000 is invalid_character", async () => {
+    const area = await createArea(send, s);
+    const blank = await send("POST", controls(), {
+      session: s.to.session,
+      body: { performanceAreaId: area.id, name: "\u200b\u200b", frequency: "monthly" },
+    });
+    expect([
+      blank.status,
+      blank.body.errors.map((e: { pointer: string; code: string }) => [e.pointer, e.code]),
+    ]).toEqual([400, [["/name", "validation.blank"]]]);
+    const nul = await send("POST", controls(), {
+      session: s.to.session,
+      body: { performanceAreaId: area.id, name: "Synthetic\u0000name", frequency: "monthly" },
+      contract: false,
+    });
+    expect(nul.status).toBe(400);
+    expect(nul.body.errors.map((e: { code: string }) => e.code)).toContain("validation.invalid_character");
+    const { area: bau } = await areaInBau(api, s);
+    const list = await send("GET", `${reviews()}?performanceAreaId=${bau.id}&status=due`, { session: s.b.s.bo });
+    const R = `${reviews()}/${list.body.items[0].id}/complete`;
+    const note = await send("POST", R, {
+      session: s.b.s.bo,
+      headers: ifm(1),
+      body: { outcomeNote: "\u00a0\u200f\u00a0", performanceSignal: "unknown" },
+    });
+    expect([note.status, note.body.errors.map((e: { pointer: string; code: string }) => [e.pointer, e.code])]).toEqual([
+      400,
+      [["/outcomeNote", "validation.blank"]],
+    ]);
+    expect(
+      await api.db.selectFrom("control").select("id").where("performance_area_id", "=", area.id).execute(),
+    ).toEqual([]);
   });
 });

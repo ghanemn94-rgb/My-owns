@@ -8,7 +8,9 @@
 //    'simple'), tag and cursor paging work;
 //  - create (BO, TO; LL-nn, draft, distinct tags), edit, publish (bodiless, If-Match), archive (final): 422
 //    lesson.status_transition and lesson.archived with their exact texts; AUD/WL 403, ADM 404; If-Match 428/409;
-//    one audit event per mutation; lessons stay editable after the transformation is closed.
+//    one audit event per mutation; lessons stay editable after the transformation is closed;
+//  - S-4 commit-time authorization on create, update and publish (an editor revoked after the identity hook: 403,
+//    nothing written) and S-1 free text (a blank lesson text or tag: 400 validation.blank at its pointer).
 // All data is SYNTHETIC; nothing here approves anything, and nothing touches DG0-DG7.
 import { randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -26,6 +28,8 @@ import {
   type World,
 } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { extraUser } from "../benefits/fixtures.ts";
+import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
 import {
   closeTransformationSynthetic,
   seedSustainmentWorld,
@@ -196,5 +200,69 @@ describe("lesson lifecycle (ADR-0034 §8, §12)", () => {
     const p = await send("POST", `${x.b.base}/lessons/${r.body.id}/publish`, { session: x.b.s.bo, headers: ifm(1) });
     expect([p.status, p.body.status]).toEqual([200, "published"]);
     expect(ids(await search(s.b.s.tl, `q=${kw}`))).toEqual([r.body.id]);
+  });
+});
+
+describe("S-4 commit-time authorization and S-1 free text", () => {
+  const revokedMidRequest = async (userId: string, sendIt: () => ReturnType<typeof call>) =>
+    afterIdentity(api, userId, sendIt, () => revokeAll(api, w.grantor.id, userId));
+
+  it("create, update and publish: an editor revoked mid-request gets 403 and nothing is written", async () => {
+    const kw = token();
+    const to2 = await extraUser(api, w, s.b, "TO");
+    const created = await revokedMidRequest(to2.id, () =>
+      call(api.app, "POST", lessons(), {
+        session: to2.session,
+        body: { title: `Synthetic ${kw}`, lessonText: "Synthetic: revoked create" },
+        contract: false,
+      }),
+    );
+    expect(created.status).toBe(403);
+    expect(await api.db.selectFrom("lesson").select("id").where("title", "=", `Synthetic ${kw}`).execute()).toEqual([]);
+    const l = await newLesson();
+    const L = `${lessons()}/${l.id}`;
+    const to3 = await extraUser(api, w, s.b, "TO");
+    const edited = await revokedMidRequest(to3.id, () =>
+      call(api.app, "PATCH", L, {
+        session: to3.session,
+        headers: ifm(1),
+        body: { title: "Synthetic revoked edit" },
+        contract: false,
+      }),
+    );
+    expect(edited.status).toBe(403);
+    const to4 = await extraUser(api, w, s.b, "TO");
+    const pub = await revokedMidRequest(to4.id, () =>
+      call(api.app, "POST", `${L}/publish`, { session: to4.session, headers: ifm(1), contract: false }),
+    );
+    expect(pub.status).toBe(403);
+    const row = await api.db
+      .selectFrom("lesson")
+      .select(["title", "status", "version"])
+      .where("id", "=", l.id)
+      .executeTakeFirstOrThrow();
+    expect([row.title, row.status, row.version]).toEqual(["Synthetic lesson", "draft", 1]);
+    expect((await auditOf(api.db, l.id)).map((e) => e.action)).toEqual(["lesson.create"]);
+  });
+
+  it("a blank lesson text or tag is 400 validation.blank at its pointer; nothing written", async () => {
+    const kw = token();
+    const text = await send("POST", lessons(), {
+      session: s.to.session,
+      body: { title: `Synthetic ${kw}`, lessonText: "\u200b\u200b\u200b" },
+    });
+    expect([text.status, text.body.errors.map((e: { pointer: string; code: string }) => [e.pointer, e.code])]).toEqual([
+      400,
+      [["/lessonText", "validation.blank"]],
+    ]);
+    const tag = await send("POST", lessons(), {
+      session: s.to.session,
+      body: { title: `Synthetic ${kw}`, lessonText: "Synthetic text", tags: ["churn", "\u200f"] },
+    });
+    expect([tag.status, tag.body.errors.map((e: { pointer: string; code: string }) => [e.pointer, e.code])]).toEqual([
+      400,
+      [["/tags/1", "validation.blank"]],
+    ]);
+    expect(await api.db.selectFrom("lesson").select("id").where("title", "=", `Synthetic ${kw}`).execute()).toEqual([]);
   });
 });
