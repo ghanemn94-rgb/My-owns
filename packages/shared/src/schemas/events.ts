@@ -57,6 +57,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "benefit.variance_evaluated": { 1: benefitVarianceEvaluatedV1 },
   // T-DG4-BE-H (ADR-0033 §4 step 6; ADR-0031 §5.4): one per below-trajectory intervention; consumer raid.corrective_adoption.
   "adoption.check_failed": { 1: checkFailedPayload },
+  // T-DG4-BE-I2 (ADR-0034 §6; ADR-0031 §5.4): one per failed control check; consumer raid.corrective_control.
+  "control_check.failed": { 1: checkFailedPayload },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

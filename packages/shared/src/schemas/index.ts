@@ -72,6 +72,9 @@ export * from "./adoption-register.ts";
 // P4 slice G mirrors of BE-I (backend-workflow-engineer, T-DG4-BE-I; p4-work-split §F+G FG.4): performance areas, their
 // links and cycles, BAU handovers and receiving-owner acceptance.
 export * from "./sustainment-areas.ts";
+// P4 slice G mirrors of BE-I2 (backend-workflow-engineer, T-DG4-BE-I2; p4-work-split §F+G FG.5): controls and control
+// checks, recurring sustainment reviews, the continuous-improvement backlog and lessons.
+export * from "./sustainment-operations.ts";
 // P4 slice D mirrors of BE-F (backend-workflow-engineer, T-DG4-BE-F; p4-work-split §D.1): forums and participants,
 // meeting series with their recurrence, and meetings.
 export * from "./governance-meetings.ts";
