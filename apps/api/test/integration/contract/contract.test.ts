@@ -668,7 +668,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // createDelegation, revokeDelegation, requestApproval, decideApproval, resubmitApproval, withdrawApproval (12 JSON).
     // T-DG4-KBE-D: + createBenefit, updateBenefit, archiveBenefit, advanceBenefitLifecycle, createBenefitEnabler,
     // removeBenefitEnabler, replaceBenefitAllocations, createBenefitGroup, updateBenefitGroup (9 JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([176, 175, 1]);
+    // T-DG4-KBE-B: + createKpiVersion, updateKpiVersion, withdrawKpiVersion, createKpiRagThreshold,
+    // createTargetTrajectory, approveTargetTrajectory, withdrawTargetTrajectory, resolveDataQualityFinding (JSON bodies;
+    // activateKpiVersion is bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([184, 183, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

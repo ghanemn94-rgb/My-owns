@@ -78,6 +78,27 @@ const KPI_P3_BENEFIT_FORMULA_OPERATIONS = [
   "createBenefitCalculation",
   "validateBenefitFormulaVersion",
 ];
+/** The 18 P4 slice A operations of T-DG4-KBE-B (ADR-0027 §1-§5, §9; requestKpiVersionApproval is still pending). */
+const KPI_P4_KBE_B_OPERATIONS = [
+  "listKpiDictionary",
+  "getKpiDictionaryEntry",
+  "listKpiVersions",
+  "createKpiVersion",
+  "getKpiVersion",
+  "updateKpiVersion",
+  "activateKpiVersion",
+  "withdrawKpiVersion",
+  "listKpiRagThresholds",
+  "createKpiRagThreshold",
+  "listTargetTrajectories",
+  "createTargetTrajectory",
+  "getTargetTrajectory",
+  "approveTargetTrajectory",
+  "withdrawTargetTrajectory",
+  "listDataQualityFindings",
+  "getDataQualityFinding",
+  "resolveDataQualityFinding",
+];
 /**
  * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
  * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
@@ -159,17 +180,22 @@ describe("kpi module (P2)", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case and the 13 T09 operations, and reports them", async () => {
+  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09 and the 18 P4 KBE-B operations, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
     expect(ids.filter((id) => id === undefined)).toEqual([]);
     expect([...ids].sort()).toEqual(
-      [...KPI_OPERATIONS, ...KPI_P3_BUSINESS_CASE_OPERATIONS, ...KPI_P3_BENEFIT_FORMULA_OPERATIONS].sort(),
+      [
+        ...KPI_OPERATIONS,
+        ...KPI_P3_BUSINESS_CASE_OPERATIONS,
+        ...KPI_P3_BENEFIT_FORMULA_OPERATIONS,
+        ...KPI_P4_KBE_B_OPERATIONS,
+      ].sort(),
     );
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
-    expect(registration.routes).toHaveLength(48);
+    expect(registration.routes).toHaveLength(48 + KPI_P4_KBE_B_OPERATIONS.length);
     expect(Object.isFrozen(registration)).toBe(true);
   });
 
@@ -202,6 +228,12 @@ describe("kpi module (P2)", () => {
         "kpi_target.approve",
         "business_case.edit",
         "benefit_formula.edit",
+        // P4 slice A (T-DG4-KBE-B).
+        "kpi_version.edit",
+        "kpi_version.activate",
+        "kpi_threshold.configure",
+        "target_trajectory.edit",
+        "data_quality.manage",
       ]),
     );
   });
