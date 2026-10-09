@@ -51,3 +51,6 @@ export * from "./benefit-scenarios.ts";
 // P4 slice C mirrors (backend-workflow-engineer, T-DG4-BE-C; p4-work-split §I+C.3): T11 decision rights, T12 RACI,
 // governance matrices and Transform readiness. Line added by BE-C (see its handback).
 export * from "./governance.ts";
+// P4 slice A mirrors of KBE-C (kpi-benefits-engineer, T-DG4-KBE-C; p4-work-split §A.3): reporting periods, actuals,
+// calculation runs and evaluations, the KPI status panel, RAG overrides and the pipeline outbox payloads.
+export * from "./kpi-actuals.ts";
