@@ -10,6 +10,7 @@ import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 // My Work and the Executive Overview.
 import { registerDashboardRoutes } from "./dashboards/index.ts";
 import { registerExecutiveOverviewRoutes } from "./executive-overview.ts";
+import { registerImpactRoutes } from "./impact.ts"; // BE-M (ADR-0038 §6)
 import { registerModularRoutes } from "./modular.ts";
 import { registerMyWorkRoutes } from "./my-work.ts";
 import { registerOrphanRoutes } from "./orphans.ts";
@@ -31,6 +32,7 @@ export function registerReportingModule(app: FastifyInstance, deps: ModuleDeps):
   const routes = [
     ...registerTraceabilityRoutes(app, deps),
     ...registerOrphanRoutes(app, deps),
+    ...registerImpactRoutes(app, deps),
     ...registerModularRoutes(app, deps),
     ...registerDashboardRoutes(app, deps),
     ...registerMyWorkRoutes(app, deps),

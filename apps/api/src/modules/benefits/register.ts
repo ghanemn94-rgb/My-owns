@@ -43,6 +43,7 @@ import {
   type BenefitRealizationState,
   type BenefitRealized,
   type BenefitRegisterRow,
+  type InitiativeRef,
   type BenefitType,
   type BenefitUpdate,
   type BenefitValueClass,
@@ -451,10 +452,51 @@ export async function presentBenefit(db: DbOrTx, row: BenefitRow): Promise<Benef
   return (await presentBenefits(db, [row]))[0]!;
 }
 
+// ------------------------------------------------------------------------------------------------ BE-M: initiatives[]
+// One source of truth (ADR-0038 §8; T-DG4-BE-M; REQ-PB-010): the optional `BenefitRegisterRow.initiatives[]` member
+// lists the initiatives of each benefit's CURRENT allocation set (benefit_allocation rows of set_no =
+// benefit.allocation_set_no), with the initiative's code and name read by join from `initiative` (never a stored copy),
+// so one rename of an initiative shows here at once. Ordered by code.
+
+/** The initiatives of each benefit's current allocation set, by benefit id (names read by join). */
+export async function registerInitiativesOf(
+  db: DbOrTx,
+  rows: readonly BenefitRow[],
+): Promise<Map<string, InitiativeRef[]>> {
+  const out = new Map<string, InitiativeRef[]>();
+  const withSet = rows.filter((r) => r.allocation_set_no > 0);
+  if (withSet.length === 0) return out;
+  const found = await db
+    .selectFrom("benefit_allocation as a")
+    .innerJoin("benefit as b", (j) =>
+      j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+    )
+    .innerJoin("initiative as i", "i.id", "a.initiative_id")
+    .select(["a.benefit_id", "i.id", "i.code", "i.name"])
+    .where(
+      "a.benefit_id",
+      "in",
+      withSet.map((r) => r.id),
+    )
+    .orderBy("i.code")
+    .orderBy("i.id")
+    .execute();
+  for (const f of found) {
+    if (!out.has(f.benefit_id)) out.set(f.benefit_id, []);
+    out.get(f.benefit_id)!.push({ id: f.id, code: f.code, name: f.name });
+  }
+  return out;
+}
+// ------------------------------------------------------------------------------------------------ end BE-M block
+
 /** T14 register rows (ADR-0029 §4): the ten columns plus step, realization state and counting status. */
-export async function presentRegisterRows(db: DbOrTx, rows: readonly BenefitRow[]): Promise<BenefitRegisterRow[]> {
+export async function presentRegisterRows(
+  db: DbOrTx,
+  rows: readonly BenefitRow[],
+): Promise<(BenefitRegisterRow & { initiatives: InitiativeRef[] })[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
+  const initiativesOf = await registerInitiativesOf(db, rows); // BE-M (ADR-0038 §8)
   const counting = await countingFor(db, ids);
   const facts = await realizationFor(db, rows);
   const evidence = await db
@@ -495,6 +537,7 @@ export async function presentRegisterRows(db: DbOrTx, rows: readonly BenefitRow[
         : NOT_COUNTED,
       currency: r.currency.trim(),
       version: r.version,
+      initiatives: initiativesOf.get(r.id) ?? [], // BE-M (ADR-0038 §8)
     };
   });
 }

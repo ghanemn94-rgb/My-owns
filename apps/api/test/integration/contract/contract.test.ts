@@ -719,7 +719,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-BE-K2: + createGateCriterionReview, createGateException, decideGateException, revokeGateException (4 JSON
     // bodies; withdrawGateException is bodiless).
     // T-DG4-KBE-G: + putDashboardRagPolicy (1 JSON body; the five dashboard reads are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([297, 296, 1]);
+    // T-DG4-BE-M: + createTraceLink, updateTraceLink, removeTraceLink, setOutcomeContributionAllocation (4 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([301, 300, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
