@@ -20,15 +20,21 @@
 //   kpi.version_activated:<versionId>:<versionNo>) is written in that transaction.
 // - Every mutation: authorization re-checked at commit time (openWrite atCommit), validation, If-Match (428/409; creates
 //   are version 1), exactly one audit event per changed row in the same transaction, no remote I/O in it (S-4).
-// - requestKpiVersionApproval needs BE-B's approval service (workflows/approvals.ts, ADR-0026 §4), which is not merged
-//   in this task's tree; it stays in p4-pending-kbe-b.ts (see the T-DG4-KBE-B handback). An agent never grants a
-//   business approval: activation under the business-approval policy needs a decision recorded by a person.
-import { diffFields, sql, type DbOrTx, type KpiVersionRow, type Tx } from "@mth/db";
+// - POST /transformations/{t}/kpi-versions/{v}/approval-requests (requestKpiVersionApproval; kpi_version.activate;
+//   If-Match; T-DG4-KBE-C, D-095): requests the kpi_version_activation BUSINESS approval through BE-B's approval service
+//   (workflows/approvals.ts, ADR-0026 §4; S-14). kpi cannot import workflows (workflows depends on kpi), so the service
+//   is reached through the KpiApprovalPort that the composition root (server.ts) passes to registerKpiModule, the
+//   GateFactsProvider pattern. The port also registers the kpi_version_activation subject provider, whose onOutcome
+//   never activates: activation stays the explicit activateKpiVersion call. An agent never grants a business approval:
+//   activation under the business-approval policy needs a decision recorded by a person (requester excluded, SoD).
+import { diffFields, sql, type ApprovalRow, type DbOrTx, type KpiVersionRow, type Tx } from "@mth/db";
 import {
   canonicalDecimal,
   kpiReasonRequest,
+  kpiVersionApprovalRequest,
   kpiVersionCreate,
   kpiVersionUpdate,
+  type Approval,
   type KpiDictionaryEntry,
   type KpiVersion,
   type KpiVersionCreate,
@@ -37,8 +43,8 @@ import { ENGINE_VERSION, FORMULA_DECIMAL as Decimal } from "@mth/shared/calc";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
-import { record } from "../audit/index.ts";
+import { principalOf, requireTransformationRead, type ResolvedTarget } from "../access/index.ts";
+import { record, type AuditContext } from "../audit/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -638,6 +644,7 @@ async function lockDraft(ctx: WriteContext, id: string, expected: number): Promi
 
 async function updateVersion(ctx: WriteContext, id: string, expected: number, body: z.output<typeof kpiVersionUpdate>) {
   const current = await lockDraft(ctx, id, expected);
+  await assertNotFrozenByApproval(ctx.tx, current);
   const def = (await findDefinition(ctx.tx, ctx.transformationId, current.kpi_definition_id, "share"))!;
   const patch = patchOf(body);
   const merged: VersionContent = { ...contentOfRow(current), ...patch };
@@ -666,18 +673,12 @@ async function activateVersion(ctx: WriteContext, id: string, expected: number) 
   // 2. the version is complete (D-089 Q1: the aggregation rule first).
   checkComplete(contentOfRow(current));
   // 3. under the business-approval policy, an approved kpi_version_activation approval of this version.
+  //    The approval must be of this version's current content (subject version = row version); activation stores its id
+  //    on the version (T-DG4-KBE-C), and the 0033 guard re-checks it.
+  let approvalId: string | null = current.approval_id;
   if (current.definition_approval === "business_approval") {
-    const approved =
-      current.approval_id !== null &&
-      (await ctx.tx
-        .selectFrom("approval")
-        .select("id")
-        .where("id", "=", current.approval_id)
-        .where("approval_type", "=", "kpi_version_activation")
-        .where("subject_id", "=", current.id)
-        .where("status", "=", "approved")
-        .executeTakeFirst()) !== undefined;
-    if (!approved)
+    approvalId = await approvedApprovalOf(ctx.tx, current);
+    if (approvalId === null)
       throw problems.businessRule(
         "kpi_version.approval_required",
         "This KPI version needs an approved business approval before it can be activated.",
@@ -725,6 +726,7 @@ async function activateVersion(ctx: WriteContext, id: string, expected: number) 
     .updateTable("kpi_version")
     .set({
       status: "active",
+      approval_id: approvalId,
       activated_at: sql<Date>`now()`,
       activated_by: ctx.userId,
       version: sql<number>`version + 1`,
@@ -757,6 +759,7 @@ async function activateVersion(ctx: WriteContext, id: string, expected: number) 
 
 async function withdrawVersion(ctx: WriteContext, id: string, expected: number, reason: string) {
   const current = await lockDraft(ctx, id, expected);
+  await assertNotFrozenByApproval(ctx.tx, current);
   const updated = await ctx.tx
     .updateTable("kpi_version")
     .set({
@@ -776,9 +779,156 @@ async function withdrawVersion(ctx: WriteContext, id: string, expected: number, 
   return updated;
 }
 
+// ------------------------------------------------------------------------------------------------ business approval
+
+/** The approval type of a KPI version's activation approval (0036 seeds it; subject table kpi_version). */
+export const KPI_VERSION_APPROVAL_TYPE = "kpi_version_activation";
+/** The party a KPI version approval is routed to by default (ADR-0027 §2 step 3: the Business Owner). */
+export const KPI_VERSION_APPROVER_PARTY = "BO";
+/** While an approval is pending or deferred the draft is frozen; under changes_requested it can be edited. */
+const FREEZING_APPROVAL_STATUSES = ["pending", "deferred"] as const;
+
+/** The subset of ADR-0026 §4's request input this module passes (structurally that of workflows' service). */
+export interface KpiApprovalRequestInput {
+  readonly organizationId: string;
+  readonly transformationId: string;
+  readonly scope: ResolvedTarget & { transformationId: string };
+  readonly approvalType: string;
+  readonly subjectId: string;
+  readonly subjectVersion: number;
+  readonly title: string;
+  readonly requestNote: string | null;
+  readonly assigneePartyCode: string;
+  readonly decisionRightId: null;
+  readonly slaType: null;
+  readonly urgentReason: null;
+  readonly due: null;
+}
+
+/** The subject provider shape of ADR-0026 §4 (structurally workflows' ApprovalSubjectProvider). */
+export interface KpiApprovalSubjectProvider {
+  readonly currentVersion: (db: DbOrTx, subjectId: string, transformationId: string) => Promise<number | null>;
+  readonly onOutcome: (tx: Tx, event: { readonly approval: ApprovalRow; readonly outcome: string }) => Promise<void>;
+}
+
+/**
+ * The approval service as the kpi module sees it. The composition root (server.ts) passes workflows'
+ * `requestApprovalInTx`, `registerApprovalSubject` and `toApprovals`; kpi never writes approval rows itself (S-14).
+ */
+export interface KpiApprovalPort {
+  readonly requestApproval: (tx: Tx, audit: AuditContext, input: KpiApprovalRequestInput) => Promise<ApprovalRow>;
+  readonly registerSubject: (approvalType: string, provider: KpiApprovalSubjectProvider) => void;
+  readonly present: (db: DbOrTx, rows: readonly ApprovalRow[]) => Promise<Approval[]>;
+}
+
+/**
+ * The subject version of a KPI version for the approval engine: its row version, read FOR SHARE (a concurrent update of
+ * the draft waits). It is exactly what the 0031 database guards compare (p4_approval_subject_version), so the service
+ * and the database agree on staleness.
+ */
+export async function kpiVersionSubjectVersion(
+  db: DbOrTx,
+  subjectId: string,
+  transformationId: string,
+): Promise<number | null> {
+  const row = await db
+    .selectFrom("kpi_version")
+    .select("version")
+    .where("id", "=", subjectId)
+    .where("transformation_id", "=", transformationId)
+    .forShare()
+    .executeTakeFirst();
+  return row?.version ?? null;
+}
+
+/**
+ * The kpi_version_activation subject provider. onOutcome deliberately changes nothing: an approved approval never
+ * activates the version (activation is the explicit activateKpiVersion call, which looks the approval up and stores
+ * its id), and a rejected, withdrawn, deferred or changes-requested one leaves the draft as it is.
+ */
+export const KPI_VERSION_SUBJECT_PROVIDER: KpiApprovalSubjectProvider = Object.freeze({
+  currentVersion: kpiVersionSubjectVersion,
+  onOutcome: async () => {},
+});
+
+/** 409 when a pending or deferred kpi_version_activation approval of the draft freezes it (ADR-0026 §4). */
+async function assertNotFrozenByApproval(tx: Tx, row: KpiVersionRow): Promise<void> {
+  const open = await tx
+    .selectFrom("approval")
+    .select("id")
+    .where("approval_type", "=", KPI_VERSION_APPROVAL_TYPE)
+    .where("subject_id", "=", row.id)
+    .where("status", "in", [...FREEZING_APPROVAL_STATUSES])
+    .executeTakeFirst();
+  if (open) throw problems.duplicate("approval.already_open", "An approval for this record is already open.");
+}
+
+/**
+ * The approved kpi_version_activation approval of this draft AT its current version (an approval of earlier content
+ * does not count), or null. Activation stores its id on the version (approval_id), which the 0033 guard re-checks.
+ */
+async function approvedApprovalOf(tx: Tx, row: KpiVersionRow): Promise<string | null> {
+  const approved = await tx
+    .selectFrom("approval")
+    .select("id")
+    .where("approval_type", "=", KPI_VERSION_APPROVAL_TYPE)
+    .where("subject_id", "=", row.id)
+    .where("transformation_id", "=", row.transformation_id)
+    .where("subject_version", "=", row.version)
+    .where("status", "=", "approved")
+    .orderBy("updated_at", "desc")
+    .executeTakeFirst();
+  return approved?.id ?? null;
+}
+
+/**
+ * Requests the business approval (ADR-0027 §2 step 3) of a draft under the business-approval policy, at the version
+ * named by If-Match, routed to the Business Owner party (requester excluded, SoD). The draft row itself is not changed:
+ * the 0031 guards compare the approval's subject version with the row's version when the approval is decided, so a
+ * stamp on the draft would make every such approval stale. The approval engine writes the approval, its audit event
+ * and the approver tasks; while it is pending or deferred the draft is frozen (409 approval.already_open).
+ */
+async function requestVersionApproval(
+  ctx: WriteContext,
+  port: KpiApprovalPort,
+  id: string,
+  expected: number,
+  requestNote: string | null,
+): Promise<ApprovalRow> {
+  const current = await lockDraft(ctx, id, expected);
+  if (current.definition_approval !== "business_approval")
+    throw constraintProblem(
+      "This KPI version is activated directly; only a version with the business-approval policy is approved.",
+      "/definitionApproval",
+    );
+  const def = (await findDefinition(ctx.tx, ctx.transformationId, current.kpi_definition_id, "share"))!;
+  return port.requestApproval(ctx.tx, ctx.audit, {
+    organizationId: ctx.organizationId,
+    transformationId: ctx.transformationId,
+    scope: { ...ctx.target, transformationId: ctx.transformationId },
+    approvalType: KPI_VERSION_APPROVAL_TYPE,
+    subjectId: current.id,
+    subjectVersion: current.version,
+    title: `${def.name} v${current.version_no}`,
+    requestNote,
+    assigneePartyCode: KPI_VERSION_APPROVER_PARTY,
+    decisionRightId: null,
+    slaType: null,
+    urgentReason: null,
+    due: null,
+  });
+}
+
+/** A server built without the approval port fails closed (500), never silently without an approval. */
+const unwiredApprovals = () => problems.internal();
+
 // ------------------------------------------------------------------------------------------------ routes
 
-export function registerKpiVersionRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
+export function registerKpiVersionRoutes(
+  app: FastifyInstance,
+  deps: ModuleDeps,
+  approvals: KpiApprovalPort | null = null,
+): string[] {
   const { db } = deps;
   const read = { access: { permission: "transformation.read" as const } };
   const write = (permission: "kpi_version.edit" | "kpi_version.activate", body = true) => ({
@@ -896,6 +1046,19 @@ export function registerKpiVersionRoutes(app: FastifyInstance, deps: ModuleDeps)
     return sendVersioned(reply, 200, (await presentVersions(db, [row]))[0]!);
   });
 
+  app.post(`${VERSION_ITEM}/approval-requests`, { config: write("kpi_version.activate") }, async (request, reply) => {
+    const { transformationId, kpiVersionId } = parse(versionParams, request.params, "params");
+    const row = await db.transaction().execute(async (tx) => {
+      const ctx = await openVersionWrite(tx, request, transformationId, "kpi_version.activate");
+      const expected = requireIfMatch(request);
+      const body = parseBody(kpiVersionApprovalRequest, request.body);
+      if (approvals === null) throw unwiredApprovals();
+      return requestVersionApproval(ctx, approvals, kpiVersionId, expected, body.requestNote ?? null);
+    });
+    const [presented] = await approvals!.present(db, [row]);
+    return sendVersioned(reply, 201, presented!, `/api/v1/approvals/${row.id}`);
+  });
+
   return [
     `GET ${DICTIONARY}`,
     `GET ${DICTIONARY_ENTRY}`,
@@ -905,6 +1068,7 @@ export function registerKpiVersionRoutes(app: FastifyInstance, deps: ModuleDeps)
     `PATCH ${VERSION_ITEM}`,
     `POST ${VERSION_ITEM}/activate`,
     `POST ${VERSION_ITEM}/withdraw`,
+    `POST ${VERSION_ITEM}/approval-requests`,
     ...registerRagThresholdRoutes(app, deps),
   ];
 }

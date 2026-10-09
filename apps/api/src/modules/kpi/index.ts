@@ -11,6 +11,7 @@
 //  - loadKpiGateFacts / KpiGateFacts: facts for the product-gate G1/G2 criteria (workflows module, p2-work-split §3).
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
+import { KPI_VERSION_APPROVAL_TYPE, KPI_VERSION_SUBJECT_PROVIDER, type KpiApprovalPort } from "./kpi-versions.ts";
 import { registerKpiRoutes } from "./routes.ts";
 
 export { loadKpiGateFacts, type KpiGateFacts } from "./gate-facts.ts";
@@ -42,8 +43,30 @@ export {
 export const VALUE_FRESHNESS = ["unknown", "stale", "current"] as const;
 export type ValueFreshness = (typeof VALUE_FRESHNESS)[number];
 
-/** Wiring hook called by the composition root (server.ts). P2: registers the 24 kpi operations. */
-export function registerKpiModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
-  const routes = registerKpiRoutes(app, deps);
+// P4 (T-DG4-KBE-C, D-095): the approval-service port the composition root passes in (kpi cannot import workflows).
+export type { KpiApprovalPort, KpiApprovalRequestInput, KpiApprovalSubjectProvider } from "./kpi-versions.ts";
+// P4 (T-DG4-KBE-C; ADR-0027 §6): the seam through which slice B (KBE-E) reports the benefit impact of a KPI value and
+// whether a Finance review follows; until it registers, a submission's financeReview is "unknown".
+export {
+  registerDownstreamImpactProvider,
+  type DownstreamImpact,
+  type DownstreamImpactProvider,
+  type FinanceReview,
+} from "./downstream.ts";
+
+/**
+ * Wiring hook called by the composition root (server.ts). P2: registers the 24 kpi operations; P4 adds slice A. The
+ * composition root passes workflows' approval service as `approvals` (T-DG4-KBE-C): the hook registers the
+ * kpi_version_activation subject provider with it, and requestKpiVersionApproval requests through it. Without it,
+ * that one operation fails closed (500).
+ */
+export function registerKpiModule(
+  app: FastifyInstance,
+  deps: ModuleDeps,
+  options: { readonly approvals?: KpiApprovalPort } = {},
+): ModuleRegistration {
+  const approvals = options.approvals ?? null;
+  if (approvals !== null) approvals.registerSubject(KPI_VERSION_APPROVAL_TYPE, KPI_VERSION_SUBJECT_PROVIDER);
+  const routes = registerKpiRoutes(app, deps, approvals);
   return Object.freeze({ module: "kpi", status: "active", deliversIn: "P2", routes: Object.freeze([...routes]) });
 }

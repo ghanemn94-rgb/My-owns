@@ -45,3 +45,6 @@ export * from "./benefits.ts";
 // P4 slice A mirrors of KBE-B (kpi-benefits-engineer, T-DG4-KBE-B; p4-work-split §A.2): KPI dictionary v2, versions,
 // formula inputs, RAG thresholds, target trajectories, data-quality findings.
 export * from "./kpi-versions.ts";
+// P4 slice A mirrors of KBE-C (kpi-benefits-engineer, T-DG4-KBE-C; p4-work-split §A.3): reporting periods, actuals,
+// calculation runs and evaluations, the KPI status panel, RAG overrides and the pipeline outbox payloads.
+export * from "./kpi-actuals.ts";
