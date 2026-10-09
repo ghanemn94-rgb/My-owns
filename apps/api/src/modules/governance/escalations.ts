@@ -18,6 +18,7 @@ import {
   escalationRuleCreate,
   escalationRuleKind,
   escalationRuleUpdate,
+  outboxPayloadSchema,
   uuid,
   type BlockerRecordType,
   type BlockerStatus,
@@ -29,7 +30,6 @@ import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import { auditContextOf, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
-import { enqueueOutboxEvent } from "../jobs/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -101,6 +101,35 @@ export const escalationRefusals = {
   meetingFrozen: (status: string) =>
     problems.businessRule("meeting.frozen", `This meeting is ${status}; its records can no longer be changed.`),
 } as const;
+
+// ------------------------------------------------------------------------------------------------ outbox
+
+/**
+ * The governance module's transactional outbox writer for `blocker_status.recorded` (ADR-0008; the kpi-outbox.ts
+ * precedent): governance's declared dependencies (modules.ts) do not include `jobs`, so this validates the payload
+ * against the shared registry (@mth/shared/schemas, which the worker's relay checks again) and inserts the outbox row
+ * in the caller's transaction, next to the observation and its audit event.
+ */
+async function enqueueBlockerStatusRecorded(
+  tx: Tx,
+  e: { organizationId: string; aggregateId: string; payload: Record<string, unknown> },
+): Promise<void> {
+  const schema = outboxPayloadSchema(BLOCKER_STATUS_RECORDED, 1);
+  if (!schema) throw new Error(`outbox: no schema for ${BLOCKER_STATUS_RECORDED} v1`);
+  await tx
+    .insertInto("outbox_event")
+    .values({
+      id: uuidv7(),
+      organization_id: e.organizationId,
+      aggregate_type: "blocker_status",
+      aggregate_id: e.aggregateId,
+      event_type: BLOCKER_STATUS_RECORDED,
+      schema_version: 1,
+      payload: JSON.stringify(schema.parse(e.payload)),
+      idempotency_key: `${BLOCKER_STATUS_RECORDED}:${e.aggregateId}`,
+    })
+    .execute();
+}
 
 // ------------------------------------------------------------------------------------------------ mapping
 
@@ -309,7 +338,7 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
         .returningAll()
         .executeTakeFirst();
       if (!updated) throw problems.versionConflict(current.version + 1);
-      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      const changes = new Map<string, { from: unknown; to: unknown }>();
       const pairs: [string, unknown, unknown][] = [
         ["enabled", current.enabled, updated.enabled],
         ["escalation_chain", current.escalation_chain?.join(",") ?? null, updated.escalation_chain?.join(",") ?? null],
@@ -317,7 +346,7 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
         ["deadline_working_days", current.deadline_working_days, updated.deadline_working_days],
         ["owner_party_code", current.owner_party_code, updated.owner_party_code],
       ];
-      for (const [k, from, to] of pairs) if (from !== to) changes[k] = { from, to };
+      for (const [k, from, to] of pairs.filter(([, a, b]) => a !== b)) changes.set(k, { from, to });
       await record(tx, auditContextOf(request), {
         action: "escalation_rule.update",
         recordType: "governance_escalation_rule",
@@ -326,7 +355,7 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
         transformationId,
         priorVersion: current.version,
         newVersion: updated.version,
-        changes,
+        changes: Object.fromEntries(changes),
       });
       return updated;
     });
@@ -409,12 +438,9 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
       });
       // ADR-0032 §8.3: the consumer governance.blocker_escalation evaluates the red-cycles rule (ADR-0031 §5.4 payload
       // conventions; one event per observation).
-      await enqueueOutboxEvent(tx, {
+      await enqueueBlockerStatusRecorded(tx, {
         organizationId: target.organizationId,
-        aggregateType: "blocker_status",
         aggregateId: id,
-        eventType: BLOCKER_STATUS_RECORDED,
-        schemaVersion: 1,
         payload: {
           blockerStatusId: id,
           transformationId,
@@ -425,7 +451,6 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
           sourceRecordId: body.sourceRecordId,
           rag: body.rag,
         },
-        idempotencyKey: `${BLOCKER_STATUS_RECORDED}:${id}`,
       });
       return inserted;
     });

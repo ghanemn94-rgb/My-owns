@@ -30,6 +30,7 @@ import {
   workweekOf,
 } from "../../../api/test/integration/governance/t16-fixtures.ts";
 import {
+  BLOCKER_OWNER_UNASSIGNED_NOTICE,
   EXECUTIVE_DECISION_DUE_KIND,
   handleBlockerEscalation,
   handleBlockerEscalationScan,
@@ -212,5 +213,67 @@ describe("REQ-PB-082: a blocker red for N consecutive cycles gets exactly one op
     await observe(o1, off, "red");
     expect(await consume(await observe(o2, off, "red"))).toEqual({ outcome: "rule_disabled", decisionId: null });
     expect(await asksOf(off)).toEqual([]);
+  });
+
+  it("an owner party that maps to no executive gives an unassigned ask and a notice to the lead; the scan skips a blocker whose latest cycle is not red", async () => {
+    // The blocker rule stored (disabled) by the previous test: enable it with an owner party mapped to nobody (FIN).
+    const current = await send("GET", `${T()}/escalation-rules`, { session: x.lead.session });
+    const stored = current.body.items.find((r: Body) => r.ruleKind === "blocker_red");
+    const on = await send("PATCH", `${T()}/escalation-rules/blocker_red`, {
+      session: x.office.session,
+      headers: ifm(stored.version),
+      body: { enabled: true, ownerPartyCode: "FIN" },
+    });
+    expect(on.status, JSON.stringify(on.body)).toBe(200);
+    const risk = await createBlockerRisk(send, x, "Synthetic blocker: no owner mapped");
+    const forum = await createForum(send, x, "Synthetic review G");
+    const m1 = await meetingInSession(send, x, forum, plusDays(today, 1));
+    const m2 = await meetingInSession(send, x, forum, plusDays(today, 2));
+    await observe(m1, risk, "red");
+    const r = await consume(await observe(m2, risk, "red"));
+    expect(r.outcome).toBe("ask_created");
+    const got = await send("GET", `${T()}/executive-decisions/${r.decisionId}`, { session: x.lead.session });
+    expect([got.body.ownerUserId, got.body.ownerStatus]).toEqual([null, "unassigned"]);
+    expect(got.body.missingElements).toContain("decision_owner");
+    const t = await api.db
+      .selectFrom("transformation")
+      .select("lead_user_id")
+      .where("id", "=", x.transformationId)
+      .executeTakeFirstOrThrow();
+    const notices = await api.db
+      .selectFrom("inbox_notification")
+      .select(["recipient_user_id", "message_key", "message_params"])
+      .where("dedupe_key", "=", `t16.blocker_owner_unassigned:${r.decisionId}`)
+      .execute();
+    expect(notices.map((n) => [n.recipient_user_id, n.message_key])).toEqual([
+      [t.lead_user_id ?? x.lead.id, BLOCKER_OWNER_UNASSIGNED_NOTICE],
+    ]);
+    const raw = notices[0]!.message_params;
+    const params = (typeof raw === "string" ? JSON.parse(raw) : raw) as Record<string, unknown>;
+    expect([params["partyCode"], params["routingError"]]).toEqual(["FIN", "party_unmapped"]);
+    // No work item for a missing owner (never a guessed one).
+    const items = await api.db
+      .selectFrom("work_item")
+      .select("id")
+      .where("subject_id", "=", r.decisionId!)
+      .where("kind", "=", EXECUTIVE_DECISION_DUE_KIND)
+      .execute();
+    expect(items).toEqual([]);
+    // A blocker whose latest observation is amber is not a scan candidate: no ledger key is spent on it.
+    const calm = await createBlockerRisk(send, x, "Synthetic blocker: recovering");
+    const f2 = await createForum(send, x, "Synthetic review H");
+    const c1 = await meetingInSession(send, x, f2, plusDays(today, 1));
+    const c2 = await meetingInSession(send, x, f2, plusDays(today, 2));
+    await observe(c1, calm, "red");
+    await observe(c2, calm, "amber");
+    await handleBlockerEscalationScan(api.db, { organizationId }, "blocker-scan-h");
+    const keys = await api.db
+      .selectFrom("processed_message")
+      .select("idempotency_key")
+      .where("consumer", "=", "governance.blocker_escalation_scan")
+      .where("idempotency_key", "like", `%:${calm}:%`)
+      .execute();
+    expect(keys).toEqual([]);
+    expect(await asksOf(calm)).toEqual([]);
   });
 });
