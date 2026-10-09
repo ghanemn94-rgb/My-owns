@@ -1,0 +1,43 @@
+port-policy: PostgreSQL listening on port 24750 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-g
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1cukls_9bf88e1f (server_encoding UTF8); applied 59 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/rag-policy.test.ts (4 tests | 1 failed) 1239ms
+   ✓ the dashboard RAG policy (ADR-0037 §3, §10) > without a row: version 0, null thresholds, the documented defaults effective, policySource default 18ms
+   × the dashboard RAG policy (ADR-0037 §3, §10) > AUD and a TL are 403 and write nothing; If-Match missing 428; a stale or wrong version 409 46ms
+     → {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a12220-8f51-72ba-8870-207e4f3d1968"}: expected 404 to be 403 // Object.is equality
+   ✓ the dashboard RAG policy (ADR-0037 §3, §10) > a configured threshold changes the area's RAG and policySource; one audit event per change 253ms
+   ✓ the dashboard RAG policy (ADR-0037 §3, §10) > amber beyond red is 422 at the amber field with the exact text; out-of-range values are 400; nothing written 83ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/rag-policy.test.ts > the dashboard RAG policy (ADR-0037 §3, §10) > AUD and a TL are 403 and write nothing; If-Match missing 428; a stale or wrong version 409
+AssertionError: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a12220-8f51-72ba-8870-207e4f3d1968"}: expected 404 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 404[39m
+
+ ❯ apps/api/test/integration/reporting/rag-policy.test.ts:63:48
+     61|     for (const s of [k.s.auditor, k.s.tl]) {
+     62|       const r = await put({ topInitiativeCount: 3 }, ifm(0), s);
+     63|       expect(r.status, JSON.stringify(r.body)).toBe(403);
+       |                                                ^
+     64|     }
+     65|     expect(await api.db.selectFrom("dashboard_rag_policy").select("id"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  19:25:10
+   Duration  11.68s (transform 3.94s, setup 0ms, collect 7.96s, tests 1.24s, environment 0ms, prepare 167ms)
+

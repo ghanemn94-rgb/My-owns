@@ -21,3 +21,5 @@ export function registerBenefitsModule(app: FastifyInstance, deps: ModuleDeps): 
     routes: Object.freeze(routes),
   });
 }
+// P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only benefit facts of the dashboards (slice B counting rules).
+export { loadBenefitDashboardFacts, loadBenefitLineEvidence, type BenefitDashboardFacts } from "./dashboard-facts.ts";

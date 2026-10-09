@@ -2152,6 +2152,32 @@ export function mapP4ChangeControlError(error: PgErrorLike): HttpProblem | null 
 }
 
 /**
+ * P4 slice J, KBE-G lines (ADR-0037 §13; T-DG4-KBE-G): the 0056 dashboard RAG policy constraints. The API checks the
+ * order first with the exact ADR text (dashboards/rag-policy.ts); these are the last line. Null when the error is not
+ * one of them. (Slices J/K block: appended after BE-M's lines at merge, p4-work-split §J+K JK.4.)
+ */
+export function mapP4DashboardError(error: PgErrorLike): HttpProblem | null {
+  const detail = "The amber threshold cannot be beyond the red threshold.";
+  const pointer =
+    error.constraint === "dashboard_rag_policy_value_gap_order"
+      ? "/valueGapAmberRatio"
+      : error.constraint === "dashboard_rag_policy_milestone_slip_order"
+        ? "/milestoneSlipAmberWorkingDays"
+        : null;
+  if (pointer !== null)
+    return new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "dashboard_rag_policy.threshold_order",
+      title: "Business rule violated",
+      detail,
+      errors: [{ pointer, code: "dashboard_rag_policy.threshold_order", message: detail }],
+    });
+  if (error.constraint === "dashboard_rag_policy_organization_key") return retryConflict();
+  return null;
+}
+
+/**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
@@ -2199,6 +2225,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4GateReviewException !== null) return p4GateReviewException;
   const p4ChangeControl = mapP4ChangeControlError(error); // BE-L (slice H block)
   if (p4ChangeControl !== null) return p4ChangeControl;
+  const p4Dashboard = mapP4DashboardError(error); // KBE-G (slices J/K block)
+  if (p4Dashboard !== null) return p4Dashboard;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
