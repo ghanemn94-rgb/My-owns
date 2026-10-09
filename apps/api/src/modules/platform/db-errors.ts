@@ -2085,6 +2085,84 @@ export function mapP4ChangeControlError(error: PgErrorLike): HttpProblem | null 
 }
 
 /**
+ * P4 slice H, BE-L2 lines (T-DG4-BE-L2; ADR-0035 §1, §11): the 0051 phase-step and step-evidence guards. The API refuses
+ * each case first with the same code and text; these are the last line when a concurrent write slips past a check (a
+ * race), so it never surfaces as a 500. Null when the error is not one of them. (Appended after BE-L, p4-work-split §H.4.)
+ */
+export function mapP4PhaseStepError(error: PgErrorLike): HttpProblem | null {
+  const stepTransition = (from: string, to: string) =>
+    sliceHInvalidTransition(
+      "phase_step.invalid_transition",
+      `A step moves from ${from} to ${to} only as the phase procedure allows.`,
+    );
+  switch (error.constraint ?? "") {
+    case "phase_step_key":
+      // Two first writes of the same step (If-Match "0") raced: the loser's version is stale.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "phase_step_status_step": {
+      const m = /: (\w+) -> (\w+) is not an allowed transition/.exec(error.message ?? "");
+      return m ? stepTransition(m[1]!, m[2]!) : stepTransition("its status", "the requested status");
+    }
+    case "phase_step_complete_final":
+      return stepTransition("complete", "another status");
+    case "phase_step_owner_locked_in_review":
+      return stepTransition("in_review", "in_review");
+    case "phase_step_reviewer_separate":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "phase_step.reviewer_is_owner",
+        title: "Forbidden",
+        detail: "The owner cannot review their own step.",
+      });
+    case "phase_step_returned_note":
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "phase_step.return_note_required",
+        title: "Validation failed",
+        detail: "A note is required to return a step.",
+        errors: [
+          {
+            pointer: "/note",
+            code: "phase_step.return_note_required",
+            message: "A note is required to return a step.",
+          },
+        ],
+      });
+    case "phase_step_evidence_active_key":
+      return problems.duplicate("phase_step_evidence.exists", "This evidence is already linked to the step.");
+    case "phase_step_evidence_step_open":
+      return rule422("phase_step.complete", "This step is complete; its evidence can no longer change.", "");
+    case "phase_step_evidence_evidence_fkey":
+      return rule422(
+        "validation.reference",
+        "The referenced record does not exist in this transformation.",
+        "/evidenceId",
+      );
+    case "phase_step_evidence_status_step":
+      return problems.invalidTransition("The evidence link is already removed.");
+    case "phase_step_in_review_checked":
+    case "phase_step_complete_shape":
+    case "phase_step_identity":
+    case "phase_step_review_requested_complete":
+    case "phase_step_reviewed_complete":
+    case "phase_step_definition_fkey":
+    case "phase_step_evidence_removed_complete":
+      // The API evaluates the rule, sets the stamps and never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
@@ -2130,6 +2208,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4GateScale !== null) return p4GateScale;
   const p4ChangeControl = mapP4ChangeControlError(error); // BE-L (slice H block)
   if (p4ChangeControl !== null) return p4ChangeControl;
+  const p4PhaseStep = mapP4PhaseStepError(error); // BE-L2 (slice H block)
+  if (p4PhaseStep !== null) return p4PhaseStep;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
