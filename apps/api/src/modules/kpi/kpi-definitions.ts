@@ -1,14 +1,20 @@
 // KPI dictionary entries (P2 subset of REQ-S07-001; OpenAPI tag "kpi"): list, create, read, update, activate,
 // archive. Activate (F-DG2-201) is the only draft -> active path; G2's g2.kpi_definitions criterion needs it.
 // Permission kpi_definition.edit (TL, KDS); reads need transformation.read.
-import { diffFields, sql } from "@mth/db";
+import { diffFields, sql, type Tx } from "@mth/db";
 import { kpiDefinitionCreate, kpiDefinitionUpdate, reasonRequest } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { auditContextOf, principalOf } from "../access/index.ts";
-import { record } from "../audit/index.ts";
+import { record, type AuditContext } from "../audit/index.ts";
 import { parse, parseBody, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
-import { findKpiDefinition, KPI_DEFINITION_AUDIT_FIELDS, kpiDefinitionInUse, toKpiDefinition } from "./repository.ts";
+import {
+  findKpiDefinition,
+  KPI_DEFINITION_AUDIT_FIELDS,
+  kpiDefinitionInUse,
+  toKpiDefinition,
+  type KpiDefinitionRow,
+} from "./repository.ts";
 import { kpiDefinitionActivationRule, kpiDefinitionUnitRule } from "./rules.ts";
 import {
   archivedRecord,
@@ -33,6 +39,79 @@ const duplicateName = (e: { code?: string; constraint?: string }) => {
   return e;
 };
 
+/** The columns a new KPI definition takes (the createKpiDefinition body, already validated, plus its scope). */
+export interface KpiDefinitionRowInput {
+  readonly organizationId: string;
+  readonly transformationId: string;
+  /** The acting user: created_by and updated_by. */
+  readonly actorUserId: string;
+  readonly name: string;
+  readonly description?: string | null | undefined;
+  readonly businessPurpose?: string | null | undefined;
+  readonly unitKind: KpiDefinitionRow["unit_kind"];
+  readonly unitLabel?: string | null | undefined;
+  readonly currency?: string | null | undefined;
+  readonly polarity: KpiDefinitionRow["polarity"];
+  /** Omitted: the column default (monthly). */
+  readonly frequency?: KpiDefinitionRow["frequency"] | undefined;
+  /** Omitted: the column default (false). */
+  readonly isLeading?: boolean | undefined;
+  readonly dataSource?: string | null | undefined;
+  readonly ownerUserId?: string | null | undefined;
+  readonly stewardUserId?: string | null | undefined;
+}
+
+/**
+ * Slice A's KPI create service (T-DG4-KBE-R1; the KBE-F handback item 2): inserts one draft `kpi_definition` row
+ * (version 1) and its `kpi_definition.create` audit event in the caller's transaction, and returns the row. A name
+ * already taken in the transformation is 409 `duplicate.name`. The caller has already authorized the write, validated
+ * the input (including the unit rule and the active owner and steward) and holds the transaction; createKpiDefinition
+ * and adoption's createAdoptionMetricLink (createKpi) both call it, so the row and the audit event are one shape.
+ */
+export async function createKpiDefinitionRow(
+  tx: Tx,
+  audit: AuditContext,
+  input: KpiDefinitionRowInput,
+): Promise<KpiDefinitionRow> {
+  const id = uuidv7();
+  const row = await tx
+    .insertInto("kpi_definition")
+    .values({
+      id,
+      organization_id: input.organizationId,
+      transformation_id: input.transformationId,
+      name: input.name,
+      description: input.description ?? null,
+      business_purpose: input.businessPurpose ?? null,
+      unit_kind: input.unitKind,
+      unit_label: input.unitLabel ?? null,
+      currency: input.currency ?? null,
+      polarity: input.polarity,
+      ...(input.frequency !== undefined ? { frequency: input.frequency } : {}),
+      ...(input.isLeading !== undefined ? { is_leading: input.isLeading } : {}),
+      data_source: input.dataSource ?? null,
+      owner_user_id: input.ownerUserId ?? null,
+      steward_user_id: input.stewardUserId ?? null,
+      created_by: input.actorUserId,
+      updated_by: input.actorUserId,
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow()
+    .catch((e: { code?: string; constraint?: string }) => {
+      throw duplicateName(e);
+    });
+  await record(tx, audit, {
+    action: "kpi_definition.create",
+    recordType: "kpi_definition",
+    recordId: id,
+    organizationId: row.organization_id,
+    transformationId: input.transformationId,
+    newVersion: 1,
+    changes: diffFields({} as typeof row, row, [...KPI_DEFINITION_AUDIT_FIELDS]),
+  });
+  return row;
+}
+
 export function registerKpiDefinitionRoutes(app: FastifyInstance, { db }: ModuleDeps, add: RouteAdder): void {
   add(app, "GET", BASE, "transformation.read", async (request) =>
     listPage(db, request, "kpi_definition", toKpiDefinition),
@@ -55,41 +134,22 @@ export function registerKpiDefinitionRoutes(app: FastifyInstance, { db }: Module
           ["ownerUserId", body.ownerUserId],
           ["stewardUserId", body.stewardUserId],
         ]);
-        const id = uuidv7();
-        const row = await tx
-          .insertInto("kpi_definition")
-          .values({
-            id,
-            organization_id: transformation.organization_id,
-            transformation_id: transformationId,
-            name: body.name,
-            description: body.description ?? null,
-            business_purpose: body.businessPurpose ?? null,
-            unit_kind: body.unitKind,
-            unit_label: body.unitLabel ?? null,
-            currency: body.currency ?? null,
-            polarity: body.polarity,
-            ...(body.frequency !== undefined ? { frequency: body.frequency } : {}),
-            ...(body.isLeading !== undefined ? { is_leading: body.isLeading } : {}),
-            data_source: body.dataSource ?? null,
-            owner_user_id: body.ownerUserId ?? null,
-            steward_user_id: body.stewardUserId ?? null,
-            created_by: principal.userId!,
-            updated_by: principal.userId!,
-          })
-          .returningAll()
-          .executeTakeFirstOrThrow()
-          .catch((e: { code?: string; constraint?: string }) => {
-            throw duplicateName(e);
-          });
-        await record(tx, audit, {
-          action: "kpi_definition.create",
-          recordType: "kpi_definition",
-          recordId: id,
-          organizationId: row.organization_id,
+        const row = await createKpiDefinitionRow(tx, audit, {
+          organizationId: transformation.organization_id,
           transformationId,
-          newVersion: 1,
-          changes: diffFields({} as typeof row, row, [...KPI_DEFINITION_AUDIT_FIELDS]),
+          actorUserId: principal.userId!,
+          name: body.name,
+          description: body.description,
+          businessPurpose: body.businessPurpose,
+          unitKind: body.unitKind,
+          unitLabel: body.unitLabel,
+          currency: body.currency,
+          polarity: body.polarity,
+          frequency: body.frequency,
+          isLeading: body.isLeading,
+          dataSource: body.dataSource,
+          ownerUserId: body.ownerUserId,
+          stewardUserId: body.stewardUserId,
         });
         return toKpiDefinition(row);
       },

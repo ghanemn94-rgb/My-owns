@@ -81,3 +81,6 @@ export {
   type OutcomeKpiRowFact,
   type OutcomeRowFact,
 } from "./dashboard-facts.ts";
+// P4 (T-DG4-KBE-R1; the KBE-F handback item 2): slice A's KPI create service - the createKpiDefinition insert and its
+// `kpi_definition.create` audit event, in the caller's transaction. adoption's createKpi calls it.
+export { createKpiDefinitionRow, type KpiDefinitionRowInput } from "./kpi-definitions.ts";
