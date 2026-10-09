@@ -1,0 +1,81 @@
+locale env: []
+
+> mobily-transformation-hub@0.1.0 test /home/user/wt/dg4-be-g
+> vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen
+
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-g
+
+ ❯ |unit-node| apps/api/src/architecture.test.ts (137 tests | 1 failed) 23422ms
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 15284ms
+     → expected [ …(12) ] to deeply equal []
+(node:1857) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests | 1 failed) 41ms
+   × advisory-lock class registry > no module source outside the registry spells a class number (they import ADVISORY_LOCK_CLASSES) 25ms
+     → expected [ …(2) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages
+AssertionError: expected [ …(12) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "modules/governance/blocker-escalation.ts: computed member with a non-literal key (line 52) bypasses the module-interface check",[39m
+[31m+   "modules/governance/escalations.ts: computed member with a non-literal key (line 320) bypasses the module-interface check",[39m
+[31m+   "modules/governance/escalations.ts: module governance may not import module jobs",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 127) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 478) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 506) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 551) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 557) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 704) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 737) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: computed member with a non-literal key (line 844) bypasses the module-interface check",[39m
+[31m+   "modules/governance/executive-decisions.ts: imports ../workflows/codes.ts; only workflows/index.ts is public",[39m
+[31m+ ][39m
+
+ ❯ apps/api/src/architecture.test.ts:162:79
+    160|     "every import respects dependsOn, public surfaces and allowed pack…
+    161|     () => {
+    162|       expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolatio…
+       |                                                                               ^
+    163|     },
+    164|     AST_TEST_TIMEOUT_MS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts > advisory-lock class registry > no module source outside the registry spells a class number (they import ADVISORY_LOCK_CLASSES)
+AssertionError: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "governance/blocker-escalation.ts",[39m
+[31m+   "governance/executive-decisions.ts",[39m
+[31m+ ][39m
+
+ ❯ apps/api/src/modules/platform/advisory-locks.test.ts:86:23
+     84|       .filter((f) => /\b7302(19|[2-4][0-9])\b/.test(readFileSync(f, "u…
+     85|       .map((f) => relative(MODULES, f));
+     86|     expect(offenders).toEqual([]);
+       |                       ^
+     87|   });
+     88| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 116 passed (118)
+      Tests  2 failed | 2256 passed (2258)
+   Start at  14:26:33
+   Duration  292.45s (transform 16.12s, setup 13.11s, collect 240.01s, tests 467.95s, environment 53.34s, prepare 20.56s)
+
+ ELIFECYCLE  Test failed. See above for more details.
+exit=1

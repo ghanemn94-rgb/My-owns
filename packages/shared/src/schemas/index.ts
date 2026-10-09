@@ -75,3 +75,6 @@ export * from "./sustainment-areas.ts";
 // P4 slice D mirrors of BE-F (backend-workflow-engineer, T-DG4-BE-F; p4-work-split §D.1): forums and participants,
 // meeting series with their recurrence, and meetings.
 export * from "./governance-meetings.ts";
+// P4 slice D mirrors of BE-G (backend-workflow-engineer, T-DG4-BE-G; p4-work-split §D.2): the T16 Executive Decision
+// Log, decision-SLA escalations, blocker RAG by cycle, the escalation rules and the blocker_status.recorded payload.
+export * from "./executive-decisions.ts";
