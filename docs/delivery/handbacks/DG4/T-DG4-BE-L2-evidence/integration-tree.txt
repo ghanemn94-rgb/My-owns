@@ -1,0 +1,974 @@
+port-policy: PostgreSQL listening on port 24660 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration /home/user/wt/dg4-be-l2
+> vitest run --project integration
+
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-l2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1dgsvx_e8f3a8c8 (server_encoding UTF8); applied 59 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (20 tests) 181ms
+ ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts (16 tests) 4943ms
+   ✓ T09 register (REQ-PB-056) > the six T09 columns persist; BF-nn codes; the formula is the current version's expression  455ms
+   ✓ T09 register (REQ-PB-056) > confidence outside H/M/L -> 400 (create and PATCH), nothing written; the DB CHECK refuses it too  369ms
+   ✓ T09 register (REQ-PB-056) > an undefined variable -> 422 'Undefined variable: {name}'; an invalid expression writes nothing  335ms
+   ✓ calculations and lineage > records inputs with kind/unit/currency/period/source, assumptions and period; Unknown never 0; append-only  438ms
+   ✓ Finance validation of the benefit logic (REQ-PB-055) > FIN validates or rejects with a note; the author gets 403; final once recorded; If-Match 428/409  309ms
+   ✓ every mutation: AUD 403, If-Match, audit, archive > If-Match: 428 without, 409 stale on PATCH, archive and new version; archive guards; audit events  426ms
+   ✓ loadKpiP3GateFacts: the kpi half of the G4 GateFactsProvider > cases with sections and baseline state (incl. Stale); each financial benefit line's current version state  376ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts (17 tests) 6858ms
+   ✓ scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > score 6 -> 400; 0, 2.5 and '4' -> 400; a weightedScore property -> 400 (read-only); nothing written  338ms
+   ✓ scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > 5,4,3,2,1 under v1 -> stored 3.3000, shown 3.30, 0-100 view 57.5 with its label; appended with its cause; audited  320ms
+   ✓ scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > PATCH: If-Match 428/409; clearing (null) makes it incomplete again; duplicate POST 409; AUD 403 on POST and PATCH  313ms
+   ✓ rankings and history (REQ-S09-005, REQ-S09-003) > snapshot: deterministic tie-break, incomplete unranked, submitted -> ranked with audit; v2 activation -> history shows 'weight version 2' as the cause of the rank change  611ms
+   ✓ rankings and history (REQ-S09-005, REQ-S09-003) > score cause lists the criteria; relative cause when another initiative moved  357ms
+   ✓ overrides (REQ-S09-005) > an override without a reason is rejected (missing/empty -> 400 at /reason; blank/invisible -> 422); the proposer cannot approve; approved applies with 'override: <reason>'; revoke; AUD 403; If-Match  502ms
+   ✓ every BE-D mutation re-authorises inside its transaction (BE18A) > weight sets, scores, rankings and overrides: 403 at commit and nothing changes  748ms
+   ✓ comparison view (REQ-S09-004) > axes, filters (status, completeness, funding, flag) and injected sequencing/capacity flags  306ms
+   ✓ comparison view (REQ-S09-004) > more than 500 initiatives -> 422 prioritization.portfolio_too_large  1624ms
+ ✓ |integration| apps/api/test/integration/portfolio/roadmap.test.ts (12 tests) 4604ms
+   ✓ roadmap waves (T07, REQ-PB-050) > a new transformation shows the four B0079 waves verbatim, bilingual, source-seeded  331ms
+   ✓ roadmap waves (T07, REQ-PB-050) > commit-time authorisation on wave create and update (403 after the lock wait, audited, nothing written)  371ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > create (version 1, audited, AUD 403), list with the 3-7 count warning, read, edit with If-Match, archive  442ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > submit (initiative.edit, If-Match, audited) then acceptance by the executive owner; never the submitter; not-owner 403; AUD 403  445ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > a delegate of the executive owner accepts on their behalf (audited as such); never for the submitter  387ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > commit-time authorisation on deliverable create, update, submit and acceptance  402ms
+   ✓ milestones: approved vs forecast (ADR-0023 §2-§3, REQ-S09-006) > create (initiative.edit or roadmap.edit; no approved date), approve-date (roadmap.approve, reason), re-approval audited, variance computed  481ms
+   ✓ milestones: approved vs forecast (ADR-0023 §2-§3, REQ-S09-006) > commit-time authorisation on milestone create, update and approve-date  315ms
+   ✓ GET /transformations/{id}/roadmap: one read model (REQ-S09-006) > waves, initiatives, milestones, deliverables and initiative dependencies with versions and flags; a moved milestone shows at once  413ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests.test.ts (10 tests) 3999ms
+   ✓ change requests: create, read, edit, withdraw (S-4) > draft CR-nn with ETag 1; AUD 403; outside and ADM-only 404; exact 400/409/422 refusals; one audit event per mutation  398ms
+   ✓ REQ-PB-065 routing, SoD and the frozen impact assessment > a business_scope request is routed to the person mapped to SP; the requester cannot decide; SP's approval applies it  343ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > with no policy the DG3 re-approval is unchanged; beyond a configured threshold it is 422, within it 200; budget likewise  661ms
+   ✓ REQ-S07-015: a KPI target change (preview, refusal, approval, the old version readable) > the preview lists the bound benefit and the approved G2 decision; a direct second activation is 422; after BO's approval v2 is active and v1 readable  566ms
+   ✓ REQ-S04-014: a new version of an approved G4 benefit formula creates one change request > one automatic benefit_logic request routed to Finance; the DG3 response unchanged; G4 decision and snapshot byte-identical  449ms
+   ✓ S-4 commit-time authorization and S-1 free text > raise, edit, submit, withdraw and the policy: a TL revoked mid-request gets 403 and nothing is written  392ms
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (45 tests | 2 failed) 42656ms
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 5ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 11ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 9ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 169ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 167ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 147ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 245ms
+   ✓ every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 9ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  807ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  3092ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations  352ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  868ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  657ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  1465ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  794ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  440ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  463ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  448ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  895ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  620ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  895ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  436ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1041ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  591ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  928ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  1267ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  627ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  585ms
+   × every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts) 830ms
+     → contract: getPhaseWorkspace 200 body violates the schema: data/phases/0/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12231-1bb7-75a1-99cf-f49525788b34","currentPhase":"diagnose","phases":[{"phase":{"code":"diagnose","ordinal":1,"gateCode":"G1","sourceNameEn":"DIAGNOSE","nameAr":"التشخيص","sourceTitleEn":"DIAGNOSE — Build the Fact Base","titleAr":"التشخيص — بناء قاعدة الحقائق","sourcePurposeEn":"Establish fact base","purposeAr":"إرساء قاعدة الحقائق","sourceKeyOutputsEn":"Current state, root causes, value pools","keyOutputsAr":"الوضع الحالي، الأسباب الجذرية، مجمّعات القيمة","sourceObjecti
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  1012ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  1184ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  831ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  930ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  1221ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-F operations (p4-exercises-kbe-f.ts) 284ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  2232ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 1ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  4652ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request media types its operation declares 37ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  8155ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b) 85ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  2971ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 18ms
+     → expected [ 'getPhaseWorkspace', …(8) ] to deeply equal []
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB chunked over the limit","status":413,"code":"evidence.too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":483}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB chunked over the limit","ms":5,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB content-length over the limit","status":413,"code":"evidence.too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":505}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB content-length over the limit","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 no session","status":401,"code":"unauthenticated","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 403 no CSRF token","status":403,"code":"csrf","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 404 unknown evidence","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 409 stale If-Match","status":409,"code":"version_conflict","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 no If-Match","status":428,"code":"precondition_required","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 bad X-File-Name","status":400,"code":"validation.file_name","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 422 not a file","status":422,"code":"validation.evidence.not_a_file","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 undeclared media type (text/plain)","status":400,"code":"validation.content_type","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 Content-Length 30 MiB","status":401,"code":"unauthenticated","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 Content-Length 30 MiB","status":428,"code":"precondition_required","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, chunked","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, Content-Length","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":1,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, chunked","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, Content-Length 30 MiB","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP-CLOSE {"label":"after the refusals sweep","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly
+SWEEP-CLOSE {"label":"while a refused (403) client keeps sending its body","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload content-length","connectionsZeroMs":25,"partialFilesGoneMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload chunked","connectionsZeroMs":25,"partialFilesGoneMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server
+SWEEP-CLOSE {"label":"stalled upload in flight (default grace 5 s)","ms":5002,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns
+SWEEP-CLOSE {"label":"in-flight upload finishing during shutdown","ms":509,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log
+SWEEP {"path":"stalled body, requestTimeout 1.5 s","status":["HTTP/1.1 408"],"closedMs":1743}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight
+SWEEP-CLOSE {"label":"SIGTERM with a stalled upload (main.ts)","ms":5045,"exitCode":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html
+SWEEP {"path":"unmatched-route flood, limit 4/min","statuses":[404,404,404,429]}
+
+ ✓ |integration| apps/api/test/integration/connection-hygiene.test.ts (13 tests) 21239ms
+   ✓ an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt  1138ms
+   ✓ an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt  789ms
+   ✓ a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt  675ms
+   ✓ a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly  329ms
+   ✓ a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket  372ms
+   ✓ a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket  401ms
+   ✓ normal traffic is unchanged > a valid 3 MiB upload over a real socket is stored byte-exact with its sha256, and the keep-alive connection serves the next request  891ms
+   ✓ shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server  5433ms
+   ✓ shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns  966ms
+   ✓ shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log  1869ms
+   ✓ shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight  7608ms
+ ✓ |integration| apps/api/test/integration/adoption/indicators.test.ts (14 tests) 2100ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 3464ms
+   ✓ starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-003) > both End-to-End and Modular creates get the pin, six T01 rows, ten canvas boxes and six gates, each audited  407ms
+ ❯ |integration| apps/api/test/integration/workflows/phases.test.ts (14 tests | 12 failed) 2643ms
+   ✓ the phase catalogue (REQ-PB-014) > GET /phases: exactly six phases in order; names, purposes and key outputs equal B0021; objectives equal the phase blocks 208ms
+   × the phase catalogue (REQ-PB-014) > the workspace shows the current phase with its purpose, objective and key outputs, and each phase's gate status 184ms
+     → contract: getPhaseWorkspace 200 body violates the schema: data/phases/0/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-017d-765f-9627-1000edb86945","currentPhase":"diagnose","phases":[{"phase":{"code":"diagnose","ordinal":1,"gateCode":"G1","sourceNameEn":"DIAGNOSE","nameAr":"التشخيص","sourceTitleEn":"DIAGNOSE — Build the Fact Base","titleAr":"التشخيص — بناء قاعدة الحقائق","sourcePurposeEn":"Establish fact base","purposeAr":"إرساء قاعدة الحقائق","sourceKeyOutputsEn":"Current state, root causes, value pools","keyOutputsAr":"الوضع الحالي، الأسباب الجذرية، مجمّعات القيمة","sourceObjecti
+   × guided phase steps (REQ-S04-001) > each of the six phases shows steps, required evidence, owners (Unknown when unassigned) and a review queue 209ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0236-705b-8fb1-38f6ae0168ac","stepKey":"define.north_star","phase":"define","ordinal":1,"sourceProcedureEn":"Refine the North Star","procedureAr":"صقل نجم الشمال","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-02f7-71d8-b87c-2dccbf541ebc","ownerUserId":"01a12232-029f-
+   × guided phase steps (REQ-S04-001) > listPhaseSteps pages in procedure order with phase and status filters 135ms
+     → contract: listPhaseSteps 200 body violates the schema: data/items/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/5/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/6/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"items":[{"transformationId":"01a12232-0306-72ec-8ba5-3217a835f36c","stepKey":"diagnose.register_scope_sponsor","phase":"diagnose","ordinal":1,"sourceProcedureEn":"Register scope and sponsor","procedureAr":"تسجيل النطاق والراعي","requiredEvidenceEn":"At least one verified evidence item linked to the step (e.g. the initial charter or sponsor confirmation).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (مثل الميثاق الأولي أو تأكيد الراعي).","defaultOwnerRoleCode":"TL","review
+   × guided phase steps (REQ-S04-001) > an unmet completion rule cannot be put in review or accepted (422); SQL cannot bypass the rule 180ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-038d-70ab-862f-83c46653d025","stepKey":"diagnose.register_scope_sponsor","phase":"diagnose","ordinal":1,"sourceProcedureEn":"Register scope and sponsor","procedureAr":"تسجيل النطاق والراعي","requiredEvidenceEn":"At least one verified evidence item linked to the step (e.g. the initial charter or sponsor confirmation).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (مثل الميثاق الأولي أو تأكيد الراعي).","defaultOwnerRoleCode":"TL","reviewerRoleCode
+   × guided phase steps (REQ-S04-001) > other completion rules are evaluated server-side (RAID register empty -> 422; no open corrective case -> met) 156ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0442-71af-86fb-0ec70d978a05","stepKey":"transform.manage_raid_decisions","phase":"transform","ordinal":4,"sourceProcedureEn":"manage RAID, dependencies, decisions and corrective actions","procedureAr":"إدارة المخاطر والافتراضات والقضايا والاعتماديات والقرارات والإجراءات التصحيحية","requiredEvidenceEn":"At least one RAID entry recorded for the transformation.","requiredEvidenceAr":"إدخال واحد على الأقل في سجل المخاطر والافتراضات والقضايا والاعتماديات للتحول.","defaul
+   × guided phase steps (REQ-S04-001) > the owner cannot accept their own step (403); a non-owner cannot progress it (403); an owner is required (422) 181ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-04dd-719d-b336-82bc9c449ba5","stepKey":"define.north_star","phase":"define","ordinal":1,"sourceProcedureEn":"Refine the North Star","procedureAr":"صقل نجم الشمال","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-058d-738c-a3c9-5edbe00d99e2","ownerUserId":"01a12232-051c-
+   × guided phase steps (REQ-S04-001) > the review queue: one task per reviewer-role holder (never the owner); accept closes them and enables the next owned step once 213ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0592-74e8-a3d4-15360863e53f","stepKey":"diagnose.assess_performance","phase":"diagnose","ordinal":2,"sourceProcedureEn":"assess business/financial performance, customer experience, processes/operations, organization/governance, technology/data and capabilities","procedureAr":"تقييم الأداء التجاري/المالي وتجربة العملاء والعمليات/التشغيل والتنظيم/الحوكمة والتقنية/البيانات والقدرات","requiredEvidenceEn":"At least one verified evidence item linked to the step (the asses
+   × guided phase steps (REQ-S04-001) > return with a note, then back to review; a return without a note is 400; invalid transitions are 422 163ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0667-712c-b3c4-ce53e8c96129","stepKey":"define.outcome_hierarchy","phase":"define","ordinal":2,"sourceProcedureEn":"build the outcome hierarchy","procedureAr":"بناء هرم النتائج","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-0704-727b-8ea1-06eecb526b84","ownerUserId":
+   × steps never move a gate (REQ-S04-002: completing every phase task leaves the gate Draft) > completing all five Diagnose steps leaves G1 draft, with no submission and an unchanged gate instance 183ms
+     → contract: getPhaseWorkspace 200 body violates the schema: data/phases/0/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-070a-7059-831b-fda54ea2a1d3","currentPhase":"diagnose","phases":[{"phase":{"code":"diagnose","ordinal":1,"gateCode":"G1","sourceNameEn":"DIAGNOSE","nameAr":"التشخيص","sourceTitleEn":"DIAGNOSE — Build the Fact Base","titleAr":"التشخيص — بناء قاعدة الحقائق","sourcePurposeEn":"Establish fact base","purposeAr":"إرساء قاعدة الحقائق","sourceKeyOutputsEn":"Current state, root causes, value pools","keyOutputsAr":"الوضع الحالي، الأسباب الجذرية، مجمّعات القيمة","sourceObjecti
+   × authorization, If-Match and audit on every write (S-4) > AUD (read-only) gets 403 on every write and nothing is written; an outsider gets 404 179ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-07c1-7210-8b94-85f5b46c8018","stepKey":"diagnose.register_scope_sponsor","phase":"diagnose","ordinal":1,"sourceProcedureEn":"Register scope and sponsor","procedureAr":"تسجيل النطاق والراعي","requiredEvidenceEn":"At least one verified evidence item linked to the step (e.g. the initial charter or sponsor confirmation).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (مثل الميثاق الأولي أو تأكيد الراعي).","defaultOwnerRoleCode":"TL","reviewerRoleCode
+   × authorization, If-Match and audit on every write (S-4) > If-Match: 428 when missing, 409 when stale; If-Match "0" on an existing row is 409; creates are version 1 215ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0875-75ea-a8f2-44a84d69c0d1","stepKey":"design.compare_states","phase":"design","ordinal":2,"sourceProcedureEn":"compare current and target states","procedureAr":"مقارنة الحالتين الحالية والمستهدفة","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-0946-7038-922b-909a3c4
+   × authorization, If-Match and audit on every write (S-4) > an evidence item of another transformation cannot be linked (422) 319ms
+     → contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-094c-7305-8d4a-4d499416b070","stepKey":"diagnose.root_causes","phase":"diagnose","ordinal":4,"sourceProcedureEn":"distinguish symptoms from root causes","procedureAr":"التمييز بين الأعراض والأسباب الجذرية","requiredEvidenceEn":"At least one verified evidence item linked to the step (root-cause analysis).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (تحليل الأسباب الجذرية).","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"e
+   ✓ the 0051 phase-step guards map to the ADR-0035 §11 problems (a race never surfaces as a 500) > maps each guard a concurrent write can hit, and leaves other constraints to the generic mapping 1ms
+ ✓ |integration| apps/api/test/integration/media-types.test.ts (21 tests) 2149ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable  617ms
+ ✓ |integration| apps/api/test/integration/kpi/business-cases.test.ts (17 tests) 6643ms
+   ✓ transformation case: the ten B0085 sections (REQ-PB-053) > all ten sections persist and read back; missingSections clears once lines and owners exist  786ms
+   ✓ initiative cases and the roll-up (REQ-PB-054, REQ-S05-005) > the total equals the distinct lines once; editing an initiative line changes the roll-up without duplication  468ms
+   ✓ initiative cases and the roll-up (REQ-PB-054, REQ-S05-005) > Unknown is never 0; per currency; revenue vs margin and non-financial kept apart  309ms
+   ✓ lines: exactly one class (REQ-PB-053, REQ-S05-005) > two classes -> 400 at /class; class/kind and class/value-basis mismatch -> 422; value rules  383ms
+   ✓ Finance validation of the baseline (REQ-PB-055 part) > FIN validates; the author is refused 403; the hash is stored; a baseline change shows Stale  780ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > the read-only auditor gets 403 (audited) on all seven mutations, whatever the body  382ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > If-Match: 428 without, 409 stale, on update/archive of cases and lines; each success audited  449ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > WL edits only the initiative cases of initiatives they lead (record-level, 403 otherwise)  333ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > authorization is re-checked at commit time (update case): a grant revoked after authentication -> 403, nothing written  321ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > authorization is re-checked at commit time (archive case): a grant revoked after authentication -> 403, nothing written  310ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > authorization is re-checked at commit time (validate baseline): a grant revoked after authentication -> 403, nothing written  314ms
+   ✓ every mutation: AUD 403, If-Match 428/409, audit, WL record-level > authorization is re-checked at commit time (create line): a grant revoked after authentication -> 403, nothing written  321ms
+ ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts (19 tests) 6015ms
+   ✓ T08 columns, From external, types > the seven T08 columns round-trip; version 1, ETag and Location; audited; listed and read  407ms
+   ✓ T08 columns, From external, types > an unknown or retired type is 422 dependency.unknown_type; nothing written  334ms
+   ✓ T08 columns, From external, types > a self-dependency is 422; an initiative of another transformation is 422; From initiative needs its id (400)  503ms
+   ✓ dependency types (REQ-PB-052) > add, relabel, retire a custom type: configure only (AUD and TL 403), If-Match 428/409, audited, duplicate 409  351ms
+   ✓ cycles (REQ-S09-008, REQ-PB-051) > A→B→C→A is 422 naming the cycle exactly (ADR-0023 §5); nothing written  303ms
+   ✓ cycles (REQ-S09-008, REQ-PB-051) > A→B→A is reported the same way ('INI-01 → INI-02 → INI-01'); an archived edge no longer counts  306ms
+   ✓ cycles (REQ-S09-008, REQ-PB-051) > PATCH re-runs the check when an endpoint changes (422, nothing written); other edits pass  433ms
+   ✓ cycles (REQ-S09-008, REQ-PB-051) > two API requests A→B and B→A at once: exactly one commits, the other is 422 dependency.cycle  319ms
+   ✓ cycles (REQ-S09-008, REQ-PB-051) > two DATABASE connections inserting A→B and B→A concurrently: exactly one commits (dependency_acyclic)  365ms
+   ✓ authorisation, concurrency and audit of every T08 mutation > AUD 403 on create, update, archive (audited as authorization.denied); 428/409 on update and archive  405ms
+   ✓ authorisation, concurrency and audit of every T08 mutation > commit-time authorisation on update and archive: the row lock wait, then 403 on reloaded grants  365ms
+   ✓ schedule flags on T08 (ADR-0023 §5) > a predecessor finishing after the needed-by date is flagged; moving its milestone earlier clears it  385ms
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (33 tests) 2421ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 1588ms
+ ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts (21 tests) 11630ms
+   ✓ submit (draft -> submitted) > REQ-PB-007/REQ-PB-022: before G1 -> 422 invalid-transition with the exact G1 text; errors[] lists every failing precondition; nothing written  598ms
+   ✓ submit (draft -> submitted) > REQ-PB-006: without an outcome/KPI link -> 'Outcome before activity' validation error at /outcomeContributions; accepted once a link exists  447ms
+   ✓ submit (draft -> submitted) > Modular: an accepted inherited approval of G1 with verified evidence satisfies submit (never a gate decision)  643ms
+   ✓ withdraw and cancel > withdraw: submitted or ranked -> draft with a reason; draft -> 422 not_withdrawable; no reason -> 400  655ms
+   ✓ withdraw and cancel > cancel: any non-terminal status -> cancelled with reason and stamps; launched or cancelled -> 422 not_cancellable  1298ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ranking never selects; select writes a portfolio_selection row and shows 'Selected - unfunded'  513ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > deselect: selected or funded -> ranked with a rationale; ranked or launched -> 422 not_deselectable  789ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ADR-0021 §6 (T-DG3-ARCH-03): select/deselect on someone's behalf -> 422 selection.on_behalf_not_supported, even under an active delegation; nothing written  540ms
+   ✓ launch (funded -> launched) > REQ-PB-004 (acceptance): End-to-End launch -> 422 'North Star, outcomes and target state not yet approved'; after G2 and G3 approval the same call succeeds  569ms
+   ✓ launch (funded -> launched) > direction is checked BEFORE funding: a selected-unfunded End-to-End initiative gets the sequencing reason, errors[] lists both  440ms
+   ✓ launch (funded -> launched) > 'Selected - unfunded' cannot launch (also after a rejected/deferred or revoked funding decision); other statuses are not launchable  873ms
+   ✓ launch (funded -> launched) > a draft launched before G1 reports G1 first (precondition 1)  329ms
+   ✓ launch (funded -> launched) > End-to-End: an accepted waiver of G3 (G2 approved) satisfies the direction rule for launch; the gate stays unapproved  506ms
+   ✓ launch (funded -> launched) > Modular: a funded initiative launches without G2/G3 (not held to the End-to-End rule); WL (no initiative.launch) gets 403  461ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > submit: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  383ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > withdraw: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  411ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > select: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  405ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > deselect: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  376ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > launch: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  399ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > cancel: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  413ms
+   ✓ latestFundingState() (ADR-0023 §7): the latest funding decision decides, fail closed > none -> unfunded; approved -> funded; deferred after approved -> unfunded; revoked -> revoked  471ms
+ ✓ |integration| apps/api/test/integration/sustainment/controls.test.ts (15 tests) 2840ms
+   ✓ control checks: a failed check emits one control_check.failed (REQ-S11-008) > an ownerless control's check goes to the BAU owner; its failure event carries ownerUserId null  303ms
+   ✓ sustainment reviews: the assignee completes (ADR-0034 §6, §9) > parity (D-102 (2)): the worker's review twin writes the same rows as the API's scheduleAreaReview  302ms
+ ✓ |integration| apps/api/test/integration/approvals/approvals.test.ts (17 tests) 3577ms
+   ✓ routing (REQ-S10-008; ADR-0026 §2, §8) > a mapped person without a business-approver role is refused (422 routing.assignee_not_approver)  424ms
+   ✓ request (ADR-0026 §4, §5) > SLA types: next SteerCo is Unknown (never guessed); urgent needs a reason and a configured route; release plan without a milestone is Unknown  477ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > commit-time authorization: a decide right revoked (or a session ended) while the request waits is refused  467ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (29 tests) 8344ms
+   ✓ valid text still succeeds (stored as entered) and null still clears > charter: text with surrounding spaces is kept verbatim; null clears; each change is audited once  340ms
+   ✓ defense in depth: blank text already in the database is never 'present' (G1 readiness, pre-checks, thesis) > blank In scope, Case for change, thesis part and T01 texts read as missing  538ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "‏" is 400 validation.blank at /outOfScope; nothing written, no audit  359ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "" is 400 validation.blank at /outOfScope; nothing written, no audit  361ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "⁠⁠⁠" is 400 validation.blank at /outOfScope; nothing written, no audit  355ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "؜" is 400 validation.blank at /outOfScope; nothing written, no audit  409ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "️͏" is 400 validation.blank at /outOfScope; nothing written, no audit  382ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "᠋᠏" is 400 validation.blank at /outOfScope; nothing written, no audit  347ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "\u0001" is 400 validation.blank at /outOfScope; nothing written, no audit  352ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "󠄀 ឴឵" is 400 validation.blank at /outOfScope; nothing written, no audit  375ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𖿤" is 400 validation.blank at /outOfScope; nothing written, no audit  320ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𝅙" is 400 validation.blank at /outOfScope; nothing written, no audit  323ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𝅙𝅙" is 400 validation.blank at /outOfScope; nothing written, no audit  316ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope " 𖿤\t𝅙 " is 400 validation.blank at /outOfScope; nothing written, no audit  377ms
+   ✓ invisible-only free text is blank (F-DG2-160) > visible text that contains U+16FE4 or U+1D159 is accepted verbatim and counts as documented (F-DG2-230)  667ms
+   ✓ invisible-only free text is blank (F-DG2-160) > an Arabic Out of scope with RLM marks is accepted verbatim, the pre-check reads pass and G1 does not list it  426ms
+   ✓ invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7) > P1 transformation archive (reasonRequest): invisible reason is 400 at /reason; a valid reason archives  426ms
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored
+BE17 R8: {"poolSize":5,"stalledUploads":5,"sessions":{"sessions":5,"visible":5,"idleInTx":0,"nonIdle":0},"me":{"status":200,"ms":6},"ready":{"status":200,"ms":3},"patch":{"status":200,"ms":19},"leftovers":[],"rows":0,"closeMs":2,"errors":[]}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object
+BE17 stale-if-match: {"patchDuringBody":{"status":200,"ms":29},"patch":{"status":200,"ms":29},"upload":{"status":409,"type":"urn:mth:problem:version-conflict","title":"Version conflict","detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a12233-022b-752f-8b9b-ee0f35398fa3","currentVersion":2},"rows":0,"files":[],"version":2,"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left
+BE17 valid-uploads: {"out":[{"size":1,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.S6ME8h/claude-0/mth-evidence-it-GviBrM/01a12232-f97f-706a-8447-af840b893f9d/01a12232-f9d6-743b-916d-2257917af2d3/01a12233-03dc-711b-9ac1-cd6629328837/01a12233-03f7-74b7-b3bf-321cf8f26a7e"]},{"size":65536,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.S6ME8h/claude-0/mth-evidence-it-GviBrM/01a12232-f97f-706a-8447-af840b893f9d/01a12232-f9d6-743b-916d-2257917af2d3/01a12233-0425-77b3-9010-94ae05ba7f4c/01a12233-0432-7617-97d3-3768fa530690"]},{"size":3145728,"status":200,"rows":1,"sha":true,"files":["/var/tmp/mth-run.S6ME8h/claude-0/mth-evidence-it-GviBrM/01a12232-f97f-706a-8447-af840b893f9d/01a12232-f9d6-743b-916d-2257917af2d3/01a12233-0454-75b8-9974-0a5310e32004/01a12233-0468-728f-b3ef-2b0c52e4ef91"]}],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection
+BE17 slow-readers: {"poolSize":2,"readers":3,"bytesReceivedWhilePaused":[65536,65536,65536],"fileBytes":25165824,"me":{"status":200,"ms":6},"ready":{"status":200,"ms":3},"sessions":{"sessions":2,"visible":2,"idleInTx":0,"nonIdle":0},"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang
+BE17 pool-exhausted: {"me":{"status":503,"ms":405},"meCode":"unavailable","ready":{"status":503,"ms":402},"meAfter":{"status":200,"ms":10},"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6a: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6d: {"status":null,"classified":25,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6c: {"status":408,"classified":26,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6e: {"status":null,"classified":25,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log
+BE17 db-econnreset: {"status":500,"resets":4,"errors":[{"msg":"unhandled error","code":"ECONNRESET","message":"read ECONNRESET"}]}
+
+ ✓ |integration| apps/api/test/integration/request-io.test.ts (10 tests) 11607ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored  1714ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object  449ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left  338ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection  1308ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang  1489ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  1978ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  697ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  2006ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  702ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log  444ms
+ ✓ |integration| apps/api/test/integration/sustainment/transition-decisions.test.ts (10 tests) 3494ms
+   ✓ create (ADR-0034 §3, §12) > 422 monitoring_after_end, benefit_validated and validation.reference (exact texts); nothing written  719ms
+   ✓ decision through the canonical approval (ADR-0034 §3; ADR-0026 §4) > changes requested: an editable draft again; resubmitted through the approval; then approved  330ms
+   ✓ REQ-S11-007: forecast stays forecast; monitoring tasks for the residual owner (ADR-0034 §3, §6) > parity (D-102 (2)): the worker's runMonitoringScan writes the same rows as the API's scheduleMonitoringReviews  521ms
+ ✓ |integration| apps/api/test/integration/gates/g4.test.ts (5 tests) 5733ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > 422 gate_criteria_incomplete names 'Owners', 'Finance validation', the initiative without a gap link, the missing funding and capacity commitment; nothing written  1114ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > an empty portfolio is 'Initiative cards' (g4.portfolio_empty); a capacity over-allocation and Unknown are conflicts  1018ms
+   ✓ G4 treats an Unknown schedule as a missing item (D-079; ADR-0021 §7, §11 item 3) > 'Schedule unknown: DEP-nn' refuses the submission; a mitigation or the missing date clears it  1039ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > TL submits; FIN validates and funds; the capacity owner commits; 403/403/409 hold; SP approves -> phase transform  1531ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > the submitter cannot decide G4, even holding the approver role (403 gate.submitter_cannot_decide)  888ms
+ ✓ |integration| apps/api/test/integration/workflows/g5-g6.test.ts (13 tests) 11748ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an open High-impact risk without an approved disposition: 422 whose detail and errors list 'Risk closure'; nothing written  591ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an approved disposition completes Risk closure (a pending one does not; a medium risk never counts)  664ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > G5 configured to BO: an SP decision is 403 gate.not_approver, a BO decision with the scale scope is 201  614ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > the scale-scope rules (ADR-0035 §5): required with a G5 approval, refused elsewhere, items inside the organization  929ms
+   ✓ G5 decision rights (D-094; ADR-0035 §8) > AUD 403 on the G5 submission and decision; an ADM-only caller 403 on the decision (D-094); nothing written  444ms
+   ✓ G1-G4 refusals keep the DG2 key form (ADR-0035 §2: the label form is G5/G6 only) > a G4 submission with gaps names the criterion keys in its detail, as in DG3  425ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > without an accepted BAU handover: 422 listing 'Ownership transfer'; nothing written  490ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > with every fact: 201 with a frozen g6 snapshot; an edit afterwards leaves it unchanged; the SP approval changes no phase, closes nothing and writes nothing under docs/delivery/  7104ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > G6 allows SP only: a BO cannot be configured as its approver (DG2 422 gate.approver_role_not_allowed)  391ms
+ ✓ |integration| apps/api/test/integration/adoption/assessment-records.test.ts (10 tests) 1891ms
+ ✓ |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts (14 tests) 2074ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  338ms
+ ✓ |integration| apps/api/test/integration/adoption/assessment-forms.test.ts (10 tests) 1835ms
+   ✓ authorisation (ADR-0033 §9) > AUD, TL and FIN 403 on writes; ADM-only and outsiders 404; another transformation 404; commit-time 403  302ms
+   ✓ authorisation (ADR-0033 §9) > commit-time 403 on create, edit, retire, invite and cancel; nothing written  348ms
+ ✓ |integration| apps/api/test/integration/governance/executive-decisions.test.ts (16 tests) 2074ms
+ ✓ |integration| apps/api/test/integration/sustainment/handovers.test.ts (10 tests) 2317ms
+   ✓ acceptance transfers routine ownership and creates the first review exactly once (REQ-PB-083) > area -> BAU; KPIs, controls and benefits transferred; one review and one My Work item for the BAU owner  308ms
+ ✓ |integration| apps/api/test/integration/raid/corrective-cases.test.ts (12 tests) 1678ms
+ ✓ |integration| apps/api/test/integration/benefits/measurements.test.ts (12 tests) 3636ms
+   ✓ create, read, list (ADR-0030 §2) > BO records a draft: 201, Location, ETag, basis, one audit event; list newest first; AUD reads  380ms
+   ✓ create, read, list (ADR-0030 §2) > the §11 refusals: step, value shape, unmonetised, period taken, period range, unknown evidence  442ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > submit needs the period and evidence; If-Match 428/409; one audit event and one outbox event; pending only  440ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > REQ-S08-017: an in-place edit of a validated value is 409 validated_immutable; nothing written  320ms
+ ✓ |integration| apps/api/test/integration/adoption/interventions.test.ts (7 tests) 1680ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 5154ms
+   ✓ create > persists a draft End-to-End record in Diagnose with organization defaults (Asia/Riyadh, SAR) and a generated code  534ms
+   ✓ closure is not a status edit (F-DG1-001: closure needs the G6 business approval, absent in P1) > refuses active -> closed with 422 invalid-transition; the record keeps its state, version and audit trail  312ms
+   ✓ archive > needs a reason, If-Match and transformation.archive; archived records are read-only and hidden by default  342ms
+   ✓ list: filters, sorting and cursor pagination > pages through a stable order without duplicates or gaps  1293ms
+   ✓ audit trail endpoint > lists events newest first with actor names, paginated; needs audit.read (TO yes, others 403/404)  343ms
+ ✓ |integration| apps/worker/test/integration/raid-corrective.test.ts (10 tests) 2924ms
+   ✓ raid.corrective_control and raid.corrective_adoption through the production worker (REQ-S12-016) > a failed control check opens one owned case with a 5-working-day follow-up and one work item; replay and restart create none  908ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 4291ms
+   ✓ F-DG2-142 evidence-link removal needs edit rights on the record (REQ-S10-001) > repro: a WL cannot remove the TL's link on a T01 row they may not edit (403 + denial audit); the TL can  444ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > End-to-End: G2 and G3 cannot be submitted before their predecessor is approved (422 gate.out_of_sequence), nothing written  593ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > repro: a pending G3 cannot be APPROVED while G2 is unapproved (422), the phase does not jump, nothing is written  397ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > an approval advances exactly one step from the gate's own phase; it never skips (define -> mobilize refused)  341ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > Modular entry stays valid: entering at design, G3 is not blocked by the earlier gates (only by its own criteria)  693ms
+ ✓ |integration| apps/api/test/integration/adoption/stakeholder-groups.test.ts (11 tests) 1836ms
+   ✓ authorization (ADR-0033 §9; S-4) > AUD is 403 on every write; ADM-only and outsiders 404 on every read and write; nothing is written  410ms
+ ✓ |integration| apps/api/test/integration/calendar/calendar.test.ts (13 tests) 1941ms
+   ✓ REQ-S15-008: time semantics and per-row currency > changing the organization's default currency affects only new records  648ms
+ ✓ |integration| apps/api/test/integration/governance/raci-matrices.test.ts (12 tests) 4946ms
+   ✓ REQ-S10-007: independent copies; edits are authorized, versioned and audited > changing one transformation's RACI changes neither the template nor another transformation  504ms
+   ✓ REQ-S10-007: independent copies; edits are authorized, versioned and audited > commit-time authorization: a raci.edit right revoked while the request waits is refused, nothing written  478ms
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > submit freezes the version and routes it to the Sponsor; the Sponsor approves it; a later edit returns it to draft  747ms
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > T11: TL submits (decision_right.configure); a rejection returns the matrix to draft and unfreezes the rows  603ms
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > an unmapped Sponsor blocks the submit with a visible routing error; nothing is written  512ms
+   ✓ REQ-PB-008: Transform readiness (operating model before execution) > not ready when the charter decision rights or T11 are empty; ready once they are completed; DG3 readiness unchanged  769ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/versions.test.ts (10 tests) 1796ms
+ ✓ |integration| apps/api/test/integration/sustainment/status-model.test.ts (9 tests) 1789ms
+   ✓ labels (ADR-0034 §2; REQ-PB-009, REQ-S11-006) > REQ-PB-009: delivery Complete without a validated benefit is 'Delivered — value validation pending'  557ms
+ ✓ |integration| apps/api/test/integration/governance/meetings.test.ts (12 tests) 2242ms
+   ✓ createMeeting and getMeeting (REQ-S16-019 Meeting) > without a business calendar the cut-off is Unknown (calendar_not_configured), never guessed  340ms
+ ✓ |integration| apps/api/test/integration/groups/groups.test.ts (9 tests) 1792ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 5985ms
+   ✓ starter structure and live readiness > a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are enabled (0059) but out of sequence  586ms
+   ✓ starter structure and live readiness > G1 submission without an initial charter is refused (422 gate_criteria_incomplete) and writes nothing  456ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  788ms
+   ✓ submission and decision (business approval by a person) > the submitter cannot decide, even when they hold the approver role (403 gate.submitter_cannot_decide)  744ms
+   ✓ submission and decision (business approval by a person) > configuring the approver: allowed roles only, refused while a submission is pending, needs gate.configure  428ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  985ms
+   ✓ decision outcome text is cut on a code-point boundary (F-DG2-260) > a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD  676ms
+ ✓ |integration| apps/api/test/integration/governance/decision-rights.test.ts (11 tests) 2665ms
+   ✓ REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > POST /transformations copies the four rows verbatim, both matrix headers and the six T12 deliverables (36 cells)  360ms
+   ✓ REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > an unmapped Approve party is a visible routing error (422 routing.role_unmapped), never a fallback  489ms
+   ✓ T11 edits (ADR-0026 §5; S-4) > commit-time authorization: a configure right revoked while the request waits is refused, nothing written  454ms
+ ✓ |integration| apps/api/test/integration/governance/meeting-series.test.ts (11 tests) 2679ms
+   ✓ working days come from the business calendar (ADR-0025 §1) > without a business calendar a daily series generates nothing (calendar_not_configured); a 'keep' weekly series generates with an Unknown cut-off  418ms
+   ✓ createMeetingSeries authorization and validation > negative: AUD, TL 403; ADM-only, another organization 404; a forum of another transformation is 400  391ms
+ ✓ |integration| apps/api/test/integration/invalid-utf8.test.ts (14 tests) 4922ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter create: 400 for every invalid sequence and framing; no charter, no audit row, no U+FFFD stored  1338ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter update (PATCH, If-Match): version, value and audit trail unchanged  437ms
+   ✓ over a real socket (the framing the reviewer probed), unauthenticated and authenticated > 400 validation.json for both framings, with and without a session; nothing stored  412ms
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > Arabic and emoji text, with Content-Length and chunked: stored and audited byte for byte  858ms
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > a leading BOM (EF BB BF) is stripped: the charter is created with the exact text  800ms
+ ✓ |integration| apps/api/test/integration/portfolio/capacity.test.ts (7 tests) 5865ms
+   ✓ the conflict rule (ADR-0023 §6) > over-allocated with the decimal shortfall; Unknown without a capacity row; a cancelled initiative's demand does not count  898ms
+   ✓ the conflict rule (ADR-0023 §6) > the prioritization view carries the capacity flags (DEFAULT_FLAG_SOURCES wired), on the item and its initiative  837ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > roles: create/update with 400, 403 (AUD, no capacity.edit), 409 duplicate code, 428/409 If-Match, audit  719ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > capacity: FTE is a decimal string (numbers, 3 decimals, negatives -> 400), month is YYYY-MM-01, one active row per role and month  1014ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > demand: planned -> committed -> released; 422s for the wrong state; commit needs capacity.commit (TL 403, TO 200); audit  835ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > a cancelled initiative's demand is read-only: create, update, commit and release -> 422 initiative.read_only  563ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > BE18A: every capacity mutation re-authorises at commit - a grant revoked while the request waits is 403, nothing written  859ms
+ ✓ |integration| apps/api/test/integration/raid/register.test.ts (15 tests) 1699ms
+ ✓ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests) 5153ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > charter create (outOfScope, freeText): no charter is created  512ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > charter update (inScope): version, value and audit trail unchanged  537ms
+   ✓ U+0000 in a JSON body string is 400 validation.invalid_character; nothing is written or audited > a NUL in an object key is reported at that key's pointer  486ms
+   ✓ text without NUL is unaffected > visible text with other control-like marks (U+0001 inside, RLM) is accepted verbatim  426ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter create (outOfScope, text column): no charter is created, nothing is stored as U+FFFD  446ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > charter update (inScope): version, value and audit trail unchanged  490ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > journey step name (reaches jsonb directly): 400 at /steps/0/name, not validation.format at ''  374ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > a lone surrogate in an object key is reported at that key's pointer  345ms
+   ✓ a lone UTF-16 surrogate in a JSON body string is 400 validation.invalid_character (F-DG2-260) > emoji (valid surrogate pairs) and Arabic are accepted and stored verbatim, in text and in jsonb  458ms
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored
+BE18 Q1 {"during":["01a12235-49c7-73fc-85ee-c6f2c4fee382.part"],"revoked":1,"response":{"status":403,"code":"forbidden"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0},"denials":[{"record_type":"transformation","record_id":"01a12235-4760-700a-8f96-b537d54d4533","reason":"POST /api/v1/transformations/:transformationId/evidence/:evidenceId/content requires transformation.read"}]}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 Q1b {"logout":200,"me":401,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 idle-expiry {"expired":1,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 absolute-expiry {"expired":1,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable
+BE18 Q7 {"pgActivityAt1s":[{"state":"idle","n":3}],"me":200,"meMs":8,"logins":[{"status":302,"location":"/login?error=idp_unavailable","ms":4004},{"status":302,"location":"/login?error=idp_unavailable","ms":4005},{"status":302,"location":"/login?error=idp_unavailable","ms":4005}]}
+
+ ✓ |integration| apps/api/test/integration/commit-time-auth.test.ts (8 tests) 8503ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored  594ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored  546ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored  587ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored  557ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploader's user account is disabled while the body streams: 401, nothing committed  555ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > positive control: an upload whose session and grant stay valid commits (200), byte-exact, audited once  433ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > a grant revoked and granted again (a new assignment) while the body streams: the commit sees the CURRENT grants and succeeds  494ms
+   ✓ F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable  4096ms
+ ✓ |integration| apps/api/test/integration/benefits/finance-validation.test.ts (9 tests) 3275ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > BO, AUD and ADM-only get 403; FIN approves; two audit events by FIN; the task is done; validated +amount  505ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > the queue task goes to the named Finance validator and is completed by the decision  328ms
+   ✓ REQ-S08-015: all six items, and the other §11 refusals > items not accepted, approved amount shape, rejection note, If-Match 428/409, SoD  396ms
+   ✓ REQ-S08-015: all six items, and the other §11 refusals > a rejected value stays visible as rejected; the period can be measured again  328ms
+   ✓ the queue read > queued first, oldest first; status filter; AUD reads; outsider 404; cursor pages  411ms
+ ✓ |integration| apps/api/test/integration/benefits/overlaps.test.ts (11 tests) 2019ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts (7 tests) 4482ms
+   ✓ waivers (End-to-End launch sequencing) > create: 201 pending, version 1, audited; reason/expiry required, G1 never waived, no past expiry, AUD 403  627ms
+   ✓ waivers (End-to-End launch sequencing) > decide: 428/409, AUD 403, not the recorder (403), only the gate's approver (403); accepted unblocks launch  679ms
+   ✓ waivers (End-to-End launch sequencing) > separation of duties: the recorder can never accept their own dispensation (403), even holding gate.decide  458ms
+   ✓ waivers (End-to-End launch sequencing) > revoke: only accepted ones, by the approver with a reason; If-Match; AUD 403; the blocker returns  547ms
+   ✓ inherited approvals (Modular entry) > need body, date and evidence; count only when the evidence is VERIFIED and another person accepted them  595ms
+   ✓ the gate list and gate view inheritedApproval annotation (ADR-0021 §5; F-DG3-120) > pending_verification → accepted (counts) → revoked; G1 stays draft and no gate decision is ever written  894ms
+   ✓ the gate list and gate view inheritedApproval annotation (ADR-0021 §5; F-DG3-120) > an End-to-End transformation's gates carry inheritedApproval null (the DG2 shape otherwise unchanged)  522ms
+ ✓ |integration| apps/api/test/integration/delegations/delegations.test.ts (13 tests) 6138ms
+   ✓ delegated approvals (REQ-S10-010; ADR-0026 §3 rules 6-9) > after expiry B loses the capability (at once, before any sweep); the sweep then marks it expired, once  2690ms
+   ✓ delegated approvals (REQ-S10-010; ADR-0026 §3 rules 6-9) > capability is the delegator's: a delegator who lost approval.decide gives the delegate nothing  752ms
+   ✓ delegated approvals (REQ-S10-010; ADR-0026 §3 rules 6-9) > never to the requester of an approval pending with the delegator (422 delegation.delegate_is_requester)  644ms
+   ✓ delegated approvals (REQ-S10-010; ADR-0026 §3 rules 6-9) > the requester cannot approve through a delegation either (SoD: on behalf of the requester is 403)  574ms
+ ✓ |integration| apps/api/test/integration/benefits/register.test.ts (17 tests) 1568ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/actuals.test.ts (11 tests) 2120ms
+ ✓ |integration| apps/api/test/integration/governance/forums.test.ts (12 tests) 1628ms
+ ✓ |integration| apps/worker/test/integration/sustainment-scans.test.ts (5 tests) 2173ms
+   ✓ sustainment.review_scan after closure (REQ-S11-004, REQ-S03-002, REQ-PB-083) > the closed transformation's BAU area gets its next review on time, once; its linked KPI accepts an actual  864ms
+   ✓ sustainment.review_scan after closure (REQ-S11-004, REQ-S03-002, REQ-PB-083) > after a worker outage one run catches up every missed due date, once each; a rerun creates nothing  332ms
+   ✓ sustainment.control_check_scan (REQ-S11-008) > end to end: a failed check emits one control_check.failed and slice E opens ONE recovery case (owner, follow-up)  396ms
+ ✓ |integration| apps/api/test/integration/portfolio/budget.test.ts (13 tests) 1254ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts (12 tests) 980ms
+ ✓ |integration| apps/api/test/integration/portfolio/links.test.ts (12 tests) 3523ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > accepts 1..n links to a TOM gap and a diagnosed finding, each audited; no_gap_link clears and returns  310ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > G3 completeness is identical with and without initiatives and gap links (TOM is not the portfolio)  685ms
+   ✓ decision links (T05 'Required decisions', one decision model) > links a canonical decision of the transformation; foreign 422, duplicate 409; removable  671ms
+   ✓ authorization on every link mutation > AUD gets 403 on the three creates and the three removes (audited denial, nothing written); a 404 for no access  328ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 3119ms
+   ✓ cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TL at BU a1 may create in a1 but not in the sibling a2 (BU unreadable -> 404) nor in org B  404ms
+   ✓ a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > TL @ BU a1: create -> read -> list -> update -> audit -> archive all succeed (explicit, audited assignment)  490ms
+   ✓ a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > still denies the BU-scoped creator every OTHER transformation, cross-BU and cross-organization  487ms
+   ✓ a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > adds no assignment when the creator can already read the record (TO inherits downward)  368ms
+   ✓ a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > never carries over a role that holds an approval permission (no approver is manufactured by a create)  419ms
+   ✓ a business-unit-scoped creator can work on what it created, and nothing more (F-DG1-106) > revoking the source BU grant also revokes the derived assignment (same transaction, audited)  449ms
+ ✓ |integration| apps/api/test/integration/raid/dependency-entries.test.ts (9 tests) 1169ms
+ ✓ |integration| apps/api/test/integration/admin.test.ts (11 tests) 671ms
+ ✓ |integration| apps/api/test/integration/approvals/adm-not-approver.test.ts (4 tests) 2337ms
+   ✓ REQ-S10-003: an ADM-only user is never a business approver > decideApproval: 403, also as a member of the assignee group; nothing written  837ms
+   ✓ REQ-S10-003: an ADM-only user is never a business approver > unchanged: a reader without the approval right, AUD, a non-member, a user with no grant, and a mixed-grant user  393ms
+ ✓ |integration| apps/api/test/integration/sustainment/closure.test.ts (9 tests) 3259ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > a validated benefit needs a BAU owner; then closed (basis validated_value, snapshot), audited; 409 again  574ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > a benefit covered by an approved transition decision closes with basis transition_decision  302ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > S-4: a TL revoked after the identity hook gets 403 at commit time (initiative and transformation); nothing written  305ms
+   ✓ closeTransformation (ADR-0034 §7; REQ-S03-003; D-089 Q4) > in order: not open, G6 not approved, value pending, BAU pending; then closed (status closed, never archived)  976ms
+ ✓ |integration| apps/api/test/integration/benefits/scenarios.test.ts (7 tests) 1532ms
+   ✓ scenario value rules (ADR-0029 §10, §11; REQ-S08-010) > parent, archived benefit, period taken, period range, no value, unknown benefit  323ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/trajectories.test.ts (8 tests) 1311ms
+ ✓ |integration| apps/api/test/integration/portfolio/funding.test.ts (8 tests) 7090ms
+   ✓ recording a funding decision (business approval) > approved: decision (executive, DEC-nn) + funding_decision + selected -> funded in one transaction, each audited  1391ms
+   ✓ recording a funding decision (business approval) > rejected / deferred leave 'Selected - unfunded'; revoked returns funded -> selected; revoking unfunded or launched -> 422  943ms
+   ✓ recording a funding decision (business approval) > an initiative that is not selected -> 422 funding.not_selected with the exact text; nothing written  549ms
+   ✓ delegation is refused (ADR-0021 §6) > onBehalfOfUserId -> 422 funding.on_behalf_not_supported at /onBehalfOfUserId, before the business preconditions; nothing written  743ms
+   ✓ the deselect rule: deselecting voids funding > funded -> deselected -> re-selected is 'Selected - unfunded' and cannot launch; a new approved decision funds it  1012ms
+   ✓ validation, authorization and idempotency > 400 for malformed bodies; 422 for amounts numeric(20,4) cannot hold; unknown business case 422  770ms
+   ✓ validation, authorization and idempotency > FIN and SP may record; TL, WL, TO and AUD get 403 (audited as authorization.denied); BE18A at commit  770ms
+   ✓ validation, authorization and idempotency > Idempotency-Key: the same key and body replays the first response and writes once  811ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests) 2452ms
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty
+BE18A R12-07 {"during":["01a12236-b625-70f9-85e6-13ece3dd2377/01a12236-b685-74c8-b622-6311185d4a08/01a12236-bf9e-76ed-a9f6-911aab79c8ab/01a12236-bfea-7188-b842-75fe7ab87f38.part (2097152 B)"],"exitCode":0,"signal":null,"ms":5049,"after":[],"rows":0,"serverClosed":true,"response":""}
+
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty
+BE18A streaming {"sentAtSignal":720896,"sentTotal":6946816,"exitCode":0,"ms":5042,"after":[],"rows":0,"serverClosed":true}
+
+stdout | apps/api/test/integration/shutdown-cleanup.test.ts > F-DG2-460 defence in depth: the start-up sweep of stale temporaries > removes a .part last written over an hour ago, logs it at info (no content), and keeps a fresh .part and every final object
+BE18A sweep {"after":["01a12236-f8ad-7058-9a1a-3ee182742ca0/01a12236-f8ad-7058-9a1a-4330cd9f9313/01a12236-f8ad-7058-9a1a-45d05f40c899/01a12236-f8ad-7058-9a1a-4ede82944134.part (46 B)","01a12236-f8ad-7058-9a1a-3ee182742ca0/01a12236-f8ad-7058-9a1a-4330cd9f9313/01a12236-f8ad-7058-9a1a-45d05f40c899/01a12236-f8ad-7058-9a1a-51d3258cd747 (46 B)","01a12236-f8ad-7058-9a1a-3ee182742ca0/01a12236-f8ad-7058-9a1a-4330cd9f9313/01a12236-f8ad-7058-9a1a-45d05f40c899/01a12236-f8ad-7058-9a1a-543e3fe79534 (46 B)","01a12236-f8ad-7058-9a1a-3ee182742ca0/01a12236-f8ad-7058-9a1a-4330cd9f9313/01a12236-f8ad-7058-9a1a-45d05f40c899/notes.part (46 B)","01a12236-f8ad-7058-9a1a-59ba140a32a1/01a12236-f8ae-7559-b667-aeede6e19426.part (46 B)"],"removals":[{"level":30,"time":1791575392083,"pid":5754,"hostname":"vm","key":"01a12236-f8ad-7058-9a1a-3ee182742ca0/01a12236-f8ad-7058-9a1a-4330cd9f9313/01a12236-f8ad-7058-9a1a-45d05f40c899/01a12236-f8ad-7058-9a1a-49fbea10814e.part","sizeBytes":46,"ageMs":7201702,"msg":"evidence store: stale temporary object removed"}],"summary":{"level":30,"time":1791575392084,"pid":5754,"hostname":"vm","removed":1,"keptFresh":1,"olderThanMs":3600000,"msg":"evidence store: start-up sweep of stale temporary objects finished"}}
+
+ ✓ |integration| apps/api/test/integration/shutdown-cleanup.test.ts (4 tests) 18881ms
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > R12-07: 2 MiB of a declared 10 MiB upload, then the client stalls; SIGTERM -> exit 0 within grace + backstop; the store is empty  7009ms
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > an upload that is ACTIVELY streaming through the whole grace period: SIGTERM -> exit 0 within grace + backstop; the store is empty  7399ms
+   ✓ F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no final object > positive control: an upload that completes before SIGTERM is kept (one final object, its content row), then shutdown is prompt  2049ms
+   ✓ F-DG2-460 defence in depth: the start-up sweep of stale temporaries > removes a .part last written over an hour ago, logs it at info (no content), and keeps a fresh .part and every final object  1755ms
+ ✓ |integration| apps/api/test/integration/raid/actions.test.ts (8 tests) 1578ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (11 tests) 1658ms
+ ✓ |integration| apps/api/test/integration/benefits/lifecycle.test.ts (10 tests) 1583ms
+ ✓ |integration| apps/api/test/integration/sustainment/performance-areas.test.ts (7 tests) 1688ms
+   ✓ areas outlive their transformation (REQ-S03-002, areas half) > after the transformation is closed, its area takes edits, links and a BAU handover with its review  465ms
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives.test.ts (12 tests) 2861ms
+   ✓ validation (nothing written on a refusal) > 422 for a named person outside the organization and for a wave of another transformation  534ms
+   ✓ authorization on every initiative mutation > BE18A: the write gate is re-checked at commit - a grant revoked while the request waits is 403, nothing written  867ms
+ ✓ |integration| apps/api/test/integration/approvals/reminders.test.ts (7 tests) 2608ms
+   ✓ approval_overdue: the escalation timer's reminders (ADR-0026 §6 step 3) > a group assignee: the group's current approvers get the reminder, a non-approver member does not  821ms
+ ✓ |integration| apps/worker/test/integration/meeting-series.test.ts (5 tests) 4020ms
+   ✓ governance.meeting_series_generate (REQ-PB-060 A01) > through the production worker: a sent job generates the meetings once  1778ms
+ ✓ |integration| apps/worker/test/integration/gates.test.ts (6 tests) 5142ms
+   ✓ gate.submitted -> approver tasks (REQ-S12-009) > one task per required approver referencing the snapshot; redelivery none; supersession cancels; the decider's task is done  1560ms
+   ✓ gate.submitted -> approver tasks (REQ-S12-009) > no approver on the transformation: one routing.role_unmapped notice to the submitter, never a silent skip  609ms
+   ✓ gate.decided -> enable the next phase and the approved scope (REQ-S12-010) > G2 approval creates the four Design steps and their tasks once; a redelivery creates none  1132ms
+   ✓ gate.decided -> enable the next phase and the approved scope (REQ-S12-010) > a G5 approval creates tasks only for its approved scope item and condition (a second initiative gets none)  833ms
+   ✓ parity and wiring (D-102) > the worker's approver resolution equals the API's canDecide for the same people  876ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 2988ms
+ ✓ |integration| apps/worker/test/integration/blocker-escalation.test.ts (4 tests) 2991ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > N = 2: one ask at the second red cycle, with decision, owner and deadline; the consumer and the scan never duplicate it  341ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > an amber cycle, or a cycle without an observation, in between ends the run  685ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > a decided ask lets a new red run create a new one; a disabled rule creates nothing  614ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > an owner party that maps to no executive gives an unassigned ask and a notice to the lead; the scan skips a blocker whose latest cycle is not red  440ms
+ ✓ |integration| apps/worker/test/integration/kpi-recalculate.test.ts (2 tests) 3034ms
+   ✓ kpi.recalculate through the relay and the production worker (REQ-S07-013, REQ-S12-006) > writes one run; a redelivery and a restarted worker write no second run  951ms
+ ✓ |integration| apps/api/test/integration/governance/blocker-status.test.ts (6 tests) 1656ms
+ ✓ |integration| apps/api/test/integration/sustainment/lessons.test.ts (7 tests) 1650ms
+   ✓ lesson lifecycle (ADR-0034 §8, §12) > after the transformation is closed, its lessons are still edited, published and found  523ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 624ms
+ ✓ |integration| apps/api/test/integration/adoption/training.test.ts (5 tests) 1212ms
+   ✓ authorisation (ADR-0033 §9) > AUD and TL 403; ADM-only and outsiders 404; archived group 422; commit-time 403  309ms
+ ✓ |integration| apps/api/test/integration/sustainment/improvement.test.ts (8 tests) 1445ms
+   ✓ create (ADR-0034 §8) > BO and TO create with CI-nn and version 1, audited; a handover-sourced item names its handover  336ms
+   ✓ REQ-PB-084 A11: the backlog stays visible and editable after the transformation is closed > after closure: listed, edited, closed and created as before; the transformation is closed, not archived  330ms
+ ✓ |integration| apps/api/test/integration/framework-errors.test.ts (11 tests) 1017ms
+ ✓ |integration| apps/api/test/integration/portfolio/schedule-network.test.ts (10 tests) 1362ms
+ ✓ |integration| apps/worker/test/integration/decision-sla-escalation.test.ts (5 tests) 2523ms
+   ✓ REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > an unmapped next party is a party_unmapped row with the owner's notice; a mapped owner is skipped  349ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/version-approval.test.ts (6 tests) 2073ms
+   ✓ requestKpiVersionApproval (business approval of a KPI version) > requests through the approval service at the draft version; approving does not activate; activation does  562ms
+   ✓ requestKpiVersionApproval (business approval of a KPI version) > the requester cannot decide their own request (SoD 403 approval.sod_requester); BO alone cannot request  319ms
+   ✓ requestKpiVersionApproval (business approval of a KPI version) > after changes are requested the draft can be edited and the approval resubmitted at the new version  375ms
+ ✓ |integration| apps/api/test/integration/portfolio/execution.test.ts (10 tests) 1467ms
+ ✓ |integration| apps/api/test/integration/portfolio/g1-agreements.test.ts (7 tests) 5614ms
+   ✓ G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > approve without agreements -> 422 gate.g1_agreements_required with the three pointers; nothing written  579ms
+   ✓ G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > partial or false confirmations -> 422 naming only the missing ones; nothing written  532ms
+   ✓ G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > with all three -> 201, three agreement rows confirmed by the decider, agreements in the response and audit diff  589ms
+   ✓ G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > agreements on G2, or with a non-approve G1 outcome -> 422 gate.agreements_not_applicable; nothing written  1054ms
+   ✓ G1 approval needs the three B0032 leadership agreements (ADR-0021 §8) > 403 not-approver, 403 submitter and 409 superseded keep their precedence over the agreement rule  1090ms
+   ✓ migration 0025: the deferred guard refuses an approved G1 decision without three agreements at COMMIT > no agreement rows -> the COMMIT fails with gate_decision_g1_agreements and nothing persists  538ms
+   ✓ migration 0025: the deferred guard refuses an approved G1 decision without three agreements at COMMIT > two of three -> refused at COMMIT; all three -> commits  1121ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/formulas.test.ts (8 tests) 1659ms
+ ✓ |integration| apps/api/test/integration/benefits/totals.test.ts (6 tests) 2344ms
+   ✓ counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %  454ms
+   ✓ classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0  674ms
+   ✓ open overlaps (REQ-S08-014) and the portfolio > a validated value of a benefit with an open overlap is on pendingOverlap, not in validated  451ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/pipeline.test.ts (6 tests) 1752ms
+   ✓ the accept pipeline (REQ-S07-013, REQ-S12-006) > one accept -> one audit event, one run (also after a redelivery), one values_recalculated; RAG from the trajectory  389ms
+ ✓ |integration| apps/api/test/integration/benefits/valuation-methods.test.ts (6 tests) 1171ms
+   ✓ controlled monetisation (REQ-S08-010) > a SAR value on a CX benefit is rejected without an approved method, and accepted once Finance approves  349ms
+ ✓ |integration| apps/api/test/integration/adoption/champion-constraints.test.ts (6 tests) 982ms
+ ✓ |integration| apps/api/test/integration/workflows/impact.test.ts (3 tests) 2479ms
+   ✓ TOM change after G3: preview, T11 routing, a returned request with one assessment per submitted version > lists the gap, the preserved G3 decision and T10 Portfolio; changes requested -> edit -> submit -> resubmit -> approve  641ms
+   ✓ charter scope change after G1: a new charter version; the earlier one stays readable > SP approves; charter version + 1 with its charter_version snapshot; reads are scoped  969ms
+ ✓ |integration| apps/api/test/integration/governance/escalation-rules.test.ts (6 tests) 1288ms
+ ✓ |integration| apps/api/test/integration/platform.test.ts (12 tests) 1203ms
+   ✓ readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way  493ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 1313ms
+   ✓ A12 cross-scope write is denied and writes nothing; in-scope write succeeds > create is denied outside the caller's scope (no row), allowed inside it  511ms
+ ✓ |integration| apps/worker/test/integration/benefits-queue.test.ts (2 tests) 14155ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  13103ms
+   ✓ benefits.recalculate_pending (REQ-S07-014, REQ-S12-006) > an accepted KPI actual gives one pending value per benefit and run; replay none; a newer value supersedes  857ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 5289ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2741ms
+ ✓ |integration| apps/api/test/integration/raid/corrective-rules.test.ts (5 tests) 775ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 6866ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3708ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1100ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 2051ms
+   ✓ links > links only to a record of the same transformation (422 otherwise); duplicate active link 409; remove keeps the row  709ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 815ms
+ ✓ |integration| apps/api/test/integration/approvals/escalation.test.ts (4 tests) 3002ms
+   ✓ approval.escalation_scan (REQ-S10-019) > an unmapped next party is recorded as party_unmapped; a deferral to a new date allows one more escalation  794ms
+   ✓ approval.escalation_scan (REQ-S10-019) > an approval with an Unknown due date is never selected  697ms
+ ✓ |integration| apps/api/test/integration/sustainment/reopen.test.ts (3 tests) 2020ms
+   ✓ reopening preserves the original handover acceptance and closure date (REQ-S11-009) > after the transformation closed, reopen -> cycle 2 linked to the prior handover and closure; nothing overwritten  946ms
+   ✓ reopen refusals and gates > a reopened area cannot be reopened again; AUD and TO 403, ADM 404; If-Match 428/409  495ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 4309ms
+ ✓ |integration| apps/api/test/integration/benefits/values.test.ts (5 tests) 1884ms
+   ✓ REQ-S08-001: seven states kept apart > planned, forecast, measured, submitted, validated, rejected each with its own total; forecast never validated  696ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/thresholds.test.ts (5 tests) 1008ms
+ ✓ |integration| apps/api/test/integration/raid/entity-group.test.ts (7 tests) 1852ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/status.test.ts (5 tests) 3443ms
+   ✓ the KPI panel (REQ-S07-008) > returns the seven elements, the explanation naming the threshold version, and i18n keys  385ms
+   ✓ the KPI panel (REQ-S07-008) > Stale data shows Stale with its reason, never green; a band outside its bounds is adverse  348ms
+   ✓ override display (REQ-S07-009) > an override in force changes displayedRag only; after expiry the calculated RAG displays again  1982ms
+ ✓ |integration| apps/api/test/integration/portfolio/hierarchy.test.ts (3 tests) 1213ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 2399ms
+   ✓ A14 transformation PATCH > create returns version 1 with a strong ETag  491ms
+   ✓ A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428  545ms
+   ✓ A14 transformation PATCH > two writers racing on the same version: exactly one 200, the rest 409, version bumped once  501ms
+   ✓ A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version  517ms
+ ✓ |integration| apps/api/test/integration/portfolio/readiness.test.ts (6 tests) 4025ms
+   ✓ POST /transformations uses p3_instantiate_transformation (T-DG3-BE-A) > a new transformation gets the four B0079 waves and the T06 weight set v1 at the source defaults, audited  625ms
+   ✓ GET /transformations/{id}/readiness (REQ-PB-007) > a fresh transformation: every B0012 area missing, both blockers with the exact §3 texts, gates G1-G4 draft  565ms
+   ✓ GET /transformations/{id}/readiness (REQ-PB-007) > T01 content covers areas (content half of g1.diagnostic; technology needs technology AND data)  719ms
+   ✓ GET /transformations/{id}/readiness (REQ-PB-007) > G1 approved clears the submit blocker; G2+G3 approved clear the launch blocker (End-to-End)  710ms
+   ✓ GET /transformations/{id}/readiness (REQ-PB-007) > read access only: the auditor reads it; a user outside the transformation gets 404; a malformed id 400  527ms
+   ✓ GET /transformations/{id}/outcome-hierarchy (REQ-PB-032) > returns North Star -> outcomes -> KPIs -> targets -> contributions as one tree (read only)  658ms
+ ✓ |integration| apps/api/test/integration/adoption/entity-group.test.ts (4 tests) 1034ms
+ ✓ |integration| apps/api/test/integration/benefits/allocations.test.ts (6 tests) 986ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/data-quality.test.ts (5 tests) 1068ms
+ ✓ |integration| apps/api/test/integration/benefits/corrections.test.ts (2 tests) 1477ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after  653ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > only an approved validation is corrected; FIN only; If-Match 428/409; a reason is required  377ms
+ ✓ |integration| apps/worker/test/integration/restart.test.ts (1 test) 7707ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  6179ms
+ ✓ |integration| apps/api/test/integration/benefits/groups.test.ts (4 tests) 983ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/periods.test.ts (4 tests) 573ms
+ ✓ |integration| apps/api/test/integration/workflows/risk-dispositions.test.ts (3 tests) 2609ms
+   ✓ risk dispositions (REQ-PB-020) > creates the row, its audit event and one pending risk_disposition approval routed to SP  847ms
+   ✓ risk dispositions (REQ-PB-020) > only an open risk: a closed risk or an issue is 422 risk_disposition.not_open_risk; AUD 403; nothing written  745ms
+   ✓ risk dispositions (REQ-PB-020) > G5 configured to BO: routed to the T11 Go-live / scale party BO; unmapped BO -> 422 routing.role_unmapped, nothing written  793ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/entity-group.test.ts (1 test) 1024ms
+   ✓ REQ-S16-014: the KPI entity group through the API > creates and reads each entity with authorization enforced (AUD 403 on writes, 200 on reads)  677ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/overrides.test.ts (4 tests) 2856ms
+   ✓ RAG overrides (REQ-S07-009) > is no longer in force after its expiry, with no job (the read compares the expiry with the current time)  1828ms
+ ✓ |integration| apps/api/test/integration/jobs/job-schedules.test.ts (3 tests) 596ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 127ms
+ ✓ |integration| packages/db/test/integration/pool-bounds.test.ts (7 tests) 2850ms
+   ✓ bounded checkout (connectionTimeoutMillis) > a checkout from an exhausted pool fails after the timeout (never hangs) and is recognised  305ms
+   ✓ bounded checkout (connectionTimeoutMillis) > through Kysely the same error reaches the caller  306ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > PostgreSQL ends a transaction left idle past the limit, releasing its row lock; the pool recovers  1214ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > a transaction that keeps running statements is not affected  1013ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 917ms
+ ✓ |integration| apps/api/test/integration/benefits/entity-group.test.ts (1 test) 1102ms
+   ✓ REQ-S16-017: the benefits entity group through the API > creates and reads each of the seven entities; AUD is refused every mutation and reads every record  799ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 3964ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table  371ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written  371ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written  332ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used)  384ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  2367ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-events.test.ts (2 tests) 2654ms
+   ✓ gate.submitted / gate.decided (ADR-0035 §7) > submission, supersession and decision each write exactly one event in their transaction; refusals write none  1634ms
+   ✓ gate.submitted / gate.decided (ADR-0035 §7) > a G5 approval's event names its scope item and condition ids and the next phase realize  903ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 6996ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  2036ms
+   ✓ mth-db bootstrap > refuses to run twice  1620ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  1758ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  1378ms
+ ✓ |integration| apps/api/test/integration/workflows/scale.test.ts (2 tests) 2256ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > before G5: 422 invalid-transition naming G5; the scope reads approved = false; nothing written  1037ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > after the G5 approval: inside the scope 201 with its audit event; outside 422; a repeat 409; AUD/ADM 403  941ms
+ ✓ |integration| apps/worker/test/integration/schedules.test.ts (2 tests) 1624ms
+ ✓ |integration| apps/api/test/integration/portfolio/closed-initiatives.test.ts (1 test) 1186ms
+   ✓ a cancelled initiative's scores, deliverables and milestones are read-only (422 initiative.read_only) > every write is refused after cancellation and nothing is written; the same writes succeed while open  1041ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 2142ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  1624ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 1806ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 8473ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  7927ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  545ms
+ ✓ |integration| apps/api/test/integration/adoption/entity-group-metric-link.test.ts (1 test) 577ms
+ ✓ |integration| apps/api/test/integration/portfolio/unpaged-lists.test.ts (1 test) 1152ms
+   ✓ unpaged P3 lists refuse limit; paged lists accept it (ADR-0021 §11 item 6) > 400 on limit for every unpaged list; 200 with {items} and no nextCursor without it  906ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)
+Error: contract: getPhaseWorkspace 200 body violates the schema: data/phases/0/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12231-1bb7-75a1-99cf-f49525788b34","currentPhase":"diagnose","phases":[{"phase":{"code":"diagnose","ordinal":1,"gateCode":"G1","sourceNameEn":"DIAGNOSE","nameAr":"التشخيص","sourceTitleEn":"DIAGNOSE — Build the Fact Base","titleAr":"التشخيص — بناء قاعدة الحقائق","sourcePurposeEn":"Establish fact base","purposeAr":"إرساء قاعدة الحقائق","sourceKeyOutputsEn":"Current state, root causes, value pools","keyOutputsAr":"الوضع الحالي، الأسباب الجذرية، مجمّعات القيمة","sourceObjecti
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ mirrored apps/api/test/integration/contract/contract.test.ts:308:15
+ ❯ exerciseP4BeL2PhaseOperations apps/api/test/integration/contract/p4-exercises-be-l.ts:249:14
+ ❯ exerciseP4BeLOperations apps/api/test/integration/contract/p4-exercises-be-l.ts:150:3
+ ❯ apps/api/test/integration/contract/contract.test.ts:600:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+AssertionError: expected [ 'getPhaseWorkspace', …(8) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getPhaseWorkspace",[39m
+[31m+   "listPhaseSteps",[39m
+[31m+   "getPhaseStep",[39m
+[31m+   "updatePhaseStep",[39m
+[31m+   "requestPhaseStepReview",[39m
+[31m+   "reviewPhaseStep",[39m
+[31m+   "listPhaseStepEvidence",[39m
+[31m+   "linkPhaseStepEvidence",[39m
+[31m+   "removePhaseStepEvidence",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/contract/contract.test.ts:783:23
+    781|       .filter((o) => ![...exercised.get(o.operationId)!].some((s) => s…
+    782|       .map((o) => o.operationId);
+    783|     expect(noSuccess).toEqual([]);
+       |                       ^
+    784|     const mirrorsNotChecked = Object.keys(ZOD_MIRRORS).filter((id) => …
+    785|     expect(mirrorsNotChecked).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > the phase catalogue (REQ-PB-014) > the workspace shows the current phase with its purpose, objective and key outputs, and each phase's gate status
+Error: contract: getPhaseWorkspace 200 body violates the schema: data/phases/0/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-017d-765f-9627-1000edb86945","currentPhase":"diagnose","phases":[{"phase":{"code":"diagnose","ordinal":1,"gateCode":"G1","sourceNameEn":"DIAGNOSE","nameAr":"التشخيص","sourceTitleEn":"DIAGNOSE — Build the Fact Base","titleAr":"التشخيص — بناء قاعدة الحقائق","sourcePurposeEn":"Establish fact base","purposeAr":"إرساء قاعدة الحقائق","sourceKeyOutputsEn":"Current state, root causes, value pools","keyOutputsAr":"الوضع الحالي، الأسباب الجذرية، مجمّعات القيمة","sourceObjecti
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/workflows/phases.test.ts:130:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > each of the six phases shows steps, required evidence, owners (Unknown when unassigned) and a review queue
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0236-705b-8fb1-38f6ae0168ac","stepKey":"define.north_star","phase":"define","ordinal":1,"sourceProcedureEn":"Refine the North Star","procedureAr":"صقل نجم الشمال","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-02f7-71d8-b87c-2dccbf541ebc","ownerUserId":"01a12232-029f-
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ apps/api/test/integration/workflows/phases.test.ts:155:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > listPhaseSteps pages in procedure order with phase and status filters
+Error: contract: listPhaseSteps 200 body violates the schema: data/items/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/5/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/items/6/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"items":[{"transformationId":"01a12232-0306-72ec-8ba5-3217a835f36c","stepKey":"diagnose.register_scope_sponsor","phase":"diagnose","ordinal":1,"sourceProcedureEn":"Register scope and sponsor","procedureAr":"تسجيل النطاق والراعي","requiredEvidenceEn":"At least one verified evidence item linked to the step (e.g. the initial charter or sponsor confirmation).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (مثل الميثاق الأولي أو تأكيد الراعي).","defaultOwnerRoleCode":"TL","review
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/workflows/phases.test.ts:212:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > an unmet completion rule cannot be put in review or accepted (422); SQL cannot bypass the rule
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-038d-70ab-862f-83c46653d025","stepKey":"diagnose.register_scope_sponsor","phase":"diagnose","ordinal":1,"sourceProcedureEn":"Register scope and sponsor","procedureAr":"تسجيل النطاق والراعي","requiredEvidenceEn":"At least one verified evidence item linked to the step (e.g. the initial charter or sponsor confirmation).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (مثل الميثاق الأولي أو تأكيد الراعي).","defaultOwnerRoleCode":"TL","reviewerRoleCode
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ apps/api/test/integration/workflows/phases.test.ts:237:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > other completion rules are evaluated server-side (RAID register empty -> 422; no open corrective case -> met)
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0442-71af-86fb-0ec70d978a05","stepKey":"transform.manage_raid_decisions","phase":"transform","ordinal":4,"sourceProcedureEn":"manage RAID, dependencies, decisions and corrective actions","procedureAr":"إدارة المخاطر والافتراضات والقضايا والاعتماديات والقرارات والإجراءات التصحيحية","requiredEvidenceEn":"At least one RAID entry recorded for the transformation.","requiredEvidenceAr":"إدخال واحد على الأقل في سجل المخاطر والافتراضات والقضايا والاعتماديات للتحول.","defaul
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ apps/api/test/integration/workflows/phases.test.ts:299:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > the owner cannot accept their own step (403); a non-owner cannot progress it (403); an owner is required (422)
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-04dd-719d-b336-82bc9c449ba5","stepKey":"define.north_star","phase":"define","ordinal":1,"sourceProcedureEn":"Refine the North Star","procedureAr":"صقل نجم الشمال","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-058d-738c-a3c9-5edbe00d99e2","ownerUserId":"01a12232-051c-
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ toReview apps/api/test/integration/workflows/phases.test.ts:93:3
+ ❯ apps/api/test/integration/workflows/phases.test.ts:336:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > the review queue: one task per reviewer-role holder (never the owner); accept closes them and enables the next owned step once
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0592-74e8-a3d4-15360863e53f","stepKey":"diagnose.assess_performance","phase":"diagnose","ordinal":2,"sourceProcedureEn":"assess business/financial performance, customer experience, processes/operations, organization/governance, technology/data and capabilities","procedureAr":"تقييم الأداء التجاري/المالي وتجربة العملاء والعمليات/التشغيل والتنظيم/الحوكمة والتقنية/البيانات والقدرات","requiredEvidenceEn":"At least one verified evidence item linked to the step (the asses
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/workflows/phases.test.ts:383:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > guided phase steps (REQ-S04-001) > return with a note, then back to review; a return without a note is 400; invalid transitions are 422
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0667-712c-b3c4-ce53e8c96129","stepKey":"define.outcome_hierarchy","phase":"define","ordinal":2,"sourceProcedureEn":"build the outcome hierarchy","procedureAr":"بناء هرم النتائج","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-0704-727b-8ea1-06eecb526b84","ownerUserId":
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ toReview apps/api/test/integration/workflows/phases.test.ts:93:3
+ ❯ apps/api/test/integration/workflows/phases.test.ts:470:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > steps never move a gate (REQ-S04-002: completing every phase task leaves the gate Draft) > completing all five Diagnose steps leaves G1 draft, with no submission and an unchanged gate instance
+Error: contract: getPhaseWorkspace 200 body violates the schema: data/phases/0/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/0/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/1/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/2/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/3/steps/4/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/4/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/0/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/1/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/2/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$", data/phases/5/steps/3/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-070a-7059-831b-fda54ea2a1d3","currentPhase":"diagnose","phases":[{"phase":{"code":"diagnose","ordinal":1,"gateCode":"G1","sourceNameEn":"DIAGNOSE","nameAr":"التشخيص","sourceTitleEn":"DIAGNOSE — Build the Fact Base","titleAr":"التشخيص — بناء قاعدة الحقائق","sourcePurposeEn":"Establish fact base","purposeAr":"إرساء قاعدة الحقائق","sourceKeyOutputsEn":"Current state, root causes, value pools","keyOutputsAr":"الوضع الحالي، الأسباب الجذرية، مجمّعات القيمة","sourceObjecti
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/workflows/phases.test.ts:552:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > authorization, If-Match and audit on every write (S-4) > AUD (read-only) gets 403 on every write and nothing is written; an outsider gets 404
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-07c1-7210-8b94-85f5b46c8018","stepKey":"diagnose.register_scope_sponsor","phase":"diagnose","ordinal":1,"sourceProcedureEn":"Register scope and sponsor","procedureAr":"تسجيل النطاق والراعي","requiredEvidenceEn":"At least one verified evidence item linked to the step (e.g. the initial charter or sponsor confirmation).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (مثل الميثاق الأولي أو تأكيد الراعي).","defaultOwnerRoleCode":"TL","reviewerRoleCode
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ toReview apps/api/test/integration/workflows/phases.test.ts:93:3
+ ❯ apps/api/test/integration/workflows/phases.test.ts:591:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > authorization, If-Match and audit on every write (S-4) > If-Match: 428 when missing, 409 when stale; If-Match "0" on an existing row is 409; creates are version 1
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-0875-75ea-a8f2-44a84d69c0d1","stepKey":"design.compare_states","phase":"design","ordinal":2,"sourceProcedureEn":"compare current and target states","procedureAr":"مقارنة الحالتين الحالية والمستهدفة","requiredEvidenceEn":"At least one verified evidence item linked to the step.","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة.","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"evidence_linked","id":"01a12232-0946-7038-922b-909a3c4
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/workflows/phases.test.ts:629:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/phases.test.ts > authorization, If-Match and audit on every write (S-4) > an evidence item of another transformation cannot be linked (422)
+Error: contract: updatePhaseStep 200 body violates the schema: data/stepKey must match pattern "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$"
+{"transformationId":"01a12232-094c-7305-8d4a-4d499416b070","stepKey":"diagnose.root_causes","phase":"diagnose","ordinal":4,"sourceProcedureEn":"distinguish symptoms from root causes","procedureAr":"التمييز بين الأعراض والأسباب الجذرية","requiredEvidenceEn":"At least one verified evidence item linked to the step (root-cause analysis).","requiredEvidenceAr":"دليل واحد متحقق منه على الأقل مرتبط بالخطوة (تحليل الأسباب الجذرية).","defaultOwnerRoleCode":"TL","reviewerRoleCode":"TO","completionRule":"e
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ startStep apps/api/test/integration/contract/p4-exercises-be-l.ts:235:13
+ ❯ apps/api/test/integration/workflows/phases.test.ts:695:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  2 failed | 141 passed (143)
+      Tests  14 failed | 1482 passed (1496)
+   Start at  19:42:27
+   Duration  727.76s (transform 7.32s, setup 0ms, collect 219.22s, tests 503.65s, environment 0ms, prepare 125ms)
+
+ ELIFECYCLE  Command failed with exit code 1.

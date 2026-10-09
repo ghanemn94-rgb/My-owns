@@ -1,0 +1,76 @@
+--- docs/api/openapi.yaml	2026-10-09 18:36:13.170814433 +0000
++++ <verify-copy>/docs/api/openapi.yaml	2026-10-09 18:56:21.851652138 +0000
+@@ -17139,7 +17139,7 @@
+       name: stepKey
+       in: path
+       required: true
+-      schema: { type: string, pattern: '^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$' }
++      schema: { type: string, pattern: "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$" }
+     PhaseStepEvidenceId:
+       name: phaseStepEvidenceId
+       in: path
+@@ -17149,7 +17149,7 @@
+       name: criterionKey
+       in: path
+       required: true
+-      schema: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
++      schema: { type: string, pattern: "^g[1-6]\\.[a-z_]{1,48}$" }
+     GateExceptionId:
+       name: gateExceptionId
+       in: path
+@@ -27412,7 +27412,7 @@
+       additionalProperties: false
+       properties:
+         transformationId: { $ref: "#/components/schemas/Uuid" }
+-        stepKey: { type: string, pattern: '^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$' }
++        stepKey: { type: string, pattern: "^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$" }
+         phase: { $ref: "#/components/schemas/Phase" }
+         ordinal: { type: integer, minimum: 1, maximum: 10 }
+         sourceProcedureEn: { type: string, minLength: 1, maxLength: 500 }
+@@ -27514,7 +27514,7 @@
+       properties:
+         id: { $ref: "#/components/schemas/Uuid" }
+         gateSubmissionId: { $ref: "#/components/schemas/Uuid" }
+-        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
++        criterionKey: { type: string, pattern: "^g[1-6]\\.[a-z_]{1,48}$" }
+         reviewNo: { type: integer, minimum: 1 }
+         reviewerUserId: { $ref: "#/components/schemas/Uuid" }
+         finding: { type: string, minLength: 1, maxLength: 4000 }
+@@ -27549,7 +27549,7 @@
+       required: [criterionKey, ordinal, mandatory, criterionLabelEn, criterionLabelAr, requiredEvidenceEn, requiredEvidenceAr, completeness, reviewerUserId, finding, openCondition, risk, decision, rationale, reviewCount, exception]
+       additionalProperties: false
+       properties:
+-        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
++        criterionKey: { type: string, pattern: "^g[1-6]\\.[a-z_]{1,48}$" }
+         ordinal: { type: integer, minimum: 1 }
+         mandatory: { type: boolean }
+         criterionLabelEn: { type: string, minLength: 1, maxLength: 200 }
+@@ -27585,7 +27585,7 @@
+         transformationId: { $ref: "#/components/schemas/Uuid" }
+         gateInstanceId: { $ref: "#/components/schemas/Uuid" }
+         gateCode: { type: string, pattern: '^G[1-6]$' }
+-        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
++        criterionKey: { type: string, pattern: "^g[1-6]\\.[a-z_]{1,48}$" }
+         reason: { type: string, minLength: 3, maxLength: 4000 }
+         scope: { type: string, minLength: 3, maxLength: 2000 }
+         compensatingAction: { type: string, minLength: 3, maxLength: 4000 }
+@@ -27622,7 +27622,7 @@
+       additionalProperties: false
+       properties:
+         gateCode: { type: string, pattern: '^G[1-6]$' }
+-        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
++        criterionKey: { type: string, pattern: "^g[1-6]\\.[a-z_]{1,48}$" }
+         reason: { type: string, minLength: 3, maxLength: 4000 }
+         scope: { type: string, minLength: 3, maxLength: 2000 }
+         compensatingAction: { type: string, minLength: 3, maxLength: 4000 }
+--- apps/api/src/modules/workflows/workflows.test.ts	2026-10-09 18:36:13.071624730 +0000
++++ <verify-copy>/apps/api/src/modules/workflows/workflows.test.ts	2026-10-09 19:17:37.131909226 +0000
+@@ -76,7 +76,7 @@
+       // "authenticated" (T-DG3-BE-C handback 7.1; integrated by the orchestrator).
+       if (r.key.startsWith("GET"))
+         expect(permission, r.key).toBe(
+-          r.key === "GET /api/v1/dependency-types" ? "authenticated" : "transformation.read",
++          r.key === "GET /api/v1/dependency-types" || r.key === "GET /api/v1/phases" ? "authenticated" : "transformation.read",
+         );
+       else expect(permission, r.key).not.toMatch(/\.read$/);
+     }
