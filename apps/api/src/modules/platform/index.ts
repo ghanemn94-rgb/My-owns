@@ -105,3 +105,10 @@ export { registerHealthRoutes } from "./health.ts";
 export { createInFlight, registerInFlightTracking, type InFlight } from "./in-flight.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";
 export { ADVISORY_LOCK_CLASSES, type AdvisoryLockClassName } from "./advisory-locks.ts";
+// P4 slice H (T-DG4-BE-L; ADR-0036 §6): the material-change port kpi calls and workflows implements (server.ts wires it).
+export {
+  materialChangePort,
+  setMaterialChangePort,
+  type BenefitFormulaVersionChange,
+  type MaterialChangePort,
+} from "./material-change.ts";

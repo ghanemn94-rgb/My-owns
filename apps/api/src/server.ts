@@ -74,6 +74,11 @@ import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workf
 import { registerApprovalSubject, requestApprovalInTx, toApprovals } from "./modules/workflows/approvals.ts";
 // T-DG4-BE-D (ADR-0031 §2): the RAID Dependency-entry port, implemented by the T08 service (the KBE-C import precedent).
 import { raidDependencyPort } from "./modules/workflows/t08-dependencies.ts";
+// T-DG4-BE-L (ADR-0036 §3, §6): the material-change port (kpi's formula hook, portfolio's threshold refusals) and kpi's
+// change-request apply entry point, wired between workflows and kpi/portfolio (the KBE-C import precedent).
+import { activateKpiVersionByChangeRequest } from "./modules/kpi/kpi-versions.ts";
+import { setMaterialChangePort } from "./modules/platform/index.ts";
+import { materialChangePortImpl, setKpiVersionActivator } from "./modules/workflows/change-requests.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -307,6 +312,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
   // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no
   // routes until its stage.
+  setMaterialChangePort(materialChangePortImpl);
+  setKpiVersionActivator(activateKpiVersionByChangeRequest);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
