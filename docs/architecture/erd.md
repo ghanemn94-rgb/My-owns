@@ -1530,6 +1530,67 @@ erDiagram
 | Risk disposition (PB-020) | `risk_disposition` | `id` | `created_by`; `residual_owner_user_id` | `risk_disposition.propose` (TL, BO, WL); `approval.decide` | its approval's status | 1 (append-only) | workflows |
 | **ChangeRequest** (S16-018) | `change_request` (+ `impact_assessment`, `impact_assessment_item`, `change_control_policy`) | `id` (`CR-nn`) | `raised_by` | `change_request.raise` (TL, BO, WL, FIN, TO, KDS); approval provider; `change_control.configure` (TL, TO) | `status` (draft, submitted, changes_requested, approved, rejected, withdrawn) | yes | workflows |
 
+## 1k. P4 physical model, slices J and K (migrations 0055–0057, DG4)
+
+Dashboards, My Work, the Executive Overview and the workspace header are read models with no table of their own (ADR-0037 §1); slice J adds only the Template 10 seed, the per-organization RAG thresholds and the `my_work_draft` view. Slice K adds the chain links no typed table records, allocation shares with a database-enforced 100 % rule, labelled inherited records of a Modular entry, and portfolios and workstreams (ADR-0038). Every mutable table carries the P2 guards (version step, identity, organization, deferred audit coverage; probes PF02, WS05, TL14, IR10, RP05). G1–G6 are business approvals inside the product; nothing here touches DG0–DG7.
+
+### 1k.1 Traceability chain, allocation and Modular entry — `reporting` and `portfolio` modules
+
+```mermaid
+erDiagram
+    diagnostic_finding ||--o{ trace_link : "issue_gap (finding -> gap)"
+    tom_gap ||--o{ trace_link : "issue_gap target"
+    deliverable ||--o{ trace_link : "deliverable_capability"
+    capability ||--o{ trace_link : "deliverable_capability target; capability_kpi source"
+    outcome_kpi ||--o{ trace_link : "capability_kpi target (share); kpi_benefit source"
+    benefit ||--o{ trace_link : "kpi_benefit target (share)"
+    initiative ||--o{ initiative_gap_link : "gap -> initiative (DG3)"
+    initiative ||--o{ deliverable : "initiative -> deliverable (DG3)"
+    initiative ||--o{ initiative_outcome_contribution : "initiative -> KPI movement (DG3; share added in 0055)"
+    initiative_outcome_contribution }o--o| outcome_kpi : "allocation set member"
+    benefit ||--o{ benefit_allocation : "benefit -> initiative shares (slice B, own 100 % rule)"
+    transformation ||--o{ inherited_record : "Modular only; inherited evidence or baseline"
+    inherited_record }o--o| evidence : "inherited evidence (referenced, not copied)"
+    inherited_record }o--o| baseline : "inherited baseline (referenced, not copied)"
+    transformation ||--o{ gate_dispensation : "prior approvals stay here (DG3; never a gate decision)"
+```
+
+The view `traceability_edge` (`0055`) unions one branch per chain step over `trace_link`, `initiative_gap_link`, `deliverable`, `initiative_outcome_contribution`, `outcome_kpi`, `benefit` (measurement KPI) and `benefit_allocation` (current set); it copies no row (probes G05, TL17). The trigger `trace_allocation_guard` (lock class 730249) keeps the active shares into one outcome KPI (capability → KPI links and contribution shares) or one benefit (KPI → benefit links) at or below 1 (probes TL07–TL11).
+
+### 1k.2 Portfolios and workstreams — `portfolio` module
+
+```mermaid
+erDiagram
+    organization ||--o{ portfolio : "code unique per organization"
+    portfolio ||--o{ portfolio_transformation : "memberships"
+    transformation ||--o{ portfolio_transformation : "at most one active"
+    transformation ||--o{ workstream : "WS-nn"
+    workstream ||--o{ workstream_initiative : "memberships"
+    initiative ||--o{ workstream_initiative : "at most one active"
+```
+
+### 1k.3 Dashboards — `reporting` module
+
+```mermaid
+erDiagram
+    methodology_version ||--o{ t10_area_definition : "six T10 areas (B0095, M0247-M0252 verbatim; seed)"
+    organization ||--o| dashboard_rag_policy : "thresholds (NULL = ADR-0037 default)"
+```
+
+The view `my_work_draft` (`0056`) lists records in status `draft` of 18 record types with their author (ADR-0037 §7). Every dashboard figure is computed from the engines' rows and views (`kpi_evaluation`/`rag_override` through the KPI module, `benefit_value_line`, `benefit_counting`, `raid_register`, `executive_decision_log`, `adoption_metric_link`, `work_item`, `traceability_edge`) on each request.
+
+### 1k.4 P4 entity register (slices J and K) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Trace link (S03-006, PB-044) | `trace_link` | `id` (one active per kind, from, to) | `created_by` | `traceability.link` (TL, BO, WL, TO) | `status` (active, removed) | yes | reporting |
+| Contribution share (S03-006) | `initiative_outcome_contribution` (columns `allocation_share`, `allocation_basis`) | `id` | `created_by` | `traceability.link` via `setOutcomeContributionAllocation` | `status` (DG3) | yes | portfolio |
+| Inherited record (S03-005, PB-005) | `inherited_record` | `id` (one active per evidence item or baseline) | `recorded_by` | `inherited_record.record` (TL, TO) | `status` (active, withdrawn) | yes | reporting |
+| Portfolio (S03-001) | `portfolio`, `portfolio_transformation` | `id` (code per organization) | `owner_user_id` | `portfolio.manage` (TO) | `status` (active, archived; membership active, removed) | yes | portfolio |
+| Workstream (S03-001, S13-001) | `workstream`, `workstream_initiative` | `id` (`WS-nn`) | `lead_user_id` | `workstream.manage` (TL, TO) | `status` (active, archived; membership active, removed) | yes | portfolio |
+| T10 area (PB-062) | `t10_area_definition` (seed) | `id` (`code`) | — | seed | — | — | reporting |
+| Dashboard RAG policy (PB-063) | `dashboard_rag_policy` | `id` (one per organization) | — | `dashboard.configure` (TO, KDS) | — | yes | reporting |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

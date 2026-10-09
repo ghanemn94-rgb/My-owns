@@ -74,6 +74,9 @@ export const ADVISORY_LOCK_CLASSES = {
   changeRequestSubject: 730246,
   /** The exceptions of one gate instance (workflows gate exceptions: request, decide, revoke, and gate submission when it records a covering exception; one pending exception per criterion is also held by the unique index gate_exception_one_pending_key). Key: "<gateInstanceId>". */
   gateException: 730247,
+  // P4 block of T-DG4-ARCH-08 (730249; p4-plan §4, ADR-0038 §3). The dashboard read models take no lock (ADR-0037 §9).
+  /** The allocation set of one target record of the traceability chain (reporting traceability links and the portfolio contribution allocation; the database trigger trace_allocation_guard (0055) takes the same lock, so the total stays <= 100 %). Key: "<outcomeKpiId>" or "<benefitId>" (the trigger hashes the uuid text). */
+  traceAllocationSet: 730249,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

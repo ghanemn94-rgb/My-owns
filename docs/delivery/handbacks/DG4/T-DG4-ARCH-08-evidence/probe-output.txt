@@ -1,0 +1,64 @@
+port-policy: PostgreSQL listening on port 23742 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 58 (0001_identity_access.sql .. 0058_p4_approval_reminder_kinds.sql)
+PASS  G00 migration ids below the repair range are contiguous 1..n and 0055-0057 are present (0058+ is the repair range)  -- last below 0058: 57; repair: 58
+PASS  G01 fresh database: 0001..last apply  -- applied 58: 0054_p4_gate_exception_expiry_schedule.sql, 0055_p4_traceability_modular_structure.sql, 0056_p4_dashboards_t10.sql, 0057_p4_dashboards_traceability_permissions.sql, 0058_p4_approval_reminder_kinds.sql
+PASS  G02 P3 database populated (0001-0027, a synthetic initiative with an outcome/KPI contribution)  -- applied 27
+PASS  G03 P4 over the P3 database: 0028..last apply  -- applied 31: 0054_p4_gate_exception_expiry_schedule.sql, 0055_p4_traceability_modular_structure.sql, 0056_p4_dashboards_t10.sql, 0057_p4_dashboards_traceability_permissions.sql, 0058_p4_approval_reminder_kinds.sql
+PASS  G04 the existing DG3 contribution keeps its values; the new allocation_share and allocation_basis are NULL  -- [{"allocation_share":null,"allocation_basis":null,"version":1}]
+PASS  G05 traceability_edge reads the DG3 contribution in place (initiative -> outcome_kpi), no copy  -- [{"edge_kind":"initiative_kpi","from_type":"initiative","to_type":"outcome_kpi"}]
+PASS  G06 on the upgraded database a DG3-style contribution edit without a share still commits (DG3 behaviour unchanged)  -- edited
+PASS  PF01 a portfolio with its audit event commits at version 1  -- 01990000-0000-7000-8000-00000000006f
+PASS  PF02 a portfolio without its audit event fails at COMMIT  -- 23000 portfolio_audit_required no audit_event for portfolio 01990000-0000-7000-8000-000000000071 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  PF03 a portfolio version that does not step by 1 is refused  -- 23514 portfolio_version_step portfolio: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  PF04 a portfolio code that is not upper-case is refused  -- 23514 portfolio_code_check new row for relation "portfolio" violates check constraint "portfolio_code_check"
+PASS  PF05 a transformation is placed in the portfolio  -- 01990000-0000-7000-8000-000000000073
+PASS  PF06 a transformation cannot sit in two portfolios at once  -- 23505 portfolio_transformation_one_active_key duplicate key value violates unique constraint "portfolio_transformation_one_active_key"
+PASS  PF07 a portfolio of another organization cannot hold this organization's transformation  -- 23503 portfolio_transformation_portfolio_fkey insert or update on table "portfolio_transformation" violates foreign key constraint "portfolio_transformation_portfolio_fkey"
+PASS  PF08 a removal without its reason is refused  -- 23514 portfolio_transformation_removal_complete new row for relation "portfolio_transformation" violates check constraint "portfolio_transformation_removal_complete"
+PASS  WS01 a workstream WS-01 with an initiative commits  -- 01990000-0000-7000-8000-00000000007b
+PASS  WS02 a workstream code outside WS-nn is refused  -- 23514 workstream_code_check new row for relation "workstream" violates check constraint "workstream_code_check"
+PASS  WS03 an initiative cannot be in two workstreams at once  -- 23505 workstream_initiative_one_active_key duplicate key value violates unique constraint "workstream_initiative_one_active_key"
+PASS  WS04 a workstream cannot take an initiative of another transformation  -- 23503 workstream_initiative_initiative_fkey insert or update on table "workstream_initiative" violates foreign key constraint "workstream_initiative_initiative_fkey"
+PASS  WS05 a workstream membership without its audit event fails at COMMIT  -- 23000 workstream_initiative_audit_required no audit_event for workstream_initiative 01990000-0000-7000-8000-00000000008a at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  WS06 a workstream version that does not step by 1 is refused  -- 23514 workstream_version_step workstream: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  TL01 one initiative links to two gaps and two KPIs (A01 shape): gap links and contributions commit  -- 2 gaps, 2 KPIs
+PASS  TL02 an issue -> gap trace link with its contribution statement commits  -- 01990000-0000-7000-8000-0000000000a9
+PASS  TL03 a link whose records do not match its kind is refused  -- 23514 trace_link_kind_shape new row for relation "trace_link" violates check constraint "trace_link_kind_shape"
+PASS  TL04 a second active link between the same two records is refused  -- 23505 trace_link_one_active_key duplicate key value violates unique constraint "trace_link_one_active_key"
+PASS  TL05 a share on a link into a record that carries no value (issue -> gap) is refused  -- 23514 trace_link_allocation_kind new row for relation "trace_link" violates check constraint "trace_link_allocation_kind"
+PASS  TL06 a share of 0 is refused (a share is > 0 and <= 1)  -- 23514 trace_link_allocation_share_check new row for relation "trace_link" violates check constraint "trace_link_allocation_share_check"
+PASS  TL07 an allocation set of 0.6 (capability -> KPI) + 0.4 (initiative contribution) = 100 % commits  -- total 1.000000
+PASS  TL08 one more link of 0.1 into the same KPI (set total 110 %) is refused  -- 23514 trace_allocation_total trace_link: the allocation set of 01990000-0000-7000-8000-000000000099 would total 1.100000 (more than 1, i.e. 100 %)
+PASS  TL09 raising the contribution's share so that the set totals 110 % is refused  -- 23514 trace_allocation_total initiative_outcome_contribution: the allocation set of 01990000-0000-7000-8000-000000000099 would total 1.100000 (more than 1, i.e. 100 %)
+PASS  TL10 removing the 0.6 link frees its share: a 0.5 link then commits (removed links are not in the set)  -- 0.4 + 0.5
+PASS  TL11 KPI -> benefit shares into one benefit above 100 % are refused  -- 23514 trace_allocation_total trace_link: the allocation set of 01990000-0000-7000-8000-00000000009f would total 1.100000 (more than 1, i.e. 100 %)
+PASS  TL12 a contribution share without its T02 KPI row is refused  -- 23514 initiative_outcome_contribution_allocation_needs_kpi new row for relation "initiative_outcome_contribution" violates check constraint "initiative_outcome_contribution_allocation_needs_kpi"
+PASS  TL13 a link to a record of another transformation is refused  -- 23503 trace_link_tom_gap_fkey insert or update on table "trace_link" violates foreign key constraint "trace_link_tom_gap_fkey"
+PASS  TL14 a trace link without its audit event fails at COMMIT  -- 23000 trace_link_audit_required no audit_event for trace_link 01990000-0000-7000-8000-0000000000bd at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  TL15 a trace link version that does not step by 1 is refused  -- 23514 trace_link_version_step trace_link: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  TL16 the application role cannot DELETE a trace link (links are removed, never deleted)  -- 42501 permission denied for table trace_link
+PASS  TL17 traceability_edge lists the whole chain in place (finding -> gap -> initiative -> deliverable -> capability -> KPI -> benefit) and no removed link  -- capability_kpi,deliverable_capability,gap_initiative,initiative_deliverable,initiative_kpi,issue_gap,kpi_benefit_measure,outcome_kpi_of
+PASS  IR01 inherited evidence on a Modular transformation commits, with its provenance  -- 01990000-0000-7000-8000-0000000000c2
+PASS  IR02 an End-to-End transformation cannot record inherited items  -- 23514 inherited_record_modular_only inherited_record: only a Modular transformation records inherited items
+PASS  IR03 an inherited baseline must reference a baseline, not evidence  -- 23514 inherited_record_kind_shape new row for relation "inherited_record" violates check constraint "inherited_record_kind_shape"
+PASS  IR04 an inherited baseline commits; the baseline stays 'unvalidated' (inheriting validates nothing)  -- unvalidated
+PASS  IR05 the provenance of an inherited record cannot be edited  -- 23514 inherited_record_immutable inherited_record: provenance is immutable; the only change is a withdrawal of an active row
+PASS  IR06 the same evidence cannot be recorded as inherited twice while active  -- 23505 inherited_record_one_active_key duplicate key value violates unique constraint "inherited_record_one_active_key"
+PASS  IR07 a withdrawal without its reason is refused  -- 23514 inherited_record_withdrawal_complete new row for relation "inherited_record" violates check constraint "inherited_record_withdrawal_complete"
+PASS  IR08 a withdrawal with its reason and audit event commits  -- withdrawn
+PASS  IR09 a withdrawn inherited record cannot become active again  -- 23514 inherited_record_immutable inherited_record: provenance is immutable; the only change is a withdrawal of an active row
+PASS  IR10 an inherited record without its audit event fails at COMMIT  -- 23000 inherited_record_audit_required no audit_event for inherited_record 01990000-0000-7000-8000-0000000000d2 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  IR11 no inherited record creates a gate decision or moves a gate (gate_decision rows of the Modular transformation: 0)  -- 0
+PASS  T01 the six T10 areas are seeded verbatim from B0095 (area, what to show, RAG logic) and M0247-M0252 (presentation, status basis)  -- 6 areas: Outcomes, Value, Portfolio, Dependencies, Decisions, People & adoption
+PASS  T02 the application role cannot change the T10 seed  -- 42501 permission denied for table t10_area_definition
+PASS  RP01 a RAG policy stores its ratios as exact decimals (0.05 -> 0.050000); NULL columns mean the ADR-0037 defaults  -- 0.050000 / null
+PASS  RP02 an amber ratio above the red ratio is refused  -- 23514 dashboard_rag_policy_value_gap_order new row for relation "dashboard_rag_policy" violates check constraint "dashboard_rag_policy_value_gap_order"
+PASS  RP03 a ratio above 1 is refused  -- 23514 dashboard_rag_policy_value_gap_red_ratio_check new row for relation "dashboard_rag_policy" violates check constraint "dashboard_rag_policy_value_gap_red_ratio_check"
+PASS  RP04 a second policy for the same organization is refused  -- 23505 dashboard_rag_policy_organization_key duplicate key value violates unique constraint "dashboard_rag_policy_organization_key"
+PASS  RP05 a policy change without its audit event fails at COMMIT  -- 23000 dashboard_rag_policy_audit_required no audit_event for dashboard_rag_policy 01990000-0000-7000-8000-0000000000d3 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RP06 a policy version that does not step by 1 is refused  -- 23514 dashboard_rag_policy_version_step dashboard_rag_policy: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  RP07 a milestone amber slip above the red slip is refused  -- 23514 dashboard_rag_policy_milestone_slip_order new row for relation "dashboard_rag_policy" violates check constraint "dashboard_rag_policy_milestone_slip_order"
+PASS  MW01 my_work_draft lists a person's draft initiative with code and label, and not a draft gate instance  -- 5 drafts; types diagnostic_finding,initiative,kpi_definition,outcome
+
+ALL PASS

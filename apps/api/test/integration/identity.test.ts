@@ -136,7 +136,7 @@ describe("GET /api/v1/me", () => {
         inheritsDownward: true,
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
         // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
-        // (0049) + P4 slice H defaults (0053), sorted.
+        // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -152,6 +152,7 @@ describe("GET /api/v1/me", () => {
           "control.manage",
           "control_check.record",
           "corrective_rule.configure",
+          "dashboard.configure",
           "decision_right.configure",
           "delegation.create_own",
           "dependency.edit",
@@ -165,6 +166,7 @@ describe("GET /api/v1/me", () => {
           "gate.review",
           "group.manage",
           "improvement.edit",
+          "inherited_record.record",
           "initiative.edit",
           "lesson.edit",
           "lesson.search",
@@ -175,6 +177,7 @@ describe("GET /api/v1/me", () => {
           "phase_step.manage",
           "phase_step.progress",
           "phase_step.review",
+          "portfolio.manage",
           "prioritization.edit",
           "raci.edit",
           "raid.edit",
@@ -184,10 +187,12 @@ describe("GET /api/v1/me", () => {
           "role.read",
           "role_mapping.assign",
           "team.assign",
+          "traceability.link",
           "transformation.archive",
           "transformation.create",
           "transformation.read",
           "transformation.update",
+          "workstream.manage",
         ],
       },
     ]);

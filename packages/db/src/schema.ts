@@ -1302,6 +1302,9 @@ export interface InitiativeOutcomeContributionTable {
   contribution_statement: string;
   expected_kpi_movement: string | null;
   status: Generated<string>;
+  /** 0055 (ADR-0038 §2): share of the KPI movement credited to this contribution (0 < share <= 1); NULL = none. */
+  allocation_share: string | null;
+  allocation_basis: string | null;
   removed_at: NullableTimestamp;
   removed_by: string | null;
   remove_reason: string | null;
@@ -4031,7 +4034,9 @@ export const VIEW_NAMES = [
   "business_unit_closure",
   "executive_decision_log",
   "raid_register",
+  "my_work_draft",
   "scope_node",
+  "traceability_edge",
 ] as const;
 
 export type OrganizationRow = Selectable<OrganizationTable>;
@@ -4467,6 +4472,221 @@ export type ChangeControlPolicyRow = Selectable<ChangeControlPolicyTable>;
 export type ChangeRequestRow = Selectable<ChangeRequestTable>;
 export type ImpactAssessmentRow = Selectable<ImpactAssessmentTable>;
 export type ImpactAssessmentItemRow = Selectable<ImpactAssessmentItemTable>;
+
+// ---- P4 slices J and K (migrations 0055-0056; T-DG4-ARCH-08; ADR-0037, ADR-0038). Generated from the DDL by
+// docs/delivery/handbacks/DG4/T-DG4-ARCH-08-evidence/gen-schema.py. numeric -> string (decimal), date -> "YYYY-MM-DD".
+export interface PortfolioTable {
+  id: string;
+  organization_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface PortfolioTransformationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  portfolio_id: string;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface WorkstreamTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  lead_user_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface WorkstreamInitiativeTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  workstream_id: string;
+  initiative_id: string;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TraceLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  link_kind: string;
+  diagnostic_finding_id: string | null;
+  tom_gap_id: string | null;
+  deliverable_id: string | null;
+  capability_id: string | null;
+  outcome_kpi_id: string | null;
+  benefit_id: string | null;
+  contribution_statement: string;
+  allocation_share: string | null;
+  allocation_basis: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InheritedRecordTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  evidence_id: string | null;
+  baseline_id: string | null;
+  source_description: string;
+  original_owner: string | null;
+  original_date: string | null;
+  recorded_by: string;
+  status: Generated<string>;
+  withdrawn_at: NullableTimestamp;
+  withdrawn_by: string | null;
+  withdraw_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface T10AreaDefinitionTable {
+  id: string;
+  code: string;
+  methodology_version_id: string;
+  ordinal: number;
+  source_area_en: string;
+  area_ar: string;
+  source_what_to_show_en: string;
+  what_to_show_ar: string;
+  source_rag_logic_en: string;
+  rag_logic_ar: string;
+  source_presentation_en: string;
+  presentation_ar: string;
+  source_status_basis_en: string;
+  status_basis_ar: string;
+  source_ref: string;
+  ar_provisional: Generated<boolean>;
+  created_at: TimestampDefault;
+}
+
+export interface DashboardRagPolicyTable {
+  id: string;
+  organization_id: string;
+  value_gap_amber_ratio: string | null;
+  value_gap_red_ratio: string | null;
+  milestone_slip_amber_working_days: number | null;
+  milestone_slip_red_working_days: number | null;
+  dependency_due_soon_working_days: number | null;
+  decision_due_soon_working_days: number | null;
+  top_initiative_count: number | null;
+  deadline_horizon_working_days: number | null;
+  note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface Database {
+  portfolio: PortfolioTable;
+  portfolio_transformation: PortfolioTransformationTable;
+  workstream: WorkstreamTable;
+  workstream_initiative: WorkstreamInitiativeTable;
+  trace_link: TraceLinkTable;
+  inherited_record: InheritedRecordTable;
+  t10_area_definition: T10AreaDefinitionTable;
+  dashboard_rag_policy: DashboardRagPolicyTable;
+}
+
+export type PortfolioRow = Selectable<PortfolioTable>;
+export type PortfolioTransformationRow = Selectable<PortfolioTransformationTable>;
+export type WorkstreamRow = Selectable<WorkstreamTable>;
+export type WorkstreamInitiativeRow = Selectable<WorkstreamInitiativeTable>;
+export type TraceLinkRow = Selectable<TraceLinkTable>;
+export type InheritedRecordRow = Selectable<InheritedRecordTable>;
+export type T10AreaDefinitionRow = Selectable<T10AreaDefinitionTable>;
+export type DashboardRagPolicyRow = Selectable<DashboardRagPolicyTable>;
+
+/** View (0055/0056; read-only). */
+export interface TraceabilityEdgeView {
+  organization_id: ColumnType<string | null, never, never>;
+  transformation_id: ColumnType<string | null, never, never>;
+  edge_kind: ColumnType<string | null, never, never>;
+  from_type: ColumnType<string | null, never, never>;
+  from_id: ColumnType<string | null, never, never>;
+  to_type: ColumnType<string | null, never, never>;
+  to_id: ColumnType<string | null, never, never>;
+  link_table: ColumnType<string | null, never, never>;
+  link_id: ColumnType<string | null, never, never>;
+  contribution_statement: ColumnType<string | null, never, never>;
+  allocation_share: ColumnType<string | null, never, never>;
+}
+
+/** View (0055/0056; read-only). */
+export interface MyWorkDraftView {
+  organization_id: ColumnType<string | null, never, never>;
+  transformation_id: ColumnType<string | null, never, never>;
+  record_type: ColumnType<string | null, never, never>;
+  record_id: ColumnType<string | null, never, never>;
+  code: ColumnType<string | null, never, never>;
+  label: ColumnType<string | null, never, never>;
+  parent_type: ColumnType<string | null, never, never>;
+  parent_id: ColumnType<string | null, never, never>;
+  created_by: ColumnType<string | null, never, never>;
+  updated_at: ColumnType<Date | null, never, never>;
+}
+
+export interface Database {
+  traceability_edge: TraceabilityEdgeView;
+  my_work_draft: MyWorkDraftView;
+}
+
+export type TraceabilityEdgeRow = Selectable<TraceabilityEdgeView>;
+export type MyWorkDraftRow = Selectable<MyWorkDraftView>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -5661,6 +5881,8 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "allocation_share",
+    "allocation_basis",
   ],
   initiative_decision_link: [
     "id",
@@ -8314,6 +8536,179 @@ export const SCHEMA_COLUMNS = {
     "gate_submission_id",
     "gate_decision_id",
     "detail",
+  ],
+  portfolio: [
+    "id",
+    "organization_id",
+    "code",
+    "name",
+    "description",
+    "owner_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  portfolio_transformation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "portfolio_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  workstream: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "name",
+    "description",
+    "lead_user_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  workstream_initiative: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "workstream_id",
+    "initiative_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  trace_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "link_kind",
+    "diagnostic_finding_id",
+    "tom_gap_id",
+    "deliverable_id",
+    "capability_id",
+    "outcome_kpi_id",
+    "benefit_id",
+    "contribution_statement",
+    "allocation_share",
+    "allocation_basis",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  inherited_record: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "evidence_id",
+    "baseline_id",
+    "source_description",
+    "original_owner",
+    "original_date",
+    "recorded_by",
+    "status",
+    "withdrawn_at",
+    "withdrawn_by",
+    "withdraw_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  t10_area_definition: [
+    "id",
+    "code",
+    "methodology_version_id",
+    "ordinal",
+    "source_area_en",
+    "area_ar",
+    "source_what_to_show_en",
+    "what_to_show_ar",
+    "source_rag_logic_en",
+    "rag_logic_ar",
+    "source_presentation_en",
+    "presentation_ar",
+    "source_status_basis_en",
+    "status_basis_ar",
+    "source_ref",
+    "ar_provisional",
+    "created_at",
+  ],
+  dashboard_rag_policy: [
+    "id",
+    "organization_id",
+    "value_gap_amber_ratio",
+    "value_gap_red_ratio",
+    "milestone_slip_amber_working_days",
+    "milestone_slip_red_working_days",
+    "dependency_due_soon_working_days",
+    "decision_due_soon_working_days",
+    "top_initiative_count",
+    "deadline_horizon_working_days",
+    "note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  traceability_edge: [
+    "organization_id",
+    "transformation_id",
+    "edge_kind",
+    "from_type",
+    "from_id",
+    "to_type",
+    "to_id",
+    "link_table",
+    "link_id",
+    "contribution_statement",
+    "allocation_share",
+  ],
+  my_work_draft: [
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "code",
+    "label",
+    "parent_type",
+    "parent_id",
+    "created_by",
+    "updated_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

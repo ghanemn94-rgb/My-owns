@@ -1,6 +1,6 @@
 # P4 work split: shared rules, file ownership, contracts and integration order
 
-- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02, section §B by T-DG4-ARCH-03, section §E by T-DG4-ARCH-04, section §D by T-DG4-ARCH-05, section §F+G by T-DG4-ARCH-06 and section §H by T-DG4-ARCH-07 (solution-architect), 2026-10-09.
+- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02, section §B by T-DG4-ARCH-03, section §E by T-DG4-ARCH-04, section §D by T-DG4-ARCH-05, section §F+G by T-DG4-ARCH-06, section §H by T-DG4-ARCH-07 and section §J+K by T-DG4-ARCH-08 (solution-architect), 2026-10-09.
 - **Stage:** P4 "Execution value and sustainment" (DG4).
 - **Rule:** two tasks never edit the same file (REQ-DLV-008). Anything not listed under an owner is **frozen**; changes go through the orchestrator (p4-plan §5.3).
 - **Off-limits to every implementer** (the write guard enforces it): `tools/gates/**`, `tools/agents/**`, `.claude/**`, `docs/source/**`, `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/stages.json`, `docs/delivery/findings.json`, `docs/delivery/candidates/**`, `docs/delivery/runs/**`, `docs/delivery/test-evidence/**`, `CLAUDE.md`, `trading_agent/**`.
@@ -804,3 +804,126 @@ None of the 18 rows is complete at this task's end: each needs its implementer h
 6. **Change requests are decided through `POST /approvals/{id}/decision`** (ADR-0026); there is no separate decide path. Apply happens in the subject provider's `onOutcome`, in the decision transaction, and never edits `gate_*` rows.
 7. **Materiality defaults to "material"** when no threshold is configured; the two direct-edit refusals of ADR-0036 §3 apply only when a threshold is configured, so DG3 `approve-date` behaviour on existing data is unchanged.
 8. **Interpretations for the orchestrator to confirm** (ADR text; not reopen candidates unless stated): (a) "High-impact" = `raid_entry.impact = 'high'` is the G5 materiality threshold; (b) "required approvers" = the configured user, else every active holder of the approver role with `gate.decide` on the transformation; (c) the KPI-version activation refusal (ADR-0036 §6 item 2) is an additive 422 on a P4 operation (D-091 (2) pattern); (d) phase-step required evidence, role defaults and completion rules are an architect interpretation of M0116/M0118–M0123; (e) "reports" in the impact preview are the T10 areas until a report entity exists.
+
+## §J+K. Slices J (dashboards and workspaces) and K (traceability and Modular entry) — T-DG4-ARCH-08
+
+Written by T-DG4-ARCH-08 (solution-architect), 2026-10-09. Binding design: ADR-0037 (read models computed on every request; the six T10 areas and their area-specific RAG with configurable thresholds; six dashboards; filters; drill-down with the zero / Unknown / Stale / n/a states; scope enforcement; My Work; the Executive Overview; the workspace header) and ADR-0038 (the chain and `traceability_edge`; trace links with contribution and allocation and the 100 % rule; traceability view, orphan report and downstream impact; Modular-entry inherited records, gate labels and missing links; the §7.4 reopen candidate; portfolios and workstreams; one source of truth). The shared rules S-1… of §1 bind every task below. Product gates G1–G6 are business approvals; nothing here touches DG0–DG7, and an inherited approval is never a platform approval.
+
+### JK.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0037-p4-dashboards-t10-my-work-overview-header.md`, `ADR-0038-p4-traceability-orphans-allocation-impact-modular.md` | Binding design, with the refusal codes and English texts (ADR-0037 §13, ADR-0038 §12) |
+| Migrations | `packages/db/migrations/0055_p4_traceability_modular_structure.sql`, `0056_p4_dashboards_t10.sql`, `0057_p4_dashboards_traceability_permissions.sql` | Applied on a fresh PostgreSQL 16.13 and over a P3-populated database; every guard probed (`docs/delivery/handbacks/DG4/T-DG4-ARCH-08-evidence/probe-output.txt`, 59 PASS / 0 FAIL). **Frozen.** |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (8 tables, 2 views, the two `initiative_outcome_contribution` columns), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts`, `apps/api/test/integration/identity.test.ts` (TO +5 codes) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P4_DASHBOARD_TRACE_PERMISSIONS`, `P4_DASHBOARD_TRACE_ROLE_PERMISSIONS`; 5 codes) | Equals `0057` |
+| Lock class | `apps/api/src/modules/platform/advisory-locks.ts` (`traceAllocationSet` 730249), ADR-0016 §6 (row 730249; the trigger constant `trace_allocation_lock_class`) | Registry test green |
+| Contract | `docs/api/openapi.yaml` 1.3.0-p4: 38 operations (tags `dashboards`, `traceability`, `modular-entry`, `portfolios`, `workstreams`), 5 `PermissionCode` values, the optional `BenefitRegisterRow.initiatives[]` member (ADR-0038 §8; a P4 schema) | `pnpm openapi:lint` PASS (645 operations); every earlier line unchanged (diff check: 0 lines removed) |
+| Contract-test seams | `apps/api/test/support/p4-pending-arch-08.ts` (slice aggregate; frozen), `p4-pending-be-m.ts` (10), `p4-pending-be-m2.ts` (4), `p4-pending-be-m3.ts` (14), `p4-pending-kbe-g.ts` (6), `p4-pending-kbe-g2.ts` (4); `p4-pending.ts` imports the slice (**now frozen**, p4-plan §5.3); `p4-operations.ts` lists the 38; `contract.test.ts` pins 645 operations | §S-10 |
+| ERD §1k, data dictionary "P4 tables, slices J and K", permissions matrix §17 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+BE-A created the route-file stubs `reporting/{traceability,orphans,modular,my-work,executive-overview}.ts`, `reporting/dashboards/index.ts` and `transformations/workspace-header.ts` with their registration lines, and the seam files `apps/api/test/integration/contract/p4-exercises-{be-m,kbe-g}.ts`. **New files** this section names get exactly one registration or export line each, written by the named task (the p4-plan §5.3 named-wiring-line rule). BE-M2 and BE-M3 append their exercises to `p4-exercises-be-m.ts` and KBE-G2 to `p4-exercises-kbe-g.ts` (the BE-K2/BE-L2 precedent), so no new seam file and no `contract.test.ts` change is needed.
+
+**Recommended split for the orchestrator to decide.** p4-plan §5.1 gives slice K to BE-M and slice J to KBE-G. With 38 operations, this section separates BE-M2 (Modular entry) and BE-M3 (portfolios and workstreams) from BE-M, and KBE-G2 (Finance and adoption dashboards, My Work, header) from KBE-G (the KBE-D2/BE-H2/BE-K2 precedents). If a split task is not scheduled, its parent owns its part as a second half.
+
+### JK.1 BE-M — trace links, allocation, traceability view, orphan report, impact, PB-010 (backend-workflow-engineer; after ARCH-08)
+
+**Owns:** `reporting/traceability.ts` (`getTraceability`, `listTraceLinks`, `createTraceLink`, `getTraceLink`, `updateTraceLink`, `removeTraceLink`, `getAllocationSet`; lock 730249 before reading a set; the node `href` builder), `reporting/orphans.ts` (`getOrphanReport`, the ADR-0038 §5 rules), `reporting/impact.ts` (new: `getRecordImpact`, the §6 walk and dashboard mapping) and its registration line in `reporting/index.ts`; in `portfolio/links.ts` one named block: `setOutcomeContributionAllocation` (lock 730249, If-Match, audit) registered inside the file's existing route registration; in `benefits/register.ts` one named block filling the optional `initiatives[]` member (ADR-0038 §8); `packages/shared/src/schemas/traceability.ts` (new; the slice K link, set, graph, orphan and impact shapes) and its `schemas/index.ts` line; the first slice J/K block in `platform/db-errors.ts` (the ADR-0038 §12 mappings of the `0055` trace constraints); `test/support/p4-pending-be-m.ts`; `p4-exercises-be-m.ts`; `test/integration/reporting/{traceability,orphans,impact,allocation,one-source-of-truth}.test.ts`.
+
+**Consumes:** ADR-0038 §1–§6, §8, §10–§12; `0055` (`trace_link`, the contribution columns, `trace_allocation_guard`, `traceability_edge`), `0057`; ADR-0021 §2 (DG3 initiative links, unchanged); ADR-0029 (benefit allocations, unchanged); ADR-0016 §6 (730249); the 10 operations in `p4-pending-be-m.ts`.
+
+**Requirement rows:** REQ-S03-006, REQ-PB-044, REQ-PB-010.
+
+**Proofs it must include:** one initiative linked to two gaps and two KPIs; a capability → KPI link of 0.6 plus a contribution share of 0.4 accepted (`total` 1, `unallocatedShare` 0) and one more 0.1 → 422 `trace_link.allocation_exceeds_total` with the exact text "The allocations into this record would total 110%, more than 100%."; a set at 0.4 shows `unallocatedShare` 0.6; two concurrent writes into one KPI cannot both commit above 100 %; changing a KPI target (a new KPI version through slice A) and calling `getRecordImpact` on the KPI lists the linked benefits (`valueAffected`) and the `outcomes`/`value` areas and dashboards (REQ-S03-006); an initiative linked only to a finding appears in the orphan report with `expected` naming the TOM gap step, and every node type's `href` returns 200 (REQ-PB-044); renaming an initiative once changes it in `getRoadmap`, the T10 Portfolio area (with KBE-G merged, else asserted on the `traceability_edge` node label and noted) and `listBenefits` `initiatives[]`, with one initiative row (REQ-PB-010); the DG3 contribution routes' responses byte-identical; AUD 403 on every write; If-Match 428/409; one audit event per mutation; a removed link is never deleted.
+
+### JK.2 BE-M2 — Modular entry: inherited records, gate labels, missing links (backend-workflow-engineer; after BE-M)
+
+**Owns:** `reporting/modular.ts` (`getMissingLinks`, `listInheritedRecords` incl. the read-only `prior_approval` entries from `gate_dispensation`, `createInheritedRecord`, `withdrawInheritedRecord`); `packages/shared/src/schemas/missing-links.ts` (new: the pure §7.3 derivation over facts, unit-tested, and the shapes) and its `schemas/index.ts` line; `transformations/missing-links-facts.ts` (new: read-only facts query) and its export line in `transformations/index.ts`; its block appended to the slice J/K block of `platform/db-errors.ts` (**after** BE-M); `test/support/p4-pending-be-m2.ts`; its exercises appended to `p4-exercises-be-m.ts` (**after** BE-M); `test/integration/reporting/modular.test.ts`. **Only if the orchestrator accepts ADR-0038 §7.4:** the precondition lines in `workflows/gates.ts` (`submitGate`, after the sequence check; **after** BE-K2) and their test `test/integration/workflows/modular-precondition.test.ts`.
+
+**Consumes:** ADR-0038 §7, §10–§12; `0055` (`inherited_record`), `0020` (`gate_dispensation`, unchanged), ADR-0021 §5 (the `inheritedApproval` annotation, unchanged); the 4 operations in `p4-pending-be-m2.ts`.
+
+**Requirement rows:** REQ-PB-005, REQ-S03-005.
+
+**Proofs it must include:** a Modular transformation entering at Design with an inherited G2 approval document: `getMissingLinks` labels G2 `inherited` (never `approved`) and lists `baseline_missing` and `outcome_link_missing` (blocking); after a baseline and an outcome KPI are added both disappear; an inherited evidence item and baseline are listed with provenance and the label text "Inherited - recorded, not granted in platform"; an End-to-End transformation → 422 `inherited_record.not_modular`; kind `prior_approval` → 422 `inherited_record.prior_approval_use_dispensation`; no `gate_decision` row is created and no gate status changes; if §7.4 is accepted: G3 submission → 422 `gate.modular_links_missing` listing both items, 201 after they are supplied or with an accepted unexpired G3 waiver, and every End-to-End G1–G4 response byte-identical; AUD 403 on every write; If-Match 428/409; one audit event per mutation.
+
+### JK.3 BE-M3 — portfolios and workstreams (backend-workflow-engineer; after BE-M2 for the seam file only)
+
+**Owns:** `portfolio/structure.ts` (new: the 7 portfolio and 7 workstream operations; `WS-nn` codes through `record_code_counter`) and its registration line in `portfolio/index.ts`; `packages/shared/src/schemas/structure.ts` (new) and its `schemas/index.ts` line; its block appended to the slice J/K block of `platform/db-errors.ts` (**after** BE-M2); `test/support/p4-pending-be-m3.ts`; its exercises appended to `p4-exercises-be-m.ts` (**after** BE-M2); `test/integration/portfolio/structure.test.ts` and the business-unit scope sweep `test/integration/reporting/bu-scope.test.ts`.
+
+**Consumes:** ADR-0038 §9–§12; `0055` (`portfolio`, `portfolio_transformation`, `workstream`, `workstream_initiative`, prefix `WS`), `0057`; the DG1 scoped policy (unchanged); the 14 operations in `p4-pending-be-m3.ts`.
+
+**Requirement rows:** REQ-S03-001.
+
+**Proofs it must include:** two transformations in different business units are listed separately, and a user scoped to one business unit cannot list the other's (`listTransformations`, `listPortfolioTransformations`, `listWorkstreams`, and the slice J/K reads that exist when it merges); a transformation in two portfolios → 422 `portfolio.transformation_already_placed`; an initiative in two workstreams → 422 `workstream.initiative_already_assigned`; codes `WS-01`, `WS-02` in order; archived portfolio/workstream read-only (422); AUD 403 on every write; If-Match 428/409; one audit event per mutation.
+
+### JK.4 KBE-G — the T10 area engine, transformation, executive and workstream dashboards, drill-down, RAG policy (kpi-benefits-engineer; after ARCH-08, BE-J and BE-K)
+
+**Owns:** `reporting/dashboards/**` except `finance.ts` and `adoption.ts` (`index.ts` registration; `areas.ts`: the six area rules of ADR-0037 §3 as pure functions of facts with decimal.js; `combine.ts`: the status precedence; `filters.ts`: the §4 filters, window and as-of date; `scope.ts`: the readable-transformation set; `drilldown.ts`: `getDashboardDrilldown` and the sum invariant; `rag-policy.ts`: `getDashboardRagPolicy`, `putDashboardRagPolicy`; `transformation.ts`: `getTransformationDashboard`; `workstream.ts`: `getWorkstreamDashboard`), `reporting/executive-overview.ts` (`getExecutiveOverview`); the read-only facts files `kpi/dashboard-facts.ts`, `benefits/dashboard-facts.ts`, `portfolio/dashboard-facts.ts`, `adoption/dashboard-facts.ts`, each with one export line in its module's `index.ts`; `packages/shared/src/schemas/dashboards.ts` (new) and its `schemas/index.ts` line; its block appended to the slice J/K block of `platform/db-errors.ts` (**after** BE-M; `dashboard_rag_policy.threshold_order`); `test/support/p4-pending-kbe-g.ts`; `p4-exercises-kbe-g.ts`; `test/integration/reporting/{dashboards,t10-rag,drilldown,filters,scope,rag-policy}.test.ts`; unit tests of `areas.ts` and `combine.ts` (property tests: Unknown/Stale never combine to green; decimal sums).
+
+**Consumes:** ADR-0037 (all); `0056`, `0057`; the views `raid_register`, `executive_decision_log`, `benefit_value_line`, `benefit_counting`, `traceability_edge`; ADR-0028 (KPI status, overrides, Stale), ADR-0030 §7 (totals, counted once), ADR-0031 (schedule network), ADR-0032 §5 (overdue rule), ADR-0033 (metric links), ADR-0025 (business date, working days); the 6 operations in `p4-pending-kbe-g.ts`.
+
+**Requirement rows:** REQ-PB-062, REQ-PB-063, REQ-PB-064, REQ-S03-009, REQ-S13-001 (executive, transformation and workstream dashboards), REQ-S13-002, REQ-S13-003.
+
+**Proofs it must include:** all six areas render with their bilingual seed labels from persisted data and each headline drills to contributing records (REQ-PB-062); an outcome whose linked deliverables are all accepted and milestones achieved but whose KPI is below trajectory is red or amber, and a KPI with no actual is `unknown` (REQ-PB-063); one open T16 ask due yesterday in Asia/Riyadh (business date injected) makes Decisions red and lists it, and after its outcome is recorded it is not counted (REQ-PB-064); after an accepted KPI actual the overview's Outcomes area shows the new actual once and `outcomes.kpi_status` lists the source actual (REQ-S03-009); a user scoped to transformation X sees no transformation Y record or figure in any tile, total or drill-down of the executive, transformation and workstream dashboards (REQ-S13-001); `periodId` Q1 changes every area's values (REQ-S13-002); the validated total drills to its benefit records with an equal decimal sum, and zero, Unknown and n/a are distinct states (REQ-S13-003); a configured threshold changes the RAG and `policySource`; AUD 403 and If-Match 428/409 on `putDashboardRagPolicy`; no figure is stored (no table write outside the policy).
+
+### JK.5 KBE-G2 — Finance and adoption dashboards, My Work, workspace header (kpi-benefits-engineer; after KBE-G)
+
+**Owns:** `reporting/dashboards/finance.ts` and `reporting/dashboards/adoption.ts` (new; `getFinanceDashboard`, `getAdoptionDashboard`) with their registration lines in `reporting/dashboards/index.ts` (**after** KBE-G); `reporting/my-work.ts` (`getMyWork`, `MY_WORK_SECTION_BY_KIND` and its completeness test); `reporting/workspace-header.ts` (new: `getWorkspaceHeader`) and its registration line in `reporting/index.ts`; `reporting/ports.ts` (new: `WorkflowsReadPort`) and its `server.ts` wiring line, implemented by `workflows/gate-readiness-read.ts` (new, read-only) with one export line in `workflows/index.ts`; `tasks/dashboard-facts.ts` with one export line in `tasks/index.ts`; the removal of the empty stub `transformations/workspace-header.ts`, its export line in `transformations/index.ts` and its import and call in `server.ts` (ADR-0037 §11); its shapes appended to `schemas/dashboards.ts` (**after** KBE-G); `test/support/p4-pending-kbe-g2.ts`; its exercises appended to `p4-exercises-kbe-g.ts` (**after** KBE-G); `test/integration/reporting/{finance-adoption,my-work,workspace-header}.test.ts`.
+
+**Consumes:** ADR-0037 §2, §5–§12; `0056` (`my_work_draft`); ADR-0025 (`work_item`, business date), ADR-0030 §7, ADR-0033; the 4 operations in `p4-pending-kbe-g2.ts`.
+
+**Requirement rows:** REQ-S03-008, REQ-S03-011, REQ-S13-001 (Finance, adoption and personal work dashboards).
+
+**Proofs it must include:** a KPI owner with a due actual sees the `kpi_update_due` item under Missing updates with a link that opens the KPI period entry, and another user's items never appear (REQ-S03-008); each of the 30 work-item kinds maps to one section (the completeness test fails on an unmapped kind); drafts list only the caller's own drafts; the header shows the eight elements with Unknown where data is missing (no North Star, no sponsor, no benefit), and `gateReadiness` comes through the port (REQ-S03-011); the Finance and adoption dashboards and My Work pass the X/Y scope sweep (REQ-S13-001); non-financial benefits are n/a, never 0.
+
+### JK.6 Migrations of slices J and K
+
+- `0055`–`0057`: architect, all three numbers used, **frozen**. No number of the range is left free, so the contiguity rule (S-12) holds up to `0057`; `0058`–`0069` stay the orchestrator's repair range. BE-M, BE-M2, BE-M3, KBE-G and KBE-G2 have no migration number; a schema need goes in the handback (D-094).
+
+### JK.7 Other slices and tasks that consume slices J and K
+
+- **FE-G:** `pages/dashboards/**` (six dashboards, filter chips, drill-down panel with zero / Unknown / Stale / n/a rendered distinctly), `pages/executive-overview/**`, the workspace header component (one-click RAID link filtered to the transformation, e2e), `pages/traceability/**` (graph with clickable nodes, orphan report, impact panel, allocation sets), the Modular-entry missing-link and inherited-records views, portfolio and workstream screens; EN/AR keys for every ADR-0037 §13 and ADR-0038 §12 code (requested from FE-A's files, append-only).
+- **QA-C:** A03 (Modular entry) uses JK.2's proofs; its G3 refusal clause depends on the orchestrator's decision on ADR-0038 §7.4.
+- **ADR-0036 §5** ("reports" = T10 areas) is unchanged: the change-request assessment stays the frozen artefact; `getRecordImpact` is the live read model.
+
+### JK.8 Integration order
+
+1. BE-M (after ARCH-08).
+2. BE-M2 (after BE-M: `p4-exercises-be-m.ts`, the db-errors block, the `schemas/index.ts` line order). Its `workflows/gates.ts` lines, if §7.4 is accepted, after BE-K2.
+3. BE-M3 (after BE-M2: `p4-exercises-be-m.ts`, the db-errors block).
+4. KBE-G (after ARCH-08, BE-J and BE-K, as p4-plan §5.1; its db-errors block after BE-M).
+5. KBE-G2 (after KBE-G: `dashboards/index.ts`, `schemas/dashboards.ts`, `p4-exercises-kbe-g.ts`).
+6. FE-G (after KBE-G, KBE-G2, BE-M, BE-M2, BE-M3).
+
+### JK.9 Requirement → owner (the 15 rows of slices J and K)
+
+| Requirement | Architect (this task) | Implementer half |
+|---|---|---|
+| REQ-PB-062 | `t10_area_definition` seed verbatim (T01, T02); area shape | KBE-G (+ FE-G screens) |
+| REQ-PB-063 | area rules and defaults (ADR-0037 §3); `dashboard_rag_policy` (RP01–RP07) | KBE-G |
+| REQ-PB-064 | Decisions rule = the ADR-0032 overdue rule | KBE-G |
+| REQ-S03-008 | sections, kind map, `my_work_draft` view (MW01) | KBE-G2 |
+| REQ-S03-009 | overview = executive dashboard (ADR-0037 §8) | KBE-G |
+| REQ-S03-011 | eight elements and their Unknown; `WorkflowsReadPort` | KBE-G2 (+ FE-G one-click link) |
+| REQ-S13-001 | six dashboards, scope rule (ADR-0037 §2, §6) | KBE-G (executive, transformation, workstream), KBE-G2 (Finance, adoption, personal) |
+| REQ-S13-002 | filters, window and as-of date (ADR-0037 §4) | KBE-G |
+| REQ-S13-003 | value states and drill-down invariant (ADR-0037 §5) | KBE-G |
+| REQ-PB-005 | missing-link rules; §7.4 reopen candidate | BE-M2 (and the orchestrator's §7.4 decision) |
+| REQ-PB-010 | no copies (`traceability_edge`, G05, TL17); `initiatives[]` member | BE-M |
+| REQ-PB-044 | `trace_link` (TL02–TL17), orphan rules | BE-M |
+| REQ-S03-001 | `portfolio*`, `workstream*` (PF01–PF08, WS01–WS06) | BE-M3 |
+| REQ-S03-005 | `inherited_record` (IR01–IR11); gate labels | BE-M2 |
+| REQ-S03-006 | allocation rule and lock 730249 (TL07–TL12); impact rules | BE-M |
+
+None of the 15 rows is complete at this task's end: each needs its implementer half.
+
+### JK.10 What the implementers of slices J and K must know
+
+1. **Shared rules S-1… apply** (free text and strict UTF-8; `config.consumes` = the request media type, `application/json` for every slice J/K body; commit-time re-authorisation; validation; `If-Match` 428/409; one audit event per mutation; no remote I/O inside a transaction; a test for each; decimals as strings; Unknown never 0 or green; bilingual texts translated at render time; ports below 32768; locale unset and `C.UTF-8`).
+2. **Read models store nothing.** No dashboard, drill-down, My Work, header, traceability, orphan, missing-link or impact response is written to a table or cache; each is computed in the request's read-only transaction. The only slice J write is the RAG policy.
+3. **Scope is the readable set.** Compute the caller's readable transformations once per request with the access module's scoped policy and constrain every query by `transformation_id`; an explicit id outside it is 404 (never 403, never an empty 200 that discloses existence). An unreadable record reached in a walk is counted, never listed.
+4. **Never import across the boundary.** `reporting` may import only the modules in its `dependsOn` (not `workflows`): read through the views named in ADR-0037 §1, the named `dashboard-facts.ts` exports, and `WorkflowsReadPort`. `workflows` reaches the missing-link rule only through `transformations/missing-links-facts.ts` and `schemas/missing-links.ts`.
+5. **Unknown precedence.** red > amber > unknown/not_computable > stale > green; an empty set follows the per-area table of ADR-0037 §3. Task completion is never an input to the Outcomes rule.
+6. **The 100 % rule is enforced twice.** Take lock 730249 (`ADVISORY_LOCK_CLASSES.traceAllocationSet`, key = the target id) before reading a set; the `0055` trigger refuses a total above 1 with constraint `trace_allocation_total`, mapped to 422 `trace_link.allocation_exceeds_total`.
+7. **Inherited is never approved.** Prior approvals stay `gate_dispensation` rows; no slice K path writes `gate_decision` or changes `gate_instance.status`. The label text is "Inherited - recorded, not granted in platform".
+8. **Interpretations for the orchestrator to confirm** (not reopen candidates unless stated): (a) the T10 default thresholds of ADR-0037 §3 (no source gives them); (b) the T10 override is the slice A KPI override (ADR-0037 §3); (c) the executive dashboard and the Executive Overview are one read model, and the personal work dashboard and My Work are one (ADR-0037 §2); (d) "scorecard" in REQ-PB-010 is the T10 Portfolio area, and the benefits register gains the optional `initiatives[]` member (ADR-0038 §8); (e) **reopen candidate:** the Modular-entry gate precondition of ADR-0038 §7.4, without which the "G3 submission is rejected" clause of REQ-PB-005 and REQ-S03-005 is not met; (f) the BE-M2/BE-M3/KBE-G2 split.
