@@ -1,0 +1,74 @@
+port-policy: PostgreSQL listening on port 24750 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-g
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1cnt3c_17a3b1cf (server_encoding UTF8); applied 59 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/drilldown.test.ts (4 tests | 3 failed) 3048ms
+   × REQ-S13-003: the validated total drills to its benefit records > items are the benefits, their decimal sum over all pages equals the headline, with evidence 80ms
+     → contract: getTransformationDashboard 200 body violates the schema: data/areas/1/headlines/4/value/value must match pattern "^-?[0-9]{1,18}(\.[0-9]{1,6})?$", data/areas/1/headlines/4/value/value must be null, data/areas/1/headlines/4/value/value must match exactly one schema in oneOf
+{"transformationId":"01a1221b-cc92-73cf-becc-0d7b799ea78d","generatedAt":"2026-10-09T19:20:10.911Z","businessDate":"2026-10-09","timezone":"Asia/Riyadh","appliedFilters":{"organizationId":"01a1221b-c8b5-751d-b147-f36c1b1de7ab","transformationIds":["01a1221b-cc92-73cf-becc-0d7b799ea78d"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-09"},"areas":[{"code":"outcomes","ordinal":1,"sourceAreaEn":"Outcomes","areaAr"
+   × REQ-S13-003: the validated total drills to its benefit records > the planned and gap drills hold the same invariant; subjectId narrows to one benefit 110ms
+     → contract: getDashboardDrilldown 200 body violates the schema: data/value/value must match pattern "^-?[0-9]{1,18}(\.[0-9]{1,6})?$", data/value/value must be null, data/value/value must match exactly one schema in oneOf
+{"metric":"value.gap","appliedFilters":{"organizationId":"01a1221b-c8b5-751d-b147-f36c1b1de7ab","transformationIds":["01a1221b-cc92-73cf-becc-0d7b799ea78d"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-09"},"value":{"state":"value","value":"0.21450087565674255691768826619964973730297723292469352014010507880910683012259194","unit":"ratio","currency":"SAR","reasonKey":null},"period":{"start":null,"end":null,"as
+   × REQ-S13-003: zero, Unknown and not_applicable are distinct > nothing validated yet is a known zero; no financial benefit is n/a; a KPI with no data is unknown 82ms
+     → contract: getTransformationDashboard 200 body violates the schema: data/areas/1/headlines/4/value/value must match pattern "^-?[0-9]{1,18}(\.[0-9]{1,6})?$", data/areas/1/headlines/4/value/value must be null, data/areas/1/headlines/4/value/value must match exactly one schema in oneOf
+{"transformationId":"01a1221b-cc92-73cf-becc-0d7b799ea78d","generatedAt":"2026-10-09T19:20:11.162Z","businessDate":"2026-10-09","timezone":"Asia/Riyadh","appliedFilters":{"organizationId":"01a1221b-c8b5-751d-b147-f36c1b1de7ab","transformationIds":["01a1221b-cc92-73cf-becc-0d7b799ea78d"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-09"},"areas":[{"code":"outcomes","ordinal":1,"sourceAreaEn":"Outcomes","areaAr"
+   ✓ REQ-S13-003: zero, Unknown and not_applicable are distinct > a subject of the wrong kind is 422 with the exact text; a subject on a metric without one too 78ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/drilldown.test.ts > REQ-S13-003: the validated total drills to its benefit records > items are the benefits, their decimal sum over all pages equals the headline, with evidence
+Error: contract: getTransformationDashboard 200 body violates the schema: data/areas/1/headlines/4/value/value must match pattern "^-?[0-9]{1,18}(\.[0-9]{1,6})?$", data/areas/1/headlines/4/value/value must be null, data/areas/1/headlines/4/value/value must match exactly one schema in oneOf
+{"transformationId":"01a1221b-cc92-73cf-becc-0d7b799ea78d","generatedAt":"2026-10-09T19:20:10.911Z","businessDate":"2026-10-09","timezone":"Asia/Riyadh","appliedFilters":{"organizationId":"01a1221b-c8b5-751d-b147-f36c1b1de7ab","transformationIds":["01a1221b-cc92-73cf-becc-0d7b799ea78d"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-09"},"areas":[{"code":"outcomes","ordinal":1,"sourceAreaEn":"Outcomes","areaAr"
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/reporting/drilldown.test.ts:69:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/drilldown.test.ts > REQ-S13-003: the validated total drills to its benefit records > the planned and gap drills hold the same invariant; subjectId narrows to one benefit
+Error: contract: getDashboardDrilldown 200 body violates the schema: data/value/value must match pattern "^-?[0-9]{1,18}(\.[0-9]{1,6})?$", data/value/value must be null, data/value/value must match exactly one schema in oneOf
+{"metric":"value.gap","appliedFilters":{"organizationId":"01a1221b-c8b5-751d-b147-f36c1b1de7ab","transformationIds":["01a1221b-cc92-73cf-becc-0d7b799ea78d"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-09"},"value":{"state":"value","value":"0.21450087565674255691768826619964973730297723292469352014010507880910683012259194","unit":"ratio","currency":"SAR","reasonKey":null},"period":{"start":null,"end":null,"as
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/reporting/drilldown.test.ts:108:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/drilldown.test.ts > REQ-S13-003: zero, Unknown and not_applicable are distinct > nothing validated yet is a known zero; no financial benefit is n/a; a KPI with no data is unknown
+Error: contract: getTransformationDashboard 200 body violates the schema: data/areas/1/headlines/4/value/value must match pattern "^-?[0-9]{1,18}(\.[0-9]{1,6})?$", data/areas/1/headlines/4/value/value must be null, data/areas/1/headlines/4/value/value must match exactly one schema in oneOf
+{"transformationId":"01a1221b-cc92-73cf-becc-0d7b799ea78d","generatedAt":"2026-10-09T19:20:11.162Z","businessDate":"2026-10-09","timezone":"Asia/Riyadh","appliedFilters":{"organizationId":"01a1221b-c8b5-751d-b147-f36c1b1de7ab","transformationIds":["01a1221b-cc92-73cf-becc-0d7b799ea78d"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-09"},"areas":[{"code":"outcomes","ordinal":1,"sourceAreaEn":"Outcomes","areaAr"
+ ❯ assertContract apps/api/test/support/contract.ts:120:13
+    118|     const body = res.body === "" ? undefined : isJson ? JSON.parse(res…
+    119|     if (!validate(body)) {
+    120|       throw new Error(
+       |             ^
+    121|         `contract: ${op.operationId} ${res.statusCode} body violates t…
+    122|       );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/reporting/drilldown.test.ts:141:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  19:19:54
+   Duration  16.57s (transform 4.89s, setup 0ms, collect 10.40s, tests 3.05s, environment 0ms, prepare 170ms)
+

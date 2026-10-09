@@ -96,3 +96,6 @@ export * from "./gates-p4.ts";
 // P4 slice H mirrors of BE-L (backend-workflow-engineer, T-DG4-BE-L; p4-work-split §H H.3): change requests, the
 // change-control policy, impact previews and frozen impact assessments, and the pure materiality rules (ADR-0036).
 export * from "./change-control.ts";
+// P4 slice J mirrors of KBE-G (kpi-benefits-engineer, T-DG4-KBE-G; p4-work-split §J+K JK.4): the six T10 areas, the
+// transformation, executive and workstream dashboards, the drill-down and the dashboard RAG policy (ADR-0037).
+export * from "./dashboards.ts";

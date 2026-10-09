@@ -191,8 +191,12 @@ describe("kpi module (P2)", () => {
       "computeTotals",
       "includedCaseIds",
       "loadCaseTotals",
+      // P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only dashboard facts through the slice A status service.
+      "loadKpiDashboardStatuses",
       "loadKpiGateFacts",
       "loadKpiP3GateFacts",
+      "loadKpiStatusLineage",
+      "loadOutcomeRows",
       "missingSections",
       "presentCases",
       // P4 (T-DG4-KBE-C): slice B's downstream-impact seam (KBE-E registers its provider).

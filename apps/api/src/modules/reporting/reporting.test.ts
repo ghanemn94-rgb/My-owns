@@ -44,18 +44,20 @@ describe("reporting module (P1 scaffold, D-048)", () => {
     expect(Object.isFrozen(mod.REPORTING_MODULE)).toBe(true);
   });
 
-  it("its register hook runs without error and registers no route (no mutating route in P1)", async () => {
+  it("its register hook registers the routes of its P4 route files and reports them (T-DG4-KBE-G)", async () => {
+    // P1 asserted a route-free scaffold; from P4 (KBE-G dashboards, BE-M traceability) the hook registers the route
+    // files' routes and reports the module "active" while any exists (the sustainment/benefits pattern).
     const app = Fastify({ logger: false });
     const routes: string[] = [];
     app.addHook("onRoute", (r) => {
       routes.push(`${String(r.method)} ${r.url}`);
     });
-    // The scaffold uses no dependency yet; the hook keeps the same signature as every other module's.
     const deps = { db: {}, config: {} } as unknown as ModuleDeps;
     const registration = mod.registerReportingModule(app, deps);
     await app.ready();
-    expect(routes).toEqual([]);
-    expect(registration).toBe(mod.REPORTING_MODULE);
+    expect(registration.module).toBe("reporting");
+    expect(registration.status).toBe(registration.routes.length > 0 ? "active" : "scaffold");
+    for (const r of registration.routes) expect(routes.map((x) => x.replace(/^GET,HEAD /, "GET "))).toContain(r);
     await app.close();
   });
 
