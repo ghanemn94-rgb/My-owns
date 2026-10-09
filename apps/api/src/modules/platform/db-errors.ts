@@ -1448,6 +1448,68 @@ export function mapP4SustainmentOperationsError(error: PgErrorLike): HttpProblem
 }
 
 /**
+ * P4 slice G, BE-J lines (T-DG4-BE-J; ADR-0034 §1, §3, §7, §12): the initiative delivery and adoption stamps,
+ * transition decisions and closure records. The API answers the same codes and exact English texts first (closures
+ * under lock class closure); these only answer a write that reached the guard (S-11). Null when the error is
+ * not one of them.
+ */
+export function mapP4SustainmentClosureError(error: PgErrorLike): HttpProblem | null {
+  const message = error.message ?? "";
+  const finalStatus = (/: an? ([a-z_]+) decision is final/.exec(message) ?? [])[1];
+  switch (error.constraint ?? "") {
+    case "transition_decision_live_key":
+      return problems.duplicate(
+        "transition_decision.exists",
+        "This benefit already has a transition decision in progress or approved.",
+      );
+    case "transition_decision_final":
+      return handoverRule(
+        "transition_decision.final",
+        `This transition decision is ${finalStatus ?? "decided"} and can no longer be changed.`,
+      );
+    case "transition_decision_content_frozen":
+      return handoverRule("transition_decision.frozen", "A submitted transition decision cannot be edited.");
+    case "transition_decision_monitoring_dates":
+      return handoverRule(
+        "transition_decision.monitoring_after_end",
+        "The first monitoring date must be on or before the expected realization end.",
+        "/firstMonitoringDate",
+      );
+    case "closure_record_initiative_key":
+      return problems.duplicate("closure.already_closed", "This initiative is already closed.");
+    case "closure_record_transformation_key":
+      return problems.duplicate("closure.already_closed", "This transformation is already closed.");
+    case "closure_record_initiative_completed":
+      return handoverInvalidTransition("closure.delivery_not_complete", "Initiative delivery is not complete.");
+    case "closure_record_g6_approved":
+      return handoverInvalidTransition(
+        "closure.g6_not_approved",
+        "Closure requires the G6 (Sustain) business approval.",
+      );
+    case "transition_decision_code_key":
+      // A concurrent code allocation: retry.
+      return retryConflict();
+    case "transition_decision_starts_draft":
+    case "transition_decision_transition":
+    case "transition_decision_identity":
+    case "transition_decision_decided_complete":
+    case "transition_decision_frequency_valid":
+    case "closure_record_subject":
+    case "closure_record_closer_is_creator":
+    case "transformation_closure_recorded":
+    case "initiative_delivery_completed_recorded":
+    case "initiative_delivery_completed_once":
+    case "initiative_delivery_completed_stamps":
+    case "initiative_adoption_status_stamps":
+    case "initiative_adoption_status_valid":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * P4 slices F and G (ADR-0033 §10, ADR-0034 §12): the database last lines of the adoption and sustainment tables, each
  * task appending its own lines to this block (p4-work-split §F+G). The API returns the same codes and exact English
  * texts first; these mappings only answer a write that reached the guard (S-11). Null when the error is not one of them.
@@ -1940,6 +2002,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4SustainmentArea !== null) return p4SustainmentArea;
   const p4SustainmentOperations = mapP4SustainmentOperationsError(error); // BE-I2 (slices F/G block)
   if (p4SustainmentOperations !== null) return p4SustainmentOperations;
+  const p4SustainmentClosure = mapP4SustainmentClosureError(error); // BE-J (slices F/G block)
+  if (p4SustainmentClosure !== null) return p4SustainmentClosure;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,

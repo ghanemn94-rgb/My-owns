@@ -308,8 +308,9 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
         if (body.status !== undefined && !isAllowedTransition(from, body.status)) {
           if (GOVERNED_TARGET_STATUSES.has(body.status))
             throw problems.invalidTransition(
+              // Seam 15 (D-089; ADR-0034 §7): closure is the governed closure action (closeTransformation, T-DG4-BE-J).
               "A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business " +
-                "approval with validated benefits, which is not available in this release.",
+                "approval with validated benefits; use the closure action.",
             );
           throw problems.invalidTransition(`A transformation cannot move from ${from} to ${body.status}.`);
         }
