@@ -12,8 +12,10 @@
 // The DG2 action operations (/actions) are byte-stable: the P4 representation `RaidAction` (source links, follow-up
 // date, `overdue`) is served only on these paths. Actions stay person-authored (`created_by` NOT NULL; ADR-0031 §6).
 // A linked action's owner gets one My Work item (kind raid_action_due, dedupe `raid.action:<actionItemId>:<owner>`,
-// due date = the action's due date) through createWorkItemOnce (S-13); an owner change cancels the previous owner's
-// open item and creates the new owner's; done / cancelled closes it. `createLinkedAction` is reused by BE-D2 for
+// due date = the action's due date) through createWorkItemOnce (S-13); the item follows the action (T-DG4-BE-R1): an
+// owner change cancels the previous owner's open item and opens the new owner's (reassignWorkItemOfSubject; A -> B -> A
+// leaves one open item, for A), a due-date change moves its due date (rescheduleWorkItemsOfSubject); done / cancelled
+// closes it. `createLinkedAction` is reused by BE-D2 for
 // corrective-case actions. Nothing here is a business approval or touches DG0-DG7.
 import { diffFields, sql, type ActionItemTable, type DbOrTx, type Tx } from "@mth/db";
 import { raidActionCreate, raidActionUpdate, type RaidAction, type RaidActionCreate } from "@mth/shared/schemas";
@@ -39,7 +41,13 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
+import {
+  closeWorkItemsOfSubject,
+  createWorkItemOnce,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
+  type WorkItemInput,
+} from "../tasks/index.ts";
 import { assertActiveUsers, openWrite, type WriteContext } from "../transformations/index.ts";
 import { JSON_BODY, parseEntryParams, parseTransformationParam, RAID, RAID_CLOSED } from "./register.ts";
 
@@ -153,10 +161,9 @@ const userActor = (ctx: WriteContext) =>
 const isLinked = (r: ActionRow) =>
   r.raid_entry_id !== null || r.dependency_id !== null || r.corrective_case_id !== null;
 
-/** The owner's My Work item for a linked, open action (createWorkItemOnce; one per action and owner). */
-async function assignActionTask(ctx: WriteContext, row: ActionRow, sourceCode: string | null): Promise<void> {
-  if (!isLinked(row) || !(OPEN_STATUSES as readonly string[]).includes(row.status)) return;
-  await createWorkItemOnce(ctx.tx, userActor(ctx), {
+/** The owner's My Work item of a linked action (one per action and owner; a returning owner's key gets `#n`). */
+function actionTaskInput(ctx: WriteContext, row: ActionRow, sourceCode: string | null): WorkItemInput {
+  return {
     organizationId: ctx.organizationId,
     transformationId: ctx.transformationId,
     kind: RAID_ACTION_TASK_KIND,
@@ -168,7 +175,41 @@ async function assignActionTask(ctx: WriteContext, row: ActionRow, sourceCode: s
     messageParams: sourceCode === null ? {} : { sourceCode },
     dueDate: dateOrNull(row.due_date),
     dedupeKey: `raid.action:${row.id}:${row.owner_user_id}`,
-  });
+  };
+}
+
+const isOpenAction = (row: ActionRow) => isLinked(row) && (OPEN_STATUSES as readonly string[]).includes(row.status);
+
+/** The owner's My Work item for a linked, open action (createWorkItemOnce; one per action and owner). */
+async function assignActionTask(ctx: WriteContext, row: ActionRow, sourceCode: string | null): Promise<void> {
+  if (!isOpenAction(row)) return;
+  await createWorkItemOnce(ctx.tx, userActor(ctx), actionTaskInput(ctx, row, sourceCode));
+}
+
+/**
+ * The open action's item follows it (T-DG4-BE-R1; D-102): an owner change moves it to the new owner (the previous
+ * owner's open item is cancelled; A -> B -> A leaves one open item, for A), a due-date change moves its due date.
+ */
+async function followActionTask(ctx: WriteContext, before: ActionRow, after: ActionRow): Promise<void> {
+  if (!isOpenAction(after)) return;
+  if (after.owner_user_id !== before.owner_user_id)
+    await reassignWorkItemOfSubject(
+      ctx.tx,
+      userActor(ctx),
+      actionTaskInput(ctx, after, await linkCodeOf(ctx.tx, after)),
+    );
+  if (dateOrNull(after.due_date) !== dateOrNull(before.due_date))
+    await rescheduleWorkItemsOfSubject(
+      ctx.tx,
+      userActor(ctx),
+      {
+        organizationId: ctx.organizationId,
+        subjectType: "action_item",
+        subjectId: after.id,
+        kinds: [RAID_ACTION_TASK_KIND],
+      },
+      dateOrNull(after.due_date),
+    );
 }
 
 function closeActionTasks(ctx: WriteContext, actionId: string, status: "done" | "cancelled"): Promise<number> {
@@ -344,10 +385,7 @@ async function updateAction(tx: Tx, request: FastifyRequest): Promise<ActionRow>
   if (isLinked(updated)) {
     if (updated.status === "done" || updated.status === "cancelled") {
       if (updated.status !== current.status) await closeActionTasks(ctx, updated.id, updated.status);
-    } else if (updated.owner_user_id !== current.owner_user_id) {
-      await closeActionTasks(ctx, updated.id, "cancelled");
-      await assignActionTask(ctx, updated, await linkCodeOf(tx, updated));
-    }
+    } else await followActionTask(ctx, current, updated);
   }
   return updated;
 }

@@ -1171,11 +1171,11 @@ export function mapP4RaidError(error: PgErrorLike): HttpProblem | null {
     case "corrective_case_owner_required":
       return rule422("corrective_case.owner_required", "Assign an owner before closing this corrective action.", "");
     case "corrective_case_one_open_key":
-      // The API decides this under the correctiveCase lock and names the open case's code; the backstop cannot read it.
-      return problems.duplicate(
-        "corrective_case.already_open",
-        "An open corrective action already exists for this finding: (unknown).",
-      );
+      // T-DG4-BE-R1: createCorrectiveCase decides this itself (INSERT ... ON CONFLICT DO NOTHING under the
+      // correctiveCase lock) and answers 409 corrective_case.already_open with the open case's real code, so the
+      // refusal has exactly one path. No API write can reach this index otherwise (the source fields are immutable and
+      // a PATCH never reopens a case): reaching it is a programming error, never a refusal without its code.
+      return problems.internal();
     case "corrective_action_rule_severity_kpi_only":
       return rule422(
         "corrective_rule.severity_kpi_only",

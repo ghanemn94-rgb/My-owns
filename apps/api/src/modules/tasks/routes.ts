@@ -34,10 +34,15 @@ import {
 } from "../platform/index.ts";
 
 /**
- * Kinds whose task closes with its subject (ADR-0025 §4): the approval tasks close when the approval is decided, so
- * they refuse manual completion with 422 work_item.system_managed.
+ * Kinds whose task closes with its subject (ADR-0025 §4): the approval tasks close when the approval is decided, and
+ * a corrective case's follow-up closes when the case closes (ADR-0031 §5.6; T-DG4-BE-R1, the BE-D2 handback), so they
+ * refuse manual completion with 422 work_item.system_managed.
  */
-export const SYSTEM_MANAGED_KINDS: ReadonlySet<string> = new Set(["approval_decision", "approval_escalated"]);
+export const SYSTEM_MANAGED_KINDS: ReadonlySet<string> = new Set([
+  "approval_decision",
+  "approval_escalated",
+  "corrective_case_follow_up",
+]);
 
 export const taskRefusals = {
   notAssignee: () =>

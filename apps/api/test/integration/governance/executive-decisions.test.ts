@@ -438,6 +438,44 @@ describe("updateExecutiveDecision and the SLA due date (ADR-0032 §6)", () => {
     expect(actions).toEqual(["executive_decision.create", "executive_decision.update", "executive_decision.update"]);
   });
 
+  it("T-DG4-BE-R1: the owner's item follows the ask: a required-date change moves it; A -> B -> A leaves one, A's", async () => {
+    const a = await raiseAsk(send, x, x.bo.id, plusDays(today, 6));
+    const U = `${L()}/${a.id}`;
+    const patch = (version: number, body: Record<string, unknown>) =>
+      send("PATCH", U, { session: x.lead.session, headers: ifm(version), body });
+    const items = () =>
+      api.db
+        .selectFrom("work_item")
+        .select(["assignee_user_id", "status", "due_date", "dedupe_key"])
+        .where("subject_id", "=", a.id)
+        .where("kind", "=", "executive_decision_due")
+        .orderBy("created_at")
+        .execute();
+    const later = plusDays(today, 9);
+    const moved = await patch(1, { requiredDate: later });
+    expect([moved.status, moved.body.decisionDate]).toEqual([200, later]);
+    expect((await items()).map((i) => [i.assignee_user_id, i.status, i.due_date])).toEqual([[x.bo.id, "open", later]]);
+    const [first] = await items();
+    const firstId = (
+      await api.db
+        .selectFrom("work_item")
+        .select("id")
+        .where("dedupe_key", "=", first!.dedupe_key)
+        .executeTakeFirstOrThrow()
+    ).id;
+    expect((await auditOf(api.db, firstId)).map((e) => [e.action, e.changes])).toEqual([
+      ["work_item.create", expect.anything()],
+      ["work_item.reschedule", { due_date: { from: plusDays(today, 6), to: later } }],
+    ]);
+    expect((await patch(2, { ownerUserId: x.fin.id })).status).toBe(200);
+    expect((await patch(3, { ownerUserId: x.bo.id })).status).toBe(200);
+    expect((await items()).map((i) => [i.assignee_user_id, i.status, i.due_date, i.dedupe_key])).toEqual([
+      [x.bo.id, "cancelled", later, `t16.decision:${a.id}:${x.bo.id}`],
+      [x.fin.id, "cancelled", later, `t16.decision:${a.id}:${x.fin.id}`],
+      [x.bo.id, "open", later, `t16.decision:${a.id}:${x.bo.id}#2`],
+    ]);
+  });
+
   it("with a T11 row the SLA due date follows its SLA type; an Unknown SLA keeps its reason (never a guessed date)", async () => {
     const rows = await api.db
       .selectFrom("transformation_decision_right")

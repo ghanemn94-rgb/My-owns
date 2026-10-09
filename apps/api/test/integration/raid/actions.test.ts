@@ -293,6 +293,36 @@ describe("the action register (ADR-0031 §4)", () => {
     ]);
   });
 
+  it("T-DG4-BE-R1: the work item follows the action: a due-date change moves it; A -> B -> A leaves one open, A's", async () => {
+    const risk = await newRisk();
+    const a = await newAction(risk.id, { title: "Synthetic follow", ownerUserId: wl.id, dueDate: "2026-12-01" });
+    const patch = (version: number, body: Record<string, unknown>) =>
+      call(api.app, "PATCH", `${AR}/${a.id}`, { session: b.s.tl, headers: ifm(version), body });
+    const r1 = await patch(1, { dueDate: "2026-12-15" });
+    expect([r1.status, r1.body.dueDate]).toEqual([200, "2026-12-15"]);
+    expect((await tasksOf(a.id)).map((t) => [t.assignee_user_id, t.status, t.due_date])).toEqual([
+      [wl.id, "open", "2026-12-15"],
+    ]);
+    const [item] = await api.db.selectFrom("work_item").select("id").where("subject_id", "=", a.id).execute();
+    expect((await auditOf(api.db, item!.id)).map((x) => [x.action, x.changes])).toEqual([
+      ["work_item.create", expect.anything()],
+      ["work_item.reschedule", { due_date: { from: "2026-12-01", to: "2026-12-15" } }],
+    ]);
+    // A title edit (same date, same owner) writes nothing to the item: the services are idempotent.
+    expect((await patch(2, { title: "Synthetic follow, renamed" })).status).toBe(200);
+    expect((await auditOf(api.db, item!.id)).length).toBe(2);
+    expect((await patch(3, { ownerUserId: wl2.id })).status).toBe(200);
+    const back = await patch(4, { ownerUserId: wl.id, dueDate: "2027-01-10" });
+    expect([back.status, back.body.ownerUserId]).toEqual([200, wl.id]);
+    const tasks = await tasksOf(a.id);
+    expect(tasks.map((t) => [t.assignee_user_id, t.status, t.due_date, t.dedupe_key])).toEqual([
+      [wl.id, "cancelled", "2026-12-15", `raid.action:${a.id}:${wl.id}`],
+      [wl2.id, "cancelled", "2026-12-15", `raid.action:${a.id}:${wl2.id}`],
+      [wl.id, "open", "2027-01-10", `raid.action:${a.id}:${wl.id}#2`],
+    ]);
+    expect(tasks.filter((t) => t.status === "open").map((t) => t.assignee_user_id)).toEqual([wl.id]);
+  });
+
   it("commit-time: a grant revoked while an action update waited is 403; nothing written", async () => {
     const risk = await newRisk();
     const a = await newAction(risk.id, { title: "Synthetic", ownerUserId: wl.id });
