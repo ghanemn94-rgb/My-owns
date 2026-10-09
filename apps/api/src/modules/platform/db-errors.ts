@@ -981,6 +981,63 @@ export function mapP4RaidError(error: PgErrorLike): HttpProblem | null {
     case "action_item_source_immutable":
       // The API never sends such a write: a programming error.
       return problems.internal();
+    // ---- BE-D2: corrective-action cases and rules.
+    case "corrective_case_code_key":
+      // A concurrent code allocation: retry.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "corrective_case_status_transition":
+    case "corrective_case_starts_open":
+      return rule422(
+        "corrective_case.status_transition",
+        "A corrective action moves between Open and In progress; use Close to close it.",
+        "",
+      );
+    case "corrective_case_closed_final":
+      return rule422("corrective_case.closed", "This corrective action is closed and can no longer be changed.", "");
+    case "corrective_case_owner_required":
+      return rule422("corrective_case.owner_required", "Assign an owner before closing this corrective action.", "");
+    case "corrective_case_one_open_key":
+      // The API decides this under the correctiveCase lock and names the open case's code; the backstop cannot read it.
+      return problems.duplicate(
+        "corrective_case.already_open",
+        "An open corrective action already exists for this finding: (unknown).",
+      );
+    case "corrective_action_rule_severity_kpi_only":
+      return rule422(
+        "corrective_rule.severity_kpi_only",
+        "A severity applies to KPI deviations only, and a KPI deviation rule needs one.",
+        "/minKpiRag",
+      );
+    case "corrective_action_rule_persistence_series_only":
+      return rule422(
+        "corrective_rule.persistence_series_only",
+        "A failed check is one event: its persistence is 1 cycle.",
+        "/persistenceCycles",
+      );
+    case "corrective_action_rule_source_key":
+      return problems.duplicate(
+        "corrective_rule.exists",
+        "A rule for this source already exists in this transformation; update it instead.",
+      );
+    case "corrective_case_source_fields":
+    case "corrective_case_created_source":
+    case "corrective_case_source_immutable":
+    case "corrective_case_one_per_check_key":
+    case "corrective_case_closed_complete":
+    case "corrective_case_follow_up_calendar":
+    case "corrective_action_rule_source_immutable":
+    case "corrective_signal_event_key":
+    case "corrective_signal_outcome_case":
+    case "corrective_signal_period_range":
+    case "corrective_signal_rag_kpi_only":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
     default:
       return null;
   }
