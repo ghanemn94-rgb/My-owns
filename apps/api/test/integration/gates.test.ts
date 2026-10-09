@@ -48,7 +48,9 @@ const decide = (p: P2World, session: P2World["lead"]["session"], submissionNo: n
   });
 
 describe("starter structure and live readiness", () => {
-  it("a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are not submittable (G4 opens in P3, 0026)", async () => {
+  // T-DG4-BE-K (0059, ADR-0035 §2): G5 and G6 are enabled with their evaluators; on a new transformation they are still
+  // refused, now by sequence (G4 is not approved; the transformation is in diagnose), never submitted.
+  it("a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are enabled (0059) but out of sequence", async () => {
     const p = await setupP2World(api, w);
     const list = await call<{
       items: {
@@ -65,13 +67,13 @@ describe("starter structure and live readiness", () => {
       ["G2", "draft", "SP", true],
       ["G3", "draft", "SP", true],
       ["G4", "draft", "SP", true],
-      ["G5", "draft", "SP", false],
-      ["G6", "draft", "SP", false],
+      ["G5", "draft", "SP", true],
+      ["G6", "draft", "SP", true],
     ]);
     expect(list.body.items.every((i) => !i.canSubmit)).toBe(true);
     for (const gateCode of ["G5", "G6"]) {
       const closed = await submit(p, p.lead.session, gateCode);
-      expect([gateCode, closed.status, closed.body.code]).toEqual([gateCode, 422, "gate_not_enabled"]);
+      expect([gateCode, closed.status, closed.body.code]).toEqual([gateCode, 422, "gate.out_of_sequence"]);
     }
   });
 

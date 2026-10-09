@@ -87,3 +87,6 @@ export * from "./executive-decisions.ts";
 // P4 slice F mirrors of KBE-F (kpi-benefits-engineer, T-DG4-KBE-F; p4-work-split §F+G FG.3): adoption indicator
 // templates, metric links and the indicator report.
 export * from "./adoption-indicators.ts";
+// P4 slice H mirrors of BE-K (backend-workflow-engineer, T-DG4-BE-K; p4-work-split §H H.1): the G5 scale scope and
+// conditions, scale transitions and risk dispositions.
+export * from "./gates-p4.ts";

@@ -22,6 +22,8 @@ import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
 import { findCharter, findCurrentNorthStar, hasExclusions, loadGoodOutcomeFacts } from "../transformations/index.ts";
 import { G4_EVALUATORS, loadG4Facts, type G4Facts, type GateFactsProvider } from "./g4.ts";
+import { G5_EVALUATORS, loadG5Facts, type G5Facts } from "./g5.ts";
+import { G6_EVALUATORS, loadG6Facts, type G6Facts } from "./g6.ts";
 
 /** Everything the G1-G3 evaluators read, loaded once per evaluation (inside the submitting transaction on submit). */
 export interface GateFacts {
@@ -74,6 +76,9 @@ export interface GateFacts {
    * was passed, so every g4.* criterion is incomplete (fail closed).
    */
   readonly g4?: G4Facts;
+  /** P4 (T-DG4-BE-K; ADR-0035 §2): the G5/G6 facts; absent without a provider, so every G5/G6 criterion is incomplete. */
+  readonly g5?: G5Facts;
+  readonly g6?: G6Facts;
 }
 
 export async function loadGateFacts(
@@ -209,6 +214,8 @@ export async function loadGateFacts(
     openDesignDecisions: openDecisions.map((d) => ({ id: d.id, code: d.code, hasOwner: d.owner_user_id !== null })),
     evidence,
     ...(provider !== undefined ? { g4: await loadG4Facts(db, provider, transformationId) } : {}),
+    ...(provider !== undefined ? { g5: await loadG5Facts(db, provider, transformationId) } : {}),
+    ...(provider !== undefined ? { g6: await loadG6Facts(db, provider, transformationId) } : {}),
   };
 }
 
@@ -244,6 +251,9 @@ const T01_SEEDED = 6;
 export const EVALUATORS: ReadonlyMap<string, Evaluator> = new Map<string, Evaluator>([
   // ---------------------------------------------------------------- G4 Mobilize (ADR-0021 §7; workflows/g4.ts)
   ...G4_EVALUATORS.map(([key, evaluate]): [string, Evaluator] => [key, (f) => evaluate(f.g4)]),
+  // ---------------------------------------------------------------- G5 Scale, G6 Sustain (ADR-0035 §2; g5.ts, g6.ts)
+  ...G5_EVALUATORS.map(([key, evaluate]): [string, Evaluator] => [key, (f) => evaluate(f.g5)]),
+  ...G6_EVALUATORS.map(([key, evaluate]): [string, Evaluator] => [key, (f) => evaluate(f.g6)]),
   // ---------------------------------------------------------------- G1 Case for Change
   [
     "g1.diagnostic",
