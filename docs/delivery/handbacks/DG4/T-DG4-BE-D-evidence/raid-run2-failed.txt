@@ -1,0 +1,52 @@
+port-policy: PostgreSQL listening on port 23500 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-d
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv0mx89w_fc3c9945 (server_encoding UTF8); applied 47 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/raid/register.test.ts (15 tests) 1437ms
+ ❯ |integration| apps/api/test/integration/raid/dependency-entries.test.ts (8 tests | 1 failed) 806ms
+   ✓ REQ-PB-078: one canonical dependency record shared by T08 and RAID > A01: editing a dependency's owner in T08 changes the same RAID entry; there is no second copy 104ms
+   ✓ REQ-PB-078: one canonical dependency record shared by T08 and RAID > a Dependency entry created through RAID is listed by listT08Dependencies with its DEP-nn code 42ms
+   ✓ REQ-PB-078: one canonical dependency record shared by T08 and RAID > with T08 endpoints and a type: the canonical row carries them; T08's cycle and type rules hold 62ms
+   ✓ Dependency entries through the RAID API (ADR-0031 §2) > has no Probability: 422 raid.probability_not_applicable on create and update; nothing written 40ms
+   ✓ Dependency entries through the RAID API (ADR-0031 §2) > a RAID update changes the canonical row (seen by T08); In progress is refused; one audit event 50ms
+   × Dependency entries through the RAID API (ADR-0031 §2) > an at-risk dependency is Open with recordStatus at_risk; Close resolves it (final through RAID); archived drops out 39ms
+     → expected [ 'open', 'open' ] to deeply equal [ 'open', 'at_risk' ]
+   ✓ Dependency entries through the RAID API (ADR-0031 §2) > AUD and TD (dependency.edit without raid.edit) get 403; ADM-only and outsiders 404; If-Match 428/409 144ms
+   ✓ Dependency entries through the RAID API (ADR-0031 §2) > commit-time: a grant revoked while a Dependency entry update waited is 403; the canonical row is unchanged 42ms
+ ✓ |integration| apps/api/test/integration/raid/actions.test.ts (8 tests) 1014ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/raid/dependency-entries.test.ts > Dependency entries through the RAID API (ADR-0031 §2) > an at-risk dependency is Open with recordStatus at_risk; Close resolves it (final through RAID); archived drops out
+AssertionError: expected [ 'open', 'open' ] to deeply equal [ 'open', 'at_risk' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "open",[22m
+[32m-   "at_risk",[39m
+[31m+   "open",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/raid/dependency-entries.test.ts:248:60
+    246|     await call(api.app, "PATCH", `${T08}/${id}`, { session: b.s.tl, he…
+    247|     const atRisk = await call(api.app, "GET", `${R}/${id}`, { session:…
+    248|     expect([atRisk.body.status, atRisk.body.recordStatus]).toEqual(["o…
+       |                                                            ^
+    249|     const closed = await call(api.app, "POST", `${R}/${id}/close`, {
+    250|       session: b.s.tl,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 30 passed (31)
+   Start at  07:19:24
+   Duration  11.25s (transform 2.00s, setup 0ms, collect 6.28s, tests 3.26s, environment 0ms, prepare 63ms)
+

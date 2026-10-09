@@ -1,0 +1,87 @@
+port-policy: PostgreSQL listening on port 23500 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-d
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv0mtta7_bbd50740 (server_encoding UTF8); applied 47 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/raid/register.test.ts (15 tests | 3 failed) 1380ms
+   ✓ T15 RAID register: the nine columns and the Type rule (REQ-PB-079) > a Risk persists all nine T15 columns on create and read; Status is Open; ID R-nn 47ms
+   ✓ T15 RAID register: the nine columns and the Type rule (REQ-PB-079) > Assumption and Issue entries get A-nn and I-nn, Probability n/a (null), Status Open 38ms
+   ✓ T15 RAID register: the nine columns and the Type rule (REQ-PB-079) > a Type outside Risk/Assumption/Issue/Dependency is 400 raid.type_invalid at /type; nothing written 44ms
+   ✓ T15 RAID register: the nine columns and the Type rule (REQ-PB-079) > an unknown field, an Impact outside H/M/L or a blank description is 400; endpoints only on a Dependency 29ms
+   ✓ T15 Probability (REQ-PB-080) > an Issue (or an Assumption) with Probability H is 422 raid.probability_not_applicable; nothing written 19ms
+   ✓ T15 Probability (REQ-PB-080) > a Risk without Probability (absent or null) is 422 raid.probability_required; nothing written 16ms
+   ✓ T15 Probability (REQ-PB-080) > the same rules on update: a Risk cannot lose its Probability, an Issue cannot get one 66ms
+   ✓ state machine and closure (ADR-0031 §1) > Open <-> In progress by update; Close with a note is final (422 raid.closed); one audit event per change 100ms
+   ✓ authorization, concurrency and commit-time checks (S-4; ADR-0031 §9) > AUD and a role without raid.edit (BO) get 403 on every write whatever the body; nothing written 104ms
+   × authorization, concurrency and commit-time checks (S-4; ADR-0031 §9) > an ADM-only user and an outsider get 404 on every RAID operation (non-disclosure) 46ms
+     → expected 403 to be 404 // Object.is equality
+   ✓ authorization, concurrency and commit-time checks (S-4; ADR-0031 §9) > If-Match: missing 428, stale 409 with currentVersion; an unknown entry 404 74ms
+   ✓ authorization, concurrency and commit-time checks (S-4; ADR-0031 §9) > an owner who is not an active user of the organization is 422; an initiative of another transformation 422 33ms
+   ✓ authorization, concurrency and commit-time checks (S-4; ADR-0031 §9) > commit-time: raid.edit revoked while the create or the update waited is 403; nothing written 99ms
+   × list filters, pagination and the integrated RAID + decision log (REQ-PB-078, B0126) > filters by type, status and owner; cursor pagination visits every row once 121ms
+     → Cannot read properties of undefined (reading 'map')
+   × list filters, pagination and the integrated RAID + decision log (REQ-PB-078, B0126) > lists open RAID entries and open design decisions from their canonical rows; closed ones drop out 66ms
+     → expected 400 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/raid/register.test.ts > authorization, concurrency and commit-time checks (S-4; ADR-0031 §9) > an ADM-only user and an outsider get 404 on every RAID operation (non-disclosure)
+AssertionError: expected 403 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 403[39m
+
+ ❯ apps/api/test/integration/raid/register.test.ts:308:86
+    306|       expect((await call(api.app, "GET", `${R}/${e.id}`, { session }))…
+    307|       expect((await call(api.app, "GET", `${b.base}/raid-decision-log`…
+    308|       expect((await call(api.app, "POST", R, { session, body: riskBody…
+       |                                                                                      ^
+    309|       expect(
+    310|         (await call(api.app, "PATCH", `${R}/${e.id}`, { session, heade…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/raid/register.test.ts > list filters, pagination and the integrated RAID + decision log (REQ-PB-078, B0126) > filters by type, status and owner; cursor pagination visits every row once
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ apps/api/test/integration/raid/register.test.ts:412:41
+    410|     } while (cursor !== null);
+    411|     const all = await call(api.app, "GET", `${R}?limit=200`, { session…
+    412|     expect(seen).toEqual(all.body.items.map((x: { id: string }) => x.i…
+       |                                         ^
+    413|     expect(new Set(seen).size).toBe(seen.length);
+    414|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/raid/register.test.ts > list filters, pagination and the integrated RAID + decision log (REQ-PB-078, B0126) > lists open RAID entries and open design decisions from their canonical rows; closed ones drop out
+AssertionError: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/raid/register.test.ts:430:24
+    428|     expect(decision.status, JSON.stringify(decision.body)).toBe(201);
+    429|     const log = await call(api.app, "GET", `${b.base}/raid-decision-lo…
+    430|     expect(log.status).toBe(200);
+       |                        ^
+    431|     const byId = new Map(log.body.items.map((x: { id: string }) => [x.…
+    432|     expect(byId.get(open.id)).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 passed (15)
+   Start at  07:16:44
+   Duration  7.05s (transform 1.94s, setup 0ms, collect 4.04s, tests 1.38s, environment 0ms, prepare 75ms)
+
