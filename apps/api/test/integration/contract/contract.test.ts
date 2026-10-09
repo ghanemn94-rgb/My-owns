@@ -714,7 +714,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-BE-J: + completeInitiativeDelivery, setInitiativeAdoptionStatus, closeInitiative, closeTransformation,
     // createTransitionDecision, updateTransitionDecision (6 JSON bodies; submitTransitionDecision is bodiless).
     // T-DG4-BE-K: + createScaleTransition, createRiskDisposition (2 JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([288, 287, 1]);
+    // T-DG4-BE-L: + putChangeControlPolicy, createChangeRequest, previewChangeImpact, updateChangeRequest (4 JSON bodies;
+    // submitChangeRequest and withdrawChangeRequest are bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([292, 291, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

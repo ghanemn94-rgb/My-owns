@@ -55,6 +55,7 @@ import {
   iso,
   isoOrNull,
   limitSchema,
+  materialChangePort,
   paginate,
   parse,
   parseBody,
@@ -402,6 +403,22 @@ export async function insertFormulaVersion(
       },
     },
   });
+  // T-DG4-BE-L (ADR-0036 §6 item 1, REQ-S04-014): a new version of a formula pinned by an approved G4 snapshot raises
+  // and submits one automatic benefit_logic change request in this transaction; the response is unchanged.
+  if (versionNo > 1) {
+    const port = materialChangePort();
+    if (port === null) throw problems.internal();
+    await port.benefitFormulaVersionCreated(tx, {
+      organizationId: ctx.organizationId,
+      transformationId: formula.transformation_id,
+      benefitFormulaId: formula.id,
+      benefitFormulaVersionId: id,
+      versionNo,
+      editorUserId: ctx.userId,
+      requestId: ctx.audit.requestId,
+      changeNote: body.changeNote ?? null,
+    });
+  }
   return row;
 }
 

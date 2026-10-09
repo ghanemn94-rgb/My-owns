@@ -51,13 +51,14 @@ import {
   iso,
   isoOrNull,
   limitSchema,
+  materialChangePort,
+  type ModuleDeps,
   paginate,
   parse,
   parseBody,
   parseQuery,
   problems,
   sendVersioned,
-  type ModuleDeps,
 } from "../platform/index.ts";
 import { assertActiveUsers, openWrite } from "../transformations/index.ts";
 import { fteText } from "./capacity.ts";
@@ -319,6 +320,17 @@ async function updateLine(tx: Tx, request: FastifyRequest, id: string): Promise<
       body.periodMonth !== undefined ? body.periodMonth : dateText(current.period_month),
       current.id,
     );
+  // T-DG4-BE-L (ADR-0036 §3): changing the budget beyond a configured material ratio needs a change request.
+  if (body.budgetAmount !== undefined) {
+    const changeControl = materialChangePort();
+    if (changeControl === null) throw problems.internal();
+    await changeControl.assertBudgetChangeWithinThreshold(
+      tx,
+      ctx.transformationId,
+      current.budget_amount,
+      body.budgetAmount,
+    );
+  }
   const updated = await tx
     .updateTable("budget_line")
     .set({
