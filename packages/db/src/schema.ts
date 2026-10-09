@@ -1,4 +1,4 @@
-// Kysely `Database` interface for the P1, P2, P3 and P4 tables (ADR-0003, ADR-0016, ADR-0021..0026), written from
+// Kysely `Database` interface for the P1, P2, P3 and P4 tables (ADR-0003, ADR-0016, ADR-0021..0028), written from
 // docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018; 0019+ by backend-workflow-engineer; P3: 0020-0024). An integration test (packages/db/test/integration/catalogue.test.ts)
 // compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
 //
@@ -2136,6 +2136,331 @@ export interface ApprovalDecisionRecordView {
   decided_at: ColumnType<Date, never, never>;
 }
 
+// ---- P4 slice A (migrations 0033-0036; T-DG4-ARCH-02; ADR-0027, ADR-0028). Generated from the migrated catalogue by
+// docs/delivery/handbacks/DG4/T-DG4-ARCH-02-evidence/gen-schema.ts. numeric -> string (decimal), date -> "YYYY-MM-DD".
+export interface ReportingPeriodTable {
+  id: string;
+  organization_id: string;
+  frequency: string;
+  period_label: string;
+  period_start: string;
+  period_end: string;
+  length_days: ColumnType<number, never, never>;
+  basis: Generated<string>;
+  week_count: number | null;
+  update_due_date: string | null;
+  status: Generated<string>;
+  opened_at: NullableTimestamp;
+  closed_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface KpiVersionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  version_no: number;
+  status: Generated<string>;
+  measure_type: string;
+  value_nature: string;
+  entry_scope_kind: Generated<string>;
+  unit_kind: string;
+  unit_label: string | null;
+  currency: string | null;
+  frequency: string;
+  numerator_label: string | null;
+  denominator_label: string | null;
+  calculation_method: Generated<string>;
+  calculation_description: string | null;
+  formula_expression: string | null;
+  formula_engine_version: string | null;
+  aggregation_rule: string | null;
+  stock_additive_across_scopes: Generated<boolean>;
+  ytd_start_month: Generated<number>;
+  baseline_id: string | null;
+  baseline_value: string | null;
+  baseline_date: string | null;
+  target_value: string | null;
+  target_date: string | null;
+  band_lower: string | null;
+  band_upper: string | null;
+  milestone_due_date: string | null;
+  dq_stale_after_days: Generated<number>;
+  dq_valid_min: string | null;
+  dq_valid_max: string | null;
+  dq_evidence_required: Generated<boolean>;
+  submission_route: Generated<string>;
+  reviewer_party_code: string | null;
+  definition_approval: Generated<string>;
+  approval_id: string | null;
+  change_reason: string | null;
+  activated_at: NullableTimestamp;
+  activated_by: string | null;
+  superseded_at: NullableTimestamp;
+  withdrawn_at: NullableTimestamp;
+  withdrawn_by: string | null;
+  withdraw_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface KpiFormulaInputTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_version_id: string;
+  variable_name: string;
+  source_kpi_definition_id: string;
+  input_basis: Generated<string>;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface KpiRagThresholdTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  version_no: number;
+  tolerance_mode: string;
+  amber_threshold: string;
+  red_threshold: string;
+  reason: string;
+  status: Generated<string>;
+  superseded_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TargetTrajectoryTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  scope_kind: Generated<string>;
+  scope_id: string;
+  version_no: number;
+  basis: Generated<string>;
+  interpolation: Generated<string>;
+  source: Generated<string>;
+  source_outcome_kpi_id: string | null;
+  status: Generated<string>;
+  approved_by: string | null;
+  approved_at: NullableTimestamp;
+  approved_record_version: number | null;
+  superseded_at: NullableTimestamp;
+  withdrawn_at: NullableTimestamp;
+  withdraw_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface TargetTrajectoryPointTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  target_trajectory_id: string;
+  point_date: string;
+  expected_value: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface KpiActualTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  scope_kind: string;
+  scope_id: string;
+  reporting_period_id: string;
+  period_start: string;
+  period_end: string;
+  period_label: string;
+  current_value_no: Generated<number>;
+  accepted_value_no: number | null;
+  status: string;
+  route: string;
+  submitted_by: string | null;
+  submitted_at: NullableTimestamp;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  decision_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface KpiActualValueTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_actual_id: string;
+  value_no: number;
+  kpi_version_id: string;
+  value: string | null;
+  numerator: string | null;
+  denominator: string | null;
+  milestone_achieved: boolean | null;
+  achieved_on: string | null;
+  currency: string | null;
+  missing_reason: string | null;
+  data_as_of: string;
+  comment: string | null;
+  entered_at: TimestampDefault;
+  entered_by: string;
+  business_date: string;
+}
+
+export interface KpiActualReviewTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_actual_id: string;
+  value_no: number;
+  outcome: string;
+  reason: string | null;
+  decided_by: string;
+  on_behalf_of_user_id: string | null;
+  decided_at: TimestampDefault;
+  business_date: string;
+}
+
+export interface KpiActualEvidenceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_actual_id: string;
+  value_no: number;
+  evidence_id: string;
+  linked_at: TimestampDefault;
+  linked_by: string;
+}
+
+export interface CalculationRunTable {
+  id: string;
+  seq: IdentityBigint;
+  organization_id: string;
+  transformation_id: string;
+  trigger_kind: string;
+  trigger_record_type: string;
+  trigger_record_id: string;
+  trigger_slot: number;
+  idempotency_key: string;
+  status: string;
+  error_code: string | null;
+  evaluation_count: Generated<number>;
+  finding_count: Generated<number>;
+  formula_engine_version: string;
+  kpi_rules_version: string;
+  started_at: Timestamp;
+  completed_at: TimestampDefault;
+}
+
+export interface KpiEvaluationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  calculation_run_id: string;
+  kpi_definition_id: string;
+  kpi_version_id: string;
+  scope_kind: string;
+  scope_id: string;
+  reporting_period_id: string;
+  period_label: string;
+  value_basis: string;
+  value: string | null;
+  value_status: string;
+  value_reason: string | null;
+  value_source: string;
+  currency: string | null;
+  inputs: JsonDefault;
+  rounding: NullableJson;
+  expected_value: string | null;
+  final_target: string | null;
+  variance: string | null;
+  variance_ratio: string | null;
+  comparison_flag: string | null;
+  trend: string;
+  previous_period_id: string | null;
+  data_as_of: string | null;
+  calculated_rag: string;
+  deviation: string;
+  threshold_id: string | null;
+  threshold_source: string;
+  target_trajectory_id: string | null;
+  explanation_key: string;
+  explanation_params: JsonDefault;
+  evaluated_at: TimestampDefault;
+}
+
+export interface DataQualityFindingTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  scope_kind: string;
+  scope_id: string;
+  reporting_period_id: string;
+  kpi_actual_id: string | null;
+  value_no: number | null;
+  rule_code: string;
+  severity: string;
+  detail_params: JsonDefault;
+  detected_by_run_id: string;
+  detected_at: TimestampDefault;
+  status: Generated<string>;
+  resolution_note: string | null;
+  resolved_by: string | null;
+  resolved_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface RagOverrideTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  scope_kind: string;
+  scope_id: string;
+  reporting_period_id: string;
+  override_rag: string;
+  calculated_rag: string;
+  kpi_evaluation_id: string | null;
+  reason: string;
+  evidence_id: string;
+  expires_at: Timestamp;
+  status: Generated<string>;
+  revoked_by: string | null;
+  revoked_at: NullableTimestamp;
+  revoke_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -2251,6 +2576,20 @@ export interface Database {
   approval_decision: ApprovalDecisionTable;
   approval_escalation: ApprovalEscalationTable;
   approval_decision_record: ApprovalDecisionRecordView;
+  reporting_period: ReportingPeriodTable;
+  kpi_version: KpiVersionTable;
+  kpi_formula_input: KpiFormulaInputTable;
+  kpi_rag_threshold: KpiRagThresholdTable;
+  target_trajectory: TargetTrajectoryTable;
+  target_trajectory_point: TargetTrajectoryPointTable;
+  kpi_actual: KpiActualTable;
+  kpi_actual_value: KpiActualValueTable;
+  kpi_actual_review: KpiActualReviewTable;
+  kpi_actual_evidence: KpiActualEvidenceTable;
+  calculation_run: CalculationRunTable;
+  kpi_evaluation: KpiEvaluationTable;
+  data_quality_finding: DataQualityFindingTable;
+  rag_override: RagOverrideTable;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
@@ -2327,6 +2666,20 @@ export type ApprovalTypeRow = Selectable<ApprovalTypeTable>;
 export type ApprovalRow = Selectable<ApprovalTable>;
 export type ApprovalDecisionRow = Selectable<ApprovalDecisionTable>;
 export type ApprovalEscalationRow = Selectable<ApprovalEscalationTable>;
+export type ReportingPeriodRow = Selectable<ReportingPeriodTable>;
+export type KpiVersionRow = Selectable<KpiVersionTable>;
+export type KpiFormulaInputRow = Selectable<KpiFormulaInputTable>;
+export type KpiRagThresholdRow = Selectable<KpiRagThresholdTable>;
+export type TargetTrajectoryRow = Selectable<TargetTrajectoryTable>;
+export type TargetTrajectoryPointRow = Selectable<TargetTrajectoryPointTable>;
+export type KpiActualRow = Selectable<KpiActualTable>;
+export type KpiActualValueRow = Selectable<KpiActualValueTable>;
+export type KpiActualReviewRow = Selectable<KpiActualReviewTable>;
+export type KpiActualEvidenceRow = Selectable<KpiActualEvidenceTable>;
+export type CalculationRunRow = Selectable<CalculationRunTable>;
+export type KpiEvaluationRow = Selectable<KpiEvaluationTable>;
+export type DataQualityFindingRow = Selectable<DataQualityFindingTable>;
+export type RagOverrideRow = Selectable<RagOverrideTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -4338,6 +4691,315 @@ export const SCHEMA_COLUMNS = {
     "decided_by",
     "on_behalf_of_user_id",
     "decided_at",
+  ],
+  reporting_period: [
+    "id",
+    "organization_id",
+    "frequency",
+    "period_label",
+    "period_start",
+    "period_end",
+    "length_days",
+    "basis",
+    "week_count",
+    "update_due_date",
+    "status",
+    "opened_at",
+    "closed_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  kpi_version: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "version_no",
+    "status",
+    "measure_type",
+    "value_nature",
+    "entry_scope_kind",
+    "unit_kind",
+    "unit_label",
+    "currency",
+    "frequency",
+    "numerator_label",
+    "denominator_label",
+    "calculation_method",
+    "calculation_description",
+    "formula_expression",
+    "formula_engine_version",
+    "aggregation_rule",
+    "stock_additive_across_scopes",
+    "ytd_start_month",
+    "baseline_id",
+    "baseline_value",
+    "baseline_date",
+    "target_value",
+    "target_date",
+    "band_lower",
+    "band_upper",
+    "milestone_due_date",
+    "dq_stale_after_days",
+    "dq_valid_min",
+    "dq_valid_max",
+    "dq_evidence_required",
+    "submission_route",
+    "reviewer_party_code",
+    "definition_approval",
+    "approval_id",
+    "change_reason",
+    "activated_at",
+    "activated_by",
+    "superseded_at",
+    "withdrawn_at",
+    "withdrawn_by",
+    "withdraw_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  kpi_formula_input: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_version_id",
+    "variable_name",
+    "source_kpi_definition_id",
+    "input_basis",
+    "created_at",
+    "created_by",
+  ],
+  kpi_rag_threshold: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "version_no",
+    "tolerance_mode",
+    "amber_threshold",
+    "red_threshold",
+    "reason",
+    "status",
+    "superseded_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  target_trajectory: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "scope_kind",
+    "scope_id",
+    "version_no",
+    "basis",
+    "interpolation",
+    "source",
+    "source_outcome_kpi_id",
+    "status",
+    "approved_by",
+    "approved_at",
+    "approved_record_version",
+    "superseded_at",
+    "withdrawn_at",
+    "withdraw_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  target_trajectory_point: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "target_trajectory_id",
+    "point_date",
+    "expected_value",
+    "created_at",
+    "created_by",
+  ],
+  kpi_actual: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "scope_kind",
+    "scope_id",
+    "reporting_period_id",
+    "period_start",
+    "period_end",
+    "period_label",
+    "current_value_no",
+    "accepted_value_no",
+    "status",
+    "route",
+    "submitted_by",
+    "submitted_at",
+    "decided_by",
+    "decided_at",
+    "decision_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  kpi_actual_value: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_actual_id",
+    "value_no",
+    "kpi_version_id",
+    "value",
+    "numerator",
+    "denominator",
+    "milestone_achieved",
+    "achieved_on",
+    "currency",
+    "missing_reason",
+    "data_as_of",
+    "comment",
+    "entered_at",
+    "entered_by",
+    "business_date",
+  ],
+  kpi_actual_review: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_actual_id",
+    "value_no",
+    "outcome",
+    "reason",
+    "decided_by",
+    "on_behalf_of_user_id",
+    "decided_at",
+    "business_date",
+  ],
+  kpi_actual_evidence: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_actual_id",
+    "value_no",
+    "evidence_id",
+    "linked_at",
+    "linked_by",
+  ],
+  calculation_run: [
+    "id",
+    "seq",
+    "organization_id",
+    "transformation_id",
+    "trigger_kind",
+    "trigger_record_type",
+    "trigger_record_id",
+    "trigger_slot",
+    "idempotency_key",
+    "status",
+    "error_code",
+    "evaluation_count",
+    "finding_count",
+    "formula_engine_version",
+    "kpi_rules_version",
+    "started_at",
+    "completed_at",
+  ],
+  kpi_evaluation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "calculation_run_id",
+    "kpi_definition_id",
+    "kpi_version_id",
+    "scope_kind",
+    "scope_id",
+    "reporting_period_id",
+    "period_label",
+    "value_basis",
+    "value",
+    "value_status",
+    "value_reason",
+    "value_source",
+    "currency",
+    "inputs",
+    "rounding",
+    "expected_value",
+    "final_target",
+    "variance",
+    "variance_ratio",
+    "comparison_flag",
+    "trend",
+    "previous_period_id",
+    "data_as_of",
+    "calculated_rag",
+    "deviation",
+    "threshold_id",
+    "threshold_source",
+    "target_trajectory_id",
+    "explanation_key",
+    "explanation_params",
+    "evaluated_at",
+  ],
+  data_quality_finding: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "scope_kind",
+    "scope_id",
+    "reporting_period_id",
+    "kpi_actual_id",
+    "value_no",
+    "rule_code",
+    "severity",
+    "detail_params",
+    "detected_by_run_id",
+    "detected_at",
+    "status",
+    "resolution_note",
+    "resolved_by",
+    "resolved_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  rag_override: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "scope_kind",
+    "scope_id",
+    "reporting_period_id",
+    "override_rag",
+    "calculated_rag",
+    "kpi_evaluation_id",
+    "reason",
+    "evidence_id",
+    "expires_at",
+    "status",
+    "revoked_by",
+    "revoked_at",
+    "revoke_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

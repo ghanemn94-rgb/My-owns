@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -92,11 +92,29 @@ export const P4_PERMISSIONS = {
   "raci.edit": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 catalogue, slice A (KPI engine; ADR-0027 §11). Seeded by migration 0036. Every code is 'write' or 'configure':
+ * none is a business approval, so the DG1/DG2 rules keyed on "a role holding an approval permission" (creator-derived
+ * assignment, F-DG1-106; team roles, ADR-0020 §3) are unchanged. Trajectory approval reuses kpi_target.approve (P2).
+ */
+export const P4_KPI_PERMISSIONS = {
+  "kpi_version.edit": "write",
+  "kpi_version.activate": "write",
+  "kpi_threshold.configure": "write",
+  "target_trajectory.edit": "write",
+  "reporting_period.manage": "configure",
+  "kpi_actual.submit": "write",
+  "kpi_actual.accept": "write",
+  "rag.override": "write",
+  "data_quality.manage": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
   ...P3_PERMISSIONS,
   ...P4_PERMISSIONS,
+  ...P4_KPI_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -236,6 +254,35 @@ export const P4_ROLE_PERMISSIONS = {
   ADM_ACCESS: ["delegation.manage"],
 } as const satisfies Record<string, readonly (keyof typeof P4_PERMISSIONS)[]>;
 
+/**
+ * P4 role defaults, slice A (seeded by 0036; ADR-0027 §11, permissions matrix §11). Owner roles of REQ-S07-001/-003/
+ * -007/-009/-012: KDS and TL define KPIs, versions, thresholds and trajectories; KDS and BO submit actuals; SP, TL and
+ * BO may accept as the configured reviewer (record-level: they must resolve to the version's reviewer party); TL and BO
+ * override RAG. TO manages reporting periods. AUD, CM, SEC, TD, WL, FIN and the technical admins get none.
+ */
+export const P4_KPI_ROLE_PERMISSIONS = {
+  SP: ["kpi_actual.accept"],
+  TL: [
+    "kpi_version.edit",
+    "kpi_version.activate",
+    "kpi_threshold.configure",
+    "target_trajectory.edit",
+    "kpi_actual.accept",
+    "rag.override",
+    "data_quality.manage",
+  ],
+  BO: ["kpi_actual.submit", "kpi_actual.accept", "rag.override"],
+  TO: ["reporting_period.manage"],
+  KDS: [
+    "kpi_version.edit",
+    "kpi_version.activate",
+    "kpi_threshold.configure",
+    "target_trajectory.edit",
+    "kpi_actual.submit",
+    "data_quality.manage",
+  ],
+} as const satisfies Record<string, readonly (keyof typeof P4_KPI_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -246,6 +293,7 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.SP,
       ...P3_ROLE_PERMISSIONS.SP,
       ...P4_ROLE_PERMISSIONS.SP,
+      ...P4_KPI_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -260,6 +308,7 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.TL,
       ...P3_ROLE_PERMISSIONS.TL,
       ...P4_ROLE_PERMISSIONS.TL,
+      ...P4_KPI_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -271,6 +320,7 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.BO,
       ...P3_ROLE_PERMISSIONS.BO,
       ...P4_ROLE_PERMISSIONS.BO,
+      ...P4_KPI_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -301,12 +351,19 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.TO,
       ...P3_ROLE_PERMISSIONS.TO,
       ...P4_ROLE_PERMISSIONS.TO,
+      ...P4_KPI_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
     kind: "implementation",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.KDS, ...P3_ROLE_PERMISSIONS.KDS, ...P4_ROLE_PERMISSIONS.KDS],
+    permissions: [
+      ...BASE_READ,
+      ...P2_ROLE_PERMISSIONS.KDS,
+      ...P3_ROLE_PERMISSIONS.KDS,
+      ...P4_ROLE_PERMISSIONS.KDS,
+      ...P4_KPI_ROLE_PERMISSIONS.KDS,
+    ],
   },
   TD: {
     kind: "implementation",

@@ -134,7 +134,8 @@ describe("GET /api/v1/me", () => {
       {
         scope: { type: "organization", id: w.orgA.id },
         inheritsDownward: true,
-        // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031), sorted.
+        // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
+        // defaults (0036), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -156,6 +157,7 @@ describe("GET /api/v1/me", () => {
           "organization.read",
           "prioritization.edit",
           "raci.edit",
+          "reporting_period.manage",
           "roadmap.approve",
           "roadmap.edit",
           "role.read",

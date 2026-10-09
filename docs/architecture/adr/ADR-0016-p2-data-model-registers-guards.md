@@ -115,13 +115,17 @@ This is the **one registry** of the transaction-scoped advisory-lock classes. AD
 | 730225 | `raciDeliverable` (governance) | the accountable cells of one T12 RACI deliverable | the deliverable id | API (BE-C) + deferred triggers `transformation_raci_*_one_accountable` (0030; `raci_deliverable_lock_class`) (ADR-0026 §7) |
 | 730226 | `approvalSubject` (workflows) | the subject record of an approval (request, decision, subject update) | the subject record id | API (BE-B, and any module updating a subject with an open approval) + triggers `approval_guard`, `approval_decision_guard` (0031; `approval_subject_lock_class`) (ADR-0026 §4) |
 | 730227 | — | reserved for the T-DG4-ARCH-01 block (p4-plan §4); not allocated | — | — |
+| 730228 | `kpiFormulaGraph` (kpi) | the KPI formula graph of one transformation (formula input insert, version activation) | transformation_id | API (KBE-B formula validation) + triggers `kpi_formula_input_guard`, `kpi_version_guard` (0033; `kpi_formula_graph_lock_class`) (ADR-0027 §4) |
+| 730229 | `kpiActualSlot` (kpi) | one KPI actual slot: KPI, scope, reporting period (value versions, review decisions, RAG overrides) | `<kpiDefinitionId>:<scopeKind>:<scopeId>:<reportingPeriodId>` | API (KBE-C actuals and overrides) + triggers `kpi_actual_guard` (0034), `rag_override_guard` (0035) (`kpi_actual_slot_lock_class`) (ADR-0027 §6, §10) |
+| 730230 | `reportingPeriod` (kpi) | the reporting periods of one organization and frequency (create, date change, open, close; overlap check) | `<organizationId>:<frequency>` | API (KBE-C reporting periods, the period-open job) + trigger `reporting_period_guard` (0033; `reporting_period_lock_class`) (ADR-0027 §3) |
+| 730231 | — | reserved for the T-DG4-ARCH-02 block (p4-plan §4); not allocated | — | — |
 
 Rules:
 
 - **Single source.** The numbers live in `apps/api/src/modules/platform/advisory-locks.ts` (`ADVISORY_LOCK_CLASSES`, exported by `platform/index.ts`). Each module's constant is defined from it, and no other module file spells a number. A migration that shares a lock declares the same number as a PL/pgSQL `*_lock_class CONSTANT`.
 - **Tested.** `platform/advisory-locks.test.ts` asserts that the classes are distinct int4 values, that every `*_lock_class` constant in `packages/db/migrations/` equals its registry entry, and that no module source outside the registry spells a class number.
 - **The 730222 collision (fixed).** Until T-DG3-ARCH-03, dependency-type creation (BE-C) and prioritization (BE-D) both used 730222. Dependency-type creation now has 730223. No migration was involved: both locks are API-only.
-- **A new class** takes the next free number in its task's P4 block (p4-plan §4: 730224–730249, one block per architecture task), adds a row here and an entry in the registry file in the same change. Rows 730224–730227 were added by T-DG4-ARCH-01 (2026-10-09).
+- **A new class** takes the next free number in its task's P4 block (p4-plan §4: 730224–730249, one block per architecture task), adds a row here and an entry in the registry file in the same change. Rows 730224–730227 were added by T-DG4-ARCH-01 (2026-10-09), rows 730228–730231 by T-DG4-ARCH-02 (2026-10-09).
 - **Out of scope** (a different key space, so no collision with the two-int4 form): the single-bigint locks `pg_advisory_xact_lock(hashtextextended(<text>, 0))` used for idempotency keys, the North Star and readable codes, and the fixed bigint keys of the migration runner and bootstrap in `packages/db`.
 
 ## Alternatives considered

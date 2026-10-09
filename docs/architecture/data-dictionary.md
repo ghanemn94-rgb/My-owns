@@ -4330,3 +4330,730 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | Database | The P2 record guards on every mutable P4 table; closed sets (statuses, kinds, outcomes, SLA types, RACI values); workweek and timezone; one default calendar; holiday range; work-item and inbox dedupe keys; one active mapping per party; no delegation loop; one accountable per RACI deliverable; T11/T12 rows frozen in approval; approval state machine, current request version, SoD, rationale, defer date, outcome needs a user's decision, escalation once per due date and never an outcome; append-only decisions and escalations; technical-admin roles never hold `approval.decide` (0001 trigger) |
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI P4 schemas), free-text rules (`freeText`/`hasText`), strict UTF-8, request media types, `If-Match` |
 | Service | Permissions and record-level rules (assignee, group, escalation target, delegate), commit-time re-authorization, routing without fallback (`routing.role_unmapped`), SLA computation and Unknown reasons, the exact refusal codes and English texts of ADR-0025 and ADR-0026 |
+
+# P4 tables, slice A (migrations 0033–0036, DG4)
+
+- **Task:** T-DG4-ARCH-02 (solution-architect), 2026-10-09. **ADRs:** ADR-0027 (KPI data model and pipeline), ADR-0028 (KPI calculation semantics).
+- **Generated:** the per-table sections below were generated from the catalogue of a freshly migrated database by `docs/delivery/handbacks/DG4/T-DG4-ARCH-02-evidence/gen-dictionary.ts` (types, nullability, defaults, constraints, indexes, triggers and `mth_app` privileges as PostgreSQL reports them; `::text` casts removed for readability). Purpose, module, writers and lifecycle are written by hand.
+- **Global rules** are those at the top of this file and the P2 record guards (`p2_attach_guards`: row guard, version step by 1, deferred audit coverage on `reporting_period`, `kpi_version`, `kpi_rag_threshold`, `target_trajectory`, `kpi_actual`, `rag_override`, and on UPDATE only for `data_quality_finding`; `p2_attach_append_only` on `kpi_formula_input`, `target_trajectory_point`, `kpi_actual_value`, `kpi_actual_review`, `kpi_actual_evidence`, `calculation_run`, `kpi_evaluation`). KPI values, bounds, thresholds and expected values are `numeric(24,6)` (decimal strings in the API; percentages are fractions). Event instants are `timestamptz`; observation periods and business dates are `date` (ADR-0025 §2). Every value row carries its own `currency` (`char(3)`), equal to the KPI's.
+- **No DELETE** grant on any slice A table.
+- **Advisory locks** (ADR-0016 §6): 730228 KPI formula graph (per transformation), 730229 KPI actual slot (KPI, scope, period; also RAG overrides), 730230 reporting periods (per organization and frequency); 730231 reserved.
+
+## kpi_definition (0014) — P4 extension (0033)
+
+- **No column change.** One additive trigger, `kpi_definition_measure_lock` (BEFORE UPDATE → `kpi_definition_measure_lock()`): once any `kpi_version` row exists for the KPI, `unit_kind`, `currency`, `polarity` and `frequency` cannot change (`kpi_definition_measure_locked`). A KPI without a version behaves exactly as in DG2.
+
+## reporting_period
+
+- **Purpose:** An observation period of one organization and frequency (REQ-S07-003, REQ-S12-005; ADR-0027 §3). Periods of one frequency never overlap (lock 730230). basis 'weeks' marks a week-based period whose week count decides comparability (REQ-S07-005).
+- **Migration:** `0033_p4_kpi_dictionary_versions.sql`. **API module:** `kpi`. **Who writes:** `reporting_period.manage` (TO); the `kpi.reporting_period_open` job opens due periods. **Lifecycle:** scheduled → open → closed (final in P4).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| frequency | text | NOT NULL |  | `CHECK ((frequency = ANY (ARRAY['daily', 'weekly', 'monthly', 'quarterly', 'annual', 'ad_hoc'])))` |
+| period_label | text | NOT NULL |  | `CHECK ((period_label ~ '^[0-9A-Za-z][0-9A-Za-z_.-]{0,31}$'))` |
+| period_start | date | NOT NULL |  |  |
+| period_end | date | NOT NULL |  |  |
+| length_days | integer | NULL | `((period_end - period_start) + 1)` |  |
+| basis | text | NOT NULL | `'calendar'` | `CHECK ((basis = ANY (ARRAY['calendar', 'weeks'])))` |
+| week_count | smallint | NULL |  | `CHECK (((week_count IS NULL) OR ((week_count >= 1) AND (week_count <= 53))))` |
+| update_due_date | date | NULL |  |  |
+| status | text | NOT NULL | `'scheduled'` | `CHECK ((status = ANY (ARRAY['scheduled', 'open', 'closed'])))` |
+| opened_at | timestamp with time zone | NULL |  |  |
+| closed_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `reporting_period_due_after_end` (CHECK): `CHECK (((update_due_date IS NULL) OR (update_due_date > period_end)))`
+- `reporting_period_label_key` (UNIQUE): `UNIQUE (organization_id, frequency, period_label)`
+- `reporting_period_org_id_key` (UNIQUE): `UNIQUE (organization_id, id)`
+- `reporting_period_range` (CHECK): `CHECK (((period_end >= period_start) AND ((period_end - period_start) <= 366)))`
+- `reporting_period_status_stamps` (CHECK): `CHECK ((((status = 'scheduled') = (opened_at IS NULL)) AND ((status = 'closed') = (closed_at IS NOT NULL))))`
+- `reporting_period_weeks` (CHECK): `CHECK ((((basis = 'weeks') = (week_count IS NOT NULL)) AND ((week_count IS NULL) OR (((period_end - period_start) + 1) = (week_count * 7)))))`
+
+**Indexes:**
+
+- `reporting_period_org_freq_idx`: `(organization_id, frequency, period_start DESC)`
+
+**Triggers:**
+
+- `reporting_period_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `reporting_period_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `reporting_period_guard()`
+- `reporting_period_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_version
+
+- **Purpose:** KPIVersion (REQ-S16-014): the versioned P4 measurement definition of a KPI; with the DG2 kpi_definition it holds every REQ-S07-001 field (measure type, value nature, numerator/denominator, calculation, baseline, target, aggregation rule, data-quality rule, submission route and approval policy; ADR-0027 §1-§2). An aggregation rule is required to activate (D-089 Q1).
+- **Migration:** `0033_p4_kpi_dictionary_versions.sql`. **API module:** `kpi`. **Who writes:** `kpi_version.edit` (TL, KDS); `kpi_version.activate` (TL, KDS), after a business approval when definition_approval = business_approval. **Lifecycle:** draft → active | withdrawn; active → superseded.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| version_no | smallint | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'active', 'superseded', 'withdrawn'])))` |
+| measure_type | text | NOT NULL |  | `CHECK ((measure_type = ANY (ARRAY['higher_is_better', 'lower_is_better', 'acceptable_band', 'binary_milestone'])))` |
+| value_nature | text | NOT NULL |  | `CHECK ((value_nature = ANY (ARRAY['flow', 'stock', 'ratio', 'milestone'])))` |
+| entry_scope_kind | text | NOT NULL | `'transformation'` | `CHECK ((entry_scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative'])))` |
+| unit_kind | text | NOT NULL |  | `CHECK ((unit_kind = ANY (ARRAY['currency', 'percentage', 'count', 'ratio', 'duration', 'score', 'other'])))` |
+| unit_label | text | NULL |  | `CHECK (((unit_label IS NULL) OR ((char_length(unit_label) >= 1) AND (char_length(unit_label) <= 50))))` |
+| currency | character(3) | NULL |  | `CHECK (((currency IS NULL) OR (currency ~ '^[A-Z]{3}$')))` |
+| frequency | text | NOT NULL |  | `CHECK ((frequency = ANY (ARRAY['daily', 'weekly', 'monthly', 'quarterly', 'annual', 'ad_hoc'])))` |
+| numerator_label | text | NULL |  | `CHECK (((numerator_label IS NULL) OR ((char_length(numerator_label) >= 1) AND (char_length(numerator_label) <= 200))))` |
+| denominator_label | text | NULL |  | `CHECK (((denominator_label IS NULL) OR ((char_length(denominator_label) >= 1) AND (char_length(denominator_label) <= 200))))` |
+| calculation_method | text | NOT NULL | `'entered'` | `CHECK ((calculation_method = ANY (ARRAY['entered', 'formula'])))` |
+| calculation_description | text | NULL |  | `CHECK (((calculation_description IS NULL) OR ((char_length(calculation_description) >= 1) AND (char_length(calculation_description) <= 4000))))` |
+| formula_expression | text | NULL |  | `CHECK (((formula_expression IS NULL) OR ((char_length(formula_expression) >= 1) AND (char_length(formula_expression) <= 2000))))` |
+| formula_engine_version | text | NULL |  | `CHECK (((formula_engine_version IS NULL) OR ((char_length(formula_engine_version) >= 1) AND (char_length(formula_engine_version) <= 50))))` |
+| aggregation_rule | text | NULL |  | `CHECK (((aggregation_rule IS NULL) OR (aggregation_rule = ANY (ARRAY['sum', 'last_value', 'weighted_ratio', 'custom_formula', 'none']))))` |
+| stock_additive_across_scopes | boolean | NOT NULL | `false` |  |
+| ytd_start_month | smallint | NOT NULL | `1` | `CHECK (((ytd_start_month >= 1) AND (ytd_start_month <= 12)))` |
+| baseline_id | uuid | NULL |  |  |
+| baseline_value | numeric(24,6) | NULL |  |  |
+| baseline_date | date | NULL |  |  |
+| target_value | numeric(24,6) | NULL |  |  |
+| target_date | date | NULL |  |  |
+| band_lower | numeric(24,6) | NULL |  |  |
+| band_upper | numeric(24,6) | NULL |  |  |
+| milestone_due_date | date | NULL |  |  |
+| dq_stale_after_days | smallint | NOT NULL | `45` | `CHECK (((dq_stale_after_days >= 1) AND (dq_stale_after_days <= 3660)))` |
+| dq_valid_min | numeric(24,6) | NULL |  |  |
+| dq_valid_max | numeric(24,6) | NULL |  |  |
+| dq_evidence_required | boolean | NOT NULL | `false` |  |
+| submission_route | text | NOT NULL | `'review'` | `CHECK ((submission_route = ANY (ARRAY['review', 'direct_accept'])))` |
+| reviewer_party_code | text | NULL |  | FK → governance_party(code) |
+| definition_approval | text | NOT NULL | `'direct'` | `CHECK ((definition_approval = ANY (ARRAY['direct', 'business_approval'])))` |
+| approval_id | uuid | NULL |  |  |
+| change_reason | text | NULL |  | `CHECK (((change_reason IS NULL) OR ((char_length(change_reason) >= 3) AND (char_length(change_reason) <= 2000))))` |
+| activated_at | timestamp with time zone | NULL |  |  |
+| activated_by | uuid | NULL |  | FK → app_user(id) |
+| superseded_at | timestamp with time zone | NULL |  |  |
+| withdrawn_at | timestamp with time zone | NULL |  |  |
+| withdrawn_by | uuid | NULL |  | FK → app_user(id) |
+| withdraw_reason | text | NULL |  | `CHECK (((withdraw_reason IS NULL) OR ((char_length(withdraw_reason) >= 3) AND (char_length(withdraw_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `kpi_version_aggregation_fits_nature` (CHECK): `CHECK (((aggregation_rule IS NULL) OR (aggregation_rule = 'custom_formula') OR ((value_nature = 'flow') AND (aggregation_rule = 'sum')) OR ((value_nature = 'stock') AND (aggregation_rule = 'last_value')) OR ((value_nature = 'ratio') AND (aggregation_rule = 'weighted_ratio')) OR ((value_nature = 'milestone') AND (aggregation_rule = 'none'))))`
+- `kpi_version_approval_fkey` (FK): `FOREIGN KEY (transformation_id, approval_id) REFERENCES approval(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_version_band` (CHECK): `CHECK ((((measure_type = 'acceptable_band') = ((band_lower IS NOT NULL) AND (band_upper IS NOT NULL))) AND ((band_lower IS NULL) = (band_upper IS NULL)) AND ((band_lower IS NULL) OR (band_lower <= band_upper))))`
+- `kpi_version_baseline_fkey` (FK): `FOREIGN KEY (transformation_id, baseline_id) REFERENCES baseline(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_version_baseline_one_source` (CHECK): `CHECK (((baseline_id IS NULL) OR (baseline_value IS NULL)))`
+- `kpi_version_change_reason` (CHECK): `CHECK (((version_no = 1) OR (change_reason IS NOT NULL)))`
+- `kpi_version_complete_when_active` (CHECK): `CHECK (((status = ANY (ARRAY['draft', 'withdrawn'])) OR ((aggregation_rule IS NOT NULL) AND ((value_nature <> 'ratio') OR ((numerator_label IS NOT NULL) AND (denominator_label IS NOT NULL))) AND ((measure_type <> 'binary_milestone') OR (milestone_due_date IS NOT NULL)) AND (activated_at IS NOT NULL) AND (activated_by IS NOT NULL))))`
+- `kpi_version_currency_unit` (CHECK): `CHECK (((unit_kind = 'currency') = (currency IS NOT NULL)))`
+- `kpi_version_custom_formula_approved` (CHECK): `CHECK (((aggregation_rule IS DISTINCT FROM 'custom_formula') OR ((calculation_method = 'formula') AND (definition_approval = 'business_approval'))))`
+- `kpi_version_dq_range` (CHECK): `CHECK (((dq_valid_min IS NULL) OR (dq_valid_max IS NULL) OR (dq_valid_min <= dq_valid_max)))`
+- `kpi_version_formula_shape` (CHECK): `CHECK ((((calculation_method = 'formula') = (formula_expression IS NOT NULL)) AND ((formula_expression IS NULL) = (formula_engine_version IS NULL))))`
+- `kpi_version_kpi_definition_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_version_milestone` (CHECK): `CHECK ((((measure_type = 'binary_milestone') = (value_nature = 'milestone')) AND ((milestone_due_date IS NULL) OR (measure_type = 'binary_milestone'))))`
+- `kpi_version_no_key` (UNIQUE): `UNIQUE (kpi_definition_id, version_no)`
+- `kpi_version_ratio_labels` (CHECK): `CHECK (((value_nature = 'ratio') OR ((numerator_label IS NULL) AND (denominator_label IS NULL))))`
+- `kpi_version_route_reviewer` (CHECK): `CHECK (((submission_route = 'review') = (reviewer_party_code IS NOT NULL)))`
+- `kpi_version_status_stamps` (CHECK): `CHECK ((((status = 'superseded') = (superseded_at IS NOT NULL)) AND ((status = 'withdrawn') = (withdrawn_at IS NOT NULL)) AND ((withdrawn_at IS NULL) = (withdrawn_by IS NULL)) AND ((withdrawn_at IS NULL) = (withdraw_reason IS NULL)) AND ((status = ANY (ARRAY['draft', 'withdrawn'])) OR (activated_at IS NOT NULL))))`
+- `kpi_version_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `kpi_version_one_active`: `UNIQUE (kpi_definition_id) WHERE (status = 'active')`
+- `kpi_version_one_draft`: `UNIQUE (kpi_definition_id) WHERE (status = 'draft')`
+- `kpi_version_transformation_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `kpi_version_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `kpi_version_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `kpi_version_guard()`
+- `kpi_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_formula_input
+
+- **Purpose:** A formula variable of a KPI version bound to another KPI of the transformation; the edges of the cycle check (REQ-S07-011; ADR-0027 §4).
+- **Migration:** `0033_p4_kpi_dictionary_versions.sql`. **API module:** `kpi`. **Who writes:** `kpi_version.edit` (with its draft version). **Lifecycle:** append-only; inserted only while the version is a draft.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_version_id | uuid | NOT NULL |  |  |
+| variable_name | text | NOT NULL |  | `CHECK ((variable_name ~ '^[a-z][a-z0-9_]{0,47}$'))` |
+| source_kpi_definition_id | uuid | NOT NULL |  |  |
+| input_basis | text | NOT NULL | `'period'` | `CHECK ((input_basis = ANY (ARRAY['period', 'cumulative'])))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `kpi_formula_input_source_fkey` (FK): `FOREIGN KEY (transformation_id, source_kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_formula_input_variable_key` (UNIQUE): `UNIQUE (kpi_version_id, variable_name)`
+- `kpi_formula_input_version_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_version_id) REFERENCES kpi_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `kpi_formula_input_source_idx`: `(source_kpi_definition_id)`
+
+**Triggers:**
+
+- `kpi_formula_input_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `kpi_formula_input_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `kpi_formula_input_guard`: BEFORE INSERT FOR EACH ROW → `kpi_formula_input_guard()`
+- `kpi_formula_input_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_rag_threshold
+
+- **Purpose:** A versioned set of RAG thresholds of a KPI (REQ-S07-007; ADR-0028 §5). A new version supersedes the active one and triggers a calculation run.
+- **Migration:** `0033_p4_kpi_dictionary_versions.sql`. **API module:** `kpi`. **Who writes:** `kpi_threshold.configure` (TL, KDS). **Lifecycle:** active → superseded.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| version_no | smallint | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| tolerance_mode | text | NOT NULL |  | `CHECK ((tolerance_mode = ANY (ARRAY['relative', 'absolute'])))` |
+| amber_threshold | numeric(24,6) | NOT NULL |  | `CHECK ((amber_threshold >= (0)::numeric))` |
+| red_threshold | numeric(24,6) | NOT NULL |  |  |
+| reason | text | NOT NULL |  | `CHECK (((char_length(btrim(reason)) >= 3) AND (char_length(reason) <= 2000)))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'superseded'])))` |
+| superseded_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `kpi_rag_threshold_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_rag_threshold_no_key` (UNIQUE): `UNIQUE (kpi_definition_id, version_no)`
+- `kpi_rag_threshold_order` (CHECK): `CHECK ((red_threshold >= amber_threshold))`
+- `kpi_rag_threshold_superseded` (CHECK): `CHECK (((status = 'superseded') = (superseded_at IS NOT NULL)))`
+- `kpi_rag_threshold_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `kpi_rag_threshold_one_active`: `UNIQUE (kpi_definition_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `kpi_rag_threshold_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `kpi_rag_threshold_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `kpi_rag_threshold_guard()`
+- `kpi_rag_threshold_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## target_trajectory
+
+- **Purpose:** TargetTrajectory (REQ-S16-014): the expected path of a KPI for one scope; RAG uses the approved one (REQ-S07-007; ADR-0027 §5). DG2 outcome_kpi trajectories are copied once by 0036 (source outcome_kpi_backfill).
+- **Migration:** `0034_p4_kpi_trajectories_actuals.sql`. **API module:** `kpi`. **Who writes:** `target_trajectory.edit` (TL, KDS); approval `kpi_target.approve` (SP, BO; not the creator). **Lifecycle:** draft → approved | withdrawn; approved → superseded.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| scope_kind | text | NOT NULL | `'transformation'` | `CHECK ((scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative'])))` |
+| scope_id | uuid | NOT NULL |  |  |
+| version_no | smallint | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| basis | text | NOT NULL | `'period'` | `CHECK ((basis = ANY (ARRAY['period', 'cumulative'])))` |
+| interpolation | text | NOT NULL | `'linear'` | `CHECK ((interpolation = ANY (ARRAY['linear', 'step'])))` |
+| source | text | NOT NULL | `'api'` | `CHECK ((source = ANY (ARRAY['api', 'outcome_kpi_import', 'outcome_kpi_backfill'])))` |
+| source_outcome_kpi_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'approved', 'superseded', 'withdrawn'])))` |
+| approved_by | uuid | NULL |  | FK → app_user(id) |
+| approved_at | timestamp with time zone | NULL |  |  |
+| approved_record_version | integer | NULL |  | `CHECK (((approved_record_version IS NULL) OR (approved_record_version >= 1)))` |
+| superseded_at | timestamp with time zone | NULL |  |  |
+| withdrawn_at | timestamp with time zone | NULL |  |  |
+| withdraw_reason | text | NULL |  | `CHECK (((withdraw_reason IS NULL) OR ((char_length(withdraw_reason) >= 3) AND (char_length(withdraw_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `target_trajectory_approval_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'superseded'])) = (approved_by IS NOT NULL)) AND ((approved_by IS NULL) = (approved_at IS NULL)) AND ((approved_at IS NULL) = (approved_record_version IS NULL))))`
+- `target_trajectory_approver_not_creator` (CHECK): `CHECK (((approved_by IS NULL) OR (approved_by <> created_by)))`
+- `target_trajectory_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `target_trajectory_no_key` (UNIQUE): `UNIQUE (kpi_definition_id, scope_kind, scope_id, version_no)`
+- `target_trajectory_outcome_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, source_outcome_kpi_id) REFERENCES outcome_kpi(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `target_trajectory_source_ref` (CHECK): `CHECK (((source = 'api') = (source_outcome_kpi_id IS NULL)))`
+- `target_trajectory_status_stamps` (CHECK): `CHECK ((((status = 'superseded') = (superseded_at IS NOT NULL)) AND ((status = 'withdrawn') = (withdrawn_at IS NOT NULL)) AND ((withdrawn_at IS NULL) = (withdraw_reason IS NULL))))`
+- `target_trajectory_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `target_trajectory_one_approved`: `UNIQUE (kpi_definition_id, scope_kind, scope_id) WHERE (status = 'approved')`
+- `target_trajectory_one_draft`: `UNIQUE (kpi_definition_id, scope_kind, scope_id) WHERE (status = 'draft')`
+- `target_trajectory_transformation_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `target_trajectory_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `target_trajectory_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `target_trajectory_guard()`
+- `target_trajectory_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## target_trajectory_point
+
+- **Purpose:** One expected value at a date of a trajectory (ADR-0027 §5).
+- **Migration:** `0034_p4_kpi_trajectories_actuals.sql`. **API module:** `kpi`. **Who writes:** `target_trajectory.edit` (with its draft trajectory). **Lifecycle:** append-only; inserted only while the trajectory is a draft.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| target_trajectory_id | uuid | NOT NULL |  |  |
+| point_date | date | NOT NULL |  |  |
+| expected_value | numeric(24,6) | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `target_trajectory_point_date_key` (UNIQUE): `UNIQUE (target_trajectory_id, point_date)`
+- `target_trajectory_point_trajectory_fkey` (FK): `FOREIGN KEY (transformation_id, target_trajectory_id) REFERENCES target_trajectory(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `target_trajectory_point_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `target_trajectory_point_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `target_trajectory_point_guard`: BEFORE INSERT FOR EACH ROW → `target_trajectory_point_guard()`
+- `target_trajectory_point_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_actual
+
+- **Purpose:** KPIActual (REQ-S16-014): the actual SLOT of one KPI, scope and reporting period (REQ-S07-003). A second actual is a new value version of the same slot. The only audited row of an entry: one audit event per save, submit, accept or reject (REQ-S07-013).
+- **Migration:** `0034_p4_kpi_trajectories_actuals.sql`. **API module:** `kpi`. **Who writes:** `kpi_actual.submit` (KDS, BO; owner, steward or update assignee); `kpi_actual.accept` (SP, TL, BO; the configured reviewer, not the submitter). **Lifecycle:** draft → submitted → accepted | rejected; direct-accept route: draft → accepted; a new value reopens to draft/submitted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| scope_kind | text | NOT NULL |  | `CHECK ((scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative'])))` |
+| scope_id | uuid | NOT NULL |  |  |
+| reporting_period_id | uuid | NOT NULL |  |  |
+| period_start | date | NOT NULL |  |  |
+| period_end | date | NOT NULL |  |  |
+| period_label | text | NOT NULL |  |  |
+| current_value_no | smallint | NOT NULL | `1` | `CHECK ((current_value_no >= 1))` |
+| accepted_value_no | smallint | NULL |  | `CHECK (((accepted_value_no IS NULL) OR (accepted_value_no >= 1)))` |
+| status | text | NOT NULL |  | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'accepted', 'rejected'])))` |
+| route | text | NOT NULL |  | `CHECK ((route = ANY (ARRAY['review', 'direct_accept'])))` |
+| submitted_by | uuid | NULL |  | FK → app_user(id) |
+| submitted_at | timestamp with time zone | NULL |  |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decision_reason | text | NULL |  | `CHECK (((decision_reason IS NULL) OR ((char_length(decision_reason) >= 1) AND (char_length(decision_reason) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `kpi_actual_accepted_le_current` (CHECK): `CHECK (((accepted_value_no IS NULL) OR (accepted_value_no <= current_value_no)))`
+- `kpi_actual_accepted_pointer` (CHECK): `CHECK (((status <> 'accepted') OR (accepted_value_no = current_value_no)))`
+- `kpi_actual_decided_stamps` (CHECK): `CHECK ((((status = ANY (ARRAY['accepted', 'rejected'])) = (decided_by IS NOT NULL)) AND ((decided_by IS NULL) = (decided_at IS NULL))))`
+- `kpi_actual_direct_route` (CHECK): `CHECK (((route <> 'direct_accept') OR (status <> 'submitted')))`
+- `kpi_actual_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_period_fkey` (FK): `FOREIGN KEY (organization_id, reporting_period_id) REFERENCES reporting_period(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_reject_reason` (CHECK): `CHECK (((status <> 'rejected') OR (decision_reason IS NOT NULL)))`
+- `kpi_actual_review_sod` (CHECK): `CHECK (((route <> 'review') OR (decided_by IS NULL) OR (decided_by <> submitted_by)))`
+- `kpi_actual_slot_key` (UNIQUE): `UNIQUE (kpi_definition_id, scope_kind, scope_id, reporting_period_id)`
+- `kpi_actual_submitted_stamps` (CHECK): `CHECK ((((status = 'draft') = (submitted_by IS NULL)) AND ((submitted_by IS NULL) = (submitted_at IS NULL))))`
+- `kpi_actual_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `kpi_actual_kpi_period_idx`: `(kpi_definition_id, period_end DESC)`
+- `kpi_actual_review_queue_idx`: `(transformation_id, submitted_at) WHERE (status = 'submitted')`
+- `kpi_actual_transformation_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `kpi_actual_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `kpi_actual_consistency`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `kpi_actual_consistency()`
+- `kpi_actual_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `kpi_actual_guard()`
+- `kpi_actual_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_actual_value
+
+- **Purpose:** Every entered value version of a slot: value, numerator/denominator, milestone flag, or an explicit missing_reason (Unknown, never 0); currency, data-as-of, entry instant and business date (REQ-S07-003, REQ-S07-005, REQ-S15-008).
+- **Migration:** `0034_p4_kpi_trajectories_actuals.sql`. **API module:** `kpi`. **Who writes:** `kpi_actual.submit` (in the slot's transaction). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_actual_id | uuid | NOT NULL |  |  |
+| value_no | smallint | NOT NULL |  | `CHECK ((value_no >= 1))` |
+| kpi_version_id | uuid | NOT NULL |  |  |
+| value | numeric(24,6) | NULL |  |  |
+| numerator | numeric(24,6) | NULL |  |  |
+| denominator | numeric(24,6) | NULL |  |  |
+| milestone_achieved | boolean | NULL |  |  |
+| achieved_on | date | NULL |  |  |
+| currency | character(3) | NULL |  | `CHECK (((currency IS NULL) OR (currency ~ '^[A-Z]{3}$')))` |
+| missing_reason | text | NULL |  | `CHECK (((missing_reason IS NULL) OR ((char_length(missing_reason) >= 1) AND (char_length(missing_reason) <= 1000))))` |
+| data_as_of | date | NOT NULL |  |  |
+| comment | text | NULL |  | `CHECK (((comment IS NULL) OR ((char_length(comment) >= 1) AND (char_length(comment) <= 4000))))` |
+| entered_at | timestamp with time zone | NOT NULL | `now()` |  |
+| entered_by | uuid | NOT NULL |  | FK → app_user(id) |
+| business_date | date | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `kpi_actual_value_achieved_on` (CHECK): `CHECK (((achieved_on IS NULL) OR (milestone_achieved IS TRUE)))`
+- `kpi_actual_value_actual_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_actual_id) REFERENCES kpi_actual(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_value_no_key` (UNIQUE): `UNIQUE (kpi_actual_id, value_no)`
+- `kpi_actual_value_version_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_version_id) REFERENCES kpi_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `kpi_actual_value_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `kpi_actual_value_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `kpi_actual_value_guard`: BEFORE INSERT FOR EACH ROW → `kpi_actual_value_guard()`
+- `kpi_actual_value_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_actual_review
+
+- **Purpose:** The decision on one value version: accept, reject (with reason) or direct_accept (REQ-S07-012).
+- **Migration:** `0034_p4_kpi_trajectories_actuals.sql`. **API module:** `kpi`. **Who writes:** `kpi_actual.accept` (reviewer); the direct-accept route (submitter). **Lifecycle:** append-only; one per value version.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_actual_id | uuid | NOT NULL |  |  |
+| value_no | smallint | NOT NULL |  | `CHECK ((value_no >= 1))` |
+| outcome | text | NOT NULL |  | `CHECK ((outcome = ANY (ARRAY['accept', 'reject', 'direct_accept'])))` |
+| reason | text | NULL |  | `CHECK (((reason IS NULL) OR ((char_length(reason) >= 1) AND (char_length(reason) <= 2000))))` |
+| decided_by | uuid | NOT NULL |  | FK → app_user(id) |
+| on_behalf_of_user_id | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NOT NULL | `now()` |  |
+| business_date | date | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `kpi_actual_review_actual_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_actual_id) REFERENCES kpi_actual(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_review_not_self_behalf` (CHECK): `CHECK ((on_behalf_of_user_id IS DISTINCT FROM decided_by))`
+- `kpi_actual_review_reject_reason` (CHECK): `CHECK (((outcome <> 'reject') OR (reason IS NOT NULL)))`
+- `kpi_actual_review_value_fkey` (FK): `FOREIGN KEY (kpi_actual_id, value_no) REFERENCES kpi_actual_value(kpi_actual_id, value_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_review_value_key` (UNIQUE): `UNIQUE (kpi_actual_id, value_no)`
+
+**Triggers:**
+
+- `kpi_actual_review_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `kpi_actual_review_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `kpi_actual_review_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_actual_evidence
+
+- **Purpose:** Evidence linked to a value version (REQ-S07-017).
+- **Migration:** `0034_p4_kpi_trajectories_actuals.sql`. **API module:** `kpi`. **Who writes:** `kpi_actual.submit`. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_actual_id | uuid | NOT NULL |  |  |
+| value_no | smallint | NOT NULL |  | `CHECK ((value_no >= 1))` |
+| evidence_id | uuid | NOT NULL |  |  |
+| linked_at | timestamp with time zone | NOT NULL | `now()` |  |
+| linked_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `kpi_actual_evidence_actual_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_actual_id) REFERENCES kpi_actual(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_evidence_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_actual_evidence_key` (UNIQUE): `UNIQUE (kpi_actual_id, value_no, evidence_id)`
+- `kpi_actual_evidence_value_fkey` (FK): `FOREIGN KEY (kpi_actual_id, value_no) REFERENCES kpi_actual_value(kpi_actual_id, value_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `kpi_actual_evidence_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `kpi_actual_evidence_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `kpi_actual_evidence_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## calculation_run
+
+- **Purpose:** CalculationRun (REQ-S16-014): one run per trigger (accepted value, threshold version, approved trajectory, activated version); unique per trigger so a retry or restart never writes a second (REQ-S07-013, REQ-S12-006; ADR-0027 §7-§8). Lineage; no audit event.
+- **Migration:** `0035_p4_kpi_calculation_runs_quality.sql`. **API module:** `kpi (worker `kpi.recalculate`)`. **Who writes:** the worker (service actor). **Lifecycle:** append-only; completed | failed.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| seq | bigint | NOT NULL |  |  |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| trigger_kind | text | NOT NULL |  | `CHECK ((trigger_kind = ANY (ARRAY['actual_accepted', 'threshold_changed', 'trajectory_approved', 'version_activated'])))` |
+| trigger_record_type | text | NOT NULL |  | `CHECK ((trigger_record_type = ANY (ARRAY['kpi_actual', 'kpi_rag_threshold', 'target_trajectory', 'kpi_version'])))` |
+| trigger_record_id | uuid | NOT NULL |  |  |
+| trigger_slot | integer | NOT NULL |  | `CHECK ((trigger_slot >= 1))` |
+| idempotency_key | text | NOT NULL |  | `CHECK (((char_length(idempotency_key) >= 1) AND (char_length(idempotency_key) <= 200)))` |
+| status | text | NOT NULL |  | `CHECK ((status = ANY (ARRAY['completed', 'failed'])))` |
+| error_code | text | NULL |  | `CHECK (((error_code IS NULL) OR (error_code ~ '^[a-z_]+\.[a-z_.]{1,80}$')))` |
+| evaluation_count | integer | NOT NULL | `0` | `CHECK ((evaluation_count >= 0))` |
+| finding_count | integer | NOT NULL | `0` | `CHECK ((finding_count >= 0))` |
+| formula_engine_version | text | NOT NULL |  | `CHECK (((char_length(formula_engine_version) >= 1) AND (char_length(formula_engine_version) <= 50)))` |
+| kpi_rules_version | text | NOT NULL |  | `CHECK (((char_length(kpi_rules_version) >= 1) AND (char_length(kpi_rules_version) <= 50)))` |
+| started_at | timestamp with time zone | NOT NULL |  |  |
+| completed_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `calculation_run_failed_shape` (CHECK): `CHECK (((status = 'failed') = (error_code IS NOT NULL)))`
+- `calculation_run_idempotency_key` (UNIQUE): `UNIQUE (idempotency_key)`
+- `calculation_run_seq_key` (UNIQUE): `UNIQUE (seq)`
+- `calculation_run_times` (CHECK): `CHECK ((completed_at >= started_at))`
+- `calculation_run_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `calculation_run_trigger_key` (UNIQUE): `UNIQUE (trigger_kind, trigger_record_id, trigger_slot)`
+- `calculation_run_trigger_pair` (CHECK): `CHECK ((((trigger_kind = 'actual_accepted') AND (trigger_record_type = 'kpi_actual')) OR ((trigger_kind = 'threshold_changed') AND (trigger_record_type = 'kpi_rag_threshold')) OR ((trigger_kind = 'trajectory_approved') AND (trigger_record_type = 'target_trajectory')) OR ((trigger_kind = 'version_activated') AND (trigger_record_type = 'kpi_version'))))`
+
+**Indexes:**
+
+- `calculation_run_transformation_idx`: `(transformation_id, seq DESC)`
+
+**Triggers:**
+
+- `calculation_run_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `calculation_run_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `calculation_run_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## kpi_evaluation
+
+- **Purpose:** One evaluated KPI value per run, KPI, scope, period and basis: value and status, expected-to-date, final target, variance, trend, freshness, calculated RAG and the rule explanation (REQ-S07-004..-008; ADR-0028 §6). Lineage; no audit event.
+- **Migration:** `0035_p4_kpi_calculation_runs_quality.sql`. **API module:** `kpi (worker)`. **Who writes:** the worker (service actor). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| calculation_run_id | uuid | NOT NULL |  |  |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| kpi_version_id | uuid | NOT NULL |  |  |
+| scope_kind | text | NOT NULL |  | `CHECK ((scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative'])))` |
+| scope_id | uuid | NOT NULL |  |  |
+| reporting_period_id | uuid | NOT NULL |  |  |
+| period_label | text | NOT NULL |  |  |
+| value_basis | text | NOT NULL |  | `CHECK ((value_basis = ANY (ARRAY['period', 'cumulative'])))` |
+| value | numeric(24,6) | NULL |  |  |
+| value_status | text | NOT NULL |  | `CHECK ((value_status = ANY (ARRAY['ok', 'unknown', 'stale', 'not_computable'])))` |
+| value_reason | text | NULL |  | `CHECK (((value_reason IS NULL) OR (value_reason ~ '^kpi\.[a-z_]{1,60}$')))` |
+| value_source | text | NOT NULL |  | `CHECK ((value_source = ANY (ARRAY['entered', 'rolled_up', 'formula', 'none'])))` |
+| currency | character(3) | NULL |  | `CHECK (((currency IS NULL) OR (currency ~ '^[A-Z]{3}$')))` |
+| inputs | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(inputs) = 'object'))` |
+| rounding | jsonb | NULL |  | `CHECK (((rounding IS NULL) OR (jsonb_typeof(rounding) = 'object')))` |
+| expected_value | numeric(24,6) | NULL |  |  |
+| final_target | numeric(24,6) | NULL |  |  |
+| variance | numeric(24,6) | NULL |  |  |
+| variance_ratio | numeric(24,6) | NULL |  |  |
+| comparison_flag | text | NULL |  | `CHECK (((comparison_flag IS NULL) OR (comparison_flag = ANY (ARRAY['negative_baseline', 'not_comparable', 'zero_base']))))` |
+| trend | text | NOT NULL |  | `CHECK ((trend = ANY (ARRAY['improving', 'worsening', 'flat', 'not_comparable', 'unknown'])))` |
+| previous_period_id | uuid | NULL |  |  |
+| data_as_of | date | NULL |  |  |
+| calculated_rag | text | NOT NULL |  | `CHECK ((calculated_rag = ANY (ARRAY['green', 'amber', 'red', 'unknown', 'stale', 'not_computable'])))` |
+| deviation | text | NOT NULL |  | `CHECK ((deviation = ANY (ARRAY['favourable', 'within', 'adverse', 'unknown'])))` |
+| threshold_id | uuid | NULL |  |  |
+| threshold_source | text | NOT NULL |  | `CHECK ((threshold_source = ANY (ARRAY['configured', 'default', 'none'])))` |
+| target_trajectory_id | uuid | NULL |  |  |
+| explanation_key | text | NOT NULL |  | `CHECK ((explanation_key ~ '^kpi\.rag\.[a-z_]{1,60}$'))` |
+| explanation_params | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(explanation_params) = 'object'))` |
+| evaluated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `kpi_evaluation_key` (UNIQUE): `UNIQUE (calculation_run_id, kpi_definition_id, scope_kind, scope_id, reporting_period_id, value_basis)`
+- `kpi_evaluation_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_evaluation_period_fkey` (FK): `FOREIGN KEY (organization_id, reporting_period_id) REFERENCES reporting_period(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_evaluation_rag_needs_data` (CHECK): `CHECK (((calculated_rag <> ALL (ARRAY['green', 'amber', 'red'])) OR ((value_status = 'ok') AND (deviation <> 'unknown'))))`
+- `kpi_evaluation_run_fkey` (FK): `FOREIGN KEY (transformation_id, calculation_run_id) REFERENCES calculation_run(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_evaluation_threshold_fkey` (FK): `FOREIGN KEY (transformation_id, threshold_id) REFERENCES kpi_rag_threshold(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_evaluation_threshold_source` (CHECK): `CHECK (((threshold_source = 'configured') = (threshold_id IS NOT NULL)))`
+- `kpi_evaluation_trajectory_fkey` (FK): `FOREIGN KEY (transformation_id, target_trajectory_id) REFERENCES target_trajectory(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `kpi_evaluation_unknown_rag` (CHECK): `CHECK (((value_status = 'ok') OR (calculated_rag = value_status)))`
+- `kpi_evaluation_value_status` (CHECK): `CHECK ((((value IS NOT NULL) = (value_status = ANY (ARRAY['ok', 'stale']))) AND ((value_status = 'ok') OR (value_reason IS NOT NULL))))`
+- `kpi_evaluation_version_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_version_id) REFERENCES kpi_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `kpi_evaluation_run_idx`: `(calculation_run_id)`
+- `kpi_evaluation_slot_idx`: `(kpi_definition_id, scope_kind, scope_id, reporting_period_id, value_basis)`
+
+**Triggers:**
+
+- `kpi_evaluation_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `kpi_evaluation_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `kpi_evaluation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## data_quality_finding
+
+- **Purpose:** DataQualityFinding (REQ-S16-014): a data-quality exception found by a run (missing, stale, out of range, evidence missing, zero denominator, not comparable, negative baseline, scope missing; ADR-0027 §9).
+- **Migration:** `0035_p4_kpi_calculation_runs_quality.sql`. **API module:** `kpi`. **Who writes:** the worker inserts (lineage); `data_quality.manage` (TL, KDS) resolves or dismisses (audited). **Lifecycle:** open → resolved | dismissed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| scope_kind | text | NOT NULL |  | `CHECK ((scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative'])))` |
+| scope_id | uuid | NOT NULL |  |  |
+| reporting_period_id | uuid | NOT NULL |  |  |
+| kpi_actual_id | uuid | NULL |  |  |
+| value_no | smallint | NULL |  | `CHECK (((value_no IS NULL) OR (value_no >= 1)))` |
+| rule_code | text | NOT NULL |  | `CHECK ((rule_code = ANY (ARRAY['missing_actual', 'stale', 'out_of_range', 'evidence_missing', 'zero_denominator', 'not_comparable', 'negative_baseline', 'scope_missing'])))` |
+| severity | text | NOT NULL |  | `CHECK ((severity = ANY (ARRAY['info', 'warning'])))` |
+| detail_params | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(detail_params) = 'object'))` |
+| detected_by_run_id | uuid | NOT NULL |  |  |
+| detected_at | timestamp with time zone | NOT NULL | `now()` |  |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'resolved', 'dismissed'])))` |
+| resolution_note | text | NULL |  | `CHECK (((resolution_note IS NULL) OR ((char_length(resolution_note) >= 3) AND (char_length(resolution_note) <= 2000))))` |
+| resolved_by | uuid | NULL |  | FK → app_user(id) |
+| resolved_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `data_quality_finding_actual_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_actual_id) REFERENCES kpi_actual(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `data_quality_finding_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `data_quality_finding_period_fkey` (FK): `FOREIGN KEY (organization_id, reporting_period_id) REFERENCES reporting_period(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `data_quality_finding_resolution` (CHECK): `CHECK ((((status = 'open') = (resolved_at IS NULL)) AND ((resolved_at IS NULL) = (resolved_by IS NULL)) AND ((resolved_at IS NULL) = (resolution_note IS NULL))))`
+- `data_quality_finding_run_fkey` (FK): `FOREIGN KEY (transformation_id, detected_by_run_id) REFERENCES calculation_run(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `data_quality_finding_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `data_quality_finding_value_ref` (CHECK): `CHECK (((value_no IS NULL) OR (kpi_actual_id IS NOT NULL)))`
+
+**Indexes:**
+
+- `data_quality_finding_one_open`: `UNIQUE (kpi_definition_id, scope_kind, scope_id, reporting_period_id, rule_code) WHERE (status = 'open')`
+- `data_quality_finding_transformation_idx`: `(transformation_id, status, detected_at DESC)`
+
+**Triggers:**
+
+- `data_quality_finding_audit_required`: CONSTRAINT AFTER UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `data_quality_finding_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `data_quality_finding_guard()`
+- `data_quality_finding_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## rag_override
+
+- **Purpose:** A manual RAG for one KPI, scope and period with reason, evidence and expiry; the calculated RAG is preserved (REQ-S07-009; ADR-0027 §10). In force while active and before expires_at.
+- **Migration:** `0035_p4_kpi_calculation_runs_quality.sql`. **API module:** `kpi`. **Who writes:** `rag.override` (TL, BO). **Lifecycle:** active → revoked (final); expiry ends it without a write.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  |  |
+| scope_kind | text | NOT NULL |  | `CHECK ((scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative'])))` |
+| scope_id | uuid | NOT NULL |  |  |
+| reporting_period_id | uuid | NOT NULL |  |  |
+| override_rag | text | NOT NULL |  | `CHECK ((override_rag = ANY (ARRAY['green', 'amber', 'red'])))` |
+| calculated_rag | text | NOT NULL |  | `CHECK ((calculated_rag = ANY (ARRAY['green', 'amber', 'red', 'unknown', 'stale', 'not_computable'])))` |
+| kpi_evaluation_id | uuid | NULL |  | FK → kpi_evaluation(id) |
+| reason | text | NOT NULL |  | `CHECK (((char_length(btrim(reason)) >= 3) AND (char_length(reason) <= 2000)))` |
+| evidence_id | uuid | NOT NULL |  |  |
+| expires_at | timestamp with time zone | NOT NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'revoked'])))` |
+| revoked_by | uuid | NULL |  | FK → app_user(id) |
+| revoked_at | timestamp with time zone | NULL |  |  |
+| revoke_reason | text | NULL |  | `CHECK (((revoke_reason IS NULL) OR ((char_length(revoke_reason) >= 3) AND (char_length(revoke_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `rag_override_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `rag_override_expiry_window` (CHECK): `CHECK (((expires_at > created_at) AND (expires_at <= (created_at + '366 days'::interval))))`
+- `rag_override_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `rag_override_period_fkey` (FK): `FOREIGN KEY (organization_id, reporting_period_id) REFERENCES reporting_period(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `rag_override_revoked` (CHECK): `CHECK ((((status = 'revoked') = (revoked_at IS NOT NULL)) AND ((revoked_at IS NULL) = (revoked_by IS NULL)) AND ((revoked_at IS NULL) = (revoke_reason IS NULL))))`
+- `rag_override_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `rag_override_slot_idx`: `(kpi_definition_id, scope_kind, scope_id, reporting_period_id, expires_at DESC)`
+
+**Triggers:**
+
+- `rag_override_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `rag_override_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `rag_override_guard()`
+- `rag_override_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P4 seeds and backfill (0036, slice A)
+
+- `approval_type` `kpi_version_activation` (subject `kpi_version`, SoD `requester_excluded`, owner module `kpi`).
+- `work_item_kind` `kpi_actual_review`, `kpi_actual_rejected` (label_ar provisional wording).
+- `permission` (9 rows, each `write` or `configure`) and `role_permission` (18 rows): exactly `P4_KPI_PERMISSIONS` / `P4_KPI_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). AUD and the technical-admin roles hold none.
+- Backfill: one approved `target_trajectory` (+ points) per KPI from its most recently approved, active DG2 `outcome_kpi` trajectory; creator, approver and approval time preserved; two audit events each (actor `system`, source `migration`). `outcome_kpi` rows are unchanged.
+
+## P4 functions (slice A)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `reporting_period_guard()` | 0033 | fixed identity, status step, no overlap per organization and frequency (lock 730230) | via trigger |
+| `p4_kpi_formula_reaches(uuid, uuid, uuid)` | 0033 | does one KPI reach another through the inputs of active versions (cycle walk) | via triggers |
+| `kpi_formula_input_guard()` | 0033 | inputs only on a draft formula version; no self-reference or cycle (lock 730228) | via trigger |
+| `kpi_version_guard()` | 0033 | version number step; unit, currency, frequency and polarity fit the definition; status machine; frozen content; activation preconditions (active definition, business approval, no cycle) | via trigger |
+| `kpi_definition_measure_lock()` | 0033 | the DG2 definition's measure fields are fixed once a version exists | via trigger |
+| `kpi_rag_threshold_guard()` | 0033 | version number step; immutable except active → superseded | via trigger |
+| `p4_kpi_scope_valid(uuid, uuid, text, uuid)` | 0034 | the scope is the transformation, a business unit of its organization or one of its initiatives | via triggers |
+| `target_trajectory_guard()`, `target_trajectory_point_guard()` | 0034 | scope, version step, status machine, frozen content, points only while draft, at least one point to approve | via trigger |
+| `kpi_actual_guard()` | 0034 | slot identity, period open and of the KPI's frequency, period copy, status machine, value step, accepted pointer (lock 730229) | via trigger |
+| `kpi_actual_consistency()` | 0034 | deferred: the current value row exists; accepted/rejected has the matching review row | via constraint trigger |
+| `kpi_actual_value_guard()` | 0034 | value number is the slot's current one; the KPI's active version; currency equal; shape per value nature or missing_reason | via trigger |
+| `data_quality_finding_guard()`, `rag_override_guard()` | 0035 | status machines, immutable content; one override in force per slot (lock 730229) | via trigger |
+
+## P4 validation rules summary (slice A)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards; closed sets (measure types, value natures, aggregation rules, routes, statuses, RAG values, rule codes); aggregation fits value nature (no averaging rule exists); custom formula needs the business-approval policy; activation completeness (aggregation rule, ratio labels, milestone due date, band bounds); formula cycles; one draft/active version, one approved trajectory, one slot per KPI/scope/period, one override in force, one open finding per rule; value shape and currency; review SoD; Unknown/Not computable stored as NULL and never green |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice A schemas), free-text rules (`freeText`/`hasText`), strict UTF-8, request media types, `If-Match`, decimal strings |
+| Service | Permissions and record-level rules (owner/steward/assignee submits; configured reviewer accepts; not the submitter), commit-time re-authorization, formula validation on the DG3 engine and the unit match, evidence rule, the exact refusal codes and English texts of ADR-0027 §13 |
+| Worker | One run per trigger (`runOnce` + unique trigger key), evaluations per ADR-0028, data-quality findings, `kpi.deviation_evaluated` and `kpi.values_recalculated` outbox events |

@@ -32,6 +32,14 @@ export const ADVISORY_LOCK_CLASSES = {
   raciDeliverable: 730225,
   /** Approval subject record (workflows approvals + triggers 0031). Key: the subject record id. */
   approvalSubject: 730226,
+  // P4 block of T-DG4-ARCH-02 (730228-730231; p4-plan §4, ADR-0027 §12). 730231 is RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it.
+  /** KPI formula graph of one transformation (kpi formulas + triggers 0033 cycle guard). Key: transformation_id. */
+  kpiFormulaGraph: 730228,
+  /** KPI actual slot (kpi actuals, overrides + triggers 0034/0035). Key: "<kpiDefinitionId>:<scopeKind>:<scopeId>:<reportingPeriodId>". */
+  kpiActualSlot: 730229,
+  /** Reporting periods of one organization and frequency (kpi reporting periods + trigger 0033). Key: "<organizationId>:<frequency>". */
+  reportingPeriod: 730230,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

@@ -18,6 +18,9 @@ const MIGRATION_CONSTANTS: ReadonlyMap<string, number> = new Map([
   ["delegation_graph_lock_class", ADVISORY_LOCK_CLASSES.delegationGraph],
   ["raci_deliverable_lock_class", ADVISORY_LOCK_CLASSES.raciDeliverable],
   ["approval_subject_lock_class", ADVISORY_LOCK_CLASSES.approvalSubject],
+  ["kpi_formula_graph_lock_class", ADVISORY_LOCK_CLASSES.kpiFormulaGraph],
+  ["kpi_actual_slot_lock_class", ADVISORY_LOCK_CLASSES.kpiActualSlot],
+  ["reporting_period_lock_class", ADVISORY_LOCK_CLASSES.reportingPeriod],
 ]);
 
 function walk(dir: string): string[] {
@@ -28,7 +31,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the eight classes, each a distinct int4 (730227 stays reserved for the T-DG4-ARCH-01 block)", () => {
+  it("lists the eleven classes, each a distinct int4 (730227 and 730231 stay reserved for their P4 blocks)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -38,6 +41,9 @@ describe("advisory-lock class registry", () => {
       delegationGraph: 730224,
       raciDeliverable: 730225,
       approvalSubject: 730226,
+      kpiFormulaGraph: 730228,
+      kpiActualSlot: 730229,
+      reportingPeriod: 730230,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);

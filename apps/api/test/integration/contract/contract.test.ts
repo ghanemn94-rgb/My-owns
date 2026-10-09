@@ -628,8 +628,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     const mirrorsNotChecked = Object.keys(ZOD_MIRRORS).filter((id) => !zodChecked.has(id));
     expect(mirrorsNotChecked).toEqual([]);
     // 33 P1 operations + 128 P2 operations (T-DG2-ARCH-01B, plus activateKpiDefinition: D-061, F-DG2-201) + 109 P3
-    // operations (T-DG3-ARCH-01) + 51 P4 operations of slices I and C (T-DG4-ARCH-01; pending in p4-pending-be-a/b/c.ts).
+    // operations (T-DG3-ARCH-01) + 51 P4 operations of slices I and C (T-DG4-ARCH-01; pending in p4-pending-be-a/b/c.ts)
+    // + 39 P4 operations of slice A (T-DG4-ARCH-02; pending in p4-pending-kbe-b/c.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(321);
+    expect(operations).toHaveLength(360);
   });
 });

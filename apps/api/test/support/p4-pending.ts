@@ -4,5 +4,6 @@
 // so the lists can only shrink. Each architecture task adds one import line here; the file is frozen after
 // T-DG4-ARCH-08 (p4-plan §5.3). All lists MUST be empty when the DG4 candidate freezes.
 import { P4_PENDING_ARCH_01 } from "./p4-pending-arch-01.ts";
+import { P4_PENDING_ARCH_02 } from "./p4-pending-arch-02.ts";
 
-export const P4_PENDING_OPERATIONS: readonly string[] = [...P4_PENDING_ARCH_01];
+export const P4_PENDING_OPERATIONS: readonly string[] = [...P4_PENDING_ARCH_01, ...P4_PENDING_ARCH_02];

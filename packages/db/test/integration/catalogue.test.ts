@@ -89,6 +89,52 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0033-0035: the P4 slice A guards are attached (deferred audit and consistency checks, append-only lineage)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('reporting_period', 'kpi_version', 'kpi_formula_input', 'kpi_rag_threshold',
+         'target_trajectory', 'target_trajectory_point', 'kpi_actual', 'kpi_actual_value', 'kpi_actual_review', 'kpi_actual_evidence',
+         'calculation_run', 'kpi_evaluation', 'data_quality_finding', 'rag_override')
+         AND t.tgname NOT LIKE '%_row_guard'
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["calculation_run", "calculation_run_append_only", false, false],
+      ["calculation_run", "calculation_run_append_only_truncate", false, false],
+      ["data_quality_finding", "data_quality_finding_audit_required", true, true],
+      ["data_quality_finding", "data_quality_finding_guard", false, false],
+      ["kpi_actual", "kpi_actual_audit_required", true, true],
+      ["kpi_actual", "kpi_actual_consistency", true, true],
+      ["kpi_actual", "kpi_actual_guard", false, false],
+      ["kpi_actual_evidence", "kpi_actual_evidence_append_only", false, false],
+      ["kpi_actual_evidence", "kpi_actual_evidence_append_only_truncate", false, false],
+      ["kpi_actual_review", "kpi_actual_review_append_only", false, false],
+      ["kpi_actual_review", "kpi_actual_review_append_only_truncate", false, false],
+      ["kpi_actual_value", "kpi_actual_value_append_only", false, false],
+      ["kpi_actual_value", "kpi_actual_value_append_only_truncate", false, false],
+      ["kpi_actual_value", "kpi_actual_value_guard", false, false],
+      ["kpi_evaluation", "kpi_evaluation_append_only", false, false],
+      ["kpi_evaluation", "kpi_evaluation_append_only_truncate", false, false],
+      ["kpi_formula_input", "kpi_formula_input_append_only", false, false],
+      ["kpi_formula_input", "kpi_formula_input_append_only_truncate", false, false],
+      ["kpi_formula_input", "kpi_formula_input_guard", false, false],
+      ["kpi_rag_threshold", "kpi_rag_threshold_audit_required", true, true],
+      ["kpi_rag_threshold", "kpi_rag_threshold_guard", false, false],
+      ["kpi_version", "kpi_version_audit_required", true, true],
+      ["kpi_version", "kpi_version_guard", false, false],
+      ["rag_override", "rag_override_audit_required", true, true],
+      ["rag_override", "rag_override_guard", false, false],
+      ["reporting_period", "reporting_period_audit_required", true, true],
+      ["reporting_period", "reporting_period_guard", false, false],
+      ["target_trajectory", "target_trajectory_audit_required", true, true],
+      ["target_trajectory", "target_trajectory_guard", false, false],
+      ["target_trajectory_point", "target_trajectory_point_append_only", false, false],
+      ["target_trajectory_point", "target_trajectory_point_append_only_truncate", false, false],
+      ["target_trajectory_point", "target_trajectory_point_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -203,6 +249,14 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "transformation_raci_deliverable",
       "transformation_raci_assignment",
       "approval",
+      // P4 slice A (0033-0036, T-DG4-ARCH-02; ADR-0027, ADR-0028).
+      "reporting_period",
+      "kpi_version",
+      "kpi_rag_threshold",
+      "target_trajectory",
+      "kpi_actual",
+      "data_quality_finding",
+      "rag_override",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -348,6 +402,22 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       approval_decision: "INSERT,SELECT",
       approval_escalation: "INSERT,SELECT",
       approval_decision_record: "SELECT",
+      // P4 slice A (0033-0036): still no DELETE anywhere; value versions, reviews, evidence links, formula inputs,
+      // trajectory points, calculation runs and evaluations are append-only (INSERT,SELECT).
+      reporting_period: SIU,
+      kpi_version: SIU,
+      kpi_formula_input: "INSERT,SELECT",
+      kpi_rag_threshold: SIU,
+      target_trajectory: SIU,
+      target_trajectory_point: "INSERT,SELECT",
+      kpi_actual: SIU,
+      kpi_actual_value: "INSERT,SELECT",
+      kpi_actual_review: "INSERT,SELECT",
+      kpi_actual_evidence: "INSERT,SELECT",
+      calculation_run: "INSERT,SELECT",
+      kpi_evaluation: "INSERT,SELECT",
+      data_quality_finding: SIU,
+      rag_override: SIU,
     });
   });
 

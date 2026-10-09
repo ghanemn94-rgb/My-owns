@@ -1,0 +1,99 @@
+Fri Oct  9 02:33:59 UTC 2026
+$ QA_PG_PORT=23700 MTH_PORT_POOL=23701-23709 tests/qa/support/with-pg.sh node --conditions=@mth/source docs/delivery/handbacks/DG4/T-DG4-ARCH-02-evidence/probe.ts
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 36 (0001_identity_access.sql .. 0036_p4_kpi_permissions_backfill.sql)
+PASS  fresh database: 0001..last apply  -- applied 36: 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql, 0032_p4_slice_i_c_reserved.sql, 0033_p4_kpi_dictionary_versions.sql, 0034_p4_kpi_trajectories_actuals.sql, 0035_p4_kpi_calculation_runs_quality.sql, 0036_p4_kpi_permissions_backfill.sql
+PASS  P3 database populated (0001-0027, a synthetic transformation with its P3 starter structure, two approved T02 rows of one KPI)  -- applied 27
+PASS  P4 over P3 database: 0028+ apply  -- applied 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql, 0032_p4_slice_i_c_reserved.sql, 0033_p4_kpi_dictionary_versions.sql, 0034_p4_kpi_trajectories_actuals.sql, 0035_p4_kpi_calculation_runs_quality.sql, 0036_p4_kpi_permissions_backfill.sql
+PASS  B01 backfill: exactly one approved target_trajectory, copied from the most recently approved T02 row, approver and time preserved  -- [{"id":"01a11e82-acbf-77e8-b973-ee4cd101f7c0","status":"approved","source":"outcome_kpi_backfill","source_outcome_kpi_id":"01990000-0000-7000-8000-00000000006b","approved_by":"01990000-0000-7000-8000-000000000004","approved_at":"2026-02-01T00:00:00.000Z","created_by":"01990000-0000-7000-8000-000000000003","version":2,"scope_kind":"transformation","scope_id":"01990000-0000-7000-8000-000000000005"}]
+PASS  B02 backfill: the points are copied verbatim as numeric(24,6)  -- [{"d":"2026-03-31","v":"12.500000"},{"d":"2026-06-30","v":"20.000000"}]
+PASS  B03 backfill: two audit events (create v1, approve v2), actor system, source migration  -- [{"action":"target_trajectory.backfill","actor_type":"system","source":"migration","new_version":1},{"action":"target_trajectory.backfill_approved","actor_type":"system","source":"migration","new_version":2}]
+PASS  B04 backfill: the DG2 outcome_kpi rows are unchanged  -- unchanged rows 2
+PASS  S01 nine slice A permissions, each 'write' or 'configure'  -- data_quality.manage:write, kpi_actual.accept:write, kpi_actual.submit:write, kpi_threshold.configure:write, kpi_version.activate:write, kpi_version.edit:write, rag.override:write, reporting_period.manage:configure, target_trajectory.edit:write
+PASS  S02 no technical admin and no AUD role holds a slice A permission  -- []
+PASS  S03 approval type kpi_version_activation and two KPI work-item kinds are seeded  -- {"at":1,"wk":2}
+PASS  RP01 missing audit fails at COMMIT (reporting_period)  -- 23000 reporting_period_audit_required no audit_event for reporting_period 01990000-0000-7000-8000-000000000070 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RP02 overlapping periods of one frequency are refused (lock 730230)  -- 23514 reporting_period_no_overlap reporting_period: monthly 2026-10b overlaps another monthly period
+PASS  RP03 a week-based period must be week_count x 7 days  -- 23514 reporting_period_weeks new row for relation "reporting_period" violates check constraint "reporting_period_weeks"
+PASS  RP04 a closed period is final (closed -> open refused)  -- 23514 reporting_period_status_step reporting_period: closed -> open is not an allowed transition
+PASS  RP05 non-stepping version (reporting_period)  -- 23514 reporting_period_version_step reporting_period: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  RP06 4-week and 5-week periods are stored with their week counts (comparability input, REQ-S07-005)  -- [{"period_label":"2027-P01","length_days":28,"week_count":4},{"period_label":"2027-P02","length_days":35,"week_count":5}]
+PASS  V01 missing audit fails at COMMIT (kpi_version)  -- 23000 kpi_version_audit_required no audit_event for kpi_version 01990000-0000-7000-8000-000000000085 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  V02 a flow KPI cannot use weighted_ratio (aggregation fits the value nature; no averaging rule exists)  -- 23514 kpi_version_aggregation_fits_nature new row for relation "kpi_version" violates check constraint "kpi_version_aggregation_fits_nature"
+PASS  V03 activation without an aggregation rule is refused (REQ-S07-001, D-089 Q1)  -- 23514 kpi_version_complete_when_active new row for relation "kpi_version" violates check constraint "kpi_version_complete_when_active"
+PASS  V04 a version cannot change the KPI's unit or currency (USD on a SAR KPI)  -- 23514 kpi_version_matches_definition kpi_version: unit currency/USD and frequency monthly must equal the KPI definition's currency/SAR and monthly
+PASS  V05 the measure type must fit the KPI polarity (lower_is_better on a higher_is_better KPI)  -- 23514 kpi_version_measure_fits_polarity kpi_version: measure type lower_is_better does not fit the KPI polarity higher_is_better
+PASS  V06 activation needs an active KPI definition  -- 23514 kpi_version_definition_active kpi_version: the KPI definition must be active before a version is activated
+PASS  V07 business_approval policy: activation without an approved approval is refused  -- 23514 kpi_version_approval_required kpi_version: this version needs an approved business approval before activation
+PASS  V08 custom_formula aggregation needs a formula and the business_approval policy  -- 23514 kpi_version_custom_formula_approved new row for relation "kpi_version" violates check constraint "kpi_version_custom_formula_approved"
+PASS  V09 acceptable band needs both bounds  -- 23514 kpi_version_band new row for relation "kpi_version" violates check constraint "kpi_version_band"
+PASS  V10 version numbers step by one  -- 23514 kpi_version_no_step kpi_version: the next version number of this KPI is 1
+PASS  V11 an active version is immutable  -- 23514 kpi_version_frozen kpi_version: an active version is immutable; create a new version
+PASS  V12 at most one draft per KPI  -- 23505 kpi_version_one_draft duplicate key value violates unique constraint "kpi_version_one_draft"
+PASS  V13 non-stepping version (kpi_version)  -- 23514 kpi_version_version_step kpi_version: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  V14 DG2 kpi_definition: unit change refused once the KPI has a version  -- 23514 kpi_definition_measure_locked kpi_definition: unit, currency, polarity and frequency are fixed once the KPI has a version
+PASS  V15 DG2 kpi_definition without a version: the unit can still change (DG2 behaviour unchanged)  -- updated
+PASS  V16 binary milestone fits a higher_is_better KPI with a due date and aggregation 'none'  -- 01990000-0000-7000-8000-0000000000a4
+PASS  F01 KPI A = B + 1 is accepted and activated  -- 01990000-0000-7000-8000-0000000000b0
+PASS  F02 KPI B = A * 2 after A = B + 1 is rejected as circular (lock 730228)  -- 23514 kpi_formula_no_cycle kpi_formula_input: a would make a circular reference
+PASS  F03 a self-reference is rejected  -- 23514 kpi_formula_no_cycle kpi_formula_input: s would make a circular reference
+PASS  F04 a draft-draft cycle is refused at the second activation  -- 23514 kpi_formula_no_cycle kpi_version: input c makes a circular reference
+PASS  F05 inputs are added only to a draft formula version  -- 23514 kpi_formula_input_draft_only kpi_formula_input: inputs are added only to a draft formula version
+PASS  F06 UPDATE on kpi_formula_input is refused (append-only)  -- 42501 kpi_formula_input is append-only: UPDATE is not allowed
+PASS  T01 a second active threshold version without superseding the first is refused  -- 23505 kpi_rag_threshold_one_active duplicate key value violates unique constraint "kpi_rag_threshold_one_active"
+PASS  T02 red threshold below amber is refused  -- 23514 kpi_rag_threshold_order new row for relation "kpi_rag_threshold" violates check constraint "kpi_rag_threshold_order"
+PASS  T03 a threshold version is immutable (only active -> superseded)  -- 23514 kpi_rag_threshold_immutable kpi_rag_threshold: a threshold version is immutable; the only change is active -> superseded
+PASS  T04 changing thresholds = supersede the active version and insert the next one  -- 01990000-0000-7000-8000-0000000000d0
+PASS  TJ01 an approved trajectory needs at least one point  -- 23514 target_trajectory_points_required target_trajectory: an approved trajectory has at least one point
+PASS  TJ02 the creator cannot approve the trajectory  -- 23514 target_trajectory_approver_not_creator new row for relation "target_trajectory" violates check constraint "target_trajectory_approver_not_creator"
+PASS  TJ03 points of an approved trajectory cannot be added  -- 23514 target_trajectory_point_draft_only target_trajectory_point: points are added only while the trajectory is a draft
+PASS  TJ04 points are never updated (append-only)  -- 42501 target_trajectory_point is append-only: UPDATE is not allowed
+PASS  TJ04b points are never deleted (append-only)  -- 42501 target_trajectory_point is append-only: DELETE is not allowed
+PASS  TJ05 an approved trajectory is immutable  -- 23514 target_trajectory_frozen target_trajectory: an approved trajectory is immutable; create a new version
+PASS  TJ06 a scope outside the transformation is refused (another organization's id)  -- 23514 target_trajectory_scope_valid target_trajectory: scope business_unit 01990000-0000-7000-8000-000000000008 is not in this transformation
+PASS  TJ07 at most one approved trajectory per KPI and scope  -- 23505 target_trajectory_one_approved duplicate key value violates unique constraint "target_trajectory_one_approved"
+PASS  A01 direct-accept entry: one slot, value 1, a direct_accept review and exactly one audit event  -- slot 01990000-0000-7000-8000-0000000000e1, audit events for the entry: 1
+PASS  A02 a second actual for the same KPI, scope and period as a new row is refused (it must be a new value version)  -- 23505 kpi_actual_slot_key duplicate key value violates unique constraint "kpi_actual_slot_key"
+PASS  A03 a second actual for the same slot is stored as value version 2 of the same row  -- slots 1, values 2, accepted value still 1 (draft not used until accepted)
+PASS  A04 missing audit fails at COMMIT (kpi_actual)  -- 23000 kpi_actual_audit_required no audit_event for kpi_actual 01990000-0000-7000-8000-0000000000e1 at version 3 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  A05 the slot needs its current value row at COMMIT  -- 23000 kpi_actual_value_present kpi_actual 01990000-0000-7000-8000-0000000000e1: value 3 has no value row
+PASS  A06 review route: the submitter cannot accept their own actual  -- 23514 kpi_actual_review_sod new row for relation "kpi_actual" violates check constraint "kpi_actual_review_sod"
+PASS  A07 accepting needs the reviewer's review row (checked at COMMIT)  -- 23000 kpi_actual_review_present kpi_actual 01990000-0000-7000-8000-0000000000f1: status accepted needs the matching review of value 1
+PASS  A08 review route: submitted (not used) -> accepted by another person; one audit event per step  -- audit events on the slot after submit + accept: 2
+PASS  A09 a value in another currency than the KPI's is refused (USD on SAR)  -- 23514 kpi_actual_value_currency kpi_actual_value: currency USD does not match the KPI currency <NULL>
+PASS  A10 a value needs its fields or a missing_reason (flow with numerator refused)  -- 23514 kpi_actual_value_shape kpi_actual_value: a flow value needs its fields, or a missing_reason and no value
+PASS  A11 an explicitly unavailable value is stored as NULL with its reason (Unknown, never 0)  -- {"value":null,"missing_reason":"Source system outage (synthetic)"}
+PASS  A12 a closed reporting period takes no new actual  -- 23514 kpi_actual_period_open kpi_actual: reporting period 2026-06 is closed
+PASS  A13 a monthly KPI is not reported for a weekly period  -- 23514 kpi_actual_period_frequency kpi_actual: a monthly KPI is reported for monthly periods, not weekly
+PASS  A14 UPDATE on kpi_actual_value is refused (append-only)  -- 42501 kpi_actual_value is append-only: UPDATE is not allowed
+PASS  A15 DELETE on kpi_actual_review is refused (append-only)  -- 42501 kpi_actual_review is append-only: DELETE is not allowed
+PASS  A16 an accepted value cannot become rejected (status step)  -- 23514 kpi_actual_status_step kpi_actual: accepted -> rejected (value 1 -> 1) is not an allowed transition
+PASS  A17 the value number steps by one  -- 23514 kpi_actual_value_step kpi_actual: the value number steps by one
+PASS  A18 a rejection needs a reason  -- 23514 kpi_actual_reject_reason new row for relation "kpi_actual" violates check constraint "kpi_actual_reject_reason"
+PASS  A19 values are entered against the KPI's active version only  -- 23514 kpi_actual_value_active_version kpi_actual_value: values are entered against the KPI's active version
+PASS  A20 an actual's scope must be in the transformation  -- 23514 kpi_actual_scope_valid kpi_actual: scope business_unit 01990000-0000-7000-8000-000000000008 is not in this transformation
+PASS  R01 a second calculation run for the same accepted value is refused (exactly one run)  -- 23505 calculation_run_trigger_key duplicate key value violates unique constraint "calculation_run_trigger_key"
+PASS  R02 UPDATE on calculation_run is refused (append-only)  -- 42501 calculation_run is append-only: UPDATE is not allowed
+PASS  R03 an Unknown value is never green (no value -> no green/amber/red)  -- 23514 kpi_evaluation_rag_needs_data new row for relation "kpi_evaluation" violates check constraint "kpi_evaluation_rag_needs_data"
+PASS  R04 an Unknown value is never stored as 0  -- 23514 kpi_evaluation_value_status new row for relation "kpi_evaluation" violates check constraint "kpi_evaluation_value_status"
+PASS  R05 a Stale value keeps its number but its RAG is 'stale', never green  -- 23514 kpi_evaluation_rag_needs_data new row for relation "kpi_evaluation" violates check constraint "kpi_evaluation_rag_needs_data"
+PASS  R06 allowed: Unknown with NULL value and RAG unknown; and a red evaluation with value, expected value and configured threshold  -- 01990000-0000-7000-8000-00000000012b
+PASS  R07 UPDATE on kpi_evaluation is refused (append-only)  -- 42501 kpi_evaluation is append-only: UPDATE is not allowed
+PASS  D01 at most one open finding per KPI, scope, period and rule  -- 23505 data_quality_finding_one_open duplicate key value violates unique constraint "data_quality_finding_one_open"
+PASS  D02 a person's resolve without its audit event fails at COMMIT  -- 23000 data_quality_finding_audit_required no audit_event for data_quality_finding 01990000-0000-7000-8000-00000000012c at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  D03 resolving needs a note  -- 23514 data_quality_finding_resolution new row for relation "data_quality_finding" violates check constraint "data_quality_finding_resolution"
+PASS  D04 resolve with note and audit  -- resolved
+PASS  D05 a resolved finding is final  -- 23514 data_quality_finding_status_step data_quality_finding: only open -> resolved | dismissed, with a note
+PASS  D06 non-stepping version (data_quality_finding)  -- 23514 data_quality_finding_version_step data_quality_finding: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  O01 an override without evidence is refused  -- 23502 null value in column "evidence_id" of relation "rag_override" violates not-null constraint
+PASS  O02 an override without expiry is refused  -- 23502 null value in column "expires_at" of relation "rag_override" violates not-null constraint
+PASS  O03 an expiry more than 366 days ahead is refused  -- 23514 rag_override_expiry_window new row for relation "rag_override" violates check constraint "rag_override_expiry_window"
+PASS  O04 missing audit fails at COMMIT (rag_override)  -- 23000 rag_override_audit_required no audit_event for rag_override 01990000-0000-7000-8000-000000000135 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  O05 an override records reason, evidence, expiry and the calculated RAG it overrides  -- {"override_rag":"amber","calculated_rag":"red","status":"active"}
+PASS  O06 a second override in force for the same slot is refused (lock 730229)  -- 23514 rag_override_one_in_force rag_override: an override is already in force for this KPI, scope and period
+PASS  O07 an override is immutable (only active -> revoked)  -- 23514 rag_override_status_step rag_override: an override is immutable; the only change is active -> revoked
+PASS  O08 after expiry a new override is allowed (an expired override is not in force)  -- 01990000-0000-7000-8000-00000000013e
+PASS  C01 concurrent activation of X = Y + 1 and Y = X + 1: the first commits, the second waits on lock 730228 and is refused  -- kpi_formula_no_cycle kpi_version: input x makes a circular reference
+PROBE RESULT: PASS (all guards fired as specified)
+EXIT=0

@@ -357,3 +357,52 @@ Legend as in 8.3. **D** = decide/approve. Every cell is checked server-side by t
 - **Record-level rules:** deciding needs the approval to be assigned to the caller, an effective member of the assignee group, the escalation target, or an active delegate of one of these (ADR-0026 §4 rule 3); work items and inbox reminders are the assignee's and recipient's only.
 - **Delegation (section 6 made concrete):** no loop in any form (database trigger, lock 730224); capability = the delegator's, checked at use time against the effective window; "B on behalf of A" in the audit trail (ADR-0026 §3).
 - **Changes against sections 1–6, flagged as assumptions:** groups grant no permission in P4 (IdP group mapping stays P6); FIN may decide P4 approvals routed to Finance parties (consistent with its existing `funding.approve`); the escalation chain defaults to the Approve party, then SP (D-089 Q7).
+
+## 11. P4 implementation, slice A (DG4): KPI engine permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-02 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the KPI engine: KPI versions (dictionary v2), formula inputs, RAG threshold versions, reporting periods, target trajectories, actuals and their review, calculation runs, data-quality findings and RAG overrides (ADR-0027, ADR-0028). The seed is migration `0036_p4_kpi_permissions_backfill.sql`, equal to `P4_KPI_PERMISSIONS` / `P4_KPI_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. Trajectory approval and KPI-version approval are business approvals recorded as a named person's decision; no engineering agent, seed or job grants a real business, Finance or IT approval.
+
+### 11.1 P4 permission catalogue (slice A)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `kpi_version.edit` | write | Create, edit and withdraw draft KPI versions and their formula inputs | TL, KDS |
+| `kpi_version.activate` | write | Activate a KPI version (directly, or after its business approval); request that approval | TL, KDS |
+| `kpi_threshold.configure` | write | Set a new RAG threshold version | TL, KDS |
+| `target_trajectory.edit` | write | Create and withdraw draft target trajectories | TL, KDS |
+| `reporting_period.manage` | configure | Create, open and close reporting periods | TO |
+| `kpi_actual.submit` | write | Enter and submit KPI actuals with evidence | KDS, BO |
+| `kpi_actual.accept` | write | Accept or reject submitted actuals as the configured reviewer | SP, TL, BO |
+| `rag.override` | write | Override a calculated RAG with reason, evidence and expiry; revoke | TL, BO |
+| `data_quality.manage` | write | Resolve or dismiss data-quality findings | TL, KDS |
+| `kpi_target.approve` (P2, reused) | business_approval | Approve a target trajectory | SP, BO |
+| `approval.decide` (P4 slices I/C, reused) | business_approval | Decide a `kpi_version_activation` approval | SP, BO, FIN |
+
+None of the nine new codes is `business_approval` or `finance_validation`, so the creator-derived assignment (F-DG1-106) and the team view (ADR-0020 §3) are unchanged. AUD and the technical-admin roles (ADM_TECH, ADM_ACCESS, ADM_METHOD) hold none of them (REQ-S10-003).
+
+### 11.2 Per-entity rights in P4 (slice A)
+
+Legend as in 8.3. **D** = decide/approve. Every cell is checked server-side by the one policy function and re-authorised at commit, plus the record-level rule named.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| KPI dictionary v2 (`kpi_definition` + `kpi_version`, `kpi_formula_input`) | V | C E, activate, withdraw | V | V | V | V | C E, activate, withdraw | V | V | V | — |
+| KPI version business approval (`approval` type `kpi_version_activation`) | D (assigned) | request | D (assigned; default assignee) | V | D (assigned) | V | request | V | V | V | — |
+| RAG thresholds (`kpi_rag_threshold`) | V | C | V | V | V | V | C | V | V | V | — |
+| Reporting periods (`reporting_period`) | V | V | V | V | V | C, open, close | V | V | V | V | — |
+| Target trajectories (`target_trajectory`, `target_trajectory_point`) | D (not the creator) | C, withdraw | D (not the creator) | V | V | V | C, withdraw | V | V | V | — |
+| KPI actuals (`kpi_actual`, values, reviews, evidence) | accept/reject (reviewer) | accept/reject (reviewer) | C submit (owner/steward/assignee); accept/reject (reviewer) | V | V | V | C submit (owner/steward/assignee) | V | V | V | — |
+| Calculation runs, evaluations (`calculation_run`, `kpi_evaluation`) | V | V | V | V | V | V | V | V | V | V | — |
+| KPI status panel (read model) | V | V | V | V | V | V | V | V | V | V | — |
+| RAG overrides (`rag_override`) | V | C, revoke | C, revoke | V | V | V | V | V | V | V | — |
+| Data-quality findings (`data_quality_finding`) | V | resolve/dismiss | V | V | V | V | resolve/dismiss | V | V | V | — |
+
+**Rules (binding for the slice A implementers):**
+
+- **AUD (read-only auditor):** every mutating slice A operation returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. KBE-B and KBE-C test this on each of their operations (p4-work-split S-4).
+- **Technical admins (REQ-S10-003):** no technical-admin role holds a slice A permission; an ADM-only user gets 403 on every slice A mutation, including `approveTargetTrajectory` (a business approval).
+- **Record-level rules:** submitting needs the KPI's owner or steward, or the assignee of its open `kpi_update_due` work item (403 `kpi_actual.not_owner`); accepting or rejecting needs `kpi_actual.accept`, resolution to the version's `reviewer_party_code` through the role mapping, and not being the submitter (403 `kpi_actual.not_reviewer`, `kpi_actual.sod_submitter`; database `kpi_actual_review_sod`); approving a trajectory needs `kpi_target.approve` and not being its creator (403 `target_trajectory.approver_is_author`).
+- **RAG override (REQ-S07-009):** only `rag.override` holders (TL, BO); anyone else gets 403. Reason, evidence and expiry are required; the calculated RAG is preserved and shown again after expiry.
+- **Changes against sections 1–6, flagged as assumptions:** BO submits actuals (REQ-S07-003 "submit:KDS,BO (assigned)"); SP, TL and BO may act as the configured reviewer (REQ-S07-012 "accept:configured reviewer"); TL and KDS configure thresholds (REQ-S07-007); TO manages the organization's reporting periods.

@@ -1152,6 +1152,61 @@ The view `approval_decision_record` unions `approval_decision`, `gate_decision` 
 | Job (S16-005) | `job_schedule` (+ pg-boss, `processed_message`) | `id` (code UK) | `owner_module` | migrations; `job.configure` (ADM_TECH) | `enabled` | yes | jobs / worker |
 | Task / reminder (S12-005, S03-008) | `work_item`, `inbox_notification` (+ seed `work_item_kind`) | `id` (dedupe key UK) | `assignee_user_id` / `recipient_user_id` | `createWorkItemOnce`; the assignee / recipient | `status`; `read_at` | yes | tasks |
 
+## 1e. P4 physical model, slice A (migrations 0033–0036, DG4)
+
+Written by T-DG4-ARCH-02 (ADR-0027, ADR-0028). Columns, constraints and triggers: `data-dictionary.md` "P4 tables, slice A" (generated from the migrated catalogue). Every table has `organization_id`; all but `reporting_period` also have `transformation_id`, and their foreign keys are composite `(transformation_id, id)` so no row can point into another transformation. No DELETE grant on any of them.
+
+### 1e.1 KPI dictionary v2, formula graph, thresholds, reporting periods — `kpi` module
+
+```mermaid
+erDiagram
+    kpi_definition ||--o{ kpi_version : "versioned as (one draft, one active)"
+    kpi_version ||--o{ kpi_formula_input : "formula reads"
+    kpi_definition ||--o{ kpi_formula_input : "is input of"
+    kpi_version }o--o| approval : "activation approved by (business_approval policy)"
+    kpi_version }o--o| baseline : "baseline from"
+    kpi_definition ||--o{ kpi_rag_threshold : "thresholds (one active)"
+    organization ||--o{ reporting_period : "periods per frequency (no overlap)"
+```
+
+### 1e.2 Trajectories, actuals, runs, findings, overrides — `kpi` module and worker
+
+```mermaid
+erDiagram
+    kpi_definition ||--o{ target_trajectory : "per scope (one approved)"
+    target_trajectory ||--|{ target_trajectory_point : "points (append-only)"
+    outcome_kpi |o--o{ target_trajectory : "imported or backfilled from"
+    kpi_definition ||--o{ kpi_actual : "one slot per scope and period"
+    reporting_period ||--o{ kpi_actual : "observation period"
+    kpi_actual ||--|{ kpi_actual_value : "value versions (append-only)"
+    kpi_version ||--o{ kpi_actual_value : "entered against (active)"
+    kpi_actual_value ||--o| kpi_actual_review : "decided by (one per value)"
+    kpi_actual_value ||--o{ kpi_actual_evidence : "evidence"
+    evidence ||--o{ kpi_actual_evidence : "linked"
+    calculation_run ||--o{ kpi_evaluation : "evaluates (append-only)"
+    kpi_actual ||--o| calculation_run : "one run per accepted value"
+    kpi_evaluation }o--o| kpi_rag_threshold : "threshold used"
+    kpi_evaluation }o--o| target_trajectory : "expected from"
+    calculation_run ||--o{ data_quality_finding : "detects"
+    kpi_definition ||--o{ rag_override : "per scope and period (one in force)"
+    rag_override }o--o| kpi_evaluation : "preserves calculated RAG of"
+    evidence ||--o{ rag_override : "evidence"
+```
+
+### 1e.3 P4 entity register (slice A): §16 entities → tables
+
+| Entity (§16 S16-014) | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **KPIDefinition** | `kpi_definition` (0014; trigger `kpi_definition_measure_lock` 0033) | `id` | `owner_user_id` (steward `steward_user_id`) | `kpi_definition.edit` (DG2) | `status` | yes | kpi |
+| **KPIVersion** | `kpi_version` (+ `kpi_formula_input`) | `id` (`kpi_definition_id`, `version_no` UK) | the definition's owner; `created_by` | `kpi_version.edit`, `kpi_version.activate` (TL, KDS) | `status` | yes | kpi |
+| **KPIActual** | `kpi_actual` (+ `kpi_actual_value`, `kpi_actual_review`, `kpi_actual_evidence`) | `id` (slot UK) | `submitted_by`; the KPI's owner | `kpi_actual.submit` (KDS, BO), `kpi_actual.accept` (SP, TL, BO) | `status` | yes (slot) | kpi |
+| **TargetTrajectory** | `target_trajectory` (+ `target_trajectory_point`) | `id` | `created_by`; `approved_by` | `target_trajectory.edit` (TL, KDS); `kpi_target.approve` (SP, BO) | `status` | yes | kpi |
+| **CalculationRun** | `calculation_run` (+ `kpi_evaluation`) | `id` (`seq` UK; trigger UK) | the worker (service) | worker `kpi.recalculate` | `status` | no (append-only) | kpi / worker |
+| **DataQualityFinding** | `data_quality_finding` | `id` | the KPI's steward or owner; `resolved_by` | worker (insert); `data_quality.manage` (TL, KDS) | `status` | yes | kpi |
+| Reporting period (S07-003) | `reporting_period` | `id` (organization, frequency, label UK) | `organization_id` | `reporting_period.manage` (TO); job `kpi.reporting_period_open` | `status` | yes | kpi |
+| RAG threshold version (S07-007) | `kpi_rag_threshold` | `id` | `created_by` | `kpi_threshold.configure` (TL, KDS) | `status` | yes | kpi |
+| RAG override (S07-009) | `rag_override` | `id` | `created_by` | `rag.override` (TL, BO) | `status` (+ `expires_at`) | yes | kpi |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1235,21 +1290,21 @@ erDiagram
 ```mermaid
 erDiagram
     KPIDefinition ||--o{ KPIVersion : "versioned as"
-    KPIVersion ||--o{ KPIActual : measures
-    KPIVersion ||--o{ TargetTrajectory : targets
-    KPIActual }o--o{ CalculationRun : "input to"
-    KPIActual ||--o{ DataQualityFinding : "flagged by"
+    KPIVersion ||--o{ KPIActual : "values entered against"
+    KPIDefinition ||--o{ TargetTrajectory : "targets (per scope)"
+    KPIActual ||--o| CalculationRun : "accepted value triggers"
+    CalculationRun ||--o{ DataQualityFinding : detects
     Outcome ||--o{ KPIDefinition : "measured by"
 ```
 
 | Entity | Table | Stage |
 |---|---|---|
 | KPIDefinition | `kpi_definition` | **P2** (dictionary subset), P4 |
-| KPIVersion | `kpi_version` | P4 |
-| KPIActual | `kpi_actual` (observation period, business date, event timestamp) | P4 |
-| TargetTrajectory | `target_trajectory` | P4 |
-| CalculationRun | `calculation_run` (inputs, formula version, result) | P4 |
-| DataQualityFinding | `data_quality_finding` | P4 |
+| KPIVersion | `kpi_version` (+ `kpi_formula_input`) | P4 (§1e) |
+| KPIActual | `kpi_actual` slot + `kpi_actual_value` versions (observation period, business date, event timestamp) | P4 (§1e) |
+| TargetTrajectory | `target_trajectory` (+ `target_trajectory_point`) | P4 (§1e) |
+| CalculationRun | `calculation_run` + `kpi_evaluation` (inputs, versions used, results) | P4 (§1e) |
+| DataQualityFinding | `data_quality_finding` | P4 (§1e) |
 
 ### 2.5 Target operating model and procedures (REQ-S16-015; DG5)
 
