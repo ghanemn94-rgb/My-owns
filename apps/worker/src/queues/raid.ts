@@ -5,8 +5,9 @@
 //   benefit.variance_evaluated (KBE-E)    -> raid.corrective_benefit
 //   adoption.check_failed (slice F)       -> raid.corrective_adoption
 //   control_check.failed (slice G)        -> raid.corrective_control
-// An event type maps to exactly one queue (QUEUE_FOR_EVENT): a later consumer of the same event needs a fan-out
-// decision from the orchestrator, never a second entry here.
+// Each entry here names RAID's one queue for the event. Since D-102 an event type may also feed other domains' queues
+// (kpi.deviation_evaluated feeds adoption.indicator_evaluated too, queues/adoption.ts): queues/index.ts merges the
+// domain maps into QUEUES_FOR_EVENT and the relay sends one job per queue in the same transaction.
 import type { QueueSpec } from "./spec.ts";
 
 export const RAID_QUEUES: readonly QueueSpec[] = [
