@@ -4,12 +4,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { DEFAULTS } from "@mth/shared";
 import { useTransformations } from "../api/queries.ts";
-import { EmptyState, QueryState } from "../components/States.tsx";
+import { BeingBuiltState, EmptyState, QueryState } from "../components/States.tsx";
 import { LifecycleChip } from "../components/Badges.tsx";
 import type { AreaId, AreaWorkspaceTab } from "../app/nav.ts";
 import { workspaceTabLabelKey } from "../components/Workspace.tsx";
 import { useMe } from "../auth/session.tsx";
-import { canAnywhere } from "../auth/permissions.ts";
 import { Icon } from "../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../components/Page.tsx";
 import { useProductName } from "../components/Wordmark.tsx";
@@ -40,7 +39,16 @@ export function AreaPlaceholderPage({ area }: { area: AreaId }) {
  * Target Operating Model -> Design, Governance -> Gates, Evidence and Reports -> Evidence). It lists the
  * transformations the user can see and opens the matching workspace tab; the cross-portfolio view is still planned.
  */
-export function AreaEntryPage({ area, tab }: { area: AreaId; tab: AreaWorkspaceTab }) {
+export function AreaEntryPage({
+  area,
+  tab,
+  moreTabs = [],
+}: {
+  area: AreaId;
+  tab: AreaWorkspaceTab;
+  /** P4: further workspace tabs of the same area (Governance -> decision rights, RACI, role mapping, readiness). */
+  moreTabs?: readonly AreaWorkspaceTab[];
+}) {
   const { t } = useTranslation();
   const label = t(`nav.areas.${area}.label`);
   usePageTitle(label);
@@ -70,6 +78,19 @@ export function AreaEntryPage({ area, tab }: { area: AreaId; tab: AreaWorkspaceT
                   </Link>{" "}
                   <LifecycleChip status={tr.status} />
                   {tr.archivedAt ? <LifecycleChip status="archived" /> : null}
+                  {moreTabs.length > 0 ? (
+                    <span className="block small" data-more-tabs="true">
+                      {moreTabs.map((more, i) => (
+                        <span key={more}>
+                          {i > 0 ? " · " : null}
+                          <Link className="link" to={`/transformations/${tr.id}/${more}`}>
+                            {t(workspaceTabLabelKey(more))}
+                            <span className="visually-hidden"> ({tr.name})</span>
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -90,41 +111,19 @@ export function AreaEntryPage({ area, tab }: { area: AreaId; tab: AreaWorkspaceT
   );
 }
 
-export function MyWorkPage() {
+/**
+ * A P4 route whose screen another FE task builds (FE-B…FE-G; p4-plan §5.1). It says what the screen will contain and
+ * that it is being built: no data, no form, nothing presented as delivered. The owning task replaces the route element
+ * (an orchestrator merge in app/router.tsx).
+ */
+export function P4BeingBuiltPage({ feature }: { feature: string }) {
   const { t } = useTranslation();
-  const me = useMe();
-  usePageTitle(t("nav.areas.myWork.label"));
-  const canReadTransformations = canAnywhere(me, "transformation.read");
+  const title = t(`nav.p4.${feature}.title`);
+  usePageTitle(title);
   return (
-    <div className="page">
-      <PageHeader
-        title={t("common.myWork.greeting", { name: me.user.displayName })}
-        subtitle={t("nav.areas.myWork.summary")}
-      />
-      <div className="grid grid--2">
-        <section className="card" aria-labelledby="mw-next">
-          <h2 id="mw-next" className="card__title">
-            {t("common.myWork.startHere")}
-          </h2>
-          {canReadTransformations ? (
-            <p>
-              <Link to="/transformations" className="link">
-                {t("common.myWork.openTransformations")}
-              </Link>
-            </p>
-          ) : (
-            <p className="muted">{t("common.myWork.noBusinessAccess")}</p>
-          )}
-        </section>
-        <section className="card" aria-labelledby="mw-planned">
-          <h2 id="mw-planned" className="card__title">
-            <span className="lifecycle-chip lifecycle-chip--draft">
-              <Icon name="clock" /> {t("nav.planned")}
-            </span>
-          </h2>
-          <p>{t("nav.areas.myWork.contents")}</p>
-        </section>
-      </div>
+    <div className="page" data-p4-feature={feature}>
+      <PageHeader title={title} subtitle={t(`nav.p4.${feature}.summary`)} />
+      <BeingBuiltState title={t("nav.p4.beingBuiltTitle")} body={t("nav.p4.beingBuiltBody")} />
     </div>
   );
 }

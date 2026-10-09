@@ -45,6 +45,12 @@ export const WORKSPACE_TABS = [
   { id: "dispensations", path: "/dispensations", labelKey: "dispensations.tab" },
   { id: "evidence", path: "/evidence" },
   { id: "team", path: "/team" },
+  // P4 slices I and C (T-DG4-FE-A; labels from each page's own namespace).
+  { id: "role-mappings", path: "/role-mappings", labelKey: "groups.roleMappings.tab" },
+  { id: "decision-rights", path: "/decision-rights", labelKey: "decisionRights.tab" },
+  { id: "raci", path: "/raci", labelKey: "raci.tab" },
+  { id: "transform-readiness", path: "/transform-readiness", labelKey: "decisionRights.readiness.tab" },
+  { id: "approval-decisions", path: "/approval-decisions", labelKey: "approvals.records.tab" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 
