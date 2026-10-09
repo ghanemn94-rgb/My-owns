@@ -99,3 +99,6 @@ export * from "./change-control.ts";
 // P4 slice J mirrors of KBE-G (kpi-benefits-engineer, T-DG4-KBE-G; p4-work-split §J+K JK.4): the six T10 areas, the
 // transformation, executive and workstream dashboards, the drill-down and the dashboard RAG policy (ADR-0037).
 export * from "./dashboards.ts";
+// P4 slice K mirrors of BE-M (backend-workflow-engineer, T-DG4-BE-M; p4-work-split §J+K JK.1): trace links, allocation
+// sets and contribution shares, the traceability graph, the orphan report and the downstream impact.
+export * from "./traceability.ts";

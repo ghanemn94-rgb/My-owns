@@ -44,9 +44,10 @@ describe("reporting module (P1 scaffold, D-048)", () => {
     expect(Object.isFrozen(mod.REPORTING_MODULE)).toBe(true);
   });
 
-  it("its register hook registers the routes of its P4 route files and reports them (T-DG4-KBE-G)", async () => {
+  it("its register hook registers the routes of its P4 route files and reports them (T-DG4-KBE-G, T-DG4-BE-M)", async () => {
     // P1 asserted a route-free scaffold; from P4 (KBE-G dashboards, BE-M traceability) the hook registers the route
-    // files' routes and reports the module "active" while any exists (the sustainment/benefits pattern).
+    // files' routes and reports the module "active" while any exists (the sustainment/benefits pattern). The P1
+    // constant REPORTING_MODULE above is unchanged. BE-M's nine slice K routes must all be registered and reported.
     const app = Fastify({ logger: false });
     const routes: string[] = [];
     app.addHook("onRoute", (r) => {
@@ -58,6 +59,21 @@ describe("reporting module (P1 scaffold, D-048)", () => {
     expect(registration.module).toBe("reporting");
     expect(registration.status).toBe(registration.routes.length > 0 ? "active" : "scaffold");
     for (const r of registration.routes) expect(routes.map((x) => x.replace(/^GET,HEAD /, "GET "))).toContain(r);
+    const T = "/api/v1/transformations/:transformationId";
+    const sliceK = [
+      `GET ${T}/traceability`,
+      `GET ${T}/trace-links`,
+      `POST ${T}/trace-links`,
+      `GET ${T}/trace-links/:traceLinkId`,
+      `PATCH ${T}/trace-links/:traceLinkId`,
+      `POST ${T}/trace-links/:traceLinkId/remove`,
+      `GET ${T}/allocation-sets/:allocationTargetType/:allocationTargetId`,
+      `GET ${T}/orphans`,
+      "GET /api/v1/records/:recordType/:recordId/impact",
+    ];
+    expect(routes.filter((r) => !r.startsWith("HEAD "))).toEqual(expect.arrayContaining(sliceK));
+    expect(registration.routes).toEqual(expect.arrayContaining(sliceK));
+    expect(registration).toMatchObject({ module: "reporting", status: "active", deliversIn: "P4" });
     await app.close();
   });
 
