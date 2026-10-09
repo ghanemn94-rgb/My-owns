@@ -3,8 +3,9 @@
 // PostgreSQL) and the worker's handlers run against the same database. Proves:
 //  - REQ-S11-004 A11 "after closure, the next scheduled review task is created on time" and REQ-S03-002 A11 "after a
 //    transformation is closed its linked performance area still generates scheduled review tasks and accepts KPI
-//    actuals": the transformation is CLOSED (SYNTHETIC direct closure-record fixture, BE-I's
-//    closeTransformationSynthetic, because BE-J's closure service is not merged), then the review scan creates the
+//    actuals": the transformation is CLOSED through BE-J's governed closure (closeTransformationGoverned: a synthetic
+//    approved G6 and an approved transition decision; T-DG4-BE-J replaced the direct closure-record fixture), then
+//    the review scan creates the
 //    review due on the next review date exactly when the date enters the 7-day window (not a day earlier), for the BAU
 //    owner, with its performance_review_due work item; the linked KPI accepts an actual after closure;
 //  - REQ-PB-083: the first review created by the acceptance is not duplicated by the scan (it advances past it);
@@ -33,10 +34,11 @@ import {
 } from "../../../api/test/integration/kpi-p4/kbe-c-fixtures.ts";
 import {
   areaInBau,
-  closeTransformationSynthetic,
   createArea,
   type SustainmentWorld,
 } from "../../../api/test/integration/contract/p4-exercises-be-i.ts";
+// T-DG4-BE-J: the closed transformation comes from the governed closure, replacing the direct closure-record fixture.
+import { closeTransformationGoverned } from "../../../api/test/integration/contract/p4-exercises-be-j.ts";
 import { DOMAIN_HANDLERS } from "../../src/handlers/index.ts";
 import { CORRECTIVE_CONSUMERS, handleControlCheckFailed } from "../../src/handlers/raid.ts";
 import {
@@ -139,7 +141,7 @@ describe("sustainment.review_scan after closure (REQ-S11-004, REQ-S03-002, REQ-P
       body: { linkKind: "kpi", kpiDefinitionId: kpiId },
     });
     expect(link.status, JSON.stringify(link.body)).toBe(201);
-    await closeTransformationSynthetic(api, s.b);
+    await closeTransformationGoverned(api, w, s.b);
     const t = await api.db
       .selectFrom("transformation")
       .select(["status", "archived_at"])

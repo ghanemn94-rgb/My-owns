@@ -30,11 +30,9 @@ import {
 import { ifm } from "../../support/p2-fixtures.ts";
 import { extraUser } from "../benefits/fixtures.ts";
 import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
-import {
-  closeTransformationSynthetic,
-  seedSustainmentWorld,
-  type SustainmentWorld,
-} from "../contract/p4-exercises-be-i.ts";
+import { seedSustainmentWorld, type SustainmentWorld } from "../contract/p4-exercises-be-i.ts";
+// T-DG4-BE-J: the closed transformation comes from the governed closure, replacing the direct closure-record fixture.
+import { closeTransformationGoverned } from "../contract/p4-exercises-be-j.ts";
 
 let api: TestApi;
 let w: World;
@@ -196,7 +194,7 @@ describe("lesson lifecycle (ADR-0034 §8, §12)", () => {
       body: { title: `Synthetic ${kw} after closure`, lessonText: "Synthetic: written before closure" },
     });
     expect(r.status).toBe(201);
-    await closeTransformationSynthetic(api, x.b);
+    await closeTransformationGoverned(api, w, x.b);
     const p = await send("POST", `${x.b.base}/lessons/${r.body.id}/publish`, { session: x.b.s.bo, headers: ifm(1) });
     expect([p.status, p.body.status]).toEqual([200, "published"]);
     expect(ids(await search(s.b.s.tl, `q=${kw}`))).toEqual([r.body.id]);

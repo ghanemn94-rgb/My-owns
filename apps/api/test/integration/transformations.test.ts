@@ -320,7 +320,11 @@ describe("closure is not a status edit (F-DG1-001: closure needs the G6 business
         "urn:mth:problem:invalid-transition",
         "invalid_transition",
       ]);
-      expect((res.body as { detail?: string }).detail).toMatch(/G6/);
+      // Seam 15 (D-089; ADR-0034 §7; T-DG4-BE-J): the second sentence points at the governed closure action.
+      expect((res.body as { detail?: string }).detail).toBe(
+        "A transformation cannot be closed by a status edit. Closure requires the G6 (Sustain) business approval " +
+          "with validated benefits; use the closure action.",
+      );
       // The same refusal when the close rides along with an otherwise valid edit: nothing at all is written.
       const mixed = await patch(t.id, { name: "Renamed while closing", status: "closed" }, `"${version}"`);
       expect(mixed.status).toBe(422);

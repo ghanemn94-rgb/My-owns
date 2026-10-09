@@ -14,7 +14,8 @@
 // (review_frequency x review_interval, calendar weeks or months; version + 1, audited as the service). A due date that
 // is still inside the window after the step (a worker outage) is processed in the same run, so the run catches up. The
 // scan NEVER reads the transformation's status: after closure the area's reviews keep coming (REQ-S11-004, S03-002).
-// The transition-decision part (benefit monitoring) is added by BE-J after BE-I2 (p4-work-split FG.6).
+// The transition-decision part (benefit monitoring; T-DG4-BE-J, p4-work-split FG.6) runs after the area part in the
+// same job: runMonitoringScan, below BE-I2's scans.
 //
 // control_check_scan: for every active control of a non-retired area whose next_check_date <= today + 7 days, insert
 // the check for that date if absent (control_check_due_key), assignee = the control's owner, else the area's BAU owner,
@@ -400,7 +401,190 @@ export async function runControlCheckScan(db: Db, jobId: string, opts: ScanOptio
   return summarize(steps);
 }
 
+// ------------------------------------------------------------------------------------------------ benefit monitoring
+// T-DG4-BE-J (p4-work-split §F+G FG.6; ADR-0034 §3, §6; REQ-S11-007 "monitoring tasks appear for the residual owner").
+// The worker twin of the API's scheduleMonitoringReviews (apps/api/src/modules/sustainment/transition-decisions.ts;
+// ADR-0002 rule 5, D-102 (2)); apps/api/test/integration/sustainment/transition-decisions.test.ts proves both write the
+// same rows. For every APPROVED transition decision whose next_monitoring_date <= the organization's business date + 7
+// days and <= its expected realization end: insert the `sustainment_review` of subject transition_decision for that date
+// if absent (sustainment_review_due_key), assigned to the residual owner only (the 0048 trigger also checks it), audited,
+// with its `benefit_monitoring_due` work item (dedupe `sustainment.monitoring:<decisionId>:<dueDate>`), then advance
+// next_monitoring_date by one period (version + 1, audited as the service). One runOnce transaction per decision and
+// slot, key `monitoring:<decisionId>:v<version>:<dueDate>`, so a rerun or a redelivered job creates nothing twice. The
+// scan reads no transformation status (monitoring continues after closure) and never decides an approval.
+
+export const BENEFIT_MONITORING_TASK_KIND = "benefit_monitoring_due";
+
+/** The twin of the API's monitoring-review insert: one review for (decision, dueDate), its audit and its work item. */
+export async function scheduleMonitoringReviewInTx(
+  tx: Tx,
+  actor: AuditActor,
+  decisionId: string,
+  dueDate: string,
+): Promise<ScheduledReview> {
+  const d = await tx
+    .selectFrom("transition_decision")
+    .select(["id", "organization_id", "transformation_id", "code", "residual_owner_user_id"])
+    .where("id", "=", decisionId)
+    .executeTakeFirstOrThrow();
+  const byUser = actor.actorType === "user" ? actor.actorUserId : null;
+  const id = await uuidv7(tx);
+  const inserted = await sql<{ id: string }>`
+    INSERT INTO sustainment_review (id, organization_id, transformation_id, subject_kind, transition_decision_id,
+                                    due_date, assignee_user_id, created_source, created_by, updated_by)
+    VALUES (${id}::uuid, ${d.organization_id}::uuid, ${d.transformation_id}::uuid, 'transition_decision',
+            ${d.id}::uuid, ${dueDate}::date, ${d.residual_owner_user_id}::uuid,
+            ${byUser === null ? "worker" : "api"}, ${byUser}::uuid, ${byUser}::uuid)
+    ON CONFLICT (subject_kind, (coalesce(performance_area_id, transition_decision_id)), due_date) DO NOTHING
+    RETURNING id`.execute(tx);
+  if (inserted.rows.length === 0) {
+    const existing = await tx
+      .selectFrom("sustainment_review")
+      .select("id")
+      .where("subject_kind", "=", "transition_decision")
+      .where("transition_decision_id", "=", d.id)
+      .where("due_date", "=", dueDate)
+      .executeTakeFirstOrThrow();
+    return { outcome: "existing", reviewId: existing.id };
+  }
+  await insertAuditEvent(tx, actor, {
+    action: "sustainment_review.create",
+    recordType: "sustainment_review",
+    recordId: id,
+    organizationId: d.organization_id,
+    transformationId: d.transformation_id,
+    newVersion: 1,
+    changes: {
+      subject_kind: { from: null, to: "transition_decision" },
+      transition_decision_id: { from: null, to: d.id },
+      due_date: { from: null, to: dueDate },
+      assignee_user_id: { from: null, to: d.residual_owner_user_id },
+    },
+  });
+  await createWorkItemOnce(tx, actor, {
+    organizationId: d.organization_id,
+    transformationId: d.transformation_id,
+    kind: BENEFIT_MONITORING_TASK_KIND,
+    assigneeUserId: d.residual_owner_user_id,
+    subjectType: "sustainment_review",
+    subjectId: id,
+    linkPath: `/transformations/${d.transformation_id}/transition-decisions/${d.id}`,
+    messageKey: "sustainment.task.benefit_monitoring_due",
+    messageParams: { decisionCode: d.code, dueDate },
+    dueDate,
+    dedupeKey: `sustainment.monitoring:${d.id}:${dueDate}`,
+  });
+  return { outcome: "created", reviewId: id };
+}
+
+/** sustainment.review_scan, transition-decision part: the next monitoring review of every approved decision. */
+export async function runMonitoringScan(db: Db, jobId: string, opts: ScanOptions = {}): Promise<ScanResult> {
+  const actor = jobActor(jobId);
+  const due = await db
+    .selectFrom("transition_decision as d")
+    .select([
+      "d.id",
+      "d.version",
+      sql<string>`d.next_monitoring_date::text`.as("due"),
+      sql<string>`d.expected_realization_end::text`.as("end"),
+      sql<string>`(${horizonExpr(opts, sql.ref("d.organization_id"))})::text`.as("horizon"),
+    ])
+    .where("d.status", "=", "approved")
+    .$if(opts.organizationId !== undefined, (q) => q.where("d.organization_id", "=", opts.organizationId!))
+    .where("d.next_monitoring_date", "is not", null)
+    .where(sql<boolean>`d.next_monitoring_date <= d.expected_realization_end`)
+    .where(sql<boolean>`d.next_monitoring_date <= ${horizonExpr(opts, sql.ref("d.organization_id"))}`)
+    .orderBy("d.id")
+    .execute();
+  const steps: ScanStep[] = [];
+  for (const decision of due) {
+    const horizon = decision.horizon;
+    let version = decision.version;
+    let dueDate = decision.due;
+    for (let i = 0; i < MAX_STEPS_PER_SUBJECT && dueDate <= horizon && dueDate <= decision.end; i += 1) {
+      const key = `monitoring:${decision.id}:v${version}:${dueDate}`;
+      const r = await runOnce(db, REVIEW_SCAN_QUEUE, key, async (tx) => {
+        const d = await tx
+          .selectFrom("transition_decision")
+          .select([
+            "id",
+            "organization_id",
+            "transformation_id",
+            "status",
+            "version",
+            "monitoring_frequency",
+            "monitoring_interval",
+          ])
+          .select(sql<string | null>`next_monitoring_date::text`.as("next_monitoring_date"))
+          .select(sql<string>`expected_realization_end::text`.as("expected_realization_end"))
+          .where("id", "=", decision.id)
+          .forUpdate()
+          .executeTakeFirstOrThrow();
+        if (
+          d.status !== "approved" ||
+          d.version !== version ||
+          d.next_monitoring_date !== dueDate ||
+          dueDate > d.expected_realization_end
+        )
+          return null;
+        const scheduled = await scheduleMonitoringReviewInTx(tx, actor, d.id, dueDate);
+        const next = await plusPeriod(tx, dueDate, d.monitoring_frequency, d.monitoring_interval);
+        await tx
+          .updateTable("transition_decision")
+          .set({
+            next_monitoring_date: next,
+            version: sql<number>`version + 1`,
+            updated_at: sql<Date>`now()`,
+            updated_by: null,
+          })
+          .where("id", "=", d.id)
+          .where("version", "=", d.version)
+          .executeTakeFirstOrThrow();
+        await insertAuditEvent(tx, actor, {
+          action: "transition_decision.monitoring_scheduled",
+          recordType: "transition_decision",
+          recordId: d.id,
+          organizationId: d.organization_id,
+          transformationId: d.transformation_id,
+          priorVersion: d.version,
+          newVersion: d.version + 1,
+          changes: { next_monitoring_date: { from: dueDate, to: next } },
+        });
+        return { scheduled, next, version: d.version + 1 };
+      });
+      if (r.outcome === "duplicate") {
+        steps.push({ subjectId: decision.id, dueDate, outcome: "duplicate", recordId: null });
+        break;
+      }
+      if (r.result === null) {
+        steps.push({ subjectId: decision.id, dueDate, outcome: "skipped", recordId: null });
+        break;
+      }
+      steps.push({
+        subjectId: decision.id,
+        dueDate,
+        outcome: r.result.scheduled.outcome,
+        recordId: r.result.scheduled.reviewId,
+      });
+      version = r.result.version;
+      dueDate = r.result.next;
+    }
+  }
+  return summarize(steps);
+}
+
+/** The whole sustainment.review_scan job: BE-I2's area reviews, then BE-J's benefit-monitoring reviews. */
+export async function runSustainmentReviewJob(
+  db: Db,
+  jobId: string,
+  opts: ScanOptions = {},
+): Promise<{ areas: ScanResult; monitoring: ScanResult }> {
+  const areas = await runReviewScan(db, jobId, opts);
+  const monitoring = await runMonitoringScan(db, jobId, opts);
+  return { areas, monitoring };
+}
+
 export const SUSTAINMENT_HANDLERS: readonly JobHandler[] = [
-  { queue: REVIEW_SCAN_QUEUE, handle: (db, _data, jobId) => runReviewScan(db, jobId) },
+  { queue: REVIEW_SCAN_QUEUE, handle: (db, _data, jobId) => runSustainmentReviewJob(db, jobId) },
   { queue: CONTROL_CHECK_SCAN_QUEUE, handle: (db, _data, jobId) => runControlCheckScan(db, jobId) },
 ];

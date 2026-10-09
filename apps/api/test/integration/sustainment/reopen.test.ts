@@ -1,7 +1,8 @@
 // Reopening a deteriorating performance area preserves the earlier handover and closure history (T-DG4-BE-I;
 // ADR-0034 §4, §12; REQ-S11-009). Proves, against the run's disposable PostgreSQL:
 //  - REQ-S11-009 A11 "after reopening, the original handover acceptance and closure date remain visible and unchanged":
-//    the transformation is closed (SYNTHETIC closure-record fixture until BE-J routes closeTransformation), the BAU area
+//    the transformation is closed (through BE-J's governed closure, closeTransformationGoverned: synthetic G6 and an
+//    approved transition decision; T-DG4-BE-J replaced the direct closure-record fixture here), the BAU area
 //    is reopened, and getPerformanceArea shows cycle 2 linked to the prior accepted handover (its acceptance time and
 //    acceptor) and to the closure (its id and closure time), exactly as they were; the accepted handover row and the
 //    closure record are byte-for-byte unchanged; cycle 1 is unchanged;
@@ -15,13 +16,13 @@ import { auditOf, call, seedWorld, startApi, type TestApi, type World } from "..
 import { ifm } from "../../support/p2-fixtures.ts";
 import {
   areaInBau,
-  closeTransformationSynthetic,
   createArea,
   createNoteEvidence,
   fullContent,
   seedSustainmentWorld,
   type SustainmentWorld,
 } from "../contract/p4-exercises-be-i.ts";
+import { closeTransformationGoverned } from "../contract/p4-exercises-be-j.ts";
 
 let api: TestApi;
 let w: World;
@@ -43,7 +44,7 @@ describe("reopening preserves the original handover acceptance and closure date 
   it("after the transformation closed, reopen -> cycle 2 linked to the prior handover and closure; nothing overwritten", async () => {
     const { area, handover } = await areaInBau(api, s);
     const A = `${s.areas}/${area.id}`;
-    const closure = await closeTransformationSynthetic(api, s.b);
+    const closure = await closeTransformationGoverned(api, w, s.b);
     const handoverBefore = await api.db
       .selectFrom("bau_handover")
       .selectAll()
