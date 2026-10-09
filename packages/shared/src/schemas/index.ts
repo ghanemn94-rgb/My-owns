@@ -87,3 +87,6 @@ export * from "./executive-decisions.ts";
 // P4 slice F mirrors of KBE-F (kpi-benefits-engineer, T-DG4-KBE-F; p4-work-split §F+G FG.3): adoption indicator
 // templates, metric links and the indicator report.
 export * from "./adoption-indicators.ts";
+// P4 slice H mirrors of BE-L (backend-workflow-engineer, T-DG4-BE-L; p4-work-split §H H.3): change requests, the
+// change-control policy, impact previews and frozen impact assessments, and the pure materiality rules (ADR-0036).
+export * from "./change-control.ts";

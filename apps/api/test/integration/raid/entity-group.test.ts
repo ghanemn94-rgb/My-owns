@@ -9,6 +9,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { call, seedWorld, signIn, startApi, type Session, type TestApi, type World } from "../../support/harness.ts";
 import { newDecision, requestBody, setupApprovalWorld, type ApprovalWorld } from "../approvals/approval-world.ts";
+import { approvedMilestone, selectedInitiative, type ChangeWorld } from "../workflows/change-fixtures.ts";
 
 let api: TestApi;
 let w: World;
@@ -142,5 +143,33 @@ describe("REQ-S16-018: Approval (the P4 canonical approval), with requester, ass
       { ...write, body: requestBody(second, p.rights["target_state_design"]!) },
       `/api/v1/approvals/${created.body.id}`,
     );
+  });
+});
+
+// T-DG4-BE-L (ADR-0036 §11, ADR-0031 §12; append-only): the ChangeRequest case, which completes the entity group.
+describe("REQ-S16-018: ChangeRequest (change_request), with owner (raised_by) and status", () => {
+  it("create and read through the API; AUD 403 on the write; 404 outside scope", async () => {
+    const c = { ...p, organizationId: w.orgA.id, base: base() } as unknown as ChangeWorld;
+    const initiativeId = await selectedInitiative(api.db, c);
+    const milestoneId = await approvedMilestone(api.db, c, initiativeId, "2026-11-02", "2026-11-16");
+    const write = {
+      method: "POST",
+      url: `${base()}/change-requests`,
+      body: {
+        changeKind: "schedule_rebaseline",
+        subjectType: "milestone",
+        subjectId: milestoneId,
+        subjectVersion: 1,
+        proposedChange: { approvedDate: { from: "2026-11-02", to: "2026-11-16" } },
+        reason: "Synthetic rebaseline for the entity group",
+      },
+    };
+    const created = await call(api.app, write.method, write.url, { session: p.lead.session, body: write.body });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const read = await call(api.app, "GET", `${write.url}/${created.body.id}`, { session: p.auditor.session });
+    expect(read.status).toBe(200);
+    expect(read.body).toMatchObject({ id: created.body.id, raisedBy: p.lead.id, status: "draft", origin: "manual" });
+    expect(read.body.code).toMatch(/^CR-[0-9]{2,}$/);
+    await enforced(write, `${write.url}/${created.body.id}`);
   });
 });

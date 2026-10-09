@@ -1,0 +1,22 @@
+port-policy: PostgreSQL listening on port 24495 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-l
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv18tmo8_da9a9bef (server_encoding UTF8); applied 55 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/change-requests.test.ts (10 tests) 3610ms
+   ✓ change requests: create, read, edit, withdraw (S-4) > draft CR-nn with ETag 1; AUD 403; outside and ADM-only 404; exact 400/409/422 refusals; one audit event per mutation  403ms
+   ✓ REQ-PB-065 routing, SoD and the frozen impact assessment > a business_scope request is routed to the person mapped to SP; the requester cannot decide; SP's approval applies it  308ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > with no policy the DG3 re-approval is unchanged; beyond a configured threshold it is 422, within it 200; budget likewise  369ms
+   ✓ REQ-S07-015: a KPI target change (preview, refusal, approval, the old version readable) > the preview lists the bound benefit and the approved G2 decision; a direct second activation is 422; after BO's approval v2 is active and v1 readable  515ms
+   ✓ REQ-S04-014: a new version of an approved G4 benefit formula creates one change request > one automatic benefit_logic request routed to Finance; the DG3 response unchanged; G4 decision and snapshot byte-identical  413ms
+   ✓ S-4 commit-time authorization and S-1 free text > raise, edit, submit, withdraw and the policy: a TL revoked mid-request gets 403 and nothing is written  344ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  17:32:27
+   Duration  11.74s (transform 2.81s, setup 0ms, collect 5.89s, tests 3.61s, environment 0ms, prepare 92ms)
+

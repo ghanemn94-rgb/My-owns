@@ -1901,6 +1901,68 @@ export function mapP4GovernanceMeetingError(error: PgErrorLike): HttpProblem | n
 }
 
 /**
+ * P4 slice H, BE-L lines (ADR-0036 §1, §10; T-DG4-BE-L): the 0052 change-control constraints. The API checks each rule
+ * first with the exact ADR texts; these are the last line when a concurrent write slips past a check. Null when the
+ * error is not one of them. (Appended to the slice H block after BE-K/BE-K2, p4-work-split §H.3.)
+ */
+export function mapP4ChangeControlError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "change_request_kind_subject":
+      return new HttpProblem({
+        status: 422,
+        type: PROBLEM_TYPES.validation,
+        code: "change_request.kind_subject_mismatch",
+        title: "Business rule violated",
+        detail: "This kind of change does not apply to that record.",
+        errors: [
+          {
+            pointer: "/subjectType",
+            code: "change_request.kind_subject_mismatch",
+            message: "This kind of change does not apply to that record.",
+          },
+        ],
+      });
+    case "change_request_content_frozen":
+      return new HttpProblem({
+        status: 422,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "change_request.not_editable",
+        title: "Invalid transition",
+        detail: "Only a draft change request, or one returned for changes, can be edited.",
+      });
+    case "change_request_final":
+      return new HttpProblem({
+        status: 422,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "change_request.not_withdrawable",
+        title: "Invalid transition",
+        detail: "A decided change request cannot be withdrawn.",
+      });
+    case "change_request_one_open_per_subject":
+    case "change_request_code_key":
+    case "change_control_policy_transformation_key":
+    case "impact_assessment_version_key":
+    case "impact_assessment_item_ordinal_key":
+      // Serialised by the change-request subject lock in the API; a concurrent write that slips past it retries.
+      return retryConflict();
+    case "change_request_status_step":
+    case "change_request_identity":
+    case "change_request_outcome_needs_decision":
+    case "change_request_assessment_current":
+    case "change_request_proposed_pair":
+    case "change_request_proposed_kind":
+    case "change_request_submitted_complete":
+    case "change_request_decided_complete":
+    case "change_request_applied_complete":
+    case "change_request_withdrawn_complete":
+      // The API never sends such a write (no job or trigger decides a change request): a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
@@ -1940,6 +2002,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4SustainmentArea !== null) return p4SustainmentArea;
   const p4SustainmentOperations = mapP4SustainmentOperationsError(error); // BE-I2 (slices F/G block)
   if (p4SustainmentOperations !== null) return p4SustainmentOperations;
+  const p4ChangeControl = mapP4ChangeControlError(error); // BE-L (slice H block)
+  if (p4ChangeControl !== null) return p4ChangeControl;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,

@@ -661,7 +661,7 @@ async function updateVersion(ctx: WriteContext, id: string, expected: number, bo
   return updated;
 }
 
-async function activateVersion(ctx: WriteContext, id: string, expected: number) {
+async function activateVersion(ctx: WriteContext, id: string, expected: number, viaChangeRequest = false) {
   const current = await lockDraft(ctx, id, expected);
   const def = (await findDefinition(ctx.tx, ctx.transformationId, current.kpi_definition_id, "update"))!;
   // 1. the KPI definition is active.
@@ -670,6 +670,22 @@ async function activateVersion(ctx: WriteContext, id: string, expected: number) 
       "kpi_version.definition_not_active",
       "Activate the KPI definition before activating one of its versions.",
     );
+  // T-DG4-BE-L (ADR-0036 §6 item 2, D-101): a KPI that already has an active version changes its definition, baseline
+  // or target only through an approved change request (M0163); the first activation is unchanged. The change-request
+  // apply path (activateKpiVersionByChangeRequest) is the only caller with viaChangeRequest = true.
+  if (!viaChangeRequest) {
+    const active = await ctx.tx
+      .selectFrom("kpi_version")
+      .select("id")
+      .where("kpi_definition_id", "=", def.id)
+      .where("status", "=", "active")
+      .executeTakeFirst();
+    if (active)
+      throw problems.businessRule(
+        "kpi_version.change_request_required",
+        "This KPI already has an active version; changing its definition, baseline or target needs an approved change request.",
+      );
+  }
   // 2. the version is complete (D-089 Q1: the aggregation rule first).
   checkComplete(contentOfRow(current));
   // 3. under the business-approval policy, an approved kpi_version_activation approval of this version.
@@ -777,6 +793,35 @@ async function withdrawVersion(ctx: WriteContext, id: string, expected: number, 
     .executeTakeFirstOrThrow();
   await auditOf(ctx, "kpi_version.withdraw", current, updated, reason);
   return updated;
+}
+
+/**
+ * The change-request apply entry point (T-DG4-BE-L; ADR-0036 §2, §6): activates the draft KPI version named by an
+ * APPROVED change request, in the approval decision's transaction, through the same activation rules (definition
+ * active, complete, the business-approval policy, no formula cycle) except the change-request refusal itself. The
+ * previous active version is superseded and stays readable (prospective by default, M0163). The caller (workflows'
+ * change_request subject provider) has checked that a person approved the request; nothing here approves anything.
+ */
+export async function activateKpiVersionByChangeRequest(
+  tx: Tx,
+  input: {
+    readonly organizationId: string;
+    readonly transformationId: string;
+    readonly userId: string;
+    readonly audit: AuditContext;
+    readonly kpiVersionId: string;
+  },
+): Promise<KpiVersionRow> {
+  const row = await findVersion(tx, input.transformationId, input.kpiVersionId, true);
+  if (!row) throw problems.notFound();
+  const ctx = {
+    tx,
+    userId: input.userId,
+    audit: input.audit,
+    transformationId: input.transformationId,
+    organizationId: input.organizationId,
+  } as WriteContext;
+  return activateVersion(ctx, row.id, row.version, true);
 }
 
 // ------------------------------------------------------------------------------------------------ business approval
