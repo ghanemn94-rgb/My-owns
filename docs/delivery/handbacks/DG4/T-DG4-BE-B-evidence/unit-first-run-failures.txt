@@ -1,0 +1,15 @@
+First unit run of T-DG4-BE-B (2026-10-09 ~04:10 UTC), both locale settings, EXIT=1: 4 failed | 1709 passed (1713);
+the formula project 259 passed | 2 skipped. The logs were overwritten by the re-run; the failures, copied from the run's
+output, were all repository guard tests catching this task's first draft (fixed before the re-run):
+ 1. apps/api/src/architecture.test.ts "every import respects dependsOn, public surfaces and allowed packages":
+    "modules/access/groups.ts: computed member with a non-literal key (line 130/131/132) bypasses the module-interface
+    check" and "modules/workflows/approvals.ts: computed member with a non-literal key (line 753)".
+    Fix: groups.ts uses diffFields (@mth/db); approvals.ts looks the outcome status up in a Map.
+ 2. apps/api/src/modules/platform/advisory-locks.test.ts "no module source outside the registry spells a class number":
+    access/delegations.ts and workflows/approvals.ts spelled 730224/730226 in comments. Fix: comments name the lock.
+ 3. apps/api/src/modules/workflows/workflows.test.ts "registers its routes, each declaring access":
+    GET /api/v1/approvals declared "authenticated"; the workflows convention is transformation.read for GETs. Fix: it
+    declares transformation.read (the list is SQL-filtered by scopeFilter on transformation.read).
+ 4. apps/api/src/modules/workflows/workflows.test.ts "its declared boundary holds": the same computed member as 1.
+Earlier, `pnpm -r typecheck` exited 2 once (groups.test.ts destructuring Session | undefined) and `pnpm lint` exited 1
+once (unused helper nameOf in access/delegations.ts); both fixed and re-run to exit 0 (typecheck.log, lint.log).

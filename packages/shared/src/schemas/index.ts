@@ -34,3 +34,8 @@ export * from "./roadmap.ts";
 export * from "./calendar.ts";
 export * from "./jobs.ts";
 export * from "./tasks.ts";
+// P4 slice C mirrors (backend-workflow-engineer, T-DG4-BE-B; p4-work-split §I+C.2): groups, role mappings and
+// governance parties, delegations, approvals. Lines added by BE-B (see its handback).
+export * from "./groups.ts";
+export * from "./delegations.ts";
+export * from "./approvals.ts";
