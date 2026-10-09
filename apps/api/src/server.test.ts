@@ -134,8 +134,9 @@ describe("module composition (D-048, P2)", () => {
         routes: [],
       });
       // P3 (T-DG3-KBE-C): kpi routes the T09 benefit formulas (/benefit-formulas, /benefit-formula-examples); the
-      // reporting module stays route-free until P5.
-      expect(routes.filter((r) => /report/i.test(r.url))).toEqual([]);
+      // reporting module stays route-free until P5. T-DG4-KBE-C: kpi's P4 reporting periods (contract path
+      // /organizations/{id}/reporting-periods, ADR-0027 §3) are KPI periods, not reports, so they are excluded here.
+      expect(routes.filter((r) => /report/i.test(r.url) && !/\/reporting-periods(\/|$)/.test(r.url))).toEqual([]);
     } finally {
       await pool.end();
     }

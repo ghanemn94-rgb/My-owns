@@ -13,7 +13,12 @@ export interface KpiOutboxEvent {
   readonly organizationId: string;
   readonly aggregateType: string;
   readonly aggregateId: string;
-  readonly eventType: "kpi.version_activated" | "kpi.threshold_changed" | "kpi.trajectory_approved";
+  readonly eventType:
+    | "kpi.version_activated"
+    | "kpi.threshold_changed"
+    | "kpi.trajectory_approved"
+    // T-DG4-KBE-C: the accept pipeline's event (ADR-0027 §8 step 1).
+    | "kpi.actual_accepted";
   readonly schemaVersion: 1;
   readonly payload: Record<string, unknown>;
   /** Unique per logical event; consumers dedupe on it (processed_message). */

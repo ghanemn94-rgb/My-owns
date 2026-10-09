@@ -20,7 +20,7 @@ import { registerCalculationRunRoutes } from "./calculation-runs.ts";
 import { registerDataQualityRoutes } from "./data-quality.ts";
 import { registerKpiFormulaRoutes } from "./kpi-formulas.ts";
 import { registerKpiStatusRoutes } from "./kpi-status.ts";
-import { registerKpiVersionRoutes } from "./kpi-versions.ts";
+import { registerKpiVersionRoutes, type KpiApprovalPort } from "./kpi-versions.ts";
 import { registerRagOverrideRoutes } from "./rag-overrides.ts";
 import { registerReportingPeriodRoutes } from "./reporting-periods.ts";
 import { registerTrajectoryRoutes } from "./trajectories.ts";
@@ -34,7 +34,11 @@ export type RouteAdder = (
 ) => void;
 
 /** Registers every kpi route and returns them as "METHOD /path" (Fastify path syntax). */
-export function registerKpiRoutes(app: FastifyInstance, deps: ModuleDeps): readonly string[] {
+export function registerKpiRoutes(
+  app: FastifyInstance,
+  deps: ModuleDeps,
+  approvals: KpiApprovalPort | null = null,
+): readonly string[] {
   const routes: string[] = [];
   const add: RouteAdder = (instance, method, url, permission, handler) => {
     instance.route({ method, url, config: { access: { permission } }, handler });
@@ -55,7 +59,7 @@ export function registerKpiRoutes(app: FastifyInstance, deps: ModuleDeps): reado
   );
   // P4 KBE-B: KPI versions, trajectories, data quality, KPI formulas.
   routes.push(
-    ...registerKpiVersionRoutes(app, deps),
+    ...registerKpiVersionRoutes(app, deps, approvals),
     ...registerTrajectoryRoutes(app, deps),
     ...registerDataQualityRoutes(app, deps),
     ...registerKpiFormulaRoutes(app, deps),
