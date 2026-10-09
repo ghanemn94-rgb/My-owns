@@ -9,11 +9,15 @@
 //    validation.reference for another transformation's record); AUD/WL 403, ADM-only and outsider 404;
 //  - the status machine: open -> in_progress -> open -> done; done and rejected need a resolution note (400
 //    improvement_item.resolution_note_required at /resolutionNote, nothing written) and are final (422
-//    improvement_item.final, exact text); If-Match 428/409; one audit event per mutation.
+//    improvement_item.final, exact text); If-Match 428/409; one audit event per mutation;
+//  - S-4 commit-time authorization on create and update (an editor revoked after the identity hook: 403, nothing
+//    written) and S-1 free text (a blank title or resolution note: 400 validation.blank at its pointer).
 // All data is SYNTHETIC; nothing here approves anything, and nothing touches DG0-DG7.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { auditOf, call, seedWorld, startApi, type TestApi, type World } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { extraUser } from "../benefits/fixtures.ts";
+import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
 import {
   areaInBau,
   closeTransformationSynthetic,
@@ -223,5 +227,68 @@ describe("REQ-PB-084 A11: the backlog stays visible and editable after the trans
     expect(later.status).toBe("open");
     const filtered = await send("GET", `${itemsOf(x)}?status=done`, { session: x.b.s.auditor });
     expect(filtered.body.items.map((i: { id: string }) => i.id)).toEqual([inProgress.id]);
+  });
+});
+
+describe("S-4 commit-time authorization and S-1 free text", () => {
+  it("create and update: an editor revoked mid-request gets 403 and nothing is written", async () => {
+    const to2 = await extraUser(api, w, s.b, "TO");
+    const title = "Synthetic: revoked create";
+    const created = await afterIdentity(
+      api,
+      to2.id,
+      () =>
+        call(api.app, "POST", itemsOf(s), {
+          session: to2.session,
+          body: { title, sourceKind: "manual" },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, to2.id),
+    );
+    expect(created.status).toBe(403);
+    expect(await api.db.selectFrom("improvement_item").select("id").where("title", "=", title).execute()).toEqual([]);
+    const item = await newItem(s);
+    const to3 = await extraUser(api, w, s.b, "TO");
+    const moved = await afterIdentity(
+      api,
+      to3.id,
+      () =>
+        call(api.app, "PATCH", `${itemsOf(s)}/${item.id}`, {
+          session: to3.session,
+          headers: ifm(1),
+          body: { status: "done", resolutionNote: "Synthetic: revoked close" },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, to3.id),
+    );
+    expect(moved.status).toBe(403);
+    const row = await api.db
+      .selectFrom("improvement_item")
+      .select(["status", "version", "resolution_note"])
+      .where("id", "=", item.id)
+      .executeTakeFirstOrThrow();
+    expect([row.status, row.version, row.resolution_note]).toEqual(["open", 1, null]);
+    expect((await auditOf(api.db, item.id)).map((e) => e.action)).toEqual(["improvement_item.create"]);
+  });
+
+  it("a blank title or resolution note is 400 validation.blank at its pointer", async () => {
+    const blank = await send("POST", itemsOf(s), {
+      session: s.to.session,
+      body: { title: "\u200b\u2060", sourceKind: "manual" },
+    });
+    expect([
+      blank.status,
+      blank.body.errors.map((e: { pointer: string; code: string }) => [e.pointer, e.code]),
+    ]).toEqual([400, [["/title", "validation.blank"]]]);
+    const item = await newItem(s);
+    const note = await send("PATCH", `${itemsOf(s)}/${item.id}`, {
+      session: s.to.session,
+      headers: ifm(1),
+      body: { status: "rejected", resolutionNote: "\u200b\u200b\u200b" },
+    });
+    expect([note.status, note.body.errors.map((e: { pointer: string; code: string }) => [e.pointer, e.code])]).toEqual([
+      400,
+      [["/resolutionNote", "validation.blank"]],
+    ]);
   });
 });

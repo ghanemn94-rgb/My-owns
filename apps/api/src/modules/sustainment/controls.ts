@@ -564,6 +564,8 @@ async function recordCheck(tx: Tx, request: FastifyRequest, transformationId: st
     failedAt: iso(failedAt),
     businessDate: await organizationBusinessDate(tx, ctx.organizationId, failedAt),
   };
+  // The module-local twin of jobs' enqueueOutboxEvent (sustainment's dependsOn excludes jobs, ADR-0002; the BE-H
+  // interventions.ts and KBE benefits/values.ts precedent): validated against the registered v1 schema, same insert.
   const schema = outboxPayloadSchema(CONTROL_CHECK_FAILED_EVENT, 1);
   if (!schema) throw new Error(`outbox: no schema for ${CONTROL_CHECK_FAILED_EVENT} v1`);
   await tx
