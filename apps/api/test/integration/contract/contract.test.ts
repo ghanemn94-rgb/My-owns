@@ -700,7 +700,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-BE-I: + createPerformanceArea, updatePerformanceArea, reopenPerformanceArea, retirePerformanceArea,
     // createPerformanceAreaLink, createBauHandover, updateBauHandover, addBauHandoverEvidence, acceptBauHandover,
     // returnBauHandover (10 JSON bodies; removePerformanceAreaLink and submitBauHandover are bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([249, 248, 1]);
+    // T-DG4-BE-F: + createForum, updateForum, addForumParticipant, createMeetingSeries, updateMeetingSeries,
+    // createMeeting, updateMeeting, cancelMeeting (8 JSON bodies; removeForumParticipant, endMeetingSeries,
+    // publishMeetingAgenda, startMeeting and closeMeeting are bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([257, 256, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
