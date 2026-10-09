@@ -34,3 +34,6 @@ export * from "./roadmap.ts";
 export * from "./calendar.ts";
 export * from "./jobs.ts";
 export * from "./tasks.ts";
+// P4 slice A mirrors of KBE-B (kpi-benefits-engineer, T-DG4-KBE-B; p4-work-split §A.2): KPI dictionary v2, versions,
+// formula inputs, RAG thresholds, target trajectories, data-quality findings.
+export * from "./kpi-versions.ts";

@@ -43,6 +43,31 @@
 //   approval_decision_open,
 //   approval_final_immutable                 -> 422 approval.not_open ({status} from the message)
 //   work_item_identity, inbox_notification_identity -> 500 (immutable columns; a programming error)
+// P4 slice A, KBE-B part (T-DG4-KBE-B; p4-work-split §A.2; ADR-0027 §13): KPI versions, formula cycles, thresholds,
+// trajectories and data-quality findings, with ADR-0027 §13's exact codes and English texts (S-11):
+//   kpi_version_complete_when_active          -> 422 kpi_version.aggregation_rule_required (the service checks the
+//                                                ratio labels and the milestone due date first, with their own codes)
+//   kpi_version_aggregation_fits_nature       -> 422 kpi_version.aggregation_not_allowed (rule and nature from the row)
+//   kpi_version_custom_formula_approved       -> 422 kpi_version.custom_formula_needs_approval
+//   kpi_version_measure_fits_polarity         -> 422 kpi_version.measure_mismatch (types from the message)
+//   kpi_version_band                          -> 422 kpi_version.band_required
+//   kpi_version_route_reviewer                -> 422 kpi_version.reviewer_required
+//   kpi_version_change_reason                 -> 422 kpi_version.change_reason_required
+//   kpi_version_one_draft                     -> 409 kpi_version.draft_exists (duplicate)
+//   kpi_version_status_step, kpi_version_frozen -> 422 kpi_version.not_draft
+//   kpi_version_definition_active             -> 422 kpi_version.definition_not_active
+//   kpi_version_approval_required             -> 422 kpi_version.approval_required
+//   kpi_definition_measure_locked             -> 422 kpi_definition.measure_locked (updateKpiDefinition, D-091 (2))
+//   kpi_formula_no_cycle                      -> 422 kpi_formula.circular (the variable from the message; the service
+//                                                names the full path first)
+//   kpi_rag_threshold_order                   -> 422 kpi_threshold.order
+//   target_trajectory_scope_valid (and every *_scope_valid of slice A) -> 422 kpi.scope_invalid
+//   target_trajectory_points_required         -> 422 target_trajectory.points_required
+//   target_trajectory_one_draft               -> 409 target_trajectory.draft_exists (duplicate)
+//   target_trajectory_status_step, target_trajectory_frozen -> 422 target_trajectory.not_draft
+//   target_trajectory_approver_not_creator    -> 403 target_trajectory.approver_is_author
+//   data_quality_finding_status_step          -> 422 data_quality.not_open
+//   data_quality_finding_resolution           -> 422 data_quality.note_required
 // Pure: no I/O, unit-tested in platform.test.ts and db-errors.test.ts.
 import { PROBLEM_TYPES, type ProblemDetails } from "@mth/shared";
 import { HttpProblem, problems } from "./problem.ts";
@@ -360,6 +385,140 @@ export function mapP4GuardError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/** "<what> % ... %" values of a slice A guard message, e.g. "measure type lower_is_better does not fit the KPI polarity higher_is_better". */
+function wordsAfter(error: PgErrorLike, pattern: RegExp): string[] {
+  return (pattern.exec(error.message ?? "") ?? []).slice(1).map((v) => v ?? "given");
+}
+
+/**
+ * P4 slice A, KBE-B part (ADR-0027 §13): the database's last line behind the KPI version, formula, threshold, trajectory
+ * and data-quality services, with the ADR's exact codes and English texts (S-11). Null when not one of them.
+ */
+export function mapP4KpiGuardError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    case "kpi_version_complete_when_active":
+      return rule422(
+        "kpi_version.aggregation_rule_required",
+        "A KPI version needs an aggregation rule before it can be activated.",
+        "/aggregationRule",
+      );
+    case "kpi_version_aggregation_fits_nature":
+      return rule422(
+        "kpi_version.aggregation_not_allowed",
+        "The aggregation rule cannot be used for this KPI's value nature. Use sum for flows, last value for stocks, weighted ratio for ratios, none for milestones, or an approved custom formula.",
+        "/aggregationRule",
+      );
+    case "kpi_version_custom_formula_approved":
+      return rule422(
+        "kpi_version.custom_formula_needs_approval",
+        "A custom aggregation formula needs a formula calculation and the business-approval policy.",
+        "/aggregationRule",
+      );
+    case "kpi_version_measure_fits_polarity": {
+      const [measureType, polarity] = wordsAfter(error, /measure type (\w+) does not fit the KPI polarity (\w+)/);
+      return rule422(
+        "kpi_version.measure_mismatch",
+        `The measure type ${measureType ?? "given"} does not fit the KPI's polarity ${polarity ?? "given"}.`,
+        "/measureType",
+      );
+    }
+    case "kpi_version_band":
+      return rule422(
+        "kpi_version.band_required",
+        "An acceptable-band measure needs a lower and an upper bound, and the lower bound cannot be above the upper bound.",
+        "/bandLower",
+      );
+    case "kpi_version_route_reviewer":
+      return rule422(
+        "kpi_version.reviewer_required",
+        "The review route needs a reviewer role, and the direct-accept route has none.",
+        "/reviewerPartyCode",
+      );
+    case "kpi_version_change_reason":
+      return rule422(
+        "kpi_version.change_reason_required",
+        "A new version of a KPI needs a reason for the change.",
+        "/changeReason",
+      );
+    case "kpi_version_one_draft":
+      return problems.duplicate(
+        "kpi_version.draft_exists",
+        "This KPI already has a draft version. Change or withdraw it first.",
+      );
+    case "kpi_version_status_step":
+    case "kpi_version_frozen":
+      return rule422("kpi_version.not_draft", "Only a draft KPI version can be changed, activated or withdrawn.", "");
+    case "kpi_version_definition_active":
+      return rule422(
+        "kpi_version.definition_not_active",
+        "Activate the KPI definition before activating one of its versions.",
+        "",
+      );
+    case "kpi_version_approval_required":
+      return rule422(
+        "kpi_version.approval_required",
+        "This KPI version needs an approved business approval before it can be activated.",
+        "",
+      );
+    case "kpi_definition_measure_locked":
+      return rule422(
+        "kpi_definition.measure_locked",
+        "This KPI has a version, so its unit, currency, polarity and frequency can no longer change. Create a new KPI instead.",
+        "",
+      );
+    case "kpi_formula_no_cycle": {
+      const [variable] = wordsAfter(
+        error,
+        /(?:kpi_formula_input: |input )(\w+) (?:would make|makes) a circular reference/,
+      );
+      return rule422(
+        "kpi_formula.circular",
+        `The formula would create a circular reference: ${variable ?? "an input"}.`,
+        "/formulaInputs",
+      );
+    }
+    case "kpi_rag_threshold_order":
+      return rule422("kpi_threshold.order", "The red threshold cannot be below the amber threshold.", "/redThreshold");
+    case "target_trajectory_points_required":
+      return rule422("target_trajectory.points_required", "An approved trajectory needs at least one point.", "");
+    case "target_trajectory_one_draft":
+      return problems.duplicate(
+        "target_trajectory.draft_exists",
+        "This KPI already has a draft trajectory for this scope. Approve or withdraw it first.",
+      );
+    case "target_trajectory_status_step":
+    case "target_trajectory_frozen":
+      return rule422("target_trajectory.not_draft", "Only a draft trajectory can be approved or withdrawn.", "");
+    case "target_trajectory_approver_not_creator":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "target_trajectory.approver_is_author",
+        title: "Forbidden",
+        detail: "The person who created this trajectory cannot approve it.",
+      });
+    case "data_quality_finding_status_step":
+      return rule422("data_quality.not_open", "Only an open finding can be resolved or dismissed.", "");
+    case "data_quality_finding_resolution":
+      return rule422("data_quality.note_required", "Resolving or dismissing a finding needs a note.", "/note");
+    default:
+      if (
+        constraint === "target_trajectory_scope_valid" ||
+        constraint === "kpi_actual_scope_valid" ||
+        constraint === "rag_override_scope_valid"
+      ) {
+        const [scopeKind, scopeId] = wordsAfter(error, /scope (\w+) ([0-9a-f-]{36})/);
+        return rule422(
+          "kpi.scope_invalid",
+          `The scope ${scopeKind ?? "given"} ${scopeId ?? ""} is not part of this transformation.`.replace("  ", " "),
+          "/scopeId",
+        );
+      }
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -379,6 +538,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
     });
   const p4 = mapP4GuardError(error);
   if (p4 !== null) return p4;
+  const p4Kpi = mapP4KpiGuardError(error);
+  if (p4Kpi !== null) return p4Kpi;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
