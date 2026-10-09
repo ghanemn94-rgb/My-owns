@@ -170,3 +170,21 @@ ChangeRequest = `change_request` (PK `id`, code `CR-nn`, owner `raised_by`, stat
 
 - **Database (probe, real output):** CR01–CR20 (`probe-output.txt`).
 - **API (BE-L tests, p4-work-split §H):** changing an approved G4 benefit formula creates a change request and the G4 decision and snapshot read back byte-identical; a KPI target change preview lists the bound benefit and the G2 approval, and after approval the old KPI version is still readable; a material date change via a request leaves `approved_date` unchanged until approved and shows `forecastDate` separately; a re-approval beyond a configured threshold → 422; a `business_scope` request is routed to the SP-mapped person; the requester cannot decide (403/SoD); AUD 403 on every write; `If-Match` 428/409; one audit event per mutation; the ChangeRequest entity-group case.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the version-0 policy, withdrawal of a request in approval, and the codes added outside §10
+
+### A1. The change-control policy before it is configured
+
+**The defaulted-record ETag rule (applies to three records only).** A record that exists by default before anyone writes it (one phase step per transformation and step key, ADR-0035 §1; one change-control policy per transformation, ADR-0036; one dashboard RAG policy per organization, ADR-0037 §3) is read with `version: 0` and `ETag: "0"` while no row exists, and the body shows the defaults (Unknown/null where the ADR says so). The first write sends `If-Match: "0"` and inserts the row at version 1; `If-Match: "0"` once a row exists is 409 `urn:mth:problem:version-conflict` with `currentVersion`; `If-Match: "<n ≥ 1>"` while no row exists is 409 without `currentVersion` (its schema starts at 1, and the BE-L behaviour is kept); a missing `If-Match` is 428. The contract declares this with two components used **only** by these six operations: the response header `ETagOrZero` (pattern `^"(0|[1-9][0-9]{0,9})"$`) on `getPhaseStep`, `getChangeControlPolicy` and `getDashboardRagPolicy`, and the parameter `IfMatchOrZero` (same pattern) on `updatePhaseStep`, `putChangeControlPolicy` and `putDashboardRagPolicy`. Every other operation keeps `ETag`/`IfMatch` starting at 1, and "creates are version 1" still holds for every row that is inserted. A 404 was rejected for these reads because the defaults are real, displayable values and the screen needs the ETag to make the first write. The three `contract: false` skips added for this (`workflows/phases.test.ts`, `workflows/change-requests.test.ts`, `reporting/rag-policy.test.ts`, one GET each) are removed by ARCH-R1, so these reads are contract-checked.
+
+### A2. Resubmission and withdrawal of a request in approval
+
+ADR-0026 amendment A4 gives the corrected flows: `submitChangeRequest` resubmits through `resubmitApprovalInTx` in its own transaction, and `withdrawChangeRequest` on a request in approval withdraws its approval through `withdrawApprovalInTx` and then the request, in one transaction. `change_request` sets `resubmitThroughSubject`. Until BE-R2 lands, the as-built 422 `change_request.withdraw_via_approval` is accepted with the text below; after BE-R2 it is no longer produced (the code is retired, not reused).
+
+### A3. Codes added outside §10
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `change_request.withdraw_via_approval` | 422 | accepted until BE-R2, then retired (replaced by the in-transaction withdraw) | This change request is in approval; withdraw its approval instead. |
+| `validation.proposed_change` | 400 field | accepted | This proposed change does not fit the kind of change requested. |
+| `validation.proposed_change_size` | 400 field | accepted | A change request proposes between 1 and 20 changes. |

@@ -20,6 +20,12 @@ const PERIODS = "kpi.reporting_period_open";
 const SUSTAINMENT_SCANS = ["sustainment.control_check_scan", "sustainment.review_scan"];
 // Seeded by 0054 (T-DG4-ARCH-07); unhandled until BE-K registers the gate-exception expiry handler.
 const GATE_EXCEPTION_SCAN = "gate.exception_expiry_scan";
+// Seeded by 0060 (T-DG4-ARCH-R1; ADR-0032 §10); listed by code. The test passes no governance handler, so they stay unhandled.
+const GOVERNANCE_JOBS = [
+  "governance.blocker_escalation_scan",
+  "governance.decision_sla_scan",
+  "governance.meeting_series_generate",
+];
 
 beforeAll(async () => {
   env = await workerEnv();
@@ -89,7 +95,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     expect(first).toEqual({
       scheduled: [ESCALATION, SWEEP],
       unscheduled: [],
-      unhandled: [GATE_EXCEPTION_SCAN, PERIODS, ...SUSTAINMENT_SCANS],
+      unhandled: [GATE_EXCEPTION_SCAN, ...GOVERNANCE_JOBS, PERIODS, ...SUSTAINMENT_SCANS],
     });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/15 * * * *", timezone: "Asia/Riyadh" });
@@ -108,7 +114,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     expect(r).toEqual({
       scheduled: [ESCALATION],
       unscheduled: [SWEEP],
-      unhandled: [GATE_EXCEPTION_SCAN, PERIODS, ...SUSTAINMENT_SCANS],
+      unhandled: [GATE_EXCEPTION_SCAN, ...GOVERNANCE_JOBS, PERIODS, ...SUSTAINMENT_SCANS],
     });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/5 * * * *", timezone: "Asia/Riyadh" });

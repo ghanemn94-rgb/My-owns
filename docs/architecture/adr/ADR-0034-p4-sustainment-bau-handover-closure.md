@@ -263,3 +263,23 @@ Events: emits `control_check.failed` (§6). Jobs: `sustainment.review_scan`, `su
 
 - **Database (probe, real output):** G00–G05, S02–S04, PA01–PA03, HO01–HO10, RO01–RO07, CK01–CK06, RV01–RV04, TD01–TD06, CI01–CI03, LL01, LL02, ST01–ST12, P01.
 - **API (implementers' tests, p4-work-split §F+G):** every refusal of §12 with its exact text; AUD 403 on every write; technical-admin 403 on accept/return; 404 outside scope; `If-Match` 428/409; audit per mutation; a handover missing data access rejected; acceptance by anyone but the receiving owner 403; acceptance creates the first review exactly once and the scan the next ones; after closure the next review task is created on time and KPI actuals are accepted; after reopening the original acceptance and closure date are unchanged; a failed control check emits one `control_check.failed` and slice E opens one case; a lesson found from another transformation; the initiative with delivery complete and no validated benefit refused with 422 invalid-transition and shown "Delivered — value validation pending"; setting delivery to Complete leaves adoption, value and closure unchanged; the transformation closure refused while value is pending unless a transition decision exists; after the transition decision the forecast stays forecast and monitoring tasks appear for the residual owner.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the handover monitoring cadence on the benefit, and the codes added outside §12
+
+### A1. How `benefit_monitoring_cadence` maps to the benefit's `control_cadence` (BE-I handback §6 item 1)
+
+`0060` adds `weekly` to the benefit's `control_cadence` (ADR-0029 amendment). On acceptance, a linked benefit without a BAU owner gets the receiving owner and `control_cadence` mapped one to one: `weekly → weekly`, `monthly → monthly`, `quarterly → quarterly`, `semi_annual → semiannual`, `annual → annual`. The two spellings of semi-annual stay as they are (renaming either would change a P4 CHECK, its contract enum and stored rows for no behaviour), and the mapping is the single place where they meet. **As built, `handovers.ts` leaves `control_cadence` unchanged for `weekly`** (BE-I, correct before `0060`); BE-R2 changes the mapping line to `["weekly", "weekly"]` and adds the test: a weekly handover sets a linked benefit's `control_cadence` to `weekly`, version + 1, audited.
+
+### A2. BE-J's stored status while in approval
+
+Accepted as built and specified in ADR-0026 amendment A4 (`benefit_transition_decision`): the row stays `draft` with the API presenting `submitted` while its approval is open; withdrawal and resubmission go through the in-transaction approval services.
+
+### A3. Codes and keys added outside §12 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `validation.not_applicable` | 400 field | accepted | This field does not apply here. |
+| `sustainment.task.bau_handover_to_accept` | message key | accepted | Accept or return the BAU handover {handoverCode} for {areaCode} {areaName}. |
+| `sustainment.task.performance_review_due` | message key | accepted | Review performance area {areaCode} by {dueDate}. |
+| `sustainment.task.control_check_due` | message key | accepted | Run the control check {controlCode} by {dueDate}. |
+| `sustainment.task.benefit_monitoring_due` | message key | accepted | Monitor the residual benefit of transition decision {decisionCode} by {dueDate}. |

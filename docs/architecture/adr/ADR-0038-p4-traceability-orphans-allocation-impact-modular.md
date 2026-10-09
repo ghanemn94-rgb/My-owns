@@ -206,3 +206,15 @@ Shares are decimal fractions (`numeric(7,6)`), summed with decimal arithmetic in
 
 - **Database (probe, real output):** G04–G06, PF01–PF08, WS01–WS06, TL01–TL17, IR01–IR11 (`probe-output.txt`).
 - **API (BE-M, BE-M2 tests, p4-work-split §J+K):** one initiative with two gaps and two KPIs; a 110 % set refused with the exact text and a 100 % set accepted, `unallocatedShare` below 100 %; changing a KPI target: `getRecordImpact` on the KPI lists the linked benefits and the Outcomes/Value areas and dashboards (REQ-S03-006); an initiative without a TOM gap in the orphan report, and every node's `href` returning 200 (REQ-PB-044); the PB-010 rename test; Modular entry at Design with an inherited G2 approval: G2 labelled `inherited`, `baseline_missing` and `outcome_link_missing` listed, and (if §7.4 is accepted) G3 submission 422 until supplied or waived (REQ-PB-005, REQ-S03-005); the BU scope sweep (REQ-S03-001); AUD 403, If-Match 428/409 and one audit event on every write.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the validation codes added outside §12 (BE-M handback §2 item 3; D-108)
+
+Accepted, with their exact English texts. `validation.decimal_measure_scale` is the shared `columnDecimal` code for a column named `measure` (`SHARE_COLUMN`).
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `validation.basis_needs_share` | 400 field | accepted | An allocation basis needs a share. |
+| `validation.share_range` | 400 field | accepted | A share is more than 0 and at most 1 (100 %). |
+| `validation.decimal_measure_scale` | 400 field | accepted | Enter a decimal with at most 6 decimal places. |
+| `validation.root_pair` | 400 field | accepted | Give rootType and rootId together. |
+| `trace_link.record_not_found (existing ADR-0038 §12 code)` | 422 | accepted reuse | on a getTraceability root that is not a record of that type in the transformation (the §12 text) |

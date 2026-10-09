@@ -159,3 +159,13 @@ Slice I stores no money, rate or FTE value. Its Unknowns are explicit: a working
 ## Verification
 
 Evidence: `docs/delivery/handbacks/DG4/T-DG4-ARCH-01-evidence/probe-output.txt` (PostgreSQL 16.13, disposable cluster). Probes for this ADR: "fresh database", "P4 over P3 database", "backfill: one default calendar per organization", "p4_ensure_default_calendar is idempotent", G01–G17, J01–J02. Not verified by this task, and assigned in the work split: the TypeScript working-day function and its worked examples (BE-A), the worker kill-and-restart test (BE-A, QA A13), and every API refusal above (BE-A).
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): codes and keys added outside the ADR
+
+### A1. Codes and keys added outside the ADR's refusal table (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `validation.job_code` | 400 field | accepted | A job code is two lower-case words joined by a dot, such as kpi.reporting_period_open. |
+| `validation.link_path` | 400 field | accepted | A link must be a path inside this application that starts with a single '/'. |
+| `validation.pattern` | 400 field | accepted | Use lower-case letters and '_' only. |

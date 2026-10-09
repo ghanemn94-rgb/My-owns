@@ -3627,7 +3627,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 
 ## job_schedule
 
-- **Purpose:** A recurring job of the scheduled-job kit: queue, five-field cron and timezone (REQ-S16-005; ADR-0025 §3). Platform-wide. Seeded: approval.escalation_scan, delegation.expiry_sweep, kpi.reporting_period_open.
+- **Purpose:** A recurring job of the scheduled-job kit: queue, five-field cron and timezone (REQ-S16-005; ADR-0025 §3). Platform-wide. Seeded: approval.escalation_scan, delegation.expiry_sweep, kpi.reporting_period_open (0028); sustainment.review_scan, sustainment.control_check_scan (0050); gate.exception_expiry_scan (0054); governance.meeting_series_generate, governance.decision_sla_scan, governance.blocker_escalation_scan (0060, ARCH-R1).
 - **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `jobs (worker registers it with pg-boss)`. **Who writes:** migrations insert; `job.configure` (ADM_TECH) updates enabled/cron/timezone. **Lifecycle:** enabled ⇄ disabled.
 - **`mth_app` privileges:** SELECT, UPDATE.
 
@@ -5219,7 +5219,7 @@ Written by T-DG4-ARCH-03 (solution-architect), 2026-10-09. Binding design: ADR-0
 | lifecycle_step | text | NOT NULL | `'identify'` | `CHECK ((lifecycle_step = ANY (ARRAY['identify', 'plan', 'enable', 'measure', 'correct', 'sustain'])))` |
 | recovery_plan | text | NULL |  | `CHECK (((recovery_plan IS NULL) OR ((char_length(recovery_plan) >= 1) AND (char_length(recovery_plan) <= 8000))))` |
 | bau_owner_user_id | uuid | NULL |  | FK → app_user(id) |
-| control_cadence | text | NULL |  | `CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['monthly', 'quarterly', 'semiannual', 'annual']))))` |
+| control_cadence | text | NULL |  | `CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['weekly', 'monthly', 'quarterly', 'semiannual', 'annual']))))` (`weekly` added by 0060, ARCH-R1) |
 | status_rag | text | NULL |  | `CHECK (((status_rag IS NULL) OR (status_rag = ANY (ARRAY['green', 'amber', 'red']))))` |
 | status_rag_note | text | NULL |  | `CHECK (((status_rag_note IS NULL) OR ((char_length(status_rag_note) >= 1) AND (char_length(status_rag_note) <= 2000))))` |
 | status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |

@@ -96,9 +96,8 @@ const scopeBody = (initiativeId: string, extra: Record<string, unknown> = {}) =>
 describe("change-control policy (REQ-S09-010 thresholds; change_control.configure)", () => {
   it('version 0 with null thresholds when none; If-Match "0" creates; 428/409; 422 out of range; AUD 403; outside 404', async () => {
     const P = `${c.base}/change-control-policy`;
-    // Outside the validating client: the contract's ETag pattern starts at "1" while this operation documents version 0
-    // (a contract defect reported in the handback); every other call here is contract-checked.
-    const none = await call(api.app, "GET", P, { session: c.auditor.session, contract: false });
+    // ETag "0" is admitted by the ETagOrZero header (ARCH-R1), so this read is contract-checked too.
+    const none = await call(api.app, "GET", P, { session: c.auditor.session });
     expect([none.status, none.body.version, none.body.materialDateShiftWorkingDays, none.headers.etag]).toEqual([
       200,
       0,

@@ -70,7 +70,8 @@ export const BENEFIT_EXCLUSION_REASONS = [
 export const benefitExclusionReason = z.enum(BENEFIT_EXCLUSION_REASONS);
 export type BenefitExclusionReason = z.infer<typeof benefitExclusionReason>;
 
-export const CONTROL_CADENCES = ["monthly", "quarterly", "semiannual", "annual"] as const;
+// `weekly` added by 0060 (T-DG4-ARCH-R1; ADR-0029 and ADR-0034 amendments of 2026-10-09).
+export const CONTROL_CADENCES = ["weekly", "monthly", "quarterly", "semiannual", "annual"] as const;
 export const BENEFIT_RECURRENCES = ["one_off", "recurring"] as const;
 export const BENEFIT_CONFIDENCES = ["H", "M", "L"] as const;
 export const BENEFIT_RAG = ["green", "amber", "red"] as const;

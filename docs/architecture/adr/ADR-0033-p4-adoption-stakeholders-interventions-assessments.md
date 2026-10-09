@@ -223,3 +223,28 @@ The REQ-S16-020 integration test ("creates and reads each one through the API wi
 
 - **Database (probe, real output):** S01, S02, S03, S04, S05, SG01–SG09, CC01–CC05, IV01, IV02, ML01–ML03, AI01–AI07, FM01–FM06, AR01–AR05, TR01, TR02, P01.
 - **API (implementers' tests, p4-work-split §F+G):** every refusal of §10 with its exact text; AUD 403 on every write; 404 outside scope; `If-Match` 428/409; audit event per mutation; a Hostile stance 400; an intervention with owner and due date in My Work; a proficiency observation through the form counted in the group's measure; 100% completion with no observation → proficiency Unknown; one intervention for an actual below trajectory, none twice on redelivery, and one `adoption.check_failed` event; a champion's constraint listed on its decision; the REQ-S16-020 entity-group test.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the assessment form's record version, the single metric-link read, and the codes added outside §10
+
+### A1. A new assessment form is at record version 2 (BE-H2 handback §6 item 1; D-105) — decided: amend the rule for this entity, no migration
+
+`createAssessmentForm` makes two audited writes to the form row in one transaction: the insert (record version 1, `current_version_no = 0`, as `assessment_form_guard` requires) and, after its first `assessment_form_version` row (`version_no = 1`, which the version guard requires to be `current_version_no + 1`), the step to `current_version_no = 1` (record version 2, as `p2_row_guard` requires). So the 201 returns `version: 2`, `ETag: "2"` and `currentVersion.versionNo: 1`, with three audit events (the form's create at version 1, the question version's create, and the form's step to version 2). **This is accepted as the one documented exception to "creates are version 1"** (p4-work-split S-4): every write is real and audited, the ETag is exact, and a client always takes the version from the ETag. A trigger change (`0061`) was rejected: it would loosen two `0047` guards that the probe proves, to save one version number. The contract's 201 description now says this. Every later form write keeps the usual `version + 1`.
+
+### A2. `getAdoptionMetricLink` (KBE-F handback §4)
+
+`createAdoptionMetricLink`'s 201 `Location` is `…/adoption-metric-links/{adoptionMetricLinkId}`, the pattern every other create in this slice follows. The read is now in the contract: `GET /api/v1/transformations/{transformationId}/adoption-metric-links/{adoptionMetricLinkId}`, operationId `getAdoptionMetricLink`, `transformation.read`, 200 `AdoptionMetricLink` with `ETag` (active or removed; 404 for another transformation's link or none). Owner: the kpi-benefits-engineer repair task (pending list `p4-pending-arch-r1.ts`). The `Location` header is unchanged.
+
+### A3. Codes and keys added outside §10 (accepted, with their exact English texts)
+
+`invalid_transition` and `validation.required` are existing codes; only their detail and use are recorded. `validation.not_applicable` is shared with ADR-0031 and ADR-0034.
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `validation.not_applicable` | 400 field | accepted | This field does not apply here. |
+| `validation.conflict` | 400 field | accepted | Name an existing KPI or ask to create one, not both. |
+| `adoption.task.intervention_due` | message key | accepted | Adoption intervention {code} is due. |
+| `adoption.task.assessment_invitation` | message key | accepted | Please complete the form {formName}. |
+| `adoption.task.assessment_to_review` | message key | accepted | Review the submitted form {formName}. |
+| `adoption.no_reporting_period` | reason key | accepted | Unknown: the organization has no reporting period. |
+| `invalid_transition (existing code)` | 422 detail | accepted detail texts | This champion is already removed. / A withdrawal record cannot itself be withdrawn. / This metric link is already removed. |
+| `validation.required (existing code)` | 400 field | accepted use | at /reportingPeriodId when the organization has no open or closed period (getAdoptionIndicators) |

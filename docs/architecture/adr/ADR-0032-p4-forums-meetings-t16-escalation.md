@@ -367,3 +367,40 @@ The A09 clause "an integration test creates and reads each one through the API w
 - Probe (`probe.ts`, `probe-output.txt`; 101 PASS, 0 FAIL): migrations on a fresh database and over a P3-populated one (G00–G07); seeds and grants (S01–S05); forums and participants (F01–F08, FP01–FP02); series (MS01–MS07); meetings (M01–M10); agenda, executive asks and quorum (A01–A10, AT01–AT02); outputs and minutes (O01–O06, MN01–MN07); action links (L01–L02); T16 asks (D01–D11); escalations (E01–E10); blocker statuses (B01–B05); rules (R01–R04); the T16 view (V01); privileges (P01–P03).
 - `catalogue.test.ts` pins the slice D triggers, the versioned tables and the grants; `seed.test.ts` pins `0046` against `P4_GOVERNANCE_PERMISSIONS`/`P4_GOVERNANCE_ROLE_PERMISSIONS`; `advisory-locks.test.ts` pins 730238–730240.
 - Not verified by this task (assigned in p4-work-split §D): every API refusal and its English text, the generation and regeneration service, the quorum and publication API checks, the two escalation jobs end to end, the `NextForumDateProvider`, the REQ-S16-019 entity-group API test, and the screens (FE-D).
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the job schedules in `0060`, and the codes added outside §11
+
+### A1. Job schedules (D-102, D-105)
+
+`0060` inserts the three `job_schedule` rows §10 names, each audited (`job_schedule.create`, actor system, source migration), enabled, timezone `Asia/Riyadh`, owner module `governance`, `queue_name` = `code` (the queue names of `apps/worker/src/queues/meetings.ts` and `escalations.ts`):
+
+| Code | Cron (minute hour …) | Cadence (§10) |
+|---|---|---|
+| `governance.meeting_series_generate` | `35 0 * * *` | daily |
+| `governance.decision_sla_scan` | `40 0 * * *` | daily; the handler acts on working days only (§7) |
+| `governance.blocker_escalation_scan` | `45 0 * * *` | daily |
+
+The minutes follow the existing rows (00:05, 00:20, 00:25, 00:30). `job.configure` (ADM_TECH) can change the cron, timezone or enabled flag as for every row (ADR-0025 §3). The worker registers a row only when its handler exists; BE-F and BE-G registered these handlers.
+
+### A2. Codes and keys added outside §11 (accepted, with their exact English texts)
+
+`validation.user_unknown` and `validation.group_unknown` are built in `governance/forums.ts` as `validation.${what}_unknown`.
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `meeting.quorum_locked` | 422 | accepted | The quorum is set before the session starts; this meeting is {status}. |
+| `validation.user_unknown` | 400 field | accepted | Choose an active user of this transformation's organization. |
+| `validation.group_unknown` | 400 field | accepted | Choose an active group of this transformation's organization. |
+| `validation.forum_unknown` | 400 field | accepted | Choose a forum of this transformation. |
+| `validation.end_before_start` | 400 field | accepted | The end date cannot be before the start date. |
+| `validation.decision_right_unknown` | 400 field | accepted | Choose an active decision-rights row of this transformation. |
+| `validation.blocker_pair` | 400 field | accepted | A blocker link names both its record type and its record. |
+| `validation.empty_patch` | 400 field | accepted | Change at least one field. |
+| `validation.local_time` | 400 field | accepted | Enter a time as HH:MM (24-hour clock). |
+| `validation.option_label` | 400 field | accepted | An option label is one capital letter, A to Z. |
+| `governance.task.executive_decision_due` | message key | accepted | Decide the executive ask {code}: {title}. |
+| `governance.task.executive_decision_escalated` | message key | accepted | Escalated to you: executive ask {code} ({title}) passed its SLA date {slaDueDate} (level {level}). |
+| `governance.notice.executive_decision_escalated` | notice key | accepted | The executive ask {code} ({title}) passed its SLA date {slaDueDate} and was escalated (level {level}). |
+| `governance.notice.blocker_ask_calendar_not_configured` | notice key | accepted | A blocker has been red for {redCycles} cycles, but no executive ask was raised: the organization has no business calendar to set its SLA date. |
+| `governance.notice.blocker_ask_owner_unassigned` | notice key | accepted | The executive ask {code} ({title}) has no owner: {partyCode} has no mapped person ({routingError}). |
+| `governance.notice.series_calendar_not_configured` | notice key | accepted | No meetings were generated for this series: the organization has no business calendar for working days. |
