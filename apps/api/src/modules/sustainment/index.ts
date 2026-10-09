@@ -11,6 +11,11 @@ import { registerStatusModelRoutes } from "./status-model.ts";
 import { registerTransitionDecisionRoutes } from "./transition-decisions.ts";
 import { registerClosureRoutes } from "./closure.ts";
 
+// T-DG4-BE-J (D-107, orchestrator wiring): the transition-decision approval port, set by the composition root because
+// sustainment may not import workflows, and the status-model reads consumed by slice J and BE-K.
+export { wireTransitionDecisionApprovals } from "./transition-decisions.ts";
+export { valueStatusOf, initiativeStatusModel, transformationStatusModel, bauStateOf } from "./status-model.ts";
+
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG4-BE-A
  * created them as stubs; p4-plan §5.1). The module reports "scaffold" until a route exists, then "active".

@@ -37,7 +37,7 @@ import { registerAdoptionModule } from "./modules/adoption/index.ts";
 import { registerBenefitsModule } from "./modules/benefits/index.ts";
 import { registerGovernanceModule } from "./modules/governance/index.ts";
 import { registerRaidModule } from "./modules/raid/index.ts";
-import { registerSustainmentModule } from "./modules/sustainment/index.ts";
+import { registerSustainmentModule, wireTransitionDecisionApprovals } from "./modules/sustainment/index.ts";
 import { registerTasksModule } from "./modules/tasks/index.ts";
 import {
   loadInheritedApprovalFacts,
@@ -319,6 +319,9 @@ export async function buildServer(options: ServerOptions): Promise<{
   // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
   // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no
   // routes until its stage.
+  // T-DG4-BE-J (D-107): sustainment requests transition-decision approvals through workflows' approval service, passed
+  // in as a port (sustainment cannot import workflows).
+  wireTransitionDecisionApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
