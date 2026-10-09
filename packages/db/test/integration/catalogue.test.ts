@@ -437,6 +437,36 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0055-0056: the P4 slices J and K guards are attached (deferred audit, allocation-set guard, inherited-record guard)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname IN ('portfolio', 'portfolio_transformation', 'workstream', 'workstream_initiative',
+         'trace_link', 'inherited_record', 't10_area_definition', 'dashboard_rag_policy')
+         OR t.tgname = 'initiative_outcome_contribution_allocation_guard')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["dashboard_rag_policy", "dashboard_rag_policy_audit_required", true, true],
+      ["dashboard_rag_policy", "dashboard_rag_policy_row_guard", false, false],
+      ["inherited_record", "inherited_record_audit_required", true, true],
+      ["inherited_record", "inherited_record_guard", false, false],
+      ["inherited_record", "inherited_record_row_guard", false, false],
+      ["initiative_outcome_contribution", "initiative_outcome_contribution_allocation_guard", false, false],
+      ["portfolio", "portfolio_audit_required", true, true],
+      ["portfolio", "portfolio_row_guard", false, false],
+      ["portfolio_transformation", "portfolio_transformation_audit_required", true, true],
+      ["portfolio_transformation", "portfolio_transformation_row_guard", false, false],
+      ["trace_link", "trace_link_allocation_guard", false, false],
+      ["trace_link", "trace_link_audit_required", true, true],
+      ["trace_link", "trace_link_row_guard", false, false],
+      ["workstream", "workstream_audit_required", true, true],
+      ["workstream", "workstream_row_guard", false, false],
+      ["workstream_initiative", "workstream_initiative_audit_required", true, true],
+      ["workstream_initiative", "workstream_initiative_row_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -611,6 +641,14 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "phase_step",
       "phase_step_evidence",
       "risk_disposition",
+      // P4 slices J and K (0055-0056, T-DG4-ARCH-08; ADR-0037, ADR-0038).
+      "dashboard_rag_policy",
+      "inherited_record",
+      "portfolio",
+      "portfolio_transformation",
+      "trace_link",
+      "workstream",
+      "workstream_initiative",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -856,6 +894,16 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       change_request: SIU,
       impact_assessment: "INSERT,SELECT",
       impact_assessment_item: "INSERT,SELECT",
+      portfolio: SIU,
+      portfolio_transformation: SIU,
+      workstream: SIU,
+      workstream_initiative: SIU,
+      trace_link: SIU,
+      inherited_record: SIU,
+      traceability_edge: "SELECT",
+      t10_area_definition: "SELECT",
+      dashboard_rag_policy: SIU,
+      my_work_draft: "SELECT",
     });
   });
 

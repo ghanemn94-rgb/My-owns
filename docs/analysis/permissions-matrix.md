@@ -671,3 +671,42 @@ Legend as in 8.3. **owner** = only as the step's owner; **≠owner** = never on 
 - **Technical admins:** ADM-only users hold no `transformation.read`, so the transformation-scoped operations answer 404, except the approval endpoints (`decideGateException`, `revokeGateException`, the G5 decision, `POST /approvals/{id}/decision`), which answer **403** through the S10-003 helper (`access/technical-admin.ts`, D-094).
 - **Record-level rules:** holding the permission is necessary but not sufficient where the table says owner, ≠owner, ≠submitter, approver, requester or assignee (exact codes in ADR-0035 §11 and ADR-0036 §10).
 - **Worker:** the `gate.submitted` and `gate.decided` consumers and the exception expiry scan act as the service actor; they hold no permission and never approve, accept, complete or scale anything.
+
+## 17. P4 implementation, slices J and K (DG4): dashboards, My Work, workspace header, traceability, allocation, Modular entry, portfolios and workstreams permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-08 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the dashboards, My Work, the Executive Overview, the workspace header (ADR-0037 §10), trace links and allocation shares, the traceability view, orphan report and impact, Modular-entry inherited records and missing links, portfolios and workstreams (ADR-0038 §10). Seeded by `0057_p4_dashboards_traceability_permissions.sql`, equal to `P4_DASHBOARD_TRACE_PERMISSIONS` / `P4_DASHBOARD_TRACE_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions; Mobily's business owners must confirm them before production. None of the five codes is a business approval or a Finance validation; no technical-admin role and no AUD holds any. An inherited approval is never a platform approval; G1–G6 are business approvals inside the product and never imply DG0–DG7.
+
+### 17.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `traceability.link` | write | Create, edit and remove trace links; set contribution shares | TL, BO, WL, TO |
+| `inherited_record.record` | write | Record and withdraw inherited evidence and baselines of a Modular entry | TL, TO |
+| `workstream.manage` | write | Create, edit and archive workstreams; assign initiatives | TL, TO |
+| `portfolio.manage` | configure | Create, edit and archive portfolios; place transformations | TO |
+| `dashboard.configure` | configure | Set the organization's T10 RAG thresholds | TO, KDS |
+
+Every dashboard, drill-down, Executive Overview, workspace header, traceability, orphan, missing-link, impact, allocation-set, inherited-record and workstream read is `transformation.read` within the caller's scope; portfolio reads are `organization.read` with memberships filtered to readable transformations; My Work is the caller's own items.
+
+### 17.2 Per-entity rights in P4 (slices J and K)
+
+Legend as in 8.3. **own** = only the caller's own items.
+
+| Entity (table or read model) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Dashboards, drill-down, Executive Overview, workspace header (read models) | V | V | V | V | V | V | V | V | V | V | V | — (404) |
+| My Work (read model) | own | own | own | own | own | own | own | own | own | own | own | own |
+| T10 areas (`t10_area_definition`; seed) | V | V | V | V | V | V | V | V | V | V | V | — |
+| RAG thresholds (`dashboard_rag_policy`) | V | V | V | V | V | E | E | V | V | V | V | V |
+| Trace links (`trace_link`) and contribution shares (`initiative_outcome_contribution` share columns) | V | C E | C E | C E | V | C E | V | V | V | V | V | — |
+| Traceability view, orphan report, impact, allocation sets (read models) | V | V | V | V | V | V | V | V | V | V | V | — |
+| Inherited records (`inherited_record`; Modular only) | V | C E | V | V | V | C E | V | V | V | V | V | — |
+| Missing-link report (read model) | V | V | V | V | V | V | V | V | V | V | V | — |
+| Portfolios (`portfolio`, `portfolio_transformation`) | V | V | V | V | V | C E | V | V | V | V | V | V (organization.read) |
+| Workstreams (`workstream`, `workstream_initiative`) | V | C E | V | V | V | C E | V | V | V | V | V | — |
+
+- **AUD (read-only auditor):** every mutating slice J/K operation (`putDashboardRagPolicy`, the trace-link writes, `setOutcomeContributionAllocation`, the inherited-record writes, the portfolio and workstream writes) returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. KBE-G, BE-M, BE-M2 and BE-M3 test this on each of their operations.
+- **Technical admins:** ADM-only users hold no `transformation.read`, so the transformation-scoped reads answer 404 and My Work is empty; they hold no slice J/K write code (403).
+- **Scope:** no response contains a record or figure of a transformation outside the caller's readable set (ADR-0037 §6; REQ-S13-001); reached records in an impact or traceability walk that the caller cannot read are counted, never listed (ADR-0038 §6).

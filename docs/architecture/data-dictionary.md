@@ -8579,3 +8579,363 @@ END)`
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slice H schemas, `GateDecisionCreate.scaleScope`), `proposedChange` per kind, free-text rules, strict UTF-8, request media types, `If-Match` |
 | Service | Permissions and record-level rules (ADR-0035 §8, ADR-0036 §7: step owner; reviewer ≠ owner/requester; gate's configured approver; requester), commit-time re-authorization, the completion rules, the G5/G6 evaluators, the exact refusal codes and English texts (ADR-0035 §11, ADR-0036 §10), materiality, T11 routing, impact derivation, apply-on-approval |
 | Worker | `gate.submitted` (one task per required approver, referencing the snapshot), `gate.decided` (next-phase steps and scope tasks once), `gate.exception_expiry_scan` (notify once) |
+
+# P4 tables, slices J and K (migrations 0055–0057, DG4)
+
+Slices J and K of `docs/architecture/p4-plan.md` (T-DG4-ARCH-08; ADR-0037 dashboards, My Work, Executive Overview, workspace header; ADR-0038 traceability, allocation, impact, Modular entry, portfolios and workstreams). The per-table sections below are generated from the catalogue of a freshly migrated database by `docs/delivery/handbacks/DG4/T-DG4-ARCH-08-evidence/gen-dictionary.ts`, so they match `0055` and `0056` exactly. Every mutable table carries the P2 guards (`p2_attach_guards`: version starts at 1 and steps by 1, identity immutable, organization = the transformation's, deferred audit coverage). No table here stores a dashboard figure or a RAG status: the dashboards are read models (ADR-0037 §1). G1–G6 are business approvals inside the product; nothing here touches DG0–DG7.
+
+## Changes to existing tables (slices J and K)
+
+- `initiative_outcome_contribution` (DG3 `0020`; additive): new columns `allocation_share numeric(7,6) NULL` (CHECK `initiative_outcome_contribution_allocation_share_check`: NULL or 0 < share ≤ 1) and `allocation_basis text NULL` (1–1000); CHECK `initiative_outcome_contribution_allocation_needs_kpi` (a share needs `outcome_kpi_id`) and `initiative_outcome_contribution_basis_needs_share`; BEFORE INSERT OR UPDATE trigger `initiative_outcome_contribution_allocation_guard` → `trace_allocation_guard()`. Existing rows keep NULL; the DG3 routes never write the columns (written by `setOutcomeContributionAllocation`, ADR-0038 §3).
+- `record_code_counter`: CHECK `record_code_counter_prefix_check` gains `WS` (workstream codes `WS-nn`).
+
+## portfolio
+
+- **Purpose:** An organization-level grouping of transformations (REQ-S03-001; ADR-0038 §9). Code unique per organization.
+- **Migration:** `0055_p4_traceability_modular_structure.sql`. **API module:** `portfolio`. **Who writes:** `portfolio.manage` (TO). **Lifecycle:** active → archived (final); versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[A-Z0-9][A-Z0-9_-]{0,31}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `portfolio_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `portfolio_org_code_key` (UNIQUE): `UNIQUE (organization_id, code)`
+- `portfolio_org_id_key` (UNIQUE): `UNIQUE (organization_id, id)`
+
+**Triggers:**
+
+- `portfolio_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `portfolio_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## portfolio_transformation
+
+- **Purpose:** A transformation's place in a portfolio; at most one active portfolio per transformation; the portfolio is of the transformation's organization (REQ-S03-001; ADR-0038 §9).
+- **Migration:** `0055_p4_traceability_modular_structure.sql`. **API module:** `portfolio`. **Who writes:** `portfolio.manage` (TO). **Lifecycle:** active → removed (final, with reason); never deleted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| portfolio_id | uuid | NOT NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `portfolio_transformation_portfolio_fkey` (FK): `FOREIGN KEY (organization_id, portfolio_id) REFERENCES portfolio(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `portfolio_transformation_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+
+**Indexes:**
+
+- `portfolio_transformation_one_active_key`: `UNIQUE (transformation_id) WHERE (status = 'active')`
+- `portfolio_transformation_portfolio_idx`: `(portfolio_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `portfolio_transformation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `portfolio_transformation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## workstream
+
+- **Purpose:** A workstream grouping initiatives of one transformation, code WS-nn; the scope of the workstream dashboard (REQ-S03-001, REQ-S13-001; ADR-0038 §9).
+- **Migration:** `0055_p4_traceability_modular_structure.sql`. **API module:** `portfolio`. **Who writes:** `workstream.manage` (TL, TO). **Lifecycle:** active → archived (final); versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^WS-[0-9]{2,6}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| lead_user_id | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `workstream_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `workstream_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `workstream_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `workstream_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `workstream_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## workstream_initiative
+
+- **Purpose:** An initiative's membership of a workstream; at most one active workstream per initiative, same transformation (REQ-S03-001; ADR-0038 §9).
+- **Migration:** `0055_p4_traceability_modular_structure.sql`. **API module:** `portfolio`. **Who writes:** `workstream.manage` (TL, TO). **Lifecycle:** active → removed (final, with reason); never deleted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| workstream_id | uuid | NOT NULL |  |  |
+| initiative_id | uuid | NOT NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `workstream_initiative_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `workstream_initiative_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+- `workstream_initiative_workstream_fkey` (FK): `FOREIGN KEY (transformation_id, workstream_id) REFERENCES workstream(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `workstream_initiative_one_active_key`: `UNIQUE (initiative_id) WHERE (status = 'active')`
+- `workstream_initiative_workstream_idx`: `(workstream_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `workstream_initiative_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `workstream_initiative_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## trace_link
+
+- **Purpose:** A chain link that no typed table records (issue → gap, deliverable → capability change, capability change → KPI movement, KPI movement → benefit) with its contribution statement and, into a KPI or benefit, an optional share; the shares into one target total at most 1 (REQ-S03-006, REQ-PB-044; ADR-0038 §2, §3).
+- **Migration:** `0055_p4_traceability_modular_structure.sql`. **API module:** `reporting`. **Who writes:** `traceability.link` (TL, BO, WL, TO). **Lifecycle:** active → removed (final, with reason); never deleted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| link_kind | text | NOT NULL |  | `CHECK ((link_kind = ANY (ARRAY['issue_gap', 'deliverable_capability', 'capability_kpi', 'kpi_benefit'])))` |
+| diagnostic_finding_id | uuid | NULL |  |  |
+| tom_gap_id | uuid | NULL |  |  |
+| deliverable_id | uuid | NULL |  |  |
+| capability_id | uuid | NULL |  |  |
+| outcome_kpi_id | uuid | NULL |  |  |
+| benefit_id | uuid | NULL |  |  |
+| contribution_statement | text | NOT NULL |  | `CHECK (((char_length(contribution_statement) >= 1) AND (char_length(contribution_statement) <= 2000)))` |
+| allocation_share | numeric(7,6) | NULL |  | `CHECK (((allocation_share IS NULL) OR ((allocation_share > (0)::numeric) AND (allocation_share <= (1)::numeric))))` |
+| allocation_basis | text | NULL |  | `CHECK (((allocation_basis IS NULL) OR ((char_length(allocation_basis) >= 1) AND (char_length(allocation_basis) <= 1000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `trace_link_allocation_kind` (CHECK): `CHECK (((allocation_share IS NULL) OR (link_kind = ANY (ARRAY['capability_kpi', 'kpi_benefit']))))`
+- `trace_link_basis_needs_share` (CHECK): `CHECK (((allocation_basis IS NULL) OR (allocation_share IS NOT NULL)))`
+- `trace_link_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `trace_link_capability_fkey` (FK): `FOREIGN KEY (transformation_id, capability_id) REFERENCES capability(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `trace_link_deliverable_fkey` (FK): `FOREIGN KEY (transformation_id, deliverable_id) REFERENCES deliverable(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `trace_link_finding_fkey` (FK): `FOREIGN KEY (transformation_id, diagnostic_finding_id) REFERENCES diagnostic_finding(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `trace_link_kind_shape` (CHECK): `CHECK ((((link_kind = 'issue_gap') = (diagnostic_finding_id IS NOT NULL)) AND ((link_kind = 'deliverable_capability') = (deliverable_id IS NOT NULL)) AND ((link_kind = 'kpi_benefit') = (benefit_id IS NOT NULL)) AND ((tom_gap_id IS NOT NULL) = (link_kind = 'issue_gap')) AND ((capability_id IS NOT NULL) = (link_kind = ANY (ARRAY['deliverable_capability', 'capability_kpi']))) AND ((outcome_kpi_id IS NOT NULL) = (link_kind = ANY (ARRAY['capability_kpi', 'kpi_benefit'])))))`
+- `trace_link_outcome_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, outcome_kpi_id) REFERENCES outcome_kpi(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `trace_link_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+- `trace_link_tom_gap_fkey` (FK): `FOREIGN KEY (transformation_id, tom_gap_id) REFERENCES tom_gap(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `trace_link_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `trace_link_benefit_idx`: `(benefit_id) WHERE (status = 'active')`
+- `trace_link_one_active_key`: `UNIQUE (transformation_id, link_kind, diagnostic_finding_id, tom_gap_id, deliverable_id, capability_id, outcome_kpi_id, benefit_id) NULLS NOT DISTINCT WHERE (status = 'active')`
+- `trace_link_outcome_kpi_idx`: `(outcome_kpi_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `trace_link_allocation_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `trace_allocation_guard()`
+- `trace_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `trace_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## inherited_record
+
+- **Purpose:** Inherited evidence or an inherited baseline of a Modular entry, labelled inherited with its provenance; references the canonical row, never copies it; prior approvals stay gate_dispensation rows (REQ-S03-005, REQ-PB-005; ADR-0038 §7).
+- **Migration:** `0055_p4_traceability_modular_structure.sql`. **API module:** `reporting`. **Who writes:** `inherited_record.record` (TL, TO); Modular transformations only. **Lifecycle:** active → withdrawn (final, with reason); provenance immutable.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['evidence', 'baseline'])))` |
+| evidence_id | uuid | NULL |  |  |
+| baseline_id | uuid | NULL |  |  |
+| source_description | text | NOT NULL |  | `CHECK (((char_length(source_description) >= 3) AND (char_length(source_description) <= 2000)))` |
+| original_owner | text | NULL |  | `CHECK (((original_owner IS NULL) OR ((char_length(original_owner) >= 1) AND (char_length(original_owner) <= 300))))` |
+| original_date | date | NULL |  |  |
+| recorded_by | uuid | NOT NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'withdrawn'])))` |
+| withdrawn_at | timestamp with time zone | NULL |  |  |
+| withdrawn_by | uuid | NULL |  | FK → app_user(id) |
+| withdraw_reason | text | NULL |  | `CHECK (((withdraw_reason IS NULL) OR ((char_length(withdraw_reason) >= 3) AND (char_length(withdraw_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `inherited_record_baseline_fkey` (FK): `FOREIGN KEY (transformation_id, baseline_id) REFERENCES baseline(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `inherited_record_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `inherited_record_kind_shape` (CHECK): `CHECK ((((kind = 'evidence') = (evidence_id IS NOT NULL)) AND ((kind = 'baseline') = (baseline_id IS NOT NULL))))`
+- `inherited_record_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `inherited_record_withdrawal_complete` (CHECK): `CHECK ((((status = 'withdrawn') = (withdrawn_at IS NOT NULL)) AND ((withdrawn_at IS NULL) = (withdrawn_by IS NULL)) AND ((withdrawn_at IS NULL) = (withdraw_reason IS NULL))))`
+
+**Indexes:**
+
+- `inherited_record_one_active_key`: `UNIQUE (transformation_id, kind, evidence_id, baseline_id) NULLS NOT DISTINCT WHERE (status = 'active')`
+
+**Triggers:**
+
+- `inherited_record_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `inherited_record_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `inherited_record_guard()`
+- `inherited_record_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## t10_area_definition
+
+- **Purpose:** The six Template 10 areas: area, what to show and RAG logic verbatim from B0095, required presentation and status basis verbatim from M0247-M0252, provisional Arabic (REQ-PB-062; ADR-0037 §2).
+- **Migration:** `0056_p4_dashboards_t10.sql`. **API module:** `reporting`. **Who writes:** none (seed, read-only). **Lifecycle:** seed.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| code | text | NOT NULL |  | `CHECK ((code = ANY (ARRAY['outcomes', 'value', 'portfolio', 'dependencies', 'decisions', 'people_adoption'])))` |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 6)))` |
+| source_area_en | text | NOT NULL |  | `CHECK (((char_length(source_area_en) >= 1) AND (char_length(source_area_en) <= 50)))` |
+| area_ar | text | NOT NULL |  | `CHECK (((char_length(area_ar) >= 1) AND (char_length(area_ar) <= 100)))` |
+| source_what_to_show_en | text | NOT NULL |  | `CHECK (((char_length(source_what_to_show_en) >= 1) AND (char_length(source_what_to_show_en) <= 200)))` |
+| what_to_show_ar | text | NOT NULL |  | `CHECK (((char_length(what_to_show_ar) >= 1) AND (char_length(what_to_show_ar) <= 300)))` |
+| source_rag_logic_en | text | NOT NULL |  | `CHECK (((char_length(source_rag_logic_en) >= 1) AND (char_length(source_rag_logic_en) <= 200)))` |
+| rag_logic_ar | text | NOT NULL |  | `CHECK (((char_length(rag_logic_ar) >= 1) AND (char_length(rag_logic_ar) <= 300)))` |
+| source_presentation_en | text | NOT NULL |  | `CHECK (((char_length(source_presentation_en) >= 1) AND (char_length(source_presentation_en) <= 200)))` |
+| presentation_ar | text | NOT NULL |  | `CHECK (((char_length(presentation_ar) >= 1) AND (char_length(presentation_ar) <= 300)))` |
+| source_status_basis_en | text | NOT NULL |  | `CHECK (((char_length(source_status_basis_en) >= 1) AND (char_length(source_status_basis_en) <= 200)))` |
+| status_basis_ar | text | NOT NULL |  | `CHECK (((char_length(status_basis_ar) >= 1) AND (char_length(status_basis_ar) <= 300)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 100)))` |
+| ar_provisional | boolean | NOT NULL | `true` |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `t10_area_definition_code_key` (UNIQUE): `UNIQUE (code)`
+- `t10_area_definition_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+
+## dashboard_rag_policy
+
+- **Purpose:** The T10 RAG thresholds of one organization; NULL = the documented ADR-0037 §3 default; no value is seeded (REQ-PB-063; ADR-0037 §3).
+- **Migration:** `0056_p4_dashboards_t10.sql`. **API module:** `reporting`. **Who writes:** `dashboard.configure` (TO, KDS). **Lifecycle:** one row per organization; versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| value_gap_amber_ratio | numeric(9,6) | NULL |  | `CHECK (((value_gap_amber_ratio IS NULL) OR ((value_gap_amber_ratio >= (0)::numeric) AND (value_gap_amber_ratio <= (1)::numeric))))` |
+| value_gap_red_ratio | numeric(9,6) | NULL |  | `CHECK (((value_gap_red_ratio IS NULL) OR ((value_gap_red_ratio >= (0)::numeric) AND (value_gap_red_ratio <= (1)::numeric))))` |
+| milestone_slip_amber_working_days | integer | NULL |  | `CHECK (((milestone_slip_amber_working_days IS NULL) OR ((milestone_slip_amber_working_days >= 0) AND (milestone_slip_amber_working_days <= 250))))` |
+| milestone_slip_red_working_days | integer | NULL |  | `CHECK (((milestone_slip_red_working_days IS NULL) OR ((milestone_slip_red_working_days >= 0) AND (milestone_slip_red_working_days <= 250))))` |
+| dependency_due_soon_working_days | integer | NULL |  | `CHECK (((dependency_due_soon_working_days IS NULL) OR ((dependency_due_soon_working_days >= 0) AND (dependency_due_soon_working_days <= 250))))` |
+| decision_due_soon_working_days | integer | NULL |  | `CHECK (((decision_due_soon_working_days IS NULL) OR ((decision_due_soon_working_days >= 0) AND (decision_due_soon_working_days <= 250))))` |
+| top_initiative_count | smallint | NULL |  | `CHECK (((top_initiative_count IS NULL) OR ((top_initiative_count >= 1) AND (top_initiative_count <= 50))))` |
+| deadline_horizon_working_days | integer | NULL |  | `CHECK (((deadline_horizon_working_days IS NULL) OR ((deadline_horizon_working_days >= 1) AND (deadline_horizon_working_days <= 250))))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `dashboard_rag_policy_milestone_slip_order` (CHECK): `CHECK (((milestone_slip_amber_working_days IS NULL) OR (milestone_slip_red_working_days IS NULL) OR (milestone_slip_amber_working_days <= milestone_slip_red_working_days)))`
+- `dashboard_rag_policy_organization_key` (UNIQUE): `UNIQUE (organization_id)`
+- `dashboard_rag_policy_value_gap_order` (CHECK): `CHECK (((value_gap_amber_ratio IS NULL) OR (value_gap_red_ratio IS NULL) OR (value_gap_amber_ratio <= value_gap_red_ratio)))`
+
+**Triggers:**
+
+- `dashboard_rag_policy_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `dashboard_rag_policy_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## traceability_edge (view)
+
+- **Purpose:** one read model of every active chain edge, reading each canonical table in place (ADR-0038 §1; REQ-PB-044, REQ-S03-006, REQ-PB-010). **Migration:** `0055`. **`mth_app` privileges:** SELECT.
+- **Columns:** `organization_id`, `transformation_id`, `edge_kind` (`issue_gap`, `gap_initiative`, `initiative_deliverable`, `deliverable_capability`, `capability_kpi`, `initiative_kpi`, `outcome_kpi_of`, `kpi_benefit`, `kpi_benefit_measure`, `initiative_benefit`), `from_type`, `from_id`, `to_type`, `to_id`, `link_table`, `link_id`, `contribution_statement`, `allocation_share`.
+- **Branches:** `trace_link` (active; four kinds), `initiative_gap_link` (active), `deliverable` (active; initiative → deliverable), `initiative_outcome_contribution` (active; to the outcome KPI, or the outcome when none), `outcome_kpi` (active; outcome → KPI row), `benefit` joined to the active outcome KPIs of its `measurement_kpi_definition_id` (active benefits), `benefit_allocation` rows of the benefit's current set (active benefits).
+
+## my_work_draft (view)
+
+- **Purpose:** the Drafts section of My Work: records in status `draft` of 18 record types with their author (ADR-0037 §7; REQ-S03-008). **Migration:** `0056`. **`mth_app` privileges:** SELECT.
+- **Columns:** `organization_id`, `transformation_id`, `record_type`, `record_id`, `code`, `label`, `parent_type`, `parent_id`, `created_by`, `updated_at`.
+- **Record types:** `agenda_item`, `assessment_form`, `bau_handover`, `benefit_measurement`, `business_case`, `change_request`, `diagnostic_finding`, `initiative`, `journey`, `kpi_actual`, `kpi_definition`, `kpi_version`, `lesson`, `meeting_minutes`, `outcome`, `target_trajectory`, `tom_canvas_cell`, `transition_decision`.
+
+## P4 seeds (0056, 0057, slices J and K)
+
+- `t10_area_definition`: 6 rows (`outcomes`, `value`, `portfolio`, `dependencies`, `decisions`, `people_adoption`); `source_area_en`, `source_what_to_show_en`, `source_rag_logic_en` verbatim from B0095; `source_presentation_en`, `source_status_basis_en` verbatim from M0247–M0252; `ar_provisional = true`.
+- `permission` (5 rows: `traceability.link`, `inherited_record.record`, `workstream.manage` write; `portfolio.manage`, `dashboard.configure` configure) and `role_permission` (11 rows): exactly `P4_DASHBOARD_TRACE_PERMISSIONS` / `P4_DASHBOARD_TRACE_ROLE_PERMISSIONS` (`packages/db/src/seed.test.ts`). No business-approval or Finance-validation code; no technical-admin role and no AUD holds any.
+- No dashboard figure, RAG status, threshold value, trace link, inherited record, portfolio or workstream is seeded.
+
+## P4 functions (slices J and K)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `trace_allocation_guard()` | 0055 | the allocation set into one outcome KPI (capability → KPI links and contribution shares) or one benefit (KPI → benefit links) totals at most 1; serialized by advisory-lock class 730249 | via triggers on `trace_link` and `initiative_outcome_contribution` |
+| `inherited_record_guard()` | 0055 | Modular transformations only; new rows active; provenance immutable; only `active → withdrawn` | via trigger |
+
+## P4 validation rules summary (slices J and K)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, organization = transformation's, deferred audit coverage); closed sets (link kinds, statuses, T10 area codes); the two records a link kind names, in the link's transformation (composite FKs); one active link per (kind, from, to); shares 0 < share ≤ 1 only into a KPI or benefit, and an allocation set total ≤ 1; one active portfolio per transformation and one active workstream per initiative; portfolio of the transformation's organization; inherited records only on Modular transformations, provenance immutable, one active per evidence item or baseline; RAG thresholds in range with amber ≤ red; one policy per organization; the T10 seed read-only for the application role |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slices J and K schemas), filters, free-text rules, strict UTF-8, request media types, `If-Match` |
+| Service | Permissions and record-level rules (ADR-0037 §10, ADR-0038 §10), the readable-transformation scope of every read (404 outside it), the area RAG rules and defaults, the drill-down sum invariant, the My Work kind map and own-items rule, the missing-link and orphan rules, the impact walk, commit-time re-authorization, the exact refusal codes and English texts (ADR-0037 §13, ADR-0038 §12) |
+| Worker | none (slices J and K have no job) |

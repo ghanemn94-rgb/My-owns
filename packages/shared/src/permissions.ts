@@ -200,6 +200,20 @@ export const P4_GATES_CHANGE_PERMISSIONS = {
   "change_control.configure": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 slices J and K (T-DG4-ARCH-08; ADR-0037 §8, ADR-0038 §8): dashboards, traceability, inherited records of a
+ * Modular entry, portfolios and workstreams. Seeded by migration 0057. No business_approval or finance_validation
+ * code: every dashboard, My Work, header, traceability, orphan, missing-link and impact read is transformation.read
+ * (or the caller's own items), which AUD already holds read-only. AUD and the technical admins get nothing here.
+ */
+export const P4_DASHBOARD_TRACE_PERMISSIONS = {
+  "traceability.link": "write",
+  "inherited_record.record": "write",
+  "workstream.manage": "write",
+  "portfolio.manage": "configure",
+  "dashboard.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -211,6 +225,7 @@ export const PERMISSIONS = {
   ...P4_GOVERNANCE_PERMISSIONS,
   ...P4_ADOPTION_SUSTAINMENT_PERMISSIONS,
   ...P4_GATES_CHANGE_PERMISSIONS,
+  ...P4_DASHBOARD_TRACE_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -516,6 +531,15 @@ export const P4_GATES_CHANGE_ROLE_PERMISSIONS = {
   KDS: ["phase_step.progress", "change_request.raise"],
 } as const satisfies Record<string, readonly (keyof typeof P4_GATES_CHANGE_PERMISSIONS)[]>;
 
+/** Slices J and K role defaults (0057). No technical admin; nothing for AUD. */
+export const P4_DASHBOARD_TRACE_ROLE_PERMISSIONS = {
+  TL: ["traceability.link", "inherited_record.record", "workstream.manage"],
+  BO: ["traceability.link"],
+  WL: ["traceability.link"],
+  TO: ["traceability.link", "inherited_record.record", "workstream.manage", "portfolio.manage", "dashboard.configure"],
+  KDS: ["dashboard.configure"],
+} as const satisfies Record<string, readonly (keyof typeof P4_DASHBOARD_TRACE_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -550,6 +574,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.TL,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TL,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TL,
+      ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -567,6 +592,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.BO,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.BO,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.BO,
+      ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -582,6 +608,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.WL,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.WL,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.WL,
+      ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -617,6 +644,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.TO,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TO,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TO,
+      ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -631,6 +659,7 @@ export const ROLES = {
       ...P4_BENEFIT_ROLE_PERMISSIONS.KDS,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.KDS,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.KDS,
+      ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {

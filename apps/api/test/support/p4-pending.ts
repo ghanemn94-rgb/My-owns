@@ -10,6 +10,7 @@ import { P4_PENDING_ARCH_04 } from "./p4-pending-arch-04.ts";
 import { P4_PENDING_ARCH_05 } from "./p4-pending-arch-05.ts";
 import { P4_PENDING_ARCH_06 } from "./p4-pending-arch-06.ts";
 import { P4_PENDING_ARCH_07 } from "./p4-pending-arch-07.ts";
+import { P4_PENDING_ARCH_08 } from "./p4-pending-arch-08.ts";
 
 export const P4_PENDING_OPERATIONS: readonly string[] = [
   ...P4_PENDING_ARCH_01,
@@ -19,4 +20,5 @@ export const P4_PENDING_OPERATIONS: readonly string[] = [
   ...P4_PENDING_ARCH_05,
   ...P4_PENDING_ARCH_06,
   ...P4_PENDING_ARCH_07,
+  ...P4_PENDING_ARCH_08,
 ];

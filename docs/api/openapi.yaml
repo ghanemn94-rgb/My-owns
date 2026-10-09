@@ -99,6 +99,11 @@ info:
     criterion may be submitted incomplete only when an accepted, unexpired exception covers it, and the snapshot records
     it. Change requests are decided through the canonical approval; approving a change never edits an earlier approval
     or evidence snapshot. Product gate G6 never implies the engineering gate DG7.
+
+    **P4 additions, slices J and K (T-DG4-ARCH-08, ADR-0037, ADR-0038).** Additive within v1. Dashboards, My Work, the
+    Executive Overview and the workspace header are read models computed on every request; zero, Unknown, Stale and
+    not applicable are distinct states, never shown as 0 or green. Trace links state their contribution; shares into
+    one KPI or benefit total at most 100 %. Inherited items are labelled inherited and never become platform approvals.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -254,6 +259,16 @@ tags:
     description: Approved dispositions of material risks for G5 Risk closure (P4, ADR-0035).
   - name: change-requests
     description: Change control for approved records with impact assessment and reapproval; original approvals and snapshots are preserved (P4, ADR-0036).
+  - name: dashboards
+    description: Read models over the P4 engines (P4, ADR-0037). Template 10 areas with area-specific RAG, six dashboards, drill-down, My Work, Executive Overview and the workspace header; nothing is stored.
+  - name: traceability
+    description: The traceability chain, trace links with contribution and allocation rules, orphan report and downstream impact (P4, ADR-0038).
+  - name: modular-entry
+    description: Modular entry missing-link report and labelled inherited records; inherited approvals are never platform approvals (P4, ADR-0038).
+  - name: portfolios
+    description: Organization-level portfolios of transformations (P4, ADR-0038).
+  - name: workstreams
+    description: Workstreams grouping the initiatives of a transformation (P4, ADR-0038).
 security:
   - sessionCookie: []
 paths:
@@ -16019,6 +16034,945 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/overview:
+    get:
+      tags: [dashboards]
+      operationId: getExecutiveOverview
+      summary: "Executive Overview = the executive dashboard (REQ-S03-009, REQ-S13-001): the six T10 areas over the transformations of the organization the caller may read, narrowed by the filters, and one row per transformation (transformation.read per transformation). 404 when the caller holds no grant in the organization; 422 dashboard.period_not_found, dashboard.owner_not_found."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/TransformationIdsQuery"
+        - $ref: "#/components/parameters/OwnerUserIdQuery"
+        - $ref: "#/components/parameters/PeriodIdQuery"
+        - $ref: "#/components/parameters/DashboardPhaseQuery"
+        - $ref: "#/components/parameters/DashboardStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutiveOverview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/dashboard:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [dashboards]
+      operationId: getTransformationDashboard
+      summary: "Template 10 Executive Transformation Dashboard of one transformation: six areas with the area-specific RAG, headlines and items (REQ-PB-062, REQ-PB-063, REQ-PB-064) (transformation.read). 422 dashboard.period_not_found, dashboard.owner_not_found."
+      parameters:
+        - $ref: "#/components/parameters/OwnerUserIdQuery"
+        - $ref: "#/components/parameters/PeriodIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransformationDashboard" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/workstreams/{workstreamId}/dashboard:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/WorkstreamId"
+    get:
+      tags: [dashboards]
+      operationId: getWorkstreamDashboard
+      summary: "Workstream dashboard: the T10 areas over the workstream's active initiatives; Decisions and People & adoption are not_applicable (REQ-S13-001) (transformation.read). 422 dashboard.workstream_archived, dashboard.period_not_found, dashboard.owner_not_found."
+      parameters:
+        - $ref: "#/components/parameters/OwnerUserIdQuery"
+        - $ref: "#/components/parameters/PeriodIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkstreamDashboard" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/dashboards/finance:
+    get:
+      tags: [dashboards]
+      operationId: getFinanceDashboard
+      summary: "Finance dashboard: value lines per class, state and currency, gross/cost/net, Finance queue count, non-financial count (n/a), per transformation (REQ-S13-001) (transformation.read per transformation). 422 dashboard.period_not_found, dashboard.owner_not_found."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/TransformationIdsQuery"
+        - $ref: "#/components/parameters/OwnerUserIdQuery"
+        - $ref: "#/components/parameters/PeriodIdQuery"
+        - $ref: "#/components/parameters/DashboardPhaseQuery"
+        - $ref: "#/components/parameters/DashboardStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinanceDashboard" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/dashboards/adoption:
+    get:
+      tags: [dashboards]
+      operationId: getAdoptionDashboard
+      summary: "Adoption dashboard: the People & adoption area, each linked indicator with its KPI status, open interventions, per transformation (REQ-S13-001) (transformation.read per transformation). 422 dashboard.period_not_found, dashboard.owner_not_found."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/TransformationIdsQuery"
+        - $ref: "#/components/parameters/OwnerUserIdQuery"
+        - $ref: "#/components/parameters/PeriodIdQuery"
+        - $ref: "#/components/parameters/DashboardPhaseQuery"
+        - $ref: "#/components/parameters/DashboardStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdoptionDashboard" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/dashboard-drilldown:
+    get:
+      tags: [dashboards]
+      operationId: getDashboardDrilldown
+      summary: "Drill-down of one headline number: contributing records (paginated), period, calculation and evidence; zero, unknown and not_applicable are distinct states (REQ-S13-003) (transformation.read in scope). 422 dashboard.metric_subject_mismatch, dashboard.period_not_found, dashboard.owner_not_found."
+      parameters:
+        - $ref: "#/components/parameters/DrilldownMetricQuery"
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/TransformationIdsQuery"
+        - $ref: "#/components/parameters/OwnerUserIdQuery"
+        - $ref: "#/components/parameters/PeriodIdQuery"
+        - $ref: "#/components/parameters/DashboardPhaseQuery"
+        - $ref: "#/components/parameters/DashboardStatusQuery"
+        - $ref: "#/components/parameters/SubjectIdQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardDrilldown" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/work:
+    get:
+      tags: [dashboards]
+      operationId: getMyWork
+      summary: "My Work = the personal work dashboard (REQ-S03-008): the caller's own assigned actions, drafts, reviews, approvals, missing updates and other items, with upcoming deadlines; section pages one section (any signed-in user; own items only)."
+      parameters:
+        - $ref: "#/components/parameters/MyWorkSectionQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyWork" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/summary:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [dashboards]
+      operationId: getWorkspaceHeader
+      summary: "Transformation workspace header: phase, gate readiness, North Star, owners, outcome health, benefits, key decisions and next required actions, each Unknown where the data is missing (REQ-S03-011) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkspaceHeader" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/organizations/{organizationId}/dashboard-rag-policy:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [dashboards]
+      operationId: getDashboardRagPolicy
+      summary: "The organization's T10 RAG thresholds; null = the ADR-0037 default, with the effective values and policySource (organization.read). Version 0 when no row exists."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardRagPolicy" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [dashboards]
+      operationId: putDashboardRagPolicy
+      summary: "Set the T10 RAG thresholds (decimal ratios 0-1, working days 0-250); If-Match \"0\" creates the row (dashboard.configure; TO, KDS). 422 dashboard_rag_policy.threshold_order."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DashboardRagPolicyUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardRagPolicy" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/traceability:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [traceability]
+      operationId: getTraceability
+      summary: "Traceability view (REQ-PB-044, REQ-S03-006): nodes and edges of the chain diagnosed issue -> gap -> initiative -> deliverable -> capability change -> KPI movement -> benefit, read in place; every node has the href of its record (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/TraceRootTypeQuery"
+        - $ref: "#/components/parameters/TraceRootIdQuery"
+        - $ref: "#/components/parameters/TraceDirectionQuery"
+        - $ref: "#/components/parameters/TraceDepthQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceabilityGraph" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/orphans:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [traceability]
+      operationId: getOrphanReport
+      summary: "Orphan report: active records missing an upstream or downstream chain link, with the expected step (REQ-PB-044) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/OrphanRecordTypeQuery"
+        - $ref: "#/components/parameters/OrphanMissingQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrphanReportPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/records/{recordType}/{recordId}/impact:
+    parameters:
+      - $ref: "#/components/parameters/RecordTypePath"
+      - $ref: "#/components/parameters/RecordIdPath"
+    get:
+      tags: [traceability]
+      operationId: getRecordImpact
+      summary: "Downstream impact of a record (REQ-S03-006): the records reached through the chain (benefits flagged valueAffected) and the dashboards and T10 areas that read them; unreadable records are only counted (transformation.read of the record)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecordImpact" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/trace-links:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [traceability]
+      operationId: listTraceLinks
+      summary: "Trace links of the transformation (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/TraceLinkKindQuery"
+        - $ref: "#/components/parameters/TraceRecordIdQuery"
+        - $ref: "#/components/parameters/IncludeRemovedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceLinkPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [traceability]
+      operationId: createTraceLink
+      summary: "Link two records of the chain with a contribution statement and, into a KPI or benefit, an optional share (traceability.link; TL, BO, WL, TO). 409 trace_link.duplicate; 422 trace_link.pair_not_allowed, record_not_found, record_inactive, share_not_allowed, allocation_exceeds_total."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TraceLinkCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/trace-links/{traceLinkId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/TraceLinkId"
+    get:
+      tags: [traceability]
+      operationId: getTraceLink
+      summary: "One trace link (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [traceability]
+      operationId: updateTraceLink
+      summary: "Edit the contribution statement, share or basis (traceability.link). 422 trace_link.not_active, share_not_allowed, allocation_exceeds_total."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TraceLinkUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/trace-links/{traceLinkId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/TraceLinkId"
+    post:
+      tags: [traceability]
+      operationId: removeTraceLink
+      summary: "Remove a trace link with a reason; it leaves its allocation set (traceability.link). 422 trace_link.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceLink" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/allocation-sets/{allocationTargetType}/{allocationTargetId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AllocationTargetType"
+      - $ref: "#/components/parameters/AllocationTargetId"
+    get:
+      tags: [traceability]
+      operationId: getAllocationSet
+      summary: "The allocation set into one outcome KPI or benefit: members, decimal total and unallocated share (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AllocationSet" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/outcome-contributions/{linkId}/allocation:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+      - $ref: "#/components/parameters/LinkId"
+    post:
+      tags: [traceability]
+      operationId: setOutcomeContributionAllocation
+      summary: "Set or clear the share of a KPI movement credited to a T05 contribution (traceability.link). 422 contribution.allocation_needs_kpi, contribution.not_active, trace_link.allocation_exceeds_total."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContributionAllocationUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContributionAllocation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/missing-links:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [modular-entry]
+      operationId: getMissingLinks
+      summary: "Missing-link report (REQ-PB-005, REQ-S03-005): blocking and warning items, and G1-G6 labelled approved, inherited or inherited_pending_verification (never approved without a platform decision) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MissingLinks" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/inherited-records:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [modular-entry]
+      operationId: listInheritedRecords
+      summary: "Inherited evidence and baselines, and the inherited-approval dispensations as read-only prior_approval entries, each labelled inherited (REQ-S03-005) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/IncludeRemovedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InheritedRecordPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [modular-entry]
+      operationId: createInheritedRecord
+      summary: "Record an inherited evidence item or baseline with its provenance (inherited_record.record; TL, TO). 409 inherited_record.duplicate; 422 inherited_record.not_modular, prior_approval_use_dispensation."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InheritedRecordCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InheritedRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/inherited-records/{inheritedRecordId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/InheritedRecordId"
+    post:
+      tags: [modular-entry]
+      operationId: withdrawInheritedRecord
+      summary: "Withdraw an inherited record with a reason; provenance never changes (inherited_record.record). 422 inherited_record.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InheritedRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/organizations/{organizationId}/portfolios:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [portfolios]
+      operationId: listPortfolios
+      summary: "Portfolios of the organization (organization.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/IncludeArchivedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortfolioPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [portfolios]
+      operationId: createPortfolio
+      summary: "Create a portfolio (portfolio.manage; TO). 409 portfolio.code_taken."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PortfolioCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Portfolio" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/portfolios/{portfolioId}:
+    parameters:
+      - $ref: "#/components/parameters/PortfolioId"
+    get:
+      tags: [portfolios]
+      operationId: getPortfolio
+      summary: "One portfolio (organization.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Portfolio" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [portfolios]
+      operationId: updatePortfolio
+      summary: "Edit or archive a portfolio (portfolio.manage). 409 portfolio.code_taken; 422 portfolio.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PortfolioUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Portfolio" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/portfolios/{portfolioId}/transformations:
+    parameters:
+      - $ref: "#/components/parameters/PortfolioId"
+    get:
+      tags: [portfolios]
+      operationId: listPortfolioTransformations
+      summary: "Transformations in the portfolio that the caller may read (organization.read; transformation.read per row)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/IncludeRemovedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortfolioTransformationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [portfolios]
+      operationId: addPortfolioTransformation
+      summary: "Place a transformation in the portfolio (portfolio.manage; the transformation must be readable). 422 portfolio.transformation_already_placed, portfolio.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PortfolioTransformationCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortfolioTransformation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/portfolios/{portfolioId}/transformations/{portfolioTransformationId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/PortfolioId"
+      - $ref: "#/components/parameters/PortfolioTransformationId"
+    post:
+      tags: [portfolios]
+      operationId: removePortfolioTransformation
+      summary: "Remove a transformation from the portfolio with a reason (portfolio.manage). 422 membership.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortfolioTransformation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/workstreams:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [workstreams]
+      operationId: listWorkstreams
+      summary: "Workstreams of the transformation (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/IncludeArchivedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkstreamPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [workstreams]
+      operationId: createWorkstream
+      summary: "Create a workstream WS-nn (workstream.manage; TL, TO)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkstreamCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workstream" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/workstreams/{workstreamId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/WorkstreamId"
+    get:
+      tags: [workstreams]
+      operationId: getWorkstream
+      summary: "One workstream (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workstream" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [workstreams]
+      operationId: updateWorkstream
+      summary: "Edit or archive a workstream (workstream.manage). 422 workstream.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkstreamUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workstream" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/workstreams/{workstreamId}/initiatives:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/WorkstreamId"
+    get:
+      tags: [workstreams]
+      operationId: listWorkstreamInitiatives
+      summary: "Initiatives of the workstream (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/IncludeRemovedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkstreamInitiativePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [workstreams]
+      operationId: addWorkstreamInitiative
+      summary: "Assign an initiative to the workstream (workstream.manage). 422 workstream.initiative_already_assigned, workstream.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkstreamInitiativeCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkstreamInitiative" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/workstreams/{workstreamId}/initiatives/{workstreamInitiativeId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/WorkstreamId"
+      - $ref: "#/components/parameters/WorkstreamInitiativeId"
+    post:
+      tags: [workstreams]
+      operationId: removeWorkstreamInitiative
+      summary: "Remove an initiative from the workstream with a reason (workstream.manage). 422 membership.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkstreamInitiative" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -16036,6 +16990,151 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    WorkstreamId:
+      name: workstreamId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    PortfolioId:
+      name: portfolioId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TraceLinkId:
+      name: traceLinkId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    InheritedRecordId:
+      name: inheritedRecordId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    PortfolioTransformationId:
+      name: portfolioTransformationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    WorkstreamInitiativeId:
+      name: workstreamInitiativeId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AllocationTargetType:
+      name: allocationTargetType
+      in: path
+      required: true
+      schema: { type: string, enum: [outcome_kpi, benefit] }
+    AllocationTargetId:
+      name: allocationTargetId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    RecordTypePath:
+      name: recordType
+      in: path
+      required: true
+      schema: { type: string, enum: [diagnostic_finding, tom_gap, initiative, deliverable, capability, outcome, outcome_kpi, benefit, kpi_definition] }
+    RecordIdPath:
+      name: recordId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    OrganizationIdQuery:
+      name: organizationId
+      in: query
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TransformationIdsQuery:
+      name: transformationId
+      in: query
+      required: false
+      schema: { type: array, items: { $ref: "#/components/schemas/Uuid" }, maxItems: 50 }
+    OwnerUserIdQuery:
+      name: ownerUserId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    PeriodIdQuery:
+      name: periodId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    DashboardPhaseQuery:
+      name: phase
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Phase" }
+    DashboardStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/TransformationStatus" }
+    DrilldownMetricQuery:
+      name: metric
+      in: query
+      required: true
+      schema: { $ref: "#/components/schemas/DashboardMetric" }
+    SubjectIdQuery:
+      name: subjectId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MyWorkSectionQuery:
+      name: section
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/MyWorkSection" }
+    TraceRootTypeQuery:
+      name: rootType
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/TraceNodeType" }
+    TraceRootIdQuery:
+      name: rootId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TraceDirectionQuery:
+      name: direction
+      in: query
+      required: false
+      schema: { type: string, enum: [upstream, downstream, both], default: both }
+    TraceDepthQuery:
+      name: depth
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 8, default: 8 }
+    OrphanRecordTypeQuery:
+      name: recordType
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/TraceNodeType" }
+    OrphanMissingQuery:
+      name: missing
+      in: query
+      required: false
+      schema: { type: string, enum: [upstream, downstream, both] }
+    TraceLinkKindQuery:
+      name: kind
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/TraceLinkKind" }
+    TraceRecordIdQuery:
+      name: recordId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    IncludeRemovedQuery:
+      name: includeRemoved
+      in: query
+      required: false
+      schema: { type: boolean, default: false }
+    IncludeArchivedQuery:
+      name: includeArchived
+      in: query
+      required: false
+      schema: { type: boolean, default: false }
     StepKey:
       name: stepKey
       in: path
@@ -17281,6 +18380,11 @@ components:
         - risk_disposition.propose
         - change_request.raise
         - change_control.configure
+        - traceability.link
+        - inherited_record.record
+        - workstream.manage
+        - portfolio.manage
+        - dashboard.configure
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -23148,6 +24252,10 @@ components:
         counting: { $ref: "#/components/schemas/BenefitCountingStatus" }
         currency: { $ref: "#/components/schemas/Currency" }
         version: { $ref: "#/components/schemas/Version" }
+        initiatives:
+          type: array
+          items: { $ref: "#/components/schemas/InitiativeRef" }
+          description: "Optional (ADR-0038 §8): the initiatives of the benefit's current allocation set, names read by join (one source of truth)."
     BenefitLifecycle:
       type: object
       required: [benefitId, currentStep, steps, history]
@@ -26791,3 +27899,812 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/ImpactAssessment" } }
         nextCursor: { type: [string, "null"] }
+    RagStatus:
+      type: string
+      enum: [green, amber, red, unknown, stale, not_applicable]
+      description: "Area or row status (ADR-0037 §3). unknown, stale and not_applicable are never shown as green or 0."
+    T10AreaCode:
+      type: string
+      enum: [outcomes, value, portfolio, dependencies, decisions, people_adoption]
+    DashboardMetric:
+      type: string
+      enum: [outcomes.kpi_status, outcomes.area, value.planned, value.forecast, value.validated, value.submitted, value.investment, value.gap, portfolio.initiatives, dependencies.open, decisions.open, decisions.overdue, adoption.indicators, finance.pending_validation]
+    MyWorkSection:
+      type: string
+      enum: [assigned_actions, drafts, reviews, approvals, missing_updates, other]
+    DashboardValue:
+      type: object
+      description: "A headline or item value (ADR-0037 §5): value and zero are known; unknown and not_applicable carry value null and a reasonKey; stale carries the value labelled Stale."
+      required: [state, value, unit, currency, reasonKey]
+      additionalProperties: false
+      properties:
+        state: { type: string, enum: [value, zero, unknown, stale, not_applicable] }
+        value: { $ref: "#/components/schemas/NullableDecimal" }
+        unit: { type: [string, "null"] }
+        currency: { type: [string, "null"], pattern: '^[A-Z]{3}$' }
+        reasonKey: { type: [string, "null"] }
+    DashboardPeriod:
+      type: object
+      required: [start, end, asOf, label]
+      additionalProperties: false
+      properties:
+        start: { $ref: "#/components/schemas/NullableBusinessDate" }
+        end: { $ref: "#/components/schemas/NullableBusinessDate" }
+        asOf: { $ref: "#/components/schemas/BusinessDate" }
+        label: { type: [string, "null"] }
+    DashboardRag:
+      type: object
+      required: [status, ruleKey, ruleParams, policySource]
+      additionalProperties: false
+      properties:
+        status: { $ref: "#/components/schemas/RagStatus" }
+        ruleKey: { type: string }
+        ruleParams: { type: object }
+        policySource: { type: string, enum: [default, configured] }
+    DashboardHeadline:
+      type: object
+      required: [metric, labelKey, value, period, drilldownHref]
+      additionalProperties: false
+      properties:
+        metric: { $ref: "#/components/schemas/DashboardMetric" }
+        labelKey: { type: string }
+        value: { $ref: "#/components/schemas/DashboardValue" }
+        period: { oneOf: [{ $ref: "#/components/schemas/DashboardPeriod" }, { type: "null" }] }
+        drilldownHref: { type: string }
+    DashboardItem:
+      type: object
+      required: [recordType, recordId, code, label, href, rag, dueDate, value, ownerUserId, flags]
+      additionalProperties: false
+      properties:
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: [string, "null"] }
+        label: { type: [string, "null"] }
+        href: { type: string }
+        rag: { oneOf: [{ $ref: "#/components/schemas/RagStatus" }, { type: "null" }] }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        value: { oneOf: [{ $ref: "#/components/schemas/DashboardValue" }, { type: "null" }] }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        flags: { type: array, items: { type: string } }
+    T10Area:
+      type: object
+      description: "One Template 10 area (B0095; M0245-M0252): the seeded bilingual labels (Arabic provisional), its RAG with the rule key, headlines and items."
+      required: [code, ordinal, sourceAreaEn, areaAr, sourceWhatToShowEn, whatToShowAr, sourceRagLogicEn, ragLogicAr, arProvisional, rag, headlines, items]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/T10AreaCode" }
+        ordinal: { type: integer, minimum: 1, maximum: 6 }
+        sourceAreaEn: { type: string }
+        areaAr: { type: string }
+        sourceWhatToShowEn: { type: string }
+        whatToShowAr: { type: string }
+        sourceRagLogicEn: { type: string }
+        ragLogicAr: { type: string }
+        arProvisional: { type: boolean }
+        rag: { $ref: "#/components/schemas/DashboardRag" }
+        headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } }
+        items: { type: array, items: { $ref: "#/components/schemas/DashboardItem" } }
+    DashboardFilters:
+      type: object
+      description: "The filters applied server-side (REQ-S13-002), echoed for the chips."
+      required: [organizationId, transformationIds, ownerUserId, periodId, periodLabel, phase, status, windowStart, windowEnd, asOf]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        transformationIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        periodId: { $ref: "#/components/schemas/NullableUuid" }
+        periodLabel: { type: [string, "null"] }
+        phase: { oneOf: [{ $ref: "#/components/schemas/Phase" }, { type: "null" }] }
+        status: { oneOf: [{ $ref: "#/components/schemas/TransformationStatus" }, { type: "null" }] }
+        windowStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        windowEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        asOf: { $ref: "#/components/schemas/BusinessDate" }
+    AreaStatus:
+      type: object
+      required: [code, status]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/T10AreaCode" }
+        status: { $ref: "#/components/schemas/RagStatus" }
+    DashboardTransformationRow:
+      type: object
+      required: [transformationId, code, name, areaStatuses]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
+        areaStatuses: { type: array, items: { $ref: "#/components/schemas/AreaStatus" } }
+    TransformationDashboard:
+      type: object
+      required: [transformationId, generatedAt, businessDate, timezone, appliedFilters, areas]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        timezone: { type: string }
+        appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
+        areas: { type: array, items: { $ref: "#/components/schemas/T10Area" }, minItems: 6, maxItems: 6 }
+    ExecutiveOverview:
+      type: object
+      required: [organizationId, generatedAt, businessDate, appliedFilters, transformationCount, areas, transformations]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
+        transformationCount: { type: integer, minimum: 0 }
+        areas: { type: array, items: { $ref: "#/components/schemas/T10Area" }, minItems: 6, maxItems: 6 }
+        transformations: { type: array, items: { $ref: "#/components/schemas/DashboardTransformationRow" } }
+    WorkstreamDashboard:
+      type: object
+      required: [workstreamId, transformationId, code, name, generatedAt, businessDate, appliedFilters, areas]
+      additionalProperties: false
+      properties:
+        workstreamId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
+        areas: { type: array, items: { $ref: "#/components/schemas/T10Area" }, minItems: 6, maxItems: 6 }
+    FinanceValueLine:
+      type: object
+      required: [valueClass, state, currency, total, drilldownHref]
+      additionalProperties: false
+      properties:
+        valueClass: { type: string }
+        state: { type: string, enum: [planned, forecast, measured, submitted, validated, rejected, sustained] }
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        total: { $ref: "#/components/schemas/DashboardValue" }
+        drilldownHref: { type: [string, "null"] }
+    FinanceDashboard:
+      type: object
+      required: [organizationId, generatedAt, businessDate, appliedFilters, lines, headlines, pendingValidationCount, nonFinancialCount, transformations]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
+        lines: { type: array, items: { $ref: "#/components/schemas/FinanceValueLine" } }
+        headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } }
+        pendingValidationCount: { type: integer, minimum: 0 }
+        nonFinancialCount: { type: integer, minimum: 0 }
+        transformations: { type: array, items: { $ref: "#/components/schemas/DashboardTransformationRow" } }
+    AdoptionIndicatorRow:
+      type: object
+      required: [kpiDefinitionId, templateKey, targetKind, targetId, rag, value, drilldownHref]
+      additionalProperties: false
+      properties:
+        kpiDefinitionId: { $ref: "#/components/schemas/Uuid" }
+        templateKey: { type: string }
+        targetKind: { type: string }
+        targetId: { $ref: "#/components/schemas/NullableUuid" }
+        rag: { $ref: "#/components/schemas/RagStatus" }
+        value: { $ref: "#/components/schemas/DashboardValue" }
+        drilldownHref: { type: string }
+    AdoptionDashboard:
+      type: object
+      required: [organizationId, generatedAt, businessDate, appliedFilters, area, indicators, openInterventionCount, transformations]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
+        area: { $ref: "#/components/schemas/T10Area" }
+        indicators: { type: array, items: { $ref: "#/components/schemas/AdoptionIndicatorRow" } }
+        openInterventionCount: { type: integer, minimum: 0 }
+        transformations: { type: array, items: { $ref: "#/components/schemas/DashboardTransformationRow" } }
+    DrilldownItem:
+      type: object
+      required: [recordType, recordId, code, label, href, value, period]
+      additionalProperties: false
+      properties:
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: [string, "null"] }
+        label: { type: [string, "null"] }
+        href: { type: string }
+        value: { oneOf: [{ $ref: "#/components/schemas/DashboardValue" }, { type: "null" }] }
+        period: { oneOf: [{ $ref: "#/components/schemas/DashboardPeriod" }, { type: "null" }] }
+    DrilldownInput:
+      type: object
+      required: [name, value, recordType, recordId]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        value: { $ref: "#/components/schemas/DashboardValue" }
+        recordType: { type: [string, "null"] }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+    DrilldownEvidence:
+      type: object
+      required: [evidenceId, title, verificationStatus, recordType, recordId]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string }
+        verificationStatus: { type: string }
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+    DrilldownCalculation:
+      type: object
+      required: [ruleKey, expression, inputs, rounding]
+      additionalProperties: false
+      properties:
+        ruleKey: { type: string }
+        expression: { type: [string, "null"] }
+        inputs: { type: array, items: { $ref: "#/components/schemas/DrilldownInput" } }
+        rounding: { type: [object, "null"] }
+    DashboardDrilldown:
+      type: object
+      description: "Contributing records, period, calculation and evidence of one headline (REQ-S13-003). For a sum metric the decimal sum of items over all pages equals value."
+      required: [metric, appliedFilters, value, period, calculation, items, evidence, nextCursor]
+      additionalProperties: false
+      properties:
+        metric: { $ref: "#/components/schemas/DashboardMetric" }
+        appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
+        value: { $ref: "#/components/schemas/DashboardValue" }
+        period: { oneOf: [{ $ref: "#/components/schemas/DashboardPeriod" }, { type: "null" }] }
+        calculation: { $ref: "#/components/schemas/DrilldownCalculation" }
+        items: { type: array, items: { $ref: "#/components/schemas/DrilldownItem" } }
+        evidence: { type: array, items: { $ref: "#/components/schemas/DrilldownEvidence" } }
+        nextCursor: { type: [string, "null"] }
+    MyWorkItem:
+      type: object
+      required: [section, source, recordType, recordId, kind, code, label, messageKey, messageParams, transformationId, href, dueDate, overdue]
+      additionalProperties: false
+      properties:
+        section: { $ref: "#/components/schemas/MyWorkSection" }
+        source: { type: string, enum: [work_item, action_item, draft] }
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        kind: { type: [string, "null"] }
+        code: { type: [string, "null"] }
+        label: { type: [string, "null"] }
+        messageKey: { type: [string, "null"] }
+        messageParams: { type: [object, "null"] }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        href: { type: string }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        overdue: { type: boolean }
+    MyWorkSectionPage:
+      type: object
+      required: [section, total, items, nextCursor]
+      additionalProperties: false
+      properties:
+        section: { $ref: "#/components/schemas/MyWorkSection" }
+        total: { type: integer, minimum: 0 }
+        items: { type: array, items: { $ref: "#/components/schemas/MyWorkItem" } }
+        nextCursor: { type: [string, "null"] }
+    MyWork:
+      type: object
+      description: "The caller's own items only (REQ-S03-008)."
+      required: [userId, generatedAt, businessDate, horizonWorkingDays, sections, upcomingDeadlines]
+      additionalProperties: false
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        horizonWorkingDays: { type: integer, minimum: 1 }
+        sections: { type: array, items: { $ref: "#/components/schemas/MyWorkSectionPage" } }
+        upcomingDeadlines: { type: array, items: { $ref: "#/components/schemas/MyWorkItem" } }
+    UserRef:
+      type: object
+      required: [userId, displayName]
+      additionalProperties: false
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        displayName: { type: string }
+    CurrencyValue:
+      type: object
+      required: [currency, value]
+      additionalProperties: false
+      properties:
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        value: { $ref: "#/components/schemas/DashboardValue" }
+    WorkspaceHeader:
+      type: object
+      description: "The eight elements of M0114 (REQ-S03-011), each with an explicit Unknown."
+      required: [transformationId, code, name, phase, gateReadiness, northStar, owners, outcomeHealth, benefits, keyDecisions, nextActions]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
+        phase: { type: object, required: [currentPhase, mode, entryPhase], additionalProperties: false, properties: { currentPhase: { $ref: "#/components/schemas/Phase" }, mode: { type: string, enum: [end_to_end, modular] }, entryPhase: { oneOf: [{ $ref: "#/components/schemas/Phase" }, { type: "null" }] } } }
+        gateReadiness: { type: object, required: [state, gateCode, status, inheritedApproval, missingMandatoryCount, ready], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, gateCode: { type: [string, "null"] }, status: { type: [string, "null"] }, inheritedApproval: { oneOf: [{ $ref: "#/components/schemas/GateInheritedApproval" }, { type: "null" }] }, missingMandatoryCount: { type: [integer, "null"], minimum: 0 }, ready: { type: [boolean, "null"] } } }
+        northStar: { type: object, required: [state, statement, status], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, statement: { type: [string, "null"] }, status: { type: [string, "null"] } } }
+        owners: { type: object, required: [sponsor, lead], additionalProperties: false, properties: { sponsor: { oneOf: [{ $ref: "#/components/schemas/UserRef" }, { type: "null" }] }, lead: { oneOf: [{ $ref: "#/components/schemas/UserRef" }, { type: "null" }] } } }
+        outcomeHealth: { type: object, required: [rag, counts], additionalProperties: false, properties: { rag: { $ref: "#/components/schemas/DashboardRag" }, counts: { type: array, items: { type: object, required: [status, count], additionalProperties: false, properties: { status: { $ref: "#/components/schemas/RagStatus" }, count: { type: integer, minimum: 0 } } } } } }
+        benefits: { type: object, required: [state, planned, validated, benefitCount, nonFinancialCount], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 } } }
+        keyDecisions: { type: object, required: [items, overdueCount], additionalProperties: false, properties: { items: { type: array, items: { $ref: "#/components/schemas/DashboardItem" }, maxItems: 5 }, overdueCount: { type: integer, minimum: 0 } } }
+        nextActions: { type: object, required: [items, missingMandatoryCount], additionalProperties: false, properties: { items: { type: array, items: { $ref: "#/components/schemas/MyWorkItem" }, maxItems: 5 }, missingMandatoryCount: { type: [integer, "null"], minimum: 0 } } }
+    DashboardRagPolicyValues:
+      type: object
+      required: [valueGapAmberRatio, valueGapRedRatio, milestoneSlipAmberWorkingDays, milestoneSlipRedWorkingDays, dependencyDueSoonWorkingDays, decisionDueSoonWorkingDays, topInitiativeCount, deadlineHorizonWorkingDays]
+      additionalProperties: false
+      properties:
+        valueGapAmberRatio: { $ref: "#/components/schemas/Decimal" }
+        valueGapRedRatio: { $ref: "#/components/schemas/Decimal" }
+        milestoneSlipAmberWorkingDays: { type: [integer], minimum: 0, maximum: 250 }
+        milestoneSlipRedWorkingDays: { type: [integer], minimum: 0, maximum: 250 }
+        dependencyDueSoonWorkingDays: { type: [integer], minimum: 0, maximum: 250 }
+        decisionDueSoonWorkingDays: { type: [integer], minimum: 0, maximum: 250 }
+        topInitiativeCount: { type: [integer], minimum: 1, maximum: 50 }
+        deadlineHorizonWorkingDays: { type: [integer], minimum: 1, maximum: 250 }
+    DashboardRagPolicy:
+      type: object
+      description: "Configured thresholds (null = the ADR-0037 §3 default) and the effective values; version 0 when no row exists."
+      required: [organizationId, policySource, valueGapAmberRatio, valueGapRedRatio, milestoneSlipAmberWorkingDays, milestoneSlipRedWorkingDays, dependencyDueSoonWorkingDays, decisionDueSoonWorkingDays, topInitiativeCount, deadlineHorizonWorkingDays, note, effective, version, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        policySource: { type: string, enum: [default, configured] }
+        valueGapAmberRatio: { $ref: "#/components/schemas/NullableDecimal" }
+        valueGapRedRatio: { $ref: "#/components/schemas/NullableDecimal" }
+        milestoneSlipAmberWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        milestoneSlipRedWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        dependencyDueSoonWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        decisionDueSoonWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        topInitiativeCount: { type: [integer, "null"], minimum: 1, maximum: 50 }
+        deadlineHorizonWorkingDays: { type: [integer, "null"], minimum: 1, maximum: 250 }
+        note: { type: [string, "null"] }
+        effective: { $ref: "#/components/schemas/DashboardRagPolicyValues" }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    DashboardRagPolicyUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        valueGapAmberRatio: { $ref: "#/components/schemas/NullableDecimal" }
+        valueGapRedRatio: { $ref: "#/components/schemas/NullableDecimal" }
+        milestoneSlipAmberWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        milestoneSlipRedWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        dependencyDueSoonWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        decisionDueSoonWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 250 }
+        topInitiativeCount: { type: [integer, "null"], minimum: 1, maximum: 50 }
+        deadlineHorizonWorkingDays: { type: [integer, "null"], minimum: 1, maximum: 250 }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    TraceNodeType:
+      type: string
+      enum: [diagnostic_finding, tom_gap, initiative, deliverable, capability, outcome, outcome_kpi, benefit]
+    TraceLinkKind:
+      type: string
+      enum: [issue_gap, deliverable_capability, capability_kpi, kpi_benefit]
+    TraceLink:
+      type: object
+      required: [id, transformationId, linkKind, diagnosticFindingId, tomGapId, deliverableId, capabilityId, outcomeKpiId, benefitId, contributionStatement, allocationShare, allocationBasis, status, removedAt, removedBy, removeReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        linkKind: { $ref: "#/components/schemas/TraceLinkKind" }
+        diagnosticFindingId: { $ref: "#/components/schemas/NullableUuid" }
+        tomGapId: { $ref: "#/components/schemas/NullableUuid" }
+        deliverableId: { $ref: "#/components/schemas/NullableUuid" }
+        capabilityId: { $ref: "#/components/schemas/NullableUuid" }
+        outcomeKpiId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitId: { $ref: "#/components/schemas/NullableUuid" }
+        contributionStatement: { type: string }
+        allocationShare: { $ref: "#/components/schemas/NullableDecimal" }
+        allocationBasis: { type: [string, "null"] }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        removeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    TraceLinkCreate:
+      type: object
+      description: "fromId/toId are the two records the kind names (issue_gap: finding -> gap; deliverable_capability: deliverable -> capability; capability_kpi: capability -> outcome KPI; kpi_benefit: outcome KPI -> benefit). allocationShare is a decimal fraction 0 < share <= 1."
+      required: [linkKind, fromId, toId, contributionStatement]
+      additionalProperties: false
+      properties:
+        linkKind: { $ref: "#/components/schemas/TraceLinkKind" }
+        fromId: { $ref: "#/components/schemas/Uuid" }
+        toId: { $ref: "#/components/schemas/Uuid" }
+        contributionStatement: { type: string, minLength: 1, maxLength: 2000 }
+        allocationShare: { $ref: "#/components/schemas/NullableDecimal" }
+        allocationBasis: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    TraceLinkUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        contributionStatement: { type: string, minLength: 1, maxLength: 2000 }
+        allocationShare: { $ref: "#/components/schemas/NullableDecimal" }
+        allocationBasis: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    TraceLinkPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/TraceLink" } }
+        nextCursor: { type: [string, "null"] }
+    ContributionAllocationUpdate:
+      type: object
+      required: [allocationShare, allocationBasis]
+      additionalProperties: false
+      properties:
+        allocationShare: { $ref: "#/components/schemas/NullableDecimal" }
+        allocationBasis: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    ContributionAllocation:
+      type: object
+      required: [linkId, initiativeId, outcomeId, outcomeKpiId, allocationShare, allocationBasis, version]
+      additionalProperties: false
+      properties:
+        linkId: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        outcomeId: { $ref: "#/components/schemas/Uuid" }
+        outcomeKpiId: { $ref: "#/components/schemas/NullableUuid" }
+        allocationShare: { $ref: "#/components/schemas/NullableDecimal" }
+        allocationBasis: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+    AllocationSetMember:
+      type: object
+      required: [linkTable, linkId, fromType, fromId, allocationShare, allocationBasis, version]
+      additionalProperties: false
+      properties:
+        linkTable: { type: string, enum: [trace_link, initiative_outcome_contribution] }
+        linkId: { $ref: "#/components/schemas/Uuid" }
+        fromType: { $ref: "#/components/schemas/TraceNodeType" }
+        fromId: { $ref: "#/components/schemas/Uuid" }
+        allocationShare: { $ref: "#/components/schemas/Decimal" }
+        allocationBasis: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+    AllocationSet:
+      type: object
+      description: "The active links into one outcome KPI or benefit that carry a share; total <= 1 (100 %)."
+      required: [targetType, targetId, members, total, unallocatedShare]
+      additionalProperties: false
+      properties:
+        targetType: { type: string, enum: [outcome_kpi, benefit] }
+        targetId: { $ref: "#/components/schemas/Uuid" }
+        members: { type: array, items: { $ref: "#/components/schemas/AllocationSetMember" } }
+        total: { $ref: "#/components/schemas/Decimal" }
+        unallocatedShare: { $ref: "#/components/schemas/Decimal" }
+    TraceNode:
+      type: object
+      required: [recordType, recordId, code, label, status, href, orphan, allocation]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/TraceNodeType" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: [string, "null"] }
+        label: { type: [string, "null"] }
+        status: { type: [string, "null"] }
+        href: { type: string }
+        orphan: { type: object, required: [upstream, downstream], additionalProperties: false, properties: { upstream: { type: boolean }, downstream: { type: boolean } } }
+        allocation: { oneOf: [{ type: object, required: [total, unallocatedShare], additionalProperties: false, properties: { total: { $ref: "#/components/schemas/Decimal" }, unallocatedShare: { $ref: "#/components/schemas/Decimal" } } }, { type: "null" }] }
+    TraceEdge:
+      type: object
+      required: [edgeKind, fromType, fromId, toType, toId, linkTable, linkId, contributionStatement, allocationShare]
+      additionalProperties: false
+      properties:
+        edgeKind: { type: string, enum: [issue_gap, gap_initiative, initiative_deliverable, deliverable_capability, capability_kpi, initiative_kpi, outcome_kpi_of, kpi_benefit, kpi_benefit_measure, initiative_benefit] }
+        fromType: { type: string }
+        fromId: { $ref: "#/components/schemas/Uuid" }
+        toType: { type: string }
+        toId: { $ref: "#/components/schemas/Uuid" }
+        linkTable: { type: string }
+        linkId: { $ref: "#/components/schemas/Uuid" }
+        contributionStatement: { type: [string, "null"] }
+        allocationShare: { $ref: "#/components/schemas/NullableDecimal" }
+    TraceabilityGraph:
+      type: object
+      required: [transformationId, rootType, rootId, direction, depth, nodes, edges, truncated]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        rootType: { oneOf: [{ $ref: "#/components/schemas/TraceNodeType" }, { type: "null" }] }
+        rootId: { $ref: "#/components/schemas/NullableUuid" }
+        direction: { type: string, enum: [upstream, downstream, both] }
+        depth: { type: integer, minimum: 1, maximum: 8 }
+        nodes: { type: array, items: { $ref: "#/components/schemas/TraceNode" } }
+        edges: { type: array, items: { $ref: "#/components/schemas/TraceEdge" } }
+        truncated: { type: boolean }
+    OrphanItem:
+      type: object
+      required: [recordType, recordId, code, label, href, missing, expected]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/TraceNodeType" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: [string, "null"] }
+        label: { type: [string, "null"] }
+        href: { type: string }
+        missing: { type: string, enum: [upstream, downstream, both] }
+        expected: { type: array, items: { type: string } }
+    OrphanReportPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/OrphanItem" } }
+        nextCursor: { type: [string, "null"] }
+    ImpactRecord:
+      type: object
+      required: [recordType, recordId, code, label, href, distance, edgeKinds, valueAffected]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/TraceNodeType" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: [string, "null"] }
+        label: { type: [string, "null"] }
+        href: { type: string }
+        distance: { type: integer, minimum: 1, maximum: 8 }
+        edgeKinds: { type: array, items: { type: string } }
+        valueAffected: { type: boolean }
+    ImpactDashboardRef:
+      type: object
+      required: [dashboard, areaCode, transformationId, workstreamId]
+      additionalProperties: false
+      properties:
+        dashboard: { type: string, enum: [executive, transformation, workstream, finance, adoption, personal] }
+        areaCode: { oneOf: [{ $ref: "#/components/schemas/T10AreaCode" }, { type: "null" }] }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        workstreamId: { $ref: "#/components/schemas/NullableUuid" }
+    RecordImpact:
+      type: object
+      description: "Downstream impact computed on request (ADR-0038 §6); unreadable records are only counted."
+      required: [recordType, recordId, records, dashboards, hiddenCount, nextCursor]
+      additionalProperties: false
+      properties:
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        records: { type: array, items: { $ref: "#/components/schemas/ImpactRecord" } }
+        dashboards: { type: array, items: { $ref: "#/components/schemas/ImpactDashboardRef" } }
+        hiddenCount: { type: integer, minimum: 0 }
+        nextCursor: { type: [string, "null"] }
+    MissingLinkItem:
+      type: object
+      required: [code, severity, recordType, recordId, label, href]
+      additionalProperties: false
+      properties:
+        code: { type: string, enum: [baseline_missing, outcome_link_missing, outcome_kpi_missing, initiative_outcome_link_missing, initiative_gap_link_missing, benefit_missing, benefit_outcome_link_missing, inherited_approval_unverified] }
+        severity: { type: string, enum: [blocking, warning] }
+        recordType: { type: [string, "null"] }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        label: { type: [string, "null"] }
+        href: { type: [string, "null"] }
+    MissingLinksGate:
+      type: object
+      description: "label is approved only when the platform recorded an approval; an inherited approval is inherited (or inherited_pending_verification), never approved."
+      required: [gateCode, status, label, inheritedApproval]
+      additionalProperties: false
+      properties:
+        gateCode: { type: string, pattern: '^G[1-6]$' }
+        status: { type: string }
+        label: { type: string }
+        inheritedApproval: { oneOf: [{ $ref: "#/components/schemas/GateInheritedApproval" }, { type: "null" }] }
+    MissingLinks:
+      type: object
+      required: [transformationId, mode, entryPhase, standaloneDeliverableType, gates, items]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        mode: { type: string, enum: [end_to_end, modular] }
+        entryPhase: { oneOf: [{ $ref: "#/components/schemas/Phase" }, { type: "null" }] }
+        standaloneDeliverableType: { type: [string, "null"] }
+        gates: { type: array, items: { $ref: "#/components/schemas/MissingLinksGate" } }
+        items: { type: array, items: { $ref: "#/components/schemas/MissingLinkItem" } }
+    InheritedRecord:
+      type: object
+      description: "An inherited item, labelled inherited (\"Inherited - recorded, not granted in platform\"); prior_approval entries are read-only views of gate dispensations."
+      required: [id, transformationId, kind, label, evidenceId, baselineId, gateDispensationId, gateCode, approvingBody, sourceDescription, originalOwner, originalDate, recordedBy, status, withdrawnAt, withdrawnBy, withdrawReason, version, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        kind: { type: string, enum: [evidence, baseline, prior_approval] }
+        label: { type: string, enum: [inherited] }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineId: { $ref: "#/components/schemas/NullableUuid" }
+        gateDispensationId: { $ref: "#/components/schemas/NullableUuid" }
+        gateCode: { type: [string, "null"] }
+        approvingBody: { type: [string, "null"] }
+        sourceDescription: { type: [string, "null"] }
+        originalOwner: { type: [string, "null"] }
+        originalDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        recordedBy: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string }
+        withdrawnAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        withdrawnBy: { $ref: "#/components/schemas/NullableUuid" }
+        withdrawReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    InheritedRecordCreate:
+      type: object
+      description: "kind prior_approval is refused (422 inherited_record.prior_approval_use_dispensation): prior approvals are recorded as gate dispensations."
+      required: [kind, sourceDescription]
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [evidence, baseline, prior_approval] }
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        baselineId: { $ref: "#/components/schemas/Uuid" }
+        sourceDescription: { type: string, minLength: 3, maxLength: 2000 }
+        originalOwner: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        originalDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    InheritedRecordPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/InheritedRecord" } }
+        nextCursor: { type: [string, "null"] }
+    Portfolio:
+      type: object
+      required: [id, organizationId, code, name, description, ownerUserId, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
+        description: { type: [string, "null"] }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    PortfolioCreate:
+      type: object
+      required: [code, name]
+      additionalProperties: false
+      properties:
+        code: { type: string, pattern: '^[A-Z0-9][A-Z0-9_-]{0,31}$' }
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+    PortfolioUpdate:
+      type: object
+      description: "status archived needs archiveReason; an archived portfolio is read-only."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        code: { type: string, pattern: '^[A-Z0-9][A-Z0-9_-]{0,31}$' }
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [archived] }
+        archiveReason: { type: string, minLength: 3, maxLength: 1000 }
+    PortfolioPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Portfolio" } }
+        nextCursor: { type: [string, "null"] }
+    PortfolioTransformation:
+      type: object
+      required: [id, portfolioId, transformationId, transformationCode, transformationName, status, removedAt, removedBy, removeReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        portfolioId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        transformationCode: { type: string }
+        transformationName: { type: string }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        removeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    PortfolioTransformationCreate:
+      type: object
+      required: [transformationId]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+    PortfolioTransformationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PortfolioTransformation" } }
+        nextCursor: { type: [string, "null"] }
+    Workstream:
+      type: object
+      required: [id, transformationId, code, name, description, leadUserId, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: '^WS-[0-9]{2,6}$' }
+        name: { type: string }
+        description: { type: [string, "null"] }
+        leadUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    WorkstreamCreate:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        leadUserId: { $ref: "#/components/schemas/NullableUuid" }
+    WorkstreamUpdate:
+      type: object
+      description: "status archived needs archiveReason; an archived workstream is read-only."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        leadUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [archived] }
+        archiveReason: { type: string, minLength: 3, maxLength: 1000 }
+    WorkstreamPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Workstream" } }
+        nextCursor: { type: [string, "null"] }
+    WorkstreamInitiative:
+      type: object
+      required: [id, workstreamId, initiativeId, initiativeCode, initiativeName, status, removedAt, removedBy, removeReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        workstreamId: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        initiativeCode: { type: string }
+        initiativeName: { type: string }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        removeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    WorkstreamInitiativeCreate:
+      type: object
+      required: [initiativeId]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+    WorkstreamInitiativePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/WorkstreamInitiative" } }
+        nextCursor: { type: [string, "null"] }
+    InitiativeRef:
+      type: object
+      required: [id, code, name]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
