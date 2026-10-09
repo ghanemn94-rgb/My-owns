@@ -51,6 +51,7 @@ import {
   loadGrants,
   principalOf,
   requireTransformationRead,
+  technicalAdminRefusal,
   type Principal,
   type ResolvedTarget,
 } from "../access/index.ts";
@@ -794,8 +795,13 @@ async function submitGate(
 
 async function decideGate(tx: Tx, request: FastifyRequest, transformationId: string, gateCode: string) {
   const principal = principalOf(request);
-  // 1. The caller can read the transformation (404 otherwise).
-  const target = await requireTransformationRead(tx, principal, transformationId);
+  // 1. The caller can read the transformation (404 otherwise; REQ-S10-003/D-094: 403 for a technical-admin-only caller).
+  let target: ResolvedTarget;
+  try {
+    target = await requireTransformationRead(tx, principal, transformationId);
+  } catch (err) {
+    throw technicalAdminRefusal(principal, err, "gate.decide");
+  }
   const defs = await loadGateDefinitions(tx);
   const def = definitionOf(defs, gateCode);
   const instance = await instanceOf(tx, transformationId, gateCode, true);
