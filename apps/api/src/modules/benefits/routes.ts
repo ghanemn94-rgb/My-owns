@@ -1,4 +1,4 @@
-// benefits route registration (P4; p4-plan §5.1): KBE-D's lines first, then KBE-E's (sequential edits, never
+// benefits route registration (P4; p4-plan §5.1): KBE-D's lines first, then KBE-D2's, then KBE-E's (sequential edits, never
 // concurrent). T-DG4-BE-A created every file below as a stub.
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
@@ -8,6 +8,7 @@ import { registerBenefitAllocationRoutes } from "./allocations.ts";
 import { registerBenefitGroupRoutes } from "./groups.ts";
 import { registerBenefitOverlapRoutes } from "./overlaps.ts";
 import { registerBenefitScenarioRoutes } from "./scenarios.ts";
+import { registerBenefitValuationMethodRoutes } from "./valuation-methods.ts";
 import { registerBenefitMeasurementRoutes } from "./measurements.ts";
 import { registerFinanceValidationRoutes } from "./finance-validation.ts";
 import { registerBenefitCorrectionRoutes } from "./corrections.ts";
@@ -23,6 +24,8 @@ export function registerBenefitRoutes(app: FastifyInstance, deps: ModuleDeps): s
     ...registerBenefitGroupRoutes(app, deps),
     ...registerBenefitOverlapRoutes(app, deps),
     ...registerBenefitScenarioRoutes(app, deps),
+    // KBE-D2 (T-DG4-KBE-D2; p4-work-split §B.2): valuation methods (overlaps and scenarios fill the stubs above).
+    ...registerBenefitValuationMethodRoutes(app, deps),
     // KBE-E: measurements, Finance validation, corrections, totals.
     ...registerBenefitMeasurementRoutes(app, deps),
     ...registerFinanceValidationRoutes(app, deps),
