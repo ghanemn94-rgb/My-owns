@@ -360,6 +360,190 @@ export function mapP4GuardError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+// P4 slice B register block (T-DG4-KBE-D; p4-work-split §B.1; ADR-0029 §11 "Database last-line mappings"). The
+// benefits services check every rule first with the same code and text; these mappings only answer when a request
+// slips past an API check or two requests race. Placeholders the database cannot know ({valueClass}, {benefitCode},
+// {missing}, {totalPercent}) are filled from the error message where it carries them, else generically. The overlap,
+// scenario and valuation-method lines (KBE-D2) and the measurement and Finance lines (KBE-E) follow this block.
+const forbidden403 = (code: string, detail: string): HttpProblem =>
+  new HttpProblem({ status: 403, type: PROBLEM_TYPES.forbidden, code, title: "Forbidden", detail });
+
+/** The total of a benefit_allocation_total message ("... total 1.100000 (above 100 %)") as a percentage, or "more than 100". */
+function allocationPercentOfMessage(error: PgErrorLike): string {
+  const m = /total ([0-9]+)(?:\.([0-9]+))? \(above/.exec(error.message ?? "");
+  if (!m) return "more than 100";
+  const frac = `${m[2] ?? ""}00`;
+  const whole = `${m[1] === "0" ? "" : m[1]}${frac.slice(0, 2)}`.replace(/^0+(?=[0-9])/, "") || "0";
+  const rest = frac.slice(2).replace(/0+$/, "");
+  return `${whole}${rest === "" ? "" : `.${rest}`}`;
+}
+
+/**
+ * P4 slice B register, lifecycle, enabler, allocation and group constraints (ADR-0029 §11): the exact codes and
+ * English texts (S-11). Null when the error is not one of them.
+ */
+export function mapP4BenefitRegisterError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    case "benefit_mapping_required":
+      return rule422(
+        "benefit.mapping_required",
+        "A financial benefit needs a financial-statement line.",
+        "/financialStatementLine",
+      );
+    case "benefit_kpi_required":
+      return rule422(
+        "benefit.kpi_required",
+        "A non-financial benefit needs an agreed KPI.",
+        "/measurementKpiDefinitionId",
+      );
+    case "benefit_type_fits_class":
+      return rule422(
+        "benefit.type_class_mismatch",
+        "The value class does not fit the benefit type. Revenue uplift and margin are revenue classes; cash savings and avoided cost are cost classes.",
+        "/valueClass",
+      );
+    case "benefit_non_financial_unmonetised":
+      return rule422(
+        "benefit.valuation_method_required",
+        "A non-financial benefit has no SAR value (n/a) unless an approved valuation method is selected.",
+        "/plannedValue",
+      );
+    case "benefit_valuation_method_approved":
+    case "benefit_valuation_only_non_financial":
+      return rule422(
+        "benefit.valuation_method_not_approved",
+        "The valuation method is not approved by Finance, or is in another currency.",
+        "/valuationMethodId",
+      );
+    case "benefit_kpi_variable_bound":
+      return rule422(
+        "benefit.kpi_variable_unbound",
+        "A KPI-fed formula variable needs both the measurement KPI and the formula.",
+        "/measurementKpiVariable",
+      );
+    case "benefit_validator_not_owner":
+      return rule422(
+        "benefit.validator_is_owner",
+        "The Finance validator cannot be the benefit's owner.",
+        "/financeValidatorUserId",
+      );
+    case "benefit_baseline_validator_not_owner":
+      return forbidden403(
+        "benefit.baseline_validator_is_owner",
+        "You own this benefit, so you cannot validate its baseline.",
+      );
+    case "benefit_lifecycle_step":
+      return rule422(
+        "benefit.lifecycle_step",
+        "A benefit moves Identify → Plan → Enable → Measure, between Measure and Correct, and from Measure to Sustain, one step at a time.",
+        "/toStep",
+      );
+    case "benefit_plan_outputs_present":
+      return rule422(
+        "benefit.plan_outputs_missing",
+        "The Plan outputs are missing: baseline, formula or target. A benefit needs its baseline, formula, target and owner before Enable and Measure.",
+        "",
+      );
+    case "benefit_enablers_required":
+      return rule422(
+        "benefit.enablers_missing",
+        "The Enable output is missing: link at least one enabling initiative, deliverable or capability before Measure.",
+        "",
+      );
+    case "benefit_correct_output_present":
+      return rule422("benefit.recovery_plan_required", "The Correct step needs a recovery plan.", "/recoveryPlan");
+    case "benefit_sustain_outputs_present":
+      return rule422(
+        "benefit.sustain_outputs_missing",
+        "The Sustain step needs a BAU owner and a control cadence.",
+        "",
+      );
+    case "benefit_parent_depth":
+    case "benefit_not_own_parent":
+      return rule422(
+        "benefit.parent_depth",
+        "A child benefit cannot have children, and a parent cannot be a child.",
+        "/parentBenefitId",
+      );
+    case "benefit_parent_has_values":
+      return rule422(
+        "benefit.parent_has_values",
+        "This benefit already has values, so it cannot become a parent. A parent is the roll-up of its children.",
+        "/parentBenefitId",
+      );
+    case "benefit_parent_currency":
+      return rule422("benefit.parent_currency", "A child benefit uses its parent's currency.", "/currency");
+    case "benefit_measure_locked":
+      return rule422(
+        "benefit.measure_locked",
+        "This benefit has values, so its type, class and currency can no longer change.",
+        "/valueClass",
+      );
+    case "benefit_case_line_valid":
+      return rule422(
+        "benefit.case_line_invalid",
+        "The business-case line must be a benefit line of this transformation.",
+        "/businessCaseLineId",
+      );
+    case "benefit_one_case_line_key":
+      return problems.duplicate("benefit.case_line_taken", "This business-case line already backs another benefit.");
+    case "benefit_code_key":
+    case "benefit_group_code_key":
+      // A concurrent code allocation: retry.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "benefit_archived_frozen":
+      return rule422("benefit.archived", "This benefit is archived and read-only.", "");
+    case "benefit_enabler_deliverable_initiative":
+      return rule422(
+        "benefit_enabler.deliverable_initiative",
+        "The deliverable must belong to the enabling initiative.",
+        "/deliverableId",
+      );
+    case "benefit_enabler_frozen":
+      return rule422("benefit_enabler.removed", "This enabler link is removed.", "");
+    case "benefit_enabler_active_key":
+      return problems.duplicate("benefit_enabler.exists", "This enabler is already linked to the benefit.");
+    case "benefit_allocation_total":
+      return rule422(
+        "benefit_allocation.over_100",
+        `The allocations total ${allocationPercentOfMessage(error)} %, above 100 %. Reduce them so they total 100 % or less.`,
+        "/allocations",
+      );
+    case "benefit_allocation_initiative_key":
+      return rule422(
+        "benefit_allocation.duplicate_initiative",
+        "Each initiative appears once in a benefit's allocations.",
+        "/allocations",
+      );
+    case "benefit_allocation_share_check":
+      return rule422("benefit_allocation.share_invalid", "Each share is above 0 % and at most 100 %.", "/allocations");
+    case "benefit_group_counted_member":
+      return error.table === "benefit_group"
+        ? rule422(
+            "benefit_group.counted_not_member",
+            "The counted benefit must be a member of the group.",
+            "/countedBenefitId",
+          )
+        : rule422(
+            "benefit_group.counted_member_leaving",
+            "This benefit is the counted member of its shared-benefit group. Name another counted member first.",
+            "/benefitGroupId",
+          );
+    case "benefit_allocation_current_set":
+    case "benefit_allocation_set_step":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -379,6 +563,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
     });
   const p4 = mapP4GuardError(error);
   if (p4 !== null) return p4;
+  const p4BenefitRegister = mapP4BenefitRegisterError(error);
+  if (p4BenefitRegister !== null) return p4BenefitRegister;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
