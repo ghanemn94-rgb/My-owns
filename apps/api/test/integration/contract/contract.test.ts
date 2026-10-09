@@ -693,7 +693,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // createCorrectiveActionRule, updateCorrectiveActionRule (6 JSON bodies).
     // T-DG4-BE-E: + createBudgetLine, updateBudgetLine, archiveBudgetLine, createInitiativeSchedule,
     // updateInitiativeSchedule (5 JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([229, 228, 1]);
+    // T-DG4-BE-F: + createForum, updateForum, addForumParticipant, createMeetingSeries, updateMeetingSeries,
+    // createMeeting, updateMeeting, cancelMeeting (8 JSON bodies; removeForumParticipant, endMeetingSeries,
+    // publishMeetingAgenda, startMeeting and closeMeeting are bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([237, 236, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

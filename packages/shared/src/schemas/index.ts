@@ -66,3 +66,6 @@ export * from "./corrective.ts";
 // P4 slice E mirrors of BE-E (backend-workflow-engineer, T-DG4-BE-E; p4-work-split §E.3): budget lines, the execution
 // view with the working-day slip, initiative durations and the schedule network with the critical path.
 export * from "./execution.ts";
+// P4 slice D mirrors of BE-F (backend-workflow-engineer, T-DG4-BE-F; p4-work-split §D.1): forums and participants,
+// meeting series with their recurrence, and meetings.
+export * from "./governance-meetings.ts";
