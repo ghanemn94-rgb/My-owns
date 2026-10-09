@@ -60,3 +60,6 @@ export * from "./raid.ts";
 // P4 slice B mirrors of KBE-E (kpi-benefits-engineer, T-DG4-KBE-E; p4-work-split §B.3): plan values, measurements and
 // lineage, the Finance queue and decisions, corrections, totals and the slice B outbox payloads.
 export * from "./benefit-values.ts";
+// P4 slice E mirrors of BE-D2 (backend-workflow-engineer, T-DG4-BE-D2; p4-work-split §E.2): corrective-action cases,
+// signals, the severity and persistence rules and the payloads of the four corrective consumers.
+export * from "./corrective.ts";
