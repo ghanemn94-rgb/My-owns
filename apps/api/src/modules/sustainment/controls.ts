@@ -2,7 +2,8 @@
 // T-DG4-BE-I2; REQ-S11-008 "a failed control check creates a recovery action", REQ-S11-004, REQ-S03-002):
 //   GET   /transformations/{t}/controls                                        list (transformation.read)
 //   POST  /transformations/{t}/controls                                        create, active (control.manage; BO, TO)
-//   PATCH /transformations/{t}/controls/{c}                                    edit, or retire with a reason (If-Match)
+//   PATCH /transformations/{t}/controls/{c}                                    edit, or retire with a reason (If-Match);
+//                                                                              retiring cancels its due checks and their tasks
 //   GET   /transformations/{t}/control-checks                                  list (transformation.read)
 //   POST  /transformations/{t}/control-checks/{k}/record                       passed | failed (control_check.record;
 //                                                                              BO, TO; If-Match)
@@ -446,6 +447,53 @@ async function updateControl(tx: Tx, request: FastifyRequest, transformationId: 
     ...(retiring ? { reason: body.retireReason! } : {}),
     changes: diffFields(current, updated, CONTROL_AUDIT_FIELDS, ["next_check_date"]),
   });
+  if (retiring) await cancelDueChecks(tx, ctx, transformationId, current.id, body.retireReason!);
+}
+
+/**
+ * A retired control is checked no more: each of its `due` checks becomes `cancelled` (final; ADR-0034 §6), audited with
+ * the retire reason, and its `control_check_due` work item is cancelled, so no task is left in the owner's My Work for
+ * a control that no longer exists. Recorded (passed/failed) checks are final and stay as they are.
+ */
+async function cancelDueChecks(
+  tx: Tx,
+  ctx: Awaited<ReturnType<typeof openSustainmentWrite>>,
+  transformationId: string,
+  controlId: string,
+  reason: string,
+): Promise<void> {
+  const cancelled = (await tx
+    .updateTable("control_check")
+    .set({
+      status: "cancelled",
+      version: sql<number>`version + 1`,
+      updated_at: sql<Date>`now()`,
+      updated_by: ctx.userId,
+    })
+    .where("control_id", "=", controlId)
+    .where("transformation_id", "=", transformationId)
+    .where("status", "=", "due")
+    .returning(["id", "version"])
+    .execute()) as { id: string; version: number }[];
+  for (const check of cancelled) {
+    await record(tx, ctx.audit, {
+      action: "control_check.cancel",
+      recordType: "control_check",
+      recordId: check.id,
+      organizationId: ctx.organizationId,
+      transformationId,
+      priorVersion: check.version - 1,
+      newVersion: check.version,
+      reason,
+      changes: { status: { from: "due", to: "cancelled" } },
+    });
+    await closeWorkItemsOfSubject(
+      tx,
+      userActor(ctx),
+      { organizationId: ctx.organizationId, subjectType: "control_check", subjectId: check.id },
+      "cancelled",
+    );
+  }
 }
 
 /**

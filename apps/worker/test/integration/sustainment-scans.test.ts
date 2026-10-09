@@ -305,7 +305,8 @@ describe("sustainment.control_check_scan (REQ-S11-008)", () => {
       ["control_check.failed", `control_check.failed:${check!.id}`],
     ]);
     // The relay's routing and validation for this event, then its envelope delivered twice (a redelivery).
-    expect(QUEUE_FOR_EVENT["control_check.failed"]).toBe(CORRECTIVE_CONSUMERS.control);
+    // One queue, whether the registry maps an event to a queue or (D-102 (1) fan-out) to a list of queues.
+    expect([QUEUE_FOR_EVENT["control_check.failed"]].flat()).toEqual([CORRECTIVE_CONSUMERS.control]);
     const e = events[0]!;
     outboxPayloadSchema(e.event_type, e.schema_version)!.parse(e.payload);
     const envelope: OutboxEnvelope = {

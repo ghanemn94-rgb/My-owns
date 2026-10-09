@@ -294,6 +294,37 @@ describe("control checks: a failed check emits one control_check.failed (REQ-S11
     expect(listed.body.items.map((k: { id: string }) => k.id)).toEqual([checkId]);
   });
 
+  it("retiring a control cancels its due check and the check's work item; a recorded check stays as it is", async () => {
+    const area = await createArea(send, s);
+    const { control: ctl, checkId, K } = await dueCheck(area.id);
+    expect((await workItemsOf(checkId)).map((i) => [i.kind, i.status])).toEqual([["control_check_due", "open"]]);
+    const retired = await send("PATCH", `${controls()}/${ctl.id}`, {
+      session: s.b.s.bo,
+      headers: ifm(2), // the scan advanced next_check_date (version 2)
+      body: { status: "retired", retireReason: "Synthetic: control replaced" },
+    });
+    expect([retired.status, retired.body.status], JSON.stringify(retired.body)).toEqual([200, "retired"]);
+    const row = await checkRow(checkId);
+    expect([row.status, row.version, row.updated_by, row.performed_at]).toEqual([
+      "cancelled",
+      2,
+      s.b.users.bo.id,
+      null,
+    ]);
+    expect((await workItemsOf(checkId)).map((i) => [i.kind, i.status])).toEqual([["control_check_due", "cancelled"]]);
+    const audit = (await auditOf(api.db, checkId)).filter((e) => e.action === "control_check.cancel");
+    expect(audit.map((e) => [e.prior_version, e.new_version, e.reason])).toEqual([
+      [1, 2, "Synthetic: control replaced"],
+    ]);
+    const late = await send("POST", K, { session: s.to.session, headers: ifm(2), body: { result: "passed" } });
+    expect([late.status, late.body.code, late.body.detail]).toEqual([
+      422,
+      "control_check.final",
+      "This control check is cancelled and can no longer be changed.",
+    ]);
+    expect(await outboxOf(checkId)).toEqual([]);
+  });
+
   it("authorization is re-checked at commit time: a recorder revoked mid-request gets 403 and nothing is written", async () => {
     const area = await createArea(send, s);
     const { checkId, K } = await dueCheck(area.id);
