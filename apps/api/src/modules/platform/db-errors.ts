@@ -1234,6 +1234,128 @@ export function mapP4RaidError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P4 slices F and G (ADR-0033 §10, ADR-0034 §12): the database last lines of the adoption and sustainment tables, each
+ * task appending its own lines to this block (p4-work-split §F+G). The API returns the same codes and exact English
+ * texts first; these mappings only answer a write that reached the guard (S-11). Null when the error is not one of them.
+ */
+export function mapP4AdoptionSustainmentError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  const message = error.message ?? "";
+  switch (constraint) {
+    // ---- BE-H (T-DG4-BE-H): T13 stakeholder groups, champions, interventions, involvement, champion constraints.
+    case "stakeholder_group_name_key":
+      return problems.duplicate(
+        "stakeholder_group.name_taken",
+        "A stakeholder group with this name already exists in this transformation.",
+      );
+    case "stakeholder_group_archived_final":
+      return rule422(
+        "stakeholder_group.archived",
+        "This stakeholder group is archived and can no longer be changed.",
+        "",
+      );
+    case "stakeholder_group_kpi_fkey":
+      return rule422(
+        "stakeholder_group.kpi_invalid",
+        "The adoption KPI must be a KPI of this transformation.",
+        "/adoptionKpiDefinitionId",
+      );
+    case "stakeholder_champion_active_key":
+      return problems.duplicate("stakeholder_champion.exists", "This person is already a champion of this group.");
+    case "stakeholder_champion_removed_final":
+      return problems.invalidTransition("This champion is already removed.");
+    case "adoption_intervention_final": {
+      const status = /a (done|cancelled) intervention is final/.exec(message)?.[1] ?? "closed";
+      return rule422("adoption_intervention.final", `This intervention is ${status} and can no longer be changed.`, "");
+    }
+    case "adoption_intervention_transition": {
+      const m = /: ([a-z_]+) -> ([a-z_]+) is not a legal transition/.exec(message);
+      return rule422(
+        "adoption_intervention.status_transition",
+        `This intervention cannot move from ${m?.[1] ?? "its status"} to ${m?.[2] ?? "this status"}.`,
+        "/status",
+      );
+    }
+    case "adoption_intervention_owner_required":
+      return rule422(
+        "adoption_intervention.owner_required",
+        "Assign an owner before completing this intervention.",
+        "",
+      );
+    case "adoption_intervention_done_complete":
+      return rule422(
+        "adoption_intervention.outcome_required",
+        "Record the outcome before completing or cancelling the intervention.",
+        "/outcomeNote",
+      );
+    case "stakeholder_group_code_key":
+    case "adoption_intervention_code_key":
+      // A concurrent code allocation: retry.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "stakeholder_involvement_withdraws_key":
+      return rule422("stakeholder_involvement.already_withdrawn", "This involvement record is already withdrawn.", "");
+    case "stakeholder_involvement_design_decision":
+    case "stakeholder_involvement_decision_fkey":
+      return rule422(
+        "stakeholder_involvement.target_invalid",
+        "Involvement is recorded on a design workshop or a T04 design decision of this transformation.",
+        "/decisionId",
+      );
+    case "stakeholder_involvement_workshop_fkey":
+      return rule422(
+        "stakeholder_involvement.target_invalid",
+        "Involvement is recorded on a design workshop or a T04 design decision of this transformation.",
+        "/workshopId",
+      );
+    case "champion_constraint_raised_by_champion":
+      return forbidden403(
+        "champion_constraint.not_champion",
+        "Only an active champion of this group can raise a constraint.",
+      );
+    case "champion_constraint_design_decision":
+    case "champion_constraint_decision_fkey":
+      return rule422(
+        "champion_constraint.decision_invalid",
+        "A constraint links to a T04 design decision of this transformation.",
+        "/decisionId",
+      );
+    case "champion_constraint_final": {
+      const status = /a (addressed|withdrawn) constraint is final/.exec(message)?.[1] ?? "closed";
+      return rule422("champion_constraint.final", `This constraint is ${status} and can no longer be changed.`, "");
+    }
+    case "stakeholder_group_starts_active":
+    case "stakeholder_group_code_immutable":
+    case "stakeholder_group_archive_complete":
+    case "stakeholder_group_intervention_types_valid":
+    case "stakeholder_group_intervention_types_distinct":
+    case "stakeholder_champion_starts_active":
+    case "stakeholder_champion_identity":
+    case "stakeholder_champion_same_org":
+    case "stakeholder_champion_removed_complete":
+    case "adoption_intervention_starts_planned":
+    case "adoption_intervention_origin_shape":
+    case "adoption_intervention_origin_immutable":
+    case "adoption_intervention_evaluation_matches":
+    case "adoption_intervention_trigger_key":
+    case "stakeholder_involvement_target":
+    case "stakeholder_involvement_withdraw_matches":
+    case "champion_constraint_starts_open":
+    case "champion_constraint_identity":
+    case "champion_constraint_resolved_complete":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
@@ -1265,6 +1387,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4KpiActual !== null) return p4KpiActual;
   const p4Raid = mapP4RaidError(error);
   if (p4Raid !== null) return p4Raid;
+  const p4AdoptionSustainment = mapP4AdoptionSustainmentError(error);
+  if (p4AdoptionSustainment !== null) return p4AdoptionSustainment;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,

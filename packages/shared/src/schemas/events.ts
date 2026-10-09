@@ -8,6 +8,8 @@ import { kpiThresholdChangedV1, kpiTrajectoryApprovedV1, kpiVersionActivatedV1 }
 import { kpiActualAcceptedV1, kpiDeviationEvaluatedV1, kpiValuesRecalculatedV1 } from "./kpi-actuals.ts";
 // P4 slice B (T-DG4-KBE-E; ADR-0030 §3, §4, §6): the measurement submission, Finance decision and variance events.
 import { benefitEvidenceSubmittedV1, benefitValueDecidedV1, benefitVarianceEvaluatedV1 } from "./benefit-values.ts";
+// P4 slice F (T-DG4-BE-H; ADR-0033 §4 step 6): the ADR-0031 §5.4 check-failed payload.
+import { checkFailedPayload } from "./corrective.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -53,6 +55,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "benefit.value_validated": { 1: benefitValueDecidedV1 },
   "benefit.value_rejected": { 1: benefitValueDecidedV1 },
   "benefit.variance_evaluated": { 1: benefitVarianceEvaluatedV1 },
+  // T-DG4-BE-H (ADR-0033 §4 step 6; ADR-0031 §5.4): one per below-trajectory intervention; consumer raid.corrective_adoption.
+  "adoption.check_failed": { 1: checkFailedPayload },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 
