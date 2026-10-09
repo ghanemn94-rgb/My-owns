@@ -706,7 +706,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-BE-G: + createExecutiveDecision, updateExecutiveDecision, recordExecutiveDecisionOutcome,
     // createEscalationRule, updateEscalationRule, recordBlockerStatus (6 JSON bodies).
     // T-DG4-KBE-F: + createAdoptionMetricLink (1 JSON body; removeAdoptionMetricLink is bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([264, 263, 1]);
+    // T-DG4-BE-H2: + createAssessmentForm, updateAssessmentForm, createAssessmentInvitations, createAssessmentRecord,
+    // reviewAssessmentRecord, withdrawAssessmentRecord, createTrainingRecord, updateTrainingRecord (8 JSON bodies;
+    // publishAssessmentForm, retireAssessmentForm and cancelAssessmentInvitation are bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([272, 271, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
