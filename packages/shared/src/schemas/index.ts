@@ -45,3 +45,6 @@ export * from "./benefits.ts";
 // P4 slice A mirrors of KBE-B (kpi-benefits-engineer, T-DG4-KBE-B; p4-work-split §A.2): KPI dictionary v2, versions,
 // formula inputs, RAG thresholds, target trajectories, data-quality findings.
 export * from "./kpi-versions.ts";
+// P4 slice C mirrors (backend-workflow-engineer, T-DG4-BE-C; p4-work-split §I+C.3): T11 decision rights, T12 RACI,
+// governance matrices and Transform readiness. Line added by BE-C (see its handback).
+export * from "./governance.ts";

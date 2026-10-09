@@ -671,7 +671,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-KBE-B: + createKpiVersion, updateKpiVersion, withdrawKpiVersion, createKpiRagThreshold,
     // createTargetTrajectory, approveTargetTrajectory, withdrawTargetTrajectory, resolveDataQualityFinding (JSON bodies;
     // activateKpiVersion is bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([184, 183, 1]);
+    // T-DG4-BE-C: + createDecisionRight, updateDecisionRight, createRaciDeliverable, updateRaciDeliverable,
+    // submitGovernanceMatrix (5 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([189, 188, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

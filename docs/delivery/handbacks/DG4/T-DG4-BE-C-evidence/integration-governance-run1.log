@@ -1,0 +1,93 @@
+port-policy: PostgreSQL listening on port 23900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-c
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv0jwzdz_baaeed89 (server_encoding UTF8); applied 46 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/governance/raci-matrices.test.ts (12 tests | 2 failed) 2586ms
+   ✓ REQ-PB-067: T12 seeded from B0101; cell values > the template and every transformation's copy match B0101 exactly (columns SP, TL, BO, WL, FIN, TD) 28ms
+   ✓ REQ-PB-067: T12 seeded from B0101; cell values > a cell value 'X' is rejected (422 raci.invalid_value); 'A/R' is accepted; a value longer than 3 is a 400 110ms
+   ✓ REQ-S10-009: exactly one accountable per deliverable > two A entries are rejected; zero is rejected; moving the A in one save passes; nothing is written on a refusal 106ms
+   ✓ REQ-S10-009: exactly one accountable per deliverable > 'A/R' for BAU Handover counts as one accountable; adding another A there is rejected 49ms
+   × REQ-S10-009: exactly one accountable per deliverable > a documented governance rule (accountability exception) permits two; a new deliverable needs one otherwise 64ms
+     → contract: updateRaciDeliverable does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11f3a-fc31-72a9-9efc-312cad29b6a7"}
+   ✓ REQ-S10-007: independent copies; edits are authorized, versioned and audited > changing one transformation's RACI changes neither the template nor another transformation 228ms
+   ✓ REQ-S10-007: independent copies; edits are authorized, versioned and audited > AUD, BO and outsiders are refused; If-Match 428/409; each changed cell and the deliverable are audited 97ms
+   ✓ REQ-S10-007: independent copies; edits are authorized, versioned and audited > commit-time authorization: a raci.edit right revoked while the request waits is refused, nothing written 196ms
+   × governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > submit freezes the version and routes it to the Sponsor; the Sponsor approves it; a later edit returns it to draft 270ms
+     → contract: updateRaciDeliverable does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11f3a-ff54-77ed-bc36-a818908a61ee"}
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > T11: TL submits (decision_right.configure); a rejection returns the matrix to draft and unfreezes the rows 279ms
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > an unmapped Sponsor blocks the submit with a visible routing error; nothing is written 190ms
+   ✓ REQ-PB-008: Transform readiness (operating model before execution) > not ready when the charter decision rights or T11 are empty; ready once they are completed; DG3 readiness unchanged  384ms
+ ❯ |integration| apps/api/test/integration/governance/decision-rights.test.ts (11 tests | 1 failed) 1267ms
+   ✓ REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > the template lists the four rows exactly as the playbook writes them 9ms
+   × REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > POST /transformations copies the four rows verbatim, both matrix headers and the six T12 deliverables (36 cells) 18ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a11f3b-08b7-71da-8deb-2e244cf04ddf","errors":[{"pointer":"/entryPhase","code":"validation.required","message":"validation.required"}]}: expected 400 to be 201 // Object.is equality
+   ✓ REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > routeByDecisionRight('business_scope_change') resolves the Sponsor-mapped person; a decision_request is assigned to them 70ms
+   ✓ REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > an unmapped Approve party is a visible routing error (422 routing.role_unmapped), never a fallback 211ms
+   ✓ REQ-PB-066: SLA due dates by type (D-089 Q6) > a Business scope change raised Thursday is due 5 working days later, skipping the configured weekend and holidays 40ms
+   ✓ REQ-PB-066: SLA due dates by type (D-089 Q6) > an approval request stores the working-day due date of its request business date (never elapsed days) 36ms
+   ✓ REQ-PB-066: SLA due dates by type (D-089 Q6) > next SteerCo: Unknown until a meeting is scheduled (the provider), the meeting date once it is; urgent needs a configured route 71ms
+   ✓ REQ-PB-066: SLA due dates by type (D-089 Q6) > per release plan: the linked milestone's approved date, Unknown without one 82ms
+   ✓ REQ-PB-066: SLA due dates by type (D-089 Q6) > no default calendar: a working-days SLA is Unknown (calendar_not_configured), never counted in elapsed days 1ms
+   ✓ T11 edits (ADR-0026 §5; S-4) > TL adds and edits a row; AUD, BO and outsiders are refused; If-Match 428/409; audited; the template never changes 147ms
+   ✓ T11 edits (ADR-0026 §5; S-4) > commit-time authorization: a configure right revoked while the request waits is refused, nothing written 188ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/decision-rights.test.ts > REQ-PB-065: the four T11 rows, seeded verbatim (B0099) > POST /transformations copies the four rows verbatim, both matrix headers and the six T12 deliverables (36 cells)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a11f3b-08b7-71da-8deb-2e244cf04ddf","errors":[{"pointer":"/entryPhase","code":"validation.required","message":"validation.required"}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ apps/api/test/integration/governance/decision-rights.test.ts:97:46
+     95|       body: { businessUnitId: w.a1, name: "Synthetic P4 instantiation"…
+     96|     });
+     97|     expect(t.status, JSON.stringify(t.body)).toBe(201);
+       |                                              ^
+     98|     const id = t.body.id as string;
+     99|     const rows = await send("GET", `/api/v1/transformations/${id}/deci…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/raci-matrices.test.ts > REQ-S10-009: exactly one accountable per deliverable > a documented governance rule (accountability exception) permits two; a new deliverable needs one otherwise
+Error: contract: updateRaciDeliverable does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11f3a-fc31-72a9-9efc-312cad29b6a7"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/governance/raci-matrices.test.ts:149:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/raci-matrices.test.ts > governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > submit freezes the version and routes it to the Sponsor; the Sponsor approves it; a later edit returns it to draft
+Error: contract: updateRaciDeliverable does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a11f3a-ff54-77ed-bc36-a818908a61ee"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ apps/api/test/integration/governance/raci-matrices.test.ts:246:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 20 passed (23)
+   Start at  05:55:13
+   Duration  11.89s (transform 2.34s, setup 0ms, collect 6.05s, tests 3.85s, environment 0ms, prepare 116ms)
+
