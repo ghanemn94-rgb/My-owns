@@ -10,6 +10,7 @@ import { operations } from "../support/contract.ts";
 import { auditOfRequest, call, seedWorld, startApi, type TestApi, type World } from "../support/harness.ts";
 import { ifm, setupP2World, type P2World } from "../support/p2-fixtures.ts";
 import { P3_OPERATION_IDS } from "../support/p3-operations.ts";
+import { P4_OPERATION_IDS } from "../support/p4-operations.ts";
 
 /** The 33 P1 operations (DG1-approved, byte-stable); everything else in the contract is P2. */
 const P1_OPERATIONS = new Set([
@@ -48,9 +49,11 @@ const P1_OPERATIONS = new Set([
   "listTransformationAudit",
 ]);
 
-// P3 operations (p3-operations.ts) are outside this P2 sweep; P3 has its own AUD sweep (p3-work-split.md).
+// P3 operations (p3-operations.ts) are outside this P2 sweep; P3 has its own AUD sweep (p3-work-split.md). So are the P4
+// operations (p4-operations.ts, T-DG4-ARCH-01); each P4 slice tests AUD on its own operations (p4-work-split.md S-4).
 const P2_OPERATIONS = operations.filter(
-  (o) => !P1_OPERATIONS.has(o.operationId) && !P3_OPERATION_IDS.has(o.operationId),
+  (o) =>
+    !P1_OPERATIONS.has(o.operationId) && !P3_OPERATION_IDS.has(o.operationId) && !P4_OPERATION_IDS.has(o.operationId),
 );
 const P2_MUTATIONS = P2_OPERATIONS.filter((o) => o.method !== "GET");
 const P2_READS = P2_OPERATIONS.filter((o) => o.method === "GET");

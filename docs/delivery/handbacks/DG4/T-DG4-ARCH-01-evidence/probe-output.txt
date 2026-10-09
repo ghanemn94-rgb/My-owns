@@ -1,0 +1,86 @@
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 31 (0001_identity_access.sql .. 0031_p4_approvals_permissions.sql)
+PASS  fresh database: all migrations apply  -- applied 31: 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql
+PASS  P3 database populated (0001-0027 + 2 synthetic transformations with the P3 starter structure + a DG3-style delegation)  -- applied 27, p3 starter rows 28 + 28
+PASS  P4 over P3 database: 0028+ apply  -- applied 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql
+PASS  backfill: one default calendar per organization (Asia/Riyadh, Sun-Thu), no holiday  -- [{"organization_id":"01990000-0000-7000-8000-000000000001","code":"DEFAULT","timezone":"Asia/Riyadh","ww":"{7,1,2,3,4}","is_default":true},{"organization_id":"01990000-0000-7000-8000-000000000008","code":"DEFAULT","timezone":"Asia/Riyadh","ww":"{7,1,2,3,4}","is_default":true}]
+PASS  backfill: per transformation 2 matrices, 4 T11 rows, 6 T12 deliverables, 36 cells; every row audited as system/migration  -- {"matrices":4,"t11":8,"t12":12,"cells":72,"audited":98}
+PASS  the DG3-style delegation row survives unchanged (new columns NULL)  -- [{"version":1,"absence_note":null,"revoked_at":null}]
+PASS  p4_instantiate_transformation is idempotent  -- second run created 0
+PASS  p4_ensure_default_calendar is idempotent  -- second run created 0
+PASS  fresh: p4_instantiate_transformation creates the P2+P3+P4 starter structure  -- created 76
+PASS  S01 T11 template = the four B0099 rows verbatim  -- business_scope_change:working_days/5/SP, funding_reallocation:next_steerco_or_urgent/null/STEERCO, target_state_design:working_days/10/BO, go_live_scale:release_plan/null/BO
+PASS  S02 transformation T11 copy is verbatim; Business scope change approves by SP  -- {"decision_en":"Business scope change","approve_label":"Sponsor","sla_label":"5 working days","approve_party_code":"SP"}
+PASS  S03 T12 template = B0101 exactly (SP TL BO WL FIN TD)  -- [{"d":"Charter","v":"A R C I C I"},{"d":"Target Operating Model","v":"C R A C C C"},{"d":"Business Case","v":"A R C C R C"},{"d":"Initiative Delivery","v":"I C A R C C"},{"d":"Benefits Validation","v":"I C A C R I"},{"d":"BAU Handover","v":"I C A/R R C C"}]
+PASS  G01 business_calendar insert WITHOUT its audit event fails at COMMIT  -- 23000 business_calendar_audit_required no audit_event for business_calendar 01990000-0000-7000-8000-000000000066 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  G02 business_calendar insert WITH its audit event commits  -- 01990000-0000-7000-8000-000000000065
+PASS  G03 business_calendar version must step by exactly 1  -- 23514 business_calendar_version_step business_calendar: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  G04 workweek with weekday 8 is refused  -- 23514 business_calendar_workweek_valid new row for relation "business_calendar" violates check constraint "business_calendar_workweek_valid"
+PASS  G05 workweek with a duplicate day is refused  -- 23514 business_calendar_workweek_valid new row for relation "business_calendar" violates check constraint "business_calendar_workweek_valid"
+PASS  G06 an unknown time zone is refused  -- 23514 business_calendar_timezone_known business_calendar: unknown time zone Mars/Olympus
+PASS  G07 a second default calendar in one organization is refused  -- 23505 business_calendar_one_default duplicate key value violates unique constraint "business_calendar_one_default"
+PASS  G08 a holiday range longer than 31 days is refused  -- 23514 business_calendar_holiday_range new row for relation "business_calendar_holiday" violates check constraint "business_calendar_holiday_range"
+PASS  G09 p4_business_date: 2026-11-02 23:30 Riyadh -> 2026-11-02; 2026-11-02 00:30 Riyadh (2026-11-01T21:30Z) -> 2026-11-02  -- {"a":"2026-11-02","b":"2026-11-02"}
+PASS  G10 work_item insert WITHOUT its audit event fails at COMMIT  -- 23000 work_item_audit_required no audit_event for work_item 01990000-0000-7000-8000-00000000006a at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  G11 work_item insert WITH its audit event commits  -- 01990000-0000-7000-8000-000000000069
+PASS  G12 a second work_item with the same dedupe key is refused (restart cannot duplicate)  -- 23505 work_item_dedupe_key duplicate key value violates unique constraint "work_item_dedupe_key"
+PASS  G13 work_item link_path must be relative (no //host)  -- 23514 work_item_link_path_relative new row for relation "work_item" violates check constraint "work_item_link_path_relative"
+PASS  G14 work_item open -> done commits  -- done
+PASS  G15 a closed work_item never reopens  -- 23514 work_item_closed work_item: a done item is closed and cannot change status
+PASS  G16 inbox_notification insert and first read commit  -- 01990000-0000-7000-8000-000000000073
+PASS  G17 inbox_notification read_at is set once  -- 23514 inbox_notification_read_once inbox_notification: read_at is set once
+PASS  G18 access_group and a member commit (audited)  -- 01990000-0000-7000-8000-000000000076
+PASS  G19 a user of another organization cannot join the group  -- 23514 access_group_member_same_org access_group_member: user 01990000-0000-7000-8000-000000000009 is not in organization 01990000-0000-7000-8000-000000000001
+PASS  G20 role_mapping BO -> named person commits  -- 01990000-0000-7000-8000-00000000007b
+PASS  G21 a second active mapping for the same party is refused  -- 23505 role_mapping_active_key duplicate key value violates unique constraint "role_mapping_active_key"
+PASS  G22 a mapping names exactly one target  -- 23514 role_mapping_one_target new row for relation "role_mapping" violates check constraint "role_mapping_one_target"
+PASS  G23 a mapping's target is immutable (end it and map again)  -- 23514 role_mapping_target_immutable role_mapping: party and target are immutable; end the mapping and create a new one
+PASS  G24 delegation A(SP) -> B(BO) commits  -- 01990000-0000-7000-8000-00000000007f
+PASS  G25 delegation B -> A (a loop) is refused  -- 23514 delegation_no_loop delegation: 01990000-0000-7000-8000-000000000006 -> 01990000-0000-7000-8000-000000000004 would create a delegation loop
+PASS  G26 delegation B(BO) -> C(TL) commits (a chain, not a loop)  -- 01990000-0000-7000-8000-000000000081
+PASS  G27 delegation C -> A closing A->B->C->A is refused  -- 23514 delegation_no_loop delegation: 01990000-0000-7000-8000-000000000003 -> 01990000-0000-7000-8000-000000000004 would create a delegation loop
+PASS  G28 a REVOKED delegation C -> A is not part of the graph (inserted revoked)  -- 01990000-0000-7000-8000-000000000083
+PASS  G29 delegation version must step by exactly 1 (row guard attached)  -- 23514 delegation_version_step delegation: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  G30 revocation fields come together with status revoked  -- 23514 delegation_revocation_complete new row for relation "delegation" violates check constraint "delegation_revocation_complete"
+PASS  R01 BAU Handover: BO is 'A/R' and that single cell satisfies the one-accountable guard (the seed committed)  -- {"id":"01a11e57-6978-71ab-84d9-758fe9bb5532","value":"A/R","version":1}
+PASS  R02 a RACI cell value 'X' is refused  -- 23514 transformation_raci_assignment_value new row for relation "transformation_raci_assignment" violates check constraint "transformation_raci_assignment_value"
+PASS  R03 a deliverable with two A entries is refused at COMMIT  -- 23514 transformation_raci_one_accountable transformation_raci: deliverable 01a11e57-696c-76f4-951a-2baa1d57376b (Charter) has 2 accountable assignments; exactly one is required
+PASS  R04 a deliverable with zero A entries is refused at COMMIT  -- 23514 transformation_raci_one_accountable transformation_raci: deliverable 01a11e57-696c-76f4-951a-2baa1d57376b (Charter) has 0 accountable assignments; exactly one is required
+PASS  R05 moving the A from SP to TL in one transaction commits; the template and transformation 2 are unchanged  -- moved
+PASS  R06 REQ-S10-007: the seeded template (SP=A, TL=R) and transformation 2 (SP=A) are unchanged  -- template SP,TL = A,R; T2 SP = A
+PASS  R07 two A entries commit when the deliverable documents an accountability exception  -- exception
+PASS  A01 an approval requested on a version the subject is not at is refused  -- 23514 approval_subject_version_current approval: requested version 2 but the subject is at version 1
+PASS  A02 approval of the current RACI version commits (pending, round 1)  -- 01990000-0000-7000-8000-00000000008c
+PASS  A03 matrix rows are frozen while the matrix is in approval  -- 23514 transformation_raci_assignment_matrix_in_approval transformation_raci_assignment: the raci matrix is in approval; its rows cannot change until it is decided
+PASS  A04 a second open approval for the same subject is refused  -- 23505 approval_one_open_per_subject duplicate key value violates unique constraint "approval_one_open_per_subject"
+PASS  A05 SoD: the requester cannot decide their own request  -- 23514 approval_decision_sod approval_decision: the requester cannot decide their own request (separation of duties)
+PASS  A06 SoD: nobody decides on the requester's behalf  -- 23514 approval_decision_sod approval_decision: the requester cannot decide their own request (separation of duties)
+PASS  A07 a decision without rationale (blank) is refused  -- 23514 approval_decision_rationale_required new row for relation "approval_decision" violates check constraint "approval_decision_rationale_required"
+PASS  A08 a decision on version N-1 is refused (stale)  -- 23514 approval_decision_stale approval_decision: decides round 1 version 1 but the request is round 1 version 2
+PASS  A09 'defer' without a new date is refused  -- 23514 approval_decision_defer_date new row for relation "approval_decision" violates check constraint "approval_decision_defer_date"
+PASS  A10 'approved' without a matching decision row is refused (no timer/system approval)  -- 23514 approval_outcome_needs_decision approval: status approved needs a matching decision of round 1 by a user
+PASS  A11 'request changes' keeps the request open (status changes_requested)  -- changes_requested
+PASS  A12 a changes_requested approval cannot be decided until resubmitted  -- 23514 approval_decision_open approval_decision: approval 01990000-0000-7000-8000-00000000008c is changes_requested and cannot be decided
+PASS  A13 resubmission must be on a newer subject version  -- 23514 approval_resubmission approval: a resubmission starts round 2 on a newer subject version
+PASS  A14 resubmission on the new subject version starts round 2  -- subject v4
+PASS  A15 approving the request after the subject moved to a newer version is refused (stale -> 409 in the API)  -- 23514 approval_decision_stale approval_decision: the subject moved from version 4 to 5
+PASS  A16 escalation of an approval that is not yet overdue is refused  -- 23514 approval_escalation_overdue approval_escalation: approval 01990000-0000-7000-8000-00000000008c is not open and overdue for round 2 and due date 2099-01-01
+PASS  A17 the approval becomes overdue (its due date is set to yesterday's business date)  -- overdue
+PASS  A18 the overdue approval escalates once; the status stays pending  -- pending
+PASS  A19 a retried escalation for the same round and due date is refused (exactly once)  -- 23505 approval_escalation_once duplicate key value violates unique constraint "approval_escalation_once"
+PASS  A20 an escalation update cannot change the status  -- 23514 approval_escalation_no_outcome approval: an escalation cannot change the status
+PASS  A21 approval_escalation is append-only (UPDATE)  -- 42501 approval_escalation is append-only: UPDATE is not allowed
+PASS  A22 withdraw the stale request, re-request on the current version, SP approves with rationale  -- 01990000-0000-7000-8000-0000000000a5
+PASS  A23 an approved approval is final and immutable  -- 23514 approval_final_immutable approval: a approved approval is final and immutable
+PASS  A24 approval_decision is append-only (UPDATE)  -- 42501 approval_decision is append-only: UPDATE is not allowed
+PASS  A25 approval_decision is append-only (DELETE)  -- 42501 approval_decision is append-only: DELETE is not allowed
+PASS  A26 approval insert WITHOUT its audit event fails at COMMIT  -- 23000 approval_audit_required no audit_event for approval 01990000-0000-7000-8000-0000000000aa at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  A27 approval_decision_record lists the P4 decisions (request changes, then approve) with the request version  -- [{"source":"approval","outcome":"changes_requested","subject_version":2},{"source":"approval","outcome":"approved","subject_version":5}]
+PASS  A28 ADM_TECH can never hold approval.decide (0001 SoD trigger)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission approval.decide (separation of duties)
+PASS  A29 no technical_admin role holds a business_approval or finance_validation permission after 0031  -- rows 0
+PASS  J01 job_schedule seeds (3 rows, Asia/Riyadh, audited)  -- [{"code":"approval.escalation_scan","cron":"*/15 * * * *","timezone":"Asia/Riyadh"},{"code":"delegation.expiry_sweep","cron":"*/15 * * * *","timezone":"Asia/Riyadh"},{"code":"kpi.reporting_period_open","cron":"5 0 * * *","timezone":"Asia/Riyadh"}]
+PASS  J02 job_schedule version must step by exactly 1  -- 23514 job_schedule_version_step job_schedule: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  C01 concurrent halves of a loop: the first commits, the second waits on lock 730224 and is refused  -- refused: delegation_no_loop delegation: 01990000-0000-7000-8000-0000000000ab -> 01990000-0000-7000-8000-000000000006 would create a delegation loop
+PROBE RESULT: PASS (all guards fired as specified)
+EXIT=0

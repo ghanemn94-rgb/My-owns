@@ -111,13 +111,17 @@ This is the **one registry** of the transaction-scoped advisory-lock classes. AD
 | 730221 | `DEPENDENCY_GRAPH_LOCK_CLASS` (workflows) | initiative dependency graph of one transformation | `transformation_id` | API (T08) + trigger `dependency_cycle_guard` (0022) |
 | 730222 | `PRIORITIZATION_LOCK_CLASS` (portfolio) | prioritization writes of one transformation (weight-set proposal and activation, ranking snapshots, score results) | `transformation_id` | API only (ADR-0022) |
 | 730223 | `DEPENDENCY_TYPE_LOCK_CLASS` (workflows) | creation of one dependency-type code | the requested code | API only (ADR-0023 §4) |
+| 730224 | `delegationGraph` (access) | delegation graph of one organization (loop guard) | `organization_id` | API (BE-B) + trigger `delegation_loop_guard` (0029; `delegation_graph_lock_class`) (ADR-0026 §3) |
+| 730225 | `raciDeliverable` (governance) | the accountable cells of one T12 RACI deliverable | the deliverable id | API (BE-C) + deferred triggers `transformation_raci_*_one_accountable` (0030; `raci_deliverable_lock_class`) (ADR-0026 §7) |
+| 730226 | `approvalSubject` (workflows) | the subject record of an approval (request, decision, subject update) | the subject record id | API (BE-B, and any module updating a subject with an open approval) + triggers `approval_guard`, `approval_decision_guard` (0031; `approval_subject_lock_class`) (ADR-0026 §4) |
+| 730227 | — | reserved for the T-DG4-ARCH-01 block (p4-plan §4); not allocated | — | — |
 
 Rules:
 
 - **Single source.** The numbers live in `apps/api/src/modules/platform/advisory-locks.ts` (`ADVISORY_LOCK_CLASSES`, exported by `platform/index.ts`). Each module's constant is defined from it, and no other module file spells a number. A migration that shares a lock declares the same number as a PL/pgSQL `*_lock_class CONSTANT`.
 - **Tested.** `platform/advisory-locks.test.ts` asserts that the classes are distinct int4 values, that every `*_lock_class` constant in `packages/db/migrations/` equals its registry entry, and that no module source outside the registry spells a class number.
 - **The 730222 collision (fixed).** Until T-DG3-ARCH-03, dependency-type creation (BE-C) and prioritization (BE-D) both used 730222. Dependency-type creation now has 730223. No migration was involved: both locks are API-only.
-- **A new class** takes the next free number (730224, …), adds a row here and an entry in the registry file in the same change.
+- **A new class** takes the next free number in its task's P4 block (p4-plan §4: 730224–730249, one block per architecture task), adds a row here and an entry in the registry file in the same change. Rows 730224–730227 were added by T-DG4-ARCH-01 (2026-10-09).
 - **Out of scope** (a different key space, so no collision with the two-int4 form): the single-bigint locks `pg_advisory_xact_lock(hashtextextended(<text>, 0))` used for idempotency keys, the North Star and readable codes, and the fixed bigint keys of the migration runner and bootstrap in `packages/db`.
 
 ## Alternatives considered

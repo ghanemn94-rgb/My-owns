@@ -1,4 +1,4 @@
-// Kysely `Database` interface for the P1, P2 and P3 tables (ADR-0003, ADR-0016, ADR-0021..0024), written from
+// Kysely `Database` interface for the P1, P2, P3 and P4 tables (ADR-0003, ADR-0016, ADR-0021..0026), written from
 // docs/architecture/data-dictionary.md (P2 tables: migrations 0010-0018; 0019+ by backend-workflow-engineer; P3: 0020-0024). An integration test (packages/db/test/integration/catalogue.test.ts)
 // compares every table, view and column here with information_schema after the migrations run, so a drift fails CI.
 //
@@ -168,6 +168,12 @@ export interface DelegationTable extends Stamps {
   effective_from: Timestamp;
   effective_to: Timestamp;
   status: Generated<string>;
+  /** P4 (0029, ADR-0026 §3). */
+  absence_note: string | null;
+  requested_by_user_id: string | null;
+  revoked_at: NullableTimestamp;
+  revoked_by: string | null;
+  revoke_reason: string | null;
 }
 
 export interface TransformationTable {
@@ -1813,6 +1819,323 @@ export interface GateDecisionAgreementTable {
   confirmed_at: TimestampDefault;
 }
 
+// -----------------------------------------------------------------------------------------------------------------
+// P4, slices I and C (T-DG4-ARCH-01; ADR-0025, ADR-0026): migrations 0028-0031.
+
+export interface BusinessCalendarTable extends Stamps {
+  id: string;
+  organization_id: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  timezone: Generated<string>;
+  workweek: Generated<number[]>;
+  is_default: Generated<boolean>;
+  status: Generated<string>;
+}
+
+export interface BusinessCalendarHolidayTable extends Stamps {
+  id: string;
+  organization_id: string;
+  calendar_id: string;
+  date_from: string;
+  date_to: string;
+  name_en: string;
+  name_ar: string;
+  status: Generated<string>;
+}
+
+export interface JobScheduleTable extends Stamps {
+  id: string;
+  code: string;
+  queue_name: string;
+  cron: string;
+  timezone: Generated<string>;
+  enabled: Generated<boolean>;
+  description_en: string;
+  description_ar: string;
+  owner_module: string;
+}
+
+export interface WorkItemKindTable {
+  code: string;
+  owner_module: string;
+  label_en: string;
+  label_ar: string;
+  source_ref: string;
+}
+
+export interface WorkItemTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string | null;
+  kind: string;
+  assignee_user_id: string;
+  subject_type: string;
+  subject_id: string;
+  link_path: string;
+  message_key: string;
+  message_params: JsonDefault;
+  due_date: string | null;
+  period_label: string | null;
+  status: Generated<string>;
+  completed_at: NullableTimestamp;
+  completed_by: string | null;
+  dedupe_key: string;
+  created_source: string;
+}
+
+export interface InboxNotificationTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string | null;
+  recipient_user_id: string;
+  work_item_id: string | null;
+  link_path: string;
+  message_key: string;
+  message_params: JsonDefault;
+  dedupe_key: string;
+  read_at: NullableTimestamp;
+}
+
+export interface AccessGroupTable extends Stamps {
+  id: string;
+  organization_id: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  description: string | null;
+  owner_user_id: string;
+  status: Generated<string>;
+}
+
+export interface AccessGroupMemberTable extends Stamps {
+  id: string;
+  organization_id: string;
+  group_id: string;
+  user_id: string;
+  effective_from: TimestampDefault;
+  effective_to: NullableTimestamp;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+}
+
+export interface GovernancePartyTable {
+  code: string;
+  ordinal: number;
+  kind: string;
+  role_code: string | null;
+  label_en: string;
+  label_ar: string;
+  source_ref: string;
+}
+
+export interface RoleMappingTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  party_code: string;
+  target_kind: string;
+  user_id: string | null;
+  group_id: string | null;
+  status: Generated<string>;
+  ended_at: NullableTimestamp;
+  ended_by: string | null;
+  end_reason: string | null;
+}
+
+export interface DecisionRightTemplateTable {
+  key: string;
+  ordinal: number;
+  source_decision_en: string;
+  source_recommend_en: string;
+  source_approve_en: string;
+  source_consult_en: string;
+  source_inform_en: string;
+  source_sla_en: string;
+  decision_ar: string;
+  recommend_ar: string;
+  approve_ar: string;
+  consult_ar: string;
+  inform_ar: string;
+  sla_ar: string;
+  recommend_parties: string[];
+  approve_party_code: string;
+  consult_parties: string[];
+  inform_parties: string[];
+  sla_type: string;
+  sla_working_days: number | null;
+  escalation_chain: string[];
+  source_ref: string;
+}
+
+export interface GovernanceMatrixTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kind: string;
+  status: Generated<string>;
+  approved_version: number | null;
+  approved_at: NullableTimestamp;
+  approved_by: string | null;
+}
+
+export interface TransformationDecisionRightTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  template_key: string | null;
+  ordinal: number;
+  decision_en: string;
+  decision_ar: string;
+  recommend_label: string;
+  approve_label: string;
+  consult_label: string;
+  inform_label: string;
+  sla_label: string;
+  recommend_parties: Generated<string[]>;
+  approve_party_code: string;
+  consult_parties: Generated<string[]>;
+  inform_parties: Generated<string[]>;
+  sla_type: string;
+  sla_working_days: number | null;
+  urgent_working_days: number | null;
+  escalation_chain: string[];
+  status: Generated<string>;
+}
+
+export interface RaciTemplateDeliverableTable {
+  key: string;
+  ordinal: number;
+  source_deliverable_en: string;
+  deliverable_ar: string;
+  source_ref: string;
+}
+
+export interface RaciTemplateCellTable {
+  deliverable_key: string;
+  party_code: string;
+  value: string;
+}
+
+export interface TransformationRaciDeliverableTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  template_key: string | null;
+  ordinal: number;
+  label_en: string;
+  label_ar: string;
+  accountability_exception: string | null;
+  status: Generated<string>;
+}
+
+export interface TransformationRaciAssignmentTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  deliverable_id: string;
+  party_code: string;
+  value: string | null;
+}
+
+export interface ApprovalTypeTable {
+  code: string;
+  subject_table: string;
+  default_sod_policy: string;
+  requires_decision_right: boolean;
+  owner_module: string;
+  label_en: string;
+  label_ar: string;
+  source_ref: string;
+}
+
+export interface ApprovalTable extends Stamps {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  approval_type: string;
+  subject_type: string;
+  subject_id: string;
+  subject_version: number;
+  round_no: Generated<number>;
+  decision_right_id: string | null;
+  title: string;
+  request_note: string | null;
+  requested_by: string;
+  requested_at: TimestampDefault;
+  request_business_date: string;
+  assignee_party_code: string;
+  assignee_user_id: string | null;
+  assignee_group_id: string | null;
+  sla_type: string | null;
+  urgent_reason: string | null;
+  due_date: string | null;
+  due_unknown_reason: string | null;
+  calendar_id: string | null;
+  calendar_version: number | null;
+  sod_policy: string;
+  status: Generated<string>;
+  escalation_level: Generated<number>;
+  escalated_to_party_code: string | null;
+  escalated_to_user_id: string | null;
+  escalated_to_group_id: string | null;
+  decided_by: string | null;
+  decided_on_behalf_of: string | null;
+  decided_at: NullableTimestamp;
+}
+
+export interface ApprovalDecisionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  approval_id: string;
+  round_no: number;
+  outcome: string;
+  rationale: string;
+  comments: string | null;
+  subject_version: number;
+  decided_by: string;
+  on_behalf_of_user_id: string | null;
+  decided_at: TimestampDefault;
+  business_date: string;
+  defer_until: string | null;
+}
+
+export interface ApprovalEscalationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  approval_id: string;
+  round_no: number;
+  due_date: string;
+  level: number;
+  from_party_code: string;
+  to_party_code: string | null;
+  to_user_id: string | null;
+  to_group_id: string | null;
+  routing_error: string | null;
+  escalated_at: TimestampDefault;
+}
+
+/** Read-only union of business-approval decisions (0031; D-089 Q10). */
+export interface ApprovalDecisionRecordView {
+  source: ColumnType<string, never, never>;
+  record_id: ColumnType<string, never, never>;
+  organization_id: ColumnType<string, never, never>;
+  transformation_id: ColumnType<string, never, never>;
+  approval_kind: ColumnType<string, never, never>;
+  subject_type: ColumnType<string, never, never>;
+  subject_id: ColumnType<string, never, never>;
+  subject_version: ColumnType<number | null, never, never>;
+  outcome: ColumnType<string, never, never>;
+  rationale: ColumnType<string, never, never>;
+  decided_by: ColumnType<string, never, never>;
+  on_behalf_of_user_id: ColumnType<string | null, never, never>;
+  decided_at: ColumnType<Date, never, never>;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -1906,10 +2229,32 @@ export interface Database {
   benefit_formula_example: BenefitFormulaExampleTable;
   benefit_formula_example_variable: BenefitFormulaExampleVariableTable;
   gate_decision_agreement: GateDecisionAgreementTable;
+  business_calendar: BusinessCalendarTable;
+  business_calendar_holiday: BusinessCalendarHolidayTable;
+  job_schedule: JobScheduleTable;
+  work_item_kind: WorkItemKindTable;
+  work_item: WorkItemTable;
+  inbox_notification: InboxNotificationTable;
+  access_group: AccessGroupTable;
+  access_group_member: AccessGroupMemberTable;
+  governance_party: GovernancePartyTable;
+  role_mapping: RoleMappingTable;
+  decision_right_template: DecisionRightTemplateTable;
+  governance_matrix: GovernanceMatrixTable;
+  transformation_decision_right: TransformationDecisionRightTable;
+  raci_template_deliverable: RaciTemplateDeliverableTable;
+  raci_template_cell: RaciTemplateCellTable;
+  transformation_raci_deliverable: TransformationRaciDeliverableTable;
+  transformation_raci_assignment: TransformationRaciAssignmentTable;
+  approval_type: ApprovalTypeTable;
+  approval: ApprovalTable;
+  approval_decision: ApprovalDecisionTable;
+  approval_escalation: ApprovalEscalationTable;
+  approval_decision_record: ApprovalDecisionRecordView;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
-export const VIEW_NAMES = ["actor_display", "business_unit_closure", "scope_node"] as const;
+export const VIEW_NAMES = ["actor_display", "approval_decision_record", "business_unit_closure", "scope_node"] as const;
 
 export type OrganizationRow = Selectable<OrganizationTable>;
 export type BusinessUnitRow = Selectable<BusinessUnitTable>;
@@ -1961,6 +2306,27 @@ export type BusinessCaseLineRow = Selectable<BusinessCaseLineTable>;
 export type BenefitFormulaExampleRow = Selectable<BenefitFormulaExampleTable>;
 export type BenefitFormulaExampleVariableRow = Selectable<BenefitFormulaExampleVariableTable>;
 export type GateDecisionAgreementRow = Selectable<GateDecisionAgreementTable>;
+export type BusinessCalendarRow = Selectable<BusinessCalendarTable>;
+export type BusinessCalendarHolidayRow = Selectable<BusinessCalendarHolidayTable>;
+export type JobScheduleRow = Selectable<JobScheduleTable>;
+export type WorkItemKindRow = Selectable<WorkItemKindTable>;
+export type WorkItemRow = Selectable<WorkItemTable>;
+export type InboxNotificationRow = Selectable<InboxNotificationTable>;
+export type AccessGroupRow = Selectable<AccessGroupTable>;
+export type AccessGroupMemberRow = Selectable<AccessGroupMemberTable>;
+export type GovernancePartyRow = Selectable<GovernancePartyTable>;
+export type RoleMappingRow = Selectable<RoleMappingTable>;
+export type DecisionRightTemplateRow = Selectable<DecisionRightTemplateTable>;
+export type GovernanceMatrixRow = Selectable<GovernanceMatrixTable>;
+export type TransformationDecisionRightRow = Selectable<TransformationDecisionRightTable>;
+export type RaciTemplateDeliverableRow = Selectable<RaciTemplateDeliverableTable>;
+export type RaciTemplateCellRow = Selectable<RaciTemplateCellTable>;
+export type TransformationRaciDeliverableRow = Selectable<TransformationRaciDeliverableTable>;
+export type TransformationRaciAssignmentRow = Selectable<TransformationRaciAssignmentTable>;
+export type ApprovalTypeRow = Selectable<ApprovalTypeTable>;
+export type ApprovalRow = Selectable<ApprovalTable>;
+export type ApprovalDecisionRow = Selectable<ApprovalDecisionTable>;
+export type ApprovalEscalationRow = Selectable<ApprovalEscalationTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -2095,6 +2461,12 @@ export const SCHEMA_COLUMNS = {
     "updated_at",
     "created_by",
     "updated_by",
+
+    "absence_note",
+    "requested_by_user_id",
+    "revoked_at",
+    "revoked_by",
+    "revoke_reason",
   ],
   transformation: [
     "id",
@@ -3634,6 +4006,338 @@ export const SCHEMA_COLUMNS = {
     "agreement_code",
     "confirmed_by",
     "confirmed_at",
+  ],
+  business_calendar: [
+    "id",
+    "organization_id",
+    "code",
+    "name_en",
+    "name_ar",
+    "timezone",
+    "workweek",
+    "is_default",
+    "status",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  business_calendar_holiday: [
+    "id",
+    "organization_id",
+    "calendar_id",
+    "date_from",
+    "date_to",
+    "name_en",
+    "name_ar",
+    "status",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  job_schedule: [
+    "id",
+    "code",
+    "queue_name",
+    "cron",
+    "timezone",
+    "enabled",
+    "description_en",
+    "description_ar",
+    "owner_module",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  work_item_kind: ["code", "owner_module", "label_en", "label_ar", "source_ref"],
+  work_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "assignee_user_id",
+    "subject_type",
+    "subject_id",
+    "link_path",
+    "message_key",
+    "message_params",
+    "due_date",
+    "period_label",
+    "status",
+    "completed_at",
+    "completed_by",
+    "dedupe_key",
+    "created_source",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  inbox_notification: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "recipient_user_id",
+    "work_item_id",
+    "link_path",
+    "message_key",
+    "message_params",
+    "dedupe_key",
+    "read_at",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  access_group: [
+    "id",
+    "organization_id",
+    "code",
+    "name_en",
+    "name_ar",
+    "description",
+    "owner_user_id",
+    "status",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  access_group_member: [
+    "id",
+    "organization_id",
+    "group_id",
+    "user_id",
+    "effective_from",
+    "effective_to",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  governance_party: ["code", "ordinal", "kind", "role_code", "label_en", "label_ar", "source_ref"],
+  role_mapping: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "party_code",
+    "target_kind",
+    "user_id",
+    "group_id",
+    "status",
+    "ended_at",
+    "ended_by",
+    "end_reason",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  decision_right_template: [
+    "key",
+    "ordinal",
+    "source_decision_en",
+    "source_recommend_en",
+    "source_approve_en",
+    "source_consult_en",
+    "source_inform_en",
+    "source_sla_en",
+    "decision_ar",
+    "recommend_ar",
+    "approve_ar",
+    "consult_ar",
+    "inform_ar",
+    "sla_ar",
+    "recommend_parties",
+    "approve_party_code",
+    "consult_parties",
+    "inform_parties",
+    "sla_type",
+    "sla_working_days",
+    "escalation_chain",
+    "source_ref",
+  ],
+  governance_matrix: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kind",
+    "status",
+    "approved_version",
+    "approved_at",
+    "approved_by",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  transformation_decision_right: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "template_key",
+    "ordinal",
+    "decision_en",
+    "decision_ar",
+    "recommend_label",
+    "approve_label",
+    "consult_label",
+    "inform_label",
+    "sla_label",
+    "recommend_parties",
+    "approve_party_code",
+    "consult_parties",
+    "inform_parties",
+    "sla_type",
+    "sla_working_days",
+    "urgent_working_days",
+    "escalation_chain",
+    "status",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  raci_template_deliverable: ["key", "ordinal", "source_deliverable_en", "deliverable_ar", "source_ref"],
+  raci_template_cell: ["deliverable_key", "party_code", "value"],
+  transformation_raci_deliverable: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "template_key",
+    "ordinal",
+    "label_en",
+    "label_ar",
+    "accountability_exception",
+    "status",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  transformation_raci_assignment: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "deliverable_id",
+    "party_code",
+    "value",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  approval_type: [
+    "code",
+    "subject_table",
+    "default_sod_policy",
+    "requires_decision_right",
+    "owner_module",
+    "label_en",
+    "label_ar",
+    "source_ref",
+  ],
+  approval: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "approval_type",
+    "subject_type",
+    "subject_id",
+    "subject_version",
+    "round_no",
+    "decision_right_id",
+    "title",
+    "request_note",
+    "requested_by",
+    "requested_at",
+    "request_business_date",
+    "assignee_party_code",
+    "assignee_user_id",
+    "assignee_group_id",
+    "sla_type",
+    "urgent_reason",
+    "due_date",
+    "due_unknown_reason",
+    "calendar_id",
+    "calendar_version",
+    "sod_policy",
+    "status",
+    "escalation_level",
+    "escalated_to_party_code",
+    "escalated_to_user_id",
+    "escalated_to_group_id",
+    "decided_by",
+    "decided_on_behalf_of",
+    "decided_at",
+    "version",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+  ],
+  approval_decision: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "approval_id",
+    "round_no",
+    "outcome",
+    "rationale",
+    "comments",
+    "subject_version",
+    "decided_by",
+    "on_behalf_of_user_id",
+    "decided_at",
+    "business_date",
+    "defer_until",
+  ],
+  approval_escalation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "approval_id",
+    "round_no",
+    "due_date",
+    "level",
+    "from_party_code",
+    "to_party_code",
+    "to_user_id",
+    "to_group_id",
+    "routing_error",
+    "escalated_at",
+  ],
+  approval_decision_record: [
+    "source",
+    "record_id",
+    "organization_id",
+    "transformation_id",
+    "approval_kind",
+    "subject_type",
+    "subject_id",
+    "subject_version",
+    "outcome",
+    "rationale",
+    "decided_by",
+    "on_behalf_of_user_id",
+    "decided_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

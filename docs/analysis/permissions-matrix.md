@@ -304,3 +304,56 @@ Legend as in 8.3. **D** = decide/approve/validate. Every cell is checked server-
 - **Separation of duties:** the weight-set approver ≠ proposer; override approver ≠ proposer (DB CHECKs); a dispensation is accepted by someone other than its recorder; Finance validation ≠ author (DB CHECKs); deliverable acceptor ≠ submitter; G4 decision never by the submitter (ADR-0015 trigger, 403).
 - **Technical admins:** `dependency_type.configure` is the only P3 right of any technical-admin role; it is `configure`, never an approval (the `0001` trigger refuses a technical admin holding `business_approval`/`finance_validation`).
 - **Changes against sections 1–5, flagged as assumptions:** FIN may record funding decisions (B0018 "validates … value realization"; the funding approver may be configured to SP only); TL launches initiatives (execution authority after the business approvals); capacity commitments are a resourcing commitment by BO/TO, not a business approval.
+
+## 10. P4 implementation, slices I and C (DG4): permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-01 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the P4 foundation and governance records: business calendars, job schedules, My Work items and the inbox (ADR-0025); groups, role mapping, delegation, the P4 approval record, T11 and T12 (ADR-0026). The seed is migration `0031`, mirrored in `packages/shared/src/permissions.ts` (`P4_PERMISSIONS`, `P4_ROLE_PERMISSIONS`) and compared by `packages/db/src/seed.test.ts`. Later P4 slices append their own subsections.
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. A P4 approval is a business approval recorded as a named person's decision; no engineering agent, seed or job grants a real business, Finance or IT approval, and a timer never decides one. G1–G6 are product gates, never DG0–DG7.
+
+### 10.1 P4 permission catalogue (slices I and C)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `calendar.configure` | configure | Business calendars: timezone, workweek, holidays | ADM_TECH |
+| `job.read` | read | View the scheduled jobs | ADM_TECH |
+| `job.configure` | configure | Enable, disable, reschedule jobs | ADM_TECH |
+| `group.manage` | configure | Governed groups and their members | TO |
+| `role_mapping.assign` | configure | Map governance parties to people or groups in a transformation | TL, TO |
+| `delegation.create_own` | write | Delegate your own approvals for a period | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC |
+| `delegation.manage` | configure | Record or revoke a delegation on the delegator's request | ADM_ACCESS |
+| `approval.request` | write | Request a T11-routed approval | SP, TL, BO, WL, FIN, TO |
+| `approval.decide` | business_approval | Decide an approval assigned to you, your group, escalated to you, or to someone you act for | SP, BO, FIN |
+| `decision_right.configure` | configure | Edit the transformation's T11 matrix; submit it for approval | TL, TO |
+| `raci.edit` | write | Edit the transformation's T12 RACI; submit it for approval | TL, TO |
+
+`approval.decide` goes only to the roles that already hold an approval permission (SP, BO, FIN). TL, TO, WL and CM stay non-approver roles, so the creator-derived assignment (F-DG1-106) and the team view (ADR-0020 §3) are unchanged (ADR-0026 §8). P1 permissions that P4 slices I and C use: `organization.read` (calendars, groups, parties; every role), `transformation.read` (mappings, T11, T12, approvals, readiness), `audit.read` (the "B on behalf of A" trail).
+
+### 10.2 Per-entity rights in P4 (slices I and C)
+
+Legend as in 8.3. **D** = decide/approve. Every cell is checked server-side by the one policy function and re-authorised at commit, plus the record-level rule named.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Business calendar, holidays (`business_calendar`, `business_calendar_holiday`) | V | V | V | V | V | V | V | V | V | V | ADM_TECH: C E; others V |
+| Job schedules (`job_schedule`) | — | — | — | — | — | — | — | — | — | — | ADM_TECH: V E |
+| My Work items (`work_item`) | own: V, complete | own | own | own | own | own | own | own | own | own: V only (none assigned) | own |
+| Inbox (`inbox_notification`) | own: V, mark read | own | own | own | own | own | own | own | own | own: V only | own |
+| Groups (`access_group`, `access_group_member`) | V | V | V | V | V | C E | V | V | V | V | V |
+| Governance parties (`governance_party`, seed) | V | V | V | V | V | V | V | V | V | V | V |
+| Role mappings (`role_mapping`) | V | C E (end) | V | V | V | C E (end) | V | V | V | V | — |
+| Delegations (`delegation`) | C (own), revoke own | C (own) | C (own) | C (own) | C (own) | C (own) | C (own) | C (own) | C (own) | V (own, none created) | ADM_ACCESS: C, revoke (on request; never to self) |
+| Approvals (`approval`, `approval_decision`, `approval_escalation`) | request; D (assigned) | request | request; D (assigned) | request | request; D (assigned) | request | V | V | V | V | — |
+| T11 (`transformation_decision_right`; template seed) | V | C E, submit | V | V | V | C E, submit | V | V | V | V | — |
+| T12 (`transformation_raci_deliverable`, `transformation_raci_assignment`; template seed) | V | C E, submit | V | V | V | C E, submit | V | V | V | V | — |
+| Matrix approval (`governance_matrix` via `governance_matrix_change`) | D (as the SP-mapped person) | V | V | V | V | V | V | V | V | V | — |
+| Transform readiness (read model) | V | V | V | V | V | V | V | V | V | V | — |
+
+**Rules (binding for the P4 slice I and C implementers):**
+
+- **AUD (read-only auditor):** every mutating operation of slices I and C returns **403** for AUD (or 404 where the record is another person's own item) and writes nothing. The slice's integration tests call every mutating operation as AUD.
+- **Separation of duties (REQ-S10-016):** under the default policy `requester_excluded` the requester, and anyone acting on the requester's behalf, gets **403** `approval.sod_requester` on every outcome; the database refuses it again (`approval_decision_sod`). Delegating to the requester of an approval that is pending with the delegator is refused (422 `delegation.delegate_is_requester`).
+- **Technical admins (REQ-S10-003):** ADM_TECH configures calendars and jobs; ADM_ACCESS records delegations on request. No technical-admin role holds `approval.decide`: the `0001` trigger refuses it, and an ADM-only user gets **403** on `decideApproval` and on the DG1–DG3 gate and Finance endpoints. Being added to a group or mapped to a party grants no permission.
+- **Record-level rules:** deciding needs the approval to be assigned to the caller, an effective member of the assignee group, the escalation target, or an active delegate of one of these (ADR-0026 §4 rule 3); work items and inbox reminders are the assignee's and recipient's only.
+- **Delegation (section 6 made concrete):** no loop in any form (database trigger, lock 730224); capability = the delegator's, checked at use time against the effective window; "B on behalf of A" in the audit trail (ADR-0026 §3).
+- **Changes against sections 1–6, flagged as assumptions:** groups grant no permission in P4 (IdP group mapping stays P6); FIN may decide P4 approvals routed to Finance parties (consistent with its existing `funding.approve`); the escalation chain defaults to the Approve party, then SP (D-089 Q7).

@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: Mobily Transformation Hub API
-  version: 1.2.0-p3
+  version: 1.3.0-p4
   summary: P1 contract (identity, scoped access, organizations, transformations, audit) plus the P2 additions (Diagnose, Define, Design, product gates G1-G3) and the P3 additions (Mobilize, portfolio, T05-T09, business cases, product gate G4).
   description: |
     Versioned REST contract for the Mobily Transformation Hub (T-DG1-ARCH-01, ADR-0007).
@@ -58,6 +58,13 @@ info:
     the T08 Dependency Map is served at `/api/v1/dependencies`. Every P3 operation declares the ADR-0007 §5a/§5b
     statuses. Selection, funding, weight-set and override approvals and dispensations are business approvals
     recorded as a named person's decision; nothing auto-approves.
+
+    **P4 additions, slices I and C (T-DG4-ARCH-01, ADR-0025, ADR-0026).** Additive within v1: new paths, schemas and
+    tags, and new values of the response-only `PermissionCode` enum. Every P1-P3 path is byte-stable. Transform
+    readiness (REQ-PB-008) is a new path beside the unchanged DG3 readiness operation. Working-day due dates come from
+    the configured business calendar (Asia/Riyadh by default, no holiday until one is configured); a due date that
+    cannot be computed is `null` (Unknown) with a reason, never elapsed days. Approvals are business approvals decided
+    by named people: a timer escalates an overdue approval once per due date and never decides it.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -97,6 +104,24 @@ tags:
     description: Transformation and initiative business cases, lines, totals and Finance baseline validation (P3, ADR-0024).
   - name: benefit-formulas
     description: T09 benefit formulas, the restricted formula language, lineage and Finance validation (P3, ADR-0024).
+  - name: calendar
+    description: Business calendars, holidays and working-day due dates (P4, ADR-0025).
+  - name: jobs
+    description: Recurring jobs of the scheduled-job kit (P4, ADR-0025).
+  - name: tasks
+    description: My Work items and the in-app inbox (P4, ADR-0025).
+  - name: groups
+    description: Governed groups (routing targets; they grant no permission) (P4, ADR-0026).
+  - name: role-mappings
+    description: Governance parties and their mapping to named people or groups per transformation (P4, ADR-0026).
+  - name: delegations
+    description: Delegation with effective dates, absence handling and loop refusal (P4, ADR-0026).
+  - name: approvals
+    description: The P4 business-approval record - approve, reject, request changes, defer; never decided by a timer (P4, ADR-0026).
+  - name: decision-rights
+    description: T11 Decision Rights Matrix, seeded verbatim from B0099 (P4, ADR-0026).
+  - name: raci
+    description: T12 RACI per transformation, matrix approval and Transform readiness (P4, ADR-0026).
 security:
   - sessionCookie: []
 paths:
@@ -7163,6 +7188,1248 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/organizations/{organizationId}/calendars:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [calendar]
+      operationId: listBusinessCalendars
+      summary: "Business calendars of the organization (organization.read). The default calendar is Asia/Riyadh with a Sunday-Thursday workweek and no holiday until one is configured (REQ-S10-006)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessCalendarPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [calendar]
+      operationId: createBusinessCalendar
+      summary: "Create a calendar (calendar.configure; ADM_TECH). 422 calendar.workweek_invalid, calendar.timezone_unknown; 409 calendar.code_taken."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessCalendarCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessCalendar" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/calendars/{calendarId}:
+    parameters:
+      - $ref: "#/components/parameters/CalendarId"
+    get:
+      tags: [calendar]
+      operationId: getBusinessCalendar
+      summary: "Read one calendar (organization.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessCalendar" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [calendar]
+      operationId: updateBusinessCalendar
+      summary: "Change names, timezone, workweek, default flag or status (calendar.configure). Stored due dates are not recomputed (ADR-0025 §1). 422 calendar.default_not_archivable."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessCalendarUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessCalendar" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/calendars/{calendarId}/holidays:
+    parameters:
+      - $ref: "#/components/parameters/CalendarId"
+    get:
+      tags: [calendar]
+      operationId: listCalendarHolidays
+      summary: "Administered holidays of the calendar, by start date (organization.read). None is seeded."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/HolidayYear"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalendarHolidayPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [calendar]
+      operationId: createCalendarHoliday
+      summary: "Add a holiday (inclusive range, at most 31 days; calendar.configure). 422 calendar.holiday_range_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CalendarHolidayCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalendarHoliday" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/calendars/{calendarId}/holidays/{holidayId}:
+    parameters:
+      - $ref: "#/components/parameters/CalendarId"
+      - $ref: "#/components/parameters/HolidayId"
+    patch:
+      tags: [calendar]
+      operationId: updateCalendarHoliday
+      summary: "Change or remove (status removed) a holiday (calendar.configure). Never deleted."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CalendarHolidayUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalendarHoliday" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/calendars/{calendarId}/working-days:
+    parameters:
+      - $ref: "#/components/parameters/CalendarId"
+    get:
+      tags: [calendar]
+      operationId: computeWorkingDayDueDate
+      summary: "The n-th working day strictly after a business date (ADR-0025 §1). dueDate is null with unknownReason when it cannot be computed; never elapsed calendar days."
+      parameters:
+        - $ref: "#/components/parameters/FromDate"
+        - $ref: "#/components/parameters/WorkingDays"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkingDayComputation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/job-schedules:
+    get:
+      tags: [jobs]
+      operationId: listJobSchedules
+      summary: "Recurring jobs of the scheduled-job kit (job.read; ADM_TECH)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSchedulePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/job-schedules/{jobCode}:
+    parameters:
+      - $ref: "#/components/parameters/JobCode"
+    patch:
+      tags: [jobs]
+      operationId: updateJobSchedule
+      summary: "Enable, disable or reschedule a job (job.configure; ADM_TECH). 422 job.cron_invalid, job.timezone_unknown."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JobScheduleUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSchedule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/work-items:
+    get:
+      tags: [tasks]
+      operationId: listMyWorkItems
+      summary: "The caller's own My Work items (open first by due date). No other person's items are ever listed."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/WorkItemStatus"
+        - $ref: "#/components/parameters/WorkItemKind"
+        - $ref: "#/components/parameters/TransformationIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkItemPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/work-items/{workItemId}:
+    parameters:
+      - $ref: "#/components/parameters/WorkItemId"
+    get:
+      tags: [tasks]
+      operationId: getWorkItem
+      summary: "Read one of the caller's work items (others: 404)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/work-items/{workItemId}/complete:
+    parameters:
+      - $ref: "#/components/parameters/WorkItemId"
+    post:
+      tags: [tasks]
+      operationId: completeWorkItem
+      summary: "Mark the caller's task done. 403 work_item.not_assignee; 422 work_item.closed, work_item.system_managed (approval tasks close with their approval)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkItem" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/inbox:
+    get:
+      tags: [tasks]
+      operationId: listMyInbox
+      summary: "The caller's in-app reminders, newest first, with the unread count."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/UnreadOnly"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/inbox/{notificationId}/read:
+    parameters:
+      - $ref: "#/components/parameters/NotificationId"
+    post:
+      tags: [tasks]
+      operationId: markInboxNotificationRead
+      summary: "Mark one of the caller's reminders as read (once). 422 inbox.already_read."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxNotification" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/organizations/{organizationId}/groups:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [groups]
+      operationId: listGroups
+      summary: "Governed groups of the organization (organization.read). A group is a routing target and grants no permission."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [groups]
+      operationId: createGroup
+      summary: "Create a governed group (group.manage; TO). 409 group.code_taken."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GroupCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/groups/{groupId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags: [groups]
+      operationId: getGroup
+      summary: "Read one group (organization.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [groups]
+      operationId: updateGroup
+      summary: "Rename, change owner, archive (group.manage)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GroupUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/groups/{groupId}/members:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags: [groups]
+      operationId: listGroupMembers
+      summary: "Members, current first (organization.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupMemberPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [groups]
+      operationId: addGroupMember
+      summary: "Add a member of the same organization (group.manage). 409 group.member_exists; 422 group.member_other_organization."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GroupMemberCreate" }
+      responses:
+        "201":
+          description: "Added."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupMember" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/groups/{groupId}/members/{memberId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/MemberId"
+    post:
+      tags: [groups]
+      operationId: removeGroupMember
+      summary: "Remove a member with a reason (group.manage). The row stays as history."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupMember" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/governance-parties:
+    get:
+      tags: [role-mappings]
+      operationId: listGovernanceParties
+      summary: "The parties named by T11 (B0099) and T12 (B0101), seeded and read-only."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GovernancePartyList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/role-mappings:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [role-mappings]
+      operationId: listRoleMappings
+      summary: "Who each party is in this transformation: a named person or a governed group (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/RoleMappingStatus"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleMappingPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [role-mappings]
+      operationId: createRoleMapping
+      summary: "Map a party to a person or a group (role_mapping.assign; TL, TO). 409 role_mapping.already_mapped (end the current mapping first)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoleMappingCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleMapping" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/role-mappings/{mappingId}/end:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MappingId"
+    post:
+      tags: [role-mappings]
+      operationId: endRoleMapping
+      summary: "End a mapping with a reason (role_mapping.assign). Final; map again with a new mapping."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleMapping" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/role-mappings/resolve:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [role-mappings]
+      operationId: resolveGovernanceParty
+      summary: "Resolve a party for routing. An unmapped party is reported as status unmapped (no fallback); routing itself refuses with 422 routing.role_unmapped."
+      parameters:
+        - $ref: "#/components/parameters/PartyQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartyResolution" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/delegations:
+    get:
+      tags: [delegations]
+      operationId: listDelegations
+      summary: "Delegations where the caller is delegator or delegate; with delegation.manage, every delegation of the caller's organization."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/DelegationRole"
+        - $ref: "#/components/parameters/DelegationStatus"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DelegationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [delegations]
+      operationId: createDelegation
+      summary: "Delegate for a period (delegation.create_own for yourself; delegation.manage on the delegator's request). 422 delegation.loop, delegation.self, delegation.window_invalid, delegation.delegate_is_requester, delegation.admin_self; 403 delegation.not_delegator."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DelegationCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delegation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/delegations/{delegationId}:
+    parameters:
+      - $ref: "#/components/parameters/DelegationId"
+    get:
+      tags: [delegations]
+      operationId: getDelegation
+      summary: "Read one delegation (delegator, delegate or delegation.manage; others 404)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delegation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/delegations/{delegationId}/revoke:
+    parameters:
+      - $ref: "#/components/parameters/DelegationId"
+    post:
+      tags: [delegations]
+      operationId: revokeDelegation
+      summary: "Revoke with a reason (the delegator, or delegation.manage). 422 delegation.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delegation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals:
+    get:
+      tags: [approvals]
+      operationId: listMyApprovals
+      summary: "Approvals assigned to the caller, their groups, escalated to them or to people they act for (role=assignee), or requested by them (role=requester)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ApprovalRole"
+        - $ref: "#/components/parameters/ApprovalStatus"
+        - $ref: "#/components/parameters/TransformationIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/approvals:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    post:
+      tags: [approvals]
+      operationId: requestApproval
+      summary: "Request a decision routed by the T11 matrix (approval.request). The assignee is the person or group mapped to the row's Approve party; the due date follows its SLA type. 422 routing.role_unmapped, decision_right.urgent_not_configured, decision_right.urgent_reason_required; 409 approval.already_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApprovalRequest" }
+      responses:
+        "201":
+          description: "Requested (pending)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals/{approvalId}:
+    parameters:
+      - $ref: "#/components/parameters/ApprovalId"
+    get:
+      tags: [approvals]
+      operationId: getApproval
+      summary: "Read one approval with its decisions and escalations (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals/{approvalId}/decisions:
+    parameters:
+      - $ref: "#/components/parameters/ApprovalId"
+    post:
+      tags: [approvals]
+      operationId: decideApproval
+      summary: "Approve, reject, request changes or defer (approval.decide and assigned). 403 approval.not_assignee, approval.sod_requester; 409 approval.stale_version (subjectVersion is not the record's current version) or If-Match; 422 approval.not_open, approval.rationale_required, approval.defer_date_required. A timer never calls this."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApprovalDecisionCreate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals/{approvalId}/resubmit:
+    parameters:
+      - $ref: "#/components/parameters/ApprovalId"
+    post:
+      tags: [approvals]
+      operationId: resubmitApproval
+      summary: "After 'request changes': resubmit a newer version of the record (the requester). 403 approval.not_requester; 422 approval.resubmit_needs_new_version."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApprovalResubmit" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals/{approvalId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/ApprovalId"
+    post:
+      tags: [approvals]
+      operationId: withdrawApproval
+      summary: "Withdraw an open request with a reason (the requester). Final."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/approval-decisions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [approvals]
+      operationId: listApprovalDecisionRecords
+      summary: "Read-only union of the transformation's business-approval decisions: P4 approvals, product-gate decisions (G1-G6) and funding decisions (D-089 Q10)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalDecisionRecordPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/decision-right-templates:
+    get:
+      tags: [decision-rights]
+      operationId: listDecisionRightTemplates
+      summary: "The four T11 rows of B0099, verbatim (read-only)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionRightTemplateList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/decision-rights:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [decision-rights]
+      operationId: listDecisionRights
+      summary: "The transformation's T11 matrix: the four seeded rows (copied verbatim) and added rows (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionRightPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [decision-rights]
+      operationId: createDecisionRight
+      summary: "Add a row (decision_right.configure; TO, TL). 422 decision_right.party_unknown, decision_right.sla_invalid, governance_matrix.in_approval."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DecisionRightCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionRight" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/decision-rights/{decisionRightId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/DecisionRightId"
+    get:
+      tags: [decision-rights]
+      operationId: getDecisionRight
+      summary: "Read one T11 row."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionRight" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [decision-rights]
+      operationId: updateDecisionRight
+      summary: "Edit the transformation's copy of a row (decision_right.configure). The seeded template never changes. 422 decision_right.party_unknown, decision_right.sla_invalid, governance_matrix.in_approval."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DecisionRightUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionRight" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/decision-rights/{decisionRightId}/due-date:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/DecisionRightId"
+    get:
+      tags: [decision-rights]
+      operationId: previewDecisionRightDueDate
+      summary: "The due date a request raised on a business date would get under the row's SLA type (working days, next SteerCo or urgent route, release plan). Unknown is null with a reason."
+      parameters:
+        - $ref: "#/components/parameters/RaisedOn"
+        - $ref: "#/components/parameters/Urgent"
+        - $ref: "#/components/parameters/ReleaseMilestoneId"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DueDatePreview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/raci-template:
+    get:
+      tags: [raci]
+      operationId: getRaciTemplate
+      summary: "The six T12 deliverables of B0101 with their cells, verbatim (read-only)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaciTemplate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raci:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [raci]
+      operationId: getTransformationRaci
+      summary: "The transformation's T12 RACI with its matrix status (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Raci" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raci/deliverables:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    post:
+      tags: [raci]
+      operationId: createRaciDeliverable
+      summary: "Add a deliverable with its cells (raci.edit; TO, TL). 422 raci.invalid_value, raci.accountable_count, governance_matrix.in_approval."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaciDeliverableCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaciDeliverable" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raci/deliverables/{deliverableId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/DeliverableId"
+    patch:
+      tags: [raci]
+      operationId: updateRaciDeliverable
+      summary: "Edit a deliverable and save its cells as one change (raci.edit). A, R, C, I or A/R; exactly one accountable (A/R counts as one) unless an accountability exception is documented. 422 raci.invalid_value, raci.accountable_count, governance_matrix.in_approval."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaciDeliverableUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaciDeliverable" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/governance-matrices:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [raci]
+      operationId: listGovernanceMatrices
+      summary: "Approval state of the T11 and T12 matrices (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GovernanceMatrixList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/governance-matrices/{matrixKind}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MatrixKind"
+    post:
+      tags: [raci]
+      operationId: submitGovernanceMatrix
+      summary: "Submit the matrix's current version for the Sponsor's approval (decision_right.configure for T11, raci.edit for T12). Rows freeze while in approval. 422 governance_matrix.not_draft, routing.role_unmapped."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GovernanceMatrixSubmit" }
+      responses:
+        "201":
+          description: "Approval requested."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/readiness/transform:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [raci]
+      operationId: getTransformReadiness
+      summary: "Operating model before execution (REQ-PB-008, B0013): Transform readiness from the charter decision rights, the four seeded T11 rows and their mapped approvers, and one accountable per T12 deliverable. The DG3 readiness operation is unchanged."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransformReadiness" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -7180,6 +8447,146 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    CalendarId:
+      name: calendarId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    HolidayId:
+      name: holidayId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    JobCode:
+      name: jobCode
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z_]+\\.[a-z_]+$", maxLength: 64 }
+    WorkItemId:
+      name: workItemId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MappingId:
+      name: mappingId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    DelegationId:
+      name: delegationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ApprovalId:
+      name: approvalId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    DecisionRightId:
+      name: decisionRightId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MatrixKind:
+      name: matrixKind
+      in: path
+      required: true
+      schema: { type: string, enum: [decision_rights, raci] }
+    HolidayYear:
+      name: year
+      in: query
+      required: false
+      schema: { type: integer, minimum: 2000, maximum: 2100 }
+    FromDate:
+      name: from
+      in: query
+      required: true
+      schema: { $ref: "#/components/schemas/BusinessDate" }
+    WorkingDays:
+      name: workingDays
+      in: query
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 250 }
+    WorkItemStatus:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, done, cancelled] }
+    WorkItemKind:
+      name: kind
+      in: query
+      required: false
+      schema: { type: string, pattern: "^[a-z_]+$", maxLength: 64 }
+    TransformationIdQuery:
+      name: transformationId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    UnreadOnly:
+      name: unreadOnly
+      in: query
+      required: false
+      schema: { type: boolean, default: false }
+    RoleMappingStatus:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, ended] }
+    PartyQuery:
+      name: party
+      in: query
+      required: true
+      schema: { $ref: "#/components/schemas/PartyCode" }
+    DelegationRole:
+      name: role
+      in: query
+      required: false
+      schema: { type: string, enum: [delegator, delegate, any], default: any }
+    DelegationStatus:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, revoked, expired] }
+    ApprovalRole:
+      name: role
+      in: query
+      required: false
+      schema: { type: string, enum: [assignee, requester], default: assignee }
+    ApprovalStatus:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [pending, changes_requested, deferred, approved, rejected, withdrawn] }
+    RaisedOn:
+      name: raisedOn
+      in: query
+      required: true
+      schema: { $ref: "#/components/schemas/BusinessDate" }
+    Urgent:
+      name: urgent
+      in: query
+      required: false
+      schema: { type: boolean, default: false }
+    ReleaseMilestoneId:
+      name: releaseMilestoneId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
     IfMatch:
       name: If-Match
       in: header
@@ -7628,6 +9035,17 @@ components:
         - business_case.edit
         - benefit_formula.edit
         - dependency_type.configure
+        - calendar.configure
+        - job.read
+        - job.configure
+        - group.manage
+        - role_mapping.assign
+        - delegation.create_own
+        - delegation.manage
+        - approval.request
+        - approval.decide
+        - decision_right.configure
+        - raci.edit
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -11826,3 +13244,777 @@ components:
         agreementCode: { type: string, enum: [problem, baseline, material_value_pools] }
         confirmedBy: { $ref: "#/components/schemas/Uuid" }
         confirmedAt: { $ref: "#/components/schemas/Timestamp" }
+
+    # ---- P4 slices I and C (T-DG4-ARCH-01; ADR-0025, ADR-0026) ------------------------------------------------
+    PartyCode:
+      type: string
+      pattern: "^[A-Z][A-Z0-9_]{0,31}$"
+      description: A governance party code (governance_party), e.g. SP, BO, STEERCO.
+    Weekday:
+      type: integer
+      minimum: 1
+      maximum: 7
+      description: ISO weekday, 1 = Monday ... 7 = Sunday.
+    LocalizedLabel:
+      type: string
+      minLength: 1
+      maxLength: 300
+    BusinessCalendar:
+      type: object
+      required: [id, organizationId, code, nameEn, nameAr, timezone, workweek, isDefault, status, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        workweek: { type: array, minItems: 1, maxItems: 7, uniqueItems: true, items: { $ref: "#/components/schemas/Weekday" } }
+        isDefault: { type: boolean }
+        status: { type: string, enum: [active, archived] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BusinessCalendarCreate:
+      type: object
+      required: [code, nameEn, nameAr]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        workweek: { type: array, minItems: 1, maxItems: 7, items: { type: integer } }
+        isDefault: { type: boolean }
+    BusinessCalendarUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        workweek: { type: array, minItems: 1, maxItems: 7, items: { type: integer } }
+        isDefault: { type: boolean, const: true, description: "Make this the default; the previous default stops being default in the same change." }
+        status: { type: string, enum: [active, archived] }
+    BusinessCalendarPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BusinessCalendar" } }
+        nextCursor: { type: [string, "null"] }
+    CalendarHoliday:
+      type: object
+      required: [id, calendarId, dateFrom, dateTo, nameEn, nameAr, status, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        calendarId: { $ref: "#/components/schemas/Uuid" }
+        dateFrom: { $ref: "#/components/schemas/BusinessDate" }
+        dateTo: { $ref: "#/components/schemas/BusinessDate" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        status: { type: string, enum: [active, removed] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    CalendarHolidayCreate:
+      type: object
+      required: [dateFrom, dateTo, nameEn, nameAr]
+      additionalProperties: false
+      properties:
+        dateFrom: { $ref: "#/components/schemas/BusinessDate" }
+        dateTo: { $ref: "#/components/schemas/BusinessDate" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+    CalendarHolidayUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        dateFrom: { $ref: "#/components/schemas/BusinessDate" }
+        dateTo: { $ref: "#/components/schemas/BusinessDate" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        status: { type: string, enum: [active, removed] }
+    CalendarHolidayPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/CalendarHoliday" } }
+        nextCursor: { type: [string, "null"] }
+    WorkingDayComputation:
+      type: object
+      required: [calendarId, calendarVersion, from, workingDays, dueDate, unknownReason, skippedDates]
+      additionalProperties: false
+      properties:
+        calendarId: { $ref: "#/components/schemas/Uuid" }
+        calendarVersion: { $ref: "#/components/schemas/Version" }
+        from: { $ref: "#/components/schemas/BusinessDate" }
+        workingDays: { type: integer, minimum: 1, maximum: 250 }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        unknownReason: { type: [string, "null"], enum: [calendar_not_configured, null] }
+        skippedDates:
+          type: array
+          description: Non-working dates passed over (weekend days and holidays), in order.
+          items:
+            type: object
+            required: [date, reason]
+            additionalProperties: false
+            properties:
+              date: { $ref: "#/components/schemas/BusinessDate" }
+              reason: { type: string, enum: [weekend, holiday] }
+              holidayId: { $ref: "#/components/schemas/NullableUuid" }
+    JobSchedule:
+      type: object
+      required: [code, queueName, cron, timezone, enabled, descriptionEn, descriptionAr, ownerModule, version, updatedAt]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        queueName: { type: string }
+        cron: { type: string }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        enabled: { type: boolean }
+        descriptionEn: { type: string }
+        descriptionAr: { type: string }
+        ownerModule: { type: string }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    JobScheduleUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean }
+        cron: { type: string, minLength: 9, maxLength: 100 }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+    JobSchedulePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/JobSchedule" } }
+        nextCursor: { type: [string, "null"] }
+    WorkItem:
+      type: object
+      required: [id, organizationId, transformationId, kind, assigneeUserId, subjectType, subjectId, linkPath, messageKey, messageParams, dueDate, periodLabel, status, completedAt, completedBy, createdAt, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        kind: { type: string, description: "A work_item_kind code (e.g. kpi_update_due, approval_decision)." }
+        assigneeUserId: { $ref: "#/components/schemas/Uuid" }
+        subjectType: { type: string }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        linkPath: { type: string, pattern: "^/[^/\\\\]", description: "Relative in-app link." }
+        messageKey: { type: string, description: "i18n key; the client translates it at render time." }
+        messageParams: { type: object, additionalProperties: { type: [string, number, boolean, "null"] } }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodLabel: { type: [string, "null"] }
+        status: { type: string, enum: [open, done, cancelled] }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedBy: { $ref: "#/components/schemas/NullableUuid" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+    WorkItemPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/WorkItem" } }
+        nextCursor: { type: [string, "null"] }
+    InboxNotification:
+      type: object
+      required: [id, transformationId, workItemId, linkPath, messageKey, messageParams, readAt, createdAt, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        workItemId: { $ref: "#/components/schemas/NullableUuid" }
+        linkPath: { type: string, pattern: "^/[^/\\\\]" }
+        messageKey: { type: string }
+        messageParams: { type: object, additionalProperties: { type: [string, number, boolean, "null"] } }
+        readAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+    InboxPage:
+      type: object
+      required: [items, nextCursor, unreadCount]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/InboxNotification" } }
+        nextCursor: { type: [string, "null"] }
+        unreadCount: { type: integer, minimum: 0 }
+    Group:
+      type: object
+      required: [id, organizationId, code, nameEn, nameAr, description, ownerUserId, status, memberCount, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        description: { type: [string, "null"], maxLength: 2000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [active, archived] }
+        memberCount: { type: integer, minimum: 0, description: "Current members." }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    GroupCreate:
+      type: object
+      required: [code, nameEn, nameAr, ownerUserId]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        description: { type: string, minLength: 1, maxLength: 2000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+    GroupUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        description: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [active, archived] }
+    GroupPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Group" } }
+        nextCursor: { type: [string, "null"] }
+    GroupMember:
+      type: object
+      required: [id, groupId, userId, displayName, effectiveFrom, effectiveTo, removedAt, removedBy, removeReason, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        groupId: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        displayName: { type: string }
+        effectiveFrom: { $ref: "#/components/schemas/Timestamp" }
+        effectiveTo: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        removeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+    GroupMemberCreate:
+      type: object
+      required: [userId]
+      additionalProperties: false
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        effectiveFrom: { $ref: "#/components/schemas/Timestamp" }
+        effectiveTo: { $ref: "#/components/schemas/Timestamp" }
+    GroupMemberPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/GroupMember" } }
+        nextCursor: { type: [string, "null"] }
+    GovernanceParty:
+      type: object
+      required: [code, ordinal, kind, roleCode, labelEn, labelAr, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/PartyCode" }
+        ordinal: { type: integer, minimum: 1 }
+        kind: { type: string, enum: [role, forum, office, owner_group] }
+        roleCode: { type: [string, "null"] }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        sourceRef: { type: string }
+    GovernancePartyList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/GovernanceParty" } }
+    RoleMapping:
+      type: object
+      required: [id, transformationId, partyCode, targetKind, userId, groupId, targetDisplayName, status, endedAt, endedBy, endReason, version, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        partyCode: { $ref: "#/components/schemas/PartyCode" }
+        targetKind: { type: string, enum: [user, group] }
+        userId: { $ref: "#/components/schemas/NullableUuid" }
+        groupId: { $ref: "#/components/schemas/NullableUuid" }
+        targetDisplayName: { type: string }
+        status: { type: string, enum: [active, ended] }
+        endedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        endedBy: { $ref: "#/components/schemas/NullableUuid" }
+        endReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    RoleMappingCreate:
+      type: object
+      required: [partyCode, targetKind]
+      additionalProperties: false
+      properties:
+        partyCode: { $ref: "#/components/schemas/PartyCode" }
+        targetKind: { type: string, enum: [user, group] }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        groupId: { $ref: "#/components/schemas/Uuid" }
+    RoleMappingPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RoleMapping" } }
+        nextCursor: { type: [string, "null"] }
+    PartyResolution:
+      type: object
+      required: [partyCode, status, mappingId, targetKind, userId, groupId]
+      additionalProperties: false
+      properties:
+        partyCode: { $ref: "#/components/schemas/PartyCode" }
+        status: { type: string, enum: [mapped, unmapped] }
+        mappingId: { $ref: "#/components/schemas/NullableUuid" }
+        targetKind: { type: [string, "null"], enum: [user, group, null] }
+        userId: { $ref: "#/components/schemas/NullableUuid" }
+        groupId: { $ref: "#/components/schemas/NullableUuid" }
+    Delegation:
+      type: object
+      required: [id, organizationId, delegatorUserId, delegateUserId, scopeType, scopeId, recordTypes, reasonCode, reasonText, absenceNote, requestedByUserId, effectiveFrom, effectiveTo, status, revokedAt, revokedBy, revokeReason, version, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        delegatorUserId: { $ref: "#/components/schemas/Uuid" }
+        delegateUserId: { $ref: "#/components/schemas/Uuid" }
+        scopeType: { type: [string, "null"] }
+        scopeId: { $ref: "#/components/schemas/NullableUuid" }
+        recordTypes: { type: [array, "null"], items: { type: string } }
+        reasonCode: { type: string, enum: [absence, other] }
+        reasonText: { type: [string, "null"] }
+        absenceNote: { type: [string, "null"] }
+        requestedByUserId: { $ref: "#/components/schemas/NullableUuid" }
+        effectiveFrom: { $ref: "#/components/schemas/Timestamp" }
+        effectiveTo: { $ref: "#/components/schemas/Timestamp" }
+        status: { type: string, enum: [active, revoked, expired] }
+        revokedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        revokedBy: { $ref: "#/components/schemas/NullableUuid" }
+        revokeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    DelegationCreate:
+      type: object
+      required: [delegateUserId, reasonCode, effectiveFrom, effectiveTo]
+      additionalProperties: false
+      properties:
+        delegatorUserId: { $ref: "#/components/schemas/Uuid", description: "Omitted = the caller. Another person only with delegation.manage, on that person's request." }
+        delegateUserId: { $ref: "#/components/schemas/Uuid" }
+        scopeType: { type: string, enum: [organization, business_unit, transformation, portfolio, workstream, initiative, performance_area, forum, record] }
+        scopeId: { $ref: "#/components/schemas/Uuid" }
+        recordTypes: { type: array, minItems: 1, maxItems: 20, items: { type: string, pattern: "^[a-z_]+$", maxLength: 64 } }
+        reasonCode: { type: string, enum: [absence, other] }
+        reasonText: { type: string, minLength: 1, maxLength: 1000 }
+        absenceNote: { type: string, minLength: 1, maxLength: 1000 }
+        effectiveFrom: { $ref: "#/components/schemas/Timestamp" }
+        effectiveTo: { $ref: "#/components/schemas/Timestamp" }
+    DelegationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Delegation" } }
+        nextCursor: { type: [string, "null"] }
+    ApprovalParty:
+      type: object
+      required: [partyCode, userId, groupId]
+      additionalProperties: false
+      properties:
+        partyCode: { $ref: "#/components/schemas/PartyCode" }
+        userId: { $ref: "#/components/schemas/NullableUuid" }
+        groupId: { $ref: "#/components/schemas/NullableUuid" }
+    ApprovalDecisionEntry:
+      type: object
+      required: [id, roundNo, outcome, rationale, comments, subjectVersion, decidedBy, onBehalfOfUserId, decidedAt, businessDate, deferUntil]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        roundNo: { type: integer, minimum: 1 }
+        outcome: { type: string, enum: [approve, reject, request_changes, defer] }
+        rationale: { type: string }
+        comments: { type: [string, "null"] }
+        subjectVersion: { $ref: "#/components/schemas/Version" }
+        decidedBy: { $ref: "#/components/schemas/Uuid" }
+        onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessDate: { $ref: "#/components/schemas/BusinessDate" }
+        deferUntil: { $ref: "#/components/schemas/NullableBusinessDate" }
+    ApprovalEscalation:
+      type: object
+      required: [id, roundNo, dueDate, level, fromPartyCode, toPartyCode, toUserId, toGroupId, routingError, escalatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        roundNo: { type: integer, minimum: 1 }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        level: { type: integer, minimum: 1, maximum: 5 }
+        fromPartyCode: { $ref: "#/components/schemas/PartyCode" }
+        toPartyCode: { type: [string, "null"] }
+        toUserId: { $ref: "#/components/schemas/NullableUuid" }
+        toGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        routingError: { type: [string, "null"], enum: [no_next_authority, party_unmapped, party_not_approver, null] }
+        escalatedAt: { $ref: "#/components/schemas/Timestamp" }
+    Approval:
+      type: object
+      required: [id, transformationId, approvalType, subjectType, subjectId, subjectVersion, roundNo, decisionRightId, title, requestNote, requestedBy, requestedAt, requestBusinessDate, assignee, slaType, urgentReason, dueDate, dueUnknownReason, calendarId, status, escalationLevel, escalatedTo, decidedBy, decidedOnBehalfOf, decidedAt, decisions, escalations, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        approvalType: { type: string }
+        subjectType: { type: string }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectVersion: { $ref: "#/components/schemas/Version" }
+        roundNo: { type: integer, minimum: 1 }
+        decisionRightId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string }
+        requestNote: { type: [string, "null"] }
+        requestedBy: { $ref: "#/components/schemas/Uuid" }
+        requestedAt: { $ref: "#/components/schemas/Timestamp" }
+        requestBusinessDate: { $ref: "#/components/schemas/BusinessDate" }
+        assignee: { $ref: "#/components/schemas/ApprovalParty" }
+        slaType: { type: [string, "null"], enum: [working_days, next_steerco_or_urgent, release_plan, null] }
+        urgentReason: { type: [string, "null"] }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate", description: "null = Unknown; see dueUnknownReason." }
+        dueUnknownReason: { type: [string, "null"], enum: [no_steerco_scheduled, no_release_date, calendar_not_configured, no_sla, null] }
+        calendarId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [pending, changes_requested, deferred, approved, rejected, withdrawn] }
+        escalationLevel: { type: integer, minimum: 0, maximum: 5 }
+        escalatedTo:
+          oneOf:
+            - { $ref: "#/components/schemas/ApprovalParty" }
+            - { type: "null" }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedOnBehalfOf: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decisions: { type: array, items: { $ref: "#/components/schemas/ApprovalDecisionEntry" } }
+        escalations: { type: array, items: { $ref: "#/components/schemas/ApprovalEscalation" } }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    ApprovalRequest:
+      type: object
+      required: [approvalType, subjectId, subjectVersion, decisionRightId, title]
+      additionalProperties: false
+      properties:
+        approvalType: { type: string, enum: [decision_request], description: "Types requested through this operation; other modules request their own types (e.g. governance_matrix_change through submitGovernanceMatrix)." }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectVersion: { $ref: "#/components/schemas/Version" }
+        decisionRightId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        requestNote: { type: string, minLength: 1, maxLength: 4000 }
+        urgent: { type: boolean, default: false }
+        urgentReason: { type: string, minLength: 1, maxLength: 2000 }
+        releaseMilestoneId: { $ref: "#/components/schemas/Uuid" }
+    ApprovalDecisionCreate:
+      type: object
+      required: [outcome, rationale, subjectVersion]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [approve, reject, request_changes, defer] }
+        rationale: { type: string, maxLength: 8000, description: "Required; blank text is 422 approval.rationale_required." }
+        comments: { type: string, minLength: 1, maxLength: 8000 }
+        subjectVersion: { $ref: "#/components/schemas/Version" }
+        deferUntil: { $ref: "#/components/schemas/BusinessDate" }
+        onBehalfOfUserId: { $ref: "#/components/schemas/Uuid" }
+    ApprovalResubmit:
+      type: object
+      required: [subjectVersion]
+      additionalProperties: false
+      properties:
+        subjectVersion: { $ref: "#/components/schemas/Version" }
+        requestNote: { type: string, minLength: 1, maxLength: 4000 }
+    ApprovalPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Approval" } }
+        nextCursor: { type: [string, "null"] }
+    ApprovalDecisionRecord:
+      type: object
+      required: [source, recordId, approvalKind, subjectType, subjectId, subjectVersion, outcome, rationale, decidedBy, onBehalfOfUserId, decidedAt]
+      additionalProperties: false
+      properties:
+        source: { type: string, enum: [approval, gate_decision, funding_decision] }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        approvalKind: { type: string }
+        subjectType: { type: string }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectVersion: { type: [integer, "null"] }
+        outcome: { type: string, enum: [approved, rejected, changes_requested, deferred, revoked] }
+        rationale: { type: string }
+        decidedBy: { $ref: "#/components/schemas/Uuid" }
+        onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/Timestamp" }
+    ApprovalDecisionRecordPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ApprovalDecisionRecord" } }
+        nextCursor: { type: [string, "null"] }
+    SlaType:
+      type: string
+      enum: [working_days, next_steerco_or_urgent, release_plan]
+    DecisionRightTemplate:
+      type: object
+      required: [key, ordinal, sourceDecisionEn, sourceRecommendEn, sourceApproveEn, sourceConsultEn, sourceInformEn, sourceSlaEn, decisionAr, recommendAr, approveAr, consultAr, informAr, slaAr, recommendParties, approvePartyCode, consultParties, informParties, slaType, slaWorkingDays, escalationChain, sourceRef]
+      additionalProperties: false
+      properties:
+        key: { type: string }
+        ordinal: { type: integer, minimum: 1 }
+        sourceDecisionEn: { type: string }
+        sourceRecommendEn: { type: string }
+        sourceApproveEn: { type: string }
+        sourceConsultEn: { type: string }
+        sourceInformEn: { type: string }
+        sourceSlaEn: { type: string }
+        decisionAr: { type: string }
+        recommendAr: { type: string }
+        approveAr: { type: string }
+        consultAr: { type: string }
+        informAr: { type: string }
+        slaAr: { type: string }
+        recommendParties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        approvePartyCode: { $ref: "#/components/schemas/PartyCode" }
+        consultParties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        informParties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        slaType: { $ref: "#/components/schemas/SlaType" }
+        slaWorkingDays: { type: [integer, "null"] }
+        escalationChain: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        sourceRef: { type: string }
+    DecisionRightTemplateList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/DecisionRightTemplate" } }
+    DecisionRight:
+      type: object
+      required: [id, transformationId, templateKey, ordinal, decisionEn, decisionAr, recommendLabel, approveLabel, consultLabel, informLabel, slaLabel, recommendParties, approvePartyCode, consultParties, informParties, slaType, slaWorkingDays, urgentWorkingDays, escalationChain, status, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        templateKey: { type: [string, "null"] }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        decisionEn: { $ref: "#/components/schemas/LocalizedLabel" }
+        decisionAr: { $ref: "#/components/schemas/LocalizedLabel" }
+        recommendLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        approveLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        consultLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        informLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        slaLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        recommendParties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        approvePartyCode: { $ref: "#/components/schemas/PartyCode" }
+        consultParties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        informParties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        slaType: { $ref: "#/components/schemas/SlaType" }
+        slaWorkingDays: { type: [integer, "null"] }
+        urgentWorkingDays: { type: [integer, "null"] }
+        escalationChain: { type: array, minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/PartyCode" } }
+        status: { type: string, enum: [active, retired] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    DecisionRightCreate:
+      type: object
+      required: [decisionEn, decisionAr, recommendLabel, approveLabel, consultLabel, informLabel, slaLabel, approvePartyCode, slaType, escalationChain]
+      additionalProperties: false
+      properties:
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        decisionEn: { $ref: "#/components/schemas/LocalizedLabel" }
+        decisionAr: { $ref: "#/components/schemas/LocalizedLabel" }
+        recommendLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        approveLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        consultLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        informLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        slaLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        recommendParties: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/PartyCode" } }
+        approvePartyCode: { $ref: "#/components/schemas/PartyCode" }
+        consultParties: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/PartyCode" } }
+        informParties: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/PartyCode" } }
+        slaType: { $ref: "#/components/schemas/SlaType" }
+        slaWorkingDays: { type: integer }
+        urgentWorkingDays: { type: integer }
+        escalationChain: { type: array, minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/PartyCode" } }
+    DecisionRightUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        decisionEn: { $ref: "#/components/schemas/LocalizedLabel" }
+        decisionAr: { $ref: "#/components/schemas/LocalizedLabel" }
+        recommendLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        approveLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        consultLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        informLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        slaLabel: { $ref: "#/components/schemas/LocalizedLabel" }
+        recommendParties: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/PartyCode" } }
+        approvePartyCode: { $ref: "#/components/schemas/PartyCode" }
+        consultParties: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/PartyCode" } }
+        informParties: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/PartyCode" } }
+        slaType: { $ref: "#/components/schemas/SlaType" }
+        slaWorkingDays: { type: [integer, "null"] }
+        urgentWorkingDays: { type: [integer, "null"] }
+        escalationChain: { type: array, minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/PartyCode" } }
+        status: { type: string, enum: [active, retired] }
+    DecisionRightPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/DecisionRight" } }
+        nextCursor: { type: [string, "null"] }
+    DueDatePreview:
+      type: object
+      required: [decisionRightId, slaType, raisedOn, dueDate, unknownReason, calendarId, calendarVersion]
+      additionalProperties: false
+      properties:
+        decisionRightId: { $ref: "#/components/schemas/Uuid" }
+        slaType: { $ref: "#/components/schemas/SlaType" }
+        raisedOn: { $ref: "#/components/schemas/BusinessDate" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate", description: "null = Unknown, never a guessed date." }
+        unknownReason: { type: [string, "null"], enum: [no_steerco_scheduled, no_release_date, calendar_not_configured, null] }
+        calendarId: { $ref: "#/components/schemas/NullableUuid" }
+        calendarVersion: { type: [integer, "null"] }
+    RaciCell:
+      type: object
+      required: [partyCode, value]
+      additionalProperties: false
+      properties:
+        partyCode: { $ref: "#/components/schemas/PartyCode" }
+        value:
+          type: [string, "null"]
+          maxLength: 3
+          description: "A, R, C, I or A/R; null = no involvement. Any other value (e.g. X) is 422 raci.invalid_value."
+    RaciTemplate:
+      type: object
+      required: [parties, deliverables]
+      additionalProperties: false
+      properties:
+        parties: { type: array, items: { $ref: "#/components/schemas/PartyCode" }, description: "Column order: SP, TL, BO, WL, FIN, TD." }
+        deliverables:
+          type: array
+          items:
+            type: object
+            required: [key, ordinal, sourceDeliverableEn, deliverableAr, sourceRef, cells]
+            additionalProperties: false
+            properties:
+              key: { type: string }
+              ordinal: { type: integer, minimum: 1 }
+              sourceDeliverableEn: { type: string }
+              deliverableAr: { type: string }
+              sourceRef: { type: string }
+              cells: { type: array, items: { $ref: "#/components/schemas/RaciCell" } }
+    RaciDeliverable:
+      type: object
+      required: [id, transformationId, templateKey, ordinal, labelEn, labelAr, accountabilityException, status, cells, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        templateKey: { type: [string, "null"] }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        labelEn: { $ref: "#/components/schemas/LocalizedLabel" }
+        labelAr: { $ref: "#/components/schemas/LocalizedLabel" }
+        accountabilityException: { type: [string, "null"] }
+        status: { type: string, enum: [active, retired] }
+        cells: { type: array, items: { $ref: "#/components/schemas/RaciCell" } }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    RaciDeliverableCreate:
+      type: object
+      required: [labelEn, labelAr, cells]
+      additionalProperties: false
+      properties:
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        labelEn: { $ref: "#/components/schemas/LocalizedLabel" }
+        labelAr: { $ref: "#/components/schemas/LocalizedLabel" }
+        accountabilityException: { type: string, minLength: 10, maxLength: 2000 }
+        cells: { type: array, minItems: 1, maxItems: 20, items: { $ref: "#/components/schemas/RaciCell" } }
+    RaciDeliverableUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        labelEn: { $ref: "#/components/schemas/LocalizedLabel" }
+        labelAr: { $ref: "#/components/schemas/LocalizedLabel" }
+        accountabilityException: { type: [string, "null"], minLength: 10, maxLength: 2000 }
+        status: { type: string, enum: [active, retired] }
+        cells: { type: array, minItems: 1, maxItems: 20, items: { $ref: "#/components/schemas/RaciCell" } }
+    GovernanceMatrix:
+      type: object
+      required: [id, transformationId, kind, status, approvedVersion, approvedAt, approvedBy, openApprovalId, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        kind: { type: string, enum: [decision_rights, raci] }
+        status: { type: string, enum: [draft, in_approval, approved] }
+        approvedVersion: { type: [integer, "null"] }
+        approvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        approvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        openApprovalId: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    GovernanceMatrixList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/GovernanceMatrix" } }
+    GovernanceMatrixSubmit:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        requestNote: { type: string, minLength: 1, maxLength: 4000 }
+    Raci:
+      type: object
+      required: [transformationId, matrix, parties, deliverables]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        matrix: { $ref: "#/components/schemas/GovernanceMatrix" }
+        parties: { type: array, items: { $ref: "#/components/schemas/PartyCode" } }
+        deliverables: { type: array, items: { $ref: "#/components/schemas/RaciDeliverable" } }
+    TransformReadiness:
+      type: object
+      required: [transformationId, phase, status, checks]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        phase: { type: string, const: transform }
+        status: { type: string, enum: [ready, not_ready] }
+        checks:
+          type: array
+          items:
+            type: object
+            required: [code, passed, missing]
+            additionalProperties: false
+            properties:
+              code: { type: string, enum: [charter_decision_rights, t11_seeded_decisions, t11_approvers_mapped, t12_accountable] }
+              passed: { type: boolean }
+              missing: { type: array, items: { type: string } }

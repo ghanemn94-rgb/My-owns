@@ -1,4 +1,4 @@
-# Data dictionary: P1, P2 and P3 tables and views
+# Data dictionary: P1, P2, P3 and P4 tables and views
 
 - **Task:** T-DG1-ARCH-01 (solution-architect), 2026-09-30.
 - **Contract for:** backend-workflow-engineer's P1 migrations (`packages/db/migrations/**`).
@@ -3523,3 +3523,810 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | Database | The P2 record guards on every P3 table; the closed sets (statuses, criteria, classes, kinds, periods, confidence H/M/L); score 1–5; weights total 100; one class per business-case line and the class/value-basis pairing; non-financial lines unmonetised; one active line per T09 formula; one active transformation case and one active case per initiative; formula versions immutable; validators ≠ authors; inherited approvals need evidence; dispensation decider ≠ recorder; override approver ≠ proposer; acyclic initiative graph; system dependency types permanent |
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI P3 schemas), decimal strings within the column scale, the formula grammar and type rules (`packages/shared/src/formula`), one `class` per line, free-text rules |
 | Service | Permissions and record-level rules, If-Match, the ADR-0021 transition preconditions and their exact 422 texts, ranking causes, schedule and capacity flags, G4 criteria evaluation |
+
+# P4 tables, slices I and C (migrations 0028–0031, DG4)
+
+- **Task:** T-DG4-ARCH-01 (solution-architect), 2026-10-09. **ADRs:** ADR-0025 (business calendar, time semantics, scheduled-job kit, work items, inbox), ADR-0026 (groups, role mapping, delegation, the P4 approval record, T11, T12).
+- **Generated:** the per-table sections below were generated from the catalogue of a freshly migrated database by `docs/delivery/handbacks/DG4/T-DG4-ARCH-01-evidence/gen-dictionary.ts` (types, nullability, defaults, constraints, indexes, triggers and `mth_app` privileges as PostgreSQL reports them; `::text` casts removed for readability). Purpose, module, writers and lifecycle are written by hand.
+- **Global rules** are those at the top of this file and the P2 record guards (`p2_attach_guards`: row guard, version step by 1, deferred audit coverage; `p2_attach_append_only` on `approval_decision` and `approval_escalation`). No money, rate or FTE column in slices I and C. Event instants are `timestamptz`; business dates and due dates are `date` (ADR-0025 §2).
+- **No DELETE** grant on any P4 table. Seeded catalogues (`work_item_kind`, `governance_party`, `decision_right_template`, `raci_template_deliverable`, `raci_template_cell`, `approval_type`) are SELECT only; `job_schedule` is SELECT, UPDATE.
+- **Advisory locks** (ADR-0016 §6): 730224 delegation graph (per organization), 730225 RACI deliverable, 730226 approval subject; 730227 reserved.
+
+## delegation (0001) — P4 extension (0029)
+
+- **Added columns** (all NULL on rows that existed before 0029):
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| absence_note | text | NULL |  | `CHECK (((absence_note IS NULL) OR ((char_length(absence_note) >= 1) AND (char_length(absence_note) <= 1000))))` |
+| requested_by_user_id | uuid | NULL |  | FK → app_user(id); set when an access administrator records the delegation on the delegator's request |
+| revoked_at | timestamp with time zone | NULL |  |  |
+| revoked_by | uuid | NULL |  | FK → app_user(id) |
+| revoke_reason | text | NULL |  | `CHECK (((revoke_reason IS NULL) OR ((char_length(revoke_reason) >= 1) AND (char_length(revoke_reason) <= 1000))))` |
+
+- **Added table constraint:** `delegation_revocation_complete` (CHECK): the revocation fields are all set or all NULL, and set only with `status = 'revoked'`.
+- **Added triggers:** `delegation_loop_guard` (BEFORE INSERT OR UPDATE OF status, delegator_user_id, delegate_user_id, effective_to FOR EACH ROW → `delegation_loop_guard()`: lock 730224 per organization, refuses a path back to the delegator through active, not-yet-ended delegations; error `delegation_no_loop`); `delegation_row_guard` (BEFORE INSERT OR UPDATE → `p2_row_guard()`: version step by 1, immutable identity).
+- **Not attached:** `p2_audit_required` (DG3 fixtures insert delegation rows directly; the API writes the audit event; ADR-0026 §3 rule 3).
+
+## business_calendar
+
+- **Purpose:** Working-day calendar of an organization (REQ-S10-006, M0196; ADR-0025 §1). One active default per organization; default Asia/Riyadh, workweek Sunday-Thursday (ISO 7,1,2,3,4). No holiday is seeded.
+- **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `organization`. **Who writes:** system (`p4_ensure_default_calendar`); `calendar.configure` (ADM_TECH). **Lifecycle:** active → archived (the default calendar cannot be archived).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| code | text | NOT NULL |  |  |
+| name_en | text | NOT NULL |  | `CHECK (((char_length(name_en) >= 1) AND (char_length(name_en) <= 200)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 200)))` |
+| timezone | text | NOT NULL | `'Asia/Riyadh'` | `CHECK (((char_length(timezone) >= 1) AND (char_length(timezone) <= 64)))` |
+| workweek | smallint[] | NOT NULL | `ARRAY[(7)::smallint, (1)::smallint, (2)::smallint, (3)::smallint, (4)::smallint]` |  |
+| is_default | boolean | NOT NULL | `false` |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `business_calendar_code_format` (CHECK): `CHECK ((code ~ '^[A-Z0-9][A-Z0-9_-]{0,31}$'))`
+- `business_calendar_default_active` (CHECK): `CHECK (((NOT is_default) OR (status = 'active')))`
+- `business_calendar_org_code_key` (UNIQUE): `UNIQUE (organization_id, code)`
+- `business_calendar_org_id_key` (UNIQUE): `UNIQUE (organization_id, id)`
+- `business_calendar_workweek_valid` (CHECK): `CHECK (p4_valid_workweek(workweek))`
+
+**Indexes:**
+
+- `business_calendar_one_default`: `UNIQUE (organization_id) WHERE is_default`
+
+**Triggers:**
+
+- `business_calendar_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `business_calendar_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `business_calendar_timezone_known`: BEFORE INSERT OR UPDATE OF timezone FOR EACH ROW → `p4_timezone_known()`
+
+## business_calendar_holiday
+
+- **Purpose:** An administered non-working date range (inclusive, at most 31 days) of a calendar (REQ-S10-006; ADR-0025 §1).
+- **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `organization`. **Who writes:** `calendar.configure` (ADM_TECH). **Lifecycle:** active → removed (never deleted).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| calendar_id | uuid | NOT NULL |  |  |
+| date_from | date | NOT NULL |  |  |
+| date_to | date | NOT NULL |  |  |
+| name_en | text | NOT NULL |  | `CHECK (((char_length(name_en) >= 1) AND (char_length(name_en) <= 200)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 200)))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `business_calendar_holiday_calendar_fkey` (FK): `FOREIGN KEY (organization_id, calendar_id) REFERENCES business_calendar(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `business_calendar_holiday_range` (CHECK): `CHECK (((date_to >= date_from) AND ((date_to - date_from) <= 30)))`
+
+**Indexes:**
+
+- `business_calendar_holiday_calendar_idx`: `(calendar_id, date_from) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `business_calendar_holiday_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `business_calendar_holiday_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## job_schedule
+
+- **Purpose:** A recurring job of the scheduled-job kit: queue, five-field cron and timezone (REQ-S16-005; ADR-0025 §3). Platform-wide. Seeded: approval.escalation_scan, delegation.expiry_sweep, kpi.reporting_period_open.
+- **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `jobs (worker registers it with pg-boss)`. **Who writes:** migrations insert; `job.configure` (ADM_TECH) updates enabled/cron/timezone. **Lifecycle:** enabled ⇄ disabled.
+- **`mth_app` privileges:** SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| code | text | NOT NULL |  |  |
+| queue_name | text | NOT NULL |  | `CHECK ((queue_name ~ '^[a-z_]+\.[a-z_.]+$'))` |
+| cron | text | NOT NULL |  | `CHECK ((cron ~ '^\S+( \S+){4}$'))` |
+| timezone | text | NOT NULL | `'Asia/Riyadh'` | `CHECK (((char_length(timezone) >= 1) AND (char_length(timezone) <= 64)))` |
+| enabled | boolean | NOT NULL | `true` |  |
+| description_en | text | NOT NULL |  | `CHECK (((char_length(description_en) >= 1) AND (char_length(description_en) <= 500)))` |
+| description_ar | text | NOT NULL |  | `CHECK (((char_length(description_ar) >= 1) AND (char_length(description_ar) <= 500)))` |
+| owner_module | text | NOT NULL |  | `CHECK ((owner_module ~ '^[a-z_]+$'))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `job_schedule_code_format` (CHECK): `CHECK ((code ~ '^[a-z_]+\.[a-z_]+$'))`
+- `job_schedule_code_key` (UNIQUE): `UNIQUE (code)`
+
+**Triggers:**
+
+- `job_schedule_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `job_schedule_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `job_schedule_timezone_known`: BEFORE INSERT OR UPDATE OF timezone FOR EACH ROW → `p4_timezone_known()`
+
+## work_item_kind
+
+- **Purpose:** Catalogue of My Work item kinds; later slices insert their own kinds by migration (ADR-0025 §4).
+- **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** migrations only. **Lifecycle:** seed (read-only).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[a-z_]+$'))`; PK |
+| owner_module | text | NOT NULL |  | `CHECK ((owner_module ~ '^[a-z_]+$'))` |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 200)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 200)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+## work_item
+
+- **Purpose:** One owned task in My Work with an i18n message and a relative deep link (REQ-S12-005, REQ-S03-008; ADR-0025 §4). The dedupe key makes a duplicate creation impossible (REQ-S16-005).
+- **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** `tasks/service.ts` `createWorkItemOnce` (domain services, job handlers); the assignee completes. **Lifecycle:** open → done | cancelled (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NULL |  | FK → transformation(id) |
+| kind | text | NOT NULL |  | FK → work_item_kind(code) |
+| assignee_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| subject_type | text | NOT NULL |  | `CHECK (((subject_type ~ '^[a-z_]+$') AND (char_length(subject_type) <= 64)))` |
+| subject_id | uuid | NOT NULL |  |  |
+| link_path | text | NOT NULL |  |  |
+| message_key | text | NOT NULL |  | `CHECK (((message_key ~ '^[a-z][a-zA-Z0-9_.]*$') AND (char_length(message_key) <= 128)))` |
+| message_params | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(message_params) = 'object'))` |
+| due_date | date | NULL |  |  |
+| period_label | text | NULL |  | `CHECK (((period_label IS NULL) OR ((char_length(period_label) >= 1) AND (char_length(period_label) <= 32))))` |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'done', 'cancelled'])))` |
+| completed_at | timestamp with time zone | NULL |  |  |
+| completed_by | uuid | NULL |  | FK → app_user(id) |
+| dedupe_key | text | NOT NULL |  | `CHECK (((char_length(dedupe_key) >= 1) AND (char_length(dedupe_key) <= 200)))` |
+| created_source | text | NOT NULL |  | `CHECK ((created_source = ANY (ARRAY['api', 'worker', 'migration'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `work_item_completion` (CHECK): `CHECK ((((status = 'done') = (completed_at IS NOT NULL)) AND ((completed_by IS NULL) OR (completed_at IS NOT NULL))))`
+- `work_item_dedupe_key` (UNIQUE): `UNIQUE (organization_id, dedupe_key)`
+- `work_item_link_path_relative` (CHECK): `CHECK ((("left"(link_path, 1) = '/') AND (substr(link_path, 2, 1) <> ALL (ARRAY['/', '\'])) AND (char_length(link_path) <= 500)))`
+
+**Indexes:**
+
+- `work_item_assignee_open_idx`: `(assignee_user_id, due_date, id) WHERE (status = 'open')`
+- `work_item_subject_idx`: `(subject_type, subject_id)`
+- `work_item_transformation_idx`: `(transformation_id, status)`
+
+**Triggers:**
+
+- `work_item_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `work_item_guard`: BEFORE UPDATE FOR EACH ROW → `work_item_guard()`
+- `work_item_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## inbox_notification
+
+- **Purpose:** In-app reminder with a direct link (REQ-S12-005; ADR-0025 §4). No email or messaging channel in P4.
+- **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** `createWorkItemOnce`; the recipient marks it read. **Lifecycle:** unread → read (once).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NULL |  | FK → transformation(id) |
+| recipient_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| work_item_id | uuid | NULL |  | FK → work_item(id) |
+| link_path | text | NOT NULL |  |  |
+| message_key | text | NOT NULL |  | `CHECK (((message_key ~ '^[a-z][a-zA-Z0-9_.]*$') AND (char_length(message_key) <= 128)))` |
+| message_params | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(message_params) = 'object'))` |
+| dedupe_key | text | NOT NULL |  | `CHECK (((char_length(dedupe_key) >= 1) AND (char_length(dedupe_key) <= 200)))` |
+| read_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `inbox_notification_dedupe_key` (UNIQUE): `UNIQUE (organization_id, dedupe_key)`
+- `inbox_notification_link_path_relative` (CHECK): `CHECK ((("left"(link_path, 1) = '/') AND (substr(link_path, 2, 1) <> ALL (ARRAY['/', '\'])) AND (char_length(link_path) <= 500)))`
+
+**Indexes:**
+
+- `inbox_notification_recipient_idx`: `(recipient_user_id, created_at DESC, id DESC)`
+- `inbox_notification_unread_idx`: `(recipient_user_id) WHERE (read_at IS NULL)`
+
+**Triggers:**
+
+- `inbox_notification_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `inbox_notification_read_once`: BEFORE UPDATE FOR EACH ROW → `inbox_notification_read_once()`
+- `inbox_notification_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## access_group
+
+- **Purpose:** A governed group (REQ-S16-011 Group, REQ-S10-008), e.g. SteerCo. A routing target; it grants no permission (ADR-0026 §1).
+- **Migration:** `0029_p4_groups_role_mapping_delegation.sql`. **API module:** `access`. **Who writes:** `group.manage` (TO). **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| code | text | NOT NULL |  |  |
+| name_en | text | NOT NULL |  | `CHECK (((char_length(name_en) >= 1) AND (char_length(name_en) <= 200)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 200)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 2000))))` |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `access_group_code_format` (CHECK): `CHECK ((code ~ '^[A-Z0-9][A-Z0-9_-]{0,31}$'))`
+- `access_group_org_code_key` (UNIQUE): `UNIQUE (organization_id, code)`
+- `access_group_org_id_key` (UNIQUE): `UNIQUE (organization_id, id)`
+
+**Triggers:**
+
+- `access_group_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `access_group_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## access_group_member
+
+- **Purpose:** Membership of a governed group with an effective window; removal is recorded (ADR-0026 §1).
+- **Migration:** `0029_p4_groups_role_mapping_delegation.sql`. **API module:** `access`. **Who writes:** `group.manage` (TO). **Lifecycle:** current → removed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| group_id | uuid | NOT NULL |  |  |
+| user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| effective_from | timestamp with time zone | NOT NULL | `now()` |  |
+| effective_to | timestamp with time zone | NULL |  |  |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 1) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `access_group_member_effective_range` (CHECK): `CHECK (((effective_to IS NULL) OR (effective_to > effective_from)))`
+- `access_group_member_group_fkey` (FK): `FOREIGN KEY (organization_id, group_id) REFERENCES access_group(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `access_group_member_removal_complete` (CHECK): `CHECK ((((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+
+**Indexes:**
+
+- `access_group_member_active_key`: `UNIQUE (group_id, user_id) WHERE (removed_at IS NULL)`
+- `access_group_member_user_idx`: `(user_id) WHERE (removed_at IS NULL)`
+
+**Triggers:**
+
+- `access_group_member_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `access_group_member_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `access_group_member_same_org`: BEFORE INSERT FOR EACH ROW → `access_group_member_same_org()`
+
+## governance_party
+
+- **Purpose:** The 18 parties named by T11 (B0099) and T12 (B0101); label_en is the source wording, label_ar provisional (ADR-0026 §2).
+- **Migration:** `0029_p4_groups_role_mapping_delegation.sql`. **API module:** `access`. **Who writes:** migrations only. **Lifecycle:** seed (read-only).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[A-Z][A-Z0-9_]{0,31}$'))`; PK |
+| ordinal | smallint | NOT NULL |  | `CHECK ((ordinal >= 1))` |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['role', 'forum', 'office', 'owner_group'])))` |
+| role_code | text | NULL |  | FK → role(code) |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 200)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 200)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+**Table constraints:**
+
+- `governance_party_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+
+## role_mapping
+
+- **Purpose:** Who a governance party is in one transformation: one named person or one governed group; no fallback when unmapped (REQ-S10-008; ADR-0026 §2).
+- **Migration:** `0029_p4_groups_role_mapping_delegation.sql`. **API module:** `access`. **Who writes:** `role_mapping.assign` (TL, TO). **Lifecycle:** active → ended (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| party_code | text | NOT NULL |  | FK → governance_party(code) |
+| target_kind | text | NOT NULL |  | `CHECK ((target_kind = ANY (ARRAY['user', 'group'])))` |
+| user_id | uuid | NULL |  | FK → app_user(id) |
+| group_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'ended'])))` |
+| ended_at | timestamp with time zone | NULL |  |  |
+| ended_by | uuid | NULL |  | FK → app_user(id) |
+| end_reason | text | NULL |  | `CHECK (((end_reason IS NULL) OR ((char_length(end_reason) >= 1) AND (char_length(end_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `role_mapping_end_complete` (CHECK): `CHECK ((((status = 'ended') = (ended_at IS NOT NULL)) AND ((ended_at IS NULL) = (ended_by IS NULL)) AND ((ended_at IS NULL) = (end_reason IS NULL))))`
+- `role_mapping_group_fkey` (FK): `FOREIGN KEY (organization_id, group_id) REFERENCES access_group(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `role_mapping_one_target` (CHECK): `CHECK ((((target_kind = 'user') AND (user_id IS NOT NULL) AND (group_id IS NULL)) OR ((target_kind = 'group') AND (group_id IS NOT NULL) AND (user_id IS NULL))))`
+
+**Indexes:**
+
+- `role_mapping_active_key`: `UNIQUE (transformation_id, party_code) WHERE (status = 'active')`
+- `role_mapping_user_idx`: `(user_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `role_mapping_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `role_mapping_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `role_mapping_guard()`
+- `role_mapping_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## decision_right_template
+
+- **Purpose:** The four T11 rows of B0099, VERBATIM (REQ-PB-065; ADR-0026 §5).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** migrations only. **Lifecycle:** seed (read-only).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| key | text | NOT NULL |  | `CHECK ((key ~ '^[a-z_]+$'))`; PK |
+| ordinal | smallint | NOT NULL |  | `CHECK ((ordinal >= 1))` |
+| source_decision_en | text | NOT NULL |  |  |
+| source_recommend_en | text | NOT NULL |  |  |
+| source_approve_en | text | NOT NULL |  |  |
+| source_consult_en | text | NOT NULL |  |  |
+| source_inform_en | text | NOT NULL |  |  |
+| source_sla_en | text | NOT NULL |  |  |
+| decision_ar | text | NOT NULL |  |  |
+| recommend_ar | text | NOT NULL |  |  |
+| approve_ar | text | NOT NULL |  |  |
+| consult_ar | text | NOT NULL |  |  |
+| inform_ar | text | NOT NULL |  |  |
+| sla_ar | text | NOT NULL |  |  |
+| recommend_parties | text[] | NOT NULL |  |  |
+| approve_party_code | text | NOT NULL |  | FK → governance_party(code) |
+| consult_parties | text[] | NOT NULL |  |  |
+| inform_parties | text[] | NOT NULL |  |  |
+| sla_type | text | NOT NULL |  | `CHECK ((sla_type = ANY (ARRAY['working_days', 'next_steerco_or_urgent', 'release_plan'])))` |
+| sla_working_days | smallint | NULL |  | `CHECK (((sla_working_days IS NULL) OR ((sla_working_days >= 1) AND (sla_working_days <= 250))))` |
+| escalation_chain | text[] | NOT NULL |  | `CHECK (((cardinality(escalation_chain) >= 1) AND (cardinality(escalation_chain) <= 5)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+**Table constraints:**
+
+- `decision_right_template_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+- `decision_right_template_sla` (CHECK): `CHECK (((sla_type = 'working_days') = (sla_working_days IS NOT NULL)))`
+
+## governance_matrix
+
+- **Purpose:** Approval header of a transformation's T11 (decision_rights) or T12 (raci) matrix; row edits bump its version; SP approves a version (REQ-S10-007; ADR-0026 §7).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** system (instantiation); `decision_right.configure` / `raci.edit`; the approval engine. **Lifecycle:** draft → in_approval → approved | draft.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['decision_rights', 'raci'])))` |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'in_approval', 'approved'])))` |
+| approved_version | integer | NULL |  | `CHECK (((approved_version IS NULL) OR (approved_version >= 1)))` |
+| approved_at | timestamp with time zone | NULL |  |  |
+| approved_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `governance_matrix_approval_complete` (CHECK): `CHECK ((((approved_version IS NULL) = (approved_at IS NULL)) AND ((approved_at IS NULL) = (approved_by IS NULL)) AND ((status <> 'approved') OR (approved_version IS NOT NULL))))`
+- `governance_matrix_kind_key` (UNIQUE): `UNIQUE (transformation_id, kind)`
+- `governance_matrix_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `governance_matrix_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `governance_matrix_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## transformation_decision_right
+
+- **Purpose:** One T11 row of a transformation: the seeded copy (template_key) or an added row; parties, SLA type and escalation chain (REQ-PB-065, REQ-PB-066; ADR-0026 §5).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** system (instantiation); `decision_right.configure` (TO, TL). **Lifecycle:** active → retired.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| template_key | text | NULL |  | FK → decision_right_template(key) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| decision_en | text | NOT NULL |  | `CHECK (((char_length(decision_en) >= 1) AND (char_length(decision_en) <= 300)))` |
+| decision_ar | text | NOT NULL |  | `CHECK (((char_length(decision_ar) >= 1) AND (char_length(decision_ar) <= 300)))` |
+| recommend_label | text | NOT NULL |  | `CHECK (((char_length(recommend_label) >= 1) AND (char_length(recommend_label) <= 300)))` |
+| approve_label | text | NOT NULL |  | `CHECK (((char_length(approve_label) >= 1) AND (char_length(approve_label) <= 300)))` |
+| consult_label | text | NOT NULL |  | `CHECK (((char_length(consult_label) >= 1) AND (char_length(consult_label) <= 300)))` |
+| inform_label | text | NOT NULL |  | `CHECK (((char_length(inform_label) >= 1) AND (char_length(inform_label) <= 300)))` |
+| sla_label | text | NOT NULL |  | `CHECK (((char_length(sla_label) >= 1) AND (char_length(sla_label) <= 300)))` |
+| recommend_parties | text[] | NOT NULL | `'{}'[]` |  |
+| approve_party_code | text | NOT NULL |  | FK → governance_party(code) |
+| consult_parties | text[] | NOT NULL | `'{}'[]` |  |
+| inform_parties | text[] | NOT NULL | `'{}'[]` |  |
+| sla_type | text | NOT NULL |  | `CHECK ((sla_type = ANY (ARRAY['working_days', 'next_steerco_or_urgent', 'release_plan'])))` |
+| sla_working_days | smallint | NULL |  | `CHECK (((sla_working_days IS NULL) OR ((sla_working_days >= 1) AND (sla_working_days <= 250))))` |
+| urgent_working_days | smallint | NULL |  | `CHECK (((urgent_working_days IS NULL) OR ((urgent_working_days >= 1) AND (urgent_working_days <= 250))))` |
+| escalation_chain | text[] | NOT NULL |  | `CHECK (((cardinality(escalation_chain) >= 1) AND (cardinality(escalation_chain) <= 5)))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'retired'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `transformation_decision_right_sla` (CHECK): `CHECK ((((sla_type = 'working_days') = (sla_working_days IS NOT NULL)) AND ((urgent_working_days IS NULL) OR (sla_type = 'next_steerco_or_urgent'))))`
+- `transformation_decision_right_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `transformation_decision_right_order_idx`: `(transformation_id, ordinal, id)`
+- `transformation_decision_right_template_key`: `UNIQUE (transformation_id, template_key) WHERE (template_key IS NOT NULL)`
+
+**Triggers:**
+
+- `transformation_decision_right_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `transformation_decision_right_editable`: BEFORE INSERT OR UPDATE FOR EACH ROW → `governance_matrix_rows_editable()`
+- `transformation_decision_right_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `transformation_decision_right_guard()`
+- `transformation_decision_right_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## raci_template_deliverable
+
+- **Purpose:** The six T12 deliverables of B0101, VERBATIM (REQ-PB-067).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** migrations only. **Lifecycle:** seed (read-only).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| key | text | NOT NULL |  | `CHECK ((key ~ '^[a-z_]+$'))`; PK |
+| ordinal | smallint | NOT NULL |  | `CHECK ((ordinal >= 1))` |
+| source_deliverable_en | text | NOT NULL |  |  |
+| deliverable_ar | text | NOT NULL |  |  |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+**Table constraints:**
+
+- `raci_template_deliverable_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+
+## raci_template_cell
+
+- **Purpose:** The 36 T12 cells of B0101 (A, R, C, I, A/R), VERBATIM (REQ-PB-067).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** migrations only. **Lifecycle:** seed (read-only).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| deliverable_key | text | NOT NULL |  | FK → raci_template_deliverable(key) |
+| party_code | text | NOT NULL |  | FK → governance_party(code) |
+| value | text | NOT NULL |  | `CHECK ((value = ANY (ARRAY['A', 'R', 'C', 'I', 'A/R'])))` |
+
+**Table constraints:**
+
+- `raci_template_cell_pkey` (PK): `PRIMARY KEY (deliverable_key, party_code)`
+
+## transformation_raci_deliverable
+
+- **Purpose:** A T12 deliverable of one transformation, copied from the template or added; an accountability exception documents the governance rule that permits zero or several A (REQ-S10-007, REQ-S10-009; ADR-0026 §7).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** system (instantiation); `raci.edit` (TO, TL). **Lifecycle:** active → retired.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| template_key | text | NULL |  | FK → raci_template_deliverable(key) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 300)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 300)))` |
+| accountability_exception | text | NULL |  | `CHECK (((accountability_exception IS NULL) OR ((char_length(accountability_exception) >= 10) AND (char_length(accountability_exception) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'retired'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `transformation_raci_deliverable_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `transformation_raci_deliverable_order_idx`: `(transformation_id, ordinal, id)`
+- `transformation_raci_deliverable_template_key`: `UNIQUE (transformation_id, template_key) WHERE (template_key IS NOT NULL)`
+
+**Triggers:**
+
+- `transformation_raci_deliverable_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `transformation_raci_deliverable_editable`: BEFORE INSERT OR UPDATE FOR EACH ROW → `governance_matrix_rows_editable()`
+- `transformation_raci_deliverable_one_accountable`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `transformation_raci_one_accountable()`
+- `transformation_raci_deliverable_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## transformation_raci_assignment
+
+- **Purpose:** One RACI cell (deliverable × party): A, R, C, I, A/R or NULL; exactly one A or A/R per active deliverable at COMMIT unless excepted (REQ-PB-067, REQ-S10-009).
+- **Migration:** `0030_p4_decision_rights_raci.sql`. **API module:** `governance`. **Who writes:** system (instantiation); `raci.edit` (TO, TL). **Lifecycle:** value changes; never deleted.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| deliverable_id | uuid | NOT NULL |  |  |
+| party_code | text | NOT NULL |  | FK → governance_party(code) |
+| value | text | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `transformation_raci_assignment_cell_key` (UNIQUE): `UNIQUE (deliverable_id, party_code)`
+- `transformation_raci_assignment_deliverable_fkey` (FK): `FOREIGN KEY (transformation_id, deliverable_id) REFERENCES transformation_raci_deliverable(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `transformation_raci_assignment_value` (CHECK): `CHECK (((value IS NULL) OR (value = ANY (ARRAY['A', 'R', 'C', 'I', 'A/R']))))`
+
+**Triggers:**
+
+- `transformation_raci_assignment_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `transformation_raci_assignment_editable`: BEFORE INSERT OR UPDATE FOR EACH ROW → `governance_matrix_rows_editable()`
+- `transformation_raci_assignment_guard`: BEFORE UPDATE FOR EACH ROW → `transformation_raci_assignment_guard()`
+- `transformation_raci_assignment_one_accountable`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `transformation_raci_one_accountable()`
+- `transformation_raci_assignment_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## approval_type
+
+- **Purpose:** What can be approved through the P4 engine, its subject table and default SoD policy (ADR-0026 §4).
+- **Migration:** `0031_p4_approvals_permissions.sql`. **API module:** `workflows`. **Who writes:** migrations only. **Lifecycle:** seed (read-only).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[a-z_]+$'))`; PK |
+| subject_table | text | NOT NULL |  | `CHECK ((subject_table ~ '^[a-z_]+$'))` |
+| default_sod_policy | text | NOT NULL |  | `CHECK ((default_sod_policy = ANY (ARRAY['requester_excluded', 'requester_allowed'])))` |
+| requires_decision_right | boolean | NOT NULL |  |  |
+| owner_module | text | NOT NULL |  | `CHECK ((owner_module ~ '^[a-z_]+$'))` |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 200)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 200)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+
+## approval
+
+- **Purpose:** The canonical P4 business-approval record: assignee, request version, due date (or Unknown with a reason), status, escalation, decision (REQ-S10-014, -016, -017, -018, -019; D-089 Q10; ADR-0026 §4).
+- **Migration:** `0031_p4_approvals_permissions.sql`. **API module:** `workflows`. **Who writes:** `approval.request` (requester); `approval.decide` (assignee); the escalation job (escalation fields only). **Lifecycle:** pending → approved | rejected | changes_requested | deferred | withdrawn; changes_requested → pending (resubmission); final: approved, rejected, withdrawn.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| approval_type | text | NOT NULL |  | FK → approval_type(code) |
+| subject_type | text | NOT NULL |  | `CHECK ((subject_type ~ '^[a-z_]+$'))` |
+| subject_id | uuid | NOT NULL |  |  |
+| subject_version | integer | NOT NULL |  | `CHECK ((subject_version >= 1))` |
+| round_no | smallint | NOT NULL | `1` | `CHECK ((round_no >= 1))` |
+| decision_right_id | uuid | NULL |  |  |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| request_note | text | NULL |  | `CHECK (((request_note IS NULL) OR ((char_length(request_note) >= 1) AND (char_length(request_note) <= 4000))))` |
+| requested_by | uuid | NOT NULL |  | FK → app_user(id) |
+| requested_at | timestamp with time zone | NOT NULL | `now()` |  |
+| request_business_date | date | NOT NULL |  |  |
+| assignee_party_code | text | NOT NULL |  | FK → governance_party(code) |
+| assignee_user_id | uuid | NULL |  | FK → app_user(id) |
+| assignee_group_id | uuid | NULL |  |  |
+| sla_type | text | NULL |  | `CHECK (((sla_type IS NULL) OR (sla_type = ANY (ARRAY['working_days', 'next_steerco_or_urgent', 'release_plan']))))` |
+| urgent_reason | text | NULL |  | `CHECK (((urgent_reason IS NULL) OR ((char_length(urgent_reason) >= 1) AND (char_length(urgent_reason) <= 2000))))` |
+| due_date | date | NULL |  |  |
+| due_unknown_reason | text | NULL |  | `CHECK (((due_unknown_reason IS NULL) OR (due_unknown_reason = ANY (ARRAY['no_steerco_scheduled', 'no_release_date', 'calendar_not_configured', 'no_sla']))))` |
+| calendar_id | uuid | NULL |  |  |
+| calendar_version | integer | NULL |  | `CHECK (((calendar_version IS NULL) OR (calendar_version >= 1)))` |
+| sod_policy | text | NOT NULL |  | `CHECK ((sod_policy = ANY (ARRAY['requester_excluded', 'requester_allowed'])))` |
+| status | text | NOT NULL | `'pending'` | `CHECK ((status = ANY (ARRAY['pending', 'changes_requested', 'deferred', 'approved', 'rejected', 'withdrawn'])))` |
+| escalation_level | smallint | NOT NULL | `0` | `CHECK (((escalation_level >= 0) AND (escalation_level <= 5)))` |
+| escalated_to_party_code | text | NULL |  | FK → governance_party(code) |
+| escalated_to_user_id | uuid | NULL |  | FK → app_user(id) |
+| escalated_to_group_id | uuid | NULL |  |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_on_behalf_of | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `approval_assignee_group_fkey` (FK): `FOREIGN KEY (organization_id, assignee_group_id) REFERENCES access_group(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_calendar_fkey` (FK): `FOREIGN KEY (organization_id, calendar_id) REFERENCES business_calendar(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_decision_right_fkey` (FK): `FOREIGN KEY (transformation_id, decision_right_id) REFERENCES transformation_decision_right(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_due_known_or_reason` (CHECK): `CHECK (((due_date IS NULL) = (due_unknown_reason IS NOT NULL)))`
+- `approval_escalated_group_fkey` (FK): `FOREIGN KEY (organization_id, escalated_to_group_id) REFERENCES access_group(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_escalation_target` (CHECK): `CHECK ((((escalation_level = 0) AND (escalated_to_party_code IS NULL) AND (escalated_to_user_id IS NULL) AND (escalated_to_group_id IS NULL)) OR ((escalation_level > 0) AND ((escalated_to_user_id IS NULL) OR (escalated_to_group_id IS NULL)))))`
+- `approval_final_decided` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'rejected'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL)) AND ((decided_on_behalf_of IS NULL) OR (decided_by IS NOT NULL))))`
+- `approval_one_assignee` (CHECK): `CHECK (((assignee_user_id IS NULL) <> (assignee_group_id IS NULL)))`
+- `approval_sod` (CHECK): `CHECK (((sod_policy = 'requester_allowed') OR (decided_by IS NULL) OR ((decided_by <> requested_by) AND (decided_on_behalf_of IS DISTINCT FROM requested_by))))`
+- `approval_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `approval_urgent_reason` (CHECK): `CHECK (((urgent_reason IS NULL) OR (sla_type = 'next_steerco_or_urgent')))`
+- `approval_working_day_calendar` (CHECK): `CHECK (((sla_type IS DISTINCT FROM 'working_days') OR (due_date IS NULL) OR (calendar_id IS NOT NULL)))`
+
+**Indexes:**
+
+- `approval_assignee_open_idx`: `(assignee_user_id, due_date) WHERE (status = ANY (ARRAY['pending', 'deferred']))`
+- `approval_group_open_idx`: `(assignee_group_id) WHERE (status = ANY (ARRAY['pending', 'deferred']))`
+- `approval_one_open_per_subject`: `UNIQUE (approval_type, subject_id) WHERE (status = ANY (ARRAY['pending', 'changes_requested', 'deferred']))`
+- `approval_overdue_scan_idx`: `(due_date) WHERE ((status = ANY (ARRAY['pending', 'deferred'])) AND (due_date IS NOT NULL))`
+- `approval_requested_by_idx`: `(requested_by, requested_at DESC, id DESC)`
+- `approval_transformation_idx`: `(transformation_id, requested_at DESC, id DESC)`
+
+**Triggers:**
+
+- `approval_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `approval_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `approval_guard()`
+- `approval_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## approval_decision
+
+- **Purpose:** Every outcome a person records on an approval, with rationale, comments, request version and decision instant (REQ-S10-014, REQ-S10-018).
+- **Migration:** `0031_p4_approvals_permissions.sql`. **API module:** `workflows`. **Who writes:** `approval.decide` (assignee, group member, escalation target or their delegate). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| approval_id | uuid | NOT NULL |  |  |
+| round_no | smallint | NOT NULL |  | `CHECK ((round_no >= 1))` |
+| outcome | text | NOT NULL |  | `CHECK ((outcome = ANY (ARRAY['approve', 'reject', 'request_changes', 'defer'])))` |
+| rationale | text | NOT NULL |  |  |
+| comments | text | NULL |  | `CHECK (((comments IS NULL) OR ((char_length(comments) >= 1) AND (char_length(comments) <= 8000))))` |
+| subject_version | integer | NOT NULL |  | `CHECK ((subject_version >= 1))` |
+| decided_by | uuid | NOT NULL |  | FK → app_user(id) |
+| on_behalf_of_user_id | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NOT NULL | `now()` |  |
+| business_date | date | NOT NULL |  |  |
+| defer_until | date | NULL |  |  |
+
+**Table constraints:**
+
+- `approval_decision_approval_fkey` (FK): `FOREIGN KEY (transformation_id, approval_id) REFERENCES approval(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_decision_defer_date` (CHECK): `CHECK ((((outcome = 'defer') = (defer_until IS NOT NULL)) AND ((defer_until IS NULL) OR (defer_until > business_date))))`
+- `approval_decision_not_self_behalf` (CHECK): `CHECK ((on_behalf_of_user_id IS DISTINCT FROM decided_by))`
+- `approval_decision_rationale_required` (CHECK): `CHECK (((char_length(btrim(rationale)) >= 1) AND (char_length(rationale) <= 8000)))`
+
+**Indexes:**
+
+- `approval_decision_approval_idx`: `(approval_id, decided_at, id)`
+
+**Triggers:**
+
+- `approval_decision_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `approval_decision_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `approval_decision_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `approval_decision_guard`: BEFORE INSERT FOR EACH ROW → `approval_decision_guard()`
+- `approval_decision_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## approval_escalation
+
+- **Purpose:** What the overdue timer did: one row per approval, round and due date; target or routing error (REQ-S10-019; ADR-0026 §6).
+- **Migration:** `0031_p4_approvals_permissions.sql`. **API module:** `workflows`. **Who writes:** the `approval.escalation_scan` job (service actor). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| approval_id | uuid | NOT NULL |  |  |
+| round_no | smallint | NOT NULL |  | `CHECK ((round_no >= 1))` |
+| due_date | date | NOT NULL |  |  |
+| level | smallint | NOT NULL |  |  |
+| from_party_code | text | NOT NULL |  | FK → governance_party(code) |
+| to_party_code | text | NULL |  | FK → governance_party(code) |
+| to_user_id | uuid | NULL |  | FK → app_user(id) |
+| to_group_id | uuid | NULL |  |  |
+| routing_error | text | NULL |  | `CHECK (((routing_error IS NULL) OR (routing_error = ANY (ARRAY['no_next_authority', 'party_unmapped', 'party_not_approver']))))` |
+| escalated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `approval_escalation_approval_fkey` (FK): `FOREIGN KEY (transformation_id, approval_id) REFERENCES approval(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_escalation_group_fkey` (FK): `FOREIGN KEY (organization_id, to_group_id) REFERENCES access_group(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `approval_escalation_level_check1` (CHECK): `CHECK (((level >= 1) AND (level <= 5)))`
+- `approval_escalation_once` (UNIQUE): `UNIQUE (approval_id, round_no, due_date)`
+- `approval_escalation_target` (CHECK): `CHECK ((((routing_error IS NULL) AND (to_party_code IS NOT NULL) AND ((to_user_id IS NULL) <> (to_group_id IS NULL))) OR ((routing_error = ANY (ARRAY['party_unmapped', 'party_not_approver'])) AND (to_party_code IS NOT NULL) AND (to_user_id IS NULL) AND (to_group_id IS NULL)) OR ((routing_error = 'no_next_authority') AND (to_party_code IS NULL) AND (to_user_id IS NULL) AND (to_group_id IS NULL))))`
+
+**Triggers:**
+
+- `approval_escalation_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `approval_escalation_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `approval_escalation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `approval_escalation_guard`: BEFORE INSERT FOR EACH ROW → `approval_escalation_guard()`
+- `approval_escalation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## approval_decision_record (view)
+
+- **Purpose:** Read-only union of the business-approval decisions (D-089 Q10): `approval_decision` (source `approval`), `gate_decision` (source `gate_decision`, kind `gate_g1`…`gate_g6`) and `funding_decision` (source `funding_decision`, kind `funding`). Outcomes normalized to `approved | rejected | changes_requested | deferred | revoked`. No existing table is migrated.
+- **Migration:** `0031_p4_approvals_permissions.sql`. **`mth_app` privileges:** SELECT.
+- **Columns:** `source` text, `record_id` uuid, `organization_id` uuid, `transformation_id` uuid, `approval_kind` text, `subject_type` text, `subject_id` uuid, `subject_version` integer (NULL for funding), `outcome` text, `rationale` text, `decided_by` uuid, `on_behalf_of_user_id` uuid, `decided_at` timestamptz.
+
+## P4 functions (slices I and C)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `p4_business_date(timestamptz, text)` | 0028 | the business date of an instant in a timezone: `(at AT TIME ZONE tz)::date` (ADR-0025 §2) | yes |
+| `p4_valid_workweek(smallint[])` | 0028 | 1–7 distinct ISO weekdays (CHECK helper) | via CHECK |
+| `p4_timezone_known()` | 0028 | the timezone is in `pg_timezone_names` | via trigger |
+| `p4_ensure_default_calendar(uuid, uuid, text, text)` | 0028 | the organization's default calendar (Asia/Riyadh or the organization's timezone, Sunday–Thursday, no holiday), idempotent, audited; backfilled | yes |
+| `inbox_notification_read_once()`, `work_item_guard()` | 0028 | read once; immutable identity; a closed item never reopens | via trigger |
+| `access_group_member_same_org()`, `role_mapping_guard()` | 0029 | members and mapped users belong to the organization; mapping target immutable, ended final | via trigger |
+| `delegation_loop_guard()` | 0029 | no delegation loop, race-free (lock 730224) | via trigger |
+| `p4_parties_known(text[])` | 0030 | every party code exists | via trigger |
+| `governance_matrix_rows_editable()` | 0030 | T11/T12 rows frozen while their matrix is in approval | via trigger |
+| `transformation_decision_right_guard()`, `transformation_raci_assignment_guard()` | 0030 | known parties, immutable template key; immutable cell identity | via trigger |
+| `transformation_raci_one_accountable()` | 0030 | deferred: exactly one A or A/R per active deliverable unless excepted (lock 730225) | via constraint triggers |
+| `p4_instantiate_transformation(uuid, uuid, text, text)` | 0030 | P3 structure + 2 matrix headers + 4 T11 rows + 6 T12 deliverables + 36 cells, verbatim, idempotent, audited; backfilled | yes |
+| `p4_approval_subject_version(text, uuid, uuid)` | 0031 | the subject's current version, read FOR SHARE | via triggers |
+| `approval_guard()`, `approval_decision_guard()`, `approval_escalation_guard()` | 0031 | state machine, current request version, SoD, outcomes need a user's decision, escalation once and only when overdue (lock 730226) | via trigger |
+
+## P4 validation rules summary (slices I and C)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards on every mutable P4 table; closed sets (statuses, kinds, outcomes, SLA types, RACI values); workweek and timezone; one default calendar; holiday range; work-item and inbox dedupe keys; one active mapping per party; no delegation loop; one accountable per RACI deliverable; T11/T12 rows frozen in approval; approval state machine, current request version, SoD, rationale, defer date, outcome needs a user's decision, escalation once per due date and never an outcome; append-only decisions and escalations; technical-admin roles never hold `approval.decide` (0001 trigger) |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI P4 schemas), free-text rules (`freeText`/`hasText`), strict UTF-8, request media types, `If-Match` |
+| Service | Permissions and record-level rules (assignee, group, escalation target, delegate), commit-time re-authorization, routing without fallback (`routing.role_unmapped`), SLA computation and Unknown reasons, the exact refusal codes and English texts of ADR-0025 and ADR-0026 |

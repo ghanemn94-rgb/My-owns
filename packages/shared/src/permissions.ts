@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -73,10 +73,31 @@ export const P3_PERMISSIONS = {
   "dependency_type.configure": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
-export const PERMISSIONS = { ...P1_PERMISSIONS, ...P2_PERMISSIONS, ...P3_PERMISSIONS } as const satisfies Record<
-  string,
-  PermissionCategory
->;
+/**
+ * P4 catalogue, slices I and C (business calendar, job schedules, groups, role mapping, delegation, approvals, T11 and
+ * T12; ADR-0025, ADR-0026 §8). Seeded by migration 0031. Later P4 slices append their own blocks here and in their own
+ * migrations. approval.decide is a business approval: no technical_admin role may hold it (REQ-S10-003).
+ */
+export const P4_PERMISSIONS = {
+  "calendar.configure": "configure",
+  "job.read": "read",
+  "job.configure": "configure",
+  "group.manage": "configure",
+  "role_mapping.assign": "configure",
+  "delegation.create_own": "write",
+  "delegation.manage": "configure",
+  "approval.request": "write",
+  "approval.decide": "business_approval",
+  "decision_right.configure": "configure",
+  "raci.edit": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
+export const PERMISSIONS = {
+  ...P1_PERMISSIONS,
+  ...P2_PERMISSIONS,
+  ...P3_PERMISSIONS,
+  ...P4_PERMISSIONS,
+} as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
 
@@ -185,11 +206,47 @@ export const P3_ROLE_PERMISSIONS = {
   ADM_METHOD: ["dependency_type.configure"],
 } as const satisfies Record<string, readonly (keyof typeof P3_PERMISSIONS)[]>;
 
+/**
+ * P4 role defaults, slices I and C (seeded by 0031; ADR-0026 §8, permissions matrix "P4"). approval.decide
+ * (business_approval) goes ONLY to SP, BO and FIN, the roles that already hold an approval permission: TL, TO, WL and CM
+ * must stay non-approver roles (creator-derived assignments, F-DG1-106; team roles, ADR-0020 §3). Deciding also needs
+ * the approval to be assigned to the caller, their group or someone they act for (record-level rule).
+ * ADM_TECH configures calendars and jobs, ADM_ACCESS records delegations on request; neither decides anything.
+ * AUD gets no P4 permission (read-only through BASE_READ and its scope).
+ */
+export const P4_ROLE_PERMISSIONS = {
+  SP: ["delegation.create_own", "approval.request", "approval.decide"],
+  TL: ["role_mapping.assign", "delegation.create_own", "approval.request", "decision_right.configure", "raci.edit"],
+  BO: ["delegation.create_own", "approval.request", "approval.decide"],
+  WL: ["delegation.create_own", "approval.request"],
+  FIN: ["delegation.create_own", "approval.request", "approval.decide"],
+  TO: [
+    "group.manage",
+    "role_mapping.assign",
+    "delegation.create_own",
+    "approval.request",
+    "decision_right.configure",
+    "raci.edit",
+  ],
+  KDS: ["delegation.create_own"],
+  TD: ["delegation.create_own"],
+  CM: ["delegation.create_own"],
+  SEC: ["delegation.create_own"],
+  ADM_TECH: ["calendar.configure", "job.read", "job.configure"],
+  ADM_ACCESS: ["delegation.manage"],
+} as const satisfies Record<string, readonly (keyof typeof P4_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "gate.decide", ...P2_ROLE_PERMISSIONS.SP, ...P3_ROLE_PERMISSIONS.SP],
+    permissions: [
+      ...BASE_READ,
+      "gate.decide",
+      ...P2_ROLE_PERMISSIONS.SP,
+      ...P3_ROLE_PERMISSIONS.SP,
+      ...P4_ROLE_PERMISSIONS.SP,
+    ],
   },
   TL: {
     kind: "source",
@@ -202,22 +259,35 @@ export const ROLES = {
       "audit.read",
       ...P2_ROLE_PERMISSIONS.TL,
       ...P3_ROLE_PERMISSIONS.TL,
+      ...P4_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "gate.decide", ...P2_ROLE_PERMISSIONS.BO, ...P3_ROLE_PERMISSIONS.BO],
+    permissions: [
+      ...BASE_READ,
+      "gate.decide",
+      ...P2_ROLE_PERMISSIONS.BO,
+      ...P3_ROLE_PERMISSIONS.BO,
+      ...P4_ROLE_PERMISSIONS.BO,
+    ],
   },
   WL: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.WL, ...P3_ROLE_PERMISSIONS.WL],
+    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.WL, ...P3_ROLE_PERMISSIONS.WL, ...P4_ROLE_PERMISSIONS.WL],
   },
   FIN: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "finance.validate", ...P2_ROLE_PERMISSIONS.FIN, ...P3_ROLE_PERMISSIONS.FIN],
+    permissions: [
+      ...BASE_READ,
+      "finance.validate",
+      ...P2_ROLE_PERMISSIONS.FIN,
+      ...P3_ROLE_PERMISSIONS.FIN,
+      ...P4_ROLE_PERMISSIONS.FIN,
+    ],
   },
   TO: {
     kind: "source",
@@ -230,16 +300,21 @@ export const ROLES = {
       "audit.read",
       ...P2_ROLE_PERMISSIONS.TO,
       ...P3_ROLE_PERMISSIONS.TO,
+      ...P4_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
     kind: "implementation",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.KDS, ...P3_ROLE_PERMISSIONS.KDS],
+    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.KDS, ...P3_ROLE_PERMISSIONS.KDS, ...P4_ROLE_PERMISSIONS.KDS],
   },
-  TD: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.TD] },
-  CM: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ] },
-  SEC: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ] },
+  TD: {
+    kind: "implementation",
+    inheritsDownward: false,
+    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.TD, ...P4_ROLE_PERMISSIONS.TD],
+  },
+  CM: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.CM] },
+  SEC: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.SEC] },
   AUD: {
     kind: "implementation",
     inheritsDownward: true,
@@ -256,6 +331,7 @@ export const ROLES = {
       "business_unit.read",
       "business_unit.manage",
       "role.read",
+      ...P4_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -269,6 +345,7 @@ export const ROLES = {
       "user.manage",
       "access.read",
       "access.assign",
+      ...P4_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {

@@ -15,6 +15,9 @@ const MIGRATION_CONSTANTS: ReadonlyMap<string, number> = new Map([
   ["hierarchy_lock_class", ADVISORY_LOCK_CLASSES.businessUnitHierarchy],
   ["outcome_lock_class", ADVISORY_LOCK_CLASSES.outcomeTree],
   ["graph_lock_class", ADVISORY_LOCK_CLASSES.dependencyGraph],
+  ["delegation_graph_lock_class", ADVISORY_LOCK_CLASSES.delegationGraph],
+  ["raci_deliverable_lock_class", ADVISORY_LOCK_CLASSES.raciDeliverable],
+  ["approval_subject_lock_class", ADVISORY_LOCK_CLASSES.approvalSubject],
 ]);
 
 function walk(dir: string): string[] {
@@ -25,13 +28,16 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the five classes, each a distinct int4", () => {
+  it("lists the eight classes, each a distinct int4 (730227 stays reserved for the T-DG4-ARCH-01 block)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
       dependencyGraph: 730221,
       prioritization: 730222,
       dependencyType: 730223,
+      delegationGraph: 730224,
+      raciDeliverable: 730225,
+      approvalSubject: 730226,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);
@@ -55,7 +61,8 @@ describe("advisory-lock class registry", () => {
   it("no module source outside the registry spells a class number (they import ADVISORY_LOCK_CLASSES)", () => {
     const offenders = walk(MODULES)
       .filter((f) => /\.[cm]?[jt]sx?$/.test(f) && !f.endsWith("advisory-locks.ts") && !f.endsWith(".test.ts"))
-      .filter((f) => /\b7302(19|2[0-9])\b/.test(readFileSync(f, "utf8")))
+      // 730219-730249: the P1-P3 classes and every P4 block (p4-plan §4).
+      .filter((f) => /\b7302(19|[2-4][0-9])\b/.test(readFileSync(f, "utf8")))
       .map((f) => relative(MODULES, f));
     expect(offenders).toEqual([]);
   });

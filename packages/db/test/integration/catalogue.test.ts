@@ -68,6 +68,27 @@ describe("schema.ts matches the migrated database", () => {
     expect(checks[2]!.def).toContain("(rounding -> 'rounded'::text) = to_jsonb(rounded)");
   });
 
+  it("0029-0031: the P4 guards are attached (loop guard, one-accountable deferred guard, approval guards)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND t.tgname IN ('delegation_loop_guard', 'delegation_row_guard',
+         'transformation_raci_assignment_one_accountable', 'transformation_raci_deliverable_one_accountable',
+         'approval_guard', 'approval_decision_guard', 'approval_escalation_guard', 'approval_decision_append_only')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["approval", "approval_guard", false, false],
+      ["approval_decision", "approval_decision_append_only", false, false],
+      ["approval_decision", "approval_decision_guard", false, false],
+      ["approval_escalation", "approval_escalation_guard", false, false],
+      ["delegation", "delegation_loop_guard", false, false],
+      ["delegation", "delegation_row_guard", false, false],
+      ["transformation_raci_assignment", "transformation_raci_assignment_one_accountable", true, true],
+      ["transformation_raci_deliverable", "transformation_raci_deliverable_one_accountable", true, true],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -168,6 +189,20 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "business_case",
       "business_case_line",
       "benefit_formula_example",
+      // P4 slices I and C (0028-0031, T-DG4-ARCH-01; ADR-0025, ADR-0026).
+      "business_calendar",
+      "business_calendar_holiday",
+      "job_schedule",
+      "work_item",
+      "inbox_notification",
+      "access_group",
+      "access_group_member",
+      "role_mapping",
+      "governance_matrix",
+      "transformation_decision_right",
+      "transformation_raci_deliverable",
+      "transformation_raci_assignment",
+      "approval",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -289,6 +324,30 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       benefit_formula_example: "SELECT",
       benefit_formula_example_variable: "SELECT",
       gate_decision_agreement: "INSERT,SELECT",
+      // P4 slices I and C (0028-0031): still no DELETE anywhere; seeded catalogues are SELECT only, job schedules are
+      // seeded (SELECT,UPDATE), and append-only decision/escalation tables are INSERT,SELECT only.
+      business_calendar: SIU,
+      business_calendar_holiday: SIU,
+      job_schedule: "SELECT,UPDATE",
+      work_item_kind: "SELECT",
+      work_item: SIU,
+      inbox_notification: SIU,
+      access_group: SIU,
+      access_group_member: SIU,
+      governance_party: "SELECT",
+      role_mapping: SIU,
+      decision_right_template: "SELECT",
+      governance_matrix: SIU,
+      transformation_decision_right: SIU,
+      raci_template_deliverable: "SELECT",
+      raci_template_cell: "SELECT",
+      transformation_raci_deliverable: SIU,
+      transformation_raci_assignment: SIU,
+      approval_type: "SELECT",
+      approval: SIU,
+      approval_decision: "INSERT,SELECT",
+      approval_escalation: "INSERT,SELECT",
+      approval_decision_record: "SELECT",
     });
   });
 

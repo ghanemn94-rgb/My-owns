@@ -24,6 +24,14 @@ export const ADVISORY_LOCK_CLASSES = {
   prioritization: 730222,
   /** Creation of one dependency-type code (workflows, API only). Key: the requested code text. */
   dependencyType: 730223,
+  // P4 block of T-DG4-ARCH-01 (730224-730227; p4-plan §4, ADR-0026). 730227 is RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it.
+  /** Delegation graph of one organization (access delegations + trigger 0029 loop guard). Key: organization_id. */
+  delegationGraph: 730224,
+  /** Accountable cells of one T12 RACI deliverable (governance RACI + deferred trigger 0030). Key: deliverable id. */
+  raciDeliverable: 730225,
+  /** Approval subject record (workflows approvals + triggers 0031). Key: the subject record id. */
+  approvalSubject: 730226,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

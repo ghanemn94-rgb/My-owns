@@ -942,6 +942,216 @@ erDiagram
 
 **Not built in P3** (stay as in section 2): `benefit`, `benefit_allocation`, `scenario`, `benefit_measurement`, `finance_validation` as generic tables (P4; the P3 Finance validations are columns on `business_case` and `benefit_formula_version`), `approval` (P4), critical-path scheduling (out of P3 scope, ADR-0023 §5).
 
+## 1d. P4 physical model, slices I and C (migrations 0028–0031, DG4)
+
+Task T-DG4-ARCH-01 (ADR-0025, ADR-0026). Column details: data dictionary "P4 tables, slices I and C". Every mutable table carries the P2 record guards (version step, audit coverage at COMMIT); `approval_decision` and `approval_escalation` are append-only. Product approvals here are business approvals inside the product, never DG0–DG7.
+
+### 1d.1 Calendar, job schedules, work items and inbox — `organization`, `tasks` modules, worker
+
+```mermaid
+erDiagram
+    organization ||--|{ business_calendar : "one active default (Asia/Riyadh, Sun-Thu)"
+    business_calendar ||--o{ business_calendar_holiday : "administered; none seeded"
+    work_item_kind ||--o{ work_item : "kind (seeded catalogue)"
+    app_user ||--o{ work_item : "assignee"
+    transformation |o--o{ work_item : "context"
+    work_item |o--o{ inbox_notification : "reminder (same dedupe key)"
+    app_user ||--o{ inbox_notification : "recipient"
+
+    business_calendar {
+        uuid id PK
+        text code UK "per organization"
+        text timezone "IANA; default Asia/Riyadh"
+        smallint_array workweek "ISO 1-7, distinct"
+        bool is_default "one per organization"
+        text status "active|archived"
+        int version
+    }
+    business_calendar_holiday {
+        uuid id PK
+        date date_from
+        date date_to "<= 31 days"
+        text status "active|removed"
+        int version
+    }
+    job_schedule {
+        uuid id PK
+        text code UK
+        text queue_name
+        text cron "5 fields"
+        text timezone
+        bool enabled
+        int version
+    }
+    work_item {
+        uuid id PK
+        text kind FK
+        uuid assignee_user_id FK
+        text subject_type
+        uuid subject_id
+        text link_path "relative"
+        text message_key "i18n at render time"
+        date due_date "business date; NULL = none"
+        text status "open|done|cancelled"
+        text dedupe_key UK "per organization"
+        int version
+    }
+    inbox_notification {
+        uuid id PK
+        uuid recipient_user_id FK
+        uuid work_item_id FK
+        text dedupe_key UK
+        timestamptz read_at "set once"
+        int version
+    }
+```
+
+### 1d.2 Groups, governance parties, role mapping and delegation — `access` module
+
+```mermaid
+erDiagram
+    organization ||--o{ access_group : "governed groups"
+    access_group ||--o{ access_group_member : "members (history kept)"
+    app_user ||--o{ access_group_member : "is member"
+    governance_party ||--o{ role_mapping : "party (seeded, 18)"
+    transformation ||--o{ role_mapping : "one active per party"
+    app_user |o--o{ role_mapping : "named person"
+    access_group |o--o{ role_mapping : "or governed group"
+    app_user ||--o{ delegation : "delegator / delegate (no loops)"
+
+    access_group {
+        uuid id PK
+        text code UK "per organization"
+        uuid owner_user_id FK
+        text status "active|archived"
+        int version
+    }
+    access_group_member {
+        uuid id PK
+        uuid group_id FK
+        uuid user_id FK "same organization"
+        timestamptz removed_at
+        int version
+    }
+    governance_party {
+        text code PK "SP, TL, BO, WL, FIN, TD, TO, STEERCO, ..."
+        text kind "role|forum|office|owner_group"
+        text role_code FK
+    }
+    role_mapping {
+        uuid id PK
+        text party_code FK
+        text target_kind "user|group"
+        uuid user_id FK
+        uuid group_id FK
+        text status "active|ended"
+        int version
+    }
+    delegation {
+        uuid id PK
+        uuid delegator_user_id FK
+        uuid delegate_user_id FK
+        timestamptz effective_from
+        timestamptz effective_to
+        text status "active|revoked|expired"
+        uuid requested_by_user_id FK "P4"
+        timestamptz revoked_at "P4"
+        int version
+    }
+```
+
+### 1d.3 T11, T12, governance matrices and approvals — `governance`, `workflows` modules
+
+```mermaid
+erDiagram
+    decision_right_template ||--o{ transformation_decision_right : "copied verbatim (B0099)"
+    transformation ||--|{ transformation_decision_right : "T11 matrix"
+    governance_party ||--o{ transformation_decision_right : "approve party"
+    transformation ||--|| governance_matrix : "decision_rights and raci headers"
+    raci_template_deliverable ||--|{ raci_template_cell : "36 cells (B0101)"
+    raci_template_deliverable ||--o{ transformation_raci_deliverable : "copied verbatim"
+    transformation ||--|{ transformation_raci_deliverable : "T12"
+    transformation_raci_deliverable ||--|{ transformation_raci_assignment : "cells; exactly one A or A/R"
+    approval_type ||--o{ approval : "type (subject table, SoD policy)"
+    transformation_decision_right |o--o{ approval : "routed by"
+    approval ||--o{ approval_decision : "outcomes (append-only)"
+    approval ||--o{ approval_escalation : "once per due date (append-only)"
+    business_calendar |o--o{ approval : "working-day due date"
+
+    transformation_decision_right {
+        uuid id PK
+        text template_key FK
+        text decision_en
+        text approve_party_code FK
+        text sla_type "working_days|next_steerco_or_urgent|release_plan"
+        smallint sla_working_days
+        text_array escalation_chain
+        text status "active|retired"
+        int version
+    }
+    governance_matrix {
+        uuid id PK
+        text kind UK "decision_rights|raci"
+        text status "draft|in_approval|approved"
+        int approved_version
+        int version
+    }
+    transformation_raci_assignment {
+        uuid id PK
+        uuid deliverable_id FK
+        text party_code FK
+        text value "A|R|C|I|A/R|NULL"
+        int version
+    }
+    approval {
+        uuid id PK
+        text approval_type FK
+        uuid subject_id "polymorphic, checked"
+        int subject_version "request version"
+        smallint round_no
+        uuid assignee_user_id FK "or group"
+        date due_date "NULL = Unknown + reason"
+        text status "pending|changes_requested|deferred|approved|rejected|withdrawn"
+        smallint escalation_level
+        uuid decided_by FK
+        timestamptz decided_at
+        int version
+    }
+    approval_decision {
+        uuid id PK
+        text outcome "approve|reject|request_changes|defer"
+        text rationale "required"
+        int subject_version
+        uuid decided_by FK
+        uuid on_behalf_of_user_id FK
+        timestamptz decided_at
+        date defer_until
+    }
+    approval_escalation {
+        uuid id PK
+        date due_date UK "with approval, round"
+        smallint level
+        text to_party_code FK
+        text routing_error "no_next_authority|party_unmapped|party_not_approver"
+    }
+```
+
+The view `approval_decision_record` unions `approval_decision`, `gate_decision` and `funding_decision` (D-089 Q10).
+
+### 1d.4 P4 entity register (slices I and C): §16 and template entities → tables
+
+| Entity (§16 / template) | Table | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **Group** (§16 S16-011) | `access_group` (+ `access_group_member`) | `id` (code UK) | `owner_user_id` | `group.manage` (TO) | `status`; member `removed_at` | yes | access |
+| **Delegation** (§16 S16-011) | `delegation` (0001, extended 0029) | `id` | `delegator_user_id` | delegator (`delegation.create_own`); ADM_ACCESS on request (`delegation.manage`) | `status` | yes | access |
+| Role mapping (S10-008) | `role_mapping` (+ seed `governance_party`) | `id` | `created_by` | `role_mapping.assign` (TL, TO) | `status` | yes | access |
+| **Approval** (§16 S16-018, P4 part) | `approval`, `approval_decision`, `approval_escalation`; view `approval_decision_record` | `id` | `requested_by`; assignee | `approval.request`; `approval.decide`; the escalation job | `status` | yes (decisions, escalations append-only) | workflows |
+| T11 Decision Rights Matrix | `decision_right_template` (seed), `transformation_decision_right`, `governance_matrix` | `id` / `key` | — | `decision_right.configure` (TO, TL); SP approves | `status` | yes | governance |
+| T12 RACI | `raci_template_deliverable`, `raci_template_cell` (seed), `transformation_raci_deliverable`, `transformation_raci_assignment`, `governance_matrix` | `id` / `key` | — | `raci.edit` (TO, TL); SP approves | `status` | yes | governance |
+| Business calendar (S10-006) | `business_calendar`, `business_calendar_holiday` | `id` | `organization_id` | `calendar.configure` (ADM_TECH) | `status` | yes | organization |
+| Job (S16-005) | `job_schedule` (+ pg-boss, `processed_message`) | `id` (code UK) | `owner_module` | migrations; `job.configure` (ADM_TECH) | `enabled` | yes | jobs / worker |
+| Task / reminder (S12-005, S03-008) | `work_item`, `inbox_notification` (+ seed `work_item_kind`) | `id` (dedupe key UK) | `assignee_user_id` / `recipient_user_id` | `createWorkItemOnce`; the assignee / recipient | `status`; `read_at` | yes | tasks |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -950,8 +1160,8 @@ erDiagram
 erDiagram
     Organization ||--o{ BusinessUnit : has
     Organization ||--o{ User : employs
-    Organization ||--o{ Group : "has (P6)"
-    Group }o--o{ User : "members (P6)"
+    Organization ||--o{ Group : "has (P4)"
+    Group }o--o{ User : "members (P4)"
     Role }o--o{ Permission : "role_permission"
     User ||--o{ ScopedAssignment : holds
     Group ||--o{ ScopedAssignment : "holds (P6)"
@@ -964,11 +1174,11 @@ erDiagram
 | Organization | `organization` | **P1** |
 | BusinessUnit | `business_unit` | **P1** |
 | User | `app_user` plus `user_identity` | **P1** |
-| Group | `app_group`, `app_group_member` | P6 (IdP group mapping) |
+| Group | `access_group`, `access_group_member` | **P4** (governed routing groups, `0029`; IdP group mapping stays P6) |
 | Role | `role` | **P1** |
 | Permission | `permission`, `role_permission` | **P1** |
 | ScopedAssignment | `scoped_assignment` | **P1** |
-| Delegation | `delegation` | **P1 table**, logic P2/P4 |
+| Delegation | `delegation` | **P1 table**; P4 columns, loop guard and API (`0029`, ADR-0026 §3) |
 | (support) Session, login state | `session`, `oidc_login_state` | **P1** |
 
 ### 2.2 Transformation, methodology and gates (REQ-S16-012; DG5)
