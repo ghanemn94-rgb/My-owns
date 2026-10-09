@@ -60,6 +60,14 @@ export const ADVISORY_LOCK_CLASSES = {
   executiveAskBlocker: 730239,
   /** The SLA escalation of one executive decision (governance: the decision-SLA scan; one escalation per due date is also held by the unique constraint decision_escalation_once). Key: "<decisionId>". */
   decisionEscalation: 730240,
+  // P4 block of T-DG4-ARCH-06 (730242-730245; p4-plan §4, ADR-0033 §8, ADR-0034 §11). 730245 is RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** The below-trajectory intervention of one adoption indicator, scope and period (adoption: the indicator consumer; exactly one intervention is also held by the unique index adoption_intervention_trigger_key). Key: "<metricLinkId>:<scopeKind>:<scopeId>:<reportingPeriodId>". */
+  adoptionIntervention: 730242,
+  /** The BAU handover of one performance area (sustainment: prepare, submit, accept, return and reopen; one open and one accepted handover per cycle are also held by the unique indexes bau_handover_open_key and bau_handover_accepted_key). Key: "<performanceAreaId>". */
+  bauHandover: 730243,
+  /** The closure of one initiative or transformation (sustainment: closeInitiative, closeTransformation; one closure per subject is also held by the unique indexes closure_record_initiative_key and closure_record_transformation_key). Key: "initiative:<initiativeId>" or "transformation:<transformationId>". */
+  closure: 730244,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

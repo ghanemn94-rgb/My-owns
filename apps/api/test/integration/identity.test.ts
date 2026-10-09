@@ -135,16 +135,20 @@ describe("GET /api/v1/me", () => {
         scope: { type: "organization", id: w.orgA.id },
         inheritsDownward: true,
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
-        // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046), sorted.
+        // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
+        // (0049), sorted.
         permissions: [
           "action.edit",
           "approval.request",
+          "assessment.respond",
           "audit.read",
           "business_case.edit",
           "business_unit.read",
           "capacity.commit",
           "capacity.edit",
           "charter.edit",
+          "control.manage",
+          "control_check.record",
           "corrective_rule.configure",
           "decision_right.configure",
           "delegation.create_own",
@@ -157,10 +161,14 @@ describe("GET /api/v1/me", () => {
           "forum.configure",
           "gate.configure",
           "group.manage",
+          "improvement.edit",
           "initiative.edit",
+          "lesson.edit",
+          "lesson.search",
           "meeting.chair",
           "meeting.prepare",
           "organization.read",
+          "performance_area.manage",
           "prioritization.edit",
           "raci.edit",
           "raid.edit",

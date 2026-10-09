@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql; P4 slices F and G: 0049_p4_adoption_sustainment_permissions.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -152,6 +152,35 @@ export const P4_GOVERNANCE_PERMISSIONS = {
   "escalation_rule.configure": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 slices F and G catalogue (adoption, sustainment, BAU, closure; ADR-0033 §9, ADR-0034 §10). Seeded by migration
+ * 0049. One business_approval code: bau_handover.accept (receiving-owner acceptance, REQ-S11-005), held only by BO.
+ * lesson.search is a read code (cross-transformation lesson search, REQ-S11-008), also held by AUD.
+ */
+export const P4_ADOPTION_SUSTAINMENT_PERMISSIONS = {
+  "adoption.edit": "write",
+  "assessment_form.manage": "write",
+  "assessment.respond": "write",
+  "assessment.review": "write",
+  "proficiency.record": "write",
+  "champion_constraint.raise": "write",
+  "adoption_status.set": "write",
+  "initiative.complete_delivery": "write",
+  "initiative.close": "write",
+  "transformation.close": "write",
+  "performance_area.manage": "write",
+  "performance_area.reopen": "write",
+  "bau_handover.prepare": "write",
+  "bau_handover.accept": "business_approval",
+  "control.manage": "write",
+  "control_check.record": "write",
+  "sustainment_review.complete": "write",
+  "improvement.edit": "write",
+  "lesson.edit": "write",
+  "lesson.search": "read",
+  "transition_decision.propose": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -161,6 +190,7 @@ export const PERMISSIONS = {
   ...P4_BENEFIT_PERMISSIONS,
   ...P4_RAID_PERMISSIONS,
   ...P4_GOVERNANCE_PERMISSIONS,
+  ...P4_ADOPTION_SUSTAINMENT_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -374,6 +404,65 @@ export const P4_GOVERNANCE_ROLE_PERMISSIONS = {
   SEC: ["meeting.prepare", "executive_decision.create"],
 } as const satisfies Record<string, readonly (keyof typeof P4_GOVERNANCE_PERMISSIONS)[]>;
 
+/** Slices F and G role defaults (0049). No technical admin; AUD only the read code lesson.search. */
+export const P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS = {
+  SP: ["assessment.respond", "lesson.search"],
+  TL: [
+    "adoption.edit",
+    "assessment.respond",
+    "initiative.complete_delivery",
+    "initiative.close",
+    "transformation.close",
+    "performance_area.reopen",
+    "bau_handover.prepare",
+    "lesson.search",
+  ],
+  BO: [
+    "adoption.edit",
+    "assessment_form.manage",
+    "assessment.respond",
+    "assessment.review",
+    "proficiency.record",
+    "champion_constraint.raise",
+    "adoption_status.set",
+    "performance_area.manage",
+    "performance_area.reopen",
+    "bau_handover.accept",
+    "control.manage",
+    "control_check.record",
+    "sustainment_review.complete",
+    "improvement.edit",
+    "lesson.edit",
+    "lesson.search",
+    "transition_decision.propose",
+  ],
+  WL: [
+    "adoption.edit",
+    "assessment_form.manage",
+    "assessment.respond",
+    "proficiency.record",
+    "champion_constraint.raise",
+    "initiative.complete_delivery",
+    "bau_handover.prepare",
+    "lesson.search",
+  ],
+  FIN: ["assessment.respond", "sustainment_review.complete", "lesson.search", "transition_decision.propose"],
+  TO: [
+    "assessment.respond",
+    "performance_area.manage",
+    "control.manage",
+    "control_check.record",
+    "improvement.edit",
+    "lesson.edit",
+    "lesson.search",
+  ],
+  KDS: ["assessment.respond", "sustainment_review.complete", "lesson.search"],
+  TD: ["assessment.respond", "lesson.search"],
+  CM: ["assessment.respond", "lesson.search"],
+  SEC: ["assessment.respond", "lesson.search"],
+  AUD: ["lesson.search"],
+} as const satisfies Record<string, readonly (keyof typeof P4_ADOPTION_SUSTAINMENT_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -386,6 +475,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.SP,
       ...P4_KPI_ROLE_PERMISSIONS.SP,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.SP,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -404,6 +494,7 @@ export const ROLES = {
       ...P4_BENEFIT_ROLE_PERMISSIONS.TL,
       ...P4_RAID_ROLE_PERMISSIONS.TL,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.TL,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -419,6 +510,7 @@ export const ROLES = {
       ...P4_BENEFIT_ROLE_PERMISSIONS.BO,
       ...P4_RAID_ROLE_PERMISSIONS.BO,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.BO,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -432,6 +524,7 @@ export const ROLES = {
       ...P4_BENEFIT_ROLE_PERMISSIONS.WL,
       ...P4_RAID_ROLE_PERMISSIONS.WL,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.WL,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -446,6 +539,7 @@ export const ROLES = {
       ...P4_BENEFIT_ROLE_PERMISSIONS.FIN,
       ...P4_RAID_ROLE_PERMISSIONS.FIN,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.FIN,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -463,6 +557,7 @@ export const ROLES = {
       ...P4_KPI_ROLE_PERMISSIONS.TO,
       ...P4_RAID_ROLE_PERMISSIONS.TO,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.TO,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -475,23 +570,44 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.KDS,
       ...P4_KPI_ROLE_PERMISSIONS.KDS,
       ...P4_BENEFIT_ROLE_PERMISSIONS.KDS,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
     kind: "implementation",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.TD, ...P4_ROLE_PERMISSIONS.TD],
+    permissions: [
+      ...BASE_READ,
+      ...P2_ROLE_PERMISSIONS.TD,
+      ...P4_ROLE_PERMISSIONS.TD,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TD,
+    ],
   },
-  CM: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.CM] },
+  CM: {
+    kind: "implementation",
+    inheritsDownward: false,
+    permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.CM, ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.CM],
+  },
   SEC: {
     kind: "implementation",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.SEC, ...P4_GOVERNANCE_ROLE_PERMISSIONS.SEC],
+    permissions: [
+      ...BASE_READ,
+      ...P4_ROLE_PERMISSIONS.SEC,
+      ...P4_GOVERNANCE_ROLE_PERMISSIONS.SEC,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SEC,
+    ],
   },
   AUD: {
     kind: "implementation",
     inheritsDownward: true,
-    permissions: [...BASE_READ, "audit.read", "user.read", "access.read"],
+    permissions: [
+      ...BASE_READ,
+      "audit.read",
+      "user.read",
+      "access.read",
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.AUD,
+    ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
   // (REQ-S10-003, REQ-S06-010; permissions matrix: Transformation row "— (technical support only)").

@@ -550,3 +550,77 @@ Legend as in 8.3. **chair** = only as the meeting's chair; **owner** = only as t
 - **Worker:** the series generation, decision-SLA scan and blocker escalation act as the service actor (the blocker ask's `created_by` is the person whose red observation triggered it, audited `system` on their behalf; ADR-0032 §8.3); they hold no permission and never record an Outcome.
 - **SoD:** an Outcome is recorded by the owner; minutes are approved by the chair. No separation-of-duties rule beyond these record-level rules applies (ADR-0032 §9).
 - **Changes against sections 1–6, flagged as assumptions:** REQ-PB-060 "configure:TO,ADM" → TO only (technical admins hold no transformation records); REQ-S10-011 "prepare:SEC; attend:CM; approve-minutes:chair" → `meeting.prepare` SEC plus TL and TO, CM attends (read and attendance recorded by the secretary), chair by record-level rule; REQ-PB-068 / REQ-PB-081 "create:TL,SEC" → `executive_decision.create` TL, SEC plus TO; "decide:Owner(executive)" → `executive_decision.decide` SP, BO, FIN with the owner rule; escalation rules (no source role) → TL and TO, the transformation configurers.
+
+## 15. P4 implementation, slices F and G (DG4): adoption, sustainment, BAU handover and closure permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-06 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the T13 stakeholder and adoption plan (stakeholder groups, champions, interventions, indicator links, involvement, champion constraints), feedback and assessment forms and records, training records, the separate delivery/adoption/value/closure statuses, transition decisions, performance areas, BAU handovers, controls and checks, reviews, the CI backlog, lessons and the governed closure (ADR-0033, ADR-0034). The seed is migration `0049_p4_adoption_sustainment_permissions.sql`, equal to `P4_ADOPTION_SUSTAINMENT_PERMISSIONS` / `P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. Accepting a BAU handover is the receiving owner's business decision in the product; approving a transition decision is a canonical P4 approval; neither is a G1–G6 gate decision, and closing a transformation needs the product's G6 approval, which never implies the engineering gate DG7. No engineering agent, seed or job accepts, approves or closes anything.
+
+### 15.1 P4 permission catalogue (slices F and G)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `adoption.edit` | write | Stakeholder groups (T13), champions, interventions, indicator links, involvement in design | TL, BO, WL |
+| `assessment_form.manage` | write | Create, version, publish, retire forms; invite respondents | BO, WL |
+| `assessment.respond` | write | Answer a form one is invited to (or, holding `proficiency.record`, record an observation) | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC |
+| `assessment.review` | write | Review submitted responses | BO |
+| `proficiency.record` | write | Training records and observed proficiency as an assessor | BO, WL |
+| `champion_constraint.raise` | write | Raise a constraint on a design decision, as the active champion only | BO, WL |
+| `adoption_status.set` | write | Set an initiative's adoption status | BO |
+| `initiative.complete_delivery` | write | Mark an initiative's delivery complete | TL, WL |
+| `initiative.close` | write | Close a delivery-complete initiative when the value conditions hold | TL |
+| `transformation.close` | write | Close a transformation after G6 when the value and BAU conditions hold | TL |
+| `performance_area.manage` | write | Create, update, retire areas; KPI and benefit links | BO, TO |
+| `performance_area.reopen` | write | Reopen a deteriorating area (new cycle; history kept) | TL, BO |
+| `bau_handover.prepare` | write | Prepare, edit, add evidence to and submit a handover | TL, WL |
+| `bau_handover.accept` | **business_approval** | Accept or return a handover, as its receiving owner only | BO |
+| `control.manage` | write | Define and retire controls | BO, TO |
+| `control_check.record` | write | Record a control check | BO, TO |
+| `sustainment_review.complete` | write | Complete a review assigned to the caller | BO, FIN, KDS |
+| `improvement.edit` | write | The continuous-improvement backlog | BO, TO |
+| `lesson.edit` | write | Record, publish, archive lessons | BO, TO |
+| `lesson.search` | read | Search published lessons across the transformations in scope | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD |
+| `transition_decision.propose` | write | Draft, submit, withdraw a benefit transition decision | BO, FIN |
+
+`bau_handover.accept` is the only approval-category code; it is granted only to BO, which already holds `business_approval` codes, so the creator-derived assignment (F-DG1-106) and the team view (ADR-0020 §3) are unchanged (ADR-0026 §8). The technical-admin roles (ADM_TECH, ADM_ACCESS, ADM_METHOD) hold none of the 21 codes; the `0001` trigger refuses `bau_handover.accept` for a technical-admin role. AUD holds only `lesson.search` (read). The transition decision is decided through the canonical approval (`approval.decide`: SP, BO, FIN; the requester cannot approve).
+
+### 15.2 Per-entity rights in P4 (slices F and G)
+
+Legend as in 8.3. **champion** = only as the active champion of the group; **receiving** = only as the handover's receiving owner; **assignee** = only as the review's assignee; **invited** = with an open invitation (or as an assessor holding `proficiency.record` for an observation); **own** = only the caller's own record. Every cell is checked server-side by the one policy function and re-authorised at commit.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Indicator templates (`adoption_indicator_template`; seed) | V | V | V | V | V | V | V | V | V | V | V | — |
+| Stakeholder groups, T13 plan, champions (`stakeholder_group`, `stakeholder_champion`) | V | C E archive | C E archive | C E archive | V | V | V | V | V | V | V | — |
+| Adoption interventions (`adoption_intervention`) | V | C E | C E | C E | V | V | V | V | V | V | V | — |
+| Indicator links and values (`adoption_metric_link`) | V | C remove | C remove | C remove | V | V | V | V | V | V | V | — |
+| Involvement in design (`stakeholder_involvement`; append-only) | V | C withdraw | C withdraw | C withdraw | V | V | V | V | V | V | V | — |
+| Champion constraints (`champion_constraint`): raise | V | V | champion | champion | V | V | V | V | V | V | V | — |
+| Champion constraints: address (`decision.edit`) / withdraw (own) | V | address | address; own | own | V | address | V | V | V | V | V | — |
+| Forms, versions, invitations (`assessment_form*`, `assessment_invitation`) | V | V | C E publish retire | C E publish retire | V | V | V | V | V | V | V | — |
+| Assessment records (`assessment_record`): respond | invited | invited | invited | invited | invited | invited | invited | invited | invited | invited | V | — |
+| Assessment records: review / withdraw | V | own | review, withdraw | own | own | own | own | own | own | own | V | — |
+| Training records (`training_record`) | V | V | C E | C E | V | V | V | V | V | V | V | — |
+| Initiative delivery complete / adoption status (`initiative` 0048 columns) | V | delivery | adoption | delivery | V | V | V | V | V | V | V | — |
+| Initiative and transformation closure (`closure_record`) | V | close | V | V | V | V | V | V | V | V | V | — |
+| Transition decisions (`transition_decision`): draft, submit, withdraw | V | V | C E | V | C E | V | V | V | V | V | V | — |
+| Transition decisions: decide (canonical `approval`) | approve | V | approve | V | approve | V | V | V | V | V | V | — |
+| Performance areas, links, cycles (`performance_area*`) | V | reopen | C E retire reopen | V | V | C E retire | V | V | V | V | V | — |
+| BAU handovers (`bau_handover`, `bau_handover_evidence`): prepare, submit | V | C E | V | C E | V | V | V | V | V | V | V | — |
+| BAU handovers: accept, return | V | V | receiving | V | V | V | V | V | V | V | V | 403 |
+| Controls (`control`) | V | V | C E retire | V | V | C E retire | V | V | V | V | V | — |
+| Control checks (`control_check`): record | V | V | E | V | V | E | V | V | V | V | V | — |
+| Sustainment reviews (`sustainment_review`): complete | V | V | assignee | V | assignee | V | assignee | V | V | V | V | — |
+| CI backlog (`improvement_item`) | V | V | C E | V | V | C E | V | V | V | V | V | — |
+| Lessons (`lesson`): own transformation | V | V | C E publish archive | V | V | C E publish archive | V | V | V | V | V | — |
+| Lessons: cross-transformation search (published only) | S | S | S | S | S | S | S | S | S | S | S | — |
+
+**S** = `searchLessons` across the transformations whose business unit is in the caller's scope.
+
+**Rules (binding for the slice F and G implementers):**
+
+- **AUD (read-only auditor):** every mutating slice F/G operation returns **403** for AUD and writes nothing; every read (and `searchLessons`) returns 200 within AUD's scope. BE-H, BE-H2, KBE-F, BE-I, BE-I2 and BE-J test this on each of their operations (p4-work-split S-4).
+- **Technical admins:** ADM-only users hold no `transformation.read`, so the transformation-scoped operations answer 404; `acceptBauHandover` and `returnBauHandover` answer **403** through the S10-003 helper (`access/technical-admin.ts`, D-094) because they are approval endpoints.
+- **Record-level rules:** holding the permission is necessary but not sufficient where the table says champion, receiving, assignee, invited or own (exact 403 codes in ADR-0033 §10 and ADR-0034 §12).
+- **Worker:** the indicator consumer, the review scan and the control-check scan act as the service actor; they hold no permission and never accept, approve, complete or close anything.

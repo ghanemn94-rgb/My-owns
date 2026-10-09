@@ -1383,6 +1383,90 @@ Read view (0045): `executive_decision_log` = the `decision` rows of kind `execut
 | Blocker RAG by cycle (PB-082) | `blocker_status` | `id` (one per meeting and blocker) | `created_by` | `meeting.prepare` | `rag` (red, amber, green, unknown) | append-only | governance |
 | Escalation rule | `governance_escalation_rule` | `id` (one per transformation and kind) | `created_by` | `escalation_rule.configure` (TL, TO) | `enabled` | yes | governance |
 
+## 1i. P4 physical model, slices F and G (migrations 0047–0050, DG4)
+
+Written by T-DG4-ARCH-06 (solution-architect), 2026-10-09; binding design ADR-0033 (adoption) and ADR-0034 (sustainment, BAU, closure). Columns, constraints and indexes: data dictionary, "P4 tables, slices F and G". Probe: `docs/delivery/handbacks/DG4/T-DG4-ARCH-06-evidence/probe-output.txt`.
+
+### 1i.1 People and adoption — `adoption` module and worker
+
+```mermaid
+erDiagram
+    adoption_indicator_template ||--o{ adoption_metric_link : "measure (seven B0109-B0115 indicators, verbatim)"
+    transformation ||--o{ stakeholder_group : "T13 rows (SG-nn)"
+    stakeholder_group }o--o| kpi_definition : "T13 Adoption KPI"
+    stakeholder_group ||--o{ stakeholder_champion : champions
+    adoption_metric_link }o--o| kpi_definition : "KPI-fed measure"
+    adoption_metric_link }o--o| outcome : "target"
+    adoption_metric_link }o--o| initiative : "target"
+    adoption_metric_link }o--o| stakeholder_group : "target"
+    stakeholder_group ||--o{ adoption_intervention : "interventions (AI-nn)"
+    adoption_metric_link ||--o{ adoption_intervention : "below trajectory: one per scope and period"
+    adoption_intervention }o--o| kpi_evaluation : "the evaluation that triggered it"
+    transformation ||--o{ assessment_form : "feedback / proficiency forms"
+    assessment_form ||--o{ assessment_form_version : "validated form JSON (append-only)"
+    assessment_form ||--o{ assessment_invitation : invitations
+    assessment_form_version ||--o{ assessment_record : "responses to the published version"
+    stakeholder_group ||--o{ assessment_record : "feedback and proficiency observations"
+    stakeholder_group ||--o{ training_record : "training attendance"
+    training_record }o--o| adoption_intervention : "training intervention"
+    stakeholder_group ||--o{ stakeholder_involvement : "involvement (append-only)"
+    stakeholder_involvement }o--o| tom_workshop : "design workshop"
+    stakeholder_involvement }o--o| decision : "T04 design decision"
+    stakeholder_champion ||--o{ champion_constraint : raises
+    champion_constraint }o--|| decision : "T04 design decision (shown on it)"
+```
+
+### 1i.2 Sustainment, BAU handover, controls, CI, lessons and closure — `sustainment` module and worker
+
+```mermaid
+erDiagram
+    transformation ||--o{ performance_area : "origin (PA-nn; continues after closure)"
+    performance_area ||--o{ performance_area_cycle : "cycle history (append-only)"
+    performance_area ||--o{ performance_area_link : "KPIs and benefits"
+    performance_area_link }o--o| kpi_definition : kpi
+    performance_area_link }o--o| benefit : benefit
+    performance_area ||--o{ bau_handover : "one per cycle accepted (HO-nn)"
+    performance_area }o--o| bau_handover : "current accepted handover"
+    performance_area_cycle }o--o| bau_handover : "prior accepted handover"
+    performance_area_cycle }o--o| closure_record : "prior closure"
+    bau_handover ||--o{ bau_handover_evidence : "evidence (append-only)"
+    bau_handover_evidence }o--|| evidence : links
+    performance_area ||--o{ control : "controls (CTL-nn)"
+    control ||--o{ control_check : "one per due date"
+    performance_area ||--o{ sustainment_review : "recurring reviews (one per due date)"
+    benefit ||--o{ transition_decision : "TD-nn (one live)"
+    transition_decision }o--o| approval : "decided through the canonical approval"
+    transition_decision ||--o{ sustainment_review : "monitoring for the residual owner"
+    transformation ||--o{ improvement_item : "CI backlog (CI-nn; persists after closure)"
+    improvement_item }o--o| performance_area : area
+    transformation ||--o{ lesson : "lessons (LL-nn; searchable across transformations)"
+    transformation ||--o{ closure_record : "governed closures"
+    closure_record }o--o| initiative : "initiative closure"
+    closure_record }o--|| gate_instance : "transformation closure needs G6 approved (checked)"
+```
+
+Columns added to existing tables: `initiative` (`delivery_completed_at`, `delivery_completed_by`, `adoption_status`, `adoption_status_note`, `adoption_status_set_at`, `adoption_status_set_by`; ADR-0034 §1). Trigger added to `transformation` (`transformation_closure_guard`).
+
+### 1i.3 P4 entity register (slices F and G): §16 S16-020 and the S16-021 increments → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **StakeholderGroup** (S16-020) | `stakeholder_group` (+ `stakeholder_champion`) | `id` (`SG-nn`) | `owner_user_id` | `adoption.edit` (TL, BO, WL) | `status` (active, archived) | yes | adoption |
+| **AdoptionIntervention** (S16-020) | `adoption_intervention` | `id` (`AI-nn`) | `owner_user_id` (NULL only for an unassigned worker intervention) | `adoption.edit`; worker (below trajectory) | `status` (planned, in_progress, done, cancelled) | yes | adoption / worker |
+| **Training/AssessmentRecord** (S16-020) | `training_record`; `assessment_record` (+ `assessment_form`, `assessment_form_version`, `assessment_invitation`) | `id` | `recorded_by`; `respondent_user_id` | `proficiency.record` (BO, WL); `assessment.respond`; review `assessment.review` (BO) | `status` (enrolled, completed, no_show, withdrawn; submitted, reviewed, withdrawn) | yes | adoption |
+| **AdoptionMetricLink** (S16-020) | `adoption_metric_link` (+ `adoption_indicator_template` seed) | `id` | `created_by` (the KPI's owner owns the measure) | `adoption.edit` | `status` (active, removed) | yes | adoption |
+| Champion constraint, involvement (PB-073) | `champion_constraint`; `stakeholder_involvement` | `id` | the champion (`created_by`) | `champion_constraint.raise`; `adoption.edit` | `status` (open, addressed, withdrawn); append-only | yes; append-only | adoption |
+| PerformanceArea (S03-002; S16-012 increment) | `performance_area` (+ `performance_area_cycle`, `performance_area_link`) | `id` (`PA-nn`) | `bau_owner_user_id` | `performance_area.manage` (BO, TO); `performance_area.reopen` (BO, TL); acceptance | `status` (establishing, bau, reopened, retired) | yes | sustainment |
+| BAUHandover (S16-021 increment) | `bau_handover` (+ `bau_handover_evidence`) | `id` (`HO-nn`) | `receiving_owner_user_id` | `bau_handover.prepare` (WL, TL); `bau_handover.accept` (BO, receiving owner only) | `status` (draft, submitted, accepted, returned) | yes | sustainment |
+| Control, ControlCheck (S16-021 increment) | `control`; `control_check` | `id` (`CTL-nn`); `id` (one per control and due date) | `owner_user_id`; `assignee_user_id` | `control.manage`, `control_check.record` (BO, TO); worker | `status` (active, retired); (due, passed, failed, cancelled) | yes | sustainment / worker |
+| ImprovementItem (S16-021 increment) | `improvement_item` | `id` (`CI-nn`) | `owner_user_id` | `improvement.edit` (BO, TO) | `status` (open, in_progress, done, rejected) | yes | sustainment |
+| Lesson (S16-021 increment) | `lesson` | `id` (`LL-nn`) | `created_by` | `lesson.edit` (BO, TO) | `status` (draft, published, archived) | yes | sustainment |
+| Review task (S11-004, S11-007) | `sustainment_review` | `id` (one per subject and due date) | `assignee_user_id` | worker; first review at acceptance; complete `sustainment_review.complete` | `status` (due, done, cancelled) | yes | sustainment / worker |
+| Transition decision (S11-007) | `transition_decision` | `id` (`TD-nn`) | `residual_owner_user_id` | `transition_decision.propose` (BO, FIN); approval provider | `status` (draft, submitted, approved, rejected, withdrawn) | yes | sustainment |
+| Closure (PB-009, S03-003) | `closure_record` | `id` (one per subject) | `closed_by` | `initiative.close`, `transformation.close` (TL) | — | append-only | sustainment |
+
+HealthAssessment (M0327) is not built in DG4 (ADR-0034 §13).
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1618,7 +1702,7 @@ erDiagram
 |---|---|---|
 | StakeholderGroup | `stakeholder_group` (T13) | P4 |
 | AdoptionIntervention | `adoption_intervention` | P4 |
-| Training/AssessmentRecord | `training_assessment_record` | P4 |
+| Training/AssessmentRecord | `training_record` and `assessment_record` (built names, ARCH-06; ERD §1i.3) | P4 |
 | AdoptionMetricLink | `adoption_metric_link` | P4 |
 
 ### 2.11 Sustainment, improvement and health (REQ-S16-021; DG5)
