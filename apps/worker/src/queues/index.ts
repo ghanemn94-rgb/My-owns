@@ -46,20 +46,51 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...GATES_QUEUES,
 ];
 
-/** Outbox event type -> queue. An event type without a queue is recorded as a relay failure, never dropped. */
-export const QUEUE_FOR_EVENT: Readonly<Record<string, string>> = {
-  ...PLATFORM_EVENT_QUEUES,
-  ...APPROVALS_EVENT_QUEUES,
-  ...ACCESS_EVENT_QUEUES,
-  ...KPI_EVENT_QUEUES,
-  ...BENEFITS_EVENT_QUEUES,
-  ...RAID_EVENT_QUEUES,
-  ...MEETINGS_EVENT_QUEUES,
-  ...ESCALATIONS_EVENT_QUEUES,
-  ...ADOPTION_EVENT_QUEUES,
-  ...SUSTAINMENT_EVENT_QUEUES,
-  ...GATES_EVENT_QUEUES,
-};
+/**
+ * The domain event maps in registration order (platform first). A domain file maps an event type to its ONE queue; the
+ * same event type may appear in several domain files (D-102 fan-out: `kpi.deviation_evaluated` feeds RAID's
+ * corrective consumer and the adoption below-trajectory consumer).
+ */
+const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
+  PLATFORM_EVENT_QUEUES,
+  APPROVALS_EVENT_QUEUES,
+  ACCESS_EVENT_QUEUES,
+  KPI_EVENT_QUEUES,
+  BENEFITS_EVENT_QUEUES,
+  RAID_EVENT_QUEUES,
+  MEETINGS_EVENT_QUEUES,
+  ESCALATIONS_EVENT_QUEUES,
+  ADOPTION_EVENT_QUEUES,
+  SUSTAINMENT_EVENT_QUEUES,
+  GATES_EVENT_QUEUES,
+];
+
+/** Merges the domain maps into event type -> the list of its queues, in registration order, each queue once. */
+export function queuesForEvents(
+  maps: readonly Readonly<Record<string, string>>[],
+): Readonly<Record<string, readonly string[]>> {
+  const out: Record<string, string[]> = {};
+  for (const map of maps)
+    for (const [eventType, queue] of Object.entries(map)) {
+      const list = (out[eventType] ??= []);
+      if (!list.includes(queue)) list.push(queue);
+    }
+  return Object.freeze(Object.fromEntries(Object.entries(out).map(([k, v]) => [k, Object.freeze([...v])])));
+}
+
+/**
+ * Outbox event type -> every queue that consumes it (D-102). The relay sends one job to each listed queue in the event's
+ * one transaction (all or none). An event type without a queue is recorded as a relay failure, never dropped.
+ */
+export const QUEUES_FOR_EVENT: Readonly<Record<string, readonly string[]>> = queuesForEvents(EVENT_QUEUE_MAPS);
+
+/**
+ * Outbox event type -> its FIRST registered queue (the pre-D-102 single-queue view, kept for the public surface and
+ * the existing tests; identical to QUEUES_FOR_EVENT for every event type with one consumer). The relay does not use it.
+ */
+export const QUEUE_FOR_EVENT: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(Object.entries(QUEUES_FOR_EVENT).map(([k, v]) => [k, v[0]!])),
+);
 
 /** Create or update every queue (platform and domain; idempotent, DML only). */
 export async function ensureQueues(boss: PgBoss, overrides: QueuePolicyOverrides = {}): Promise<void> {

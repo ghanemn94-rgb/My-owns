@@ -1454,6 +1454,25 @@ export function mapP4AdoptionSustainmentError(error: PgErrorLike): HttpProblem |
       const status = /a (addressed|withdrawn) constraint is final/.exec(message)?.[1] ?? "closed";
       return rule422("champion_constraint.final", `This constraint is ${status} and can no longer be changed.`, "");
     }
+    // ---- KBE-F (T-DG4-KBE-F): adoption metric links (ADR-0033 §3, §10). The service answers these before any write;
+    // these lines answer a write that reached the database guard (a concurrent attachment, a vanished reference).
+    case "adoption_metric_link_active_key":
+      return problems.duplicate("adoption_metric_link.exists", "This indicator is already attached to this target.");
+    case "adoption_metric_link_removed_final":
+      return problems.invalidTransition("This metric link is already removed.");
+    case "adoption_metric_link_kpi_fkey":
+      return rule422("validation.reference", "No such record in this transformation.", "/kpiDefinitionId");
+    case "adoption_metric_link_outcome_fkey":
+    case "adoption_metric_link_initiative_fkey":
+    case "adoption_metric_link_group_fkey":
+      return rule422("validation.reference", "No such record in this transformation.", "/targetId");
+    case "adoption_metric_link_kpi_matches_source":
+    case "adoption_metric_link_starts_active":
+    case "adoption_metric_link_identity":
+    case "adoption_metric_link_target":
+    case "adoption_metric_link_removed_complete":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
     case "stakeholder_group_starts_active":
     case "stakeholder_group_code_immutable":
     case "stakeholder_group_archive_complete":
