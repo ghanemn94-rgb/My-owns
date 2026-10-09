@@ -10,7 +10,7 @@
 // sides need are in @mth/shared/schemas (`redForCycles`, `ESCALATION_RULE_DEFAULTS`).
 //
 // What the API needs, and the worker mirrors with the same SQL:
-//  - the lock 730239 `executiveAskBlocker` on '<transformationId>:<blockerRecordType>:<blockerRecordId>', taken by
+//  - the advisory lock class `executiveAskBlocker` (ADR-0016 §6) on '<transformationId>:<blockerRecordType>:<blockerRecordId>', taken by
 //    createExecutiveDecision when a person links an ask to a blocker, so a person-raised ask and the job never both
 //    create one (the partial unique index decision_one_open_blocker_ask is the second line);
 //  - the existence check of the blocker record in the transformation;
@@ -25,7 +25,7 @@ import { ADVISORY_LOCK_CLASSES } from "../platform/index.ts";
 export const blockerLockKey = (transformationId: string, type: BlockerRecordType, id: string): string =>
   `${transformationId}:${type}:${id}`;
 
-/** pg_advisory_xact_lock(730239, hashtext('<transformationId>:<type>:<id>')) in `tx`. */
+/** pg_advisory_xact_lock(executiveAskBlocker, hashtext('<transformationId>:<type>:<id>')) in `tx`. */
 export async function lockBlockerAsk(tx: Tx, transformationId: string, type: BlockerRecordType, id: string) {
   await sql`SELECT pg_advisory_xact_lock(${ADVISORY_LOCK_CLASSES.executiveAskBlocker}::integer, hashtext(${blockerLockKey(transformationId, type, id)}::text))`.execute(
     tx,
@@ -33,13 +33,20 @@ export async function lockBlockerAsk(tx: Tx, transformationId: string, type: Blo
 }
 
 /** The table each blocker record type lives in (the CHECK of blocker_status / decision.blocker_record_type). */
-const BLOCKER_TABLES = {
-  raid_entry: "raid_entry",
-  dependency: "dependency",
-  corrective_case: "corrective_case",
-  initiative: "initiative",
-  milestone: "milestone",
-} as const satisfies Record<BlockerRecordType, string>;
+function blockerTable(type: BlockerRecordType) {
+  switch (type) {
+    case "raid_entry":
+      return "raid_entry" as const;
+    case "dependency":
+      return "dependency" as const;
+    case "corrective_case":
+      return "corrective_case" as const;
+    case "initiative":
+      return "initiative" as const;
+    case "milestone":
+      return "milestone" as const;
+  }
+}
 
 /** True when the blocker record exists in the transformation. */
 export async function blockerExists(
@@ -49,7 +56,7 @@ export async function blockerExists(
   id: string,
 ): Promise<boolean> {
   const row = await db
-    .selectFrom(BLOCKER_TABLES[type])
+    .selectFrom(blockerTable(type))
     .select("id")
     .where("id", "=", id)
     .where("transformation_id", "=", transformationId)

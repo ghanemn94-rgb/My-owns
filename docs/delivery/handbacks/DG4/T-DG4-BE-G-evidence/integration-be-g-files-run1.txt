@@ -1,0 +1,80 @@
+port-policy: PostgreSQL listening on port 24250 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-g
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1242ey_604fc6c4 (server_encoding UTF8); applied 55 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (45 tests) 36894ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  873ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  3162ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations  366ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  1058ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  859ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  1317ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  874ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  595ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  742ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  529ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  1017ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  780ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  1074ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  553ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1126ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  710ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  810ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  872ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  753ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  1388ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  961ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  864ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  1162ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  1543ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  2919ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  5645ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  2855ms
+ ✓ |integration| apps/api/test/integration/governance/executive-decisions.test.ts (16 tests) 2115ms
+ ✓ |integration| apps/worker/test/integration/blocker-escalation.test.ts (4 tests) 2179ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > an amber cycle, or a cycle without an observation, in between ends the run  536ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > a decided ask lets a new red run create a new one; a disabled rule creates nothing  366ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > an owner party that maps to no executive gives an unassigned ask and a notice to the lead; the scan skips a blocker whose latest cycle is not red  300ms
+ ✓ |integration| apps/api/test/integration/governance/blocker-status.test.ts (6 tests) 1561ms
+ ❯ |integration| apps/worker/test/integration/decision-sla-escalation.test.ts (5 tests | 1 failed) 1149ms
+   ✓ REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > the first working-day scan after the SLA date escalates to SP; a second scan creates nothing; the decision is untouched 124ms
+   ✓ REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > a new SLA date (as after a deferral) allows one more escalation, to the next party: the default chain [SP] is then exhausted 70ms
+   ✓ REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > an unmapped next party is a party_unmapped row with the owner's notice; a mapped owner is skipped 183ms
+   ✓ REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > nothing on a non-working day; an Unknown SLA date is never escalated 109ms
+   × REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > a disabled decision_sla rule escalates nothing and spends no ledger key; enabled again, the next scan escalates 41ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"A rule of this kind already exists in this transformation; update it instead.","code":"escalation_rule.exists","requestId":"01a1210e-2719-70f2-818c-cb0caee7d495"}: expected 409 to be 201 // Object.is equality
+ ✓ |integration| apps/api/test/integration/governance/escalation-rules.test.ts (6 tests) 974ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/decision-sla-escalation.test.ts > REQ-S12-011: an SLA expiring on a working day escalates once to the next authority with the delay impact > a disabled decision_sla rule escalates nothing and spends no ledger key; enabled again, the next scan escalates
+AssertionError: {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"A rule of this kind already exists in this transformation; update it instead.","code":"escalation_rule.exists","requestId":"01a1210e-2719-70f2-818c-cb0caee7d495"}: expected 409 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 409[39m
+
+ ❯ apps/worker/test/integration/decision-sla-escalation.test.ts:223:56
+    221|       body: { ruleKind: "decision_sla", escalationChain: ["SP"], enabl…
+    222|     });
+    223|     expect(stored.status, JSON.stringify(stored.body)).toBe(201);
+       |                                                        ^
+    224|     const off = await scan("sla-9");
+    225|     expect(off.asks.filter((o) => o.decisionId === a.id)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 81 passed (82)
+   Start at  14:24:37
+   Duration  63.27s (transform 3.47s, setup 0ms, collect 15.82s, tests 44.87s, environment 0ms, prepare 90ms)
+
+exit=1

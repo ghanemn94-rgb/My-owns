@@ -22,10 +22,13 @@ import type { DbOrTx, DecisionOptionTable, DecisionRow, Tx } from "@mth/db";
 import type { Selectable } from "kysely";
 import { sql } from "@mth/db";
 import {
+  decCode,
   executiveDecisionCreate,
   executiveDecisionListQuery,
   executiveDecisionOutcome,
   executiveDecisionUpdate,
+  hasInvalidCharacter,
+  hasText,
   missingAskElements,
   uuid,
   type AskOrigin,
@@ -72,7 +75,6 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
-import { nextCode } from "../workflows/codes.ts";
 import { blockerAskOpen, lockBlockerAsk, blockerExists } from "./blocker-escalation.ts";
 import { computeDecisionRightDue } from "./decision-rights.ts";
 
@@ -116,13 +118,17 @@ export const ASK_FIELD_ELEMENTS = {
   requiredDate: "Required date",
 } as const;
 
+type AskField = keyof typeof ASK_FIELD_ELEMENTS;
+const ASK_FIELDS = Object.keys(ASK_FIELD_ELEMENTS) as AskField[];
+const ASK_ELEMENT_NAMES: ReadonlyMap<string, string> = new Map(Object.entries(ASK_FIELD_ELEMENTS));
+
 /** ADR-0032 §11, T16 lines: exact codes and English texts. */
 export const executiveDecisionRefusals = {
   fieldsRequired: (fields: readonly (keyof typeof ASK_FIELD_ELEMENTS)[]) => {
     const errors: FieldError[] = fields.map((f) => ({
       pointer: `/${f}`,
       code: "executive_decision.field_required",
-      message: `${ASK_FIELD_ELEMENTS[f]} is required.`,
+      message: `${ASK_ELEMENT_NAMES.get(f) ?? f} is required.`,
     }));
     return new HttpProblem({
       status: 400,
@@ -234,12 +240,31 @@ export async function holdsExecutiveDecide(db: DbOrTx, userId: string, target: R
  * ADR-0032 §6 "Overdue list"), from the database clock (`p4_business_date`, the same function the guards use).
  */
 export async function organizationBusinessToday(db: DbOrTx, organizationId: string): Promise<string> {
+  return organizationBusinessDateAt(db, organizationId, null);
+}
+
+/** The business date of instant `at` (null: now) in the organization's default calendar timezone (Asia/Riyadh). */
+export async function organizationBusinessDateAt(db: DbOrTx, organizationId: string, at: Date | null): Promise<string> {
   const r = await sql<{ d: string }>`
-    SELECT p4_business_date(now(), coalesce(
+    SELECT p4_business_date(coalesce(${at}::timestamptz, now()), coalesce(
       (SELECT c.timezone FROM business_calendar c
        WHERE c.organization_id = ${organizationId}::uuid AND c.is_default AND c.status = 'active' LIMIT 1),
       'Asia/Riyadh'))::text AS d`.execute(db);
   return r.rows[0]!.d;
+}
+
+/**
+ * The next DEC-nn code of a transformation (B0130 "DEC-01…"): the same record_code_counter UPSERT as workflows'
+ * codes.ts `nextCode(tx, id, "DEC")`, which is not on the workflows module's public surface (ADR-0002), so funding
+ * decisions, API asks and worker asks share one sequence (the worker's twin and this one are covered by the D-102
+ * parity test). The counter row lock serializes concurrent creates; decision_code_key is the second line.
+ */
+export async function nextDecisionCode(tx: Tx, transformationId: string): Promise<string> {
+  const row = await sql<{ last_value: number }>`
+    INSERT INTO record_code_counter (transformation_id, prefix, last_value) VALUES (${transformationId}::uuid, 'DEC', 1)
+    ON CONFLICT (transformation_id, prefix) DO UPDATE SET last_value = record_code_counter.last_value + 1
+    RETURNING last_value`.execute(tx);
+  return decCode(row.rows[0]!.last_value);
 }
 
 // ------------------------------------------------------------------------------------------------ mapping
@@ -395,13 +420,13 @@ interface SlaOf {
   readonly slaUnknownReason: string | null;
 }
 
-/** ADR-0032 §6 "SLA due date": the required date, or the T11 row's SLA from today's business date. */
+/** ADR-0032 §6 "SLA due date": the required date, or the T11 row's SLA from the ask's creation business date. */
 async function slaOf(
   tx: Tx,
   target: ResolvedTarget & { transformationId: string },
   decisionRightId: string | null,
   requiredDate: string,
-  today: string,
+  raisedOn: string,
 ): Promise<SlaOf> {
   if (decisionRightId === null) return { slaDueDate: requiredDate, slaUnknownReason: null };
   const row = await tx
@@ -415,7 +440,7 @@ async function slaOf(
   const due = await computeDecisionRightDue(tx, row, {
     organizationId: target.organizationId,
     transformationId: target.transformationId,
-    raisedOn: today,
+    raisedOn,
     urgent: false,
     urgentReason: undefined,
     releaseMilestoneId: null,
@@ -454,7 +479,7 @@ async function ownerWorkItem(
  * Creates a person-raised executive ask (origin 'api' or 'agenda') in `tx`: owner check, required date not past,
  * recommendation label check, SLA due date, DEC-nn code, options A, B, C … as decision_option rows (inserted in the
  * same statement as the decision, so the recommended option exists when the row's foreign key is checked), the audit
- * events, and the owner's My Work item. A blocker link is serialized under lock 730239 and refused when the blocker
+ * events, and the owner's My Work item. A blocker link is serialized under the executiveAskBlocker lock and refused when the blocker
  * already has an open ask (409). The caller has authorized executive_decision.create. Returns the decision id.
  */
 export async function createExecutiveAsk(tx: Tx, ctx: T16Context, f: ExecutiveAskFields): Promise<string> {
@@ -468,7 +493,7 @@ export async function createExecutiveAsk(tx: Tx, ctx: T16Context, f: ExecutiveAs
   if (isLabel(f.recommendation)) {
     const i = OPTION_LABELS.indexOf(f.recommendation);
     if (i < 0 || i >= f.options.length) throw executiveDecisionRefusals.optionUnknown("/recommendation");
-    recommendationOptionId = optionIds[i]!;
+    recommendationOptionId = optionIds.at(i)!;
     recommendationText = null;
   }
   const blockerType = f.blockerRecordType ?? null;
@@ -490,13 +515,13 @@ export async function createExecutiveAsk(tx: Tx, ctx: T16Context, f: ExecutiveAs
   }
   const sla = await slaOf(tx, ctx.target, f.decisionRightId ?? null, f.requiredDate, today);
   const id = uuidv7();
-  const code = await nextCode(tx, ctx.target.transformationId, "DEC");
+  const code = await nextDecisionCode(tx, ctx.target.transformationId);
   const org = ctx.target.organizationId;
   const tid = ctx.target.transformationId;
   const by = ctx.userId;
   const optionRows = f.options.map(
     (o, i) =>
-      sql`(${optionIds[i]!}::uuid, ${org}::uuid, ${tid}::uuid, ${id}::uuid, ${OPTION_LABELS[i]!}, ${o.title}, ${o.description ?? null}::text, ${i + 1}::smallint, ${by}::uuid, ${by}::uuid)`,
+      sql`(${optionIds.at(i)!}::uuid, ${org}::uuid, ${tid}::uuid, ${id}::uuid, ${OPTION_LABELS.charAt(i)}, ${o.title}, ${o.description ?? null}::text, ${i + 1}::smallint, ${by}::uuid, ${by}::uuid)`,
   );
   // One statement: the decision row and its options. Non-deferrable foreign keys (the options' decision, the
   // decision's recommended option) are checked at the end of the statement, when both sides exist.
@@ -541,13 +566,13 @@ export async function createExecutiveAsk(tx: Tx, ctx: T16Context, f: ExecutiveAs
     await record(tx, ctx.audit, {
       action: "decision_option.create",
       recordType: "decision_option",
-      recordId: optionIds[i]!,
+      recordId: optionIds.at(i)!,
       organizationId: org,
       transformationId: tid,
       newVersion: 1,
       changes: {
         decision_id: { from: null, to: id },
-        label: { from: null, to: OPTION_LABELS[i]! },
+        label: { from: null, to: OPTION_LABELS.charAt(i) },
         title: { from: null, to: o.title },
       },
     });
@@ -690,12 +715,17 @@ export async function recordExecutiveOutcome(
  */
 function checkAskElements(body: unknown): void {
   if (body === null || typeof body !== "object" || Array.isArray(body)) return; // parseBody answers
-  const b = body as Record<string, unknown>;
-  const missing = (Object.keys(ASK_FIELD_ELEMENTS) as (keyof typeof ASK_FIELD_ELEMENTS)[]).filter(
-    (k) => b[k] === undefined || b[k] === null,
-  );
+  const b: ReadonlyMap<string, unknown> = new Map(Object.entries(body));
+  // Absent, null, or a text element with no visible content (empty or whitespace-only; S-1 `hasText`) is "missing".
+  // A text holding an invalid character is not blank: the schema answers it with its own code.
+  const missing = ASK_FIELDS.filter((k) => {
+    const v = b.get(k);
+    if (v === undefined || v === null) return true;
+    return typeof v === "string" && !hasText(v) && !hasInvalidCharacter(v);
+  });
   if (missing.length > 0) throw executiveDecisionRefusals.fieldsRequired(missing);
-  if (Array.isArray(b["options"]) && b["options"].length < 2) throw executiveDecisionRefusals.optionsTooFew();
+  const options = b.get("options");
+  if (Array.isArray(options) && options.length < 2) throw executiveDecisionRefusals.optionsTooFew();
 }
 
 /** The same option-count refusal on an update that replaces the options. */
@@ -722,9 +752,8 @@ const decisionFields = (r: DecisionRow): ReadonlyMap<string, unknown> =>
   ]);
 
 function diff(before: ReadonlyMap<string, unknown>, after: ReadonlyMap<string, unknown>) {
-  const out: Record<string, { from: unknown; to: unknown }> = {};
-  for (const [k, v] of after) if (before.get(k) !== v) out[k] = { from: before.get(k) ?? null, to: v };
-  return out;
+  const changed = [...after].filter(([k, v]) => before.get(k) !== v);
+  return Object.fromEntries(changed.map(([k, v]) => [k, { from: before.get(k) ?? null, to: v }]));
 }
 
 // ------------------------------------------------------------------------------------------------ routes
@@ -830,7 +859,7 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
       const activeAfter: { id: string; label: string }[] = [];
       if (body.options !== undefined) {
         for (const [i, o] of body.options.entries()) {
-          const label = OPTION_LABELS[i]!;
+          const label = OPTION_LABELS.charAt(i);
           const existing = options.find((x) => x.label === label);
           const description = o.description ?? null;
           if (!existing) {
@@ -939,7 +968,10 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
       const requiredDate = body.requiredDate ?? current.due_date;
       const rightId = body.decisionRightId !== undefined ? body.decisionRightId : current.decision_right_id;
       const slaChanged = body.requiredDate !== undefined || body.decisionRightId !== undefined;
-      const sla = slaChanged && requiredDate !== null ? await slaOf(tx, target, rightId, requiredDate, today) : null;
+      // ADR-0032 §6: recomputed when the required date or the T11 row changes, from the ask's CREATION business date
+      // (a T11 working-day SLA counts from when the ask was raised, not from the edit).
+      const raisedOn = await organizationBusinessDateAt(tx, target.organizationId, current.created_at);
+      const sla = slaChanged && requiredDate !== null ? await slaOf(tx, target, rightId, requiredDate, raisedOn) : null;
       const updated = await tx
         .updateTable("decision")
         .set({

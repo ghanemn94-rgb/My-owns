@@ -478,3 +478,67 @@ describe("updateExecutiveDecision and the SLA due date (ADR-0032 §6)", () => {
     for (const d of res.body.items) expect([d.askOrigin, d.missingElements]).toEqual(["earlier_record", []]);
   });
 });
+
+describe("commit-time authorization and blank elements (S-1, S-4)", () => {
+  it("an owner whose grant is revoked while the Outcome request waits gets 403; the ask stays open", async () => {
+    const owner = await person(api, w, x.transformationId, "SP");
+    const a = await raiseAsk(send, x, owner.id, plusDays(today, 6));
+    const res = await afterIdentity(
+      api,
+      owner.id,
+      () =>
+        call(api.app, "POST", `${L()}/${a.id}/outcome`, {
+          session: owner.session,
+          headers: ifm(1),
+          body: { outcome: "decided", chosenOptionLabel: "A", outcomeText: "Synthetic" },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, owner.id),
+    );
+    expect(res.status).toBe(403);
+    const d = await api.db
+      .selectFrom("decision")
+      .select(["status", "version", "outcome_text"])
+      .where("id", "=", a.id)
+      .executeTakeFirstOrThrow();
+    expect(d).toEqual({ status: "open", version: 1, outcome_text: null });
+  });
+
+  it("a TL whose grant is revoked while the update waits gets 403; the ask is unchanged", async () => {
+    const a = await raiseAsk(send, x, x.sponsor.id, plusDays(today, 6));
+    const tl = await person(api, w, x.transformationId, "TL");
+    const res = await afterIdentity(
+      api,
+      tl.id,
+      () =>
+        call(api.app, "PATCH", `${L()}/${a.id}`, {
+          session: tl.session,
+          headers: ifm(1),
+          body: { title: "Synthetic: changed" },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, tl.id),
+    );
+    expect(res.status).toBe(403);
+    const d = await api.db
+      .selectFrom("decision")
+      .select(["title", "version"])
+      .where("id", "=", a.id)
+      .executeTakeFirstOrThrow();
+    expect(d).toEqual({ title: "Synthetic: approve the vendor switch", version: 1 });
+  });
+
+  it("a blank (whitespace-only) why now is 'Why now is required.' at /whyNow, before any write", async () => {
+    const before = await decisionsOf();
+    const res = await send("POST", L(), {
+      session: x.lead.session,
+      body: askBody(x.sponsor.id, plusDays(today, 5), { whyNow: "   ", impactOfDelay: "" }),
+    });
+    expect([res.status, res.body.code]).toEqual([400, "executive_decision.field_required"]);
+    expect(res.body.errors).toEqual([
+      { pointer: "/whyNow", code: "executive_decision.field_required", message: "Why now is required." },
+      { pointer: "/impactOfDelay", code: "executive_decision.field_required", message: "Impact of delay is required." },
+    ]);
+    expect(await decisionsOf()).toBe(before);
+  });
+});

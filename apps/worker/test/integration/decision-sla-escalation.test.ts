@@ -32,8 +32,10 @@ import {
   DECISION_SLA_SCAN_CONSUMER,
   ESCALATION_NOTICE,
   EXECUTIVE_DECISION_ESCALATED_KIND,
+  escalateDecisionInTx,
   handleDecisionSlaScan,
 } from "../../src/handlers/escalations.ts";
+import { jobActor, runOnce } from "../../src/kit.ts";
 
 let api: TestApi;
 let w: World;
@@ -82,10 +84,14 @@ describe("REQ-S12-011: an SLA expiring on a working day escalates once to the ne
       rows.map((r) => [r.level, r.party_code, r.target_user_id, r.routing_error, r.sla_due_date, r.business_date]),
     ).toEqual([[1, "SP", x.sponsor.id, null, sla, today]]);
     expect(rows[0]!.delay_impact).toBe("Synthetic: a further quarter on the current terms");
+    // A second scan does not select an ask already escalated for this SLA date; a redelivered job with the same
+    // ledger key is a duplicate (runOnce), and the unique constraint decision_escalation_once is the last line.
     const second = await scan("sla-2");
-    expect(second.asks.filter((r) => r.decisionId === a.id)).toEqual([
-      { decisionId: a.id, outcome: "duplicate", level: null, routingError: null },
-    ]);
+    expect(second.asks.filter((r) => r.decisionId === a.id)).toEqual([]);
+    const replay = await runOnce(api.db, DECISION_SLA_SCAN_CONSUMER, `decision.escalate:${a.id}:${sla}`, (tx) =>
+      escalateDecisionInTx(tx, jobActor("sla-2b"), a.id, sla, today),
+    );
+    expect(replay.outcome).toBe("duplicate");
     expect((await escalationsOf(a.id)).length).toBe(1);
     // The scan never decides and never changes the decision.
     expect(await decisionRow(a.id)).toEqual(before);
@@ -204,5 +210,43 @@ describe("REQ-S12-011: an SLA expiring on a working day escalates once to the ne
       expect(r.asks.map((o) => o.decisionId)).not.toContain(u.id);
       expect(await escalationsOf(u.id)).toEqual([]);
     }
+  });
+
+  it("a disabled decision_sla rule escalates nothing and spends no ledger key; enabled again, the next scan escalates", async () => {
+    const a = await raiseAsk(send, x, x.fin.id, today);
+    await moveAskDates(api.db, a.id, plusDays(today, -2), plusDays(today, -2));
+    const R = `${T()}/escalation-rules`;
+    // Disable the decision_sla rule (an earlier test may already have stored one; else store it disabled).
+    const rules = await send("GET", R, { session: x.lead.session });
+    const sla = rules.body.items.find((r: Body) => r.ruleKind === "decision_sla");
+    const stored = sla.isDefault
+      ? await send("POST", R, {
+          session: x.office.session,
+          body: { ruleKind: "decision_sla", escalationChain: ["SP"], enabled: false },
+        })
+      : await send("PATCH", `${R}/decision_sla`, {
+          session: x.office.session,
+          headers: ifm(sla.version),
+          body: { enabled: false, escalationChain: ["SP"] },
+        });
+    expect([200, 201], JSON.stringify(stored.body)).toContain(stored.status);
+    const off = await scan("sla-9");
+    expect(off.asks.filter((o) => o.decisionId === a.id)).toEqual([]);
+    expect(await escalationsOf(a.id)).toEqual([]);
+    const ledger = await api.db
+      .selectFrom("processed_message")
+      .select("idempotency_key")
+      .where("idempotency_key", "like", `decision.escalate:${a.id}:%`)
+      .execute();
+    expect(ledger).toEqual([]);
+    const on = await send("PATCH", `${R}/decision_sla`, {
+      session: x.office.session,
+      headers: ifm(stored.body.version),
+      body: { enabled: true },
+    });
+    expect(on.status, JSON.stringify(on.body)).toBe(200);
+    const r = await scan("sla-10");
+    expect(r.asks.filter((o) => o.decisionId === a.id).map((o) => o.outcome)).toEqual(["escalated"]);
+    expect((await escalationsOf(a.id)).map((e) => [e.level, e.party_code])).toEqual([[1, "SP"]]);
   });
 });

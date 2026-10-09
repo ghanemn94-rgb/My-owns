@@ -6,12 +6,31 @@
 //  - refusals: 409 blocker_status.exists, 422 meeting.not_in_session (scheduled), 422 meeting.frozen (cancelled), 422
 //    blocker_status.record_not_found, 400 validation; AUD and SP 403, ADM-only and another organization 404;
 //  - a person may link an ask to a blocker on createExecutiveDecision; a second open ask for it is 409
-//    executive_decision.blocker_ask_open (the API side of "without duplicating an existing open ask").
+//    executive_decision.blocker_ask_open (the API side of "without duplicating an existing open ask");
+//  - commit-time authorization of recordBlockerStatus (a grant revoked while the request waits: 403, nothing written);
+//  - D-102 parity: the worker's twins (apps/worker/src/handlers/escalations.ts; ADR-0002 rule 5 forbids it importing
+//    API code) give the same answers as the API services for the same input: resolveParty, the executive check of an
+//    owner or escalation target (holdsExecutiveDecide) and the DEC-nn code sequence (workflows' nextCode, the T16
+//    allocator nextDecisionCode and the worker's twin share one counter and one format).
 // The red-cycles rule itself is proven with the worker's real consumer in apps/worker/test/integration/
 // blocker-escalation.test.ts. All data is SYNTHETIC; nothing touches the engineering gates DG0-DG7.
+import { sql } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  executivesAmong,
+  nextDecisionCode,
+  resolveParty as workerResolveParty,
+} from "../../../../worker/src/handlers/escalations.ts";
+import { resolveParty, resolveTarget } from "../../../src/modules/access/index.ts";
+import {
+  holdsExecutiveDecide,
+  nextDecisionCode as apiNextDecisionCode,
+} from "../../../src/modules/governance/executive-decisions.ts";
+import { nextCode } from "../../../src/modules/workflows/codes.ts";
 import { auditOf, call, seedWorld, signIn, startApi, type TestApi, type World } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { person } from "../approvals/approval-world.ts";
+import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
 import { businessToday, plusDays, setupMeetingWorld, type MeetingWorld } from "./meeting-fixtures.ts";
 import { askBody, createBlockerRisk, createForum, envelopeOf, meetingInSession } from "./t16-fixtures.ts";
 
@@ -168,5 +187,93 @@ describe("a person-raised ask linked to a blocker (ADR-0032 §8.3)", () => {
       body: askBody(x.sponsor.id, plusDays(today, 8), { blockerRecordType: "raid_entry", blockerRecordId: forumId }),
     });
     expect([missing.status, missing.body.code]).toEqual([422, "blocker_status.record_not_found"]);
+  });
+});
+
+describe("recordBlockerStatus commit-time authorization (S-4)", () => {
+  it("a TO whose grant is revoked while the request waits gets 403 and nothing is written", async () => {
+    const to = await person(api, w, x.transformationId, "TO");
+    const meetingId = await meetingInSession(send, x, forumId, today);
+    const res = await afterIdentity(
+      api,
+      to.id,
+      () => call(api.app, "POST", S(meetingId), { session: to.session, body: red(), contract: false }),
+      () => revokeAll(api, w.grantor.id, to.id),
+    );
+    expect(res.status).toBe(403);
+    const rows = await api.db.selectFrom("blocker_status").select("id").where("meeting_id", "=", meetingId).execute();
+    expect(rows).toEqual([]);
+    const events = await api.db
+      .selectFrom("outbox_event")
+      .select("id")
+      .where("event_type", "=", "blocker_status.recorded")
+      .where(sql<string>`payload->>'meetingId'`, "=", meetingId)
+      .execute();
+    expect(events).toEqual([]);
+  });
+});
+
+describe("D-102 parity: the worker's twins answer as the API services do", () => {
+  it("resolveParty, the executive check and the DEC-nn sequence are the same on both paths", async () => {
+    // resolveParty: mapped user (SP, BO), mapped TL, and an unmapped party.
+    for (const party of ["SP", "BO", "TL", "CFO"]) {
+      const a = await resolveParty(api.db, x.transformationId, party);
+      const b = await api.db.transaction().execute((tx) => workerResolveParty(tx, x.transformationId, party));
+      const strip = (t: typeof a) =>
+        t.status === "unmapped"
+          ? t
+          : t.kind === "user"
+            ? { kind: t.kind, userId: t.userId }
+            : { kind: t.kind, groupId: t.groupId };
+      const stripW = (t: typeof b) =>
+        t.status === "unmapped"
+          ? t
+          : t.kind === "user"
+            ? { kind: t.kind, userId: t.userId }
+            : { kind: t.kind, groupId: t.groupId };
+      expect(stripW(b), party).toEqual(strip(a));
+    }
+    // The executive check: SP, BO and FIN hold executive_decision.decide; TL, TO, WL and AUD do not; a revoked SP
+    // does not any more.
+    const target = (await resolveTarget(api.db, { type: "transformation", id: x.transformationId }))!;
+    const revoked = await person(api, w, x.transformationId, "SP");
+    await revokeAll(api, w.grantor.id, revoked.id);
+    const people = [
+      x.sponsor.id,
+      x.bo.id,
+      x.fin.id,
+      x.lead.id,
+      x.office.id,
+      x.contributor.id,
+      x.auditor.id,
+      revoked.id,
+    ];
+    const apiAnswers = [];
+    for (const id of people) apiAnswers.push(await holdsExecutiveDecide(api.db, id, target));
+    const workerAnswers = await api.db.transaction().execute(async (tx) => {
+      const ok = new Set(await executivesAmong(tx, people, x.transformationId));
+      return people.map((id) => ok.has(id));
+    });
+    expect(workerAnswers).toEqual(apiAnswers);
+    expect(apiAnswers).toEqual([true, true, true, false, false, false, false, false]);
+    // DEC-nn: one counter, one format; the two paths continue each other's sequence (rolled back afterwards).
+    const rollback = new Error("rollback");
+    let codes: string[] = [];
+    await api.db
+      .transaction()
+      .execute(async (tx) => {
+        codes = [
+          await nextCode(tx, x.transformationId, "DEC"),
+          await nextDecisionCode(tx, x.transformationId),
+          await apiNextDecisionCode(tx, x.transformationId),
+          await nextCode(tx, x.transformationId, "DEC"),
+        ];
+        throw rollback;
+      })
+      .catch((e: unknown) => {
+        if (e !== rollback) throw e;
+      });
+    const n = codes.map((c) => Number(/^DEC-(\d{2,})$/.exec(c)![1]));
+    expect([n[1]! - n[0]!, n[2]! - n[1]!, n[3]! - n[2]!]).toEqual([1, 1, 1]);
   });
 });

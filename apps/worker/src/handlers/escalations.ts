@@ -74,6 +74,7 @@ export const EXECUTIVE_DECISION_ESCALATED_KIND = "executive_decision_escalated";
 export const EXECUTIVE_DECISION_ESCALATED_MESSAGE = "governance.task.executive_decision_escalated";
 export const ESCALATION_NOTICE = "governance.notice.executive_decision_escalated";
 export const BLOCKER_CALENDAR_NOTICE = "governance.notice.blocker_ask_calendar_not_configured";
+export const BLOCKER_OWNER_UNASSIGNED_NOTICE = "governance.notice.blocker_ask_owner_unassigned";
 const DECIDE = "executive_decision.decide";
 const BATCH = 500;
 /** How far before the start date the calendar's holidays are loaded. */
@@ -148,8 +149,8 @@ type PartyTarget =
   | { readonly status: "mapped"; readonly kind: "user"; readonly userId: string }
   | { readonly status: "mapped"; readonly kind: "group"; readonly groupId: string };
 
-/** The API's resolveParty (role mapping, no fallback). */
-async function resolveParty(tx: Tx, transformationId: string, partyCode: string): Promise<PartyTarget> {
+/** The API's resolveParty (role mapping, no fallback); the parity test compares the two. */
+export async function resolveParty(tx: Tx, transformationId: string, partyCode: string): Promise<PartyTarget> {
   const m = await tx
     .selectFrom("role_mapping")
     .select(["target_kind", "user_id", "group_id"])
@@ -228,6 +229,18 @@ async function notifyOnce(
     },
   });
   return true;
+}
+
+/**
+ * The next DEC-nn code of a transformation: the twin of the API's workflows/codes.ts `nextCode(tx, id, "DEC")` (the
+ * same record_code_counter row, so API-raised and worker-raised asks share one sequence; the parity test proves it).
+ */
+export async function nextDecisionCode(tx: Tx, transformationId: string): Promise<string> {
+  const counter = await sql<{ last_value: number }>`
+    INSERT INTO record_code_counter (transformation_id, prefix, last_value) VALUES (${transformationId}::uuid, 'DEC', 1)
+    ON CONFLICT (transformation_id, prefix) DO UPDATE SET last_value = record_code_counter.last_value + 1
+    RETURNING last_value`.execute(tx);
+  return decCode(counter.rows[0]!.last_value);
 }
 
 const decisionLink = (transformationId: string, decisionId: string) =>
@@ -461,6 +474,31 @@ export async function handleDecisionSlaScan(db: Db, data: unknown, jobId: string
       .where("status", "in", ["open", "deferred"])
       .where("sla_due_date", "is not", null)
       .where("sla_due_date", "<", today)
+      // Already escalated for this SLA date (decision_escalation_once): never re-selected, so a backlog larger than
+      // one batch cannot starve later asks.
+      .where(({ not, exists, selectFrom }) =>
+        not(
+          exists(
+            selectFrom("decision_escalation as e")
+              .select("e.id")
+              .whereRef("e.decision_id", "=", "decision.id")
+              .whereRef("e.sla_due_date", "=", "decision.sla_due_date"),
+          ),
+        ),
+      )
+      // A transformation whose stored decision_sla rule is disabled escalates nothing; it is not selected, so no
+      // runOnce key is spent and the ask escalates once the rule is enabled again.
+      .where(({ not, exists, selectFrom }) =>
+        not(
+          exists(
+            selectFrom("governance_escalation_rule as g")
+              .select("g.id")
+              .whereRef("g.transformation_id", "=", "decision.transformation_id")
+              .where("g.rule_kind", "=", "decision_sla")
+              .where("g.enabled", "=", false),
+          ),
+        ),
+      )
       .orderBy("sla_due_date")
       .orderBy("id")
       .limit(BATCH)
@@ -620,17 +658,19 @@ export async function evaluateBlocker(
   }
   const name = (await blockerName(tx, b.sourceRecordType, b.sourceRecordId)) ?? b.sourceRecordId;
   const title = truncateText(name, 500);
+  // The owner: the owner party mapped to ONE person who holds executive_decision.decide; otherwise NULL (ownerStatus
+  // "unassigned"), never a guessed owner, and the routing error is made visible to the transformation lead below.
   let owner: string | null = null;
+  let ownerRoutingError: EscalationRoutingError | null = null;
   const party = await resolveParty(tx, b.transformationId, ownerParty);
-  if (party.status === "mapped" && party.kind === "user") {
+  if (party.status === "unmapped") ownerRoutingError = "party_unmapped";
+  else if (party.kind === "group") ownerRoutingError = "party_not_executive";
+  else {
     const ok = await executivesAmong(tx, [party.userId], b.transformationId);
-    owner = ok.length > 0 ? party.userId : null;
+    if (ok.length > 0) owner = party.userId;
+    else ownerRoutingError = "party_not_executive";
   }
-  const counter = await sql<{ last_value: number }>`
-    INSERT INTO record_code_counter (transformation_id, prefix, last_value) VALUES (${b.transformationId}::uuid, 'DEC', 1)
-    ON CONFLICT (transformation_id, prefix) DO UPDATE SET last_value = record_code_counter.last_value + 1
-    RETURNING last_value`.execute(tx);
-  const code = decCode(counter.rows[0]!.last_value);
+  const code = await nextDecisionCode(tx, b.transformationId);
   const id = await uuidv7(tx);
   await tx
     .insertInto("decision")
@@ -701,6 +741,17 @@ export async function evaluateBlocker(
       dueDate: due.dueDate,
       dedupeKey: `t16.decision:${id}:${owner}`,
     });
+  // No owner: the transformation lead (else the recorder) is told, with the routing error (a visible gap).
+  else
+    await notifyOnce(tx, actor, {
+      organizationId: t.organization_id,
+      transformationId: b.transformationId,
+      recipientUserId: t.lead_user_id ?? recorder,
+      linkPath: decisionLink(b.transformationId, id),
+      messageKey: BLOCKER_OWNER_UNASSIGNED_NOTICE,
+      messageParams: { code, title, partyCode: ownerParty, routingError: ownerRoutingError },
+      dedupeKey: `t16.blocker_owner_unassigned:${id}`,
+    });
   return { outcome: "ask_created", decisionId: id };
 }
 
@@ -735,6 +786,9 @@ export interface BlockerScanResult {
  */
 export async function handleBlockerEscalationScan(db: Db, data: unknown, jobId: string): Promise<BlockerScanResult> {
   const { organizationId } = scanData.parse(data ?? {});
+  // Candidates: the blocker's LATEST observation in the forum is red (a later non-red one ends any run, so only these
+  // can be red for N cycles), and it has no open ask. `today` (the ledger key's date) is the business date in the
+  // organization's default calendar timezone, Asia/Riyadh when it has none (ADR-0025 §1).
   let q = db
     .selectFrom("blocker_status as s")
     .select([
@@ -743,8 +797,23 @@ export async function handleBlockerEscalationScan(db: Db, data: unknown, jobId: 
       "s.source_record_type",
       "s.source_record_id",
       sql<string>`max(s.cycle_date)::text`.as("latest"),
-      sql<string>`p4_business_date(now(), 'Asia/Riyadh')::text`.as("today"),
+      sql<string>`p4_business_date(now(), coalesce((SELECT c.timezone FROM business_calendar c
+        WHERE c.organization_id = s.organization_id AND c.is_default AND c.status = 'active' LIMIT 1),
+        'Asia/Riyadh'))::text`.as("today"),
     ])
+    .where("s.rag", "=", "red")
+    .where(({ not, exists, selectFrom }) =>
+      not(
+        exists(
+          selectFrom("blocker_status as later")
+            .select("later.id")
+            .whereRef("later.forum_id", "=", "s.forum_id")
+            .whereRef("later.source_record_type", "=", "s.source_record_type")
+            .whereRef("later.source_record_id", "=", "s.source_record_id")
+            .whereRef("later.cycle_date", ">", "s.cycle_date"),
+        ),
+      ),
+    )
     .where(({ not, exists, selectFrom }) =>
       not(
         exists(
@@ -757,9 +826,14 @@ export async function handleBlockerEscalationScan(db: Db, data: unknown, jobId: 
         ),
       ),
     )
-    .groupBy(["s.transformation_id", "s.forum_id", "s.source_record_type", "s.source_record_id"]);
+    .groupBy(["s.organization_id", "s.transformation_id", "s.forum_id", "s.source_record_type", "s.source_record_id"]);
   if (organizationId !== undefined) q = q.where("s.organization_id", "=", organizationId);
-  const candidates = await q.orderBy("s.transformation_id").limit(BATCH).execute();
+  const candidates = await q
+    .orderBy("s.transformation_id")
+    .orderBy("s.forum_id")
+    .orderBy("s.source_record_id")
+    .limit(BATCH)
+    .execute();
   const created: string[] = [];
   let duplicates = 0;
   for (const c of candidates) {

@@ -4,12 +4,15 @@
 //  - createEscalationRule / updateEscalationRule (escalation_rule.configure: TL, TO): the shape rule (422
 //    escalation_rule.shape), known parties (422 forum.party_unknown), one per kind (409 escalation_rule.exists),
 //    If-Match 428/409, 404 for a kind without a stored rule, audited; AUD and SP 403, ADM-only and outside 404;
+//    authorization re-checked at commit time (a grant revoked while the request waits: 403, nothing changes);
 //  - the T16, escalation and blocker lines of the slice D database mapper (platform/db-errors.ts; the last lines).
 // All data is SYNTHETIC; a rule escalates and never decides; nothing touches the engineering gates DG0-DG7.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mapDatabaseGuardError } from "../../../src/modules/platform/index.ts";
 import { auditOf, call, seedWorld, signIn, startApi, type TestApi, type World } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { person } from "../approvals/approval-world.ts";
+import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
 import { setupMeetingWorld, type MeetingWorld } from "./meeting-fixtures.ts";
 
 let api: TestApi;
@@ -177,6 +180,46 @@ describe("escalation rules (ADR-0032 §8.1)", () => {
         (await send("PATCH", `${R()}/blocker_red`, { session, headers: ifm(2), body: { redCycles: 5 } })).status,
       ).toBe(status);
     }
+  });
+
+  it("commit-time (S-4): a TO whose grant is revoked while the request waits gets 403 on create and update; nothing changes", async () => {
+    const stored = async () =>
+      api.db
+        .selectFrom("governance_escalation_rule")
+        .select(["rule_kind", "version", "red_cycles"])
+        .where("transformation_id", "=", x.transformationId)
+        .orderBy("rule_kind")
+        .execute();
+    const before = await stored();
+    expect(before.map((r) => r.rule_kind)).toEqual(["blocker_red"]);
+    const to1 = await person(api, w, x.transformationId, "TO");
+    const created = await afterIdentity(
+      api,
+      to1.id,
+      () =>
+        call(api.app, "POST", R(), {
+          session: to1.session,
+          body: { ruleKind: "decision_sla", escalationChain: ["SP"] },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, to1.id),
+    );
+    expect(created.status).toBe(403);
+    const to2 = await person(api, w, x.transformationId, "TO");
+    const updated = await afterIdentity(
+      api,
+      to2.id,
+      () =>
+        call(api.app, "PATCH", `${R()}/blocker_red`, {
+          session: to2.session,
+          headers: ifm(before[0]!.version),
+          body: { redCycles: 7 },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, to2.id),
+    );
+    expect(updated.status).toBe(403);
+    expect(await stored()).toEqual(before);
   });
 });
 
