@@ -57,3 +57,6 @@ export * from "./kpi-actuals.ts";
 // P4 slice E mirrors of BE-D (backend-workflow-engineer, T-DG4-BE-D; p4-work-split §E.1): the T15 RAID register, the
 // integrated RAID + decision log and the action register.
 export * from "./raid.ts";
+// P4 slice B mirrors of KBE-E (kpi-benefits-engineer, T-DG4-KBE-E; p4-work-split §B.3): plan values, measurements and
+// lineage, the Finance queue and decisions, corrections, totals and the slice B outbox payloads.
+export * from "./benefit-values.ts";
