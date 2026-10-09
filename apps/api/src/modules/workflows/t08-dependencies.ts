@@ -640,3 +640,195 @@ export function registerT08DependencyRoutes(
     `POST ${BASE}/:dependencyId/archive`,
   ];
 }
+
+// ------------------------------------------------------------------------------------------------ RAID port
+// T-DG4-BE-D (ADR-0031 §2; p4-work-split §E.1): the RaidDependencyPort implementation that server.ts passes to the raid
+// module. A RAID Dependency entry IS this canonical row (REQ-PB-078): no copy. It reuses T08's code allocation (DEP-nn),
+// type check, reference checks and the cycle guard under the graph lock, so the T08 rules hold on both paths. The raid
+// module authorises the write (raid.edit AND dependency.edit, at commit time) before it calls the port. The T08 routes,
+// schemas and texts above are unchanged; the T15 `impact` column is written only here (the T08 representation does not
+// show it, ADR-0031 §2).
+
+type RaidLevelValue = "high" | "medium" | "low";
+
+const RAID_AUDIT_FIELDS = [...AUDIT_FIELDS, "impact"] as const;
+
+function raidDiff(before: Partial<DependencyRow>, after: DependencyRow) {
+  const changes = new Map<string, { from: unknown; to: unknown }>();
+  const b = new Map(Object.entries(before));
+  const a = new Map(Object.entries(after));
+  for (const f of RAID_AUDIT_FIELDS) {
+    const from = b.get(f) ?? null;
+    const to = a.get(f) ?? null;
+    if (JSON.stringify(from) !== JSON.stringify(to)) changes.set(f, { from, to });
+  }
+  return changes.size > 0 ? Object.fromEntries(changes) : null;
+}
+
+/** The initiative endpoints of a RAID Dependency entry: same transformation, never itself, never closing a cycle. */
+async function checkRaidEndpoints(
+  ctx: WriteContext,
+  from: string | null,
+  to: string | null,
+  excludeId: string | null,
+): Promise<void> {
+  await assertSameTransformation(ctx.tx, "initiative", ctx.transformationId, from, "/fromInitiativeId");
+  await assertSameTransformation(ctx.tx, "initiative", ctx.transformationId, to, "/toInitiativeId");
+  if (from !== null && from === to)
+    throw rule("dependency.self", "An initiative cannot depend on itself.", "/toInitiativeId");
+  if (from !== null && to !== null) await assertAcyclic(ctx.tx, ctx.transformationId, from, to, excludeId);
+}
+
+export const raidDependencyPort = {
+  async lock(tx: Tx, transformationId: string, dependencyId: string): Promise<DependencyRow | undefined> {
+    await lockGraph(tx, transformationId);
+    return tx
+      .selectFrom("dependency")
+      .selectAll()
+      .where("id", "=", dependencyId)
+      .where("transformation_id", "=", transformationId)
+      .forUpdate()
+      .executeTakeFirst();
+  },
+
+  async create(
+    ctx: WriteContext,
+    input: {
+      readonly description: string;
+      readonly impact: RaidLevelValue;
+      readonly ownerUserId: string;
+      readonly dueDate: string | null;
+      readonly mitigation: string | null;
+      readonly fromInitiativeId: string | null;
+      readonly toInitiativeId: string | null;
+      readonly dependencyType: string | null;
+    },
+  ): Promise<DependencyRow> {
+    const { tx, transformationId } = ctx;
+    await lockGraph(tx, transformationId);
+    const dependencyType = input.dependencyType ?? "other";
+    await assertActiveType(tx, dependencyType);
+    await checkRaidEndpoints(ctx, input.fromInitiativeId, input.toInitiativeId, null);
+    await assertActiveUsers(tx, ctx.organizationId, [{ id: input.ownerUserId, pointer: "/ownerUserId" }]);
+    const id = uuidv7();
+    const row = await tx
+      .insertInto("dependency")
+      .values({
+        id,
+        organization_id: ctx.organizationId,
+        transformation_id: transformationId,
+        code: await nextCode(tx, transformationId, "DEP"),
+        description: input.description,
+        from_kind: input.fromInitiativeId === null ? "other" : "initiative",
+        from_label: null,
+        from_initiative_id: input.fromInitiativeId,
+        to_kind: input.toInitiativeId === null ? "other" : "initiative",
+        to_label: null,
+        to_initiative_id: input.toInitiativeId,
+        dependency_type: dependencyType,
+        needed_by: input.dueDate,
+        owner_user_id: input.ownerUserId,
+        mitigation: input.mitigation,
+        impact: input.impact,
+        created_by: ctx.userId,
+        updated_by: ctx.userId,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    await record(tx, ctx.audit, {
+      action: "dependency.create",
+      recordType: "dependency",
+      recordId: id,
+      organizationId: ctx.organizationId,
+      transformationId,
+      newVersion: row.version,
+      changes: raidDiff({}, row),
+    });
+    return row;
+  },
+
+  async update(
+    ctx: WriteContext,
+    current: DependencyRow,
+    changes: {
+      readonly description?: string;
+      readonly impact?: RaidLevelValue;
+      readonly ownerUserId?: string;
+      readonly dueDate?: string | null;
+      readonly mitigation?: string | null;
+      readonly toInitiativeId?: string | null;
+    },
+  ): Promise<DependencyRow> {
+    const { tx } = ctx;
+    let to: { to_kind: string; to_label: null; to_initiative_id: string | null } | null = null;
+    if (changes.toInitiativeId !== undefined && changes.toInitiativeId !== current.to_initiative_id) {
+      if (changes.toInitiativeId === null && current.from_initiative_id !== null)
+        throw rule(
+          "dependency.to_required",
+          "A T08 dependency's To is an initiative: set toInitiativeId.",
+          "/toInitiativeId",
+        );
+      await checkRaidEndpoints(ctx, current.from_initiative_id, changes.toInitiativeId, current.id);
+      to =
+        changes.toInitiativeId === null
+          ? { to_kind: "other", to_label: null, to_initiative_id: null }
+          : { to_kind: "initiative", to_label: null, to_initiative_id: changes.toInitiativeId };
+    }
+    await assertActiveUsers(tx, ctx.organizationId, [{ id: changes.ownerUserId, pointer: "/ownerUserId" }]);
+    const updated = await tx
+      .updateTable("dependency")
+      .set({
+        ...(changes.description !== undefined ? { description: changes.description } : {}),
+        ...(changes.impact !== undefined ? { impact: changes.impact } : {}),
+        ...(changes.ownerUserId !== undefined ? { owner_user_id: changes.ownerUserId } : {}),
+        ...(changes.dueDate !== undefined ? { needed_by: changes.dueDate } : {}),
+        ...(changes.mitigation !== undefined ? { mitigation: changes.mitigation } : {}),
+        ...(to ?? {}),
+        version: sql<number>`version + 1`,
+        updated_at: sql<Date>`now()`,
+        updated_by: ctx.userId,
+      })
+      .where("id", "=", current.id)
+      .where("version", "=", current.version)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    await record(tx, ctx.audit, {
+      action: "dependency.update",
+      recordType: "dependency",
+      recordId: current.id,
+      organizationId: ctx.organizationId,
+      transformationId: ctx.transformationId,
+      priorVersion: current.version,
+      newVersion: updated.version,
+      changes: raidDiff(current, updated),
+    });
+    return updated;
+  },
+
+  async resolve(ctx: WriteContext, current: DependencyRow, closureNote: string): Promise<DependencyRow> {
+    const updated = await ctx.tx
+      .updateTable("dependency")
+      .set({
+        status: "resolved",
+        version: sql<number>`version + 1`,
+        updated_at: sql<Date>`now()`,
+        updated_by: ctx.userId,
+      })
+      .where("id", "=", current.id)
+      .where("version", "=", current.version)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    await record(ctx.tx, ctx.audit, {
+      action: "dependency.update",
+      recordType: "dependency",
+      recordId: current.id,
+      organizationId: ctx.organizationId,
+      transformationId: ctx.transformationId,
+      priorVersion: current.version,
+      newVersion: updated.version,
+      reason: closureNote,
+      changes: { status: { from: current.status, to: "resolved" } },
+    });
+    return updated;
+  },
+};

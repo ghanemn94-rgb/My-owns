@@ -1,10 +1,21 @@
-// P4 route-file stub (T-DG4-BE-A; p4-plan §5.1, p4-work-split §I+C.1): RAID (T15), actions and corrective-action cases (slice E; BE-D owns raid/**).
-// Owned and filled by task BE-D. Until then it registers nothing; its registration line already exists, so the
-// owning task edits only this file (and its own tests, pending list and contract exercises).
+// raid route registration (P4; p4-plan §5.1, p4-work-split §E.1-§E.2): BE-D's lines first (the T15 register, the
+// integrated RAID + decision log, RAID-linked actions and the action register), then BE-D2's (corrective-action cases
+// and rules), sequential edits, never concurrent. T-DG4-BE-A created this file as a stub.
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
+import { registerRaidActionRoutes } from "./actions.ts";
+import type { RaidDependencyPort } from "./dependency-port.ts";
+import { registerRaidRegisterRoutes } from "./register.ts";
 
-/** Registers this file's routes and returns them as "METHOD /path" (none until BE-D fills it). */
-export function registerRaidRoutes(_app: FastifyInstance, _deps: ModuleDeps): string[] {
-  return [];
+/** Registers this module's routes and returns them as "METHOD /path". */
+export function registerRaidRoutes(
+  app: FastifyInstance,
+  deps: ModuleDeps,
+  dependencies?: RaidDependencyPort,
+): string[] {
+  return [
+    // BE-D (T-DG4-BE-D): register, decision log, actions.
+    ...registerRaidRegisterRoutes(app, deps, dependencies),
+    ...registerRaidActionRoutes(app, deps),
+  ];
 }

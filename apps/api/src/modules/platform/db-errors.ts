@@ -937,6 +937,56 @@ export function mapP4KpiActualGuardError(error: PgErrorLike): HttpProblem | null
 }
 
 /**
+ * P4 slice E (ADR-0031 §11): the database last lines of the RAID register and actions (T-DG4-BE-D), then the corrective
+ * lines (BE-D2) and the budget and schedule lines (BE-E), each task appending its own. The API returns the same codes
+ * and exact English texts first; these mappings only answer a write that reached the guard (S-11). Null when the error
+ * is not one of them.
+ */
+export function mapP4RaidError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    // ---- BE-D: RAID entries and actions.
+    case "raid_entry_probability_applicable":
+      // The CHECK holds both directions. The failing row's fourth column is entry_type ("Failing row contains (id,
+      // organization_id, transformation_id, entry_type, …)"): a Risk lacks a Probability, any other type has one.
+      return /^Failing row contains \([^,]*, [^,]*, [^,]*, risk,/.test(error.detail ?? "")
+        ? rule422("raid.probability_required", "A Risk needs a Probability (High, Medium or Low).", "/probability")
+        : rule422(
+            "raid.probability_not_applicable",
+            "Probability is n/a for Assumption, Issue and Dependency entries; leave it empty.",
+            "/probability",
+          );
+    case "raid_entry_status_transition":
+    case "raid_entry_starts_open":
+      return rule422(
+        "raid.status_transition",
+        "A RAID entry moves between Open and In progress; use Close to close it.",
+        "",
+      );
+    case "raid_entry_closed_final":
+      return rule422("raid.closed", "This RAID entry is closed and can no longer be changed.", "");
+    case "raid_entry_code_key":
+      // A concurrent code allocation: retry.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "raid_entry_type_immutable":
+    case "raid_entry_code_format":
+    case "raid_entry_closed_complete":
+    case "action_item_one_source":
+    case "action_item_source_immutable":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
@@ -964,6 +1014,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4Kpi !== null) return p4Kpi;
   const p4KpiActual = mapP4KpiActualGuardError(error);
   if (p4KpiActual !== null) return p4KpiActual;
+  const p4Raid = mapP4RaidError(error);
+  if (p4Raid !== null) return p4Raid;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
