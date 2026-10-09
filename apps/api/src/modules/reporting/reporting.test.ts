@@ -44,7 +44,10 @@ describe("reporting module (P1 scaffold, D-048)", () => {
     expect(Object.isFrozen(mod.REPORTING_MODULE)).toBe(true);
   });
 
-  it("its register hook runs without error and registers no route (no mutating route in P1)", async () => {
+  // T-DG4-BE-M (p4-work-split §J+K JK.1): the first P4 read models land in reporting, so the hook now registers the
+  // slice K routes and reports the module active in P4 (reporting/index.ts). The P1 constant REPORTING_MODULE above
+  // is unchanged; KBE-G/KBE-G2 extend the list below with their dashboard routes.
+  it("its register hook runs without error and registers exactly the P4 slice K routes", async () => {
     const app = Fastify({ logger: false });
     const routes: string[] = [];
     app.addHook("onRoute", (r) => {
@@ -54,8 +57,20 @@ describe("reporting module (P1 scaffold, D-048)", () => {
     const deps = { db: {}, config: {} } as unknown as ModuleDeps;
     const registration = mod.registerReportingModule(app, deps);
     await app.ready();
-    expect(routes).toEqual([]);
-    expect(registration).toBe(mod.REPORTING_MODULE);
+    const T = "/api/v1/transformations/:transformationId";
+    const sliceK = [
+      `GET ${T}/traceability`,
+      `GET ${T}/trace-links`,
+      `POST ${T}/trace-links`,
+      `GET ${T}/trace-links/:traceLinkId`,
+      `PATCH ${T}/trace-links/:traceLinkId`,
+      `POST ${T}/trace-links/:traceLinkId/remove`,
+      `GET ${T}/allocation-sets/:allocationTargetType/:allocationTargetId`,
+      `GET ${T}/orphans`,
+      "GET /api/v1/records/:recordType/:recordId/impact",
+    ];
+    expect(routes.filter((r) => !r.startsWith("HEAD "))).toEqual(sliceK);
+    expect(registration).toMatchObject({ module: "reporting", status: "active", deliversIn: "P4", routes: sliceK });
     await app.close();
   });
 
