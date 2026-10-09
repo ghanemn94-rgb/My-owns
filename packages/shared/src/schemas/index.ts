@@ -42,3 +42,6 @@ export * from "./approvals.ts";
 // P4 slice B register mirrors (kpi-benefits-engineer, T-DG4-KBE-D; p4-work-split §B.1): benefits, lifecycle, enablers,
 // allocations and shared-benefit groups.
 export * from "./benefits.ts";
+// P4 slice A mirrors of KBE-B (kpi-benefits-engineer, T-DG4-KBE-B; p4-work-split §A.2): KPI dictionary v2, versions,
+// formula inputs, RAG thresholds, target trajectories, data-quality findings.
+export * from "./kpi-versions.ts";
