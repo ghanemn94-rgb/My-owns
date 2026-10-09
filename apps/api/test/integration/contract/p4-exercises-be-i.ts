@@ -485,9 +485,13 @@ async function exerciseP4BeI2Operations(ctx: P4ExerciseContext, s: SustainmentWo
   });
   expect([done.status, done.body.status, done.body.performanceSignal]).toEqual([200, "done", "unknown"]);
 
+  // The scan advanced next_check_date (version + 1 as the service), so the current version is read back first.
+  const current = await m("GET", `${controls}?performanceAreaId=${area.id}`, { session: b.s.bo });
+  const ctlVersion = current.body.items.find((x: { id: string }) => x.id === ctl.body.id).version as number;
+  expect(ctlVersion).toBe(edited.body.version + 1);
   const retiredCtl = await m("PATCH", C, {
     session: b.s.bo,
-    headers: ifm(edited.body.version),
+    headers: ifm(ctlVersion),
     body: { status: "retired", retireReason: "Synthetic: replaced by automated monitoring" },
   });
   expect([retiredCtl.status, retiredCtl.body.status]).toEqual([200, "retired"]);
