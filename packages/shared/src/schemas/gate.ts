@@ -4,6 +4,7 @@
 // GateCriterionEvaluation, GateView, GateList, GateApproverConfig.
 import { z } from "zod";
 import { freeText, roleCode, timestamp, uuid, version } from "./common.ts";
+import { gateScaleScope } from "./gates-p4.ts";
 import { businessDate } from "./kpi.ts";
 import { gateDefinition, warning } from "./methodology.ts";
 
@@ -187,4 +188,6 @@ export const gateDecisionCreate = z.strictObject({
   comments: freeText(1, 8000).optional(),
   onBehalfOfUserId: uuid.optional(),
   agreements: gateAgreements.optional(),
+  // P4 (T-DG4-BE-K; ADR-0035 §5, D-089 seam 2): the approved scale scope of a G5 approval.
+  scaleScope: gateScaleScope.optional(),
 });

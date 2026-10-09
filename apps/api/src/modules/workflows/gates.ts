@@ -29,12 +29,14 @@ import {
   gateApproverConfig,
   gateDecisionCreate,
   gateSubmissionCreate,
+  outboxPayloadSchema,
   type GateAgreementRecord,
   type GateCriterionEvaluation,
   type GateDecision,
   type GateDefinition,
   type GateInheritedApproval,
   type GateInstance,
+  type GateScaleScope,
   type GateSubmission,
   truncateText,
 } from "@mth/shared/schemas";
@@ -85,6 +87,8 @@ import {
 import { nextCode } from "./codes.ts";
 import { evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 import { buildG4Snapshot, type GateFactsProvider, type InheritedApprovalFact } from "./g4.ts";
+import { g5SnapshotOf } from "./g5.ts";
+import { g6SnapshotOf } from "./g6.ts";
 
 const G = "/api/v1/transformations/:transformationId/gates";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -634,13 +638,16 @@ async function submitGate(
   const facts = await loadGateFacts(tx, transformationId, gateFacts);
   const criteria = evaluateGate(def, facts);
   const incomplete = criteria.filter((c) => c.mandatory && c.completeness === "incomplete");
+  // T-DG4-BE-K (ADR-0035 §2): for G5 and G6 only, the detail names the criterion LABELS (B0023), so a refusal lists
+  // "Risk closure" / "Ownership transfer" literally; G1-G4 keep the DG2 key form byte for byte.
+  const named = (c: GateCriterionEvaluation) => (LABELLED_GATES.has(gateCode) ? c.labelEn : c.key);
   if (incomplete.length > 0)
     throw new HttpProblem({
       status: 422,
       type: "urn:mth:problem:validation",
       code: "gate_criteria_incomplete",
       title: "Business rule violated",
-      detail: `Mandatory required outputs are incomplete: ${incomplete.map((c) => c.key).join(", ")}.`,
+      detail: `Mandatory required outputs are incomplete: ${incomplete.map(named).join(", ")}.`,
       errors: incomplete.map((c) => ({
         pointer: `/criteria/${c.key}`,
         code: c.missing[0]?.code ?? "gate.criterion_incomplete",
@@ -659,6 +666,9 @@ async function submitGate(
   // P3 (ADR-0021 §7): the G4 snapshot (in-scope initiatives, ranking, weight set, cases, formulas, funding, demand,
   // waves) built by g4.ts through the GateFactsProvider. Only G4 calls it, so G1-G3 snapshots stay byte-stable.
   const g4 = gateCode === "G4" ? await buildG4Snapshot(tx, gateFacts, transformationId) : null;
+  // P4 (T-DG4-BE-K; ADR-0035 §2 "Snapshot", REQ-S04-002): the G5/G6 members, built from the facts just evaluated.
+  const g5 = gateCode === "G5" && facts.g5 !== undefined ? g5SnapshotOf(facts.g5) : null;
+  const g6 = gateCode === "G6" && facts.g6 !== undefined ? g6SnapshotOf(facts.g6) : null;
   const snapshot = {
     schema: "mth.gate-submission/1",
     gateCode,
@@ -685,6 +695,8 @@ async function submitGate(
       verified: e.verified,
     })),
     ...(g4 !== null ? { g4 } : {}),
+    ...(g5 !== null ? { g5 } : {}),
+    ...(g6 !== null ? { g6 } : {}),
     note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
   };
   const snapshotJson = canonicalJson(snapshot);
@@ -788,6 +800,25 @@ async function submitGate(
       latestSubmissionNo: { from: instance.latest_submission_no, to: submissionNo },
     },
   });
+  // P4 (T-DG4-BE-K; ADR-0035 §7, R1): the gate.submitted event, in this transaction (consumer: approver tasks).
+  await enqueueGateEvent(tx, {
+    organizationId: ctx.organizationId,
+    aggregateId: instance.id,
+    eventType: "gate.submitted",
+    idempotencyKey: `gate.submitted:${id}`,
+    payload: {
+      gateInstanceId: instance.id,
+      transformationId,
+      gateCode,
+      submissionId: id,
+      submissionNo,
+      snapshotSha256: sha,
+      approverRoleCode: approver.roleCode,
+      approverUserId: approver.userId,
+      submittedBy: ctx.userId,
+      supersededSubmissionId: pending?.id ?? null,
+    },
+  });
   return submission;
 }
 
@@ -842,12 +873,15 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
     });
   // 4a. P3 (ADR-0021 §8; REQ-PB-022, B0032): after checks 1-4, the G1 leadership agreements. Nothing is written.
   const agreed = agreementRule(gateCode, body);
+  // 4b. P4 (T-DG4-BE-K; ADR-0035 §5): the G5 scale scope: required with a G5 approval, refused otherwise.
+  const scope = scaleScopeRule(gateCode, body);
   // 5. Sequence: an approval never skips a phase or a preceding gate (F-DG2-205); nothing is written otherwise.
   if (body.outcome === "approved") {
     const outOfSequence = await sequenceProblem(tx, transformationId, def, defs);
     if (outOfSequence) throw outOfSequence;
   }
   const t = await writableTransformation(tx, transformationId);
+  if (scope !== null) await assertScaleScopeValid(tx, t.organization_id, transformationId, scope);
   const audit: AuditContext = { ...auditContextOf(request), ...(onBehalfOf ? { onBehalfOfUserId: onBehalfOf } : {}) };
   const userId = principal.userId!;
 
@@ -922,8 +956,83 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
       outcome: { from: null, to: body.outcome },
       approverBasis: { from: null, to: approver.basis },
       ...(agreed ? { agreements: { from: null, to: [...GATE_AGREEMENT_CODES] } } : {}),
+      ...(scope !== null
+        ? {
+            scaleScope: {
+              from: null,
+              to: {
+                items: scope.items.map((i) => `${i.initiativeId}:${i.businessUnitId}`),
+                conditions: (scope.conditions ?? []).length,
+              },
+            },
+          }
+        : {}),
     },
   });
+  // The approved scale scope and its conditions (append-only; 0051 triggers require an approved G5 decision).
+  const scopeItemIds: string[] = [];
+  const conditionIds: string[] = [];
+  if (scope !== null) {
+    for (const i of scope.items) {
+      const sid = uuidv7();
+      await tx
+        .insertInto("gate_decision_scale_scope")
+        .values({
+          id: sid,
+          organization_id: t.organization_id,
+          transformation_id: transformationId,
+          gate_decision_id: gateDecisionId,
+          initiative_id: i.initiativeId,
+          business_unit_id: i.businessUnitId,
+          note: i.note ?? null,
+          created_by: userId,
+        })
+        .execute();
+      await record(tx, audit, {
+        action: "gate_decision_scale_scope.create",
+        recordType: "gate_decision_scale_scope",
+        recordId: sid,
+        organizationId: t.organization_id,
+        transformationId,
+        changes: {
+          gate_decision_id: { from: null, to: gateDecisionId },
+          initiative_id: { from: null, to: i.initiativeId },
+          business_unit_id: { from: null, to: i.businessUnitId },
+        },
+      });
+      scopeItemIds.push(sid);
+    }
+    for (const [n, c] of (scope.conditions ?? []).entries()) {
+      const cid = uuidv7();
+      await tx
+        .insertInto("gate_decision_condition")
+        .values({
+          id: cid,
+          organization_id: t.organization_id,
+          transformation_id: transformationId,
+          gate_decision_id: gateDecisionId,
+          ordinal: n + 1,
+          condition_text: c.text,
+          owner_user_id: c.ownerUserId,
+          due_date: c.dueDate,
+          created_by: userId,
+        })
+        .execute();
+      await record(tx, audit, {
+        action: "gate_decision_condition.create",
+        recordType: "gate_decision_condition",
+        recordId: cid,
+        organizationId: t.organization_id,
+        transformationId,
+        changes: {
+          gate_decision_id: { from: null, to: gateDecisionId },
+          owner_user_id: { from: null, to: c.ownerUserId },
+          due_date: { from: null, to: c.dueDate },
+        },
+      });
+      conditionIds.push(cid);
+    }
+  }
   // The three B0032 confirmations of an approved G1 decision, confirmed by the decider (0024 guard), in THIS
   // transaction; the deferred 0025 guard refuses the COMMIT of an approved G1 decision without exactly these three.
   if (agreed)
@@ -987,6 +1096,27 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
       gateCode,
       decisionId,
     });
+  // P4 (T-DG4-BE-K; ADR-0035 §7, R1): the gate.decided event, in this transaction (consumer: close the decision tasks;
+  // on approval enable the next phase's steps and, for G5, only the approved scope). It reports; it decides nothing.
+  await enqueueGateEvent(tx, {
+    organizationId: t.organization_id,
+    aggregateId: instance.id,
+    eventType: "gate.decided",
+    idempotencyKey: `gate.decided:${gateDecisionId}`,
+    payload: {
+      gateInstanceId: instance.id,
+      transformationId,
+      gateCode,
+      submissionId: pending.id,
+      submissionNo: pending.submission_no,
+      gateDecisionId,
+      outcome: body.outcome,
+      decidedBy: userId,
+      nextPhase: body.outcome === "approved" ? def.nextPhase : null,
+      scaleScopeItemIds: scopeItemIds,
+      conditionIds,
+    },
+  });
   return { row, agreements: agreed ? await agreementsOf(tx, gateDecisionId) : [] };
 }
 
@@ -1052,6 +1182,122 @@ export function agreementRule(gateCode: string, body: z.infer<typeof decisionReq
       ],
     });
   return false;
+}
+
+// ------------------------------------------------------------------------------------------------ P4 (T-DG4-BE-K)
+
+/** Gates whose 422 gate_criteria_incomplete detail names the criterion labels (ADR-0035 §2); G1-G4 keep the keys. */
+const LABELLED_GATES: ReadonlySet<string> = new Set(["G5", "G6"]);
+
+const scopeProblem = (code: string, detail: string, pointer: string) =>
+  new HttpProblem({
+    status: 422,
+    type: "urn:mth:problem:validation",
+    code,
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer, code, message: detail }],
+  });
+
+/**
+ * ADR-0035 §5: a G5 approval must carry the scale scope (422 gate.scale_scope_required); any other gate or outcome must
+ * not (422 gate.scale_scope_not_applicable, the G1 `agreements` precedent). Returns the scope to record, or null.
+ */
+export function scaleScopeRule(
+  gateCode: string,
+  body: { outcome: string; scaleScope?: GateScaleScope | undefined },
+): GateScaleScope | null {
+  if (gateCode === "G5" && body.outcome === "approved") {
+    if (body.scaleScope === undefined)
+      throw scopeProblem(
+        "gate.scale_scope_required",
+        "A G5 approval must record the approved scale scope.",
+        "/scaleScope",
+      );
+    return body.scaleScope;
+  }
+  if (body.scaleScope !== undefined)
+    throw scopeProblem(
+      "gate.scale_scope_not_applicable",
+      "A scale scope is recorded only with a G5 approval.",
+      "/scaleScope",
+    );
+  return null;
+}
+
+/**
+ * Every scope item names an initiative of this transformation and an active business unit of its organization (422
+ * gate.scale_scope_invalid at /scaleScope/items/{i}); every condition owner is an active user of the organization.
+ * Nothing is written before this passes.
+ */
+async function assertScaleScopeValid(
+  tx: Tx,
+  organizationId: string,
+  transformationId: string,
+  scope: GateScaleScope,
+): Promise<void> {
+  for (const [n, i] of scope.items.entries()) {
+    const initiative = await tx
+      .selectFrom("initiative")
+      .select("id")
+      .where("id", "=", i.initiativeId)
+      .where("transformation_id", "=", transformationId)
+      .executeTakeFirst();
+    const unit = await tx
+      .selectFrom("business_unit")
+      .select("id")
+      .where("id", "=", i.businessUnitId)
+      .where("organization_id", "=", organizationId)
+      .where("status", "=", "active")
+      .executeTakeFirst();
+    if (!initiative || !unit)
+      throw scopeProblem(
+        "gate.scale_scope_invalid",
+        "Each scope item names an initiative of this transformation and a business unit of its organization.",
+        `/scaleScope/items/${n}`,
+      );
+  }
+  const conditions = scope.conditions ?? [];
+  if (conditions.length > 0)
+    await assertActiveUsers(
+      tx,
+      organizationId,
+      conditions.map((c, n) => ({ id: c.ownerUserId, pointer: `/scaleScope/conditions/${n}/ownerUserId` })),
+    );
+}
+
+/**
+ * The gate outbox writer (ADR-0035 §7; ADR-0008 transactional outbox). workflows' declared dependencies (modules.ts) do
+ * not include `jobs`, so it cannot import jobs/outbox.ts; like kpi/kpi-outbox.ts, this writer does the same thing:
+ * validate the payload against the registered schema (packages/shared events.ts) and insert one outbox_event row in
+ * the caller's transaction. The relay publishes it after COMMIT; consumers dedupe on the idempotency key.
+ */
+async function enqueueGateEvent(
+  tx: Tx,
+  event: {
+    organizationId: string;
+    aggregateId: string;
+    eventType: "gate.submitted" | "gate.decided";
+    idempotencyKey: string;
+    payload: Record<string, unknown>;
+  },
+): Promise<void> {
+  const schema = outboxPayloadSchema(event.eventType, 1);
+  if (!schema) throw new Error(`outbox: no schema for ${event.eventType} v1`);
+  const payload = schema.parse(event.payload) as Record<string, unknown>;
+  await tx
+    .insertInto("outbox_event")
+    .values({
+      id: uuidv7(),
+      organization_id: event.organizationId,
+      aggregate_type: "gate_instance",
+      aggregate_id: event.aggregateId,
+      event_type: event.eventType,
+      schema_version: 1,
+      payload: JSON.stringify(payload),
+      idempotency_key: event.idempotencyKey,
+    })
+    .execute();
 }
 
 /** Permissions a gate route declares (for the generated AUD write-deny sweep and documentation). */

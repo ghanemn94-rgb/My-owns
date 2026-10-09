@@ -42,6 +42,45 @@ export const jobScheduleUpdatedV1 = z.strictObject({
 });
 export type JobScheduleUpdatedV1 = z.infer<typeof jobScheduleUpdatedV1>;
 
+/**
+ * P4 slice H (T-DG4-BE-K; ADR-0035 §7; REQ-S12-009): a gate submission was recorded. Consumer gates.submitted creates
+ * one gate_decision_due task per required approver referencing the snapshot SHA-256, and cancels the open tasks of the
+ * superseded submission. Key `gate.submitted:<submissionId>`. A product gate (business approval), never DG0-DG7.
+ */
+export const gateSubmittedV1 = z.strictObject({
+  gateInstanceId: uuid,
+  transformationId: uuid,
+  gateCode: z.enum(["G1", "G2", "G3", "G4", "G5", "G6"]),
+  submissionId: uuid,
+  submissionNo: z.number().int().min(1),
+  snapshotSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  approverRoleCode: z.string().min(1).max(32),
+  approverUserId: uuid.nullable(),
+  submittedBy: uuid,
+  supersededSubmissionId: uuid.nullable(),
+});
+export type GateSubmittedV1 = z.infer<typeof gateSubmittedV1>;
+
+/**
+ * P4 slice H (T-DG4-BE-K; ADR-0035 §7; REQ-S12-010): a person decided a gate submission. Consumer gates.decided closes
+ * the decision tasks and, on approval, enables the next phase's steps (once) and, for G5, only the approved scope items
+ * and conditions. Key `gate.decided:<gateDecisionId>`. The event reports a decision; it never makes one.
+ */
+export const gateDecidedV1 = z.strictObject({
+  gateInstanceId: uuid,
+  transformationId: uuid,
+  gateCode: z.enum(["G1", "G2", "G3", "G4", "G5", "G6"]),
+  submissionId: uuid,
+  submissionNo: z.number().int().min(1),
+  gateDecisionId: uuid,
+  outcome: z.enum(["approved", "rejected", "changes_requested", "deferred"]),
+  decidedBy: uuid,
+  nextPhase: z.string().min(1).max(32).nullable(),
+  scaleScopeItemIds: z.array(uuid),
+  conditionIds: z.array(uuid),
+});
+export type GateDecidedV1 = z.infer<typeof gateDecidedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -63,6 +102,9 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "blocker_status.recorded": { 1: blockerStatusRecordedV1 },
   // T-DG4-BE-I2 (ADR-0034 §6; ADR-0031 §5.4): one per failed control check; consumer raid.corrective_control.
   "control_check.failed": { 1: checkFailedPayload },
+  // T-DG4-BE-K (ADR-0035 §7): the gate events (R1); consumers gates.submitted and gates.decided (apps/worker gates).
+  "gate.submitted": { 1: gateSubmittedV1 },
+  "gate.decided": { 1: gateDecidedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

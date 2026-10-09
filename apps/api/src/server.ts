@@ -74,6 +74,12 @@ import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workf
 import { registerApprovalSubject, requestApprovalInTx, toApprovals } from "./modules/workflows/approvals.ts";
 // T-DG4-BE-D (ADR-0031 §2): the RAID Dependency-entry port, implemented by the T08 service (the KBE-C import precedent).
 import { raidDependencyPort } from "./modules/workflows/t08-dependencies.ts";
+// P4 (T-DG4-BE-K; ADR-0035 §2): the G5/G6 GateFactsProvider members (read-only loaders in their owning modules).
+import { loadAdoptionGateFacts } from "./modules/adoption/gate-facts.ts";
+import { loadBenefitsGateFacts } from "./modules/benefits/gate-facts.ts";
+import { loadGovernanceGateFacts } from "./modules/governance/gate-facts.ts";
+import { loadRaidGateFacts } from "./modules/raid/gate-facts.ts";
+import { loadSustainmentGateFacts } from "./modules/sustainment/gate-facts.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -303,6 +309,12 @@ export async function buildServer(options: ServerOptions): Promise<{
     kpi: loadKpiP3GateFacts,
     // The gate list/view inherited-approval annotation (ADR-0021 §5; F-DG3-120): read-only, never a gate status.
     inheritedApprovals: loadInheritedApprovalFacts,
+    // P4 (T-DG4-BE-K; ADR-0035 §2): the G5/G6 fact loaders, each read-only in its owning module's gate-facts.ts.
+    raid: loadRaidGateFacts,
+    adoption: loadAdoptionGateFacts,
+    governance: loadGovernanceGateFacts,
+    sustainment: loadSustainmentGateFacts,
+    benefits: loadBenefitsGateFacts,
   };
   // Business modules reporting their registration (D-048): the P2 modules (workflows, methodology, evidence; kpi by
   // kpi-benefits-engineer), the P3 portfolio module, and the remaining scaffold (reporting, P5), which registers no
