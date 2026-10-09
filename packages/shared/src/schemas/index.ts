@@ -57,3 +57,6 @@ export * from "./kpi-actuals.ts";
 // P4 slice E mirrors of BE-D (backend-workflow-engineer, T-DG4-BE-D; p4-work-split §E.1): the T15 RAID register, the
 // integrated RAID + decision log and the action register.
 export * from "./raid.ts";
+// P4 slice E mirrors of BE-D2 (backend-workflow-engineer, T-DG4-BE-D2; p4-work-split §E.2): corrective-action cases,
+// signals, the severity and persistence rules and the payloads of the four corrective consumers.
+export * from "./corrective.ts";

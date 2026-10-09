@@ -4,6 +4,8 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
 import { registerRaidActionRoutes } from "./actions.ts";
+import { registerCorrectiveCaseRoutes } from "./corrective-cases.ts";
+import { registerCorrectiveRuleRoutes } from "./corrective-rules.ts";
 import type { RaidDependencyPort } from "./dependency-port.ts";
 import { registerRaidRegisterRoutes } from "./register.ts";
 
@@ -17,5 +19,8 @@ export function registerRaidRoutes(
     // BE-D (T-DG4-BE-D): register, decision log, actions.
     ...registerRaidRegisterRoutes(app, deps, dependencies),
     ...registerRaidActionRoutes(app, deps),
+    // BE-D2 (T-DG4-BE-D2): corrective-action cases, their signals and actions, and the severity and persistence rules.
+    ...registerCorrectiveCaseRoutes(app, deps),
+    ...registerCorrectiveRuleRoutes(app, deps),
   ];
 }
