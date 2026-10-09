@@ -18,6 +18,8 @@ const SWEEP = "delegation.expiry_sweep";
 const PERIODS = "kpi.reporting_period_open";
 // Seeded by 0050 (T-DG4-ARCH-06); unhandled until BE-I2 registers the sustainment handlers (rows are listed by code).
 const SUSTAINMENT_SCANS = ["sustainment.control_check_scan", "sustainment.review_scan"];
+// Seeded by 0054 (T-DG4-ARCH-07); unhandled until BE-K registers the gate-exception expiry handler.
+const GATE_EXCEPTION_SCAN = "gate.exception_expiry_scan";
 
 beforeAll(async () => {
   env = await workerEnv();
@@ -87,7 +89,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     expect(first).toEqual({
       scheduled: [ESCALATION, SWEEP],
       unscheduled: [],
-      unhandled: [PERIODS, ...SUSTAINMENT_SCANS],
+      unhandled: [GATE_EXCEPTION_SCAN, PERIODS, ...SUSTAINMENT_SCANS],
     });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/15 * * * *", timezone: "Asia/Riyadh" });
@@ -103,7 +105,11 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     await change(SWEEP, { enabled: false });
     await change(ESCALATION, { cron: "*/5 * * * *" });
     const r = await handleJobScheduleUpdated(env.db, boss, handled, envelope(SWEEP));
-    expect(r).toEqual({ scheduled: [ESCALATION], unscheduled: [SWEEP], unhandled: [PERIODS, ...SUSTAINMENT_SCANS] });
+    expect(r).toEqual({
+      scheduled: [ESCALATION],
+      unscheduled: [SWEEP],
+      unhandled: [GATE_EXCEPTION_SCAN, PERIODS, ...SUSTAINMENT_SCANS],
+    });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/5 * * * *", timezone: "Asia/Riyadh" });
     expect(s.has(SWEEP)).toBe(false);

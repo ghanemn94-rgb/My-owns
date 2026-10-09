@@ -376,6 +376,67 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0051-0052: the P4 slice H guards are attached (deferred audit, status guards, append-only reviews, scope and assessments)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname IN ('phase_definition', 'phase_step_definition', 'phase_step', 'phase_step_evidence',
+         'gate_criterion_review', 'gate_exception', 'gate_decision_scale_scope', 'gate_decision_condition', 'scale_transition',
+         'risk_disposition', 'change_control_policy', 'change_request', 'impact_assessment', 'impact_assessment_item')
+         OR t.tgname = 'gate_submission_criterion_exception_valid')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["change_control_policy", "change_control_policy_audit_required", true, true],
+      ["change_control_policy", "change_control_policy_row_guard", false, false],
+      ["change_request", "change_request_audit_required", true, true],
+      ["change_request", "change_request_guard", false, false],
+      ["change_request", "change_request_row_guard", false, false],
+      ["gate_criterion_review", "gate_criterion_review_append_only", false, false],
+      ["gate_criterion_review", "gate_criterion_review_append_only_truncate", false, false],
+      ["gate_criterion_review", "gate_criterion_review_audit_required", true, true],
+      ["gate_criterion_review", "gate_criterion_review_guard", false, false],
+      ["gate_criterion_review", "gate_criterion_review_row_guard", false, false],
+      ["gate_decision_condition", "gate_decision_condition_append_only", false, false],
+      ["gate_decision_condition", "gate_decision_condition_append_only_truncate", false, false],
+      ["gate_decision_condition", "gate_decision_condition_audit_required", true, true],
+      ["gate_decision_condition", "gate_decision_condition_guard", false, false],
+      ["gate_decision_condition", "gate_decision_condition_row_guard", false, false],
+      ["gate_decision_scale_scope", "gate_decision_scale_scope_append_only", false, false],
+      ["gate_decision_scale_scope", "gate_decision_scale_scope_append_only_truncate", false, false],
+      ["gate_decision_scale_scope", "gate_decision_scale_scope_audit_required", true, true],
+      ["gate_decision_scale_scope", "gate_decision_scale_scope_guard", false, false],
+      ["gate_decision_scale_scope", "gate_decision_scale_scope_row_guard", false, false],
+      ["gate_exception", "gate_exception_audit_required", true, true],
+      ["gate_exception", "gate_exception_guard", false, false],
+      ["gate_exception", "gate_exception_row_guard", false, false],
+      ["gate_submission_criterion", "gate_submission_criterion_exception_valid", false, false],
+      ["impact_assessment", "impact_assessment_append_only", false, false],
+      ["impact_assessment", "impact_assessment_append_only_truncate", false, false],
+      ["impact_assessment", "impact_assessment_audit_required", true, true],
+      ["impact_assessment", "impact_assessment_row_guard", false, false],
+      ["impact_assessment_item", "impact_assessment_item_append_only", false, false],
+      ["impact_assessment_item", "impact_assessment_item_append_only_truncate", false, false],
+      ["impact_assessment_item", "impact_assessment_item_row_guard", false, false],
+      ["phase_step", "phase_step_audit_required", true, true],
+      ["phase_step", "phase_step_row_guard", false, false],
+      ["phase_step", "phase_step_status_step", false, false],
+      ["phase_step_evidence", "phase_step_evidence_audit_required", true, true],
+      ["phase_step_evidence", "phase_step_evidence_guard", false, false],
+      ["phase_step_evidence", "phase_step_evidence_row_guard", false, false],
+      ["risk_disposition", "risk_disposition_append_only", false, false],
+      ["risk_disposition", "risk_disposition_append_only_truncate", false, false],
+      ["risk_disposition", "risk_disposition_audit_required", true, true],
+      ["risk_disposition", "risk_disposition_guard", false, false],
+      ["risk_disposition", "risk_disposition_row_guard", false, false],
+      ["scale_transition", "scale_transition_append_only", false, false],
+      ["scale_transition", "scale_transition_append_only_truncate", false, false],
+      ["scale_transition", "scale_transition_audit_required", true, true],
+      ["scale_transition", "scale_transition_guard", false, false],
+      ["scale_transition", "scale_transition_row_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -543,6 +604,13 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "sustainment_review",
       "training_record",
       "transition_decision",
+      // P4 slice H (0051-0052, T-DG4-ARCH-07; ADR-0035, ADR-0036).
+      "change_control_policy",
+      "change_request",
+      "gate_exception",
+      "phase_step",
+      "phase_step_evidence",
+      "risk_disposition",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -774,6 +842,20 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       lesson: SIU,
       improvement_item: SIU,
       closure_record: "INSERT,SELECT",
+      phase_definition: "SELECT",
+      phase_step_definition: "SELECT",
+      phase_step: SIU,
+      phase_step_evidence: SIU,
+      gate_criterion_review: "INSERT,SELECT",
+      gate_exception: SIU,
+      gate_decision_scale_scope: "INSERT,SELECT",
+      gate_decision_condition: "INSERT,SELECT",
+      scale_transition: "INSERT,SELECT",
+      risk_disposition: "INSERT,SELECT",
+      change_control_policy: SIU,
+      change_request: SIU,
+      impact_assessment: "INSERT,SELECT",
+      impact_assessment_item: "INSERT,SELECT",
     });
   });
 

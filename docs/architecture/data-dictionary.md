@@ -7980,3 +7980,602 @@ Written by T-DG4-ARCH-06 (solution-architect), 2026-10-09. Binding design: ADR-0
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slice F and G schemas), the form schema and answers, free-text rules, strict UTF-8, request media types, `If-Match` |
 | Service | Permissions and record-level rules (ADR-0033 §9, ADR-0034 §9: invitation or assessor; the champion; the receiving owner; the review assignee), commit-time re-authorization, the exact refusal codes and English texts (ADR-0033 §10, ADR-0034 §12), the value-status and closure checks, ownership transfer on acceptance, the record-fed measures with Unknown |
 | Worker | `adoption.indicator_evaluated` (below trajectory → one intervention, lock 730242, `adoption.check_failed`); `sustainment.review_scan` and `sustainment.control_check_scan` (once per due date; `control_check.failed` from `recordControlCheck`) |
+
+# P4 tables, slice H (migrations 0051–0054, DG4)
+
+Slice H of `docs/architecture/p4-plan.md` (T-DG4-ARCH-07; ADR-0035 phases, G5/G6, criterion reviews, exceptions, scale scope, risk dispositions; ADR-0036 change control). The per-table sections below are generated from the catalogue of a freshly migrated database by `docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/gen-dictionary.ts`, so they match `0051` and `0052` exactly. Every mutable table carries the P2 guards (`p2_attach_guards`: version starts at 1 and steps by 1, identity immutable, organization = the transformation's, deferred audit coverage); append-only tables also carry `p2_attach_append_only`. G1–G6 are business approvals inside the product; nothing here touches DG0–DG7.
+
+## Changes to existing tables (slice H)
+
+- `gate_submission_criterion` (DG2 `0017`; D-089 Q2 reopen): new column `gate_exception_id uuid NULL` (FK `(transformation_id, gate_exception_id)` → `gate_exception (transformation_id, id)`); CHECK `gate_submission_criterion_mandatory_complete` replaced by `NOT mandatory OR completeness = 'complete' OR gate_exception_id IS NOT NULL`; new CHECK `gate_submission_criterion_exception_only_incomplete` (`gate_exception_id IS NULL OR (mandatory AND completeness = 'incomplete')`); new BEFORE INSERT trigger `gate_submission_criterion_exception_valid` (the exception is accepted, of the same gate instance and criterion, and `expires_on` ≥ the submission's business date in the transformation's timezone). Existing rows keep their values (`gate_exception_id` NULL).
+- `gate_criterion_definition` (seed): 8 rows `g5.performance_evidence`, `g5.adoption`, `g5.risk_closure`, `g5.decision_log`, `g6.benefits_evidence`, `g6.ownership_transfer`, `g6.controls`, `g6.improvement_backlog` (labels verbatim from B0023; all mandatory). G1–G4 rows unchanged; G5/G6 stay `submission_enabled = false` (enabled by BE-K's migration).
+- `record_code_counter`: the prefix CHECK gains `CR` (change requests, `CR-nn`); every earlier prefix stays.
+
+## phase_definition
+
+- **Purpose:** The six phases with name, title, purpose and key outputs (B0021, verbatim) and the phase objective (B0027, B0046, B0054, B0068, B0091, B0119), provisional Arabic (REQ-PB-014; ADR-0035 §1).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** none (seed, read-only). **Lifecycle:** seed.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| code | text | NOT NULL |  | `CHECK ((code = ANY (ARRAY['diagnose', 'define', 'design', 'mobilize', 'transform', 'realize'])))` |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 6)))` |
+| gate_code | text | NOT NULL |  | FK → gate_definition(code) |
+| source_name_en | text | NOT NULL |  | `CHECK (((char_length(source_name_en) >= 1) AND (char_length(source_name_en) <= 50)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 100)))` |
+| source_title_en | text | NOT NULL |  | `CHECK (((char_length(source_title_en) >= 1) AND (char_length(source_title_en) <= 200)))` |
+| title_ar | text | NOT NULL |  | `CHECK (((char_length(title_ar) >= 1) AND (char_length(title_ar) <= 200)))` |
+| source_purpose_en | text | NOT NULL |  | `CHECK (((char_length(source_purpose_en) >= 1) AND (char_length(source_purpose_en) <= 200)))` |
+| purpose_ar | text | NOT NULL |  | `CHECK (((char_length(purpose_ar) >= 1) AND (char_length(purpose_ar) <= 200)))` |
+| source_key_outputs_en | text | NOT NULL |  | `CHECK (((char_length(source_key_outputs_en) >= 1) AND (char_length(source_key_outputs_en) <= 500)))` |
+| key_outputs_ar | text | NOT NULL |  | `CHECK (((char_length(key_outputs_ar) >= 1) AND (char_length(key_outputs_ar) <= 500)))` |
+| source_objective_en | text | NOT NULL |  | `CHECK (((char_length(source_objective_en) >= 1) AND (char_length(source_objective_en) <= 1000)))` |
+| objective_ar | text | NOT NULL |  | `CHECK (((char_length(objective_ar) >= 1) AND (char_length(objective_ar) <= 1000)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 100)))` |
+| ar_provisional | boolean | NOT NULL | `true` |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `phase_definition_code_key` (UNIQUE): `UNIQUE (code)`
+- `phase_definition_gate_code_key` (UNIQUE): `UNIQUE (gate_code)`
+- `phase_definition_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+
+## phase_step_definition
+
+- **Purpose:** The guided procedure of each phase: one verbatim M0118-M0123 procedure clause per step, required evidence, default owner and reviewer roles and the completion rule (architect interpretation) (REQ-S04-001; ADR-0035 §1).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** none (seed, read-only). **Lifecycle:** seed.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| key | text | NOT NULL |  | `CHECK ((key ~ '^(diagnose|define|design|mobilize|transform|realize)\.[a-z_]{1,48}$'))` |
+| phase_code | text | NOT NULL |  | FK → phase_definition(code) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 10)))` |
+| source_procedure_en | text | NOT NULL |  | `CHECK (((char_length(source_procedure_en) >= 1) AND (char_length(source_procedure_en) <= 500)))` |
+| procedure_ar | text | NOT NULL |  | `CHECK (((char_length(procedure_ar) >= 1) AND (char_length(procedure_ar) <= 500)))` |
+| required_evidence_en | text | NOT NULL |  | `CHECK (((char_length(required_evidence_en) >= 1) AND (char_length(required_evidence_en) <= 500)))` |
+| required_evidence_ar | text | NOT NULL |  | `CHECK (((char_length(required_evidence_ar) >= 1) AND (char_length(required_evidence_ar) <= 500)))` |
+| default_owner_role_code | text | NOT NULL |  | FK → role(code) |
+| reviewer_role_code | text | NOT NULL |  | FK → role(code) |
+| completion_rule | text | NOT NULL |  | `CHECK ((completion_rule = ANY (ARRAY['evidence_linked', 'meeting_held', 'kpi_actual_accepted', 'raid_register_present', 'benefit_validated', 'corrective_cases_owned', 'handover_accepted', 'improvement_backlog_present'])))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+| ar_provisional | boolean | NOT NULL | `true` |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `phase_step_definition_key_key` (UNIQUE): `UNIQUE (key)`
+- `phase_step_definition_key_phase_key` (UNIQUE): `UNIQUE (key, phase_code)`
+- `phase_step_definition_key_prefix` (CHECK): `CHECK ((split_part(key, '.', 1) = phase_code))`
+- `phase_step_definition_ordinal_key` (UNIQUE): `UNIQUE (phase_code, ordinal)`
+- `phase_step_definition_reviewer_not_owner_role` (CHECK): `CHECK ((reviewer_role_code <> default_owner_role_code))`
+
+## phase_step
+
+- **Purpose:** One transformation's progress on one phase step: named owner, status, frozen completion check, separate reviewer (REQ-S04-001; ADR-0035 §1). No row = not started, owner Unknown.
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** `phase_step.manage` (TL, TO); `phase_step.progress` (the owner); `phase_step.review` (SP, BO, FIN, TO; not the owner); the `gate.decided` consumer (actor service) enables the next phase's steps. **Lifecycle:** not_started → in_progress → in_review → complete (final) | returned; returned → in_progress | in_review.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| step_key | text | NOT NULL |  |  |
+| phase_code | text | NOT NULL |  |  |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'not_started'` | `CHECK ((status = ANY (ARRAY['not_started', 'in_progress', 'in_review', 'complete', 'returned'])))` |
+| enabled_by_gate_decision_id | uuid | NULL |  | FK → gate_decision(id) |
+| review_requested_by | uuid | NULL |  | FK → app_user(id) |
+| review_requested_at | timestamp with time zone | NULL |  |  |
+| completion_check | jsonb | NULL |  | `CHECK (((completion_check IS NULL) OR (jsonb_typeof(completion_check) = 'object')))` |
+| reviewed_by | uuid | NULL |  | FK → app_user(id) |
+| reviewed_at | timestamp with time zone | NULL |  |  |
+| review_outcome | text | NULL |  | `CHECK (((review_outcome IS NULL) OR (review_outcome = ANY (ARRAY['accepted', 'returned']))))` |
+| review_note | text | NULL |  | `CHECK (((review_note IS NULL) OR ((char_length(review_note) >= 1) AND (char_length(review_note) <= 2000))))` |
+| completed_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `phase_step_complete_shape` (CHECK): `CHECK ((((status = 'complete') = (completed_at IS NOT NULL)) AND ((status <> 'complete') OR ((review_outcome = 'accepted') AND ((completion_check ->> 'met') = 'true') AND (owner_user_id IS NOT NULL)))))`
+- `phase_step_definition_fkey` (FK): `FOREIGN KEY (step_key, phase_code) REFERENCES phase_step_definition(key, phase_code) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `phase_step_in_review_checked` (CHECK): `CHECK (((status <> 'in_review') OR ((review_requested_at IS NOT NULL) AND (completion_check IS NOT NULL) AND ((completion_check ->> 'met') = 'true'))))`
+- `phase_step_key` (UNIQUE): `UNIQUE (transformation_id, step_key)`
+- `phase_step_returned_note` (CHECK): `CHECK (((status <> 'returned') OR ((review_outcome = 'returned') AND (review_note IS NOT NULL))))`
+- `phase_step_review_requested_complete` (CHECK): `CHECK (((review_requested_at IS NULL) = (review_requested_by IS NULL)))`
+- `phase_step_reviewed_complete` (CHECK): `CHECK ((((reviewed_at IS NULL) = (reviewed_by IS NULL)) AND ((reviewed_at IS NULL) = (review_outcome IS NULL))))`
+- `phase_step_reviewer_separate` (CHECK): `CHECK (((reviewed_by IS NULL) OR ((reviewed_by IS DISTINCT FROM owner_user_id) AND (reviewed_by IS DISTINCT FROM review_requested_by))))`
+- `phase_step_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `phase_step_owner_idx`: `(owner_user_id) WHERE (status = ANY (ARRAY['not_started', 'in_progress', 'returned']))`
+- `phase_step_review_queue_idx`: `(transformation_id, review_requested_at) WHERE (status = 'in_review')`
+
+**Triggers:**
+
+- `phase_step_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `phase_step_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `phase_step_status_step`: BEFORE INSERT OR UPDATE FOR EACH ROW → `phase_step_status_step()`
+
+## phase_step_evidence
+
+- **Purpose:** Evidence linked to a phase step; verified evidence meets the evidence_linked completion rule (REQ-S04-001; ADR-0035 §1).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** `phase_step.progress` (the step owner). **Lifecycle:** active → removed (final); frozen once the step is complete.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| phase_step_id | uuid | NOT NULL |  |  |
+| evidence_id | uuid | NOT NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| removed_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `phase_step_evidence_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `phase_step_evidence_removed_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL))))`
+- `phase_step_evidence_step_fkey` (FK): `FOREIGN KEY (transformation_id, phase_step_id) REFERENCES phase_step(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `phase_step_evidence_active_key`: `UNIQUE (phase_step_id, evidence_id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `phase_step_evidence_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `phase_step_evidence_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `phase_step_evidence_guard()`
+- `phase_step_evidence_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## gate_criterion_review
+
+- **Purpose:** A per-criterion review of a pending gate submission: reviewer, finding, open condition, risk, recommendation (the criterion decision) and rationale; with the criterion, required evidence and completeness, the nine M0124 fields (REQ-S04-009, REQ-S04-010; ADR-0035 §3).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** `gate.review` (SP, BO, FIN, TO; not the submitter). **Lifecycle:** append-only; review_no 1, 2, … per submission and criterion.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| gate_submission_id | uuid | NOT NULL |  | FK → gate_submission(id) |
+| criterion_key | text | NOT NULL |  | FK → gate_criterion_definition(key) |
+| review_no | integer | NOT NULL |  | `CHECK ((review_no >= 1))` |
+| reviewer_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| finding | text | NOT NULL |  | `CHECK (((char_length(finding) >= 1) AND (char_length(finding) <= 4000)))` |
+| open_condition | text | NULL |  | `CHECK (((open_condition IS NULL) OR ((char_length(open_condition) >= 1) AND (char_length(open_condition) <= 2000))))` |
+| risk_note | text | NULL |  | `CHECK (((risk_note IS NULL) OR ((char_length(risk_note) >= 1) AND (char_length(risk_note) <= 2000))))` |
+| raid_entry_id | uuid | NULL |  |  |
+| recommendation | text | NOT NULL |  | `CHECK ((recommendation = ANY (ARRAY['meets', 'meets_with_conditions', 'does_not_meet'])))` |
+| rationale | text | NOT NULL |  | `CHECK (((char_length(rationale) >= 3) AND (char_length(rationale) <= 4000)))` |
+| reviewed_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `gate_criterion_review_condition_required` (CHECK): `CHECK (((recommendation <> 'meets_with_conditions') OR (open_condition IS NOT NULL)))`
+- `gate_criterion_review_no_key` (UNIQUE): `UNIQUE (gate_submission_id, criterion_key, review_no)`
+- `gate_criterion_review_raid_fkey` (FK): `FOREIGN KEY (transformation_id, raid_entry_id) REFERENCES raid_entry(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `gate_criterion_review_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `gate_criterion_review_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `gate_criterion_review_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `gate_criterion_review_guard`: BEFORE INSERT FOR EACH ROW → `gate_criterion_review_guard()`
+- `gate_criterion_review_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## gate_exception
+
+- **Purpose:** A specifically authorized exception (waiver) for one mandatory criterion of one gate instance: reason, scope, approver, expiry and compensating action (REQ-S04-012, REQ-S04-013; ADR-0035 §4). Covers its criterion while accepted and the business date is on or before expires_on.
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** `gate_exception.request` (TL); `gate_exception.decide` (SP, BO; the gate's configured approver, not the requester); the `gate.exception_expiry_scan` job sets expiry_notified_at once. **Lifecycle:** pending → accepted | rejected | withdrawn; accepted → revoked (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| gate_instance_id | uuid | NOT NULL |  |  |
+| gate_code | text | NOT NULL |  | FK → gate_definition(code) |
+| criterion_key | text | NOT NULL |  | FK → gate_criterion_definition(key) |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 4000)))` |
+| scope | text | NOT NULL |  | `CHECK (((char_length(scope) >= 3) AND (char_length(scope) <= 2000)))` |
+| compensating_action | text | NOT NULL |  | `CHECK (((char_length(compensating_action) >= 3) AND (char_length(compensating_action) <= 4000)))` |
+| compensating_owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| expires_on | date | NOT NULL |  |  |
+| status | text | NOT NULL | `'pending'` | `CHECK ((status = ANY (ARRAY['pending', 'accepted', 'rejected', 'withdrawn', 'revoked'])))` |
+| requested_by | uuid | NOT NULL |  | FK → app_user(id) |
+| requested_at | timestamp with time zone | NOT NULL | `now()` |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_on_behalf_of | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decision_note | text | NULL |  | `CHECK (((decision_note IS NULL) OR ((char_length(decision_note) >= 3) AND (char_length(decision_note) <= 2000))))` |
+| revoked_by | uuid | NULL |  | FK → app_user(id) |
+| revoked_at | timestamp with time zone | NULL |  |  |
+| revoke_reason | text | NULL |  | `CHECK (((revoke_reason IS NULL) OR ((char_length(revoke_reason) >= 3) AND (char_length(revoke_reason) <= 1000))))` |
+| expiry_notified_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `gate_exception_decided_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['accepted', 'rejected', 'revoked'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL)) AND ((decided_on_behalf_of IS NULL) OR (decided_by IS NOT NULL))))`
+- `gate_exception_decider_not_requester` (CHECK): `CHECK (((decided_by IS NULL) OR ((decided_by <> requested_by) AND (decided_on_behalf_of IS DISTINCT FROM requested_by))))`
+- `gate_exception_gate_instance_fkey` (FK): `FOREIGN KEY (transformation_id, gate_instance_id) REFERENCES gate_instance(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `gate_exception_revoked_complete` (CHECK): `CHECK ((((status = 'revoked') = (revoked_at IS NOT NULL)) AND ((revoked_at IS NULL) = (revoked_by IS NULL)) AND ((revoked_at IS NULL) = (revoke_reason IS NULL))))`
+- `gate_exception_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `gate_exception_cover_idx`: `(gate_instance_id, criterion_key, expires_on DESC) WHERE (status = 'accepted')`
+- `gate_exception_expiry_scan_idx`: `(expires_on) WHERE ((status = 'accepted') AND (expiry_notified_at IS NULL))`
+- `gate_exception_one_pending_key`: `UNIQUE (gate_instance_id, criterion_key) WHERE (status = 'pending')`
+
+**Triggers:**
+
+- `gate_exception_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `gate_exception_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `gate_exception_guard()`
+- `gate_exception_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## gate_decision_scale_scope
+
+- **Purpose:** The approved scale scope of a G5 approval: one initiative in one business unit per row, so a scope is never unrestricted (REQ-S04-007, REQ-S12-010, M0124; ADR-0035 §5).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** the G5 decision (`gate.decide`, the configured approver). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| gate_decision_id | uuid | NOT NULL |  | FK → gate_decision(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| business_unit_id | uuid | NOT NULL |  | FK → business_unit(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 1000))))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `gate_decision_scale_scope_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `gate_decision_scale_scope_key` (UNIQUE): `UNIQUE (gate_decision_id, initiative_id, business_unit_id)`
+
+**Triggers:**
+
+- `gate_decision_scale_scope_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `gate_decision_scale_scope_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `gate_decision_scale_scope_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `gate_decision_scale_scope_guard`: BEFORE INSERT FOR EACH ROW → `gate_decision_scope_guard()`
+- `gate_decision_scale_scope_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## gate_decision_condition
+
+- **Purpose:** A condition of a G5 approval with owner and deadline (M0124; ADR-0035 §5).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** the G5 decision (`gate.decide`). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| gate_decision_id | uuid | NOT NULL |  | FK → gate_decision(id) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 20)))` |
+| condition_text | text | NOT NULL |  | `CHECK (((char_length(condition_text) >= 3) AND (char_length(condition_text) <= 2000)))` |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| due_date | date | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `gate_decision_condition_ordinal_key` (UNIQUE): `UNIQUE (gate_decision_id, ordinal)`
+
+**Triggers:**
+
+- `gate_decision_condition_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `gate_decision_condition_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `gate_decision_condition_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `gate_decision_condition_guard`: BEFORE INSERT FOR EACH ROW → `gate_decision_scope_guard()`
+- `gate_decision_condition_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## scale_transition
+
+- **Purpose:** Scaling one initiative into one business unit, only inside the scope of an approved G5 decision (REQ-S03-004, REQ-S04-007; ADR-0035 §5).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** `scale.transition` (TL). **Lifecycle:** append-only; once per initiative and business unit.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| business_unit_id | uuid | NOT NULL |  | FK → business_unit(id) |
+| gate_decision_id | uuid | NOT NULL |  | FK → gate_decision(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| transitioned_by | uuid | NOT NULL |  | FK → app_user(id) |
+| transitioned_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `scale_transition_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `scale_transition_key` (UNIQUE): `UNIQUE (initiative_id, business_unit_id)`
+
+**Triggers:**
+
+- `scale_transition_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `scale_transition_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `scale_transition_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `scale_transition_guard`: BEFORE INSERT FOR EACH ROW → `scale_transition_guard()`
+- `scale_transition_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## risk_disposition
+
+- **Purpose:** A proposed disposition of an open RAID risk (accept, transfer, carry into BAU) with rationale and residual owner; approved through the canonical approval of type risk_disposition, it counts for G5 Risk closure (REQ-PB-020, REQ-S04-007; ADR-0035 §6).
+- **Migration:** `0051_p4_phases_gates_g5_g6_exceptions.sql`. **API module:** `workflows`. **Who writes:** `risk_disposition.propose` (TL, BO, WL); decided with `approval.decide` (SP, BO, FIN). **Lifecycle:** append-only; status = its approval's status.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| raid_entry_id | uuid | NOT NULL |  |  |
+| disposition | text | NOT NULL |  | `CHECK ((disposition = ANY (ARRAY['accept', 'transfer', 'carry_into_bau'])))` |
+| rationale | text | NOT NULL |  | `CHECK (((char_length(rationale) >= 3) AND (char_length(rationale) <= 4000)))` |
+| residual_owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version = 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `risk_disposition_raid_fkey` (FK): `FOREIGN KEY (transformation_id, raid_entry_id) REFERENCES raid_entry(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `risk_disposition_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `risk_disposition_raid_idx`: `(raid_entry_id)`
+
+**Triggers:**
+
+- `risk_disposition_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `risk_disposition_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `risk_disposition_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `risk_disposition_guard`: BEFORE INSERT FOR EACH ROW → `risk_disposition_guard()`
+- `risk_disposition_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## change_control_policy
+
+- **Purpose:** The materiality thresholds of one transformation; NULL = every change of that kind is material; no threshold is seeded (REQ-S09-010; ADR-0036 §3).
+- **Migration:** `0052_p4_change_control.sql`. **API module:** `workflows`. **Who writes:** `change_control.configure` (TL, TO). **Lifecycle:** one row per transformation; versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| material_date_shift_working_days | integer | NULL |  | `CHECK (((material_date_shift_working_days IS NULL) OR ((material_date_shift_working_days >= 0) AND (material_date_shift_working_days <= 250))))` |
+| material_budget_change_ratio | numeric(9,6) | NULL |  | `CHECK (((material_budget_change_ratio IS NULL) OR ((material_budget_change_ratio >= (0)::numeric) AND (material_budget_change_ratio <= (10)::numeric))))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `change_control_policy_transformation_key` (UNIQUE): `UNIQUE (transformation_id)`
+
+**Triggers:**
+
+- `change_control_policy_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `change_control_policy_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## change_request
+
+- **Purpose:** A change request to an approved record (scope, baseline, target, TOM, cost, benefit logic, KPI definition, schedule or budget rebaseline) with reason, proposed change, materiality, route and frozen impact assessment; decided through the canonical approval (REQ-S04-014, REQ-S07-015, REQ-S09-010; REQ-S16-018 ChangeRequest; ADR-0036 §1).
+- **Migration:** `0052_p4_change_control.sql`. **API module:** `workflows`. **Who writes:** `change_request.raise` (TL, BO, WL, FIN, TO, KDS; the requester); the `change_request` approval subject provider (outcomes); the material-change hook (origin automatic). **Lifecycle:** draft → submitted | withdrawn; submitted → approved | rejected | changes_requested | withdrawn; changes_requested → submitted | withdrawn (approved, rejected, withdrawn final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^CR-[0-9]{2,}$'))` |
+| change_kind | text | NOT NULL |  | `CHECK ((change_kind = ANY (ARRAY['business_scope', 'baseline', 'target', 'tom', 'cost', 'benefit_logic', 'kpi_definition', 'schedule_rebaseline', 'budget_rebaseline'])))` |
+| subject_type | text | NOT NULL |  | `CHECK ((subject_type = ANY (ARRAY['charter', 'kpi_definition', 'outcome_kpi', 'tom_canvas_cell', 'initiative', 'benefit_formula', 'milestone', 'budget_line'])))` |
+| subject_id | uuid | NOT NULL |  |  |
+| subject_version | integer | NOT NULL |  | `CHECK ((subject_version >= 1))` |
+| proposed_record_type | text | NULL |  | `CHECK (((proposed_record_type IS NULL) OR (proposed_record_type = ANY (ARRAY['kpi_version', 'benefit_formula_version']))))` |
+| proposed_record_id | uuid | NULL |  |  |
+| proposed_change | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(proposed_change) = 'object'))` |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 4000)))` |
+| origin | text | NOT NULL | `'manual'` | `CHECK ((origin = ANY (ARRAY['manual', 'automatic'])))` |
+| materiality | text | NULL |  | `CHECK (((materiality IS NULL) OR (materiality = ANY (ARRAY['material', 'not_material']))))` |
+| materiality_basis | jsonb | NULL |  | `CHECK (((materiality_basis IS NULL) OR (jsonb_typeof(materiality_basis) = 'object')))` |
+| route_party_code | text | NULL |  | FK → governance_party(code) |
+| decision_right_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'changes_requested', 'approved', 'rejected', 'withdrawn'])))` |
+| raised_by | uuid | NOT NULL |  | FK → app_user(id) |
+| submitted_by | uuid | NULL |  | FK → app_user(id) |
+| submitted_at | timestamp with time zone | NULL |  |  |
+| current_impact_assessment_id | uuid | NULL |  |  |
+| decided_at | timestamp with time zone | NULL |  |  |
+| applied_at | timestamp with time zone | NULL |  |  |
+| applied_record_type | text | NULL |  | `CHECK (((applied_record_type IS NULL) OR (applied_record_type ~ '^[a-z_]+$')))` |
+| applied_record_id | uuid | NULL |  |  |
+| applied_version | integer | NULL |  | `CHECK (((applied_version IS NULL) OR (applied_version >= 1)))` |
+| withdrawn_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `change_request_applied_complete` (CHECK): `CHECK ((((status = 'approved') = (applied_at IS NOT NULL)) AND ((applied_at IS NULL) = (applied_record_type IS NULL)) AND ((applied_record_type IS NULL) = (applied_record_id IS NULL)) AND ((applied_record_id IS NULL) = (applied_version IS NULL))))`
+- `change_request_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `change_request_current_impact_assessment_fkey` (FK): `FOREIGN KEY (transformation_id, current_impact_assessment_id) REFERENCES impact_assessment(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `change_request_decided_complete` (CHECK): `CHECK (((status = ANY (ARRAY['approved', 'rejected'])) = (decided_at IS NOT NULL)))`
+- `change_request_decision_right_fkey` (FK): `FOREIGN KEY (transformation_id, decision_right_id) REFERENCES transformation_decision_right(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `change_request_kind_subject` (CHECK): `CHECK (
+CASE change_kind
+    WHEN 'business_scope' THEN (subject_type = ANY (ARRAY['charter', 'initiative']))
+    WHEN 'baseline' THEN (subject_type = ANY (ARRAY['kpi_definition', 'outcome_kpi']))
+    WHEN 'target' THEN (subject_type = ANY (ARRAY['kpi_definition', 'outcome_kpi']))
+    WHEN 'kpi_definition' THEN (subject_type = 'kpi_definition')
+    WHEN 'tom' THEN (subject_type = 'tom_canvas_cell')
+    WHEN 'cost' THEN (subject_type = ANY (ARRAY['initiative', 'budget_line']))
+    WHEN 'benefit_logic' THEN (subject_type = 'benefit_formula')
+    WHEN 'schedule_rebaseline' THEN (subject_type = 'milestone')
+    WHEN 'budget_rebaseline' THEN (subject_type = 'budget_line')
+    ELSE false
+END)`
+- `change_request_proposed_kind` (CHECK): `CHECK (((proposed_record_type IS NULL) OR ((proposed_record_type = 'kpi_version') AND (change_kind = ANY (ARRAY['baseline', 'target', 'kpi_definition'])) AND (subject_type = 'kpi_definition')) OR ((proposed_record_type = 'benefit_formula_version') AND (change_kind = 'benefit_logic'))))`
+- `change_request_proposed_pair` (CHECK): `CHECK (((proposed_record_type IS NULL) = (proposed_record_id IS NULL)))`
+- `change_request_submitted_complete` (CHECK): `CHECK (((status = ANY (ARRAY['draft', 'withdrawn'])) OR ((submitted_at IS NOT NULL) AND (submitted_by IS NOT NULL) AND (materiality IS NOT NULL) AND (route_party_code IS NOT NULL) AND (current_impact_assessment_id IS NOT NULL))))`
+- `change_request_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `change_request_withdrawn_complete` (CHECK): `CHECK (((status = 'withdrawn') = (withdrawn_at IS NOT NULL)))`
+
+**Indexes:**
+
+- `change_request_one_open_per_subject`: `UNIQUE (subject_type, subject_id) WHERE (status = ANY (ARRAY['draft', 'submitted', 'changes_requested']))`
+- `change_request_transformation_idx`: `(transformation_id, status, created_at DESC, id DESC)`
+
+**Triggers:**
+
+- `change_request_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `change_request_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `change_request_guard()`
+- `change_request_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## impact_assessment
+
+- **Purpose:** The impact assessment frozen for one submitted change-request version, with the SHA-256 of its items (REQ-S04-014, REQ-S07-015; ADR-0036 §5).
+- **Migration:** `0052_p4_change_control.sql`. **API module:** `workflows`. **Who writes:** `submitChangeRequest`. **Lifecycle:** append-only; one per request version.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| change_request_id | uuid | NOT NULL |  |  |
+| change_request_version | integer | NOT NULL |  | `CHECK ((change_request_version >= 1))` |
+| item_count | integer | NOT NULL |  | `CHECK ((item_count >= 0))` |
+| content_sha256 | character(64) | NOT NULL |  | `CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'))` |
+| assessed_at | timestamp with time zone | NOT NULL | `now()` |  |
+| assessed_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `impact_assessment_change_request_fkey` (FK): `FOREIGN KEY (transformation_id, change_request_id) REFERENCES change_request(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `impact_assessment_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `impact_assessment_version_key` (UNIQUE): `UNIQUE (change_request_id, change_request_version)`
+
+**Triggers:**
+
+- `impact_assessment_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `impact_assessment_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `impact_assessment_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `impact_assessment_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## impact_assessment_item
+
+- **Purpose:** One affected record of an impact assessment: outcome, KPI, benefit, gate (naming the preserved submission and decision), report (T10 area), formula, initiative, milestone, business case or budget line (ADR-0036 §5).
+- **Migration:** `0052_p4_change_control.sql`. **API module:** `workflows`. **Who writes:** `submitChangeRequest`. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| impact_assessment_id | uuid | NOT NULL |  |  |
+| ordinal | integer | NOT NULL |  | `CHECK ((ordinal >= 1))` |
+| item_type | text | NOT NULL |  | `CHECK ((item_type = ANY (ARRAY['outcome', 'kpi', 'benefit', 'gate', 'report', 'formula', 'initiative', 'milestone', 'business_case', 'budget_line'])))` |
+| record_type | text | NULL |  | `CHECK (((record_type IS NULL) OR (record_type ~ '^[a-z_]+$')))` |
+| record_id | uuid | NULL |  |  |
+| record_code | text | NULL |  | `CHECK (((record_code IS NULL) OR ((char_length(record_code) >= 1) AND (char_length(record_code) <= 50))))` |
+| label | text | NOT NULL |  | `CHECK (((char_length(label) >= 1) AND (char_length(label) <= 300)))` |
+| effect | text | NOT NULL |  | `CHECK ((effect = ANY (ARRAY['value_changes', 'recalculation', 'reapproval_required', 'informational'])))` |
+| gate_submission_id | uuid | NULL |  | FK → gate_submission(id) |
+| gate_decision_id | uuid | NULL |  | FK → gate_decision(id) |
+| detail | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(detail) = 'object'))` |
+
+**Table constraints:**
+
+- `impact_assessment_item_assessment_fkey` (FK): `FOREIGN KEY (transformation_id, impact_assessment_id) REFERENCES impact_assessment(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `impact_assessment_item_gate_shape` (CHECK): `CHECK ((((item_type = 'gate') = (gate_submission_id IS NOT NULL)) AND ((gate_decision_id IS NULL) OR (item_type = 'gate'))))`
+- `impact_assessment_item_ordinal_key` (UNIQUE): `UNIQUE (impact_assessment_id, ordinal)`
+- `impact_assessment_item_record_pair` (CHECK): `CHECK (((record_type IS NULL) = (record_id IS NULL)))`
+
+**Indexes:**
+
+- `impact_assessment_item_record_idx`: `(record_type, record_id)`
+
+**Triggers:**
+
+- `impact_assessment_item_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `impact_assessment_item_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `impact_assessment_item_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P4 seeds (0051, 0053, 0054, slice H)
+
+- `phase_definition`: 6 rows (B0021 names, purposes, key outputs; phase titles; objectives), `ar_provisional = true`.
+- `phase_step_definition`: 25 rows (Diagnose 5, Define 3, Design 4, Mobilize 5, Transform 4, Realize 4); `source_procedure_en` verbatim from M0118–M0123; required evidence, role defaults and completion rules are an architect interpretation (ADR-0035 §1); `ar_provisional = true`.
+- `gate_criterion_definition`: the 8 G5/G6 rows above.
+- `approval_type` `change_request` (subject `change_request`) and `risk_disposition` (subject `risk_disposition`), SoD `requester_excluded`, owner module `workflows`.
+- `work_item_kind` `gate_decision_due` (M0229), `gate_exception_to_decide`, `gate_exception_expired` (M0125), `gate_condition_due` (M0124), `phase_step_enabled` (M0230), `phase_step_review` (M0116), `scale_scope_enabled` (M0230) — owner module `workflows`.
+- `permission` (10 rows: 8 write, `change_control.configure` configure, `gate_exception.decide` business_approval) and `role_permission` (31 rows): exactly `P4_GATES_CHANGE_PERMISSIONS` / `P4_GATES_CHANGE_ROLE_PERMISSIONS` (`packages/db/src/seed.test.ts`). No technical-admin role and no AUD holds any; `gate_exception.decide` is held by SP and BO only.
+- `job_schedule` `gate.exception_expiry_scan` (daily 00:30 `Asia/Riyadh`, owner `workflows`), audited `system` (`0054`); reported `unhandled` until BE-K registers the handler.
+- No phase step, review, exception, scale scope, transition, disposition, policy or change request is seeded, and no threshold value.
+
+## P4 functions (slice H)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `phase_step_status_step()`, `phase_step_evidence_guard()` | 0051 | the step state machine, final `complete`, owner locked in review, evidence frozen on a complete step | via trigger |
+| `gate_criterion_review_guard()` | 0051 | review of a pending submission's own criterion, not by the submitter, sequential `review_no` | via trigger |
+| `gate_exception_guard()` | 0051 | pending start, mandatory criterion of the same gate, content immutable, legal transitions, final decisions, expiry notified once | via trigger |
+| `gate_submission_criterion_exception_valid()` | 0051 | an exception recorded on a criterion row covers it on the submission's business date | via trigger |
+| `p4_g5_approved_decision(uuid, uuid)` | 0051 | is the gate decision an approved G5 decision of the transformation | via triggers |
+| `gate_decision_scope_guard()`, `scale_transition_guard()` | 0051 | scope and conditions only on an approved G5 decision, business unit of the same organization; scaling only inside the approved scope | via trigger |
+| `risk_disposition_guard()` | 0051 | a disposition names an open risk | via trigger |
+| `change_request_guard()` | 0052 | draft start, immutable identity, content frozen outside draft/changes requested, legal transitions, outcomes only with a person's decision on the change_request approval, the assessment frozen for the current version | via trigger |
+
+## P4 validation rules summary (slice H)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, organization = transformation's, deferred audit coverage; append-only reviews, scale scope, conditions, transitions, dispositions, assessments and items); closed sets (phase codes, step statuses, completion rules, recommendations, exception and change-request statuses, change kinds and subjects, item types and effects, dispositions); step state machine and separate reviewer; exception content immutable and decider ≠ requester; a mandatory criterion incomplete only with a covering exception; scale scope only on an approved G5 decision; scaling only inside it, once; change-request outcomes only with a person's approval decision; one open change request per subject; thresholds in range (decimal ratio) |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice H schemas, `GateDecisionCreate.scaleScope`), `proposedChange` per kind, free-text rules, strict UTF-8, request media types, `If-Match` |
+| Service | Permissions and record-level rules (ADR-0035 §8, ADR-0036 §7: step owner; reviewer ≠ owner/requester; gate's configured approver; requester), commit-time re-authorization, the completion rules, the G5/G6 evaluators, the exact refusal codes and English texts (ADR-0035 §11, ADR-0036 §10), materiality, T11 routing, impact derivation, apply-on-approval |
+| Worker | `gate.submitted` (one task per required approver, referencing the snapshot), `gate.decided` (next-phase steps and scope tasks once), `gate.exception_expiry_scan` (notify once) |

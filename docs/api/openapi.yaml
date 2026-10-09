@@ -93,6 +93,12 @@ info:
     Delivery, adoption, validated value and closure are separate statuses; a transformation closes only through the
     governed closure action after its G6 business approval, and its performance areas, KPI actuals, backlog and lessons
     continue. Accepting a BAU handover is the receiving owner's business decision; no job accepts or closes anything.
+
+    **P4 additions, slice H (T-DG4-ARCH-07, ADR-0035, ADR-0036).** Additive within v1 except the D-089-accepted
+    `GateDecisionCreate.scaleScope` member (G5 only). G5 Scale and G6 Sustain use the existing gate paths; a mandatory
+    criterion may be submitted incomplete only when an accepted, unexpired exception covers it, and the snapshot records
+    it. Change requests are decided through the canonical approval; approving a change never edits an earlier approval
+    or evidence snapshot. Product gate G6 never implies the engineering gate DG7.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -238,6 +244,16 @@ tags:
     description: The continuous-improvement backlog; persists after closure (P4, ADR-0034).
   - name: lessons
     description: Lessons, searchable across transformations (P4, ADR-0034).
+  - name: phases
+    description: The six phases (B0021) and their guided steps, owners, completion rules and review queue (P4, ADR-0035).
+  - name: gate-exceptions
+    description: Specifically authorized exceptions (waivers) for missing mandatory gate evidence, with reason, scope, approver, expiry and compensating action (P4, ADR-0035).
+  - name: scale
+    description: The approved G5 scale scope and scale transitions; scaling outside the approved scope is refused (P4, ADR-0035).
+  - name: risk-dispositions
+    description: Approved dispositions of material risks for G5 Risk closure (P4, ADR-0035).
+  - name: change-requests
+    description: Change control for approved records with impact assessment and reapproval; original approvals and snapshots are preserved (P4, ADR-0036).
 security:
   - sessionCookie: []
 paths:
@@ -15096,6 +15112,913 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/phases:
+    get:
+      tags: [phases]
+      operationId: listPhases
+      summary: "The six phases in order with name, title, purpose and key outputs (B0021, verbatim) and the phase objective; Arabic labels carry arProvisional (REQ-PB-014; any signed-in user)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseDefinitionList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phases:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [phases]
+      operationId: getPhaseWorkspace
+      summary: "The phase workspace: the current phase, and per phase its objective, gate status, steps with procedure, required evidence, owner (Unknown when unassigned), status and the review-queue count (REQ-S04-001) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseWorkspace" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phase-steps:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [phases]
+      operationId: listPhaseSteps
+      summary: "Phase steps of the transformation; status=in_review is the phase review queue. A step without a row is listed not_started with version 0 (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/PhaseQuery"
+        - $ref: "#/components/parameters/PhaseStepStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStepPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phase-steps/{stepKey}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StepKey"
+    get:
+      tags: [phases]
+      operationId: getPhaseStep
+      summary: "Read one phase step; ETag \"0\" when it has no row yet (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStep" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [phases]
+      operationId: updatePhaseStep
+      summary: "Assign the step owner and/or start the step (not_started -> in_progress); If-Match \"0\" creates the row (phase_step.manage; TL, TO). 422 phase_step.invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PhaseStepUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStep" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phase-steps/{stepKey}/request-review:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StepKey"
+    post:
+      tags: [phases]
+      operationId: requestPhaseStepReview
+      summary: "Evaluate the step's completion rule server-side and, when met, put the step in the review queue (phase_step.progress; the step owner). 403 phase_step.not_owner; 422 phase_step.completion_rule_unmet, owner_required, invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStep" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phase-steps/{stepKey}/review:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StepKey"
+    post:
+      tags: [phases]
+      operationId: reviewPhaseStep
+      summary: "Accept (re-evaluates the completion rule) or return the step with a note; the reviewer is neither the owner nor the requester (phase_step.review; SP, BO, FIN, TO). 400 phase_step.return_note_required; 403 phase_step.reviewer_is_owner; 422 phase_step.completion_rule_unmet, invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PhaseStepReview" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStep" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phase-steps/{stepKey}/evidence:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StepKey"
+    get:
+      tags: [phases]
+      operationId: listPhaseStepEvidence
+      summary: "Evidence linked to the step, active and removed (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStepEvidencePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [phases]
+      operationId: linkPhaseStepEvidence
+      summary: "Link an evidence item of the transformation to the step (phase_step.progress; the step owner). 409 phase_step_evidence.exists; 422 phase_step.complete."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PhaseStepEvidenceLink" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStepEvidence" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/phase-steps/{stepKey}/evidence/{phaseStepEvidenceId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/StepKey"
+      - $ref: "#/components/parameters/PhaseStepEvidenceId"
+    post:
+      tags: [phases]
+      operationId: removePhaseStepEvidence
+      summary: "Remove an evidence link; the row stays as history (phase_step.progress; the step owner). 422 phase_step.complete."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhaseStepEvidence" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo}/criteria:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateCode"
+      - $ref: "#/components/parameters/SubmissionNo"
+    get:
+      tags: [gates]
+      operationId: listGateSubmissionCriteria
+      summary: "The gate criteria review table of one submission: per criterion the nine fields criterion, required evidence, completeness, reviewer, finding, open condition, risk, decision and rationale (latest review; 'not reviewed' when none), plus a covering exception (REQ-S04-009) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateCriterionRowList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gates/{gateCode}/submissions/{submissionNo}/criteria/{criterionKey}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateCode"
+      - $ref: "#/components/parameters/SubmissionNo"
+      - $ref: "#/components/parameters/CriterionKey"
+    get:
+      tags: [gates]
+      operationId: listGateCriterionReviews
+      summary: "Every review of one criterion of the submission, oldest first (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateCriterionReviewPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [gates]
+      operationId: createGateCriterionReview
+      summary: "Record a review of one criterion of the pending submission; the first review moves the gate from Submitted to Under Review (gate.review; SP, BO, FIN, TO; If-Match = the gate's ETag). 403 gate.reviewer_is_submitter; 422 gate.review_not_open, gate.review_condition_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GateCriterionReviewCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateCriterionReview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-exceptions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [gate-exceptions]
+      operationId: listGateExceptions
+      summary: "Gate exceptions (waivers) of the transformation with their coverage on today's business date (covering / expired / not decided) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/GateCodeQuery"
+        - $ref: "#/components/parameters/GateExceptionStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateExceptionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [gate-exceptions]
+      operationId: createGateException
+      summary: "Request an exception for one missing mandatory criterion with reason, scope, compensating action (and owner) and expiry; the gate approver gets a My Work item (gate_exception.request; TL). 400 when expiry or compensating action is missing; 409 gate_exception.already_pending; 422 gate_exception.criterion_not_mandatory, expiry_in_past."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GateExceptionCreate" }
+      responses:
+        "201":
+          description: "Created (pending)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateException" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-exceptions/{gateExceptionId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateExceptionId"
+    get:
+      tags: [gate-exceptions]
+      operationId: getGateException
+      summary: "Read one exception (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateException" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-exceptions/{gateExceptionId}/decision:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateExceptionId"
+    post:
+      tags: [gate-exceptions]
+      operationId: decideGateException
+      summary: "Accept or reject a pending exception as the gate's configured approver, never the requester (gate_exception.decide; SP, BO). 403 gate_exception.not_approver, requester_cannot_decide; 422 gate_exception.not_pending."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GateExceptionDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateException" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-exceptions/{gateExceptionId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateExceptionId"
+    post:
+      tags: [gate-exceptions]
+      operationId: withdrawGateException
+      summary: "Withdraw a pending exception (gate_exception.request; the requester). 422 gate_exception.not_pending."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateException" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-exceptions/{gateExceptionId}/revoke:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateExceptionId"
+    post:
+      tags: [gate-exceptions]
+      operationId: revokeGateException
+      summary: "Revoke an accepted exception with a reason; the criterion is missing again from that moment (gate_exception.decide; the gate's configured approver). 400 gate_exception.revoke_reason_required; 422 gate_exception.not_accepted."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GateExceptionRevoke" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GateException" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/scale-scope:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [scale]
+      operationId: getScaleScope
+      summary: "The scale scope and conditions of the latest approved G5 decision; approved = false and empty lists before G5 is approved (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScaleScope" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/scale-transitions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [scale]
+      operationId: listScaleTransitions
+      summary: "Scale transitions of the transformation (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScaleTransitionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [scale]
+      operationId: createScaleTransition
+      summary: "Scale an initiative into a business unit; only inside the scope of an approved G5 decision (scale.transition; TL). 409 scale.already_scaled; 422 invalid-transition gate.g5_not_approved (names G5), scale.outside_approved_scope."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScaleTransitionCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScaleTransition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/risk-dispositions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [risk-dispositions]
+      operationId: listRiskDispositions
+      summary: "Proposed and decided dispositions of RAID risks, each with its approval status (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/RaidEntryIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RiskDispositionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [risk-dispositions]
+      operationId: createRiskDisposition
+      summary: "Propose a disposition of an open risk (accept, transfer, carry into BAU) with rationale and residual owner; requests its business approval (risk_disposition.propose; TL, BO, WL; decided with approval.decide). 422 risk_disposition.not_open_risk, routing.role_unmapped."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RiskDispositionCreate" }
+      responses:
+        "201":
+          description: "Created (approval pending)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RiskDisposition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/risk-dispositions/{riskDispositionId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/RiskDispositionId"
+    get:
+      tags: [risk-dispositions]
+      operationId: getRiskDisposition
+      summary: "Read one disposition with its approval (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RiskDisposition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-control-policy:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [change-requests]
+      operationId: getChangeControlPolicy
+      summary: "The materiality thresholds; null thresholds mean every change is material (version 0 when none is configured) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeControlPolicy" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [change-requests]
+      operationId: putChangeControlPolicy
+      summary: "Set the materiality thresholds (working days; decimal ratio); If-Match \"0\" creates the row (change_control.configure; TL, TO). 422 change_control.threshold_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangeControlPolicyUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeControlPolicy" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [change-requests]
+      operationId: listChangeRequests
+      summary: "Change requests of the transformation (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ChangeRequestStatusQuery"
+        - $ref: "#/components/parameters/ChangeKindQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeRequestPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [change-requests]
+      operationId: createChangeRequest
+      summary: "Raise a change request (draft) to an approved record with reason and proposed change (change_request.raise; TL, BO, WL, FIN, TO, KDS). 400 change_request.reason_required; 409 change_request.already_open; 422 change_request.kind_subject_mismatch, subject_not_approved, proposed_change_invalid, retrospective_not_supported."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangeRequestCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeRequest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests/impact-preview:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    post:
+      tags: [change-requests]
+      operationId: previewChangeImpact
+      summary: "Impact preview of an unsaved change: affected outcomes, KPIs, benefits, gates (naming the preserved approval), reports (T10 areas) and formulas; writes nothing (transformation.read)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangeRequestCreate" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImpactPreview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests/{changeRequestId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ChangeRequestId"
+    get:
+      tags: [change-requests]
+      operationId: getChangeRequest
+      summary: "Read one change request with its approval and current impact assessment (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeRequest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [change-requests]
+      operationId: updateChangeRequest
+      summary: "Edit a draft or returned change request (change_request.raise; the requester, TL or TO). 403 change_request.not_requester; 422 change_request.not_editable, proposed_change_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangeRequestUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeRequest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests/{changeRequestId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ChangeRequestId"
+    post:
+      tags: [change-requests]
+      operationId: submitChangeRequest
+      summary: "Submit: compute materiality, freeze the impact assessment of this version and request the business approval routed per T11 (change_request.raise; the requester, TL or TO). 422 change_request.not_submittable, routing.role_unmapped."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeRequest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests/{changeRequestId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ChangeRequestId"
+    post:
+      tags: [change-requests]
+      operationId: withdrawChangeRequest
+      summary: "Withdraw a change request that is not decided; its approval is withdrawn too (change_request.raise; the requester, TL or TO). 422 change_request.not_withdrawable."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChangeRequest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests/{changeRequestId}/impact-preview:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ChangeRequestId"
+    get:
+      tags: [change-requests]
+      operationId: getChangeRequestImpactPreview
+      summary: "Live impact preview of the request's current content (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImpactPreview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/change-requests/{changeRequestId}/impact-assessments:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ChangeRequestId"
+    get:
+      tags: [change-requests]
+      operationId: listImpactAssessments
+      summary: "The frozen impact assessments of the request, one per submitted version (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImpactAssessmentPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/impact-assessments/{impactAssessmentId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ImpactAssessmentId"
+    get:
+      tags: [change-requests]
+      operationId: getImpactAssessment
+      summary: "One frozen impact assessment with its items and content SHA-256 (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImpactAssessment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -15113,6 +16036,76 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    StepKey:
+      name: stepKey
+      in: path
+      required: true
+      schema: { type: string, pattern: '^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$' }
+    PhaseStepEvidenceId:
+      name: phaseStepEvidenceId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    CriterionKey:
+      name: criterionKey
+      in: path
+      required: true
+      schema: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
+    GateExceptionId:
+      name: gateExceptionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    RiskDispositionId:
+      name: riskDispositionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ChangeRequestId:
+      name: changeRequestId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ImpactAssessmentId:
+      name: impactAssessmentId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    PhaseQuery:
+      name: phase
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Phase" }
+    PhaseStepStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [not_started, in_progress, in_review, complete, returned] }
+    GateCodeQuery:
+      name: gateCode
+      in: query
+      required: false
+      schema: { type: string, pattern: '^G[1-6]$' }
+    GateExceptionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [pending, accepted, rejected, withdrawn, revoked] }
+    RaidEntryIdQuery:
+      name: raidEntryId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ChangeRequestStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [draft, submitted, changes_requested, approved, rejected, withdrawn] }
+    ChangeKindQuery:
+      name: kind
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/ChangeKind" }
     StakeholderGroupId:
       name: stakeholderGroupId
       in: path
@@ -16278,6 +17271,16 @@ components:
         - lesson.edit
         - lesson.search
         - transition_decision.propose
+        - phase_step.manage
+        - phase_step.progress
+        - phase_step.review
+        - gate.review
+        - gate_exception.request
+        - gate_exception.decide
+        - scale.transition
+        - risk_disposition.propose
+        - change_request.raise
+        - change_control.configure
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -18841,6 +19844,7 @@ components:
         comments: { type: string, minLength: 1, maxLength: 8000 }
         onBehalfOfUserId: { $ref: "#/components/schemas/Uuid" }
         agreements: { $ref: "#/components/schemas/GateAgreements" }
+        scaleScope: { $ref: "#/components/schemas/GateScaleScope" }
     EvidenceReview:
       type: object
       required: [result, accessibilityStatus, note]
@@ -25265,4 +26269,525 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/LessonSearchHit" } }
+        nextCursor: { type: [string, "null"] }
+    PhaseDefinition:
+      type: object
+      description: "One of the six phases; source* text is verbatim from the playbook (B0021 and the phase blocks); Arabic is provisional when arProvisional."
+      required: [code, ordinal, gateCode, sourceNameEn, nameAr, sourceTitleEn, titleAr, sourcePurposeEn, purposeAr, sourceKeyOutputsEn, keyOutputsAr, sourceObjectiveEn, objectiveAr, sourceRef, arProvisional]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/Phase" }
+        ordinal: { type: integer, minimum: 1, maximum: 6 }
+        gateCode: { type: string, pattern: '^G[1-6]$' }
+        sourceNameEn: { type: string, minLength: 1, maxLength: 50 }
+        nameAr: { type: string, minLength: 1, maxLength: 100 }
+        sourceTitleEn: { type: string, minLength: 1, maxLength: 200 }
+        titleAr: { type: string, minLength: 1, maxLength: 200 }
+        sourcePurposeEn: { type: string, minLength: 1, maxLength: 200 }
+        purposeAr: { type: string, minLength: 1, maxLength: 200 }
+        sourceKeyOutputsEn: { type: string, minLength: 1, maxLength: 500 }
+        keyOutputsAr: { type: string, minLength: 1, maxLength: 500 }
+        sourceObjectiveEn: { type: string, minLength: 1, maxLength: 1000 }
+        objectiveAr: { type: string, minLength: 1, maxLength: 1000 }
+        sourceRef: { type: string, minLength: 1, maxLength: 100 }
+        arProvisional: { type: boolean }
+    PhaseDefinitionList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PhaseDefinition" }, minItems: 6, maxItems: 6 }
+    PhaseStep:
+      type: object
+      description: "A step of a phase in one transformation. A step with no row has version 0, status not_started and a null owner (shown Unknown)."
+      required: [transformationId, stepKey, phase, ordinal, sourceProcedureEn, procedureAr, requiredEvidenceEn, requiredEvidenceAr, defaultOwnerRoleCode, reviewerRoleCode, completionRule, id, ownerUserId, status, enabledByGateDecisionId, reviewRequestedBy, reviewRequestedAt, completionCheck, reviewedBy, reviewedAt, reviewOutcome, reviewNote, completedAt, version]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        stepKey: { type: string, pattern: '^(diagnose|define|design|mobilize|transform|realize)\\.[a-z_]{1,48}$' }
+        phase: { $ref: "#/components/schemas/Phase" }
+        ordinal: { type: integer, minimum: 1, maximum: 10 }
+        sourceProcedureEn: { type: string, minLength: 1, maxLength: 500 }
+        procedureAr: { type: string, minLength: 1, maxLength: 500 }
+        requiredEvidenceEn: { type: string, minLength: 1, maxLength: 500 }
+        requiredEvidenceAr: { type: string, minLength: 1, maxLength: 500 }
+        defaultOwnerRoleCode: { type: string, minLength: 1, maxLength: 32 }
+        reviewerRoleCode: { type: string, minLength: 1, maxLength: 32 }
+        completionRule: { type: string, enum: [evidence_linked, meeting_held, kpi_actual_accepted, raid_register_present, benefit_validated, corrective_cases_owned, handover_accepted, improvement_backlog_present] }
+        id: { $ref: "#/components/schemas/NullableUuid" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [not_started, in_progress, in_review, complete, returned] }
+        enabledByGateDecisionId: { $ref: "#/components/schemas/NullableUuid" }
+        reviewRequestedBy: { $ref: "#/components/schemas/NullableUuid" }
+        reviewRequestedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completionCheck: { type: ["object", "null"], description: "Frozen at review request: rule, met, facts." }
+        reviewedBy: { $ref: "#/components/schemas/NullableUuid" }
+        reviewedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reviewOutcome: { type: [string, "null"], enum: [accepted, returned, null] }
+        reviewNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { type: integer, minimum: 0 }
+    PhaseStepPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PhaseStep" } }
+        nextCursor: { type: [string, "null"] }
+    PhaseWorkspacePhase:
+      type: object
+      required: [phase, isCurrent, gateStatus, steps, reviewQueueCount]
+      additionalProperties: false
+      properties:
+        phase: { $ref: "#/components/schemas/PhaseDefinition" }
+        isCurrent: { type: boolean }
+        gateStatus: { type: string, enum: [draft, submitted, under_review, changes_requested, approved, rejected, deferred] }
+        steps: { type: array, items: { $ref: "#/components/schemas/PhaseStep" } }
+        reviewQueueCount: { type: integer, minimum: 0 }
+    PhaseWorkspace:
+      type: object
+      description: "Guided phase workspace (REQ-S04-001); gate statuses are product G1-G6 business approvals, never DG0-DG7."
+      required: [transformationId, currentPhase, phases]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        currentPhase: { $ref: "#/components/schemas/Phase" }
+        phases: { type: array, items: { $ref: "#/components/schemas/PhaseWorkspacePhase" }, minItems: 6, maxItems: 6 }
+    PhaseStepUpdate:
+      type: object
+      description: "At least one member."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        start: { type: boolean, const: true }
+    PhaseStepReview:
+      type: object
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [accepted, returned] }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    PhaseStepEvidence:
+      type: object
+      required: [id, transformationId, phaseStepId, evidenceId, status, removedBy, removedAt, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        phaseStepId: { $ref: "#/components/schemas/Uuid" }
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [active, removed] }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    PhaseStepEvidencePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PhaseStepEvidence" } }
+        nextCursor: { type: [string, "null"] }
+    PhaseStepEvidenceLink:
+      type: object
+      required: [evidenceId]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+    GateCriterionReview:
+      type: object
+      description: "One review of one criterion of a pending submission (append-only)."
+      required: [id, gateSubmissionId, criterionKey, reviewNo, reviewerUserId, finding, openCondition, riskNote, raidEntryId, recommendation, rationale, reviewedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        gateSubmissionId: { $ref: "#/components/schemas/Uuid" }
+        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
+        reviewNo: { type: integer, minimum: 1 }
+        reviewerUserId: { $ref: "#/components/schemas/Uuid" }
+        finding: { type: string, minLength: 1, maxLength: 4000 }
+        openCondition: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        riskNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        raidEntryId: { $ref: "#/components/schemas/NullableUuid" }
+        recommendation: { type: string, enum: [meets, meets_with_conditions, does_not_meet] }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+        reviewedAt: { $ref: "#/components/schemas/Timestamp" }
+    GateCriterionReviewPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/GateCriterionReview" } }
+        nextCursor: { type: [string, "null"] }
+    GateCriterionReviewCreate:
+      type: object
+      description: "openCondition is required when recommendation = meets_with_conditions (422)."
+      required: [finding, recommendation, rationale]
+      additionalProperties: false
+      properties:
+        finding: { type: string, minLength: 1, maxLength: 4000 }
+        openCondition: { type: string, minLength: 1, maxLength: 2000 }
+        riskNote: { type: string, minLength: 1, maxLength: 2000 }
+        raidEntryId: { $ref: "#/components/schemas/Uuid" }
+        recommendation: { type: string, enum: [meets, meets_with_conditions, does_not_meet] }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+    GateCriterionRow:
+      type: object
+      description: "The nine M0124 fields of one criterion row; the six review fields are null (shown 'not reviewed') until a review exists."
+      required: [criterionKey, ordinal, mandatory, criterionLabelEn, criterionLabelAr, requiredEvidenceEn, requiredEvidenceAr, completeness, reviewerUserId, finding, openCondition, risk, decision, rationale, reviewCount, exception]
+      additionalProperties: false
+      properties:
+        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
+        ordinal: { type: integer, minimum: 1 }
+        mandatory: { type: boolean }
+        criterionLabelEn: { type: string, minLength: 1, maxLength: 200 }
+        criterionLabelAr: { type: string, minLength: 1, maxLength: 200 }
+        requiredEvidenceEn: { type: string, minLength: 1, maxLength: 1000 }
+        requiredEvidenceAr: { type: string, minLength: 1, maxLength: 1000 }
+        completeness: { type: string, enum: [complete, incomplete] }
+        reviewerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        finding: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        openCondition: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        risk: { type: ["object", "null"], additionalProperties: false, required: [note, raidEntryId], properties: { note: { type: [string, "null"] }, raidEntryId: { $ref: "#/components/schemas/NullableUuid" } } }
+        decision: { type: [string, "null"], enum: [meets, meets_with_conditions, does_not_meet, null] }
+        rationale: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        reviewCount: { type: integer, minimum: 0 }
+        exception: { oneOf: [{ $ref: "#/components/schemas/GateException" }, { type: "null" }] }
+    GateCriterionRowList:
+      type: object
+      required: [gateCode, submissionNo, snapshotSha256, gateStatus, items]
+      additionalProperties: false
+      properties:
+        gateCode: { type: string, pattern: '^G[1-6]$' }
+        submissionNo: { type: integer, minimum: 1 }
+        snapshotSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        gateStatus: { type: string, enum: [draft, submitted, under_review, changes_requested, approved, rejected, deferred] }
+        items: { type: array, items: { $ref: "#/components/schemas/GateCriterionRow" } }
+    GateException:
+      type: object
+      description: "A specifically authorized exception (waiver) for one mandatory criterion (REQ-S04-012/013). covering is computed for today's business date."
+      required: [id, transformationId, gateInstanceId, gateCode, criterionKey, reason, scope, compensatingAction, compensatingOwnerUserId, expiresOn, status, covering, requestedBy, requestedAt, decidedBy, decidedOnBehalfOf, decidedAt, decisionNote, revokedBy, revokedAt, revokeReason, expiryNotifiedAt, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        gateInstanceId: { $ref: "#/components/schemas/Uuid" }
+        gateCode: { type: string, pattern: '^G[1-6]$' }
+        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
+        reason: { type: string, minLength: 3, maxLength: 4000 }
+        scope: { type: string, minLength: 3, maxLength: 2000 }
+        compensatingAction: { type: string, minLength: 3, maxLength: 4000 }
+        compensatingOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        expiresOn: { $ref: "#/components/schemas/BusinessDate" }
+        status: { type: string, enum: [pending, accepted, rejected, withdrawn, revoked] }
+        covering: { type: boolean }
+        requestedBy: { $ref: "#/components/schemas/Uuid" }
+        requestedAt: { $ref: "#/components/schemas/Timestamp" }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedOnBehalfOf: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decisionNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        revokedBy: { $ref: "#/components/schemas/NullableUuid" }
+        revokedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        revokeReason: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        expiryNotifiedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    GateExceptionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/GateException" } }
+        nextCursor: { type: [string, "null"] }
+    GateExceptionCreate:
+      type: object
+      description: "All five REQ-S04-013 fields are required: a missing expiry or compensating action is 400."
+      required: [gateCode, criterionKey, reason, scope, compensatingAction, compensatingOwnerUserId, expiresOn]
+      additionalProperties: false
+      properties:
+        gateCode: { type: string, pattern: '^G[1-6]$' }
+        criterionKey: { type: string, pattern: '^g[1-6]\\.[a-z_]{1,48}$' }
+        reason: { type: string, minLength: 3, maxLength: 4000 }
+        scope: { type: string, minLength: 3, maxLength: 2000 }
+        compensatingAction: { type: string, minLength: 3, maxLength: 4000 }
+        compensatingOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        expiresOn: { $ref: "#/components/schemas/BusinessDate" }
+    GateExceptionDecision:
+      type: object
+      required: [outcome, note]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [accepted, rejected] }
+        note: { type: string, minLength: 3, maxLength: 2000 }
+        onBehalfOfUserId: { $ref: "#/components/schemas/Uuid" }
+    GateExceptionRevoke:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    ScaleScopeItemCreate:
+      type: object
+      required: [initiativeId, businessUnitId]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        businessUnitId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: string, minLength: 1, maxLength: 1000 }
+    GateConditionCreate:
+      type: object
+      required: [text, ownerUserId, dueDate]
+      additionalProperties: false
+      properties:
+        text: { type: string, minLength: 3, maxLength: 2000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+    GateScaleScope:
+      type: object
+      description: "G5 only (D-089 seam 2): the approved scale scope; every item names one initiative and one business unit, so a scope is never unrestricted (M0124). Required with a G5 approval (422 gate.scale_scope_required); any other gate or outcome: 422 gate.scale_scope_not_applicable."
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ScaleScopeItemCreate" }, minItems: 1, maxItems: 100 }
+        conditions: { type: array, items: { $ref: "#/components/schemas/GateConditionCreate" }, minItems: 0, maxItems: 20 }
+    ScaleScopeItem:
+      type: object
+      required: [id, initiativeId, businessUnitId, note]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        businessUnitId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    GateCondition:
+      type: object
+      required: [id, ordinal, text, ownerUserId, dueDate]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        ordinal: { type: integer, minimum: 1, maximum: 20 }
+        text: { type: string, minLength: 3, maxLength: 2000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+    ScaleScope:
+      type: object
+      required: [approved, gateDecisionId, decidedAt, items, conditions]
+      additionalProperties: false
+      properties:
+        approved: { type: boolean }
+        gateDecisionId: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        items: { type: array, items: { $ref: "#/components/schemas/ScaleScopeItem" } }
+        conditions: { type: array, items: { $ref: "#/components/schemas/GateCondition" } }
+    ScaleTransition:
+      type: object
+      required: [id, transformationId, initiativeId, businessUnitId, gateDecisionId, note, transitionedBy, transitionedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        businessUnitId: { $ref: "#/components/schemas/Uuid" }
+        gateDecisionId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        transitionedBy: { $ref: "#/components/schemas/Uuid" }
+        transitionedAt: { $ref: "#/components/schemas/Timestamp" }
+    ScaleTransitionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ScaleTransition" } }
+        nextCursor: { type: [string, "null"] }
+    ScaleTransitionCreate:
+      type: object
+      required: [initiativeId, businessUnitId]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        businessUnitId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    RiskDisposition:
+      type: object
+      description: "approvalStatus is the status of its canonical approval (type risk_disposition); approved counts for G5 Risk closure."
+      required: [id, transformationId, raidEntryId, disposition, rationale, residualOwnerUserId, approvalId, approvalStatus, version, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        raidEntryId: { $ref: "#/components/schemas/Uuid" }
+        disposition: { type: string, enum: [accept, transfer, carry_into_bau] }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+        residualOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+        approvalId: { $ref: "#/components/schemas/NullableUuid" }
+        approvalStatus: { type: [string, "null"], enum: [pending, changes_requested, deferred, approved, rejected, withdrawn, null] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    RiskDispositionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RiskDisposition" } }
+        nextCursor: { type: [string, "null"] }
+    RiskDispositionCreate:
+      type: object
+      required: [raidEntryId, disposition, rationale, residualOwnerUserId]
+      additionalProperties: false
+      properties:
+        raidEntryId: { $ref: "#/components/schemas/Uuid" }
+        disposition: { type: string, enum: [accept, transfer, carry_into_bau] }
+        rationale: { type: string, minLength: 3, maxLength: 4000 }
+        residualOwnerUserId: { $ref: "#/components/schemas/Uuid" }
+    ChangeKind:
+      type: string
+      enum: [business_scope, baseline, target, tom, cost, benefit_logic, kpi_definition, schedule_rebaseline, budget_rebaseline]
+    ChangeControlPolicy:
+      type: object
+      description: "Null thresholds mean every change of that kind is material; version 0 when none is configured."
+      required: [transformationId, materialDateShiftWorkingDays, materialBudgetChangeRatio, note, version, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        materialDateShiftWorkingDays: { type: ["integer", "null"], minimum: 0, maximum: 250 }
+        materialBudgetChangeRatio: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    ChangeControlPolicyUpdate:
+      type: object
+      description: "materialBudgetChangeRatio is a decimal string fraction (0.05 = 5 %), 0 to 10."
+      required: [materialDateShiftWorkingDays, materialBudgetChangeRatio]
+      additionalProperties: false
+      properties:
+        materialDateShiftWorkingDays: { type: ["integer", "null"], minimum: 0, maximum: 250 }
+        materialBudgetChangeRatio: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    ChangeRequestCreate:
+      type: object
+      description: "proposedChange holds { field: { from, to } } validated per kind (ADR-0036 §2); decimals are strings."
+      required: [changeKind, subjectType, subjectId, subjectVersion, proposedChange, reason]
+      additionalProperties: false
+      properties:
+        changeKind: { $ref: "#/components/schemas/ChangeKind" }
+        subjectType: { type: string, enum: [charter, kpi_definition, outcome_kpi, tom_canvas_cell, initiative, benefit_formula, milestone, budget_line] }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectVersion: { type: integer, minimum: 1 }
+        proposedRecordType: { type: string, enum: [kpi_version, benefit_formula_version] }
+        proposedRecordId: { $ref: "#/components/schemas/Uuid" }
+        proposedChange: { type: object, minProperties: 1, maxProperties: 20 }
+        reason: { type: string, minLength: 3, maxLength: 4000 }
+    ChangeRequestUpdate:
+      type: object
+      description: "At least one member."
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        proposedRecordId: { $ref: "#/components/schemas/Uuid" }
+        proposedChange: { type: object, minProperties: 1, maxProperties: 20 }
+        reason: { type: string, minLength: 3, maxLength: 4000 }
+        subjectVersion: { type: integer, minimum: 1 }
+    ChangeRequest:
+      type: object
+      description: "A change request to an approved record; its decision is the canonical approval (approvalId), so the original approval and snapshot stay unchanged."
+      required: [id, transformationId, code, changeKind, subjectType, subjectId, subjectVersion, proposedRecordType, proposedRecordId, proposedChange, reason, origin, materiality, materialityBasis, routePartyCode, decisionRightId, approvalId, status, raisedBy, submittedBy, submittedAt, currentImpactAssessmentId, decidedAt, appliedAt, appliedRecordType, appliedRecordId, appliedVersion, withdrawnAt, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: '^CR-[0-9]{2,}$' }
+        changeKind: { $ref: "#/components/schemas/ChangeKind" }
+        subjectType: { type: string, enum: [charter, kpi_definition, outcome_kpi, tom_canvas_cell, initiative, benefit_formula, milestone, budget_line] }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectVersion: { type: integer, minimum: 1 }
+        proposedRecordType: { type: [string, "null"], enum: [kpi_version, benefit_formula_version, null] }
+        proposedRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        proposedChange: { type: object }
+        reason: { type: string, minLength: 3, maxLength: 4000 }
+        origin: { type: string, enum: [manual, automatic] }
+        materiality: { type: [string, "null"], enum: [material, not_material, null] }
+        materialityBasis: { type: ["object", "null"] }
+        routePartyCode: { type: [string, "null"] }
+        decisionRightId: { $ref: "#/components/schemas/NullableUuid" }
+        approvalId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [draft, submitted, changes_requested, approved, rejected, withdrawn] }
+        raisedBy: { $ref: "#/components/schemas/Uuid" }
+        submittedBy: { $ref: "#/components/schemas/NullableUuid" }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        currentImpactAssessmentId: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        appliedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        appliedRecordType: { type: [string, "null"] }
+        appliedRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        appliedVersion: { type: ["integer", "null"], minimum: 1 }
+        withdrawnAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    ChangeRequestPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ChangeRequest" } }
+        nextCursor: { type: [string, "null"] }
+    ImpactItem:
+      type: object
+      description: "One affected record; a gate item names the affected submission and, when approved, the preserved decision."
+      required: [ordinal, itemType, recordType, recordId, recordCode, label, effect, gateSubmissionId, gateDecisionId, detail]
+      additionalProperties: false
+      properties:
+        ordinal: { type: integer, minimum: 1 }
+        itemType: { type: string, enum: [outcome, kpi, benefit, gate, report, formula, initiative, milestone, business_case, budget_line] }
+        recordType: { type: [string, "null"] }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        recordCode: { type: [string, "null"], minLength: 1, maxLength: 50 }
+        label: { type: string, minLength: 1, maxLength: 300 }
+        effect: { type: string, enum: [value_changes, recalculation, reapproval_required, informational] }
+        gateSubmissionId: { $ref: "#/components/schemas/NullableUuid" }
+        gateDecisionId: { $ref: "#/components/schemas/NullableUuid" }
+        detail: { type: object }
+    ImpactPreview:
+      type: object
+      description: "Computed, not stored. hiddenItemCount counts affected records outside the caller's scope (never shown as 'no impact')."
+      required: [materiality, materialityBasis, items, hiddenItemCount]
+      additionalProperties: false
+      properties:
+        materiality: { type: string, enum: [material, not_material] }
+        materialityBasis: { type: object }
+        items: { type: array, items: { $ref: "#/components/schemas/ImpactItem" } }
+        hiddenItemCount: { type: integer, minimum: 0 }
+    ImpactAssessment:
+      type: object
+      description: "Frozen at submit for one change-request version (append-only)."
+      required: [id, transformationId, changeRequestId, changeRequestVersion, itemCount, contentSha256, assessedAt, assessedBy, items]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        changeRequestId: { $ref: "#/components/schemas/Uuid" }
+        changeRequestVersion: { type: integer, minimum: 1 }
+        itemCount: { type: integer, minimum: 0 }
+        contentSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        assessedAt: { $ref: "#/components/schemas/Timestamp" }
+        assessedBy: { $ref: "#/components/schemas/Uuid" }
+        items: { type: array, items: { $ref: "#/components/schemas/ImpactItem" } }
+    ImpactAssessmentPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ImpactAssessment" } }
         nextCursor: { type: [string, "null"] }

@@ -1,6 +1,6 @@
 # P4 work split: shared rules, file ownership, contracts and integration order
 
-- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02, section §B by T-DG4-ARCH-03, section §E by T-DG4-ARCH-04, section §D by T-DG4-ARCH-05 and section §F+G by T-DG4-ARCH-06 (solution-architect), 2026-10-09.
+- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02, section §B by T-DG4-ARCH-03, section §E by T-DG4-ARCH-04, section §D by T-DG4-ARCH-05, section §F+G by T-DG4-ARCH-06 and section §H by T-DG4-ARCH-07 (solution-architect), 2026-10-09.
 - **Stage:** P4 "Execution value and sustainment" (DG4).
 - **Rule:** two tasks never edit the same file (REQ-DLV-008). Anything not listed under an owner is **frozen**; changes go through the orchestrator (p4-plan §5.3).
 - **Off-limits to every implementer** (the write guard enforces it): `tools/gates/**`, `tools/agents/**`, `.claude/**`, `docs/source/**`, `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/stages.json`, `docs/delivery/findings.json`, `docs/delivery/candidates/**`, `docs/delivery/runs/**`, `docs/delivery/test-evidence/**`, `CLAUDE.md`, `trading_agent/**`.
@@ -686,3 +686,121 @@ The route-file stubs `adoption/{routes,indicators}.ts` and `sustainment/{perform
 8. **The check events carry exactly the ADR-0031 §5.4 payload** (`adoption.check_failed` with `checkRecordType: "adoption_intervention"`; `control_check.failed` with `checkRecordType: "control_check"`), idempotency key `<event type>:<checkId>`.
 9. **Lesson search is organization-wide but scoped.** Published lessons only, business units in the caller's scope, no existence disclosure for the rest.
 10. **AUD is read-only and ADM-only users see nothing** in the transformation-scoped operations (403 on writes, 404 on reads); `searchLessons` is a read AUD may use. Slices F and G store no money.
+
+## §H. Slice H (phases, G5/G6, gate reviews and exceptions, scale, change control) — T-DG4-ARCH-07
+
+Written by T-DG4-ARCH-07 (solution-architect), 2026-10-09. Binding design: ADR-0035 (the phase catalogue and guided steps, G5/G6 criteria and evaluators, per-criterion review and Under Review, gate exceptions and the D-089 Q2 CHECK change, the G5 scale scope, conditions and scale transitions, risk dispositions, the gate outbox events and routing tasks) and ADR-0036 (change requests, materiality, T11 routing, impact preview and assessments, automatic and refused material changes, apply-on-approval with preserved originals). The shared rules S-1… of §1 bind every task below. Product gates G1–G6 are business approvals; nothing here touches DG0–DG7, and G6 approval never implies DG7.
+
+### H.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0035-p4-phases-g5-g6-exceptions-routing.md`, `ADR-0036-p4-change-control-impact-assessment.md`; correction note appended to ADR-0015 (D-089 R1) | Binding design, with the refusal codes and English texts (ADR-0035 §11, ADR-0036 §10) |
+| Migrations | `packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql`, `0052_p4_change_control.sql`, `0053_p4_gates_change_permissions.sql`, `0054_p4_gate_exception_expiry_schedule.sql` | Applied on a fresh PostgreSQL 16.13 and over a P3-populated database; every guard probed (`docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/probe-output.txt`). **Frozen.** |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (14 tables; `gate_submission_criterion.gate_exception_id`), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts`, `apps/worker/test/integration/schedules.test.ts` (the `0054` row is `unhandled` until BE-K2), `apps/api/test/integration/identity.test.ts` (TO +6 codes) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P4_GATES_CHANGE_PERMISSIONS`, `P4_GATES_CHANGE_ROLE_PERMISSIONS`; 10 codes) | Equals `0053` |
+| Lock classes | `apps/api/src/modules/platform/advisory-locks.ts` (`changeRequestSubject` 730246, `gateException` 730247; 730248 reserved), ADR-0016 §6 | Registry test green |
+| Contract | `docs/api/openapi.yaml` 1.3.0-p4: 37 operations (tags `phases`, `gate-exceptions`, `scale`, `risk-dispositions`, `change-requests`; 3 operations under the existing `gates` tag), the D-089-accepted `GateDecisionCreate.scaleScope` member (schema `GateScaleScope`), 10 `PermissionCode` values | `pnpm openapi:lint` PASS (607 operations); every earlier line unchanged (diff check: 0 lines removed; the one line inside a pre-existing schema is the `scaleScope` member) |
+| Contract-test seams | `apps/api/test/support/p4-pending-arch-07.ts` (slice aggregate; frozen), `p4-pending-be-k.ts` (6), `p4-pending-be-k2.ts` (9), `p4-pending-be-l.ts` (12), `p4-pending-be-l2.ts` (10); `p4-pending.ts` imports the slice; `p4-operations.ts` lists the 37; `contract.test.ts` pins 607 operations | §S-10 |
+| ERD §1j, data dictionary "P4 tables, slice H", permissions matrix §16 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+BE-A created the route-file stubs `workflows/{gate-exceptions,change-requests,impact,phase-steps}.ts`, their registration lines in `workflows/index.ts`, the worker stubs `apps/worker/src/{handlers,queues}/gates.ts`, and the seam files `apps/api/test/integration/contract/p4-exercises-{be-k,be-l}.ts`. **New files** this section names (`workflows/g5.ts`, `g6.ts`, `scale.ts`, `gate-reviews.ts`) get exactly one registration line each in `workflows/index.ts`, written by the named task (a named wiring line, the BE-K `GateFactsProvider` precedent of p4-plan §5.3). BE-K2 appends its exercises to `p4-exercises-be-k.ts` and BE-L2 to `p4-exercises-be-l.ts` (the BE-H2/BE-I2 precedent), so no new seam file and no `contract.test.ts` change is needed.
+
+**Recommended split for the orchestrator to decide.** p4-plan §5.1 gives slice H to BE-K and BE-L. With 37 operations, two engines and two worker consumers, this section separates BE-K2 (gate reviews and exceptions) from BE-K and BE-L2 (phases) from BE-L, the KBE-D2/BE-H2/BE-I2 precedents (D-092, D-099). If a split task is not scheduled, its parent owns the section as its second half.
+
+### H.1 BE-K — G5/G6 evaluators and facts, enabling, scale scope and transitions, risk dispositions, gate events and consumers (backend-workflow-engineer; after BE-D, BE-G, KBE-F, BE-I and KBE-E)
+
+**Owns:** `workflows/g5.ts` and `workflows/g6.ts` (the eight evaluators of ADR-0035 §2 as pure functions of the facts, with their `missing[]` messages starting with the criterion label; the G5/G6 snapshot members), their `EVALUATORS` registration lines in `workflows/criteria.ts`, the five new `GateFactsProvider` members in `workflows/g4.ts` (interface only) and their implementations as **exported functions** in the owning modules' files that BE-K creates: `raid/gate-facts.ts`, `adoption/gate-facts.ts`, `governance/gate-facts.ts`, `sustainment/gate-facts.ts`, `benefits/gate-facts.ts` (read-only queries; no other file of those modules is edited), the `server.ts` wiring lines of those members; in `workflows/gates.ts`: the G5/G6 label form of the 422 `gate_criteria_incomplete` detail, the `scaleScope` decision rules and inserts (ADR-0035 §5; 422 `gate.scale_scope_required`, `gate.scale_scope_not_applicable`, `gate.scale_scope_invalid`), the two `enqueueOutboxEvent` calls (ADR-0035 §7); `packages/shared/src/schemas/gate.ts` (the `scaleScope` member of `gateDecisionCreate` only); `workflows/scale.ts` (new: `getScaleScope`, `listScaleTransitions`, `createScaleTransition`; `listRiskDispositions`, `createRiskDisposition` (requests the `risk_disposition` approval through `requestApprovalInTx`; registers the subject provider), `getRiskDisposition`) and its registration line in `workflows/index.ts`; `packages/shared/src/schemas/gates-p4.ts` (new; the slice H gate, scale and disposition shapes) and its `schemas/index.ts` line; the `gate.submitted`/`gate.decided` lines in `packages/shared/src/schemas/events.ts` (append-only); `apps/worker/src/{handlers,queues}/gates.ts` (the two consumers of ADR-0035 §7: approver tasks, cancellation, next-phase steps and tasks, scope and condition tasks); the **G5/G6 enabling migration** under a repair-range number the orchestrator assigns (`0058`–`0069`; the `0026` pattern with a guard), and the matching edit of the DG3 catalogue test "0026: … G5 and G6 stay closed"; the first slice H block in `platform/db-errors.ts` (mappings for every `0051` constraint ADR-0035 §11 names); `test/support/p4-pending-be-k.ts`; `p4-exercises-be-k.ts`; `test/integration/workflows/{g5-g6,scale,risk-dispositions,gate-events}.test.ts`; `apps/worker/test/integration/gates.test.ts`.
+
+**Consumes:** ADR-0035 §2, §5–§9, §11; `0051`, `0053`; ADR-0015 (the gate engine; `sequenceProblem`), ADR-0021 §7 (the G4 `GateFactsProvider` pattern); ADR-0025 (`runOnce`, `createWorkItemOnce`); ADR-0026 §4 (`requestApprovalInTx`, `registerApprovalSubject`); the slice A/B/D/E/F/G tables named in ADR-0035 §2; the 6 operations in `p4-pending-be-k.ts`; the existing gate operations (no new gate path).
+
+**Requirement rows:** REQ-PB-015 (G5/G6 complete the set), REQ-PB-020, REQ-PB-021, REQ-S03-004, REQ-S04-002 (G5/G6 snapshot), REQ-S04-007, REQ-S04-008, REQ-S12-009, REQ-S12-010.
+
+**Proofs it must include:** G5 with an open High-impact risk and no approved disposition → 422 whose detail and errors list "Risk closure" (REQ-PB-020); with an approved disposition → that criterion complete; G5 configured to BO: an SP decision → 403 `gate.not_approver`, a BO decision → 201; G6 without an accepted BAU handover → 422 listing "Ownership transfer" (REQ-PB-021, REQ-S04-008); G6 approval changes no phase, closes nothing, and writes no file under `docs/delivery/` (assert the directory listing and hashes before/after); a G5 approval without `scaleScope` → 422; `scaleScope` on G4 → 422; a scale transition before G5 → 422 invalid-transition naming G5, after approval inside scope → 201, outside → 422 (REQ-S03-004, REQ-S04-007); each required approver gets exactly one `gate_decision_due` task referencing the snapshot SHA-256, a redelivered `gate.submitted` creates none, a superseding submission cancels the old tasks (REQ-S12-009); G2 approval creates the Design phase steps and their tasks once (redelivery: none), a G5 approval creates tasks only for its scope items (REQ-S12-010); editing a record after submission leaves the snapshot shown unchanged (REQ-S04-002); G1–G4 422 bodies byte-identical to DG3; AUD 403 on every write; ADM-only 403 on the G5/G6 decision.
+
+### H.2 BE-K2 — per-criterion review and Under Review, gate exceptions, the submission exception lines, the expiry scan (backend-workflow-engineer; after BE-K)
+
+**Owns:** `workflows/gate-reviews.ts` (new: `listGateSubmissionCriteria` (the nine fields per row; a covering exception), `listGateCriterionReviews`, `createGateCriterionReview` (submitted → under_review on the first review, audit)) and its registration line in `workflows/index.ts`; `workflows/gate-exceptions.ts` (`listGateExceptions`, `createGateException` (lock 730247; the `gate_exception_to_decide` work item for the configured approver), `getGateException`, `decideGateException` (`isGateApprover`, one-hop delegation, SoD, ADM-only 403), `withdrawGateException`, `revokeGateException`; the **exported** `coveringExceptionsInTx(tx, gateInstanceId, businessDate)` that `submitGate` calls); in `workflows/gates.ts` (**after** BE-K): the submission lines that record a covering exception on the criterion row and in the snapshot (ADR-0035 §4) and the decision-time 422 `gate.exception_expired`; the `gate.exception_expiry_scan` handler appended to `apps/worker/src/handlers/gates.ts` and its queue line (**after** BE-K); its shapes appended to `schemas/gates-p4.ts` (**after** BE-K); its block appended to the slice H block of `platform/db-errors.ts` (**after** BE-K); `test/support/p4-pending-be-k2.ts`; its exercises appended to `p4-exercises-be-k.ts` (**after** BE-K); `test/integration/workflows/{gate-reviews,gate-exceptions}.test.ts`; its worker test appended to `apps/worker/test/integration/gates.test.ts`.
+
+**Consumes:** ADR-0035 §3, §4, §8, §11; `0051`, `0053`, `0054`; the DG2 gate engine; BE-K's merged `gates.ts`; the 9 operations in `p4-pending-be-k2.ts`.
+
+**Requirement rows:** REQ-S04-009, REQ-S04-010, REQ-S04-012, REQ-S04-013.
+
+**Proofs it must include:** the gate page lists missing items; a submission with one missing mandatory item → 422 listing it (DG2 body unchanged for G1–G4); with an accepted unexpired exception → 201 and the snapshot's criterion entry records the exception (REQ-S04-012); a waiver without expiry or compensating action → 400 (REQ-S04-013); the requester cannot decide (403), a non-approver cannot decide (403), ADM-only → 403; after expiry (business date after `expires_on`, clock injected) the live gate view reports the criterion missing again and the scan notifies the requester and approver exactly once (a second scan: none); the first criterion review moves the gate to Under Review with an audit event; each criterion row returns all nine fields (REQ-S04-009); a direct Draft → Approved is refused and each transition writes one audit event (REQ-S04-010); AUD 403 on every write; If-Match 428/409.
+
+### H.3 BE-L — change requests, materiality, impact preview and assessments, the approval subject, the hook lines (backend-workflow-engineer; after BE-B, KBE-B, KBE-D and BE-E)
+
+**Owns:** `workflows/change-requests.ts` (`getChangeControlPolicy`, `putChangeControlPolicy`, `listChangeRequests`, `createChangeRequest` (lock 730246), `getChangeRequest`, `updateChangeRequest`, `submitChangeRequest` (materiality with decimal.js and the ADR-0025 calendar; the frozen assessment; `requestApprovalInTx` routed per ADR-0036 §4 through `routeByDecisionRight`), `withdrawChangeRequest`; the `change_request` approval subject provider (`registerApprovalSubject`) whose `onOutcome` applies the change per ADR-0036 §2 or sets `rejected`/`changes_requested`/`withdrawn`; the `MaterialChangePort` implementation), `workflows/impact.ts` (`previewChangeImpact`, `getChangeRequestImpactPreview`, `listImpactAssessments`, `getImpactAssessment`; the item derivation of ADR-0036 §5 as an exported pure function of facts), the `MaterialChangePort` **type** in `platform/material-change.ts` (new) and its `server.ts` wiring line; the **named hook lines** of ADR-0036 §6: in `kpi/benefit-formulas.ts` (the call after a new formula version is inserted), in `kpi/kpi-versions.ts` (the 422 `kpi_version.change_request_required` check in activation and the CR-apply entry point it exports), in `portfolio/milestones.ts` (the 422 `milestone.rebaseline_requires_change_request` check in `approveMilestoneDate`), in `portfolio/budget.ts` (the 422 `budget_line.rebaseline_requires_change_request` check); `packages/shared/src/schemas/change-control.ts` (new; `proposedChange` per kind) and its `schemas/index.ts` line; its block appended to the slice H block of `platform/db-errors.ts` (**after** BE-K2); `test/support/p4-pending-be-l.ts`; `p4-exercises-be-l.ts`; `test/integration/workflows/{change-requests,impact}.test.ts`; the ChangeRequest case in `apps/api/test/integration/raid/entity-group.test.ts` (ADR-0036 §11; append-only).
+
+**Consumes:** ADR-0036 (all); `0052`, `0053`; ADR-0026 §4–§5; ADR-0027 §2 (activation); ADR-0024 (formula versions); ADR-0023 (milestones); ADR-0031 §7 (budget lines); the 12 operations in `p4-pending-be-l.ts`.
+
+**Requirement rows:** REQ-S04-014, REQ-S07-015, REQ-S09-010, REQ-S16-018 (ChangeRequest case), REQ-PB-065 (the change-request half of its literal acceptance).
+
+**Proofs it must include:** changing an approved G4 benefit formula (a new version through the DG3 route) creates one change request, the DG3 response is unchanged, and the G4 decision and snapshot read back byte-identical (REQ-S04-014); a KPI target change preview lists the bound benefit and the approved G2 decision, and after approval the old KPI version is still readable (REQ-S07-015); a material date change through a request leaves `approved_date` unchanged until approval while `forecastDate` is shown separately, and a re-approval beyond a configured threshold → 422 (REQ-S09-010); a `business_scope` request is routed to the person mapped to SP (REQ-PB-065); the requester cannot approve (403/SoD); approving a request on a moved subject → 409 and nothing applied; the impact assessment of the submitted version is immutable and its SHA-256 matches; AUD 403 on every write; If-Match 428/409; one audit event per mutation; decimals as strings.
+
+### H.4 BE-L2 — the phase catalogue, workspace, guided steps, evidence and review queue (backend-workflow-engineer; after BE-L)
+
+**Owns:** `workflows/phase-steps.ts` (`listPhases`, `getPhaseWorkspace`, `listPhaseSteps`, `getPhaseStep`, `updatePhaseStep` (If-Match `"0"` creates the row), `requestPhaseStepReview` (completion rules of ADR-0035 §1 evaluated through read-only queries; the `phase_step_review` work items), `reviewPhaseStep` (re-evaluation on accept; the next-step `phase_step_enabled` item), `listPhaseStepEvidence`, `linkPhaseStepEvidence`, `removePhaseStepEvidence`); `packages/shared/src/schemas/phases.ts` (new) and its `schemas/index.ts` line; its block appended to the slice H block of `platform/db-errors.ts` (**after** BE-L); `test/support/p4-pending-be-l2.ts`; its exercises appended to `p4-exercises-be-l.ts` (**after** BE-L); `test/integration/workflows/phases.test.ts`.
+
+**Consumes:** ADR-0035 §1, §7 item 3, §8, §11; `0051`, `0053`; the slice A/B/D/E/G tables the completion rules read; the 10 operations in `p4-pending-be-l2.ts`.
+
+**Requirement rows:** REQ-PB-014, REQ-S04-001.
+
+**Proofs it must include:** `GET /phases` returns exactly six phases in order with names and purposes equal to B0021 and each objective text (REQ-PB-014); each of the six phases shows steps, required evidence, owners (Unknown when unassigned) and a review queue; a step with an unmet completion rule cannot be put in review or accepted (422 `phase_step.completion_rule_unmet`) (REQ-S04-001); the owner cannot accept their own step (403); completing every step of a phase leaves its gate `draft` (REQ-S04-002 first clause); AUD 403 on every write; If-Match 428/409.
+
+### H.5 Migrations of slice H
+
+- `0051`–`0054`: architect, all four numbers used, **frozen**. No number of the range is left free, so ARCH-08's `0055` can merge directly after them (S-12 contiguity). `0054` (the expiry-scan schedule) is written by the architect for that reason.
+- The **G5/G6 enabling** migration ships with BE-K's evaluators (ADR-0035 §2) under a repair-range number (`0058`–`0069`) that the orchestrator assigns; BE-K2, BE-L and BE-L2 have no migration number (a schema need goes in the handback, D-094).
+
+### H.6 Other slices that consume slice H
+
+- **J (ARCH-08, KBE-G):** My Work lists the slice H work-item kinds; the workspace header's "next actions" reads open phase steps; the T10 Decisions area is unaffected.
+- **K (ARCH-08, BE-M):** the downstream-impact listing of REQ-S03-006 may reuse `workflows/impact.ts`'s exported derivation (read-only).
+- **G (BE-J):** the governed closure reads the G6 instance status only (ADR-0034 §7); G6 approval closes nothing (D-089 Q4).
+- **FE-F:** G5/G6 views, the criteria review table, exceptions, scale scope, change requests and the phase workspace (`pages/gates/**`, `pages/change-requests/**`, the phase workspace page); EN/AR keys for every ADR-0035 §11 and ADR-0036 §10 code (requested from FE-A).
+- **QA-B:** A08 (incl. G5/G6) uses the proofs above.
+
+### H.7 Integration order
+
+1. BE-K (after BE-D, BE-G, KBE-F, BE-I, KBE-E; with its repair-range enabling migration).
+2. BE-K2 (after BE-K: `gates.ts`, the worker `gates.ts`, `schemas/gates-p4.ts`, the db-errors block and `p4-exercises-be-k.ts` are sequential edits).
+3. BE-L (after BE-B, KBE-B, KBE-D, BE-E; independent of BE-K/BE-K2 except the shared db-errors block, appended after BE-K2).
+4. BE-L2 (after BE-L: `p4-exercises-be-l.ts` and the db-errors block).
+5. FE-F (after BE-J, BE-K, BE-K2, BE-L, BE-L2).
+
+### H.8 Requirement → owner (the 18 rows of slice H)
+
+| Requirement | Architect (this task) | Implementer half |
+|---|---|---|
+| REQ-PB-014 | `phase_definition` seed (S01) | BE-L2 (`listPhases`, workspace) |
+| REQ-PB-015 | G5/G6 criteria (S03); review table | BE-K (G5/G6), BE-K2 (reviews) |
+| REQ-PB-020 | G5 criteria, `risk_disposition` (RD01–RD04) | BE-K |
+| REQ-PB-021 | G6 criteria (S03) | BE-K |
+| REQ-S03-004 | `scale_transition` guards (SC02, SC06–SC08) | BE-K |
+| REQ-S04-001 | `phase_step*` tables and guards (PS01–PS16) | BE-L2 |
+| REQ-S04-002 | snapshot unchanged (DG2 trigger); CR20 | BE-K (G5/G6 snapshot), BE-L2 (steps never move a gate) |
+| REQ-S04-007 | scope, conditions, transitions (SC01–SC10) | BE-K |
+| REQ-S04-008 | G6 criteria; `next_phase` NULL | BE-K |
+| REQ-S04-009 | `gate_criterion_review` (GR01–GR08) | BE-K2 |
+| REQ-S04-010 | the `under_review` edge specified (ADR-0035 §3) | BE-K2 |
+| REQ-S04-012 | `gate_exception`, Q2 CHECK (GE*, GC01–GC06, G06) | BE-K2 |
+| REQ-S04-013 | five NOT NULL fields, expiry semantics, scan schedule (`0054`) | BE-K2 |
+| REQ-S04-014 | `change_request`, `impact_assessment*` (CR01–CR20) | BE-L |
+| REQ-S07-015 | KPI kinds, impact derivation (ADR-0036 §5) | BE-L |
+| REQ-S09-010 | `change_control_policy`, `schedule_rebaseline` (CR18, CR19) | BE-L |
+| REQ-S12-009 | `gate_decision_due` kind; event payloads (ADR-0035 §7) | BE-K |
+| REQ-S12-010 | `phase_step_enabled`, `scale_scope_enabled`, `gate_condition_due` kinds | BE-K |
+
+None of the 18 rows is complete at this task's end: each needs its implementer half.
+
+### H.9 What the implementers of slice H must know
+
+1. **Shared rules S-1… apply** (free text and strict UTF-8; `config.consumes` = the request media type; commit-time re-authorisation; validation; `If-Match` 428/409; one audit event per mutation; no remote I/O inside a transaction; a test for each; decimals as strings; Unknown never 0 or green; bilingual texts translated at render time; ports below 32768; locale unset and `C.UTF-8`).
+2. **G1–G4 are byte-stable.** Every DG2/DG3 response for G1–G4 stays identical; the label form of the 422 detail and every slice H refusal apply to G5/G6 or to new paths only. The only DG2 invariant change is the D-089 Q2 CHECK, already in `0051`.
+3. **No job approves anything.** The consumers create tasks and enable steps; exceptions, dispositions, scale scopes and change requests are decided by people; the CHECKs in `0051`/`0052` refuse an outcome without a person's decision.
+4. **Exceptions are per criterion,** not `gate_dispensation` rows; `gate_dispensation` and its DG3 routes are not touched (ADR-0035 §4).
+5. **Coverage is a date comparison** in the transformation's timezone (business date ≤ `expires_on`); the expiry scan only notifies.
+6. **Change requests are decided through `POST /approvals/{id}/decision`** (ADR-0026); there is no separate decide path. Apply happens in the subject provider's `onOutcome`, in the decision transaction, and never edits `gate_*` rows.
+7. **Materiality defaults to "material"** when no threshold is configured; the two direct-edit refusals of ADR-0036 §3 apply only when a threshold is configured, so DG3 `approve-date` behaviour on existing data is unchanged.
+8. **Interpretations for the orchestrator to confirm** (ADR text; not reopen candidates unless stated): (a) "High-impact" = `raid_entry.impact = 'high'` is the G5 materiality threshold; (b) "required approvers" = the configured user, else every active holder of the approver role with `gate.decide` on the transformation; (c) the KPI-version activation refusal (ADR-0036 §6 item 2) is an additive 422 on a P4 operation (D-091 (2) pattern); (d) phase-step required evidence, role defaults and completion rules are an architect interpretation of M0116/M0118–M0123; (e) "reports" in the impact preview are the T10 areas until a report entity exists.

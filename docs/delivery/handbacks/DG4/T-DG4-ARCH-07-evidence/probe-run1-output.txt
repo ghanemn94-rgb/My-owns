@@ -1,0 +1,29 @@
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 55 (0001_identity_access.sql .. 0058_p4_approval_reminder_kinds.sql)
+PASS  G00 migration ids below the repair range are contiguous 1..n and 0051-0054 are present (0058+ is the repair range, D-094)  -- last below 0058: 54; repair: 58
+PASS  G01 fresh database: 0001..last apply  -- applied 55: 0050_p4_sustainment_schedules.sql, 0051_p4_phases_gates_g5_g6_exceptions.sql, 0052_p4_change_control.sql, 0053_p4_gates_change_permissions.sql, 0054_p4_gate_exception_expiry_schedule.sql, 0058_p4_approval_reminder_kinds.sql
+error: column "gate_exception_id" of relation "gate_submission_criterion" does not exist
+    at /home/user/My-owns/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async ins (file:///home/user/My-owns/docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/probe.ts:128:3)
+    at async submit (file:///home/user/My-owns/docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/probe.ts:187:5)
+    at async main (file:///home/user/My-owns/docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/probe.ts:254:15) {
+  length: 156,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '149',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1066',
+  routine: 'checkInsertTargets'
+}

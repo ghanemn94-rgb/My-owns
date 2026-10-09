@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql; P4 slices F and G: 0049_p4_adoption_sustainment_permissions.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql; P4 slices F and G: 0049_p4_adoption_sustainment_permissions.sql; P4 slice H: 0053_p4_gates_change_permissions.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -181,6 +181,25 @@ export const P4_ADOPTION_SUSTAINMENT_PERMISSIONS = {
   "transition_decision.propose": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 slice H catalogue (phases and phase steps, gate reviews and exceptions, G5 scale, risk dispositions, change
+ * control; ADR-0035 §8, ADR-0036 §7). Seeded by migration 0053. One business_approval code: gate_exception.decide,
+ * held only by SP and BO (the roles that already hold gate.decide). Change requests and risk dispositions are decided
+ * through the canonical approval (approval.decide). AUD gets nothing here (every slice H read is transformation.read).
+ */
+export const P4_GATES_CHANGE_PERMISSIONS = {
+  "phase_step.manage": "write",
+  "phase_step.progress": "write",
+  "phase_step.review": "write",
+  "gate.review": "write",
+  "gate_exception.request": "write",
+  "gate_exception.decide": "business_approval",
+  "scale.transition": "write",
+  "risk_disposition.propose": "write",
+  "change_request.raise": "write",
+  "change_control.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -191,6 +210,7 @@ export const PERMISSIONS = {
   ...P4_RAID_PERMISSIONS,
   ...P4_GOVERNANCE_PERMISSIONS,
   ...P4_ADOPTION_SUSTAINMENT_PERMISSIONS,
+  ...P4_GATES_CHANGE_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -463,6 +483,39 @@ export const P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS = {
   AUD: ["lesson.search"],
 } as const satisfies Record<string, readonly (keyof typeof P4_ADOPTION_SUSTAINMENT_PERMISSIONS)[]>;
 
+/** Slice H role defaults (0053). No technical admin; nothing for AUD. */
+export const P4_GATES_CHANGE_ROLE_PERMISSIONS = {
+  SP: ["phase_step.review", "gate.review", "gate_exception.decide"],
+  TL: [
+    "phase_step.manage",
+    "phase_step.progress",
+    "gate_exception.request",
+    "scale.transition",
+    "risk_disposition.propose",
+    "change_request.raise",
+    "change_control.configure",
+  ],
+  BO: [
+    "phase_step.progress",
+    "phase_step.review",
+    "gate.review",
+    "gate_exception.decide",
+    "risk_disposition.propose",
+    "change_request.raise",
+  ],
+  WL: ["phase_step.progress", "risk_disposition.propose", "change_request.raise"],
+  FIN: ["phase_step.progress", "phase_step.review", "gate.review", "change_request.raise"],
+  TO: [
+    "phase_step.manage",
+    "phase_step.progress",
+    "phase_step.review",
+    "gate.review",
+    "change_request.raise",
+    "change_control.configure",
+  ],
+  KDS: ["phase_step.progress", "change_request.raise"],
+} as const satisfies Record<string, readonly (keyof typeof P4_GATES_CHANGE_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -476,6 +529,7 @@ export const ROLES = {
       ...P4_KPI_ROLE_PERMISSIONS.SP,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.SP,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SP,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -495,6 +549,7 @@ export const ROLES = {
       ...P4_RAID_ROLE_PERMISSIONS.TL,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.TL,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TL,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -511,6 +566,7 @@ export const ROLES = {
       ...P4_RAID_ROLE_PERMISSIONS.BO,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.BO,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.BO,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -525,6 +581,7 @@ export const ROLES = {
       ...P4_RAID_ROLE_PERMISSIONS.WL,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.WL,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.WL,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -540,6 +597,7 @@ export const ROLES = {
       ...P4_RAID_ROLE_PERMISSIONS.FIN,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.FIN,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.FIN,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -558,6 +616,7 @@ export const ROLES = {
       ...P4_RAID_ROLE_PERMISSIONS.TO,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.TO,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TO,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -571,6 +630,7 @@ export const ROLES = {
       ...P4_KPI_ROLE_PERMISSIONS.KDS,
       ...P4_BENEFIT_ROLE_PERMISSIONS.KDS,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.KDS,
+      ...P4_GATES_CHANGE_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {

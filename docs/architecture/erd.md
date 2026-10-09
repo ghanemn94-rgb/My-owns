@@ -1320,7 +1320,7 @@ erDiagram
 | **Issue** | `raid_entry` (`entry_type = 'issue'`) | `id` (`I-nn`) | `owner_user_id` | `raid.edit` | `status` | yes | raid |
 | **Action** | `action_item` (0017, extended by 0041) | `id` | `owner_user_id` | `action.edit` (TL, TO); `action.update_own` (owner) | `status` (open, in_progress, done, cancelled) | yes | workflows (DG2 paths); raid (P4 paths) |
 | **Decision** | `decision` (0017; one decision model, kinds design, gate, executive) | `id` (`code` D-nn, GD-nn, DEC-nn) | `owner_user_id` | `decision.edit`, `decision.decide` (DG2); T16 slice D | `status` (open, decided, deferred, cancelled) | yes | workflows; governance (T16) |
-| **ChangeRequest** | not yet built: slice H (ARCH-07, migrations 0051–0054) | — | — | — | — | — | workflows (BE-L) |
+| **ChangeRequest** | `change_request` (slice H, T-DG4-ARCH-07, `0052`; see §1j.3) | `id` (`CR-nn`) | `raised_by` | `change_request.raise`; approval provider | `status` (draft, submitted, changes_requested, approved, rejected, withdrawn) | yes | workflows (BE-L) |
 | **Approval** | `approval` (0031, D-089 Q10) | `id` | `requested_by`; assignee party/user/group | `approval.request`; `approval.decide` (SP, BO, FIN) | `status` (pending, changes_requested, deferred, approved, rejected, withdrawn) | yes | workflows |
 | RAID Dependency entry (PB-078) | `dependency` (0017/0022, + `impact` 0041) via `raid_register` | `id` (`DEP-nn`) | `owner_user_id` | `raid.edit` + `dependency.edit`, or T08 | `status` (open, at_risk, resolved, archived) | yes | workflows (T08); raid (through the T08 port) |
 | Corrective-action case (PB-085, S12-016) | `corrective_case` (+ `corrective_signal`, `corrective_action_rule`) | `id` (`CA-nn`) | `owner_user_id` | worker consumers; `corrective_action.manage` (TL, BO, FIN) | `status` (open, in_progress, closed) | yes (signals append-only) | raid / worker |
@@ -1466,6 +1466,69 @@ Columns added to existing tables: `initiative` (`delivery_completed_at`, `delive
 | Closure (PB-009, S03-003) | `closure_record` | `id` (one per subject) | `closed_by` | `initiative.close`, `transformation.close` (TL) | — | append-only | sustainment |
 
 HealthAssessment (M0327) is not built in DG4 (ADR-0034 §13).
+
+## 1j. P4 physical model, slice H (migrations 0051–0054, DG4)
+
+Phases, guided phase steps, G5 Scale and G6 Sustain, per-criterion gate review, gate exceptions (waivers), the approved scale scope and scale transitions, risk dispositions (ADR-0035) and change control with impact assessment (ADR-0036). G1–G6 are business approvals inside the product; nothing here touches DG0–DG7. Column-level detail: `docs/architecture/data-dictionary.md` ("P4 tables, slice H"), generated from the migrated catalogue.
+
+### 1j.1 Phases, gates, exceptions and scale — `workflows` module and worker
+
+```mermaid
+erDiagram
+    phase_definition ||--o{ phase_step_definition : "guided steps (M0118-M0123 clauses)"
+    phase_definition }o--|| gate_definition : "phase gate G1..G6"
+    transformation ||--o{ phase_step : "progress per step (no row = not started)"
+    phase_step }o--|| phase_step_definition : "step (key, phase)"
+    phase_step }o--o| gate_decision : "enabled by the approving gate decision"
+    phase_step ||--o{ phase_step_evidence : "evidence links"
+    phase_step_evidence }o--|| evidence : links
+    gate_definition ||--o{ gate_criterion_definition : "criteria (G5/G6 rows added)"
+    gate_submission ||--o{ gate_submission_criterion : "frozen completeness"
+    gate_submission_criterion }o--o| gate_exception : "covering exception (D-089 Q2)"
+    gate_submission ||--o{ gate_criterion_review : "per-criterion reviews (append-only)"
+    gate_criterion_review }o--o| raid_entry : "risk"
+    gate_instance ||--o{ gate_exception : "exceptions per mandatory criterion"
+    gate_exception }o--|| gate_criterion_definition : criterion
+    gate_decision ||--o{ gate_decision_scale_scope : "approved G5 scope (initiative x business unit)"
+    gate_decision ||--o{ gate_decision_condition : "G5 conditions (owner, deadline)"
+    gate_decision_scale_scope }o--|| initiative : initiative
+    gate_decision_scale_scope }o--|| business_unit : "business unit"
+    gate_decision ||--o{ scale_transition : "authorizes"
+    scale_transition }o--|| initiative : scaled
+    scale_transition }o--|| business_unit : into
+    raid_entry ||--o{ risk_disposition : "risk dispositions (append-only)"
+    risk_disposition ||--o| approval : "canonical approval (type risk_disposition)"
+```
+
+### 1j.2 Change control — `workflows` module
+
+```mermaid
+erDiagram
+    transformation ||--o| change_control_policy : "materiality thresholds (NULL = every change material)"
+    transformation ||--o{ change_request : "CR-nn (one open per subject)"
+    change_request }o--o| transformation_decision_right : "T11 route"
+    change_request ||--o| approval : "canonical approval (type change_request) = the reapproval"
+    change_request ||--o{ impact_assessment : "one frozen per submitted version"
+    change_request }o--o| impact_assessment : "current assessment"
+    impact_assessment ||--o{ impact_assessment_item : "affected outcomes, KPIs, benefits, gates, reports, formulas"
+    impact_assessment_item }o--o| gate_submission : "affected submission (snapshot unchanged)"
+    impact_assessment_item }o--o| gate_decision : "preserved approval"
+```
+
+`change_request.subject_id` is polymorphic over `charter`, `kpi_definition`, `outcome_kpi`, `tom_canvas_cell`, `initiative`, `benefit_formula`, `milestone` and `budget_line` (CHECK `change_request_kind_subject`); `proposed_record_id` names a draft `kpi_version` or a `benefit_formula_version`. Columns added to existing tables: `gate_submission_criterion.gate_exception_id` (with the D-089 Q2 CHECK change).
+
+### 1j.3 P4 entity register (slice H) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Phase (PB-014; S16-012 increment) | `phase_definition` (seed) | `id` (`code`) | — | seed | — | — | workflows |
+| Phase step (S04-001) | `phase_step_definition` (seed); `phase_step` (+ `phase_step_evidence`) | `id` (`step_key` per transformation) | `owner_user_id` | `phase_step.manage` (TL, TO); `phase_step.progress` (owner); `phase_step.review` (SP, BO, FIN, TO); worker (enable) | `status` (not_started, in_progress, in_review, complete, returned) | yes | workflows / worker |
+| Gate criterion review (S04-009) | `gate_criterion_review` | `id` (`review_no` per submission and criterion) | `reviewer_user_id` | `gate.review` (SP, BO, FIN, TO) | — | append-only | workflows |
+| Gate exception / waiver (S04-012, S04-013) | `gate_exception` | `id` | `requested_by`; approver `decided_by` | `gate_exception.request` (TL); `gate_exception.decide` (SP, BO) | `status` (pending, accepted, rejected, withdrawn, revoked) | yes | workflows / worker |
+| G5 scale scope and conditions (S04-007, S12-010) | `gate_decision_scale_scope`; `gate_decision_condition` | `id` | the G5 decider; condition `owner_user_id` | the G5 decision (`gate.decide`) | — | append-only | workflows |
+| Scale transition (S03-004) | `scale_transition` | `id` (one per initiative and business unit) | `transitioned_by` | `scale.transition` (TL) | — | append-only | workflows |
+| Risk disposition (PB-020) | `risk_disposition` | `id` | `created_by`; `residual_owner_user_id` | `risk_disposition.propose` (TL, BO, WL); `approval.decide` | its approval's status | 1 (append-only) | workflows |
+| **ChangeRequest** (S16-018) | `change_request` (+ `impact_assessment`, `impact_assessment_item`, `change_control_policy`) | `id` (`CR-nn`) | `raised_by` | `change_request.raise` (TL, BO, WL, FIN, TO, KDS); approval provider; `change_control.configure` (TL, TO) | `status` (draft, submitted, changes_requested, approved, rejected, withdrawn) | yes | workflows |
 
 ## 2. Conceptual model, all §16 entity groups
 
@@ -1662,7 +1725,7 @@ erDiagram
 | Risk, Assumption, Issue | `raid_entry` (T15 typed rows, `entry_type`; T-DG4-ARCH-04 built one typed table instead of the three planned ones, ADR-0031 §1; see §1g) | P4 |
 | Action | `action_item` (also corrective actions) | **P2** (workshop actions), P3/P4 |
 | Decision | `decision` + `decision_option`: **the one decision model** (T04/T11/T16/gate/funding) | **P2** (design + gate decisions), P4 |
-| ChangeRequest | `change_request` (slice H, ARCH-07; not yet built at T-DG4-ARCH-04) | P4 |
+| ChangeRequest | `change_request` (slice H, T-DG4-ARCH-07, `0052`) | P4 |
 | Approval | P2: `gate_decision` (approver basis, submission number, rationale, timestamp; SoD). Generic `approval`: P4 | **P2** (gates), P4 |
 
 ### 2.9 Governance forums and meetings (REQ-S16-019; DG4)

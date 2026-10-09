@@ -68,6 +68,12 @@ export const ADVISORY_LOCK_CLASSES = {
   bauHandover: 730243,
   /** The closure of one initiative or transformation (sustainment: closeInitiative, closeTransformation; one closure per subject is also held by the unique indexes closure_record_initiative_key and closure_record_transformation_key). Key: "initiative:<initiativeId>" or "transformation:<transformationId>". */
   closure: 730244,
+  // P4 block of T-DG4-ARCH-07 (730246-730248; p4-plan §4, ADR-0035 §9, ADR-0036 §8). 730248 is RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** The change requests of one subject record (workflows change requests: raise, the automatic material-change hook and apply; one open request per subject is also held by the unique index change_request_one_open_per_subject). Key: "<subjectType>:<subjectId>". */
+  changeRequestSubject: 730246,
+  /** The exceptions of one gate instance (workflows gate exceptions: request, decide, revoke, and gate submission when it records a covering exception; one pending exception per criterion is also held by the unique index gate_exception_one_pending_key). Key: "<gateInstanceId>". */
+  gateException: 730247,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

@@ -624,3 +624,50 @@ Legend as in 8.3. **champion** = only as the active champion of the group; **rec
 - **Technical admins:** ADM-only users hold no `transformation.read`, so the transformation-scoped operations answer 404; `acceptBauHandover` and `returnBauHandover` answer **403** through the S10-003 helper (`access/technical-admin.ts`, D-094) because they are approval endpoints.
 - **Record-level rules:** holding the permission is necessary but not sufficient where the table says champion, receiving, assignee, invited or own (exact 403 codes in ADR-0033 §10 and ADR-0034 §12).
 - **Worker:** the indicator consumer, the review scan and the control-check scan act as the service actor; they hold no permission and never accept, approve, complete or close anything.
+
+## 16. P4 implementation, slice H (DG4): phases and phase steps, G5/G6, gate reviews and exceptions, scale, risk dispositions and change control permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-07 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the guided phase steps and review queue, per-criterion gate reviews, gate exceptions (waivers), the G5 scale scope and scale transitions, risk dispositions and change requests (ADR-0035, ADR-0036). G5/G6 submission and decision reuse the DG2 codes `gate.submit`, `gate.configure` and `gate.decide`; change requests and risk dispositions are decided with `approval.decide` (§11, ADR-0026). The seed is migration `0053_p4_gates_change_permissions.sql`, equal to `P4_GATES_CHANGE_PERMISSIONS` / `P4_GATES_CHANGE_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. G1–G6 decisions, exception decisions and change-request approvals are business decisions in the product; product G6 never implies the engineering gate DG7. No engineering agent, seed or job approves a gate, an exception, a disposition or a change.
+
+### 16.1 P4 permission catalogue (slice H)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `phase_step.manage` | write | Assign phase-step owners and start steps | TL, TO |
+| `phase_step.progress` | write | Link evidence to and request review of a step one owns | TL, BO, WL, FIN, TO, KDS |
+| `phase_step.review` | write | Accept or return a step in the review queue (never one's own) | SP, BO, FIN, TO |
+| `gate.review` | write | Record a per-criterion review of a pending gate submission (not one's own) | SP, BO, FIN, TO |
+| `gate_exception.request` | write | Request an exception (waiver) for a missing mandatory criterion | TL |
+| `gate_exception.decide` | **business_approval** | Accept, reject or revoke an exception, as the gate's configured approver only, never the requester | SP, BO |
+| `scale.transition` | write | Scale an initiative into a business unit inside the approved G5 scope | TL |
+| `risk_disposition.propose` | write | Propose a disposition of an open risk for approval | TL, BO, WL |
+| `change_request.raise` | write | Raise, edit, submit and withdraw change requests (requester, TL or TO) | TL, BO, WL, FIN, TO, KDS |
+| `change_control.configure` | configure | Set the transformation's materiality thresholds | TL, TO |
+
+### 16.2 Per-entity rights in P4 (slice H)
+
+Legend as in 8.3. **owner** = only as the step's owner; **≠owner** = never on a step the caller owns or asked to review; **≠submitter** = never on a submission the caller submitted; **approver** = only as the gate's configured approver (or a delegate, ADR-0015); **requester** = only the request's requester (TL and TO may also edit, submit or withdraw a change request); **assignee** = only as the routed approval assignee. Every cell is checked server-side by the one policy function and re-authorised at commit.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Phases and step definitions (`phase_definition`, `phase_step_definition`; seed) | V | V | V | V | V | V | V | V | V | V | V | — |
+| Phase steps (`phase_step`): assign owner, start | V | C E | V | V | V | C E | V | V | V | V | V | — |
+| Phase steps: link evidence, request review (`phase_step_evidence`) | V | owner | owner | owner | owner | owner | owner | V | V | V | V | — |
+| Phase steps: accept / return | ≠owner | V | ≠owner | V | ≠owner | ≠owner | V | V | V | V | V | — |
+| Gate criterion reviews (`gate_criterion_review`; append-only) | ≠submitter | V | ≠submitter | V | ≠submitter | ≠submitter | V | V | V | V | V | — |
+| Gate exceptions (`gate_exception`): request, withdraw | V | C requester | V | V | V | V | V | V | V | V | V | — |
+| Gate exceptions: accept, reject, revoke | approver | V | approver | V | V | V | V | V | V | V | V | 403 |
+| G5 scale scope and conditions (`gate_decision_scale_scope`, `gate_decision_condition`; with the G5 decision) | approver | V | approver | V | V | V | V | V | V | V | V | 403 |
+| Scale transitions (`scale_transition`; append-only) | V | C | V | V | V | V | V | V | V | V | V | — |
+| Risk dispositions (`risk_disposition`): propose | V | C | C | C | V | V | V | V | V | V | V | — |
+| Risk dispositions: decide (`approval.decide`) | assignee | V | assignee | V | assignee | V | V | V | V | V | V | 403 |
+| Change requests (`change_request`, `impact_assessment*`): raise, edit, submit, withdraw | V | C E | C requester | C requester | C requester | C E | C requester | V | V | V | V | — |
+| Change requests: decide (`approval.decide`) | assignee | V | assignee | V | assignee | V | V | V | V | V | V | 403 |
+| Materiality policy (`change_control_policy`) | V | E | V | V | V | E | V | V | V | V | V | — |
+
+- **AUD (read-only auditor):** every mutating slice H operation returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. BE-K, BE-K2, BE-L and BE-L2 test this on each of their operations (p4-work-split S-4).
+- **Technical admins:** ADM-only users hold no `transformation.read`, so the transformation-scoped operations answer 404, except the approval endpoints (`decideGateException`, `revokeGateException`, the G5 decision, `POST /approvals/{id}/decision`), which answer **403** through the S10-003 helper (`access/technical-admin.ts`, D-094).
+- **Record-level rules:** holding the permission is necessary but not sufficient where the table says owner, ≠owner, ≠submitter, approver, requester or assignee (exact codes in ADR-0035 §11 and ADR-0036 §10).
+- **Worker:** the `gate.submitted` and `gate.decided` consumers and the exception expiry scan act as the service actor; they hold no permission and never approve, accept, complete or scale anything.

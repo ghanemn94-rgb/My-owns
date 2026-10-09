@@ -1,0 +1,96 @@
+port-policy: PostgreSQL listening on port 23702 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 55 (0001_identity_access.sql .. 0058_p4_approval_reminder_kinds.sql)
+PASS  G00 migration ids below the repair range are contiguous 1..n and 0051-0054 are present (0058+ is the repair range, D-094)  -- last below 0058: 54; repair: 58
+PASS  G01 fresh database: 0001..last apply  -- applied 55: 0050_p4_sustainment_schedules.sql, 0051_p4_phases_gates_g5_g6_exceptions.sql, 0052_p4_change_control.sql, 0053_p4_gates_change_permissions.sql, 0054_p4_gate_exception_expiry_schedule.sql, 0058_p4_approval_reminder_kinds.sql
+PASS  G02 P3 database populated (0001-0027, a synthetic transformation with a G1 submission)  -- applied 27
+PASS  G03 P4 over the P3 database: 0028..last apply  -- applied 28: 0050_p4_sustainment_schedules.sql, 0051_p4_phases_gates_g5_g6_exceptions.sql, 0052_p4_change_control.sql, 0053_p4_gates_change_permissions.sql, 0054_p4_gate_exception_expiry_schedule.sql, 0058_p4_approval_reminder_kinds.sql
+PASS  G04 the existing DG2 submission criterion keeps its values; the new gate_exception_id is NULL  -- [{"mandatory":true,"completeness":"complete","gate_exception_id":null}]
+PASS  G05 G1-G4 keep their 24 criteria; G1-G4 stay enabled and G5/G6 stay closed after 0051 (enabling ships with the evaluators)  -- [{"code":"G1","submission_enabled":true},{"code":"G2","submission_enabled":true},{"code":"G3","submission_enabled":true},{"code":"G4","submission_enabled":true},{"code":"G5","submission_enabled":false},{"code":"G6","submission_enabled":false}]
+FAIL  G06 on the upgraded P3 database a mandatory incomplete criterion without an exception is still refused (DG2 rule kept)  -- 23505 gate_instance_gate_key duplicate key value violates unique constraint "gate_instance_gate_key"
+PASS  S01 exactly six phases in order with B0021 names, purposes and key outputs verbatim; gates G1..G6; objectives present; Arabic provisional  -- ["diagnose","define","design","mobilize","transform","realize"]
+PASS  S02 25 step definitions: Diagnose 5, Define 3, Design 4, Mobilize 5, Transform 4, Realize 4; Transform/Realize use domain completion rules  -- {"define":"3:evidence_linked","design":"4:evidence_linked","diagnose":"5:evidence_linked","mobilize":"5:evidence_linked","realize":"4:benefit_validated,corrective_cases_owned,handover_accepted,improvement_backlog_present","transform":"4:evidence_linked,kpi_actual_accepted,meeting_held,raid_register_present"}
+FAIL  S03 G5 and G6 each have four mandatory criteria labelled verbatim from B0023 (incl. 'Risk closure' and 'Ownership transfer')  -- ["g5.adoption","g5.decision_log","g5.performance_evidence","g5.risk_closure","g6.benefits_evidence","g6.controls","g6.improvement_backlog","g6.ownership_transfer"]
+PASS  S04 ten slice H permissions; gate_exception.decide is business_approval held by BO and SP only; no technical admin and no AUD holds any  -- ["BO,SP",0]
+PASS  S05 seven work-item kinds, the change_request and risk_disposition approval types, and the audited daily expiry scan (Asia/Riyadh)  -- [7,[{"code":"change_request","subject_table":"change_request"},{"code":"risk_disposition","subject_table":"risk_disposition"}],[{"cron":"30 0 * * *","timezone":"Asia/Riyadh","audits":1}]]
+PASS  S06 a technical admin cannot be granted gate_exception.decide (0001 SoD trigger)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission gate_exception.decide (separation of duties)
+PASS  S07 mth_app cannot write the phase or step catalogue (SELECT only)  -- 42501 permission denied for table phase_step_definition
+PASS  PS01 a step is created not_started with a named owner (audited)  -- 01990000-0000-7000-8000-00000000006b
+PASS  PS02 a step without its audit event fails at COMMIT (deferred audit-coverage constraint)  -- 23000 phase_step_audit_required no audit_event for phase_step 01990000-0000-7000-8000-00000000006d at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  PS03 a step cannot be created complete  -- 23514 phase_step_status_step phase_step: a new step starts not_started or in_progress, not complete
+PASS  PS04 the step key must belong to the phase (composite FK to phase_step_definition)  -- 23503 phase_step_definition_fkey insert or update on table "phase_step" violates foreign key constraint "phase_step_definition_fkey"
+PASS  PS05 not_started -> complete is refused (state machine)  -- 23514 phase_step_status_step phase_step: not_started -> complete is not an allowed transition
+PASS  PS06 not_started -> in_progress  -- in_progress
+PASS  PS07 a step with an unmet completion rule cannot enter review (completion_check.met = false)  -- 23514 phase_step_in_review_checked new row for relation "phase_step" violates check constraint "phase_step_in_review_checked"
+PASS  PS08 an update that does not step the version by 1 is refused  -- 23514 phase_step_version_step phase_step: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  PS09 in_progress -> in_review with a met completion check  -- in_review
+PASS  PS10 the owner cannot accept their own step (reviewer separate from owner and requester)  -- 23514 phase_step_reviewer_separate new row for relation "phase_step" violates check constraint "phase_step_reviewer_separate"
+PASS  PS11 a return needs a note  -- 23514 phase_step_returned_note new row for relation "phase_step" violates check constraint "phase_step_returned_note"
+PASS  PS12 the owner cannot change while the step is in review  -- 23514 phase_step_owner_locked_in_review phase_step 01990000-0000-7000-8000-00000000006b: the owner cannot change while the step is in review
+PASS  PS13 another person accepts: in_review -> complete  -- complete
+PASS  PS14 a complete step is final  -- 23514 phase_step_complete_final phase_step 01990000-0000-7000-8000-00000000006b: a complete step is final
+PASS  PS15 evidence cannot be linked to a complete step  -- 23514 phase_step_evidence_step_open phase_step_evidence: the step is complete; its evidence is frozen
+PASS  PS16 evidence links to an open step, once while active; removal is recorded, not deleted  -- 01990000-0000-7000-8000-00000000007a
+PASS  GR01 the submitter cannot review their own submission (SoD)  -- 42501 gate_criterion_review_not_submitter gate_criterion_review: the submitter cannot review their own submission (separation of duties)
+PASS  GR02 'meets with conditions' needs an open condition  -- 23514 gate_criterion_review_condition_required new row for relation "gate_criterion_review" violates check constraint "gate_criterion_review_condition_required"
+PASS  GR03 a review without its audit event fails at COMMIT  -- 23000 gate_criterion_review_audit_required no audit_event for gate_criterion_review 01990000-0000-7000-8000-000000000088 at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  GR04 a criterion that is not in the submission cannot be reviewed  -- 23514 gate_criterion_review_criterion_of_submission gate_criterion_review: g6.controls is not a criterion of submission 01990000-0000-7000-8000-00000000007f
+PASS  GR05 a reviewer records all six review fields (with the criterion, required evidence and completeness: nine per row)  -- 9 of 9 non-null
+PASS  GR06 review numbers are sequential per criterion (a skipped number is refused)  -- 23514 gate_criterion_review_no_sequence gate_criterion_review: review_no must be the next number for this criterion
+PASS  GR07 reviews are append-only (UPDATE refused)  -- 42501 gate_criterion_review is append-only: UPDATE is not allowed
+PASS  GR08 reviews are append-only (DELETE refused)  -- 42501 gate_criterion_review is append-only: DELETE is not allowed
+PASS  GE01 an exception without a compensating action is refused  -- 23502 null value in column "compensating_action" of relation "gate_exception" violates not-null constraint
+PASS  GE02 an exception without an expiry is refused  -- 23502 null value in column "expires_on" of relation "gate_exception" violates not-null constraint
+PASS  GE03 an exception names a mandatory criterion of its own gate  -- 23514 gate_exception_mandatory_criterion gate_exception: g4.roadmap is not a mandatory criterion of G5
+PASS  GE04 an exception without its audit event fails at COMMIT  -- 23000 gate_exception_audit_required no audit_event for gate_exception 01990000-0000-7000-8000-000000000092 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  GE05 an exception records reason, scope, compensating action (with owner) and expiry; it starts pending  -- 01990000-0000-7000-8000-000000000093
+PASS  GE06 a second pending exception for the same criterion is refused  -- 23505 gate_exception_one_pending_key duplicate key value violates unique constraint "gate_exception_one_pending_key"
+PASS  GE07 the requester cannot accept their own exception (SoD)  -- 23514 gate_exception_decider_not_requester new row for relation "gate_exception" violates check constraint "gate_exception_decider_not_requester"
+PASS  GE08 reason, scope, expiry and compensating action are fixed once requested  -- 23514 gate_exception_content_immutable gate_exception 01990000-0000-7000-8000-000000000093: reason, scope, expiry and compensating action are fixed once requested
+PASS  GE09 another person (the approver) accepts it  -- accepted
+PASS  GE10 accepted -> pending is refused (state machine)  -- 23514 gate_exception_status_step gate_exception: accepted -> pending is not an allowed transition
+PASS  GE11 a revocation needs its reason  -- 23514 gate_exception_revoked_complete new row for relation "gate_exception" violates check constraint "gate_exception_revoked_complete"
+PASS  GE12 the expiry notification is recorded once  -- 23514 gate_exception_expiry_notified_once gate_exception 01990000-0000-7000-8000-000000000093: the expiry notification is recorded once
+PASS  GE13 a version that does not step by 1 is refused  -- 23514 gate_exception_version_step gate_exception: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  GC01 a mandatory incomplete criterion WITHOUT an exception is refused (the DG2 rule, unchanged)  -- 23514 gate_submission_criterion_mandatory_complete new row for relation "gate_submission_criterion" violates check constraint "gate_submission_criterion_mandatory_complete"
+PASS  GC02 a pending (not accepted) exception does not cover the criterion  -- 23514 gate_submission_criterion_exception_covers gate_submission_criterion: exception 01990000-0000-7000-8000-00000000009d does not cover g6.controls on the submission date (accepted, same gate, same criterion, unexpired)
+PASS  GC03 an exception that expired before the submission date does not cover it (expiry re-opens the gap)  -- 23514 gate_submission_criterion_exception_covers gate_submission_criterion: exception 01990000-0000-7000-8000-0000000000a2 does not cover g6.controls on the submission date (accepted, same gate, same criterion, unexpired)
+PASS  GC04 an exception of another criterion does not cover this one  -- 23514 gate_submission_criterion_exception_covers gate_submission_criterion: exception 01990000-0000-7000-8000-0000000000a8 does not cover g6.ownership_transfer on the submission date (accepted, same gate, same criterion, unexpired)
+PASS  GC05 a complete criterion cannot carry an exception  -- 23514 gate_submission_criterion_exception_only_incomplete new row for relation "gate_submission_criterion" violates check constraint "gate_submission_criterion_exception_only_incomplete"
+PASS  GC06 an accepted, unexpired exception of the same gate and criterion lets the incomplete criterion be frozen (recorded on the row)  -- 01990000-0000-7000-8000-0000000000b4
+PASS  SC01 a scale scope needs an APPROVED G5 decision (a rejected one is refused)  -- 23514 gate_decision_scale_scope_g5_approved gate_decision_scale_scope: 01990000-0000-7000-8000-0000000000c1 is not an approved G5 decision of transformation 01990000-0000-7000-8000-000000000005
+PASS  SC02 a scale transition before G5 approval is refused, naming G5  -- 23514 scale_transition_g5_approved scale_transition: scaling needs an approved G5 decision of transformation 01990000-0000-7000-8000-000000000005
+PASS  SC03 a scope item's business unit must be in the transformation's organization  -- 23514 gate_decision_scale_scope_business_unit_org gate_decision_scale_scope: the business unit is not in the transformation's organization
+PASS  SC04 an approved G5 records its scale scope (initiative + business unit) and a condition with owner and deadline  -- scope + condition
+PASS  SC05 a condition without an owner is refused  -- 23502 null value in column "owner_user_id" of relation "gate_decision_condition" violates not-null constraint
+PASS  SC06 scaling outside the approved scope is refused (another initiative)  -- 23514 scale_transition_in_approved_scope scale_transition: initiative 01990000-0000-7000-8000-0000000000bd in business unit 01990000-0000-7000-8000-000000000002 is outside the approved G5 scale scope
+PASS  SC07 scaling inside the approved scope succeeds  -- 01990000-0000-7000-8000-0000000000d9
+PASS  SC08 the same initiative and business unit are scaled once  -- 23505 scale_transition_key duplicate key value violates unique constraint "scale_transition_key"
+PASS  SC09 the approved scope is append-only (UPDATE refused)  -- 42501 gate_decision_scale_scope is append-only: UPDATE is not allowed
+FAIL  SC10 a scale transition without its audit event fails at COMMIT  -- 23514 scale_transition_in_approved_scope scale_transition: initiative 01990000-0000-7000-8000-0000000000bd in business unit 01990000-0000-7000-8000-000000000002 is outside the approved G5 scale scope
+PASS  RD01 a disposition of an open risk is recorded and its canonical approval (type risk_disposition) can be requested  -- 01990000-0000-7000-8000-0000000000e1
+PASS  RD02 an assumption cannot be dispositioned as a risk  -- 23514 risk_disposition_open_risk risk_disposition: 01990000-0000-7000-8000-0000000000e3 is not an open RAID risk
+FAIL  RD03 a closed risk cannot be dispositioned  -- 23514 raid_entry_starts_open raid_entry 01990000-0000-7000-8000-0000000000e6: a new RAID entry starts with status open
+PASS  RD04 a disposition is immutable (UPDATE refused)  -- 42501 risk_disposition is append-only: UPDATE is not allowed
+PASS  CR01 a change request starts draft  -- 23514 change_request_status_step change_request: a new change request starts draft
+PASS  CR02 kind and subject must match (a rebaseline names a milestone)  -- 23514 change_request_kind_subject new row for relation "change_request" violates check constraint "change_request_kind_subject"
+PASS  CR03 a change request without its audit event fails at COMMIT  -- 23000 change_request_audit_required no audit_event for change_request 01990000-0000-7000-8000-0000000000eb at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  CR04 a draft change request is raised (CR-nn, reason, proposed change)  -- 01990000-0000-7000-8000-0000000000ed
+PASS  CR05 a second open change request for the same subject is refused  -- 23505 change_request_one_open_per_subject duplicate key value violates unique constraint "change_request_one_open_per_subject"
+PASS  CR06 submitting needs materiality, route and a frozen impact assessment  -- 23514 change_request_submitted_complete new row for relation "change_request" violates check constraint "change_request_submitted_complete"
+PASS  CR07 the impact assessment must be the one frozen for exactly the submitted version  -- 23514 change_request_assessment_current change_request 01990000-0000-7000-8000-0000000000ed: the impact assessment must be the one frozen for version 2
+PASS  CR08 submit with the assessment of the submitted version  -- 01990000-0000-7000-8000-0000000000f4
+PASS  CR09 content is frozen while submitted  -- 23514 change_request_content_frozen change_request 01990000-0000-7000-8000-0000000000ed: reason is fixed while submitted
+PASS  CR10 the impact assessment is append-only (UPDATE refused)  -- 42501 impact_assessment is append-only: UPDATE is not allowed
+PASS  CR11 a gate impact item must name the affected submission  -- 23514 impact_assessment_item_gate_shape new row for relation "impact_assessment_item" violates check constraint "impact_assessment_item_gate_shape"
+PASS  CR12 a gate impact item names the preserved submission and decision  -- 01990000-0000-7000-8000-0000000000f8
+PASS  CR13 submitted -> approved without a person's approve decision is refused (no automatic approval)  -- 23514 change_request_outcome_needs_decision change_request 01990000-0000-7000-8000-0000000000ed: approved needs a person's decision on its change_request approval
+PASS  CR14 a change_request approval for a stale request version is refused (approval_guard on the new subject table)  -- 23514 approval_subject_version_current approval: requested version 1 but the subject is at version 2
+PASS  CR15 with the approver's approve decision the request is approved and records its application  -- approved
+PASS  CR16 an approved change request is final  -- 23514 change_request_final change_request 01990000-0000-7000-8000-0000000000ed: a approved change request is final
+PASS  CR17 a change request version that does not step by 1 is refused  -- 23514 change_request_version_step change_request: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  CR18 the materiality ratio is stored as an exact decimal (0.05 -> 0.050000), NULL = every change material  -- 0.050000
+PASS  CR19 a negative materiality ratio is refused  -- 23514 change_control_policy_material_budget_change_ratio_check new row for relation "change_control_policy" violates check constraint "change_control_policy_material_budget_change_ratio_check"
+PASS  CR20 the original approval and snapshot stay retrievable unchanged after the change is approved  -- {"outcome":"approved","status":"decided","snapshot_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+
+4 FAILED
