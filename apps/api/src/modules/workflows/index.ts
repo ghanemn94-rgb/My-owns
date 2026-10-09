@@ -17,6 +17,12 @@ import { UNWIRED_GATE_FACTS, type GateFactsProvider } from "./g4.ts";
 import { registerGateRoutes } from "./gates.ts";
 import { registerT08DependencyRoutes, type T08ScheduleFlagsProvider } from "./t08-dependencies.ts";
 import { registerWorkshopRoutes } from "./workshops.ts";
+// P4 route files (T-DG4-BE-A stubs; p4-plan §5.1): BE-B approvals, BE-K gate exceptions, BE-L change control.
+import { registerApprovalRoutes } from "./approvals.ts";
+import { registerChangeRequestRoutes } from "./change-requests.ts";
+import { registerGateExceptionRoutes } from "./gate-exceptions.ts";
+import { registerImpactRoutes } from "./impact.ts";
+import { registerPhaseStepRoutes } from "./phase-steps.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
@@ -39,9 +45,10 @@ export const CLOSURE_GATE: ProductGate = "G6";
  */
 export function registerWorkflowsModule(
   app: FastifyInstance,
-  { db }: ModuleDeps,
+  deps: ModuleDeps,
   options: { readonly gateFacts?: GateFactsProvider; readonly t08ScheduleFlags?: T08ScheduleFlagsProvider } = {},
 ): ModuleRegistration {
+  const { db } = deps;
   const routes = [
     ...registerDecisionRoutes(app, db),
     ...registerRegister(app, db, dependencyRegister),
@@ -53,6 +60,12 @@ export function registerWorkflowsModule(
     // P3 T08 dependency map and dependency types (ADR-0023 §4, T-DG3-BE-C).
     ...registerT08DependencyRoutes(app, db, options.t08ScheduleFlags),
     ...registerDependencyTypeRoutes(app, db),
+    // P4 (p4-plan §5.1): BE-B approvals; BE-K gate exceptions; BE-L change requests, impact and phase steps.
+    ...registerApprovalRoutes(app, deps),
+    ...registerGateExceptionRoutes(app, deps),
+    ...registerChangeRequestRoutes(app, deps),
+    ...registerImpactRoutes(app, deps),
+    ...registerPhaseStepRoutes(app, deps),
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });
 }

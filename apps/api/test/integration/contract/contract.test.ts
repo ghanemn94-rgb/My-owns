@@ -89,6 +89,26 @@ import { exerciseP3BeDOperations, P3_MIRRORS_BE_D } from "./p3-exercises-be-d.ts
 import { exerciseP3BeEOperations, P3_MIRRORS_BE_E } from "./p3-exercises-be-e.ts";
 import { exerciseP3KbeBOperations, P3_MIRRORS_KBE_B } from "./p3-exercises-kbe-b.ts";
 import { exerciseP3KbeCOperations, P3_MIRRORS_KBE_C } from "./p3-exercises-kbe-c.ts";
+// P4 seams (p4-work-split §1 S-10): one per P4 implementer task with operations; T-DG4-BE-A created them all.
+import { exerciseP4BeAOperations, P4_MIRRORS_BE_A } from "./p4-exercises-be-a.ts";
+import { exerciseP4BeBOperations, P4_MIRRORS_BE_B } from "./p4-exercises-be-b.ts";
+import { exerciseP4BeCOperations, P4_MIRRORS_BE_C } from "./p4-exercises-be-c.ts";
+import { exerciseP4BeDOperations, P4_MIRRORS_BE_D } from "./p4-exercises-be-d.ts";
+import { exerciseP4BeEOperations, P4_MIRRORS_BE_E } from "./p4-exercises-be-e.ts";
+import { exerciseP4BeFOperations, P4_MIRRORS_BE_F } from "./p4-exercises-be-f.ts";
+import { exerciseP4BeGOperations, P4_MIRRORS_BE_G } from "./p4-exercises-be-g.ts";
+import { exerciseP4BeHOperations, P4_MIRRORS_BE_H } from "./p4-exercises-be-h.ts";
+import { exerciseP4BeIOperations, P4_MIRRORS_BE_I } from "./p4-exercises-be-i.ts";
+import { exerciseP4BeJOperations, P4_MIRRORS_BE_J } from "./p4-exercises-be-j.ts";
+import { exerciseP4BeKOperations, P4_MIRRORS_BE_K } from "./p4-exercises-be-k.ts";
+import { exerciseP4BeLOperations, P4_MIRRORS_BE_L } from "./p4-exercises-be-l.ts";
+import { exerciseP4BeMOperations, P4_MIRRORS_BE_M } from "./p4-exercises-be-m.ts";
+import { exerciseP4KbeBOperations, P4_MIRRORS_KBE_B } from "./p4-exercises-kbe-b.ts";
+import { exerciseP4KbeCOperations, P4_MIRRORS_KBE_C } from "./p4-exercises-kbe-c.ts";
+import { exerciseP4KbeDOperations, P4_MIRRORS_KBE_D } from "./p4-exercises-kbe-d.ts";
+import { exerciseP4KbeEOperations, P4_MIRRORS_KBE_E } from "./p4-exercises-kbe-e.ts";
+import { exerciseP4KbeFOperations, P4_MIRRORS_KBE_F } from "./p4-exercises-kbe-f.ts";
+import { exerciseP4KbeGOperations, P4_MIRRORS_KBE_G } from "./p4-exercises-kbe-g.ts";
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -251,6 +271,26 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P3_MIRRORS_BE_E,
   ...P3_MIRRORS_KBE_B,
   ...P3_MIRRORS_KBE_C,
+  // P4 operations: each task's mirrors come from its own seam file (p4-work-split §1 S-10).
+  ...P4_MIRRORS_BE_A,
+  ...P4_MIRRORS_BE_B,
+  ...P4_MIRRORS_BE_C,
+  ...P4_MIRRORS_BE_D,
+  ...P4_MIRRORS_BE_E,
+  ...P4_MIRRORS_BE_F,
+  ...P4_MIRRORS_BE_G,
+  ...P4_MIRRORS_BE_H,
+  ...P4_MIRRORS_BE_I,
+  ...P4_MIRRORS_BE_J,
+  ...P4_MIRRORS_BE_K,
+  ...P4_MIRRORS_BE_L,
+  ...P4_MIRRORS_BE_M,
+  ...P4_MIRRORS_KBE_B,
+  ...P4_MIRRORS_KBE_C,
+  ...P4_MIRRORS_KBE_D,
+  ...P4_MIRRORS_KBE_E,
+  ...P4_MIRRORS_KBE_F,
+  ...P4_MIRRORS_KBE_G,
 };
 
 let api: TestApi;
@@ -520,6 +560,65 @@ describe("every operation, validated against the contract and the zod mirrors", 
     await exerciseP3KbeCOperations(p3());
   });
 
+  // P4 seams (p4-work-split §1 S-10): the same context shape (P4ExerciseContext = P3ExerciseContext).
+  it("P4 BE-A operations (p4-exercises-be-a.ts)", async () => {
+    await exerciseP4BeAOperations(p3());
+  });
+  it("P4 BE-B operations (p4-exercises-be-b.ts)", async () => {
+    await exerciseP4BeBOperations(p3());
+  });
+  it("P4 BE-C operations (p4-exercises-be-c.ts)", async () => {
+    await exerciseP4BeCOperations(p3());
+  });
+  it("P4 BE-D operations (p4-exercises-be-d.ts)", async () => {
+    await exerciseP4BeDOperations(p3());
+  });
+  it("P4 BE-E operations (p4-exercises-be-e.ts)", async () => {
+    await exerciseP4BeEOperations(p3());
+  });
+  it("P4 BE-F operations (p4-exercises-be-f.ts)", async () => {
+    await exerciseP4BeFOperations(p3());
+  });
+  it("P4 BE-G operations (p4-exercises-be-g.ts)", async () => {
+    await exerciseP4BeGOperations(p3());
+  });
+  it("P4 BE-H operations (p4-exercises-be-h.ts)", async () => {
+    await exerciseP4BeHOperations(p3());
+  });
+  it("P4 BE-I operations (p4-exercises-be-i.ts)", async () => {
+    await exerciseP4BeIOperations(p3());
+  });
+  it("P4 BE-J operations (p4-exercises-be-j.ts)", async () => {
+    await exerciseP4BeJOperations(p3());
+  });
+  it("P4 BE-K operations (p4-exercises-be-k.ts)", async () => {
+    await exerciseP4BeKOperations(p3());
+  });
+  it("P4 BE-L operations (p4-exercises-be-l.ts)", async () => {
+    await exerciseP4BeLOperations(p3());
+  });
+  it("P4 BE-M operations (p4-exercises-be-m.ts)", async () => {
+    await exerciseP4BeMOperations(p3());
+  });
+  it("P4 KBE-B operations (p4-exercises-kbe-b.ts)", async () => {
+    await exerciseP4KbeBOperations(p3());
+  });
+  it("P4 KBE-C operations (p4-exercises-kbe-c.ts)", async () => {
+    await exerciseP4KbeCOperations(p3());
+  });
+  it("P4 KBE-D operations (p4-exercises-kbe-d.ts)", async () => {
+    await exerciseP4KbeDOperations(p3());
+  });
+  it("P4 KBE-E operations (p4-exercises-kbe-e.ts)", async () => {
+    await exerciseP4KbeEOperations(p3());
+  });
+  it("P4 KBE-F operations (p4-exercises-kbe-f.ts)", async () => {
+    await exerciseP4KbeFOperations(p3());
+  });
+  it("P4 KBE-G operations (p4-exercises-kbe-g.ts)", async () => {
+    await exerciseP4KbeGOperations(p3());
+  });
+
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
     // A fresh session: `office` signed out in "transformations and audit".
@@ -563,7 +662,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // Wave 2 of P3 (orchestrator reconciliation of the per-task pins): 90 after BE-A, + 14 JSON bodies T-DG3-BE-B,
     // + 14 T-DG3-BE-C (waves 2, deliverables 4, milestones 3, T08 dependencies 3, dependency types 2), + 9 T-DG3-BE-D,
     // + 7 T-DG3-KBE-B.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([150, 149, 1]);
+    // T-DG4-BE-A: + createBusinessCalendar, updateBusinessCalendar, createCalendarHoliday, updateCalendarHoliday,
+    // updateJobSchedule (JSON bodies; completeWorkItem and markInboxNotificationRead are bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([155, 154, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
@@ -610,7 +711,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
       expect(checked).toHaveLength(live.length);
       // 161 P1/P2 operations + all 109 P3 operations: 6 T-DG3-BE-A, 20 T-DG3-BE-B, 25 T-DG3-BE-C, 17 T-DG3-BE-D,
       // 11 T-DG3-KBE-B, 13 T-DG3-KBE-C and 17 T-DG3-BE-E (orchestrator reconciliation). Every contract operation is live.
-      expect(live.length).toBeGreaterThanOrEqual(270);
+      // + 15 T-DG4-BE-A (slice I: calendars, working days, job schedules, My Work items, inbox).
+      expect(live.length).toBeGreaterThanOrEqual(285);
     } finally {
       await limited.close();
     }

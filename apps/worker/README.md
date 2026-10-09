@@ -11,7 +11,7 @@ API and never serves HTTP.
   unpublished `outbox_event`, `boss.send` **inside the same transaction** (job id = outbox event id, `singletonKey` =
   idempotency key), then `published_at`. A replayed send is a no-op; concurrent relays never double-publish.
   An unroutable event gets `publish_attempts`/`last_error` and is parked after 10 attempts for an operator.
-- **`transformation.created`** (`src/handlers.ts`): records the starter-automation request (REQ-S12-004 increment)
+- **`transformation.created`** (`src/handlers/platform.ts`): records the starter-automation request (REQ-S12-004 increment)
   as a `processed_message` ledger row plus one audit event (`actor_type = service`, on behalf of the creator), in one
   transaction. A duplicate delivery conflicts on the ledger key and does nothing. Methodology/forms/checklist
   instantiation arrives with the P2/P5 content.

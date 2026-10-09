@@ -23,14 +23,22 @@ import type { AppConfig } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
 import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
-import { registerAccessP2Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
+import { registerAccessP2Routes, registerAccessP4Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
 import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
 import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
 import { RateLimitSubjects, registerIdentity, sessionCookieName, type OidcService } from "./modules/identity/index.ts";
 import { registerEvidenceModule } from "./modules/evidence/index.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { registerMethodologyModule } from "./modules/methodology/index.ts";
-import { registerOrganizationRoutes } from "./modules/organization/index.ts";
+import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
+import { registerJobScheduleRoutes } from "./modules/jobs/index.ts";
+// P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
+import { registerAdoptionModule } from "./modules/adoption/index.ts";
+import { registerBenefitsModule } from "./modules/benefits/index.ts";
+import { registerGovernanceModule } from "./modules/governance/index.ts";
+import { registerRaidModule } from "./modules/raid/index.ts";
+import { registerSustainmentModule } from "./modules/sustainment/index.ts";
+import { registerTasksModule } from "./modules/tasks/index.ts";
 import {
   loadInheritedApprovalFacts,
   loadPortfolioGateFacts,
@@ -60,7 +68,7 @@ import {
   type SecurityHeaders,
 } from "./modules/platform/index.ts";
 import { registerReportingModule } from "./modules/reporting/index.ts";
-import { registerTransformationRoutes } from "./modules/transformations/index.ts";
+import { registerTransformationRoutes, registerWorkspaceHeaderRoutes } from "./modules/transformations/index.ts";
 import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workflows/index.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
@@ -278,6 +286,12 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerAdminRoutes(app, deps);
   registerAccessP2Routes(app, deps);
   registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
+  // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs), the BE-B access route
+  // files (groups, role mappings, delegations) and the workspace-header stub (KBE-G; p4-plan §5.1).
+  registerCalendarRoutes(app, deps);
+  registerJobScheduleRoutes(app, db);
+  registerAccessP4Routes(app, deps);
+  registerWorkspaceHeaderRoutes(app, deps);
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
   // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
   const gateFacts: GateFactsProvider = {
@@ -296,6 +310,13 @@ export async function buildServer(options: ServerOptions): Promise<{
     registerMethodologyModule(app, deps),
     registerEvidenceModule(app, deps),
     registerPortfolioModule(app, deps),
+    // P4 modules (p4-plan §2 seam 19): tasks is active (BE-A); the others report "scaffold" until a route exists.
+    registerTasksModule(app, deps),
+    registerGovernanceModule(app, deps),
+    registerRaidModule(app, deps),
+    registerBenefitsModule(app, deps),
+    registerAdoptionModule(app, deps),
+    registerSustainmentModule(app, deps),
   ];
 
   if (webRoot) {

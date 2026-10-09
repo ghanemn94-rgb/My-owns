@@ -35,6 +35,9 @@ import { registerScoreRoutes } from "./scores.ts";
 import { registerSelectionRoutes } from "./selections.ts";
 import { registerInitiativeTransitionRoutes } from "./transitions.ts";
 import { registerWaveRoutes } from "./waves.ts";
+// P4 route files (T-DG4-BE-A stubs; p4-plan §5.1 BE-E).
+import { registerBudgetRoutes } from "./budget.ts";
+import { registerScheduleNetworkRoutes } from "./schedule-network.ts";
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
 // The gate annotation's inherited approvals (ADR-0021 §5; F-DG3-120): the third member of the GateFactsProvider.
@@ -79,6 +82,9 @@ export function registerPortfolioModule(app: FastifyInstance, deps: ModuleDeps):
     ...registerCapacityRoutes(app, deps),
     ...registerResourceDemandRoutes(app, deps),
     ...registerFundingRoutes(app, deps),
+    // P4 BE-E: budget lines, schedule network and critical path.
+    ...registerBudgetRoutes(app, deps),
+    ...registerScheduleNetworkRoutes(app, deps),
   ];
   return Object.freeze({ module: "portfolio", status: "active", deliversIn: "P3", routes: Object.freeze(routes) });
 }

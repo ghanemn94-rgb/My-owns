@@ -8,7 +8,7 @@ import { CompiledQuery } from "kysely";
 import { sql, type Db, type Tx } from "@mth/db";
 import { outboxPayloadSchema, truncateText, type OutboxEnvelope } from "@mth/shared/schemas";
 import type PgBoss from "pg-boss";
-import { OUTBOX_RELAY, QUEUE_FOR_EVENT } from "./queues.ts";
+import { OUTBOX_RELAY, QUEUE_FOR_EVENT } from "./queues/index.ts";
 
 export interface RelayResult {
   readonly published: number;

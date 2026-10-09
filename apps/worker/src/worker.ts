@@ -2,9 +2,10 @@
 // A handler that throws is retried by pg-boss per the queue policy and lands in `ops.failed` when retries run out.
 import type { Db } from "@mth/db";
 import type PgBoss from "pg-boss";
-import { handleTransformationCreated, purgeExpired } from "./handlers.ts";
-import { ensureQueues, OUTBOX_RELAY, QUEUES, schedulePurge, type QueuePolicyOverrides } from "./queues.ts";
+import { DOMAIN_HANDLERS, handleTransformationCreated, purgeExpired, type JobHandler } from "./handlers/index.ts";
+import { ensureQueues, OUTBOX_RELAY, QUEUES, schedulePurge, type QueuePolicyOverrides } from "./queues/index.ts";
 import { relayOnce } from "./relay.ts";
+import { handleJobScheduleUpdated, syncSchedules } from "./schedules.ts";
 
 export interface WorkerLogger {
   info(obj: object, msg: string): void;
@@ -19,6 +20,8 @@ export interface WorkerOptions {
   readonly pollIntervalMs?: number;
   readonly jobPollingIntervalSeconds?: number;
   readonly queuePolicy?: QueuePolicyOverrides;
+  /** The domain handlers to start (default: every registered DOMAIN_HANDLERS entry; tests pass their own). */
+  readonly handlers?: readonly JobHandler[];
 }
 
 export interface RunningWorker {
@@ -48,6 +51,23 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
     log.info({ queue: QUEUES.purge, jobId: job!.id, ...result }, "expired rows purged");
     return result;
   });
+  // P4 (ADR-0025 §3; T-DG4-BE-A): one pg-boss worker per domain handler, then the job_schedule rows are registered with
+  // pg-boss, and re-registered whenever the API emits job_schedule.updated.
+  const handlers = options.handlers ?? DOMAIN_HANDLERS;
+  for (const h of handlers) {
+    await boss.work(h.queue, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
+      const outcome = await h.handle(db, job!.data, job!.id);
+      log.info({ queue: h.queue, jobId: job!.id, outcome }, "job handled");
+      return { outcome };
+    });
+  }
+  const handledQueues: ReadonlySet<string> = new Set(handlers.map((h) => h.queue));
+  log.info({ ...(await syncSchedules(db, boss, handledQueues)) }, "job schedules registered");
+  await boss.work(QUEUES.jobScheduleUpdated, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
+    const result = await handleJobScheduleUpdated(db, boss, handledQueues, job!.data);
+    log.info({ queue: QUEUES.jobScheduleUpdated, jobId: job!.id, ...result }, "job schedules re-registered");
+    return result;
+  });
 
   let stopped = false;
   let running: Promise<void> = Promise.resolve();
@@ -75,6 +95,8 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
       await running;
       await boss.offWork(QUEUES.transformationCreated);
       await boss.offWork(QUEUES.purge);
+      await boss.offWork(QUEUES.jobScheduleUpdated);
+      for (const h of handlers) await boss.offWork(h.queue);
     },
   };
 }

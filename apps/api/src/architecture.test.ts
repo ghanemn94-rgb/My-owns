@@ -53,6 +53,7 @@ import {
   P1_SCAFFOLD_MODULES,
   P2_MODULES,
   P3_MODULES,
+  P4_MODULES,
   SECTION16_MODULES,
   type ApiModule,
 } from "./modules.ts";
@@ -82,28 +83,52 @@ describe("API module boundaries (ADR-0002)", () => {
         readdirSync(join(MODULES_DIR, m)).some((f) => f.endsWith(".test.ts")),
         `${m} has its own test suite`,
       ).toBe(true);
+    // P4 (T-DG4-BE-A): + organization (working-day schedule slip, BE-E) and tasks (follow-up items).
     expect([...API_MODULES.portfolio.dependsOn].sort()).toEqual([
       "access",
       "audit",
       "evidence",
       "kpi",
+      "organization",
       "platform",
+      "tasks",
       "transformations",
       "workflows",
     ]);
     // workflows reads portfolio facts only through its GateFactsProvider (workflows/g4.ts), wired by server.ts.
+    // P4: reporting (read-only views over every engine, BE-M/KBE-G) is the one module that may read portfolio.
     for (const m of Object.keys(API_MODULES) as ApiModule[])
-      expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("portfolio");
+      if (m !== "reporting") expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("portfolio");
+  });
+
+  it("the P4 modules exist, each with its own test suite, and only governance imports workflows (p4-plan §2)", () => {
+    expect([...P4_MODULES]).toEqual(["tasks", "governance", "raid", "benefits", "adoption", "sustainment"]);
+    for (const m of P4_MODULES)
+      expect(
+        readdirSync(join(MODULES_DIR, m)).some((f) => f.endsWith(".test.ts")),
+        `${m} has its own test suite`,
+      ).toBe(true);
+    // tasks is a leaf business module: every task-creating module depends on it, it depends on none of them.
+    expect([...API_MODULES.tasks.dependsOn].sort()).toEqual(["access", "audit", "platform"]);
+    for (const m of P4_MODULES.filter((x) => x !== "governance"))
+      expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("workflows");
+    expect(API_MODULES.governance.dependsOn as readonly string[]).toContain("workflows");
+    // workflows never imports a P4 module except the leaf tasks.
+    for (const m of P4_MODULES.filter((x) => x !== "tasks"))
+      expect(API_MODULES.workflows.dependsOn as readonly string[], m).not.toContain(m);
   });
 
   it("workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)", () => {
+    // P4 (T-DG4-BE-A): + organization (working-day due dates) and tasks (approval work items), both leaves.
     expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
       "access",
       "audit",
       "evidence",
       "kpi",
       "methodology",
+      "organization",
       "platform",
+      "tasks",
       "transformations",
     ]);
     for (const m of ["transformations", "kpi", "evidence", "methodology"] as const)
@@ -118,9 +143,11 @@ describe("API module boundaries (ADR-0002)", () => {
       ...walk(integrationDir).filter((f) => f.endsWith(".test.ts") && relative(integrationDir, f).startsWith(m)),
     ];
     expect(Object.keys(SECTION16_MODULES)).toHaveLength(6);
+    // P4 (p4-plan §3 seam 19): the benefit engine joins "formulas/KPI" next to kpi.
+    expect([...SECTION16_MODULES["formulas/KPI"]]).toEqual(["kpi", "benefits"]);
     for (const [area, mods] of Object.entries(SECTION16_MODULES)) {
       for (const m of mods) {
-        expect(P1_MODULES, `${area}: ${m} is a P1 module`).toContain(m);
+        expect([...P1_MODULES, ...P4_MODULES], `${area}: ${m} is a P1 or P4 module`).toContain(m);
         expect(suitesOf(m).length, `${area}: ${m} has its own test suite`).toBeGreaterThan(0);
       }
     }

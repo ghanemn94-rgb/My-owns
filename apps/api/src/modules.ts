@@ -20,7 +20,7 @@ export const API_MODULES = {
     dependsOn: ["platform", "audit"],
   },
   organization: {
-    responsibility: "Organizations, business units, calendars (later)",
+    responsibility: "Organizations, business units, business calendars and working-day arithmetic (P4, ADR-0025 §1)",
     dependsOn: ["platform", "audit", "access"],
   },
   transformations: {
@@ -35,29 +35,112 @@ export const API_MODULES = {
     responsibility: "Gates, approvals, decisions, SoD rules (P2+)",
     // ADR-0015: the G1-G3 criterion evaluators read through the public interfaces of transformations, kpi and
     // evidence. None of those depends on workflows, so the graph stays acyclic.
-    dependsOn: ["platform", "audit", "access", "transformations", "methodology", "kpi", "evidence"],
+    // P4 (ADR-0026 §6; p4-work-split §I+C.2): the approval service computes working-day due dates with organization's
+    // calendar and creates My Work items through tasks' createWorkItemOnce. Neither depends on workflows.
+    dependsOn: [
+      "platform",
+      "audit",
+      "access",
+      "transformations",
+      "methodology",
+      "kpi",
+      "evidence",
+      "organization",
+      "tasks",
+    ],
   },
   kpi: {
     responsibility: "KPI and benefit calculations via @mth/calc (P4)",
-    dependsOn: ["platform", "audit", "access", "transformations", "methodology"],
+    // P4 (ADR-0025 §2, §4): business dates in the organization's calendar timezone; owner tasks through tasks.
+    dependsOn: ["platform", "audit", "access", "transformations", "methodology", "organization", "tasks"],
   },
   reporting: {
-    responsibility: "Report snapshots and exports via @mth/reporting (P5)",
-    dependsOn: ["platform", "audit", "access", "transformations", "kpi"],
+    responsibility:
+      "Report snapshots and exports via @mth/reporting (P5); P4 traceability, dashboards and My Work views",
+    // P4 (p4-plan §5.1 BE-M, KBE-G): read-only views over every P4 engine. Never workflows directly (the read model of
+    // approvals comes through governance or tasks), so the P1 scaffold self-check (reporting -> workflows) still holds.
+    dependsOn: [
+      "platform",
+      "audit",
+      "access",
+      "transformations",
+      "kpi",
+      "tasks",
+      "benefits",
+      "raid",
+      "adoption",
+      "sustainment",
+      "governance",
+      "portfolio",
+    ],
   },
   evidence: {
     responsibility: "Evidence metadata and the storage adapter (P2/P6)",
     // transformations: the P2 register kit (evidence items are transformation-scoped registers).
     dependsOn: ["platform", "audit", "access", "transformations"],
   },
-  jobs: { responsibility: "Outbox writer and job/automation administration views", dependsOn: ["platform", "audit"] },
+  jobs: {
+    responsibility: "Outbox writer and job/automation administration views (P4: job schedules, ADR-0025 §3)",
+    dependsOn: ["platform", "audit", "access"],
+  },
   portfolio: {
     responsibility:
       "Initiatives (T05) and their links, waves, deliverables, milestones, prioritization, capacity, selection, funding, readiness, outcome hierarchy and gate dispensations (P3)",
     // ADR-0021 §1: portfolio reads gate status and creates canonical decision rows through workflows' public interface.
     // workflows never imports portfolio: its G4 evaluators read portfolio facts through the GateFactsProvider interface
     // it defines (workflows/g4.ts), wired by server.ts, so the graph stays acyclic.
-    dependsOn: ["platform", "audit", "access", "transformations", "kpi", "evidence", "workflows"],
+    // P4 (p4-plan §5.1 BE-E): working-day schedule slip uses organization's calendar; tasks for follow-ups.
+    dependsOn: [
+      "platform",
+      "audit",
+      "access",
+      "transformations",
+      "kpi",
+      "evidence",
+      "workflows",
+      "organization",
+      "tasks",
+    ],
+  },
+  tasks: {
+    responsibility:
+      "My Work items and the in-app inbox (P4, ADR-0025 §4): createWorkItemOnce and the five task and inbox operations",
+    // A leaf business module: every domain module that creates tasks depends on it, and it depends on none of them.
+    dependsOn: ["platform", "audit", "access"],
+  },
+  governance: {
+    responsibility:
+      "Decision rights (T11), RACI (T12), governance matrices, forums, meetings, T16 executive decisions, escalations (P4)",
+    // p4-plan §2: governance is the only new module that imports workflows (decision rows, the approval service).
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "workflows", "tasks"],
+  },
+  raid: {
+    responsibility: "RAID (T15) on canonical records, actions and corrective-action cases (P4, ADR-0031)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "kpi", "tasks"],
+  },
+  benefits: {
+    responsibility: "Benefit register (T14), allocations, measurements, Finance validation and totals (P4)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "kpi", "evidence", "tasks"],
+  },
+  adoption: {
+    responsibility: "Adoption (T13): stakeholder groups, indicators, interventions and assessments (P4)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "kpi", "tasks"],
+  },
+  sustainment: {
+    responsibility:
+      "BAU handover, performance areas, controls, continuous improvement, lessons, status model and closure (P4)",
+    dependsOn: [
+      "platform",
+      "audit",
+      "access",
+      "organization",
+      "transformations",
+      "kpi",
+      "benefits",
+      "adoption",
+      "raid",
+      "tasks",
+    ],
   },
   admin: {
     responsibility: "Administration endpoints composed from other modules",
@@ -93,15 +176,22 @@ export const P2_MODULES: readonly ApiModule[] = ["methodology", "evidence"];
 /** Modules added in P3 (ADR-0021 §1; p3-work-split §2 BE-A): each with a public index.ts and its own test suite. */
 export const P3_MODULES: readonly ApiModule[] = ["portfolio"];
 
-/** Every module directory that exists under src/modules (P1 + P2 + P3). */
-export const IMPLEMENTED_MODULES: readonly ApiModule[] = [...P1_MODULES, ...P2_MODULES, ...P3_MODULES];
+/**
+ * Modules added in P4 (p4-plan §2 seam 19; p4-work-split §I+C.1 BE-A): each with a public index.ts and its own test
+ * suite. BE-A creates them with stub route files; the owning tasks fill them (p4-plan §5.1).
+ */
+export const P4_MODULES: readonly ApiModule[] = ["tasks", "governance", "raid", "benefits", "adoption", "sustainment"];
+
+/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4). */
+export const IMPLEMENTED_MODULES: readonly ApiModule[] = [...P1_MODULES, ...P2_MODULES, ...P3_MODULES, ...P4_MODULES];
 
 /** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
 export const SECTION16_MODULES = {
   "identity/access": ["identity", "access"],
   transformations: ["transformations"],
   workflows: ["workflows"],
-  "formulas/KPI": ["kpi"],
+  // P4 (p4-plan §3 seam 19): the benefit engine joins the KPI engine under "formulas/KPI".
+  "formulas/KPI": ["kpi", "benefits"],
   reporting: ["reporting"],
   admin: ["admin"],
 } as const satisfies Record<string, readonly ApiModule[]>;

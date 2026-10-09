@@ -2,7 +2,7 @@
 // (ADR-0002). Connects as mth_app; pg-boss starts with migrate=false and refuses to run on a missing/outdated schema.
 import { ConfigError, loadConfig } from "@mth/config";
 import { createDb, createPool } from "@mth/db";
-import { createBoss } from "./queues.ts";
+import { createBoss } from "./queues/index.ts";
 import { startWorker } from "./worker.ts";
 
 async function main(): Promise<void> {

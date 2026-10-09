@@ -11,7 +11,7 @@ import {
   testDatabase,
 } from "../../../packages/db/test/helpers.ts";
 import type PgBoss from "pg-boss";
-import { createBoss } from "../src/queues.ts";
+import { createBoss } from "../src/queues/index.ts";
 
 export interface WorkerEnv {
   readonly appUrl: string;

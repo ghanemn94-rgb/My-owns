@@ -16,8 +16,26 @@ export const transformationCreatedV1 = z.strictObject({
 });
 export type TransformationCreatedV1 = z.infer<typeof transformationCreatedV1>;
 
+/**
+ * P4 (ADR-0025 §3; T-DG4-BE-A): a job schedule was enabled, disabled or rescheduled through updateJobSchedule. The
+ * worker re-registers every enabled schedule with pg-boss and unschedules every disabled one (apps/worker/src/schedules.ts).
+ */
+export const jobScheduleUpdatedV1 = z.strictObject({
+  jobScheduleId: uuid,
+  code: z.string().min(1).max(64),
+  queueName: z.string().min(1).max(100),
+  cron: z.string().min(1).max(100),
+  timezone: z.string().min(1).max(64),
+  enabled: z.boolean(),
+  version: z.number().int().min(1),
+  updatedBy: uuid,
+  occurredAt: timestamp,
+});
+export type JobScheduleUpdatedV1 = z.infer<typeof jobScheduleUpdatedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1 },
+  "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

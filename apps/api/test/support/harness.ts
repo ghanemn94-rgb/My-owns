@@ -378,4 +378,10 @@ export interface P3ExerciseContext {
   readonly mirrored: (method: string, url: string, opts?: RequestOptions) => Promise<Res<any>>;
 }
 
+/**
+ * What contract.test.ts hands every P4 exercise seam (`test/integration/contract/p4-exercises-<task>.ts`, p4-work-split
+ * §1 S-10): the same shape as the P3 seams.
+ */
+export type P4ExerciseContext = P3ExerciseContext;
+
 export { createDb, createPool };

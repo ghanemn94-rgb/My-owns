@@ -110,7 +110,17 @@ describe("module composition (D-048, P2)", () => {
         "methodology",
         "evidence",
         "portfolio",
+        // P4 (T-DG4-BE-A; p4-plan §2 seam 19).
+        "tasks",
+        "governance",
+        "raid",
+        "benefits",
+        "adoption",
+        "sustainment",
       ]);
+      // P4: tasks routes the five My Work and inbox operations; the other P4 modules are route-free until filled.
+      expect(modules.find((m) => m.module === "tasks")).toMatchObject({ status: "active", deliversIn: "P4" });
+      expect(modules.find((m) => m.module === "tasks")!.routes).toHaveLength(5);
       // P3 (T-DG3-BE-A): the portfolio module is active and registers routes (readiness, hierarchy, dispensations).
       expect(modules.find((m) => m.module === "portfolio")).toMatchObject({ status: "active", deliversIn: "P3" });
       expect(modules.find((m) => m.module === "portfolio")!.routes.length).toBeGreaterThan(0);

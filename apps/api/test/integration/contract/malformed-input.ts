@@ -47,6 +47,9 @@ function wellFormed(name: string, transformationId: string): string {
   // P3 (p3-work-split §2 BE-A): a T06 criterion code and a T08 dependency type code.
   if (name === "criterionCode") return "feasibility";
   if (name === "dependencyTypeCode") return "tech";
+  // P4 (p4-work-split §I+C.1 BE-A): a seeded job schedule code (0028) and a governance matrix kind (0030).
+  if (name === "jobCode") return "approval.escalation_scan";
+  if (name === "matrixKind") return "raci";
   return crypto.randomUUID();
 }
 
