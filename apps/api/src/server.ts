@@ -70,6 +70,8 @@ import {
 import { registerReportingModule } from "./modules/reporting/index.ts";
 import { registerTransformationRoutes, registerWorkspaceHeaderRoutes } from "./modules/transformations/index.ts";
 import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workflows/index.ts";
+// T-DG4-KBE-C: the approval service for kpi's port (workflows/index.ts does not export it; see the KBE-C handback).
+import { registerApprovalSubject, requestApprovalInTx, toApprovals } from "./modules/workflows/approvals.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -305,7 +307,15 @@ export async function buildServer(options: ServerOptions): Promise<{
   // routes until its stage.
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
-    registerKpiModule(app, deps),
+    // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
+    // in as a port (kpi cannot import workflows, which depends on kpi).
+    registerKpiModule(app, deps, {
+      approvals: {
+        requestApproval: requestApprovalInTx,
+        registerSubject: registerApprovalSubject,
+        present: toApprovals,
+      },
+    }),
     registerReportingModule(app, deps),
     registerMethodologyModule(app, deps),
     registerEvidenceModule(app, deps),

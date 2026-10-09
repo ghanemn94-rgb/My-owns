@@ -99,6 +99,30 @@ const KPI_P4_KBE_B_OPERATIONS = [
   "getDataQualityFinding",
   "resolveDataQualityFinding",
 ];
+/** The P4 slice A operations of T-DG4-KBE-C (ADR-0027 §2-§3, §6-§8, §10; requestKpiVersionApproval carried by D-095). */
+const KPI_P4_KBE_C_OPERATIONS = [
+  "requestKpiVersionApproval",
+  "listReportingPeriods",
+  "createReportingPeriod",
+  "getReportingPeriod",
+  "openReportingPeriod",
+  "closeReportingPeriod",
+  "listKpiActuals",
+  "submitKpiActual",
+  "getKpiActual",
+  "addKpiActualValue",
+  "submitKpiActualDraft",
+  "acceptKpiActual",
+  "rejectKpiActual",
+  "listKpiActualReviewQueue",
+  "listCalculationRuns",
+  "getCalculationRun",
+  "listKpiStatus",
+  "getKpiStatus",
+  "listRagOverrides",
+  "createRagOverride",
+  "revokeRagOverride",
+];
 /**
  * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
  * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
@@ -107,6 +131,9 @@ const KPI_P4_KBE_B_OPERATIONS = [
 const PERMISSION_EXCEPTIONS: ReadonlyMap<string, string> = new Map([
   ["listBenefitFormulaExamples", "authenticated"],
   ["checkBenefitFormula", "benefit_formula.edit"],
+  // P4 reporting periods (T-DG4-KBE-C): organization-level records, read with organization.read (contract summary).
+  ["listReportingPeriods", "organization.read"],
+  ["getReportingPeriod", "organization.read"],
 ]);
 
 const openapi = parseYaml(
@@ -151,7 +178,7 @@ describe("kpi module (P2)", () => {
     ]);
   });
 
-  it("exposes exactly its wiring hook, the gate-facts loader and the freshness vocabulary", () => {
+  it("exposes exactly its wiring hook, the gate-facts loader, the freshness vocabulary and the P4 seams", () => {
     expect(moduleFiles("kpi")).toContain("index.ts");
     expect(Object.keys(mod).sort()).toEqual([
       "VALUE_FRESHNESS",
@@ -168,6 +195,8 @@ describe("kpi module (P2)", () => {
       "loadKpiP3GateFacts",
       "missingSections",
       "presentCases",
+      // P4 (T-DG4-KBE-C): slice B's downstream-impact seam (KBE-E registers its provider).
+      "registerDownstreamImpactProvider",
       "registerKpiModule",
       "toBusinessCaseLine",
     ]);
@@ -180,7 +209,7 @@ describe("kpi module (P2)", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09 and the 18 P4 KBE-B operations, and reports them", async () => {
+  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B and the P4 KBE-C operations, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
@@ -191,11 +220,12 @@ describe("kpi module (P2)", () => {
         ...KPI_P3_BUSINESS_CASE_OPERATIONS,
         ...KPI_P3_BENEFIT_FORMULA_OPERATIONS,
         ...KPI_P4_KBE_B_OPERATIONS,
+        ...KPI_P4_KBE_C_OPERATIONS,
       ].sort(),
     );
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
-    expect(registration.routes).toHaveLength(48 + KPI_P4_KBE_B_OPERATIONS.length);
+    expect(registration.routes).toHaveLength(48 + KPI_P4_KBE_B_OPERATIONS.length + KPI_P4_KBE_C_OPERATIONS.length);
     expect(Object.isFrozen(registration)).toBe(true);
   });
 
@@ -234,6 +264,11 @@ describe("kpi module (P2)", () => {
         "kpi_threshold.configure",
         "target_trajectory.edit",
         "data_quality.manage",
+        // P4 slice A (T-DG4-KBE-C).
+        "reporting_period.manage",
+        "kpi_actual.submit",
+        "kpi_actual.accept",
+        "rag.override",
       ]),
     );
   });

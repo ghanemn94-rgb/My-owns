@@ -68,6 +68,13 @@
 //   target_trajectory_approver_not_creator    -> 403 target_trajectory.approver_is_author
 //   data_quality_finding_status_step          -> 422 data_quality.not_open
 //   data_quality_finding_resolution           -> 422 data_quality.note_required
+// P4 slice A, KBE-C part (T-DG4-KBE-C; p4-work-split §A.3; ADR-0027 §13): reporting periods, actuals, overrides:
+//   reporting_period_label_key -> 409 reporting_period.label_taken; reporting_period_no_overlap / _weeks / _range /
+//   _status_step -> 422 reporting_period.*; kpi_actual_period_open / _period_frequency / _value_currency / _value_shape
+//   / _value_active_version / _reject_reason / _status_step -> 422 kpi_actual.*; kpi_actual_review_sod -> 403
+//   kpi_actual.sod_submitter; kpi_actual_slot_key -> 409 version conflict; rag_override_one_in_force -> 409
+//   rag_override.already_in_force; rag_override_expiry_window / _status_step -> 422 rag_override.*;
+//   kpi_actual_value_present, kpi_actual_review_present -> 500 (a programming error)
 // Pure: no I/O, unit-tested in platform.test.ts and db-errors.test.ts.
 import { PROBLEM_TYPES, type ProblemDetails } from "@mth/shared";
 import { HttpProblem, problems } from "./problem.ts";
@@ -812,6 +819,124 @@ export function mapP4KpiGuardError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P4 slice A, KBE-C part (T-DG4-KBE-C; ADR-0027 §13): the database's last line behind the reporting-period, actual and
+ * RAG-override services, with the ADR's codes and English texts (S-11; values from the guard messages where the message
+ * carries them). The services check every rule first with the exact parameterized texts. Null when not one of them.
+ */
+export function mapP4KpiActualGuardError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    case "reporting_period_label_key": {
+      const [frequency, label] = (/=\([^,]+, ([a-z_]+), ([^)]+)\)/.exec(error.detail ?? "") ?? []).slice(1);
+      return problems.duplicate(
+        "reporting_period.label_taken",
+        `A ${frequency ?? "matching"} reporting period ${label ?? "with this label"} already exists.`,
+      );
+    }
+    case "reporting_period_no_overlap": {
+      const [frequency] = wordsAfter(error, /reporting_period: ([a-z_]+) /);
+      return rule422(
+        "reporting_period.overlap",
+        `The period overlaps another ${frequency ?? ""} reporting period.`.replace("  ", " "),
+        "/periodStart",
+      );
+    }
+    case "reporting_period_weeks":
+      return rule422(
+        "reporting_period.weeks_invalid",
+        "A week-based period lasts exactly its number of weeks times seven days.",
+        "/weekCount",
+      );
+    case "reporting_period_range":
+      return rule422(
+        "reporting_period.range_invalid",
+        "A reporting period ends on or after its start and lasts at most 367 days.",
+        "/periodEnd",
+      );
+    case "reporting_period_status_step":
+      return rule422(
+        "reporting_period.status_step",
+        "A reporting period moves from scheduled to open to closed, and a closed period stays closed.",
+        "",
+      );
+    case "kpi_actual_period_open": {
+      const [label, status] = wordsAfter(error, /reporting period (\S+) is (\w+)/);
+      return rule422(
+        "kpi_actual.period_not_open",
+        `The reporting period ${label} is ${status}. Actuals are entered only for an open period; a closed period is corrected through a restatement.`,
+        "/reportingPeriodId",
+      );
+    }
+    case "kpi_actual_period_frequency": {
+      const [frequency] = wordsAfter(error, /a (\w+) KPI is reported/);
+      return rule422(
+        "kpi_actual.period_frequency",
+        `A ${frequency} KPI is reported for ${frequency} periods.`,
+        "/reportingPeriodId",
+      );
+    }
+    case "kpi_actual_value_currency": {
+      const [currency, kpiCurrency] = wordsAfter(error, /currency (\S+) does not match the KPI currency (\S+)/);
+      return rule422(
+        "kpi_actual.currency_mismatch",
+        `The value is in ${currency}, but the KPI is measured in ${kpiCurrency}. Values are never converted.`,
+        "/currency",
+      );
+    }
+    case "kpi_actual_value_shape":
+      return rule422(
+        "kpi_actual.value_shape",
+        "Enter the value fields for this KPI, or state why the value is not available.",
+        "/value",
+      );
+    case "kpi_actual_value_active_version":
+      return rule422(
+        "kpi_actual.no_active_version",
+        "This KPI has no active version. Activate a version with its aggregation rule before entering actuals.",
+        "",
+      );
+    case "kpi_actual_review_sod":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "kpi_actual.sod_submitter",
+        title: "Forbidden",
+        detail: "You submitted this value, so you cannot accept or reject it.",
+      });
+    case "kpi_actual_reject_reason":
+      return rule422("kpi_actual.reject_reason_required", "A rejection needs a reason.", "/reason");
+    case "kpi_actual_status_step":
+      return rule422("kpi_actual.not_submitted", "Only a submitted value can be accepted or rejected.", "");
+    case "kpi_actual_slot_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "An actual for this KPI, scope and period was entered at the same time. Read it and add a new value.",
+      });
+    case "rag_override_one_in_force":
+      return problems.duplicate(
+        "rag_override.already_in_force",
+        "An override is already in force for this KPI, scope and period. Revoke it first.",
+      );
+    case "rag_override_expiry_window":
+      return rule422(
+        "rag_override.expiry_invalid",
+        "The expiry must be in the future and at most 366 days away.",
+        "/expiresAt",
+      );
+    case "rag_override_status_step":
+      return rule422("rag_override.not_active", "Only an override in force can be revoked.", "");
+    case "kpi_actual_value_present":
+    case "kpi_actual_review_present":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
@@ -837,6 +962,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
 
   const p4Kpi = mapP4KpiGuardError(error);
   if (p4Kpi !== null) return p4Kpi;
+  const p4KpiActual = mapP4KpiActualGuardError(error);
+  if (p4KpiActual !== null) return p4KpiActual;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
