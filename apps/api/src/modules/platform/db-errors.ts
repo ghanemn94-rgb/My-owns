@@ -1359,6 +1359,95 @@ export function mapP4SustainmentAreaError(error: PgErrorLike): HttpProblem | nul
 }
 
 /**
+ * P4 slice G, BE-I2 lines (ADR-0034 §6, §8, §12): controls, control checks, sustainment reviews, the CI backlog and
+ * lessons. The API answers the same codes and exact English texts first; these only answer a write that reached the
+ * guard (S-11). Null when the error is not one of them.
+ */
+export function mapP4SustainmentOperationsError(error: PgErrorLike): HttpProblem | null {
+  const message = error.message ?? "";
+  const finalStatus = (/: an? ([a-z_]+) (?:check|review|item) is final/.exec(message) ?? [])[1];
+  const edge = (/: ([a-z_]+) -> ([a-z_]+) is not a legal transition/.exec(message) ?? []).slice(1);
+  switch (error.constraint ?? "") {
+    case "control_retired_final":
+      return handoverRule("control.retired", "This control is retired and can no longer be changed.");
+    case "control_check_final":
+      return handoverRule(
+        "control_check.final",
+        `This control check is ${finalStatus ?? "recorded"} and can no longer be changed.`,
+      );
+    case "control_check_performed_complete":
+      return problems.badRequest(
+        "control_check.result_note_required",
+        "A failed control check needs a result note.",
+        "/resultNote",
+      );
+    case "sustainment_review_final":
+      return handoverRule(
+        "sustainment_review.final",
+        `This review is ${finalStatus ?? "closed"} and can no longer be changed.`,
+      );
+    case "improvement_item_final":
+      return handoverRule(
+        "improvement_item.final",
+        `This improvement item is ${finalStatus ?? "closed"} and can no longer be changed.`,
+      );
+    case "improvement_item_transition":
+      return handoverRule(
+        "improvement_item.status_transition",
+        `This improvement item cannot move from ${edge[0] ?? "its status"} to ${edge[1] ?? "that status"}.`,
+      );
+    case "improvement_item_resolved_complete":
+      return problems.badRequest(
+        "improvement_item.resolution_note_required",
+        "Record a resolution note before closing the item.",
+        "/resolutionNote",
+      );
+    case "lesson_archived_final":
+      return handoverRule("lesson.archived", "This lesson is archived and can no longer be changed.");
+    case "lesson_transition":
+      return handoverRule(
+        "lesson.status_transition",
+        `This lesson cannot move from ${edge[0] ?? "its status"} to ${edge[1] ?? "that status"}.`,
+      );
+    case "control_code_key":
+    case "improvement_item_code_key":
+    case "lesson_code_key":
+      // A concurrent code allocation: retry.
+      return retryConflict();
+    case "control_check_due_key":
+    case "sustainment_review_due_key":
+      // Only the worker scans insert these (insert-if-absent); an API write never reaches them.
+      return retryConflict();
+    case "control_starts_active":
+    case "control_identity":
+    case "control_retired_complete":
+    case "control_check_starts_due":
+    case "control_check_control_active":
+    case "control_check_identity":
+    case "control_check_created_source":
+    case "sustainment_review_starts_due":
+    case "sustainment_review_area_bau":
+    case "sustainment_review_decision_approved":
+    case "sustainment_review_identity":
+    case "sustainment_review_subject":
+    case "sustainment_review_created_source":
+    case "sustainment_review_done_complete":
+    case "improvement_item_starts_open":
+    case "improvement_item_source_immutable":
+    case "improvement_item_source_fields":
+    case "lesson_starts_draft":
+    case "lesson_code_immutable":
+    case "lesson_published_complete":
+    case "lesson_archived_complete":
+    case "lesson_tags_valid":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * P4 slices F and G (ADR-0033 §10, ADR-0034 §12): the database last lines of the adoption and sustainment tables, each
  * task appending its own lines to this block (p4-work-split §F+G). The API returns the same codes and exact English
  * texts first; these mappings only answer a write that reached the guard (S-11). Null when the error is not one of them.
@@ -1849,6 +1938,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4AdoptionSustainment !== null) return p4AdoptionSustainment;
   const p4SustainmentArea = mapP4SustainmentAreaError(error); // BE-I (slices F/G block)
   if (p4SustainmentArea !== null) return p4SustainmentArea;
+  const p4SustainmentOperations = mapP4SustainmentOperationsError(error); // BE-I2 (slices F/G block)
+  if (p4SustainmentOperations !== null) return p4SustainmentOperations;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
