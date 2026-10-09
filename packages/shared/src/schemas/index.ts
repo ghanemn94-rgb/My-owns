@@ -63,3 +63,6 @@ export * from "./benefit-values.ts";
 // P4 slice E mirrors of BE-D2 (backend-workflow-engineer, T-DG4-BE-D2; p4-work-split §E.2): corrective-action cases,
 // signals, the severity and persistence rules and the payloads of the four corrective consumers.
 export * from "./corrective.ts";
+// P4 slice E mirrors of BE-E (backend-workflow-engineer, T-DG4-BE-E; p4-work-split §E.3): budget lines, the execution
+// view with the working-day slip, initiative durations and the schedule network with the critical path.
+export * from "./execution.ts";
