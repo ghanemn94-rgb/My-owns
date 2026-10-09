@@ -6,6 +6,8 @@ import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
 import { registerAdoptionInterventionRoutes } from "./interventions.ts";
 import { registerAdoptionRegisterRoutes } from "./register.ts";
+import { registerAssessmentRoutes } from "./assessments.ts";
+import { registerTrainingRoutes } from "./training.ts";
 
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerAdoptionRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
@@ -14,5 +16,9 @@ export function registerAdoptionRoutes(app: FastifyInstance, deps: ModuleDeps): 
     ...registerAdoptionRegisterRoutes(app, deps),
     // BE-H (T-DG4-BE-H): adoption interventions and their My Work items.
     ...registerAdoptionInterventionRoutes(app, deps),
+    // BE-H2 (T-DG4-BE-H2): feedback and assessment forms, invitations, assessment records.
+    ...registerAssessmentRoutes(app, deps),
+    // BE-H2 (T-DG4-BE-H2): training attendance records (completion is attendance, never adoption).
+    ...registerTrainingRoutes(app, deps),
   ];
 }
