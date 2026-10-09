@@ -1,0 +1,77 @@
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 60 (0001_identity_access.sql .. 0060_p4_governance_schedules_weekly_cadence.sql)
+PASS  R00 ids 0001..0060 contiguous; 0060 is the last; 0061 absent  -- last 60
+PASS  R01 fresh: 0001..0059 apply  -- applied 59, last 0059_p4_enable_g5_g6.sql
+--- fresh, before 0060 (probe_r1_fresh)
+    job_schedule approval.escalation_scan queue=approval.escalation_scan cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule delegation.expiry_sweep queue=delegation.expiry_sweep cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=access v1
+    job_schedule gate.exception_expiry_scan queue=gate.exception_expiry_scan cron="30 0 * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule kpi.reporting_period_open queue=kpi.reporting_period_open cron="5 0 * * *" tz=Asia/Riyadh enabled=true owner=kpi v1
+    job_schedule sustainment.control_check_scan queue=sustainment.control_check_scan cron="25 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    job_schedule sustainment.review_scan queue=sustainment.review_scan cron="20 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    benefit_control_cadence_check: CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+    job_schedule.create audit events for the three governance codes: 0
+PASS  R02 fresh before 0060: no governance schedule; CHECK has no weekly  -- CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+PASS  R03 fresh: 0060 applies alone  -- applied 0060_p4_governance_schedules_weekly_cadence.sql
+--- fresh, after 0060 (probe_r1_fresh)
+    job_schedule approval.escalation_scan queue=approval.escalation_scan cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule delegation.expiry_sweep queue=delegation.expiry_sweep cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=access v1
+    job_schedule gate.exception_expiry_scan queue=gate.exception_expiry_scan cron="30 0 * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule governance.blocker_escalation_scan queue=governance.blocker_escalation_scan cron="45 0 * * *" tz=Asia/Riyadh enabled=true owner=governance v1
+    job_schedule governance.decision_sla_scan queue=governance.decision_sla_scan cron="40 0 * * *" tz=Asia/Riyadh enabled=true owner=governance v1
+    job_schedule governance.meeting_series_generate queue=governance.meeting_series_generate cron="35 0 * * *" tz=Asia/Riyadh enabled=true owner=governance v1
+    job_schedule kpi.reporting_period_open queue=kpi.reporting_period_open cron="5 0 * * *" tz=Asia/Riyadh enabled=true owner=kpi v1
+    job_schedule sustainment.control_check_scan queue=sustainment.control_check_scan cron="25 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    job_schedule sustainment.review_scan queue=sustainment.review_scan cron="20 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    benefit_control_cadence_check: CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['weekly'::text, 'monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+    job_schedule.create audit events for the three governance codes: 3
+PASS  R04 fresh after 0060: three governance rows (9 in all), three audit events, weekly admitted  -- CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['weekly'::text, 'monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+PASS  R05 fresh CHECK 'weekly' accepted  -- inserted
+PASS  R05 fresh CHECK 'monthly' accepted  -- inserted
+PASS  R05 fresh CHECK 'quarterly' accepted  -- inserted
+PASS  R05 fresh CHECK 'semiannual' accepted  -- inserted
+PASS  R05 fresh CHECK 'annual' accepted  -- inserted
+PASS  R05 fresh CHECK NULL accepted  -- inserted
+PASS  R05 fresh CHECK 'semi_annual' refused  -- check_violation
+PASS  R05 fresh CHECK 'fortnightly' refused  -- check_violation
+PASS  R06 fresh: a second migrate run applies nothing  -- applied 0
+PASS  R07 P3: 0001..0027 apply and synthetic P1 rows commit  -- applied 27
+PASS  R08 P3: 0028..0059 apply on top  -- applied 32, last 0059_p4_enable_g5_g6.sql
+--- P3-populated, before 0060 (probe_r1_p3)
+    job_schedule approval.escalation_scan queue=approval.escalation_scan cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule delegation.expiry_sweep queue=delegation.expiry_sweep cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=access v1
+    job_schedule gate.exception_expiry_scan queue=gate.exception_expiry_scan cron="30 0 * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule kpi.reporting_period_open queue=kpi.reporting_period_open cron="5 0 * * *" tz=Asia/Riyadh enabled=true owner=kpi v1
+    job_schedule sustainment.control_check_scan queue=sustainment.control_check_scan cron="25 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    job_schedule sustainment.review_scan queue=sustainment.review_scan cron="20 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    benefit_control_cadence_check: CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+    job_schedule.create audit events for the three governance codes: 0
+PASS  R09 P3 before 0060: no governance schedule; CHECK has no weekly  -- CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+PASS  R10 P3: 0060 applies alone  -- applied 0060_p4_governance_schedules_weekly_cadence.sql
+--- P3-populated, after 0060 (probe_r1_p3)
+    job_schedule approval.escalation_scan queue=approval.escalation_scan cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule delegation.expiry_sweep queue=delegation.expiry_sweep cron="*/15 * * * *" tz=Asia/Riyadh enabled=true owner=access v1
+    job_schedule gate.exception_expiry_scan queue=gate.exception_expiry_scan cron="30 0 * * *" tz=Asia/Riyadh enabled=true owner=workflows v1
+    job_schedule governance.blocker_escalation_scan queue=governance.blocker_escalation_scan cron="45 0 * * *" tz=Asia/Riyadh enabled=true owner=governance v1
+    job_schedule governance.decision_sla_scan queue=governance.decision_sla_scan cron="40 0 * * *" tz=Asia/Riyadh enabled=true owner=governance v1
+    job_schedule governance.meeting_series_generate queue=governance.meeting_series_generate cron="35 0 * * *" tz=Asia/Riyadh enabled=true owner=governance v1
+    job_schedule kpi.reporting_period_open queue=kpi.reporting_period_open cron="5 0 * * *" tz=Asia/Riyadh enabled=true owner=kpi v1
+    job_schedule sustainment.control_check_scan queue=sustainment.control_check_scan cron="25 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    job_schedule sustainment.review_scan queue=sustainment.review_scan cron="20 0 * * *" tz=Asia/Riyadh enabled=true owner=sustainment v1
+    benefit_control_cadence_check: CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['weekly'::text, 'monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+    job_schedule.create audit events for the three governance codes: 3
+PASS  R11 P3 after 0060: three governance rows, three audit events, weekly admitted  -- CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['weekly'::text, 'monthly'::text, 'quarterly'::text, 'semiannual'::text, 'annual'::text]))))
+PASS  R12 P3: the synthetic transformation is untouched  -- rows 1
+PASS  R13 mth_app cannot insert a job_schedule row  -- permission denied for table job_schedule
+PASS  R14 P3 CHECK 'weekly' accepted  -- inserted
+PASS  R14 P3 CHECK 'monthly' accepted  -- inserted
+PASS  R14 P3 CHECK 'quarterly' accepted  -- inserted
+PASS  R14 P3 CHECK 'semiannual' accepted  -- inserted
+PASS  R14 P3 CHECK 'annual' accepted  -- inserted
+PASS  R14 P3 CHECK NULL accepted  -- inserted
+PASS  R14 P3 CHECK 'semi_annual' refused  -- check_violation
+PASS  R14 P3 CHECK 'fortnightly' refused  -- check_violation
+
+ALL PASS
+exit=0

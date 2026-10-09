@@ -46,6 +46,7 @@ function takesIfMatch(op: Operation, openapi: Record<string, unknown>): boolean 
   return params.some(
     (p) =>
       p["$ref"] === "#/components/parameters/IfMatch" ||
+      p["$ref"] === "#/components/parameters/IfMatchOrZero" ||
       (p["in"] === "header" && String(p["name"]).toLowerCase() === "if-match"),
   );
 }

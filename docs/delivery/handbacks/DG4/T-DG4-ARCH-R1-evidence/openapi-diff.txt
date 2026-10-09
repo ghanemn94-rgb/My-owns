@@ -1,0 +1,92 @@
+diff --git a/docs/api/openapi.yaml b/docs/api/openapi.yaml
+index ad8d61b..836605d 100644
+--- a/docs/api/openapi.yaml
++++ b/docs/api/openapi.yaml
+@@ -106,0 +107,5 @@ info:
++
++    **P4 repairs (T-DG4-ARCH-R1, 2026-10-09).** Two new reads (`listTransformationReportingPeriods`,
++    `getAdoptionMetricLink`); the defaulted-record ETag rule (`ETagOrZero` and `IfMatchOrZero`, used only by the phase
++    step, change-control policy and dashboard RAG policy reads and writes, where `"0"` means no row yet); `weekly` in the
++    benefit `controlCadence`; and the createAssessmentForm 201 description (record version 2). Nothing else changes.
+@@ -8862,0 +8868,22 @@ paths:
++  /api/v1/transformations/{transformationId}/reporting-periods:
++    parameters:
++      - $ref: "#/components/parameters/TransformationId"
++    get:
++      tags: [reporting-periods]
++      operationId: listTransformationReportingPeriods
++      summary: "Reporting periods of the transformation's organization, latest first, for the people who submit actuals (REQ-S07-017 'select period'; ARCH-R1). The same items, order and filters as listReportingPeriods (transformation.read)."
++      parameters:
++        - $ref: "#/components/parameters/Cursor"
++        - $ref: "#/components/parameters/Limit"
++        - $ref: "#/components/parameters/FrequencyQuery"
++        - $ref: "#/components/parameters/ReportingPeriodStatusQuery"
++      responses:
++        "200":
++          description: "OK."
++          content:
++            application/json:
++              schema: { $ref: "#/components/schemas/ReportingPeriodPage" }
++        "400": { $ref: "#/components/responses/ValidationError" }
++        "401": { $ref: "#/components/responses/Unauthenticated" }
++        "404": { $ref: "#/components/responses/NotFound" }
++        "429": { $ref: "#/components/responses/RateLimited" }
+@@ -13274,0 +13302,20 @@ paths:
++  /api/v1/transformations/{transformationId}/adoption-metric-links/{adoptionMetricLinkId}:
++    parameters:
++      - $ref: "#/components/parameters/TransformationId"
++      - $ref: "#/components/parameters/AdoptionMetricLinkId"
++    get:
++      tags: [adoption-indicators]
++      operationId: getAdoptionMetricLink
++      summary: "Read one indicator measure link, active or removed; the target of createAdoptionMetricLink's Location (ARCH-R1) (transformation.read)."
++      responses:
++        "200":
++          description: "OK."
++          headers:
++            ETag: { $ref: "#/components/headers/ETag" }
++          content:
++            application/json:
++              schema: { $ref: "#/components/schemas/AdoptionMetricLink" }
++        "400": { $ref: "#/components/responses/ValidationError" }
++        "401": { $ref: "#/components/responses/Unauthenticated" }
++        "404": { $ref: "#/components/responses/NotFound" }
++        "429": { $ref: "#/components/responses/RateLimited" }
+@@ -13360 +13407 @@ paths:
+-          description: "Created (draft, version 1)."
++          description: "Created (draft) with question version 1 (`currentVersion.versionNo` 1). The form row is at record version 2 and ETag \"2\": inserting the form (record version 1) and stepping it to its first question version (record version 2) are two audited row writes in one transaction (ARCH-R1; ADR-0033 amendment of 2026-10-09)."
+@@ -15195 +15242 @@ paths:
+-            ETag: { $ref: "#/components/headers/ETag" }
++            ETag: { $ref: "#/components/headers/ETagOrZero" }
+@@ -15211 +15258 @@ paths:
+-        - $ref: "#/components/parameters/IfMatch"
++        - $ref: "#/components/parameters/IfMatchOrZero"
+@@ -15757 +15804 @@ paths:
+-            ETag: { $ref: "#/components/headers/ETag" }
++            ETag: { $ref: "#/components/headers/ETagOrZero" }
+@@ -15773 +15820 @@ paths:
+-        - $ref: "#/components/parameters/IfMatch"
++        - $ref: "#/components/parameters/IfMatchOrZero"
+@@ -16222 +16269 @@ paths:
+-            ETag: { $ref: "#/components/headers/ETag" }
++            ETag: { $ref: "#/components/headers/ETagOrZero" }
+@@ -16238 +16285 @@ paths:
+-        - $ref: "#/components/parameters/IfMatch"
++        - $ref: "#/components/parameters/IfMatchOrZero"
+@@ -17868,0 +17916,6 @@ components:
++    IfMatchOrZero:
++      name: If-Match
++      in: header
++      required: true
++      description: 'The ETag of the defaulted record being changed (ARCH-R1; the amendments of 2026-10-09 to ADR-0035, ADR-0036 and ADR-0037). `"0"` creates the row and is stale (409) once a row exists; otherwise the row version. A missing header gives 428; a stale one gives 409.'
++      schema: { type: string, pattern: '^"(0|[1-9][0-9]{0,9})"$' }
+@@ -18134,0 +18188,3 @@ components:
++    ETagOrZero:
++      description: 'Strong entity tag `"<version>"` of a defaulted record (ARCH-R1; the amendments of 2026-10-09 to ADR-0035, ADR-0036 and ADR-0037). `"0"` when no row has been written yet and the response shows the defaults; otherwise the row version (1 or more).'
++      schema: { type: string, pattern: '^"(0|[1-9][0-9]{0,9})"$' }
+@@ -24099 +24155 @@ components:
+-        controlCadence: { type: [string, "null"], enum: [monthly, quarterly, semiannual, annual, null] }
++        controlCadence: { type: [string, "null"], enum: [weekly, monthly, quarterly, semiannual, annual, null] }
+@@ -24193 +24249 @@ components:
+-        controlCadence: { type: [string, "null"], enum: [monthly, quarterly, semiannual, annual, null] }
++        controlCadence: { type: [string, "null"], enum: [weekly, monthly, quarterly, semiannual, annual, null] }

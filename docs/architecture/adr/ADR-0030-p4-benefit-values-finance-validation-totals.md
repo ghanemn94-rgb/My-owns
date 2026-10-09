@@ -179,3 +179,12 @@ The REQ-S16-017 integration test (KBE-E, `test/integration/benefits/entity-group
 - Probe (`probe.ts`, `probe-output.txt`): every constraint named above has a probe id (M01–M21, FV01–FV10, K01–K02, I01–I03, E01–E02, T01–T03, D01–D02).
 - `catalogue.test.ts` pins the triggers (incl. the deferred `benefit_measurement_decision_present`), the versioned tables and the grants; the views are pinned in `VIEW_NAMES`.
 - KBE-E's integration tests prove the API half: queue exactly once on replay (REQ-S12-014), 403 for BO, AUD and ADM-only on the Finance endpoints, 409 on an in-place edit of a validated value, the entity-group test (§12), and the totals examples (§7, §8).
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): codes and keys added outside the ADR
+
+### A1. Codes and keys added outside the ADR's refusal table (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `benefits.task.finance_validation_review` | message key | accepted | Validate the value of {benefitCode} for {periodStart} to {periodEnd}. |
+| `kpi.downstream.benefit` | label key | accepted | Benefit measured by this KPI |

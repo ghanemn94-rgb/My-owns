@@ -259,3 +259,19 @@ The A09 acceptance clause "an integration test creates and reads each one throug
 - Probe (`probe.ts`, `probe-output.txt`): migrations on a fresh database and over a P3-populated one (G00–G05); seeds (S01–S05); RAID (R01–R18); Dependency entries (D01–D05); actions (AC01–AC05); rules (RU01–RU07); cases (C01–C22); signals (SG01–SG08); budget lines (BU01–BU12); durations (SC01–SC05); privileges (P01–P03).
 - `catalogue.test.ts` pins the triggers, the versioned tables, the grants and the view; `seed.test.ts` pins `0043` against `P4_RAID_PERMISSIONS`/`P4_RAID_ROLE_PERMISSIONS`; `advisory-locks.test.ts` pins 730236.
 - The implementers' integration tests prove the API half (p4-work-split §E): the nine T15 columns and the type, probability and closure refusals; the T08-owner-edit A01 test; the corrective rule (two cycles create one case, the third updates it; a benefit below plan creates one; replay creates none; a failed control check creates one owned case with a follow-up date); decimal budget totals and the working-day slip examples; the critical-path fixture and the missing-duration refusal; AUD 403 on every write; the entity-group test (§12).
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): RAID Dependency entries as decided, and the codes added outside §11
+
+### A1. RAID Dependency entries (BE-D handback §5 items 1–3; decided, no DG3 reopen)
+
+1. **Status.** A Dependency entry has no "In progress" status. Its RAID status is **Open** (the T08 statuses `open` and `at_risk`) or **Closed** (`resolved`). A RAID update to `in_progress` on a Dependency is refused 422 `raid.status_transition` (the §11 text, unchanged); `status: "open"` is accepted and keeps `at_risk`. Risk, Assumption and Issue keep Open ⇄ In progress as §1 states.
+2. **Closure fields.** The canonical `dependency` row (DG2/DG3) has no closure columns, and none is added. A closed Dependency entry returns `recordStatus: "resolved"` and `closedAt`, `closedBy`, `closureNote` as `null`; the closure note is the `reason` of the `dependency.update` audit event that resolved it. The RAID screen shows such an entry as **Closed** and its closure note from the record history; it never shows the null fields as a blank closure or as "Unknown". (Risk, Assumption and Issue entries keep their closure columns.)
+3. **"To" initiative.** The RAID form requires a "To" initiative when the type is Dependency (FE-D; the orchestrator's preference). The API mapping of §2 is unchanged, so an API create without endpoints still maps to `to_kind = other`. Such an entry is listed and read on T08, edited and closed through RAID, and editable on T08 once a `toInitiativeId` is given (T08's `updateT08Dependency` keeps its DG3 422 `dependency.to_required`). No DG3 response changes.
+
+### A2. Codes and keys added outside §11 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `validation.not_applicable` | 400 field | accepted | This field does not apply here. |
+| `raid.task.action_due` | message key | accepted | Your action is due. With {sourceCode}: Your action on {sourceCode} is due. |
+| `raid.task.corrective_follow_up` | message key | accepted | Follow up corrective case {caseCode}. |

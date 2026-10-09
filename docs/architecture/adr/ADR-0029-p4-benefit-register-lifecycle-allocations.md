@@ -213,3 +213,27 @@ Money is numeric(20,4) (`planned_value`, value amounts, `unit_value`), baseline,
 
 - `docs/delivery/handbacks/DG4/T-DG4-ARCH-03-evidence/probe.ts` on a disposable PostgreSQL 16: migrations 0001→0040 on an empty database and 0028→0040 over a P3-populated one; every guard named above has a probe id (`probe-output.txt`).
 - `packages/db/test/integration/catalogue.test.ts` pins the slice B trigger attachments, the versioned tables and the grants (no DELETE); `packages/db/src/seed.test.ts` pins 0040 against `P4_BENEFIT_PERMISSIONS`; `advisory-locks.test.ts` pins 730232–730234 and the trigger constant `benefit_allocation_lock_class`.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the weekly control cadence, and the codes and keys added outside §11
+
+### A1. The weekly control cadence (BE-I handback §6 item 1; D-102, D-105)
+
+Migration `0060` widens `benefit_control_cadence_check` to `weekly`, `monthly`, `quarterly`, `semiannual`, `annual` (NULL still allowed). `semiannual` keeps its spelling. `CONTROL_CADENCES` in `packages/shared/src/schemas/benefits.ts` and the contract's `controlCadence` enums (`Benefit`, `BenefitUpdate`) gain `weekly`. No job reads a benefit's `control_cadence` (the monitoring schedule follows transition decisions, ADR-0034), so nothing else changes. The BAU-handover mapping that writes it is in the ADR-0034 amendment.
+
+### A2. Codes and keys added outside §11 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `benefit_valuation_method.not_approved` | 422 | accepted | Only an approved valuation method can be retired. |
+| `benefit_value.period_range` | 422 | accepted | The period end cannot be before the period start. |
+| `benefit_value.value_required` | 422 | accepted | A scenario value needs an amount or a KPI value. |
+| `validation.decimal_share_scale` | 400 field | accepted | A share has at most 6 decimal places. |
+| `validation.key` | 400 field | accepted | A key starts with a lower-case letter or digit and uses a-z, 0-9, '_', '.', ':' and '-' (up to 100 characters). |
+| `validation.decimal_non_negative` | 400 field | accepted | Enter zero or a positive amount. |
+| `benefits.task.overlap_review` | message key | accepted | Review a possible double count between {benefitACode} and {benefitBCode} ({dimensions}). |
+| `benefit.planned_value_missing` | reason key | accepted | Unknown: the benefit has no planned value. |
+| `benefit.value_amount_missing` | reason key | accepted | Unknown: an amount in this total is missing. |
+| `benefit.kpi_actual_missing` | reason key | accepted | Unknown: the measuring KPI has no accepted actual. |
+| `benefit.non_financial` | reason key | accepted | Not applicable: a non-financial benefit has no currency amount. |
+| `benefit.not_counted` | reason key | accepted | Not applicable: this benefit is not counted in the total. |
+| `benefit.overlap_open` | reason key | accepted | Unknown: an open double-count warning excludes this benefit until it is resolved. |

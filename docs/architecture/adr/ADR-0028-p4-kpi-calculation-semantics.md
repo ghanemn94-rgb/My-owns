@@ -145,3 +145,15 @@ The roll-up of an entry scope narrower than the transformation (business units o
 - KBE-A: unit and property tests in `packages/shared/src/kpi/**` for every worked example above (the A05 list): adverse/favourable/outside/milestone; +2.0 pp and +20 %; YTD = Σ flows; zero denominator → Not computable (no error, not 0); negative baseline flagged; 4-week vs 5-week → Not comparable; 1/10 and 9/10 → 0.50; SAR + USD refused; no actual → Unknown and no zero contribution; all-tasks-complete plus actual below red → Red; a new threshold version → new RAG.
 - Database invariants: probe R03–R07 (`0035`).
 - KBE-C: the read model's seven elements in en and ar and the override display rules; QA A04/A05.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): codes and keys added outside the ADR
+
+### A1. Codes and keys added outside the ADR's refusal table (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `kpi.aggregation_period_mismatch` | roll-up refusal | accepted | Roll-up refused: scope {scopeId} is for period {periodId} ({basis}), not {expectedPeriodId} ({expectedBasis}); a roll-up never mixes periods. |
+| `kpi.before_trajectory` | reason key | accepted | Unknown: the date is before the first trajectory point. |
+| `kpi.no_approved_trajectory` | reason key | accepted | Unknown: the KPI has no approved target trajectory. |
+| `kpi.calculation_pending` | reason key | accepted | Unknown: an accepted actual is waiting for its calculation run. |
+| `kpi.value_out_of_range` | reason key | accepted | Not computable: the result does not fit the stored decimal range. |

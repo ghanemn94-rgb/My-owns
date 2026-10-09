@@ -213,3 +213,47 @@ All money, ratios and KPI values are decimal strings computed with decimal.js an
 - **Database (probe, real output):** T01, T02, RP01–RP07, MW01 (`probe-output.txt`).
 - **API (KBE-G tests, p4-work-split §J+K):** all six areas present with both languages' labels; the Outcomes area red/amber for a KPI below trajectory with every linked deliverable accepted, `unknown` for a KPI without an actual (REQ-PB-063); Decisions red with one open ask due yesterday in Asia/Riyadh (business date injected), not counted after its outcome is recorded (REQ-PB-064); period filter Q1 changes every area (REQ-S13-002); every headline's drill-down sums to it and the validated total drills to its benefits (REQ-S13-003); the scope sweep over the six dashboards and every drill-down metric (REQ-S13-001, REQ-S03-001); My Work sections, the `kpi_update_due` item under Missing updates with its link, and no other user's item (REQ-S03-008); the overview after an accepted actual (REQ-S03-009); the header's eight elements with Unknown where data is missing (REQ-S03-011); AUD 403 and If-Match 428/409 on the policy write; the work-item-kind map completeness test.
 - **Web (FE-G):** six dashboards, chips, drill-down panel, header with the one-click RAID link (e2e), en/ar.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the version-0 RAG policy and the keys added outside §13
+
+### A1. The RAG policy before it is configured
+
+**The defaulted-record ETag rule (applies to three records only).** A record that exists by default before anyone writes it (one phase step per transformation and step key, ADR-0035 §1; one change-control policy per transformation, ADR-0036; one dashboard RAG policy per organization, ADR-0037 §3) is read with `version: 0` and `ETag: "0"` while no row exists, and the body shows the defaults (Unknown/null where the ADR says so). The first write sends `If-Match: "0"` and inserts the row at version 1; `If-Match: "0"` once a row exists is 409 `urn:mth:problem:version-conflict` with `currentVersion`; `If-Match: "<n ≥ 1>"` while no row exists is 409 without `currentVersion` (its schema starts at 1, and the BE-L behaviour is kept); a missing `If-Match` is 428. The contract declares this with two components used **only** by these six operations: the response header `ETagOrZero` (pattern `^"(0|[1-9][0-9]{0,9})"$`) on `getPhaseStep`, `getChangeControlPolicy` and `getDashboardRagPolicy`, and the parameter `IfMatchOrZero` (same pattern) on `updatePhaseStep`, `putChangeControlPolicy` and `putDashboardRagPolicy`. Every other operation keeps `ETag`/`IfMatch` starting at 1, and "creates are version 1" still holds for every row that is inserted. A 404 was rejected for these reads because the defaults are real, displayable values and the screen needs the ETag to make the first write. The three `contract: false` skips added for this (`workflows/phases.test.ts`, `workflows/change-requests.test.ts`, `reporting/rag-policy.test.ts`, one GET each) are removed by ARCH-R1, so these reads are contract-checked.
+
+### A2. Rule, reason and headline keys and codes added outside §13 (accepted, with their exact English texts)
+
+These keys are rendered by the web client; the server sends only the key (and `ruleParams` where §3 defines them). The rule keys `.none`, `.none_open`, `.nothing_due`, `.no_indicators` and `dashboard.rag.workstream_not_applicable` are already in this ADR and are not repeated.
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `validation.ratio_range` | 400 field | accepted | Enter a decimal ratio from 0 to 1. |
+| `dashboard.rag.outcomes.trajectory` | rule key | accepted | Outcomes: the worst outcome-KPI status against its trajectory. |
+| `dashboard.rag.value.validated_gap` | rule key | accepted | Value: validated value against the value planned to date. |
+| `dashboard.rag.portfolio.milestone_outcome` | rule key | accepted | Portfolio: the worst milestone slip of the top initiatives. |
+| `dashboard.rag.dependencies.needed_by_critical_path` | rule key | accepted | Dependencies: open dependencies needed soon or on the critical path. |
+| `dashboard.rag.decisions.overdue` | rule key | accepted | Decisions: at least one open decision is past its decision date. |
+| `dashboard.rag.decisions.due` | rule key | accepted | Decisions: open decisions are due soon. |
+| `dashboard.rag.adoption.curve` | rule key | accepted | People and adoption: the worst adoption indicator against its curve. |
+| `dashboard.value.gap_ratio` | rule key | accepted | Value gap = (planned due to date - validated) / planned due to date. |
+| `dashboard.value.sum_investment` | rule key | accepted | Investment = the sum of the approved budget lines. |
+| `dashboard.finance.pending_validation` | rule key | accepted | Values waiting for Finance validation. |
+| `dashboard.value.nothing_planned` | reason key | accepted | Not applicable: nothing is planned to date. |
+| `dashboard.value.no_financial_benefit` | reason key | accepted | Not applicable: there is no financial benefit. |
+| `dashboard.value.multiple_currencies` | reason key | accepted | Not applicable: the values are in more than one currency and are never converted. |
+| `dashboard.portfolio.no_allocated_value` | reason key | accepted | Unknown: no benefit value is allocated to this initiative. |
+| `dashboard.portfolio.no_approved_milestone` | reason key | accepted | Unknown: the initiative has no approved milestone date. |
+| `dashboard.portfolio.milestone_overdue` | reason key | accepted | Red: a milestone is past its approved date and not achieved. |
+| `dashboard.portfolio.milestone_slip` | reason key | accepted | A milestone has slipped past its approved date. |
+| `dashboard.kpi.no_period_in_window` | reason key | accepted | Unknown: no reporting period falls in the selected window. |
+| `dashboard.headline.value_planned` | label key | accepted | Planned value |
+| `dashboard.headline.value_forecast` | label key | accepted | Forecast value |
+| `dashboard.headline.value_submitted` | label key | accepted | Submitted value |
+| `dashboard.headline.value_validated` | label key | accepted | Validated value |
+| `dashboard.headline.value_gap` | label key | accepted | Value gap |
+| `dashboard.headline.value_investment` | label key | accepted | Investment |
+| `dashboard.headline.outcome_kpis` | label key | accepted | Outcome KPIs |
+| `dashboard.headline.top_initiatives` | label key | accepted | Top initiatives |
+| `dashboard.headline.open_dependencies` | label key | accepted | Open dependencies |
+| `dashboard.headline.open_decisions` | label key | accepted | Open decisions |
+| `dashboard.headline.overdue_decisions` | label key | accepted | Overdue decisions |
+| `dashboard.headline.adoption_indicators` | label key | accepted | Adoption indicators |

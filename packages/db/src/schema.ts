@@ -2816,7 +2816,7 @@ export interface BenefitOverlapTable {
   transformation_id: string;
   benefit_a_id: string;
   benefit_b_id: string;
-  dimensions: string;
+  dimensions: string[];
   driver_key: string | null;
   population_key: string | null;
   overlap_start: string | null;

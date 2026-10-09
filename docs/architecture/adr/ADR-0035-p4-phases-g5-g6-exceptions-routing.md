@@ -230,3 +230,49 @@ The rule messages of `phase_step.completion_rule_unmet` are, per rule: "at least
 
 - **Database (probe, real output):** G00–G06, S01–S07, PS01–PS16, GR01–GR08, GE01–GE13, GC01–GC06, SC01–SC10, RD01–RD04 (`probe-output.txt`).
 - **API (implementers' tests, p4-work-split §H):** `GET /phases` returns six phases matching B0021; each phase shows steps, required evidence, owners and a review queue; a step with an unmet rule cannot be completed (422); G5 with an open High-impact risk and no disposition → 422 listing "Risk closure"; G5 configured to BO: SP → 403, BO → 201; G6 without an accepted handover → 422 listing "Ownership transfer"; G6 approval changes no file under `docs/delivery/` and no phase; with a valid exception the submission succeeds and its snapshot records the exception; after expiry the live view lists the criterion missing; a waiver without expiry or compensating action → 400; the first review moves the gate to Under Review; each criterion row returns nine fields; a scale transition before G5 → 422 naming G5, after approval inside scope → 201, outside → 422; each required approver gets exactly one task referencing the snapshot SHA-256 (a redelivery adds none); G2 approval enables the Design steps once; a G5 approval enables only its scope items; AUD 403 on every write; technical-admin 403 on exception decisions; `If-Match` 428/409; one audit event per mutation.
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): revoked exceptions, the version-0 phase step, and the codes added outside §11
+
+### A1. A revoked exception blocks approval (BE-K2 handback §5 item 4; D-108)
+
+REQ-S04-012 lets a mandatory criterion be incomplete only when "an authorized, unexpired exception covers the item". A revoked exception is no longer authorized, and §4 already says revoke makes the item "missing again from that moment". **Decision:** approving a submission whose snapshot records an exception that has been revoked (`status = 'revoked'`, whatever the revoke date relative to the submission) is refused **422 `gate.exception_revoked`**: "The exception for {label} was revoked on {date}; it no longer covers the missing evidence." ({label} = the criterion label, {date} = the revoke business date in the transformation's timezone). The check runs at the same point as `gate.exception_expired` and before it, so an exception that is both revoked and expired reports the revoke. Rejecting, requesting changes and deferring stay allowed, as for an expired exception. The submission row and its snapshot are never changed (frozen history); the requester resubmits once the evidence exists or a new exception is accepted. Nothing in DG2/DG3 changes: a submission without an exception never reaches this check. BE-R2 implements it in `workflows/gates.ts` (decision path) with tests: revoked before decision → 422 with the text, nothing written; reject on the same submission → allowed; an unrevoked, unexpired exception → approve allowed (unchanged).
+
+### A2. Phase steps without a row
+
+**The defaulted-record ETag rule (applies to three records only).** A record that exists by default before anyone writes it (one phase step per transformation and step key, ADR-0035 §1; one change-control policy per transformation, ADR-0036; one dashboard RAG policy per organization, ADR-0037 §3) is read with `version: 0` and `ETag: "0"` while no row exists, and the body shows the defaults (Unknown/null where the ADR says so). The first write sends `If-Match: "0"` and inserts the row at version 1; `If-Match: "0"` once a row exists is 409 `urn:mth:problem:version-conflict` with `currentVersion`; `If-Match: "<n ≥ 1>"` while no row exists is 409 without `currentVersion` (its schema starts at 1, and the BE-L behaviour is kept); a missing `If-Match` is 428. The contract declares this with two components used **only** by these six operations: the response header `ETagOrZero` (pattern `^"(0|[1-9][0-9]{0,9})"$`) on `getPhaseStep`, `getChangeControlPolicy` and `getDashboardRagPolicy`, and the parameter `IfMatchOrZero` (same pattern) on `updatePhaseStep`, `putChangeControlPolicy` and `putDashboardRagPolicy`. Every other operation keeps `ETag`/`IfMatch` starting at 1, and "creates are version 1" still holds for every row that is inserted. A 404 was rejected for these reads because the defaults are real, displayable values and the screen needs the ETag to make the first write. The three `contract: false` skips added for this (`workflows/phases.test.ts`, `workflows/change-requests.test.ts`, `reporting/rag-policy.test.ts`, one GET each) are removed by ARCH-R1, so these reads are contract-checked.
+
+### A3. Codes and keys added outside §11 (accepted, with their exact English texts)
+
+The `g5.*` and `g6.*` keys are the per-item keys of the "missing" list a G5/G6 evaluation returns (the server sends the English text shown). `forbidden` is the existing generic code; only its detail is recorded.
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `gate.exception_revoked` | 422 | new (item 7; BE-R2 implements) | The exception for {label} was revoked on {date}; it no longer covers the missing evidence. |
+| `forbidden (existing code)` | 403 detail | accepted detail text | Only the requester can withdraw their exception. |
+| `validation.duplicate_scope_item` | 400 field | accepted | Each item can appear only once in the scale scope. |
+| `gates.task.gate_decision_due` | message key | accepted | Decide gate {gateCode}, submission {submissionNo}. |
+| `gates.task.gate_condition_due` | message key | accepted | Meet condition {ordinal} of the {gateCode} decision. |
+| `gates.task.gate_exception_to_decide` | message key | accepted | Decide an exception for {criterionKey} at gate {gateCode} (expires {expiresOn}). |
+| `gates.task.gate_exception_expired` | message key | accepted | The exception for {criterionKey} at gate {gateCode} expired on {expiresOn}. Close the evidence gap. |
+| `gates.notice.gate_exception_expired` | notice key | accepted | The exception for {criterionKey} at gate {gateCode} expired on {expiresOn}; it no longer covers the missing evidence. |
+| `gates.task.phase_step_enabled` | message key | accepted | Phase step {stepKey} ({phaseCode}) can start. |
+| `gates.task.phase_step_review` | message key | accepted | Review phase step {stepKey} ({phaseCode}). |
+| `gates.task.scale_scope_enabled` | message key | accepted | Scale-out of {initiativeCode} is enabled in its approved scope. |
+| `g5.performance_not_loaded / g5.adoption_not_loaded / g5.risk_closure_not_loaded / g5.decision_log_not_loaded / g6.benefits_not_loaded / g6.ownership_not_loaded / g6.controls_not_loaded / g6.improvement_not_loaded` | missing-item key | accepted | {label}: the facts could not be read. |
+| `g5.performance_no_kpi` | missing-item key | accepted | Performance evidence: no KPI is linked to an outcome of the transformation. |
+| `g5.performance_no_accepted_actual` | missing-item key | accepted | Performance evidence: {name} has no accepted actual. |
+| `g5.performance_kpi_not_known` | missing-item key | accepted | Performance evidence: {name} is {valueStatus}. |
+| `g5.performance_pilot_evidence_missing` | missing-item key | accepted | Performance evidence: no verified evidence is linked to the Transform step "deliver pilots". |
+| `g5.adoption_none` | missing-item key | accepted | Adoption: no adoption indicator is linked to the transformation. |
+| `g5.adoption_indicator_unknown` | missing-item key | accepted | Adoption: indicator {templateKey} has no current value ({valueStatus}). |
+| `g5.risk_open` | missing-item key | accepted | Risk closure: {code} has High impact and is neither closed nor dispositioned. |
+| `g5.decision_log_empty` | missing-item key | accepted | Decision log: the T16 decision log has no entry. |
+| `g5.decision_date_missing` | missing-item key | accepted | Decision log: {name} is open and its decision date is missing. |
+| `g5.decision_overdue` | missing-item key | accepted | Decision log: {name} is open past its decision date {decisionDate}. |
+| `g6.benefits_none` | missing-item key | accepted | Benefits evidence: the transformation has no benefit. |
+| `g6.benefit_not_validated` | missing-item key | accepted | Benefits evidence: {code} {title} has no Finance-validated measurement and no approved transition decision. |
+| `g6.performance_area_none` | missing-item key | accepted | Ownership transfer: the transformation has no performance area. |
+| `g6.handover_not_accepted` | missing-item key | accepted | Ownership transfer: {code} {name} has no accepted BAU handover in its current cycle. |
+| `g6.controls_no_handover` | missing-item key | accepted | Controls: no performance area has an accepted BAU handover. |
+| `g6.control_missing` | missing-item key | accepted | Controls: {code} {name} has no active control. |
+| `g6.improvement_backlog_empty` | missing-item key | accepted | Continuous improvement backlog: the improvement backlog is empty. |

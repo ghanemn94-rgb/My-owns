@@ -194,9 +194,8 @@ describe("guided phase steps (REQ-S04-001)", () => {
     expect(after.body.phases.map((x: { reviewQueueCount: number }) => x.reviewQueueCount)).toEqual([1, 0, 0, 0, 0, 0]);
     const queue = await send("GET", `${p.base}/phase-steps?status=in_review`, { session: p.auditor });
     expect(queue.body.items.map((s: Step) => s.stepKey)).toEqual(["diagnose.register_scope_sponsor"]);
-    // Version 0 (no row): ETag "0" as the getPhaseStep summary says. contract: false ONLY because the shared ETag header
-    // pattern starts at "1" (a contract conflict reported in the BE-L2 handback); the body is checked by its zod mirror.
-    const one = await send("GET", S(p, "diagnose.assess_performance"), { session: p.auditor, contract: false });
+    // Version 0 (no row): ETag "0" as the getPhaseStep summary says; the ETagOrZero header admits it (ARCH-R1).
+    const one = await send("GET", S(p, "diagnose.assess_performance"), { session: p.auditor });
     expect(phaseStep.safeParse(one.body).success).toBe(true);
     expect([one.status, one.headers.etag, one.body.version, one.body.ownerUserId]).toEqual([200, '"0"', 0, null]);
     expect((await send("GET", S(p, "diagnose.no_such_step"), { session: p.auditor })).status).toBe(404);

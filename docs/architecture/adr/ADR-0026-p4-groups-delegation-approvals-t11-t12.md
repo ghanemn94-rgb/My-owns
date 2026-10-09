@@ -307,3 +307,75 @@ Slice C stores no money, rate or FTE value. Its Unknowns: a due date that cannot
 ## Verification
 
 Evidence: `docs/delivery/handbacks/DG4/T-DG4-ARCH-01-evidence/probe-output.txt`. Probes for this ADR: "backfill: per transformation 2 matrices, 4 T11 rows, 6 T12 deliverables, 36 cells", "the DG3-style delegation row survives", "p4_instantiate_transformation is idempotent", S01–S03, G18–G30, R01–R07, A01–A29, C01. Not verified by this task (assigned in the work split): every API refusal and its English text, the routing service, the SLA computation, the escalation job and the REQ-S16-011 API test (BE-B, BE-C), and the screens (FE-A).
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): in-transaction resubmit and withdraw, and the codes added outside §4
+
+This amendment answers the gap reported by BE-C (handback §4.1), BE-J (§5 item 3) and BE-L (§5 item 2), recorded in D-107. Nothing above is removed; where this amendment and §4 differ, this amendment wins. BE-R2 implements it (the approval service is BE-B's `workflows/approvals.ts`).
+
+### A1. What the database already allows (no migration)
+
+The `0031` trigger `approval_guard` checks `subject_version` against the subject's current version only on INSERT and when `subject_version` changes, and it lets a resubmission (`changes_requested → pending`, round + 1) take any newer subject version. So both services below need no schema change. A subject module that steps its own row in the same transaction must step it **before** it calls the service (resubmit) or **after** it (withdraw), as each flow in A4 states; otherwise the approval is stale at once.
+
+### A2. `resubmitApprovalInTx(tx, audit, input)` (exported from `workflows/index.ts`)
+
+- **Input:** `{ approvalId, subjectVersion, requestNote?: string | null, expectedApprovalVersion?: number }`. `audit.actorUserId` is the person resubmitting. The caller has already authorised its own subject action; the service checks only what is below.
+- **Checks, in this order (nothing is written on a refusal):**
+  1. the approval exists and is read `FOR UPDATE` → else 404 `not_found`;
+  2. `audit.actorUserId` equals `requested_by` → else 403 `approval.not_requester`;
+  3. `expectedApprovalVersion`, when given, equals the approval's `version` → else 409 `urn:mth:problem:version-conflict` with `currentVersion`;
+  4. status is `changes_requested` → else 422 `invalid_transition` with the existing `notResubmittable` text ("This approval is {status}; only an approval with changes requested can be resubmitted.");
+  5. `subjectVersion` > the approval's `subject_version` → else 422 `approval.resubmit_needs_new_version`;
+  6. under `pg_advisory_xact_lock(730226, hashtext(subjectId))`, the subject's current version equals `subjectVersion` → else 409 `approval.stale_version`.
+- **Effects:** exactly the effects of today's route body: status `pending`, `round_no + 1`, `subject_version`, `request_note` when given, `version + 1`, `updated_by`; the audit event `approval.resubmit` with the same `changes` (status, round_no, subject_version); the requester's open `approval_changes_requested` items closed `done`; one `approval_decision` task per approver of the current assignee. **It does not call the subject provider's `onOutcome`**: the caller is the subject's own module and has already applied its subject change in this transaction.
+- **Returns** the updated approval row.
+
+### A3. `withdrawApprovalInTx(tx, audit, input)` (exported from `workflows/index.ts`)
+
+- **Input:** `{ approvalId, reason, expectedApprovalVersion?: number }`. `reason` must have text (the shared `hasText` rule) → else 400 `validation` at `/reason`.
+- **Checks, in this order:** 1 and 2 as in A2 (404; 403 `approval.not_requester`); 3 as in A2 (409); status is `pending`, `deferred` or `changes_requested` → else 422 `approval.not_open`.
+- **Effects:** exactly the effects of today's route body: status `withdrawn` (final), `version + 1`; the audit event `approval.withdraw` with `reason` and `changes.status`; every open work item of the approval closed `cancelled`. **It does not call `onOutcome`** (as A2). The subject module then steps its own subject in the same transaction; a withdrawn approval is final, so a later subject update cannot make it stale.
+
+### A4. The routes and each subject's corrected flow
+
+- **The routes** `POST /api/v1/approvals/{approvalId}/resubmit` and `/withdraw` keep their contract and responses. Each becomes: the existing authorization and `If-Match` checks, then the in-transaction service with `expectedApprovalVersion` = the `If-Match` value, then `emitOutcome` (`resubmitted` / `withdrawn`) to the subject provider, as today.
+- **A provider may set `resubmitThroughSubject: true`.** For such an approval type, `POST …/resubmit` refuses with 422 `approval.resubmit_through_record`: "Resubmit this request by submitting its record again." (nothing written). The three types below set it. `withdraw` stays available on the route for every type, because its `onOutcome('withdrawn')` runs after the approval is final.
+- **`governance_matrix_change` (BE-C, §7).** `submitGovernanceMatrix` accepts a `draft` matrix whose approval is `changes_requested`: it sets the header `in_approval` (header `version + 1`, audited) and then calls `resubmitApprovalInTx` with that new header version, in one transaction. Rows are frozen again from that moment (`governance_matrix_rows_editable`), which closes BE-C's gap for rounds 2 and later. `onOutcome('resubmitted')` is no longer reached for this type.
+- **`benefit_transition_decision` (BE-J; ADR-0034 §3).** The stored status stays `draft` while the approval is open, and the API presents `submitted` with `approvalId` (BE-J as built; accepted, because the `0048` CHECK needs `approval_id` on a stored `submitted` row and the approval cannot exist before the request). Withdrawing a decision whose approval is open: `updateTransitionDecision` with `status: withdrawn` calls `withdrawApprovalInTx` first, then moves the row `draft → withdrawn` (audited `transition_decision.withdraw`), in one transaction. This removes the approval that "can never be decided". Resubmitting after changes requested: `submitTransitionDecision` on a draft whose approval is `changes_requested` calls `resubmitApprovalInTx` with the decision's current row version (content edits made while changes were requested step that version).
+- **`change_request` (BE-L; ADR-0036).** Resubmission: `submitChangeRequest` freezes the new assessment and returns the request to `submitted` (version + 1), then calls `resubmitApprovalInTx` with that version, in one transaction (today it is two calls). Withdrawal: `withdrawChangeRequest` on a request in approval calls `withdrawApprovalInTx`, then sets the request `withdrawn`, in one transaction. The 422 `change_request.withdraw_via_approval` is then no longer produced (ADR-0036 amendment).
+- **Every other approval type** (`decision_request`, `kpi_version_activation`, `kpi_actual_review`, `kpi_actual_rejected`, `adoption_intervention_due`, `risk_disposition`) is unchanged.
+- **Tests BE-R2 must add:** for each of the three subjects, (a) a round-2 resubmission through the subject's submit leaves one open approval, round 2, bound to the subject's new version, and a decision on it succeeds; (b) a subject-side withdraw leaves the approval `withdrawn` and the subject withdrawn (or draft for a matrix), with both audit events, in one transaction; (c) `POST …/resubmit` on these types is 422 `approval.resubmit_through_record` and writes nothing; (d) a revoked requester between the request and commit gets 403 and nothing is written.
+
+### A5. Codes and keys added outside §4–§7 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `group.code_taken` | 409 | accepted | A group with the code {code} already exists in this organization. |
+| `group.member_exists` | 409 | accepted | This person is already a current member of the group. |
+| `group.member_other_organization` | 422 | accepted | Only an active user of the group's organization can be a member. |
+| `group.owner_invalid` | 422 | accepted | The owner must be an active user of the group's organization. |
+| `group.archived` | 422 | accepted | This group is archived. Reactivate it before adding members. |
+| `group.member_removed` | 422 | accepted | This member has already been removed. |
+| `group.member_window_invalid` | 422 | accepted | A membership must end after it starts. |
+| `role_mapping.already_mapped` | 409 | accepted | This party is already mapped in this transformation. End the current mapping first. |
+| `role_mapping.party_unknown` | 422 | accepted | {party} is not a known governance role. |
+| `role_mapping.target_invalid` | 422 | accepted | Map the party to an active user, or an active group, of this transformation's organization. |
+| `role_mapping.ended` | 422 | accepted | This mapping has already ended. Create a new mapping instead. |
+| `validation.party_unknown` | 400 field | accepted | {party} is not a known governance role. |
+| `validation.party_code` | 400 field | accepted | A governance role code starts with a capital letter and uses A-Z, 0-9 and '_' (up to 32 characters). |
+| `validation.duplicate_party` | 400 field | accepted | Each governance role can appear only once in a row. |
+| `raci.party_unknown` | 422 | accepted | {party} is not a known governance role. |
+| `delegation.delegate_unknown` | 422 | accepted | The delegate must be an active user of the delegator's organization. |
+| `delegation.scope_invalid` | 422 | accepted | The scope must be the delegator's organization, one of its business units or one of its transformations. |
+| `validation.scope_pair` | 400 field | accepted | Give scopeType and scopeId together. |
+| `approval.decision_right_unknown` | 422 | accepted | Choose an active decision right of this transformation. |
+| `approval.subject_unknown` | 422 | accepted | The record to approve does not exist in this transformation. |
+| `approval.calendar_not_configured` | 422 | accepted | Configure the organization's default business calendar before deferring this approval. |
+| `validation.defer_only` | 400 field | accepted | Only a deferral takes a new date. |
+| `approval.resubmit_through_record` | 422 | new (§4.1 amendment; BE-R2 implements) | Resubmit this request by submitting its record again. |
+| `approvals.task.decide` | message key | accepted | Decide: {title} (round {roundNo}), due {dueDate}. |
+| `approvals.task.changes_requested` | message key | accepted | Changes were requested on {title} (round {roundNo}). Update the record and resubmit, or withdraw. |
+| `approvals.task.outcome` | message key | accepted | Your approval request {title} (round {roundNo}) was {outcome}. |
+| `approvals.task.escalated` | message key | accepted | Escalated to you: {title}, due {dueDate} (level {level}, from {fromParty} to {toParty}). |
+| `approvals.task.overdue` | message key | accepted | {title} (round {roundNo}) is overdue since {dueDate} and was escalated to {escalatedToParty} (level {level}). |
+| `approvals.task.overdue_routing_error` | message key | accepted | {title} (round {roundNo}) is overdue since {dueDate}, but it could not be escalated: {routingParty} has no mapped person ({routingError}). |
+| `charter.decision_rights` | missing-item key | accepted | Charter decision rights |

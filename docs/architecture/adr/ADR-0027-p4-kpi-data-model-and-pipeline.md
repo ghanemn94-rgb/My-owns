@@ -248,3 +248,30 @@ Every KPI value, threshold, bound and expected value is `numeric(24,6)` (ADR-001
 - `docs/delivery/handbacks/DG4/T-DG4-ARCH-02-evidence/probe.ts` on a disposable PostgreSQL 16: migrations 0001→0036 on an empty database and 0028→0036 over a P3-populated one; every guard named above has a probe id (`probe-output.txt`).
 - `packages/db/test/integration/catalogue.test.ts` pins the versioned tables, the grants (no DELETE) and the slice A trigger attachments; `packages/db/src/seed.test.ts` pins `0036` against `P4_KPI_PERMISSIONS`; `advisory-locks.test.ts` pins 730228–730230.
 - The API behaviour (refusal texts, routes, pipeline counts, the four-step submission) is the implementers' tests (p4-work-split §A, KBE-A/B/C) and QA's A04/A05 (slice L).
+
+## Amendment (2026-10-09, T-DG4-ARCH-R1): the transformation-scoped reporting-period read, and the codes added outside §13
+
+### A1. `listTransformationReportingPeriods` (FE-B handback §5 item 1; D-102)
+
+**Decided: required.** REQ-S07-017's procedure is "open KPI, select period, enter or import actual and evidence, submit", and its permission is "submit: assigned KPI owner/steward"; REQ-S07-003's is "submit: KDS, BO (assigned)". A KPI owner or Lead granted only on the transformation holds `transformation.read` but not `organization.read`, so `listReportingPeriods` answers 404 and the person who must "select period" cannot list the periods. (REQ-S12-005 itself is satisfied by the job and needs no read; the requirement that drives this is S07-017.)
+
+- **Operation:** `GET /api/v1/transformations/{transformationId}/reporting-periods`, operationId `listTransformationReportingPeriods`, tag `reporting-periods`, permission `transformation.read` on the transformation (404 otherwise, as every transformation read).
+- **Result:** exactly the `ReportingPeriodPage` that `listReportingPeriods` returns for the transformation's organization, with the same parameters (`cursor`, `limit`, `frequency`, `status`), order (latest first) and cursor format. It reads; it changes nothing. Reporting periods are organization-wide (§3), so no period is hidden from a transformation of that organization; nothing of another organization is ever returned.
+- **Owner:** the kpi-benefits-engineer repair task after ARCH-R1 (the pending list `apps/api/test/support/p4-pending-arch-r1.ts`). Its tests: a TL or KDS granted only on the transformation gets 200 with the same items as an organization reader; an outsider gets 404; AUD gets 200 (read); the contract check passes. FE-B's fallback (the KPI's current period) can then be replaced by this list.
+
+### A2. Codes and keys added outside §13 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `kpi_definition.archived` | 422 | accepted | Archived records are read-only. |
+| `validation.period_label` | 400 field | accepted | A period label starts with a letter or digit and uses letters, digits, '_', '.' and '-' (up to 32 characters). |
+| `validation.trajectory_points_or_source` | 400 field | accepted | Give either the trajectory points or the outcome KPI to copy them from, not both. |
+| `validation.trajectory_point_dates_distinct` | 400 field | accepted | Each trajectory point needs its own date. |
+| `validation.variable_name` | 400 field | accepted | A variable name starts with a lower-case letter and uses a-z, 0-9 and '_' (up to 48 characters). |
+| `kpi.update_due` | message key | accepted | Enter the {periodLabel} actual for {kpiName}. |
+| `kpi_actual.review_due` | message key | accepted | Review the {periodLabel} actual of {kpiName} (value {valueNo}). |
+| `kpi_actual.rejected` | message key | accepted | The {periodLabel} actual of {kpiName} (value {valueNo}) was rejected. Correct it and submit again. |
+| `kpi.downstream.kpi_panel` | label key | accepted | KPI panel |
+| `kpi.downstream.formula_kpi` | label key | accepted | Formula KPI that reads this KPI |
+| `kpi.downstream.outcome_kpi` | label key | accepted | Outcome KPI |
+| `kpi.downstream.executive_overview_outcomes` | label key | accepted | Executive Overview: outcomes |

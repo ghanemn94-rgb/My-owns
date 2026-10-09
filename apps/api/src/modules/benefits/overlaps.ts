@@ -164,8 +164,8 @@ export function toOverlap(r: BenefitOverlapRow): BenefitOverlap {
 }
 
 /**
- * `dimensions` is text[]: node-postgres returns a string[] at run time, but the frozen Kysely type in
- * packages/db/src/schema.ts declares `string` (reported to the orchestrator). Accept both shapes.
+ * `dimensions` is text[]: node-postgres returns a string[], and packages/db/src/schema.ts types it `string[]` (corrected
+ * by T-DG4-ARCH-R1). The Postgres array-literal string form is still accepted, so a caller holding one gets the same list.
  */
 export function dimensionsOf(v: unknown): BenefitOverlapDimension[] {
   const list = Array.isArray(v)
@@ -261,7 +261,7 @@ async function raiseOverlap(tx: Tx, ctx: WriteContext, input: RaiseInput): Promi
       transformation_id: ctx.transformationId,
       benefit_a_id: lo.id,
       benefit_b_id: hi.id,
-      dimensions: sql<string>`${canonicalDimensions(input.dimensions)}::text[]`,
+      dimensions: sql<string[]>`${canonicalDimensions(input.dimensions)}::text[]`,
       driver_key: lo.driver_key !== null && lo.driver_key === hi.driver_key ? lo.driver_key : null,
       population_key: lo.population_key !== null && lo.population_key === hi.population_key ? lo.population_key : null,
       overlap_start: input.start,

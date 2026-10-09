@@ -44,8 +44,8 @@ const put = (body: object, headers: Record<string, string> = ifm(0), session: Se
 
 describe("the dashboard RAG policy (ADR-0037 §3, §10)", () => {
   it("without a row: version 0, null thresholds, the documented defaults effective, policySource default", async () => {
-    // ETag "0" is outside the contract's ETag pattern (the BE-L precedent), so this one read skips the contract check.
-    const res = await call<Body>(api.app, "GET", P, { session: k.s.auditor, contract: false });
+    // ETag "0" is admitted by the ETagOrZero header (ARCH-R1), so this read is contract-checked.
+    const res = await call<Body>(api.app, "GET", P, { session: k.s.auditor });
     expect([res.status, res.headers.etag]).toEqual([200, '"0"']);
     expect(res.body).toMatchObject({
       organizationId: w.orgA.id,
