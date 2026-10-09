@@ -56,6 +56,15 @@ export {
   type SequencingResult,
 } from "./sequencing.ts";
 
+// P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only portfolio facts of the dashboards.
+export {
+  loadCriticalPathFlags,
+  loadDefaultWorkingCalendar,
+  loadPortfolioDashboardInitiatives,
+  loadWorkstreamFacts,
+  type PortfolioDashboardInitiative,
+} from "./dashboard-facts.ts";
+
 /** Wiring hook called by the composition root (server.ts). Every portfolio route file registers here. */
 export function registerPortfolioModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
   const routes = [
