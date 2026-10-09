@@ -476,6 +476,9 @@ export const benefitRegisterRow = z.strictObject({
   counting: benefitCountingStatus,
   currency,
   version,
+  // ARCH-08 / BE-M (D-106 (d)): the initiatives of the benefit's current allocation set. Inline, because
+  // schemas/traceability.ts imports from this file (importing its initiativeRef here would be circular).
+  initiatives: z.array(z.strictObject({ id: uuid, code: z.string(), name: z.string() })).optional(),
 });
 export type BenefitRegisterRow = z.infer<typeof benefitRegisterRow>;
 export const benefitRegisterPage = z.strictObject({

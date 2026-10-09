@@ -281,6 +281,80 @@ describe("updateCorrectiveCase and closeCorrectiveCase (ADR-0031 §5.5, §5.6)",
     ]);
   });
 
+  it("T-DG4-BE-R1: the follow-up follows the case: a date change moves it; A -> B -> A leaves one open item, A's", async () => {
+    const c = await create();
+    const patch = (version: number, extra: Record<string, unknown>) =>
+      call(api.app, "PATCH", `${C}/${c.id}`, { session: b.s.tl, headers: ifm(version), body: extra });
+    const moved = await patch(1, { followUpDate: "2030-02-20" });
+    expect([moved.status, moved.body.followUpDate]).toEqual([200, "2030-02-20"]);
+    expect((await tasksOf(c.id)).map((t) => [t.assignee_user_id, t.status, t.due_date])).toEqual([
+      [b.users.bo.id, "open", "2030-02-20"],
+    ]);
+    const [item] = await api.db.selectFrom("work_item").select("id").where("subject_id", "=", c.id).execute();
+    expect((await auditOf(api.db, item!.id)).map((a) => [a.action, a.changes])).toEqual([
+      ["work_item.create", expect.anything()],
+      ["work_item.reschedule", { due_date: { from: FUTURE, to: "2030-02-20" } }],
+    ]);
+    expect((await patch(2, { ownerUserId: b.users.bo2.id })).status).toBe(200);
+    expect((await patch(3, { ownerUserId: b.users.bo.id })).status).toBe(200);
+    const tasks = await tasksOf(c.id);
+    expect(tasks.map((t) => [t.assignee_user_id, t.status, t.due_date, t.dedupe_key])).toEqual([
+      [b.users.bo.id, "cancelled", "2030-02-20", `corrective.follow_up:${c.id}:${b.users.bo.id}`],
+      [b.users.bo2.id, "cancelled", "2030-02-20", `corrective.follow_up:${c.id}:${b.users.bo2.id}`],
+      [b.users.bo.id, "open", "2030-02-20", `corrective.follow_up:${c.id}:${b.users.bo.id}#2`],
+    ]);
+    // A repeat of the same owner and date changes no item (idempotent).
+    expect((await patch(4, { ownerUserId: b.users.bo.id, followUpDate: "2030-02-20" })).status).toBe(200);
+    expect((await tasksOf(c.id)).length).toBe(3);
+  });
+
+  it("T-DG4-BE-R1: the follow-up is system managed: its owner cannot complete it (422 work_item.system_managed)", async () => {
+    const c = await create();
+    const item = await api.db
+      .selectFrom("work_item")
+      .select(["id", "assignee_user_id"])
+      .where("subject_id", "=", c.id)
+      .executeTakeFirstOrThrow();
+    expect(item.assignee_user_id).toBe(b.users.bo.id);
+    const res = await call(api.app, "POST", `/api/v1/work-items/${item.id}/complete`, {
+      session: b.s.bo,
+      headers: ifm(1),
+    });
+    expect([res.status, res.body.code, res.body.detail]).toEqual([
+      422,
+      "work_item.system_managed",
+      "This task closes automatically when its approval is decided.",
+    ]);
+    expect((await tasksOf(c.id)).map((t) => t.status)).toEqual(["open"]);
+    expect((await auditOf(api.db, item.id)).map((a) => a.action)).toEqual(["work_item.create"]);
+    // Closing the case closes it (ADR-0031 §5.6).
+    const closed = await call(api.app, "POST", `${C}/${c.id}/close`, {
+      session: b.s.tl,
+      headers: ifm(1),
+      body: { closureNote: "Synthetic: recovered" },
+    });
+    expect(closed.status, JSON.stringify(closed.body)).toBe(200);
+    expect((await tasksOf(c.id)).map((t) => t.status)).not.toContain("open");
+  });
+
+  it("T-DG4-BE-R1: concurrent creations for one finding: one 201, the other 409 naming the real code", async () => {
+    const findingRef = `VR-2026-Q4 race ${randomUUID().slice(0, 8)}`;
+    const before = await caseCount();
+    const results = await Promise.all(
+      [b.s.tl, b.s.fin, b.s.bo].map((session) => call(api.app, "POST", C, { session, body: body({ findingRef }) })),
+    );
+    const created = results.filter((r) => r.status === 201);
+    expect(created).toHaveLength(1);
+    const code = (created[0]!.body as { code: string }).code;
+    for (const r of results.filter((x) => x.status !== 201))
+      expect([r.status, r.body.code, r.body.detail]).toEqual([
+        409,
+        "corrective_case.already_open",
+        `An open corrective action already exists for this finding: ${code}.`,
+      ]);
+    expect(await caseCount()).toBe(before + 1);
+  });
+
   it("If-Match: 428 when missing, 409 when stale; a past follow-up date is 422; nothing written", async () => {
     const c = await create();
     const missing = await call(api.app, "PATCH", `${C}/${c.id}`, { session: b.s.tl, body: { title: "Synthetic B" } });

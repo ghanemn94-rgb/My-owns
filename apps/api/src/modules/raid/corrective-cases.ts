@@ -16,10 +16,13 @@
 //
 // The four event-driven kinds are created and updated only by the worker (apps/worker/src/handlers/raid.ts; ADR-0031
 // §5.4); people create Value Review cases and edit, assign and close every case. One case that is not closed per source:
-// a second open case for the same finding is 409 corrective_case.already_open, decided under the correctiveCase advisory lock on
-// `<transformationId>:<sourceKind>:<sourceScopeKey>` (the worker's lock), with corrective_case_one_open_key as the
-// backstop. The owner gets one My Work item (corrective_case_follow_up, dedupe corrective.follow_up:<case>:<owner>,
-// due = the follow-up date; ADR-0031 §5.6); an owner change cancels the previous owner's open item, and closing the
+// a second open case for the same finding is 409 corrective_case.already_open, decided under the correctiveCase advisory
+// lock on `<transformationId>:<sourceKind>:<sourceScopeKey>` (the worker's lock) by the insert itself (ON CONFLICT on
+// corrective_case_one_open_key DO NOTHING, then the open case's code is read; T-DG4-BE-R1), so this service is the only
+// path that answers that refusal and it always names the real code. The owner gets one My Work item
+// (corrective_case_follow_up, dedupe corrective.follow_up:<case>:<owner>, due = the follow-up date; ADR-0031 §5.6;
+// system managed, so only the case closes it); an owner change cancels the previous owner's open item and opens the new
+// owner's (A -> B -> A leaves one, for A), a follow-up date change moves its due date (T-DG4-BE-R1), and closing the
 // case closes it. Refusals are exactly ADR-0031 §11 (S-11). Every mutation: the write gate re-checked at commit time
 // (AUD 403; ADM-only and outsiders 404), validation, If-Match (428/409; creates are version 1), one audit event in the
 // same transaction, no remote I/O. Closing a case records a person's judgement, never a G1-G6 business approval; a case
@@ -57,7 +60,13 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
+import {
+  closeWorkItemsOfSubject,
+  createWorkItemOnce,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
+  type WorkItemInput,
+} from "../tasks/index.ts";
 import { assertActiveUsers, openWrite, type WriteContext } from "../transformations/index.ts";
 import { createLinkedAction, openActionCreate, todayOf, toRaidAction, type ActionRow } from "./actions.ts";
 import { JSON_BODY, parseTransformationParam, raidRule } from "./register.ts";
@@ -202,22 +211,52 @@ async function nextCaseCode(tx: Tx, transformationId: string): Promise<string> {
   return `CA-${String(row.rows[0]!.last_value).padStart(2, "0")}`;
 }
 
-/** The owner's follow-up item (ADR-0031 §5.6); none without an owner (unassigned is shown, never skipped silently). */
-async function assignFollowUp(ctx: WriteContext, row: CorrectiveCaseRow): Promise<void> {
-  if (row.owner_user_id === null || row.status === "closed") return;
-  await createWorkItemOnce(ctx.tx, userActor(ctx), {
+/** The owner's follow-up item (ADR-0031 §5.6): one per case and owner; a returning owner's key gets `#n`. */
+function followUpInput(ctx: WriteContext, row: CorrectiveCaseRow, ownerUserId: string): WorkItemInput {
+  return {
     organizationId: ctx.organizationId,
     transformationId: ctx.transformationId,
     kind: CORRECTIVE_FOLLOW_UP_KIND,
-    assigneeUserId: row.owner_user_id,
+    assigneeUserId: ownerUserId,
     subjectType: "corrective_case",
     subjectId: row.id,
     linkPath: `/transformations/${ctx.transformationId}/corrective-actions/${row.id}`,
     messageKey: CORRECTIVE_FOLLOW_UP_MESSAGE,
     messageParams: { caseCode: row.code },
     dueDate: dateOrNull(row.follow_up_date),
-    dedupeKey: `corrective.follow_up:${row.id}:${row.owner_user_id}`,
-  });
+    dedupeKey: `corrective.follow_up:${row.id}:${ownerUserId}`,
+  };
+}
+
+/** The owner's follow-up item (ADR-0031 §5.6); none without an owner (unassigned is shown, never skipped silently). */
+async function assignFollowUp(ctx: WriteContext, row: CorrectiveCaseRow): Promise<void> {
+  if (row.owner_user_id === null || row.status === "closed") return;
+  await createWorkItemOnce(ctx.tx, userActor(ctx), followUpInput(ctx, row, row.owner_user_id));
+}
+
+/**
+ * The open case's follow-up follows it (T-DG4-BE-R1; ADR-0031 §5.5-§5.6): an owner change moves it to the new owner
+ * (the previous owner's open item is cancelled; A -> B -> A leaves one open item, for A), a follow-up date change moves
+ * its due date.
+ */
+async function followFollowUp(ctx: WriteContext, before: CorrectiveCaseRow, after: CorrectiveCaseRow): Promise<void> {
+  if (after.status === "closed") return;
+  if (after.owner_user_id !== before.owner_user_id) {
+    if (after.owner_user_id === null) await closeFollowUps(ctx, after.id, "cancelled");
+    else await reassignWorkItemOfSubject(ctx.tx, userActor(ctx), followUpInput(ctx, after, after.owner_user_id));
+  }
+  if (dateOrNull(after.follow_up_date) !== dateOrNull(before.follow_up_date))
+    await rescheduleWorkItemsOfSubject(
+      ctx.tx,
+      userActor(ctx),
+      {
+        organizationId: ctx.organizationId,
+        subjectType: "corrective_case",
+        subjectId: after.id,
+        kinds: [CORRECTIVE_FOLLOW_UP_KIND],
+      },
+      dateOrNull(after.follow_up_date),
+    );
 }
 
 function closeFollowUps(ctx: WriteContext, caseId: string, status: "done" | "cancelled"): Promise<number> {
@@ -247,15 +286,6 @@ async function createCase(tx: Tx, request: FastifyRequest): Promise<string> {
   await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId, pointer: "/ownerUserId" }]);
   const scopeKey = valueReviewScopeKey(body.findingRef);
   await lockCorrectiveScope(tx, transformationId, "value_review", scopeKey);
-  const open = await tx
-    .selectFrom("corrective_case")
-    .select("code")
-    .where("transformation_id", "=", transformationId)
-    .where("source_kind", "=", "value_review")
-    .where("source_scope_key", "=", scopeKey)
-    .where("status", "<>", "closed")
-    .executeTakeFirst();
-  if (open) throw CASE_ALREADY_OPEN(open.code);
   const id = uuidv7();
   const row = await tx
     .insertInto("corrective_case")
@@ -274,8 +304,25 @@ async function createCase(tx: Tx, request: FastifyRequest): Promise<string> {
       created_by: ctx.userId,
       updated_by: ctx.userId,
     })
+    // T-DG4-BE-R1 (BE-D2 handback §4): the one-open-case rule is decided here, so the refusal always names the open
+    // case's code; corrective_case_one_open_key never reaches the database mapper from this path.
+    .onConflict((oc) =>
+      oc.columns(["transformation_id", "source_kind", "source_scope_key"]).where("status", "<>", "closed").doNothing(),
+    )
     .returningAll()
-    .executeTakeFirstOrThrow();
+    .executeTakeFirst();
+  if (!row) {
+    const open = await tx
+      .selectFrom("corrective_case")
+      .select("code")
+      .where("transformation_id", "=", transformationId)
+      .where("source_kind", "=", "value_review")
+      .where("source_scope_key", "=", scopeKey)
+      .where("status", "<>", "closed")
+      .executeTakeFirst();
+    if (!open) throw problems.internal();
+    throw CASE_ALREADY_OPEN(open.code);
+  }
   await record(tx, ctx.audit, {
     action: "corrective_case.created",
     recordType: "corrective_case",
@@ -347,11 +394,9 @@ async function updateCase(tx: Tx, request: FastifyRequest): Promise<void> {
     newVersion: updated.version,
     changes: diffFields(current, updated, [...CASE_AUDIT_FIELDS]),
   });
-  if (updated.owner_user_id !== current.owner_user_id) {
-    // ADR-0031 §5.5: an owner change cancels the previous owner's open item and creates the new owner's.
-    await closeFollowUps(ctx, current.id, "cancelled");
-    await assignFollowUp(ctx, updated);
-  }
+  // ADR-0031 §5.5: an owner change cancels the previous owner's open item and creates the new owner's; a follow-up
+  // date change moves the open item's due date (T-DG4-BE-R1).
+  await followFollowUp(ctx, current, updated);
 }
 
 async function closeCase(tx: Tx, request: FastifyRequest): Promise<void> {

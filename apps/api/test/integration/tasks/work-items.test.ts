@@ -5,11 +5,25 @@
 //  - the worker kit's twin (apps/worker/src/kit.ts) writes the same rows as the API service;
 //  - only the assignee sees and completes an item (others 404/403); system-managed kinds refuse manual completion;
 //  - the inbox lists the caller's own reminders newest first with an unread count; read is once;
-//  - every mutation: If-Match 428/409, one audit event, the session re-resolved at commit time (401 when it ended).
+//  - every mutation: If-Match 428/409, one audit event, the session re-resolved at commit time (401 when it ended);
+//  - T-DG4-BE-R1 (D-102, D-105): rescheduleWorkItemsOfSubject moves the open items' due date, reassignWorkItemOfSubject
+//    moves the open item to a new assignee (A -> B -> A leaves exactly one open item, for A); both idempotent and
+//    audited; the worker kit's twins write the same rows (parity).
 // All data is synthetic; nothing here approves anything or touches the engineering gates DG0-DG7.
+import type { Tx } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createWorkItemOnce as workerCreateWorkItemOnce } from "../../../../worker/src/kit.ts";
-import { closeWorkItemsOfSubject, createWorkItemOnce, type WorkItemInput } from "../../../src/modules/tasks/index.ts";
+import {
+  createWorkItemOnce as workerCreateWorkItemOnce,
+  reassignWorkItemOfSubject as workerReassign,
+  rescheduleWorkItemsOfSubject as workerReschedule,
+} from "../../../../worker/src/kit.ts";
+import {
+  closeWorkItemsOfSubject,
+  createWorkItemOnce,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
+  type WorkItemInput,
+} from "../../../src/modules/tasks/index.ts";
 import {
   auditOf,
   call,
@@ -384,5 +398,167 @@ describe("the in-app inbox (S-4)", () => {
       ["GET", `/api/v1/work-items/${crypto.randomUUID()}`],
     ] as const)
       expect((await call<Body>(api.app, method, url)).status, url).toBe(401);
+  });
+});
+
+describe("work items follow their source (T-DG4-BE-R1; D-102, D-105)", () => {
+  const ACTION_KIND = "raid_action_due";
+  const sourceInput = (subjectId: string, assigneeUserId: string, dueDate: string | null): WorkItemInput => ({
+    organizationId: w.orgA.id,
+    kind: ACTION_KIND,
+    assigneeUserId,
+    subjectType: "action_item",
+    subjectId,
+    linkPath: "/synthetic/action",
+    messageKey: "raid.task.action_due",
+    messageParams: {},
+    dueDate,
+    dedupeKey: `raid.action:${subjectId}:${assigneeUserId}`,
+  });
+  const ref = (subjectId: string) => ({
+    organizationId: w.orgA.id,
+    subjectType: "action_item",
+    subjectId,
+    kinds: [ACTION_KIND],
+  });
+  const itemsOf = (subjectId: string) =>
+    api.db
+      .selectFrom("work_item")
+      .selectAll()
+      .where("subject_id", "=", subjectId)
+      .orderBy("created_at")
+      .orderBy("id")
+      .execute();
+  type Impl = {
+    create: typeof createWorkItemOnce;
+    reschedule: typeof rescheduleWorkItemsOfSubject;
+    reassign: typeof reassignWorkItemOfSubject;
+  };
+  const API_IMPL: Impl = {
+    create: createWorkItemOnce,
+    reschedule: rescheduleWorkItemsOfSubject,
+    reassign: reassignWorkItemOfSubject,
+  };
+  const WORKER_IMPL: Impl = {
+    create: workerCreateWorkItemOnce,
+    reschedule: workerReschedule,
+    reassign: workerReassign,
+  };
+  const run = <T>(fn: (t: Tx) => Promise<T>) => api.db.transaction().execute(fn);
+
+  /** The same scenario through one implementation: create, reschedule (twice), A -> B (twice) -> A, reschedule. */
+  async function scenario(impl: Impl, subjectId: string, a: string, b2: string) {
+    await run((t) => impl.create(t, WORKER, sourceInput(subjectId, a, "2026-11-01")));
+    const moved = await run((t) => impl.reschedule(t, WORKER, ref(subjectId), "2026-11-15"));
+    const again = await run((t) => impl.reschedule(t, WORKER, ref(subjectId), "2026-11-15"));
+    const toB = await run((t) => impl.reassign(t, WORKER, sourceInput(subjectId, b2, "2026-11-15")));
+    const toBAgain = await run((t) => impl.reassign(t, WORKER, sourceInput(subjectId, b2, "2026-11-15")));
+    const toA = await run((t) => impl.reassign(t, WORKER, sourceInput(subjectId, a, "2026-11-15")));
+    const cleared = await run((t) => impl.reschedule(t, WORKER, ref(subjectId), null));
+    return { moved, again, toB, toBAgain, toA, cleared };
+  }
+
+  it("reschedule moves the open item's due date once (audited); a repeat writes nothing", async () => {
+    const subjectId = crypto.randomUUID();
+    const r = await create(sourceInput(subjectId, w.office.id, "2026-11-01"));
+    expect(await run((t) => rescheduleWorkItemsOfSubject(t, WORKER, ref(subjectId), "2026-11-20"))).toBe(1);
+    expect(await run((t) => rescheduleWorkItemsOfSubject(t, WORKER, ref(subjectId), "2026-11-20"))).toBe(0);
+    const [item] = await itemsOf(subjectId);
+    expect([item!.due_date, item!.version, item!.status]).toEqual(["2026-11-20", 2, "open"]);
+    expect(
+      (await auditOf(api.db, r.workItemId)).map((a) => [a.action, a.prior_version, a.new_version, a.changes]),
+    ).toEqual([
+      ["work_item.create", null, 1, expect.anything()],
+      ["work_item.reschedule", 1, 2, { due_date: { from: "2026-11-01", to: "2026-11-20" } }],
+    ]);
+    // A closed item never moves; other kinds of the same subject are left alone.
+    await run((t) =>
+      closeWorkItemsOfSubject(t, WORKER, { organizationId: w.orgA.id, subjectType: "action_item", subjectId }, "done"),
+    );
+    expect(await run((t) => rescheduleWorkItemsOfSubject(t, WORKER, ref(subjectId), "2026-12-01"))).toBe(0);
+    await expect(
+      run((t) => rescheduleWorkItemsOfSubject(t, WORKER, { ...ref(subjectId), kinds: [] }, "2026-12-01")),
+    ).rejects.toThrow(/kinds/);
+  });
+
+  it("reassign A -> B -> A: exactly one open item, for A, under a fresh key; repeats are unchanged", async () => {
+    const subjectId = crypto.randomUUID();
+    const userB = await createUser(api.db, w.orgA.id);
+    const r = await scenario(API_IMPL, subjectId, w.office.id, userB.id);
+    expect([r.moved, r.again, r.cleared]).toEqual([1, 0, 1]);
+    expect([r.toB.outcome, r.toB.cancelled, r.toBAgain.outcome, r.toBAgain.cancelled]).toEqual([
+      "reassigned",
+      1,
+      "unchanged",
+      0,
+    ]);
+    expect(r.toBAgain.workItemId).toBe(r.toB.workItemId);
+    expect([r.toA.outcome, r.toA.cancelled]).toEqual(["reassigned", 1]);
+    const items = await itemsOf(subjectId);
+    expect(items.map((i) => [i.assignee_user_id, i.status, i.due_date, i.dedupe_key])).toEqual([
+      [w.office.id, "cancelled", "2026-11-15", `raid.action:${subjectId}:${w.office.id}`],
+      [userB.id, "cancelled", "2026-11-15", `raid.action:${subjectId}:${userB.id}`],
+      [w.office.id, "open", null, `raid.action:${subjectId}:${w.office.id}#2`],
+    ]);
+    expect(items.filter((i) => i.status === "open").map((i) => i.id)).toEqual([r.toA.workItemId]);
+    // Each new item got its in-app reminder; each cancellation is audited with the reason.
+    const notes = await api.db
+      .selectFrom("inbox_notification")
+      .select(["recipient_user_id", "dedupe_key"])
+      .where(
+        "work_item_id",
+        "in",
+        items.map((i) => i.id),
+      )
+      .orderBy("created_at")
+      .execute();
+    expect(notes.map((n) => n.recipient_user_id)).toEqual([w.office.id, userB.id, w.office.id]);
+    const cancel = (await auditOf(api.db, items[1]!.id)).find((a) => a.action === "work_item.cancel")!;
+    expect([cancel.reason, cancel.changes]).toEqual(["reassigned", { status: { from: "open", to: "cancelled" } }]);
+  });
+
+  it("parity (D-102): the worker kit's twins write the same rows and audit events as the API services", async () => {
+    const userB = await createUser(api.db, w.orgA.id);
+    const apiSubject = crypto.randomUUID();
+    const workerSubject = crypto.randomUUID();
+    const apiRun = await scenario(API_IMPL, apiSubject, w.office.id, userB.id);
+    const workerRun = await scenario(WORKER_IMPL, workerSubject, w.office.id, userB.id);
+    const strip = <T extends { workItemId: string }>(x: T) => ({ ...x, workItemId: "<id>" });
+    expect({
+      ...workerRun,
+      toB: strip(workerRun.toB),
+      toBAgain: strip(workerRun.toBAgain),
+      toA: strip(workerRun.toA),
+    }).toEqual({ ...apiRun, toB: strip(apiRun.toB), toBAgain: strip(apiRun.toBAgain), toA: strip(apiRun.toA) });
+    const shape = async (subjectId: string) => {
+      const items = await itemsOf(subjectId);
+      const audit = await api.db
+        .selectFrom("audit_event")
+        .select(["record_id", "action", "actor_type", "source", "prior_version", "new_version", "reason", "changes"])
+        .where(
+          "record_id",
+          "in",
+          items.map((i) => i.id),
+        )
+        .orderBy("seq")
+        .execute();
+      const index = new Map(items.map((i, n) => [i.id, n]));
+      return {
+        items: items.map((i) => ({
+          kind: i.kind,
+          assignee: i.assignee_user_id,
+          status: i.status,
+          due: i.due_date,
+          key: i.dedupe_key.replace(subjectId, "<subject>"),
+          version: i.version,
+          source: i.created_source,
+        })),
+        audit: audit.map((a) => {
+          const changes = JSON.parse(JSON.stringify(a.changes ?? {}).replaceAll(subjectId, "<subject>"));
+          return { ...a, record_id: index.get(a.record_id), changes };
+        }),
+      };
+    };
+    expect(await shape(workerSubject)).toEqual(await shape(apiSubject));
   });
 });

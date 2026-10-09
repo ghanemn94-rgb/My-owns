@@ -202,6 +202,31 @@ describe("manual interventions and My Work (REQ-S11-001 A11)", () => {
     ]);
   });
 
+  it("T-DG4-BE-R1: the item follows the intervention: a due-date change moves it; A -> B -> A leaves one, A's", async () => {
+    const iv = await plan();
+    const patch = (version: number, body: Record<string, unknown>) =>
+      call(api.app, "PATCH", `${AI}/${iv.id}`, { session: b.s.tl, headers: ifm(version), body });
+    const moved = await patch(1, { dueDate: "2026-12-10" });
+    expect([moved.status, moved.body.dueDate]).toEqual([200, "2026-12-10"]);
+    expect((await tasksOf(iv.id)).map((t) => [t.assignee_user_id, t.status, t.due_date])).toEqual([
+      [wl.id, "open", "2026-12-10"],
+    ]);
+    const [item] = await api.db.selectFrom("work_item").select("id").where("subject_id", "=", iv.id).execute();
+    expect((await auditOf(api.db, item!.id)).map((a) => [a.action, a.changes])).toEqual([
+      ["work_item.create", expect.anything()],
+      ["work_item.reschedule", { due_date: { from: "2026-11-26", to: "2026-12-10" } }],
+    ]);
+    expect((await patch(2, { ownerUserId: wl2.id })).status).toBe(200);
+    expect((await patch(3, { ownerUserId: wl.id })).status).toBe(200);
+    const tasks = await tasksOf(iv.id);
+    expect(tasks.map((t) => [t.assignee_user_id, t.status, t.due_date, t.dedupe_key])).toEqual([
+      [wl.id, "cancelled", "2026-12-10", `adoption.intervention:${iv.id}:${wl.id}`],
+      [wl2.id, "cancelled", "2026-12-10", `adoption.intervention:${iv.id}:${wl2.id}`],
+      [wl.id, "open", "2026-12-10", `adoption.intervention:${iv.id}:${wl.id}#2`],
+    ]);
+    expect(tasks.filter((t) => t.status === "open").map((t) => t.assignee_user_id)).toEqual([wl.id]);
+  });
+
   it("cancelled closes the item; If-Match 428/409", async () => {
     const iv = await plan();
     const I = `${AI}/${iv.id}`;

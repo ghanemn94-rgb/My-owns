@@ -74,7 +74,13 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
+import {
+  closeWorkItemsOfSubject,
+  createWorkItemOnce,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
+  type WorkItemInput,
+} from "../tasks/index.ts";
 import { blockerAskOpen, lockBlockerAsk, blockerExists } from "./blocker-escalation.ts";
 import { computeDecisionRightDue } from "./decision-rights.ts";
 
@@ -448,6 +454,31 @@ async function slaOf(
   return { slaDueDate: due.dueDate, slaUnknownReason: due.dueDate === null ? due.unknownReason : null };
 }
 
+/** The owner's My Work item of an open ask (dedupe `t16.decision:<decisionId>:<ownerUserId>`, ADR-0032 §6). */
+function ownerWorkItemInput(
+  ctx: T16Context,
+  d: { id: string; code: string; title: string },
+  owner: string,
+  due: string | null,
+): WorkItemInput {
+  return {
+    organizationId: ctx.target.organizationId,
+    transformationId: ctx.target.transformationId,
+    kind: EXECUTIVE_DECISION_DUE_KIND,
+    assigneeUserId: owner,
+    subjectType: "decision",
+    subjectId: d.id,
+    linkPath: `/transformations/${ctx.target.transformationId}/executive-decisions/${d.id}`,
+    messageKey: EXECUTIVE_DECISION_DUE_MESSAGE,
+    messageParams: { code: d.code, title: d.title },
+    dueDate: due,
+    dedupeKey: `t16.decision:${d.id}:${owner}`,
+  };
+}
+
+const t16Actor = (ctx: T16Context) =>
+  ({ actorType: "user", actorUserId: ctx.userId, requestId: ctx.audit.requestId, source: "api" }) as const;
+
 /** The owner's My Work item for an open ask (dedupe `t16.decision:<decisionId>:<ownerUserId>`, ADR-0032 §6). */
 async function ownerWorkItem(
   tx: Tx,
@@ -456,23 +487,7 @@ async function ownerWorkItem(
   owner: string,
   due: string | null,
 ) {
-  await createWorkItemOnce(
-    tx,
-    { actorType: "user", actorUserId: ctx.userId, requestId: ctx.audit.requestId, source: "api" },
-    {
-      organizationId: ctx.target.organizationId,
-      transformationId: ctx.target.transformationId,
-      kind: EXECUTIVE_DECISION_DUE_KIND,
-      assigneeUserId: owner,
-      subjectType: "decision",
-      subjectId: d.id,
-      linkPath: `/transformations/${ctx.target.transformationId}/executive-decisions/${d.id}`,
-      messageKey: EXECUTIVE_DECISION_DUE_MESSAGE,
-      messageParams: { code: d.code, title: d.title },
-      dueDate: due,
-      dedupeKey: `t16.decision:${d.id}:${owner}`,
-    },
-  );
+  await createWorkItemOnce(tx, t16Actor(ctx), ownerWorkItemInput(ctx, d, owner, due));
 }
 
 /**
@@ -1008,22 +1023,26 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
             : {}),
         },
       });
-      // A new or re-owned open ask: one My Work item for its owner (ADR-0032 §6); the previous owner's item closes.
-      if (updated.owner_user_id !== null && updated.owner_user_id !== current.owner_user_id) {
-        if (current.owner_user_id !== null)
-          await closeWorkItemsOfSubject(
-            tx,
-            { actorType: "user", actorUserId: userId, requestId: ctx.audit.requestId, source: "api" },
-            {
-              organizationId: current.organization_id,
-              subjectType: "decision",
-              subjectId: decisionId,
-              kinds: [EXECUTIVE_DECISION_DUE_KIND],
-            },
-            "cancelled",
-          );
-        await ownerWorkItem(tx, ctx, updated, updated.owner_user_id, updated.due_date);
-      }
+      // A new or re-owned open ask: one My Work item for its owner (ADR-0032 §6); the previous owner's item closes
+      // (A -> B -> A leaves one open item, for A), and a required-date change moves its due date (T-DG4-BE-R1).
+      if (updated.owner_user_id !== null && updated.owner_user_id !== current.owner_user_id)
+        await reassignWorkItemOfSubject(
+          tx,
+          t16Actor(ctx),
+          ownerWorkItemInput(ctx, updated, updated.owner_user_id, updated.due_date),
+        );
+      if (updated.due_date !== current.due_date)
+        await rescheduleWorkItemsOfSubject(
+          tx,
+          t16Actor(ctx),
+          {
+            organizationId: current.organization_id,
+            subjectType: "decision",
+            subjectId: decisionId,
+            kinds: [EXECUTIVE_DECISION_DUE_KIND],
+          },
+          updated.due_date,
+        );
       return updated;
     });
     const [out] = await toExecutiveDecisions(db, [row]);
