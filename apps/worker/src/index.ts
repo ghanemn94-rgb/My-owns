@@ -28,10 +28,14 @@ export {
 export {
   createWorkItemOnce,
   jobActor,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
   runOnce,
   type RunOnceResult,
   type WorkItemInput,
   type WorkItemOnceResult,
+  type WorkItemReassignResult,
+  type WorkItemSourceRef,
 } from "./kit.ts";
 export { handleJobScheduleUpdated, syncSchedules, type ScheduleSyncResult } from "./schedules.ts";
 export { startWorker, type RunningWorker, type WorkerOptions } from "./worker.ts";

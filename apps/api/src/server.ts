@@ -69,9 +69,15 @@ import {
 } from "./modules/platform/index.ts";
 import { registerReportingModule } from "./modules/reporting/index.ts";
 import { registerTransformationRoutes, registerWorkspaceHeaderRoutes } from "./modules/transformations/index.ts";
-import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workflows/index.ts";
-// T-DG4-KBE-C: the approval service for kpi's port (workflows/index.ts does not export it; see the KBE-C handback).
-import { registerApprovalSubject, requestApprovalInTx, toApprovals } from "./modules/workflows/approvals.ts";
+// T-DG4-KBE-C / T-DG4-BE-R1: the approval service for the kpi and sustainment ports, through workflows' public
+// interface (workflows/index.ts exports it since BE-C).
+import {
+  registerApprovalSubject,
+  registerWorkflowsModule,
+  requestApprovalInTx,
+  toApprovals,
+  type GateFactsProvider,
+} from "./modules/workflows/index.ts";
 // T-DG4-BE-D (ADR-0031 §2): the RAID Dependency-entry port, implemented by the T08 service (the KBE-C import precedent).
 import { raidDependencyPort } from "./modules/workflows/t08-dependencies.ts";
 // P4 (T-DG4-BE-K; ADR-0035 §2): the G5/G6 GateFactsProvider members (read-only loaders in their owning modules).

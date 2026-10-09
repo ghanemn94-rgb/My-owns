@@ -8,6 +8,8 @@
 //    ADR-0002 rule 5). Same SQL, same audit events; apps/api/test/integration/tasks/work-items.test.ts proves both write
 //    the same rows. Every effect table carries its own unique key as the second line of defence
 //    (work_item / inbox_notification (organization_id, dedupe_key)).
+//  - rescheduleWorkItemsOfSubject / reassignWorkItemOfSubject: the twins of the API services that make an item follow
+//    its source's due date and owner (T-DG4-BE-R1; D-102); same parity test.
 // Rules: idempotency keys are deterministic, `<rule>:<subject id>:<slot>[:<recipient>]`; no remote I/O inside `fn`;
 // audit actor `service` with source `worker` (JOB_ACTOR); a service actor holds no permission and never decides a
 // business approval. Retries and the failure queue are ADR-0008 §4's (5 attempts, then ops.failed).
@@ -184,4 +186,147 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
       },
     });
   return { outcome: "created", workItemId: id };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// rescheduleWorkItemsOfSubject / reassignWorkItemOfSubject: the twins of apps/api/src/modules/tasks/service.ts
+// (T-DG4-BE-R1; D-102: the worker imports no API code). A work item follows its source's due date and owner; an owner
+// who gets the source back (A -> B -> A) gets a NEW item under the first free key of `<key>`, `<key>#2`, ... (the 0028
+// guard keeps assignee and dedupe key immutable and never reopens a closed item). Keep the two identical; the parity
+// test in apps/api/test/integration/tasks/work-items.test.ts fails on any difference in the rows they write.
+
+/** The open items of one source that follow it: the subject and the kinds (other kinds of the subject are left alone). */
+export interface WorkItemSourceRef {
+  readonly organizationId: string;
+  readonly subjectType: string;
+  readonly subjectId: string;
+  readonly kinds: readonly string[];
+}
+
+export interface WorkItemReassignResult {
+  /** `unchanged`: the new assignee already held the only open item; nothing was written. */
+  readonly outcome: "unchanged" | "reassigned";
+  /** The open item of the new assignee. */
+  readonly workItemId: string;
+  /** How many open items of other assignees were cancelled. */
+  readonly cancelled: number;
+}
+
+/** The most `#n` suffixes tried for a returning assignee's new key; reaching it is a programming error. */
+const MAX_REASSIGN_KEYS = 100;
+
+/**
+ * Moves the due date of the source's open items to `dueDate` (null: no due date, never guessed), each with a
+ * `work_item.reschedule` audit event, in `tx`. Items already due on that date are not touched. Returns how many moved.
+ */
+export async function rescheduleWorkItemsOfSubject(
+  tx: Tx,
+  actor: AuditActor,
+  source: WorkItemSourceRef,
+  dueDate: string | null,
+): Promise<number> {
+  if (source.kinds.length === 0) throw new Error("rescheduleWorkItemsOfSubject: kinds must not be empty");
+  const open = await tx
+    .selectFrom("work_item")
+    .selectAll()
+    .where("organization_id", "=", source.organizationId)
+    .where("subject_type", "=", source.subjectType)
+    .where("subject_id", "=", source.subjectId)
+    .where("kind", "in", [...source.kinds])
+    .where("status", "=", "open")
+    .orderBy("id")
+    .forUpdate()
+    .execute();
+  const by = actor.actorType === "user" ? actor.actorUserId : null;
+  let moved = 0;
+  for (const item of open) {
+    if (item.due_date === dueDate) continue;
+    const updated = await tx
+      .updateTable("work_item")
+      .set((eb) => ({
+        due_date: dueDate,
+        version: eb("version", "+", 1),
+        updated_at: eb.fn<Date>("now", []),
+        updated_by: by,
+      }))
+      .where("id", "=", item.id)
+      .where("version", "=", item.version)
+      .returning("version")
+      .executeTakeFirstOrThrow();
+    await insertAuditEvent(tx, actor, {
+      action: "work_item.reschedule",
+      recordType: "work_item",
+      recordId: item.id,
+      organizationId: item.organization_id,
+      transformationId: item.transformation_id,
+      priorVersion: item.version,
+      newVersion: updated.version,
+      changes: { due_date: { from: item.due_date, to: dueDate } },
+    });
+    moved += 1;
+  }
+  return moved;
+}
+
+/**
+ * Makes `input.assigneeUserId` the holder of the source's only open item of `input.kind`, in `tx`: every open item of
+ * another assignee is cancelled (`work_item.cancel`, reason `reassigned`); when the new assignee holds none, one is
+ * created through createWorkItemOnce under `input.dedupeKey`, or its first free `#n` variant when that key was used
+ * before (A -> B -> A). The caller holds the source row's lock, so reassignments of one source are serialised.
+ */
+export async function reassignWorkItemOfSubject(
+  tx: Tx,
+  actor: AuditActor,
+  input: WorkItemInput,
+): Promise<WorkItemReassignResult> {
+  const open = await tx
+    .selectFrom("work_item")
+    .selectAll()
+    .where("organization_id", "=", input.organizationId)
+    .where("subject_type", "=", input.subjectType)
+    .where("subject_id", "=", input.subjectId)
+    .where("kind", "=", input.kind)
+    .where("status", "=", "open")
+    .orderBy("id")
+    .forUpdate()
+    .execute();
+  const keep = open.find((i) => i.assignee_user_id === input.assigneeUserId);
+  const by = actor.actorType === "user" ? actor.actorUserId : null;
+  let cancelled = 0;
+  for (const item of open) {
+    if (item === keep) continue;
+    const updated = await tx
+      .updateTable("work_item")
+      .set((eb) => ({
+        status: "cancelled",
+        completed_at: null,
+        completed_by: null,
+        version: eb("version", "+", 1),
+        updated_at: eb.fn<Date>("now", []),
+        updated_by: by,
+      }))
+      .where("id", "=", item.id)
+      .where("version", "=", item.version)
+      .returning("version")
+      .executeTakeFirstOrThrow();
+    await insertAuditEvent(tx, actor, {
+      action: "work_item.cancel",
+      recordType: "work_item",
+      recordId: item.id,
+      organizationId: item.organization_id,
+      transformationId: item.transformation_id,
+      priorVersion: item.version,
+      newVersion: updated.version,
+      reason: "reassigned",
+      changes: { status: { from: "open", to: "cancelled" } },
+    });
+    cancelled += 1;
+  }
+  if (keep) return { outcome: cancelled > 0 ? "reassigned" : "unchanged", workItemId: keep.id, cancelled };
+  for (let n = 1; n <= MAX_REASSIGN_KEYS; n += 1) {
+    const dedupeKey = n === 1 ? input.dedupeKey : `${input.dedupeKey}#${n}`;
+    const r = await createWorkItemOnce(tx, actor, { ...input, dedupeKey });
+    if (r.outcome === "created") return { outcome: "reassigned", workItemId: r.workItemId, cancelled };
+  }
+  throw new Error(`reassignWorkItemOfSubject: no free dedupe key after ${MAX_REASSIGN_KEYS} tries: ${input.dedupeKey}`);
 }

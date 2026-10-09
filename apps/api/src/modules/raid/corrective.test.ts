@@ -100,10 +100,10 @@ describe("database last lines of the corrective constraints (ADR-0031 §11)", ()
       const p = map(constraint)!;
       expect([constraint, p.status, p.code, p.detail]).toEqual([constraint, status, code, detail]);
     }
-    expect([map("corrective_case_one_open_key")!.status, map("corrective_case_one_open_key")!.code]).toEqual([
-      409,
-      "corrective_case.already_open",
-    ]);
+    // T-DG4-BE-R1: the service is the only path to 409 corrective_case.already_open (it names the real code); the
+    // database backstop is a programming error and never answers the refusal with "(unknown)".
+    expect(map("corrective_case_one_open_key")!.status).toBe(500);
+    expect(map("corrective_case_one_open_key")!.detail ?? "").not.toContain("(unknown)");
     expect(map("corrective_case_code_key")!.status).toBe(409);
     for (const internal of [
       "corrective_case_source_fields",
