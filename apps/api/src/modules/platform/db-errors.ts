@@ -1592,6 +1592,107 @@ export function mapP4GovernanceMeetingError(error: PgErrorLike): HttpProblem | n
     case "meeting_times":
       // The API never sends such a write: a programming error.
       return problems.internal();
+    // ---- BE-G: the T16 log, decision-SLA escalations, blocker statuses and escalation rules (ADR-0032 §11). The API
+    // refuses each of these before its write; these are the last lines (a race or a programming error).
+    case "decision_one_open_blocker_ask":
+      return problems.duplicate(
+        "executive_decision.blocker_ask_open",
+        "An open executive ask already exists for this blocker: see the T16 log.",
+      );
+    case "decision_ask_complete":
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "executive_decision.field_required",
+        title: "Invalid request",
+        detail: "Decision, why now, recommendation, impact of delay, decision owner and required date are required.",
+        errors: [
+          {
+            pointer: "",
+            code: "executive_decision.field_required",
+            message:
+              "Decision, why now, recommendation, impact of delay, decision owner and required date are required.",
+          },
+        ],
+      });
+    case "decision_ask_options":
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "executive_decision.options_too_few",
+        title: "Invalid request",
+        detail: "An executive ask states at least two options.",
+        errors: [
+          {
+            pointer: "/options",
+            code: "executive_decision.options_too_few",
+            message: "An executive ask states at least two options.",
+          },
+        ],
+      });
+    case "decision_ask_outcome_recorded":
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "executive_decision.field_required",
+        title: "Invalid request",
+        detail: "Outcome is required.",
+        errors: [
+          { pointer: "/outcomeText", code: "executive_decision.field_required", message: "Outcome is required." },
+        ],
+      });
+    case "decision_code_key":
+      // A concurrent DEC-nn allocation (the counter row serializes it; this is the second line): retry.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "governance_escalation_rule_kind_key":
+      return problems.duplicate(
+        "escalation_rule.exists",
+        "A rule of this kind already exists in this transformation; update it instead.",
+      );
+    case "governance_escalation_rule_shape":
+    case "governance_escalation_rule_red_cycles_check":
+      return rule422(
+        "escalation_rule.shape",
+        "A decision-SLA rule takes an escalation chain only; a blocker rule takes red cycles (2–12), a deadline in working days and an owner role.",
+        "",
+      );
+    case "blocker_status_once_per_cycle":
+      return problems.duplicate("blocker_status.exists", "A RAG for this blocker is already recorded in this meeting.");
+    case "blocker_status_meeting_in_session":
+      return rule422(
+        "meeting.not_in_session",
+        "Decisions and blocker status are recorded while the meeting is in session or held.",
+        "",
+      );
+    case "blocker_status_record_ref":
+      return rule422(
+        "blocker_status.record_not_found",
+        "The blocker does not exist in this transformation.",
+        "/sourceRecordId",
+      );
+    case "decision_ask_executive_only":
+    case "decision_ask_columns":
+    case "decision_ask_source":
+    case "decision_ask_sla_known_or_reason":
+    case "decision_ask_origin_immutable":
+    case "decision_blocker_pair":
+    case "decision_blocker_ref":
+    case "decision_escalation_once":
+    case "decision_escalation_expired":
+    case "decision_escalation_target":
+    case "decision_escalation_party_error":
+    case "decision_escalation_open_ask":
+    case "decision_escalation_level_step":
+    case "blocker_status_cycle_of_meeting":
+    case "governance_escalation_rule_kind_immutable":
+      // The API never sends such a write (decision escalations are written by the worker only): a programming error.
+      return problems.internal();
     default:
       return null;
   }

@@ -10,6 +10,8 @@ import { kpiActualAcceptedV1, kpiDeviationEvaluatedV1, kpiValuesRecalculatedV1 }
 import { benefitEvidenceSubmittedV1, benefitValueDecidedV1, benefitVarianceEvaluatedV1 } from "./benefit-values.ts";
 // P4 slice F (T-DG4-BE-H; ADR-0033 §4 step 6): the ADR-0031 §5.4 check-failed payload.
 import { checkFailedPayload } from "./corrective.ts";
+// P4 slice D (T-DG4-BE-G; ADR-0032 §8.3): a blocker RAG observed in one meeting cycle.
+import { blockerStatusRecordedV1 } from "./executive-decisions.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -57,6 +59,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "benefit.variance_evaluated": { 1: benefitVarianceEvaluatedV1 },
   // T-DG4-BE-H (ADR-0033 §4 step 6; ADR-0031 §5.4): one per below-trajectory intervention; consumer raid.corrective_adoption.
   "adoption.check_failed": { 1: checkFailedPayload },
+  // T-DG4-BE-G (ADR-0032 §8.3): one per blocker RAG observation; consumer governance.blocker_escalation.
+  "blocker_status.recorded": { 1: blockerStatusRecordedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 
