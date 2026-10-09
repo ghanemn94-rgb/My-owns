@@ -54,3 +54,6 @@ export * from "./governance.ts";
 // P4 slice A mirrors of KBE-C (kpi-benefits-engineer, T-DG4-KBE-C; p4-work-split §A.3): reporting periods, actuals,
 // calculation runs and evaluations, the KPI status panel, RAG overrides and the pipeline outbox payloads.
 export * from "./kpi-actuals.ts";
+// P4 slice B mirrors of KBE-E (kpi-benefits-engineer, T-DG4-KBE-E; p4-work-split §B.3): plan values, measurements and
+// lineage, the Finance queue and decisions, corrections, totals and the slice B outbox payloads.
+export * from "./benefit-values.ts";

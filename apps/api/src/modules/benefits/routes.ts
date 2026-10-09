@@ -13,6 +13,8 @@ import { registerBenefitMeasurementRoutes } from "./measurements.ts";
 import { registerFinanceValidationRoutes } from "./finance-validation.ts";
 import { registerBenefitCorrectionRoutes } from "./corrections.ts";
 import { registerBenefitTotalRoutes } from "./totals.ts";
+// T-DG4-KBE-E (p4-work-split §B.3): value series and planned/forecast values (a file of its own, after KBE-D2's lines).
+import { registerBenefitValueRoutes } from "./values.ts";
 
 /** Registers every benefits route file and returns the routes as "METHOD /path". */
 export function registerBenefitRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
@@ -26,7 +28,8 @@ export function registerBenefitRoutes(app: FastifyInstance, deps: ModuleDeps): s
     ...registerBenefitScenarioRoutes(app, deps),
     // KBE-D2 (T-DG4-KBE-D2; p4-work-split §B.2): valuation methods (overlaps and scenarios fill the stubs above).
     ...registerBenefitValuationMethodRoutes(app, deps),
-    // KBE-E: measurements, Finance validation, corrections, totals.
+    // KBE-E (T-DG4-KBE-E; p4-work-split §B.3): values, measurements, Finance validation, corrections, totals.
+    ...registerBenefitValueRoutes(app, deps),
     ...registerBenefitMeasurementRoutes(app, deps),
     ...registerFinanceValidationRoutes(app, deps),
     ...registerBenefitCorrectionRoutes(app, deps),
