@@ -72,6 +72,8 @@ import { registerTransformationRoutes, registerWorkspaceHeaderRoutes } from "./m
 import { registerWorkflowsModule, type GateFactsProvider } from "./modules/workflows/index.ts";
 // T-DG4-KBE-C: the approval service for kpi's port (workflows/index.ts does not export it; see the KBE-C handback).
 import { registerApprovalSubject, requestApprovalInTx, toApprovals } from "./modules/workflows/approvals.ts";
+// T-DG4-BE-D (ADR-0031 §2): the RAID Dependency-entry port, implemented by the T08 service (the KBE-C import precedent).
+import { raidDependencyPort } from "./modules/workflows/t08-dependencies.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -323,7 +325,7 @@ export async function buildServer(options: ServerOptions): Promise<{
     // P4 modules (p4-plan §2 seam 19): tasks is active (BE-A); the others report "scaffold" until a route exists.
     registerTasksModule(app, deps),
     registerGovernanceModule(app, deps),
-    registerRaidModule(app, deps),
+    registerRaidModule(app, deps, { dependencies: raidDependencyPort }),
     registerBenefitsModule(app, deps),
     registerAdoptionModule(app, deps),
     registerSustainmentModule(app, deps),
