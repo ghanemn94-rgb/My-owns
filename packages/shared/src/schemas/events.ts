@@ -61,6 +61,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "adoption.check_failed": { 1: checkFailedPayload },
   // T-DG4-BE-G (ADR-0032 §8.3): one per blocker RAG observation; consumer governance.blocker_escalation.
   "blocker_status.recorded": { 1: blockerStatusRecordedV1 },
+  // T-DG4-BE-I2 (ADR-0034 §6; ADR-0031 §5.4): one per failed control check; consumer raid.corrective_control.
+  "control_check.failed": { 1: checkFailedPayload },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

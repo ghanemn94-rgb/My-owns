@@ -9,11 +9,23 @@ import { createDb, insertAuditEvent, sql, type Db } from "@mth/db";
 import {
   bauHandover,
   bauHandoverPage,
+  control,
+  controlCheck,
+  controlCheckPage,
+  controlPage,
+  improvementItem,
+  improvementItemPage,
+  lesson,
+  lessonPage,
+  lessonSearchPage,
   performanceArea,
   performanceAreaLink,
   performanceAreaLinkPage,
   performanceAreaPage,
+  sustainmentReview,
+  sustainmentReviewPage,
 } from "@mth/shared/schemas";
+import { runControlCheckScan } from "../../../../worker/src/handlers/sustainment.ts";
 import { v7 as uuidv7 } from "uuid";
 import { expect } from "vitest";
 import type { z } from "zod";
@@ -46,6 +58,22 @@ export const P4_MIRRORS_BE_I: Readonly<Record<string, z.ZodType>> = {
   submitBauHandover: bauHandover,
   acceptBauHandover: bauHandover,
   returnBauHandover: bauHandover,
+  // T-DG4-BE-I2: controls, control checks, reviews, the CI backlog and lessons.
+  listControls: controlPage,
+  createControl: control,
+  updateControl: control,
+  listControlChecks: controlCheckPage,
+  recordControlCheck: controlCheck,
+  listSustainmentReviews: sustainmentReviewPage,
+  completeSustainmentReview: sustainmentReview,
+  listImprovementItems: improvementItemPage,
+  createImprovementItem: improvementItem,
+  updateImprovementItem: improvementItem,
+  listLessons: lessonPage,
+  createLesson: lesson,
+  updateLesson: lesson,
+  publishLesson: lesson,
+  searchLessons: lessonSearchPage,
 };
 
 // ------------------------------------------------------------------------------------------------ shared fixtures
@@ -368,4 +396,151 @@ export async function exerciseP4BeIOperations(ctx: P4ExerciseContext): Promise<v
     body: { reason: "Synthetic: merged into PA-01" },
   });
   expect([retired.status, retired.body.status]).toEqual([200, "retired"]);
+
+  await exerciseP4BeI2Operations(ctx, s);
+}
+
+// ------------------------------------------------------------------------------------------------ BE-I2 (appended)
+
+/**
+ * T-DG4-BE-I2 (p4-work-split §F+G FG.5): the 15 operations of controls, control checks, sustainment reviews, the CI
+ * backlog and lessons, through the validating client. Checks are created by the worker's control-check scan (called
+ * in-process for this organization, ADR-0002: the test, not the API, imports the worker).
+ */
+async function exerciseP4BeI2Operations(ctx: P4ExerciseContext, s: SustainmentWorld): Promise<void> {
+  const m = ctx.mirrored;
+  const { b } = s;
+  const { area } = await areaInBau(ctx.api, s, m);
+  const controls = `${b.base}/controls`;
+  const checks = `${b.base}/control-checks`;
+  const reviews = `${b.base}/sustainment-reviews`;
+  const items = `${b.base}/improvement-items`;
+  const lessons = `${b.base}/lessons`;
+
+  // ------------------------------------------------------------------ controls (ADR-0034 §6)
+  expect((await m("GET", controls, { session: b.s.auditor })).status).toBe(200);
+  expect((await m("GET", controls, { session: b.s.admin })).status).toBe(404);
+  const ctl = await m("POST", controls, {
+    session: s.to.session,
+    body: {
+      performanceAreaId: area.id,
+      name: "Synthetic weekly SIM-swap fraud review",
+      ownerUserId: b.users.bo.id,
+      frequency: "monthly",
+      nextCheckDate: "2026-01-05",
+    },
+  });
+  expect([ctl.status, ctl.body.status, ctl.body.nextCheckDate]).toEqual([201, "active", "2026-01-05"]);
+  const C = `${controls}/${ctl.body.id}`;
+  const edited = await m("PATCH", C, { session: b.s.bo, headers: ifm(1), body: { description: "Synthetic" } });
+  expect([edited.status, edited.body.version]).toEqual([200, 2]);
+  expect(
+    (
+      await m("POST", controls, {
+        session: b.s.auditor,
+        body: { performanceAreaId: area.id, name: "x", frequency: "monthly" },
+      })
+    ).status,
+  ).toBe(403);
+  expect((await m("GET", `${controls}?performanceAreaId=${area.id}&status=active`, { session: b.s.tl })).status).toBe(
+    200,
+  );
+
+  // ------------------------------------------------------------------ control checks (the worker scan creates them)
+  const scan = await runControlCheckScan(ctx.api.db, "contract-be-i2", {
+    asOf: "2026-01-05",
+    organizationId: b.organizationId,
+  });
+  const step = scan.steps.find((x) => x.subjectId === ctl.body.id)!;
+  expect([step.outcome, step.dueDate]).toEqual(["created", "2026-01-05"]);
+  const listed = await m("GET", `${checks}?performanceAreaId=${area.id}&status=due`, { session: b.s.auditor });
+  expect(listed.status).toBe(200);
+  const check = listed.body.items.find((k: { controlId: string }) => k.controlId === ctl.body.id);
+  const K = `${checks}/${check.id}/record`;
+  const noNote = await m("POST", K, { session: s.to.session, headers: ifm(1), body: { result: "failed" } });
+  expect([noNote.status, noNote.body.errors[0].code]).toEqual([400, "control_check.result_note_required"]);
+  const failed = await m("POST", K, {
+    session: s.to.session,
+    headers: ifm(1),
+    body: { result: "failed", resultNote: "Synthetic: 3 unreviewed swaps found" },
+  });
+  expect([failed.status, failed.body.status, failed.body.correctiveCaseId]).toEqual([200, "failed", null]);
+  const again = await m("POST", K, { session: s.to.session, headers: ifm(2), body: { result: "passed" } });
+  expect([again.status, again.body.code]).toEqual([422, "control_check.final"]);
+
+  // ------------------------------------------------------------------ reviews (acceptance created the first one)
+  const rv = await m("GET", `${reviews}?performanceAreaId=${area.id}&status=due`, { session: b.s.auditor });
+  expect([rv.status, rv.body.items.length]).toEqual([200, 1]);
+  const R = `${reviews}/${rv.body.items[0].id}/complete`;
+  const notMine = await m("POST", R, {
+    session: b.s.fin,
+    headers: ifm(1),
+    body: { outcomeNote: "Synthetic", performanceSignal: "on_track" },
+  });
+  expect([notMine.status, notMine.body.code]).toEqual([403, "sustainment_review.not_assignee"]);
+  const done = await m("POST", R, {
+    session: b.s.bo,
+    headers: ifm(1),
+    body: { outcomeNote: "Synthetic: churn stable", performanceSignal: "unknown" },
+  });
+  expect([done.status, done.body.status, done.body.performanceSignal]).toEqual([200, "done", "unknown"]);
+
+  // The scan advanced next_check_date (version + 1 as the service), so the current version is read back first.
+  const current = await m("GET", `${controls}?performanceAreaId=${area.id}`, { session: b.s.bo });
+  const ctlVersion = current.body.items.find((x: { id: string }) => x.id === ctl.body.id).version as number;
+  expect(ctlVersion).toBe(edited.body.version + 1);
+  const retiredCtl = await m("PATCH", C, {
+    session: b.s.bo,
+    headers: ifm(ctlVersion),
+    body: { status: "retired", retireReason: "Synthetic: replaced by automated monitoring" },
+  });
+  expect([retiredCtl.status, retiredCtl.body.status]).toEqual([200, "retired"]);
+
+  // ------------------------------------------------------------------ the CI backlog (ADR-0034 §8)
+  const ci = await m("POST", items, {
+    session: s.to.session,
+    body: {
+      title: "Synthetic: automate the swap review",
+      sourceKind: "control_check",
+      sourceId: check.id,
+      priority: "H",
+    },
+  });
+  expect([ci.status, ci.body.code, ci.body.status, ci.body.sourceId]).toEqual([201, "CI-01", "open", check.id]);
+  expect((await m("GET", `${items}?status=open`, { session: b.s.auditor })).body.items).toHaveLength(1);
+  const prog = await m("PATCH", `${items}/${ci.body.id}`, {
+    session: b.s.bo,
+    headers: ifm(1),
+    body: { status: "in_progress" },
+  });
+  expect([prog.status, prog.body.status]).toEqual([200, "in_progress"]);
+  const closed = await m("PATCH", `${items}/${ci.body.id}`, {
+    session: b.s.bo,
+    headers: ifm(2),
+    body: { status: "done", resolutionNote: "Synthetic: rule deployed" },
+  });
+  expect([closed.status, closed.body.status]).toEqual([200, "done"]);
+
+  // ------------------------------------------------------------------ lessons and the search (REQ-S11-008)
+  const ll = await m("POST", lessons, {
+    session: s.to.session,
+    body: {
+      title: "Synthetic reconciliation lesson",
+      lessonText: "Synthetic: reconcile prepaid churn before month-end close",
+      tags: ["churn", "reconciliation"],
+    },
+  });
+  expect([ll.status, ll.body.code, ll.body.status]).toEqual([201, "LL-01", "draft"]);
+  const L = `${lessons}/${ll.body.id}`;
+  const lu = await m("PATCH", L, { session: b.s.bo, headers: ifm(1), body: { recommendation: "Synthetic: automate" } });
+  expect([lu.status, lu.body.version]).toEqual([200, 2]);
+  expect((await m("GET", `${lessons}?status=draft`, { session: b.s.auditor })).body.items).toHaveLength(1);
+  const pub = await m("POST", `${L}/publish`, { session: b.s.bo, headers: ifm(2) });
+  expect([pub.status, pub.body.status]).toEqual([200, "published"]);
+  const found = await m("GET", "/api/v1/lessons/search?q=reconcile%20prepaid&tag=churn", { session: b.s.auditor });
+  expect(found.status).toBe(200);
+  expect(found.body.items.map((h: { lesson: { id: string } }) => h.lesson.id)).toContain(ll.body.id);
+  expect((await m("GET", "/api/v1/lessons/search?q=x", { session: b.s.admin })).status).toBe(403);
+  const archived = await m("PATCH", L, { session: b.s.bo, headers: ifm(3), body: { status: "archived" } });
+  expect([archived.status, archived.body.status]).toEqual([200, "archived"]);
 }
