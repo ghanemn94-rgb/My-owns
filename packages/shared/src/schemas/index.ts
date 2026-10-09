@@ -78,6 +78,9 @@ export * from "./sustainment-areas.ts";
 // P4 slice G mirrors of BE-I2 (backend-workflow-engineer, T-DG4-BE-I2; p4-work-split §F+G FG.5): controls and control
 // checks, recurring sustainment reviews, the continuous-improvement backlog and lessons.
 export * from "./sustainment-operations.ts";
+// P4 slice G mirrors of BE-J (backend-workflow-engineer, T-DG4-BE-J; p4-work-split §F+G FG.6): the four separate
+// statuses (status model), benefit transition decisions and the governed closure.
+export * from "./sustainment-closure.ts";
 // P4 slice D mirrors of BE-F (backend-workflow-engineer, T-DG4-BE-F; p4-work-split §D.1): forums and participants,
 // meeting series with their recurrence, and meetings.
 export * from "./governance-meetings.ts";
