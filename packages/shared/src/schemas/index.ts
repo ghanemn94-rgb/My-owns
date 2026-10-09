@@ -69,3 +69,6 @@ export * from "./execution.ts";
 // P4 slice F mirrors of BE-H (backend-workflow-engineer, T-DG4-BE-H; p4-work-split §F+G FG.1): the T13 Stakeholder &
 // Adoption Plan, champions, adoption interventions, impacted-team involvement and champion constraints.
 export * from "./adoption-register.ts";
+// P4 slice G mirrors of BE-I (backend-workflow-engineer, T-DG4-BE-I; p4-work-split §F+G FG.4): performance areas, their
+// links and cycles, BAU handovers and receiving-owner acceptance.
+export * from "./sustainment-areas.ts";
