@@ -54,3 +54,6 @@ export * from "./governance.ts";
 // P4 slice A mirrors of KBE-C (kpi-benefits-engineer, T-DG4-KBE-C; p4-work-split §A.3): reporting periods, actuals,
 // calculation runs and evaluations, the KPI status panel, RAG overrides and the pipeline outbox payloads.
 export * from "./kpi-actuals.ts";
+// P4 slice E mirrors of BE-D (backend-workflow-engineer, T-DG4-BE-D; p4-work-split §E.1): the T15 RAID register, the
+// integrated RAID + decision log and the action register.
+export * from "./raid.ts";
