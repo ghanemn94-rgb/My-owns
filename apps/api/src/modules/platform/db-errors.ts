@@ -1233,6 +1233,131 @@ export function mapP4RaidError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+// ---- P4 slices F and G block (ADR-0033 §10, ADR-0034 §12). Each slice F/G task appends its own lines.
+// BE-I (T-DG4-BE-I; p4-work-split §F+G FG.4): performance areas, links and cycles, BAU handovers. The API checks every
+// one of these first (under lock class bauHandover where it matters); these are the database's last line (S-11).
+const handoverRule = (code: string, detail: string, pointer = ""): HttpProblem => rule422(code, detail, pointer);
+const handoverInvalidTransition = (code: string, detail: string): HttpProblem =>
+  new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.invalidTransition,
+    code,
+    title: "Invalid transition",
+    detail,
+    errors: [{ pointer: "", code, message: detail }],
+  });
+const retryConflict = (): HttpProblem =>
+  new HttpProblem({
+    status: 409,
+    type: PROBLEM_TYPES.versionConflict,
+    code: "version_conflict",
+    title: "Version conflict",
+    detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+  });
+
+/**
+ * P4 slice G, BE-I lines (ADR-0034 §4, §5, §12): performance areas, links, cycles and BAU handovers. Null when the
+ * error is not one of them.
+ */
+export function mapP4SustainmentAreaError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "performance_area_retired_final":
+      return handoverRule("performance_area.retired", "This performance area is retired and can no longer be changed.");
+    case "performance_area_transition":
+    case "performance_area_cycle_step":
+      return handoverInvalidTransition(
+        "performance_area.not_reopenable",
+        "Only a performance area in BAU can be reopened.",
+      );
+    case "performance_area_link_active_key":
+      return problems.duplicate(
+        "performance_area_link.exists",
+        "This KPI or benefit is already linked to the performance area.",
+      );
+    case "performance_area_link_removed_final":
+      return problems.invalidTransition("This link is removed; a removed link is final.");
+    case "performance_area_code_key":
+    case "bau_handover_code_key":
+    case "bau_handover_evidence_key":
+      // A concurrent code allocation or evidence link: retry.
+      return retryConflict();
+    case "bau_handover_open_key":
+    case "bau_handover_accepted_key":
+      return problems.duplicate(
+        "bau_handover.exists",
+        "This performance area already has a handover in progress for this cycle.",
+      );
+    case "bau_handover_area_open":
+      return handoverRule(
+        "bau_handover.area_not_open",
+        "A handover is prepared for an establishing or reopened performance area.",
+        "/performanceAreaId",
+      );
+    case "bau_handover_accepted_final":
+      return handoverRule("bau_handover.accepted_final", "An accepted handover is final and cannot be changed.");
+    case "bau_handover_content_frozen":
+    case "bau_handover_evidence_editable":
+      return handoverRule("bau_handover.frozen", "A submitted handover can only be accepted or returned.");
+    case "bau_handover_transition": {
+      const [from, to] = (/: ([a-z]+) -> ([a-z]+) is not a legal transition/.exec(error.message ?? "") ?? []).slice(1);
+      return handoverInvalidTransition(
+        "bau_handover.status_transition",
+        `This handover cannot move from ${from ?? "its status"} to ${to ?? "that status"}.`,
+      );
+    }
+    case "bau_handover_controls_required":
+      return new HttpProblem({
+        status: 422,
+        type: PROBLEM_TYPES.validation,
+        code: "bau_handover.incomplete",
+        title: "Business rule violated",
+        detail: "The BAU handover is incomplete. Missing: controls.",
+        errors: [{ pointer: "/controlIds", code: "bau_handover.incomplete", message: "controls" }],
+      });
+    case "bau_handover_evidence_required":
+      return new HttpProblem({
+        status: 422,
+        type: PROBLEM_TYPES.validation,
+        code: "bau_handover.incomplete",
+        title: "Business rule violated",
+        detail: "The BAU handover is incomplete. Missing: evidence.",
+        errors: [{ pointer: "/evidenceIds", code: "bau_handover.incomplete", message: "evidence" }],
+      });
+    case "bau_handover_accepted_complete":
+    case "bau_handover_returned_stamps":
+      // accepted_by / returned_by must be the receiving owner (probe HO04).
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "bau_handover.not_receiving_owner",
+        title: "Forbidden",
+        detail: "Only the receiving owner can accept or return this handover.",
+      });
+    case "performance_area_starts_establishing":
+    case "performance_area_code_immutable":
+    case "performance_area_bau_handover_accepted":
+    case "performance_area_reopen_keeps_handover":
+    case "performance_area_bau_complete":
+    case "performance_area_retired_complete":
+    case "performance_area_cycle_present":
+    case "performance_area_cycle_first":
+    case "performance_area_cycle_prior_stamps":
+    case "performance_area_link_starts_active":
+    case "performance_area_link_identity":
+    case "performance_area_link_target":
+    case "performance_area_link_removed_complete":
+    case "bau_handover_starts_draft":
+    case "bau_handover_identity":
+    case "bau_handover_current_cycle":
+    case "bau_handover_submitted_stamps":
+    case "bau_handover_content_complete":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -1265,6 +1390,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4KpiActual !== null) return p4KpiActual;
   const p4Raid = mapP4RaidError(error);
   if (p4Raid !== null) return p4Raid;
+  const p4SustainmentArea = mapP4SustainmentAreaError(error); // BE-I (slices F/G block)
+  if (p4SustainmentArea !== null) return p4SustainmentArea;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,
