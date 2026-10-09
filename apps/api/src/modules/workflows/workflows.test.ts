@@ -72,11 +72,14 @@ describe("workflows module (P2)", () => {
     expect(routes.map((r) => r.key).sort()).toEqual([...registration.routes].sort());
     for (const r of routes) {
       const permission = (r.access as { permission?: string }).permission;
-      // GET /api/v1/dependency-types is the one global catalogue read: the contract declares no 403 on it, so it is
-      // "authenticated" (T-DG3-BE-C handback 7.1; integrated by the orchestrator).
+      // GET /api/v1/dependency-types and GET /api/v1/phases are the global catalogue reads: the contract declares no 403
+      // on them, so they are "authenticated" (T-DG3-BE-C handback 7.1; T-DG4-BE-L2 handback; integrated by the
+      // orchestrator, D-108).
       if (r.key.startsWith("GET"))
         expect(permission, r.key).toBe(
-          r.key === "GET /api/v1/dependency-types" ? "authenticated" : "transformation.read",
+          ["GET /api/v1/dependency-types", "GET /api/v1/phases"].includes(r.key)
+            ? "authenticated"
+            : "transformation.read",
         );
       else expect(permission, r.key).not.toMatch(/\.read$/);
     }
