@@ -142,6 +142,7 @@ async function validateVersion(tx: Tx, request: FastifyRequest, formulaId: strin
   const transformationId = await formulaTransformation(tx, formulaId);
   const ctx = await openWrite(tx, request, transformationId, [{ permission: "finance.validate" }], null, {
     atCommit: true,
+    technicalAdminRefusal: "finance.validate", // REQ-S10-003 (D-094)
   });
   const expected = requireIfMatch(request);
   const decision = parseBody(financeValidationRequest, request.body);

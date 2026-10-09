@@ -1,0 +1,50 @@
+port-policy: PostgreSQL listening on port 23410 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/base-clone
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv0jwk8y_00ca9c2a (server_encoding UTF8); applied 46 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/approvals/adm-not-approver.test.ts (4 tests | 1 failed) 1449ms
+   ✓ REQ-S10-003: an ADM-only user is never a business approver > no technical-admin role holds a business_approval or finance_validation permission (catalogue) 2ms
+   ✓ REQ-S10-003: an ADM-only user is never a business approver > decideApproval: 403, also as a member of the assignee group; nothing written  402ms
+   × REQ-S10-003: an ADM-only user is never a business approver > A12: the ADM-only user gets 403 forbidden on every gate and Finance approval endpoint; only a denial is written 18ms
+     → expected [ 'decideGate (G1)', 404, …(2) ] to deeply equal [ 'decideGate (G1)', 403, …(2) ]
+   ✓ REQ-S10-003: an ADM-only user is never a business approver > unchanged: a reader without the approval right, AUD, a non-member, a user with no grant, and a mixed-grant user 276ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/approvals/adm-not-approver.test.ts > REQ-S10-003: an ADM-only user is never a business approver > A12: the ADM-only user gets 403 forbidden on every gate and Finance approval endpoint; only a denial is written
+AssertionError: expected [ 'decideGate (G1)', 404, …(2) ] to deeply equal [ 'decideGate (G1)', 403, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "decideGate (G1)",[22m
+[32m-   403,[39m
+[32m-   "forbidden",[39m
+[32m-   "You do not have permission for this action.",[39m
+[31m+   404,[39m
+[31m+   "not_found",[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/approvals/adm-not-approver.test.ts:279:68
+    277|     for (const e of endpoints) {
+    278|       const res = await e.call(adm.session);
+    279|       expect([e.name, res.status, res.body.code, res.body.detail]).toE…
+       |                                                                    ^
+    280|         e.name,
+    281|         403,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  05:54:54
+   Duration  6.90s (transform 1.79s, setup 0ms, collect 3.79s, tests 1.45s, environment 0ms, prepare 88ms)
+

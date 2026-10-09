@@ -9,13 +9,15 @@
 //      no_next_authority (visible on the approval, never a silent skip);
 //   3. when a target was found, sets the approval's escalation fields and escalation_level + 1 (nothing else: the
 //      status is unchanged, no decision row is written), and creates an `approval_escalated` task for the target's
-//      approvers (createWorkItemOnce).
+//      approvers (createWorkItemOnce);
+//   4. in every case (target or routing error), gives the requester and the current assignee one `approval_overdue`
+//      inbox reminder naming the delay and any routing error (ADR-0026 §6 step 3; 0058; T-DG4-BE-B2).
 // An approval with an Unknown due date (due_date NULL) is never selected. Retries, redeliveries and restarts escalate
 // exactly once per (approval, round, due date): the processed_message ledger row, and behind it the 0031 unique key
 // approval_escalation_once and trigger approval_escalation_guard. The audit actor is `service` (jobActor), which holds
 // no permission and can never decide a business approval (the 0031 approval_guard refuses approved/rejected without a
 // user's decision row). Nothing here touches the engineering gates DG0-DG7.
-import { insertAuditEvent, sql, type Db, type Tx } from "@mth/db";
+import { insertAuditEvent, sql, type ApprovalRow, type Db, type Tx } from "@mth/db";
 import { z } from "zod";
 import { createWorkItemOnce, jobActor, runOnce } from "../kit.ts";
 import type { JobHandler } from "./spec.ts";
@@ -106,6 +108,54 @@ async function resolveNext(tx: Tx, transformationId: string, party: string | und
 
 type EscalateOutcome = "escalated" | "routing_error" | "skipped";
 
+/** The approval's current assignee as people: the assignee user, or the assignee group's current approvers (§8). */
+async function assigneeUsers(tx: Tx, a: ApprovalRow): Promise<string[]> {
+  if (a.assignee_user_id !== null) return [a.assignee_user_id];
+  if (a.assignee_group_id === null) return [];
+  return approversAmong(tx, await currentMembers(tx, a.assignee_group_id), a.transformation_id);
+}
+
+/**
+ * ADR-0026 §6 step 3: "In every case the requester and the current assignee get an inbox reminder naming the delay
+ * impact and any routing error, so the error is visible, never a silent skip." One `approval_overdue` item per
+ * (approval, round, due date, person), so a retried or redelivered escalation creates nothing new. The delay is named
+ * by business dates (overdue since `dueDate`, as of today's business date in the approval's calendar timezone); no
+ * elapsed-day count is computed. A reminder informs; it decides nothing.
+ */
+async function remindOverdue(
+  tx: Tx,
+  actor: ReturnType<typeof jobActor>,
+  a: ApprovalRow,
+  e: { dueDate: string; today: string; level: number; toParty: string | null; routingError: RoutingError | null },
+): Promise<void> {
+  const people = [...new Set([a.requested_by, ...(await assigneeUsers(tx, a))])];
+  for (const userId of people) {
+    await createWorkItemOnce(tx, actor, {
+      organizationId: a.organization_id,
+      transformationId: a.transformation_id,
+      kind: "approval_overdue",
+      assigneeUserId: userId,
+      subjectType: "approval",
+      subjectId: a.id,
+      linkPath: `/my-work/approvals/${a.id}`,
+      messageKey: e.routingError === null ? "approvals.task.overdue" : "approvals.task.overdue_routing_error",
+      messageParams: {
+        title: a.title,
+        roundNo: a.round_no,
+        dueDate: e.dueDate,
+        overdueAsOf: e.today,
+        level: e.level,
+        escalatedToParty: e.routingError === null ? e.toParty : null,
+        routingError: e.routingError,
+        routingParty: e.toParty,
+        recipientRole: userId === a.requested_by ? "requester" : "assignee",
+      },
+      dueDate: null,
+      dedupeKey: `approval.overdue:${a.id}:${a.round_no}:${e.dueDate}:${userId}`,
+    });
+  }
+}
+
 /** One approval, inside runOnce's transaction. Re-reads the row under lock; a changed row is skipped. */
 async function escalateOne(
   tx: Tx,
@@ -117,11 +167,14 @@ async function escalateOne(
   const a = await tx.selectFrom("approval").selectAll().where("id", "=", approvalId).forUpdate().executeTakeFirst();
   if (!a || !["pending", "deferred"].includes(a.status) || a.round_no !== roundNo || a.due_date !== dueDate)
     return "skipped";
-  const still = await sql<{ overdue: boolean }>`
-    SELECT ${dueDate}::date < p4_business_date(now(), coalesce(
+  const still = await sql<{ today: string }>`
+    SELECT p4_business_date(now(), coalesce(
       (SELECT c.timezone FROM business_calendar c WHERE c.id = ${a.calendar_id}::uuid),
-      (SELECT o.default_timezone FROM organization o WHERE o.id = ${a.organization_id}::uuid))) AS overdue`.execute(tx);
-  if (still.rows[0]?.overdue !== true) return "skipped";
+      (SELECT o.default_timezone FROM organization o WHERE o.id = ${a.organization_id}::uuid)))::text AS today`.execute(
+    tx,
+  );
+  const today = still.rows[0]?.today;
+  if (today === undefined || !(dueDate < today)) return "skipped";
 
   let chain: string[] = [];
   if (a.decision_right_id !== null) {
@@ -178,6 +231,13 @@ async function escalateOne(
       to_party_code: { from: null, to: next.toPartyCode },
       routing_error: { from: null, to: next.routingError },
     },
+  });
+  await remindOverdue(tx, actor, a, {
+    dueDate,
+    today,
+    level: rowLevel,
+    toParty: next.toPartyCode,
+    routingError: next.routingError,
   });
   if (next.routingError !== null) return "routing_error";
 
