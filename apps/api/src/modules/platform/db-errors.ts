@@ -1480,6 +1480,123 @@ export function mapP4AdoptionSustainmentError(error: PgErrorLike): HttpProblem |
   }
 }
 
+// P4 slice D block (ADR-0032 §11 "Database last-line mappings"). BE-F's forum, series and meeting lines come first; BE-G
+// appends its T16, escalation and blocker lines and BE-F2 its agenda, attendance, minutes and output lines after them.
+// The services return the same codes and English texts before any write; these answer a write that reached the guard.
+
+/** The "<from> -> <to>" of a meeting_status_transition message ("meeting <id>: a -> b is not a legal transition"). */
+function meetingEdgeOf(message: string | undefined): [string, string] {
+  const m = /: ([a-z_]+) -> ([a-z_]+) is not a legal transition/.exec(message ?? "");
+  return m ? [m[1]!, m[2]!] : ["its status", "the requested status"];
+}
+
+/** The status word of a "... a <status> meeting is final" / "the meeting is <status> ..." message. */
+function meetingStatusOf(message: string | undefined): string {
+  const m = /(?:a ([a-z_]+) meeting is final|the meeting is ([a-z_]+) and)/.exec(message ?? "");
+  return m?.[1] ?? m?.[2] ?? "closed";
+}
+
+/**
+ * P4 slice D (ADR-0032 §11): the database last lines of forums, participants, meeting series and meetings (T-DG4-BE-F).
+ * Runs before the generic `*_version_step` rule, because `meeting_series_rule_version_step` is a programming error
+ * (500), not a version conflict. Null when the error is not one of them.
+ */
+export function mapP4GovernanceMeetingError(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  if (constraint.endsWith("_meeting_frozen"))
+    return rule422(
+      "meeting.frozen",
+      `This meeting is ${meetingStatusOf(error.message)}; its records can no longer be changed.`,
+      "",
+    );
+  switch (constraint) {
+    // ---- BE-F: forums, participants, meeting series and meetings.
+    case "forum_archived_final":
+      return rule422("forum.archived", "This forum is archived and can no longer be changed.", "");
+    case "forum_participant_parties_known":
+      // The guard cannot name the party; the API names it before the write.
+      return rule422("forum.party_unknown", "A listed party is not a known governance role.", "/participantParties");
+    case "forum_output_kinds_valid":
+      return rule422(
+        "forum.output_kind_invalid",
+        "Outputs are chosen from: decisions, unblockers, benefit view, integrated status, decision log, milestones, actions, RAID, test, evidence, recommendation, benefit evidence, forecast, corrective action.",
+        "/outputKinds",
+      );
+    case "forum_publish_outputs_subset":
+      return rule422(
+        "forum.publish_output_not_listed",
+        "A required publication output must be one of this forum's outputs.",
+        "/publishRequiresAnyOutput",
+      );
+    case "forum_participant_active_user_key":
+    case "forum_participant_active_group_key":
+      return problems.duplicate(
+        "forum_participant.exists",
+        "This person or group is already a participant of the forum.",
+      );
+    case "forum_participant_removed_final":
+      return rule422("forum_participant.removed", "This participant was removed and can no longer be changed.", "");
+    case "meeting_series_one_active_key":
+      return problems.duplicate(
+        "meeting_series.exists",
+        "This forum already has an active meeting series; change it instead.",
+      );
+    case "meeting_series_ended_final":
+      return rule422("meeting_series.ended", "This meeting series has ended and can no longer be changed.", "");
+    case "meeting_series_rule_shape":
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "meeting_series.rule_invalid",
+        title: "Invalid request",
+        detail:
+          "A weekly series needs its weekdays, a monthly series a day of the month (1–28), and a daily series neither.",
+        errors: [
+          {
+            pointer: "/weekdays",
+            code: "meeting_series.rule_invalid",
+            message:
+              "A weekly series needs its weekdays, a monthly series a day of the month (1–28), and a daily series neither.",
+          },
+        ],
+      });
+    case "meeting_status_transition": {
+      const [from, to] = meetingEdgeOf(error.message);
+      return rule422("meeting.status_transition", `This meeting cannot move from ${from} to ${to}.`, "");
+    }
+    case "meeting_final":
+      return rule422(
+        "meeting.final",
+        `This meeting is ${meetingStatusOf(error.message)} and can no longer be changed.`,
+        "",
+      );
+    case "forum_template_immutable":
+    case "forum_participant_identity":
+    case "forum_participant_starts_active":
+    case "forum_participant_same_org":
+    case "forum_participant_one_target":
+    case "forum_participant_removed_complete":
+    case "meeting_series_rule_version_step":
+    case "meeting_series_author_required":
+    case "meeting_series_starts_active":
+    case "meeting_series_forum_immutable":
+    case "meeting_series_dates":
+    case "meeting_series_ended_complete":
+    case "meeting_starts_scheduled":
+    case "meeting_regenerate_future_only":
+    case "meeting_created_source":
+    case "meeting_series_fields":
+    case "meeting_minutes_required":
+    case "meeting_cancelled_complete":
+    case "meeting_cutoff_known_or_reason":
+    case "meeting_times":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -1489,6 +1606,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (code === undefined || !SQLSTATE.test(code)) return null;
   const constraint = error.constraint ?? "";
 
+  const p4Meetings = mapP4GovernanceMeetingError(error);
+  if (p4Meetings !== null) return p4Meetings;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
