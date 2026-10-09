@@ -13,7 +13,7 @@ import { Icon } from "../components/Icon.tsx";
 import { LanguageNotSavedNotice, LanguageSwitch, useLanguageNotSaved } from "../components/LanguageSwitch.tsx";
 import { Wordmark } from "../components/Wordmark.tsx";
 import { localName, useLocale } from "./locale.ts";
-import { NAV_AREAS } from "./nav.ts";
+import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
 
 export function Shell() {
   const { t } = useTranslation();
@@ -31,6 +31,9 @@ export function Shell() {
   useEffect(() => setNavOpen(false), [location.pathname]);
 
   const areas = NAV_AREAS.filter((a) => !a.requiresAny || canAny(me, a.requiresAny));
+  // P4 sub-entries (nav.ts NAV_SUBPAGES) of the visible areas; a hint only, the server still decides.
+  const subpagesOf = (areaId: string) =>
+    NAV_SUBPAGES.filter((s) => s.area === areaId && (!s.requiresAny || canAny(me, s.requiresAny)));
 
   // Signing out here is on purpose: markSignedOut() first, so the 401s that follow are not a "session ended" event (and
   // RequireSession does not redirect with that message), then the whole session cache is dropped. A logout that
@@ -99,6 +102,17 @@ export function Shell() {
                   <span>{t(`nav.areas.${area.id}.label`)}</span>
                   {area.availability === "planned" ? <span className="app-nav__tag">{t("nav.planned")}</span> : null}
                 </NavLink>
+                {subpagesOf(area.id).length > 0 ? (
+                  <ul className="app-nav__sublist" aria-label={t(`nav.areas.${area.id}.label`)}>
+                    {subpagesOf(area.id).map((sub) => (
+                      <li key={sub.id}>
+                        <NavLink to={sub.path} end className="app-nav__link app-nav__link--sub" data-subpage={sub.id}>
+                          {t(`nav.sub.${sub.id}`)}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>
