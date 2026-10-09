@@ -8,8 +8,9 @@
 //
 // My Work (REQ-S11-001 "an intervention with owner and due date appears in My Work"): on create, and on an owner change,
 // the owner gets one work item `adoption_intervention_due` through createWorkItemOnce (dedupe
-// `adoption.intervention:<interventionId>:<ownerUserId>`, due = the intervention's due date); an owner change cancels
-// the previous owner's open item; done / cancelled closes it.
+// `adoption.intervention:<interventionId>:<ownerUserId>`, due = the intervention's due date); the item follows the
+// intervention (T-DG4-BE-R1): an owner change cancels the previous owner's open item and opens the new owner's (A -> B
+// -> A leaves one open item, for A), a due-date change moves its due date; done / cancelled closes it.
 //
 // `createBelowTrajectoryIntervention` (exported for KBE-F's consumer `adoption.indicator_evaluated`, ADR-0033 §4 steps
 // 3-6) creates exactly one corrective intervention per metric link, scope and reporting period: the adoptionIntervention advisory lock,
@@ -58,7 +59,13 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
+import {
+  closeWorkItemsOfSubject,
+  createWorkItemOnce,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
+  type WorkItemInput,
+} from "../tasks/index.ts";
 import { assertActiveUsers, type WriteContext } from "../transformations/index.ts";
 import {
   adoptionRule,
@@ -165,22 +172,57 @@ export function toAdoptionIntervention(r: AdoptionInterventionRow): AdoptionInte
 
 // ------------------------------------------------------------------------------------------------ work items
 
-/** The owner's My Work item for an open intervention with an owner (createWorkItemOnce; one per intervention and owner). */
-async function assignInterventionTask(tx: Tx, actor: AuditActor, row: AdoptionInterventionRow): Promise<void> {
-  if (row.owner_user_id === null || !(OPEN_STATUSES as readonly string[]).includes(row.status)) return;
-  await createWorkItemOnce(tx, actor, {
+/** The owner's My Work item of an intervention (one per intervention and owner; a returning owner's key gets `#n`). */
+function interventionTaskInput(row: AdoptionInterventionRow, ownerUserId: string): WorkItemInput {
+  return {
     organizationId: row.organization_id,
     transformationId: row.transformation_id,
     kind: ADOPTION_INTERVENTION_TASK_KIND,
-    assigneeUserId: row.owner_user_id,
+    assigneeUserId: ownerUserId,
     subjectType: "adoption_intervention",
     subjectId: row.id,
     linkPath: `/transformations/${row.transformation_id}/adoption-interventions/${row.id}`,
     messageKey: "adoption.task.intervention_due",
     messageParams: { code: row.code },
     dueDate: dateOrNull(row.due_date),
-    dedupeKey: `adoption.intervention:${row.id}:${row.owner_user_id}`,
-  });
+    dedupeKey: `adoption.intervention:${row.id}:${ownerUserId}`,
+  };
+}
+
+/** The owner's My Work item for an open intervention with an owner (createWorkItemOnce; one per intervention and owner). */
+async function assignInterventionTask(tx: Tx, actor: AuditActor, row: AdoptionInterventionRow): Promise<void> {
+  if (row.owner_user_id === null || !(OPEN_STATUSES as readonly string[]).includes(row.status)) return;
+  await createWorkItemOnce(tx, actor, interventionTaskInput(row, row.owner_user_id));
+}
+
+/**
+ * The open intervention's item follows it (T-DG4-BE-R1; D-102): an owner change moves it to the new owner (the
+ * previous owner's open item is cancelled; A -> B -> A leaves one open item, for A), a due-date change moves its due
+ * date.
+ */
+async function followInterventionTask(
+  tx: Tx,
+  actor: AuditActor,
+  before: AdoptionInterventionRow,
+  after: AdoptionInterventionRow,
+): Promise<void> {
+  if (!(OPEN_STATUSES as readonly string[]).includes(after.status)) return;
+  if (after.owner_user_id !== before.owner_user_id) {
+    if (after.owner_user_id === null) await closeInterventionTasks(tx, actor, after, "cancelled");
+    else await reassignWorkItemOfSubject(tx, actor, interventionTaskInput(after, after.owner_user_id));
+  }
+  if (dateOrNull(after.due_date) !== dateOrNull(before.due_date))
+    await rescheduleWorkItemsOfSubject(
+      tx,
+      actor,
+      {
+        organizationId: after.organization_id,
+        subjectType: "adoption_intervention",
+        subjectId: after.id,
+        kinds: [ADOPTION_INTERVENTION_TASK_KIND],
+      },
+      dateOrNull(after.due_date),
+    );
 }
 
 function closeInterventionTasks(
@@ -310,10 +352,7 @@ async function updateIntervention(tx: Tx, request: FastifyRequest): Promise<Adop
   const actor = userActor(ctx);
   if (closing) {
     if (updated.status !== current.status) await closeInterventionTasks(tx, actor, updated, to);
-  } else if (updated.owner_user_id !== current.owner_user_id) {
-    await closeInterventionTasks(tx, actor, updated, "cancelled");
-    await assignInterventionTask(tx, actor, updated);
-  }
+  } else await followInterventionTask(tx, actor, current, updated);
   return updated;
 }
 

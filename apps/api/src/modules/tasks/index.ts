@@ -5,6 +5,8 @@
 // Public interface:
 //  - registerTasksModule: wiring hook called by the composition root (server.ts);
 //  - createWorkItemOnce / closeWorkItemsOfSubject: the creation and system-close services (ADR-0025 §4);
+//  - rescheduleWorkItemsOfSubject / reassignWorkItemOfSubject: an item follows its source's due date and owner
+//    (T-DG4-BE-R1; D-102, D-105);
 //  - SYSTEM_MANAGED_KINDS, toWorkItem, toInboxNotification.
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
@@ -13,9 +15,13 @@ import { registerTaskRoutes } from "./routes.ts";
 export {
   closeWorkItemsOfSubject,
   createWorkItemOnce,
+  reassignWorkItemOfSubject,
+  rescheduleWorkItemsOfSubject,
   type MessageParamValue,
   type WorkItemInput,
   type WorkItemOnceResult,
+  type WorkItemReassignResult,
+  type WorkItemSourceRef,
 } from "./service.ts";
 export { SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
 

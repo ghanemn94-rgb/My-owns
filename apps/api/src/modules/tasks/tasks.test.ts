@@ -25,9 +25,14 @@ describe("tasks module (P4)", () => {
     }
   });
 
-  it("approval tasks are system managed (ADR-0025 §4)", () => {
-    expect([...SYSTEM_MANAGED_KINDS].sort()).toEqual(["approval_decision", "approval_escalated"]);
+  it("approval tasks and the corrective follow-up are system managed (ADR-0025 §4, ADR-0031 §5.6)", () => {
+    expect([...SYSTEM_MANAGED_KINDS].sort()).toEqual([
+      "approval_decision",
+      "approval_escalated",
+      "corrective_case_follow_up",
+    ]);
     expect(SYSTEM_MANAGED_KINDS.has("kpi_update_due")).toBe(false);
+    expect(SYSTEM_MANAGED_KINDS.has("raid_action_due")).toBe(false);
   });
 
   it("refusals carry the ADR-0025 §4 codes and English texts", () => {
