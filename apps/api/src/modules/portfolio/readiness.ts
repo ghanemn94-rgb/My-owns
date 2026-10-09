@@ -16,6 +16,10 @@ import { parse, problems, type ModuleDeps } from "../platform/index.ts";
 import { loadGateFacts } from "../workflows/index.ts";
 import { loadDispensations } from "./dispensations.ts";
 import { sequencingState, type DispensationFact, type SequencingGate } from "./sequencing.ts";
+// P4 (REQ-PB-008, B0013 "Operating model before execution"; ADR-0026 §9; T-DG4-BE-C): Transform readiness, a NEW path.
+// The DG3 readiness operation above stays byte-stable (D-090).
+import { hasText, SEEDED_DECISION_RIGHT_KEYS, type TransformReadiness } from "@mth/shared/schemas";
+import { resolveParty } from "../access/index.ts";
 
 const PATH = "/api/v1/transformations/:transformationId/readiness";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -110,5 +114,124 @@ export function registerReadinessRoutes(app: FastifyInstance, { db }: ModuleDeps
     await requireTransformationRead(db, principalOf(request), transformationId);
     return loadReadiness(db, transformationId);
   });
-  return [`GET ${PATH}`];
+  return [`GET ${PATH}`, ...registerTransformReadinessRoute(app, db)];
+}
+
+// ------------------------------------------------------------------------------------------------ Transform readiness
+// GET /transformations/{id}/readiness/transform (getTransformReadiness; transformation.read; read only). REQ-PB-008:
+// "readiness for Transform shows 'not ready' when T11 or charter decision rights are empty and 'ready' once they are
+// completed". Four checks (ADR-0026 §9), each listing what is missing; `ready` only when all pass. Readiness checks
+// content, not approval: an approved governance matrix is not required (ADR-0026 §7).
+
+const TRANSFORM_PATH = "/api/v1/transformations/:transformationId/readiness/transform";
+
+/** The facts Transform readiness reads (loaded by `loadTransformReadiness`). */
+export interface TransformReadinessFacts {
+  /** The current charter's decision_rights text (null when there is no charter or the field is empty). */
+  readonly charterDecisionRights: string | null;
+  /** The transformation's T11 rows (seeded and added). */
+  readonly decisionRights: readonly { templateKey: string | null; status: string; approvePartyCode: string | null }[];
+  /** The parties that currently have an active role mapping in the transformation. */
+  readonly mappedParties: ReadonlySet<string>;
+  /** The T12 deliverables with their cell values. */
+  readonly raciDeliverables: readonly {
+    key: string;
+    status: string;
+    accountabilityException: string | null;
+    values: readonly (string | null)[];
+  }[];
+}
+
+/** Pure: the four Transform readiness checks of ADR-0026 §9, in order. */
+export function transformReadinessChecks(f: TransformReadinessFacts): TransformReadiness["checks"] {
+  const activeSeeded = (key: string) =>
+    f.decisionRights.find((r) => r.templateKey === key && r.status === "active" && r.approvePartyCode !== null);
+  const seeded = SEEDED_DECISION_RIGHT_KEYS.map(activeSeeded);
+  const missingKeys = SEEDED_DECISION_RIGHT_KEYS.filter((key) => activeSeeded(key) === undefined);
+  const unmapped = [
+    ...new Set(
+      seeded.flatMap((r) =>
+        r && r.approvePartyCode !== null && !f.mappedParties.has(r.approvePartyCode) ? [r.approvePartyCode] : [],
+      ),
+    ),
+  ];
+  const unaccountable = f.raciDeliverables
+    .filter(
+      (d) =>
+        d.status === "active" &&
+        d.accountabilityException === null &&
+        d.values.filter((v) => v === "A" || v === "A/R").length !== 1,
+    )
+    .map((d) => d.key);
+  return [
+    {
+      code: "charter_decision_rights",
+      passed: hasText(f.charterDecisionRights),
+      missing: hasText(f.charterDecisionRights) ? [] : ["charter.decision_rights"],
+    },
+    { code: "t11_seeded_decisions", passed: missingKeys.length === 0, missing: [...missingKeys] },
+    { code: "t11_approvers_mapped", passed: unmapped.length === 0, missing: unmapped },
+    { code: "t12_accountable", passed: unaccountable.length === 0, missing: unaccountable },
+  ];
+}
+
+export async function loadTransformReadiness(db: DbOrTx, transformationId: string): Promise<TransformReadiness> {
+  const t = await db.selectFrom("transformation").select("id").where("id", "=", transformationId).executeTakeFirst();
+  if (!t) throw problems.notFound();
+  const charter = await db
+    .selectFrom("charter")
+    .select("decision_rights")
+    .where("transformation_id", "=", transformationId)
+    .executeTakeFirst();
+  const rights = await db
+    .selectFrom("transformation_decision_right")
+    .select(["template_key", "status", "approve_party_code"])
+    .where("transformation_id", "=", transformationId)
+    .execute();
+  const mappedParties = new Set<string>();
+  for (const party of new Set(rights.map((r) => r.approve_party_code)))
+    if ((await resolveParty(db, transformationId, party)).status === "mapped") mappedParties.add(party);
+  const deliverables = await db
+    .selectFrom("transformation_raci_deliverable")
+    .select(["id", "template_key", "status", "accountability_exception"])
+    .where("transformation_id", "=", transformationId)
+    .orderBy("ordinal")
+    .orderBy("id")
+    .execute();
+  const cells = await db
+    .selectFrom("transformation_raci_assignment")
+    .select(["deliverable_id", "value"])
+    .where("transformation_id", "=", transformationId)
+    .execute();
+  const checks = transformReadinessChecks({
+    charterDecisionRights: charter?.decision_rights ?? null,
+    decisionRights: rights.map((r) => ({
+      templateKey: r.template_key,
+      status: r.status,
+      approvePartyCode: r.approve_party_code,
+    })),
+    mappedParties,
+    raciDeliverables: deliverables.map((d) => ({
+      key: d.template_key ?? d.id,
+      status: d.status,
+      accountabilityException: d.accountability_exception,
+      values: cells.filter((c) => c.deliverable_id === d.id).map((c) => c.value),
+    })),
+  });
+  return {
+    transformationId,
+    phase: "transform",
+    status: checks.every((c) => c.passed) ? "ready" : "not_ready",
+    checks,
+  };
+}
+
+/** Registered by registerReadinessRoutes (the portfolio module's existing wiring line). */
+function registerTransformReadinessRoute(app: FastifyInstance, db: DbOrTx): readonly string[] {
+  app.get(TRANSFORM_PATH, { config: { access: { permission: "transformation.read" } } }, async (request) => {
+    const { transformationId } = parse(tParams, request.params, "params");
+    await requireTransformationRead(db, principalOf(request), transformationId);
+    return loadTransformReadiness(db, transformationId);
+  });
+  return [`GET ${TRANSFORM_PATH}`];
 }

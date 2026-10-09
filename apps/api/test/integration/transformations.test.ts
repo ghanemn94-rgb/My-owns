@@ -491,6 +491,14 @@ describe("audit trail endpoint", () => {
         ...Array<string>(6).fill("gate_instance.create"),
         ...Array<string>(4).fill("roadmap_wave.create"),
         "scoring_weight_set.create",
+        // T-DG4-BE-C (ADR-0026 §7): POST /transformations runs p4_instantiate_transformation, which adds the P4 starter
+        // structure: 2 governance-matrix headers, the 4 T11 rows, the 6 T12 deliverables with their 36 cells, and the
+        // 5 seeded forums of slice D (0044 extends the same function).
+        ...Array<string>(2).fill("governance_matrix.create"),
+        ...Array<string>(4).fill("transformation_decision_right.create"),
+        ...Array<string>(6).fill("transformation_raci_deliverable.create"),
+        ...Array<string>(36).fill("transformation_raci_assignment.create"),
+        ...Array<string>(5).fill("forum.create"),
       ].sort(),
     );
     expect(page2.body.nextCursor).toBeNull();

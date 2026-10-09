@@ -44,7 +44,13 @@ describe("workflows module (P2)", () => {
       // P3 (T-DG3-BE-A): a waiver is granted by the waived gate's configured approver (portfolio dispensations).
       "isGateApprover",
       "loadGateFacts",
+      // P4 (T-DG4-BE-B's approval service, exported for governance by T-DG4-BE-C): subject providers, in-transaction
+      // requests, the T11 router seam and the approval read model.
+      "registerApprovalSubject",
       "registerWorkflowsModule",
+      "requestApprovalInTx",
+      "setDecisionRightRouter",
+      "toApprovals",
     ]);
   });
 
