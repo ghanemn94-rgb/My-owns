@@ -96,3 +96,6 @@ export * from "./gates-p4.ts";
 // P4 slice H mirrors of BE-L (backend-workflow-engineer, T-DG4-BE-L; p4-work-split §H H.3): change requests, the
 // change-control policy, impact previews and frozen impact assessments, and the pure materiality rules (ADR-0036).
 export * from "./change-control.ts";
+// P4 slice K mirrors of BE-M (backend-workflow-engineer, T-DG4-BE-M; p4-work-split §J+K JK.1): trace links, allocation
+// sets and contribution shares, the traceability graph, the orphan report and the downstream impact.
+export * from "./traceability.ts";

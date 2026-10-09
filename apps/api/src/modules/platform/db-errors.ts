@@ -77,6 +77,7 @@
 //   kpi_actual_value_present, kpi_actual_review_present -> 500 (a programming error)
 // Pure: no I/O, unit-tested in platform.test.ts and db-errors.test.ts.
 import { PROBLEM_TYPES, type ProblemDetails } from "@mth/shared";
+import { allocationExceedsText } from "@mth/shared/schemas";
 import { HttpProblem, problems } from "./problem.ts";
 import { invalidCharacterProblem } from "./validation.ts";
 
@@ -2084,6 +2085,82 @@ export function mapP4ChangeControlError(error: PgErrorLike): HttpProblem | null 
   }
 }
 
+// ------------------------------------------------------------------------------------------------ P4 slices J/K
+// BE-M block (T-DG4-BE-M; ADR-0038 §12): the 0055 trace-link and contribution-share constraints. The API answers each
+// rule first (reporting/traceability.ts, portfolio/links.ts); these mappings are the backstop for a write that slips
+// past it (e.g. the trigger's 100 % rule under a concurrent write).
+
+/** The exact ADR-0038 §12 refusal of a set above 100 %, with the total the trigger reports ("would total 1.100000"). */
+function allocationExceedsProblem(error: PgErrorLike): HttpProblem {
+  const total = /would total ([0-9]+(?:\.[0-9]+)?)/.exec(error.message ?? "")?.[1];
+  const detail =
+    total !== undefined ? allocationExceedsText(total) : "The allocations into this record would total more than 100%.";
+  return new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.validation,
+    code: "trace_link.allocation_exceeds_total",
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer: "/allocationShare", code: "trace_link.allocation_exceeds_total", message: detail }],
+  });
+}
+
+const traceRule = (code: string, detail: string, pointer: string): HttpProblem =>
+  new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.validation,
+    code,
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer, code, message: detail }],
+  });
+
+/** Maps the 0055 trace-link and contribution-share constraints (BE-M), or null when the error is not one of them. */
+export function mapP4TraceabilityError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "trace_allocation_total":
+      return allocationExceedsProblem(error);
+    case "trace_link_one_active_key":
+      return problems.duplicate("trace_link.duplicate", "These two records are already linked.");
+    case "trace_link_kind_shape":
+      return traceRule(
+        "trace_link.pair_not_allowed",
+        "This kind of link cannot connect these two records.",
+        "/linkKind",
+      );
+    case "trace_link_allocation_kind":
+      return traceRule(
+        "trace_link.share_not_allowed",
+        "A share can be set only on a link into a KPI or a benefit.",
+        "/allocationShare",
+      );
+    case "initiative_outcome_contribution_allocation_needs_kpi":
+      return traceRule(
+        "contribution.allocation_needs_kpi",
+        "A share needs the contribution's KPI; name the KPI first.",
+        "/allocationShare",
+      );
+    case "trace_link_finding_fkey":
+    case "trace_link_tom_gap_fkey":
+    case "trace_link_deliverable_fkey":
+    case "trace_link_capability_fkey":
+    case "trace_link_outcome_kpi_fkey":
+    case "trace_link_benefit_fkey":
+      return traceRule(
+        "trace_link.record_not_found",
+        "The linked record does not exist in this transformation.",
+        "/fromId",
+      );
+    case "trace_link_basis_needs_share":
+    case "initiative_outcome_contribution_basis_needs_share":
+    case "trace_link_removal_complete":
+      // The API validates these before writing: reaching the constraint is a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 /**
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
@@ -2130,6 +2207,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4GateScale !== null) return p4GateScale;
   const p4ChangeControl = mapP4ChangeControlError(error); // BE-L (slice H block)
   if (p4ChangeControl !== null) return p4ChangeControl;
+  const p4Traceability = mapP4TraceabilityError(error); // BE-M (slices J/K block)
+  if (p4Traceability !== null) return p4Traceability;
   if (constraint === "gate_decision_not_submitter")
     return new HttpProblem({
       status: 403,

@@ -14,14 +14,19 @@
 // KPI (T02 row) named by it must belong to that outcome (422 here; the database trigger
 // initiative_contribution_kpi_matches_outcome backs it up). Every mutation: authorization re-checked at commit
 // (BE18A), validation, If-Match on remove (creates are version 1), one audit event; no client I/O inside the transaction.
-import type {
-  DbOrTx,
-  InitiativeDecisionLinkRow,
-  InitiativeGapLinkRow,
-  InitiativeOutcomeContributionRow,
-  Tx,
+import {
+  sql,
+  type DbOrTx,
+  type InitiativeDecisionLinkRow,
+  type InitiativeGapLinkRow,
+  type InitiativeOutcomeContributionRow,
+  type Tx,
 } from "@mth/db";
 import {
+  allocationExceedsText,
+  contributionAllocationUpdate,
+  traceAllocationTotals,
+  type ContributionAllocation,
   initiativeDecisionLinkCreate,
   initiativeGapLinkCreate,
   initiativeOutcomeContributionCreate,
@@ -35,6 +40,7 @@ import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import { record } from "../audit/index.ts";
 import {
+  ADVISORY_LOCK_CLASSES,
   iso,
   isoOrNull,
   parse,
@@ -372,6 +378,132 @@ async function createDecisionLink(tx: Tx, request: FastifyRequest, initiativeId:
   return toDecisionLink(row);
 }
 
+// ------------------------------------------------------------------------------------------------ BE-M: contribution share
+// setOutcomeContributionAllocation (P4 slice K; ADR-0038 §3, §10, §12; T-DG4-BE-M; REQ-S03-006):
+//   POST /api/v1/initiatives/{id}/outcome-contributions/{linkId}/allocation   (traceability.link; If-Match)
+// Sets or clears the share of a KPI movement credited to a T05 contribution. A share needs the contribution's outcome
+// KPI (422 contribution.allocation_needs_kpi); a removed contribution is read-only (422 contribution.not_active). The
+// set into the KPI (capability_kpi trace links + contribution shares) is serialized by the advisory lock of class traceAllocationSet (key = the
+// outcome KPI id; the 0055 trigger takes the same lock) and may not exceed 100 % (422
+// trace_link.allocation_exceeds_total, exact ADR text). The DG3 contribution routes above never write these columns
+// and their responses are unchanged. One audit event `initiative_outcome_contribution.allocation_set`.
+
+const allocationParams = z.strictObject({ initiativeId: z.uuid(), linkId: z.uuid() });
+const TRACE_LINK = [{ permission: "traceability.link" as const }];
+
+function toContributionAllocation(r: InitiativeOutcomeContributionRow): ContributionAllocation {
+  return {
+    linkId: r.id,
+    initiativeId: r.initiative_id,
+    outcomeId: r.outcome_id,
+    outcomeKpiId: r.outcome_kpi_id,
+    allocationShare: r.allocation_share,
+    allocationBasis: r.allocation_basis,
+    version: r.version,
+  };
+}
+
+async function setContributionAllocation(
+  tx: Tx,
+  request: FastifyRequest,
+  initiativeId: string,
+  linkId: string,
+): Promise<ContributionAllocation> {
+  const { row: initiative } = await readableInitiative(tx, request, initiativeId);
+  const ctx = await openWrite(tx, request, initiative.transformation_id, TRACE_LINK, null, { atCommit: true });
+  const body = parseBody(contributionAllocationUpdate, request.body);
+  const expected = requireIfMatch(request);
+  const peek = await tx
+    .selectFrom("initiative_outcome_contribution")
+    .select(["id", "outcome_kpi_id"])
+    .where("id", "=", linkId)
+    .where("initiative_id", "=", initiativeId)
+    .executeTakeFirst();
+  if (!peek) throw problems.notFound();
+  // The allocation-set lock before the row lock, in the trigger's order.
+  if (peek.outcome_kpi_id !== null)
+    await sql`SELECT pg_advisory_xact_lock(${ADVISORY_LOCK_CLASSES.traceAllocationSet}::int4, hashtext(${peek.outcome_kpi_id}::text))`.execute(
+      tx,
+    );
+  const current = await tx
+    .selectFrom("initiative_outcome_contribution")
+    .selectAll()
+    .where("id", "=", linkId)
+    .forUpdate()
+    .executeTakeFirstOrThrow();
+  if (current.version !== expected) throw problems.versionConflict(current.version);
+  if (current.status !== "active")
+    throw transitionProblem("contribution.not_active", "This contribution has been removed.");
+  const share = body.allocationShare;
+  const basis = body.allocationBasis;
+  if (share !== null && current.outcome_kpi_id === null)
+    throw fieldRule(
+      "contribution.allocation_needs_kpi",
+      "A share needs the contribution's KPI; name the KPI first.",
+      "/allocationShare",
+    );
+  if (basis !== null && share === null)
+    throw problems.badRequest("validation.basis_needs_share", "An allocation basis needs a share.", "/allocationBasis");
+  if (share !== null && current.outcome_kpi_id !== null) {
+    const links = await tx
+      .selectFrom("trace_link")
+      .select("allocation_share")
+      .where("outcome_kpi_id", "=", current.outcome_kpi_id)
+      .where("link_kind", "=", "capability_kpi")
+      .where("status", "=", "active")
+      .where("allocation_share", "is not", null)
+      .execute();
+    const contributions = await tx
+      .selectFrom("initiative_outcome_contribution")
+      .select("allocation_share")
+      .where("outcome_kpi_id", "=", current.outcome_kpi_id)
+      .where("status", "=", "active")
+      .where("allocation_share", "is not", null)
+      .where("id", "<>", linkId)
+      .execute();
+    const totals = traceAllocationTotals([...[...links, ...contributions].map((r) => r.allocation_share!), share]);
+    if (totals.overHundred)
+      throw fieldRule("trace_link.allocation_exceeds_total", allocationExceedsText(totals.total), "/allocationShare");
+  }
+  const updated = await tx
+    .updateTable("initiative_outcome_contribution")
+    .set({ allocation_share: share, allocation_basis: basis, ...bumpStamps(ctx.userId) })
+    .where("id", "=", linkId)
+    .where("version", "=", current.version)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+  await record(tx, ctx.audit, {
+    action: "initiative_outcome_contribution.allocation_set",
+    recordType: "initiative_outcome_contribution",
+    recordId: linkId,
+    organizationId: ctx.organizationId,
+    transformationId: ctx.transformationId,
+    priorVersion: current.version,
+    newVersion: updated.version,
+    changes: {
+      allocation_share: { from: current.allocation_share, to: updated.allocation_share },
+      allocation_basis: { from: current.allocation_basis, to: updated.allocation_basis },
+    },
+  });
+  return toContributionAllocation(updated);
+}
+
+/** Registers setOutcomeContributionAllocation; returns its "METHOD /path". */
+function registerContributionAllocationRoute(app: FastifyInstance, db: ModuleDeps["db"]): string {
+  const path = `${BASE}/outcome-contributions/:linkId/allocation`;
+  app.post(
+    path,
+    { config: { access: { permission: "traceability.link" as const }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { initiativeId, linkId } = parse(allocationParams, request.params, "params");
+      const body = await db.transaction().execute((tx) => setContributionAllocation(tx, request, initiativeId, linkId));
+      return sendVersioned(reply, 200, body);
+    },
+  );
+  return `POST ${path}`;
+}
+// ------------------------------------------------------------------------------------------------ end BE-M block
+
 // ------------------------------------------------------------------------------------------------ routes
 
 export function registerInitiativeLinkRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
@@ -443,5 +575,6 @@ export function registerInitiativeLinkRoutes(app: FastifyInstance, { db }: Modul
 
     routes.push(`GET ${path}`, `POST ${path}`, `POST ${path}/:linkId/remove`);
   }
+  routes.push(registerContributionAllocationRoute(app, db)); // BE-M (ADR-0038 §3)
   return routes;
 }

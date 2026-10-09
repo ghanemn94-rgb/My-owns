@@ -50,6 +50,8 @@ function wellFormed(name: string, transformationId: string): string {
   // P4 (p4-work-split §I+C.1 BE-A): a seeded job schedule code (0028) and a governance matrix kind (0030).
   if (name === "jobCode") return "approval.escalation_scan";
   if (name === "matrixKind") return "raci";
+  // P4 (T-DG4-BE-M; ADR-0038 §3, §6): an impact record type and an allocation-set target type (enum path parameters).
+  if (name === "recordType" || name === "allocationTargetType") return "benefit";
   return crypto.randomUUID();
 }
 
