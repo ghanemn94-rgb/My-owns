@@ -52,3 +52,16 @@ export {
 } from "./records.ts";
 export { registerAccessP2Routes } from "./team.ts";
 export { registerAccessP4Routes } from "./p4-routes.ts";
+// P4 slice C (T-DG4-BE-B; ADR-0026 §1-§3, §8): group membership, party routing and delegation for the approval service.
+export { currentGroupMemberIds, effectiveGroupIds } from "./groups.ts";
+export {
+  approversOf,
+  partyLabel,
+  resolveParty,
+  routeToParty,
+  routingRefusals,
+  userHoldsApprovalDecide,
+  type PartyTarget,
+  type RoutedParty,
+} from "./role-mappings.ts";
+export { actsFor, delegatorsOf } from "./delegations.ts";
