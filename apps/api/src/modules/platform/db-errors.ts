@@ -1533,8 +1533,14 @@ export function mapP4AdoptionSustainmentError(error: PgErrorLike): HttpProblem |
       const status = /a (completed|no_show|withdrawn) record is final/.exec(message)?.[1] ?? "closed";
       return rule422("training_record.final", `This training record is ${status} and can no longer be changed.`, "");
     }
-    case "training_record_intervention_training":
     case "training_record_intervention_fkey":
+      // The linked intervention is not one of this transformation (the service checks first; a race backstop).
+      return rule422(
+        "validation.reference",
+        "The linked record does not exist in this transformation.",
+        "/interventionId",
+      );
+    case "training_record_intervention_training":
       return rule422(
         "training_record.intervention_not_training",
         "Only a training intervention can be linked to a training record.",

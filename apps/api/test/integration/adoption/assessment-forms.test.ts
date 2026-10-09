@@ -245,6 +245,9 @@ describe("forms and versions (ADR-0033 §5)", () => {
       (await call(api.app, "PATCH", `${AF}/${f.id}`, { session: b.s.bo, headers: ifm(1), body: { name: "x" } })).status,
     ).toBe(409);
     expect((await call(api.app, "POST", `${AF}/${f.id}/publish`, { session: b.s.bo })).status).toBe(428);
+    expect((await call(api.app, "POST", `${AF}/${f.id}/publish`, { session: b.s.bo, headers: ifm(1) })).status).toBe(
+      409,
+    );
     const draftRetire = await call(api.app, "POST", `${AF}/${f.id}/retire`, { session: b.s.bo, headers: ifm(2) });
     expect([draftRetire.status, draftRetire.body.code, draftRetire.body.detail]).toEqual([
       422,
@@ -252,6 +255,10 @@ describe("forms and versions (ADR-0033 §5)", () => {
       "This form cannot move from draft to retired.",
     ]);
     await publish(f.id, 2);
+    expect((await call(api.app, "POST", `${AF}/${f.id}/retire`, { session: b.s.bo })).status).toBe(428);
+    expect((await call(api.app, "POST", `${AF}/${f.id}/retire`, { session: b.s.bo, headers: ifm(2) })).status).toBe(
+      409,
+    );
     const retired = await call(api.app, "POST", `${AF}/${f.id}/retire`, { session: b.s.bo, headers: ifm(3) });
     expect([retired.status, retired.body.status, retired.body.retiredBy]).toEqual([200, "retired", b.users.bo.id]);
     const edit = await call(api.app, "PATCH", `${AF}/${f.id}`, {
@@ -459,6 +466,67 @@ describe("authorisation (ADR-0033 §9)", () => {
       .executeTakeFirstOrThrow();
     expect(row).toEqual({ status: "draft", version: 2 });
     expect((await auditOf(api.db, f.id)).length).toBe(2);
+  });
+
+  it("commit-time 403 on create, edit, retire, invite and cancel; nothing written", async () => {
+    // Each call runs as a fresh BO whose grants are revoked between identity resolution and commit.
+    const revokedCall = async (
+      method: string,
+      url: string,
+      init: { headers?: Record<string, string>; body?: unknown },
+    ) => {
+      const u = await extraUser(api, w, b, "BO");
+      return afterIdentity(
+        api,
+        u.id,
+        () => call(api.app, method, url, { session: u.session, ...init, contract: false }),
+        () => revokeAll(api, w.grantor.id, u.id),
+      );
+    };
+    const before = await formCount();
+    const created = await revokedCall("POST", AF, {
+      body: { kind: "feedback", name: "Synthetic commit-time form", schema: FEEDBACK },
+    });
+    expect(created.status).toBe(403);
+    expect(await formCount()).toBe(before);
+
+    const draft = await newForm();
+    const edited = await revokedCall("PATCH", `${AF}/${draft.id}`, { headers: ifm(2), body: { schema: PROFICIENCY } });
+    expect(edited.status).toBe(403);
+    const pub = await publish(draft.id, 2);
+    const retired = await revokedCall("POST", `${AF}/${draft.id}/retire`, { headers: ifm(pub.version) });
+    expect(retired.status).toBe(403);
+    const formRow = await api.db
+      .selectFrom("assessment_form")
+      .select(["status", "version", "current_version_no"])
+      .where("id", "=", draft.id)
+      .executeTakeFirstOrThrow();
+    expect(formRow).toEqual({ status: "published", version: 3, current_version_no: 1 });
+
+    const invited = await revokedCall("POST", `${AF}/${draft.id}/invitations`, {
+      body: { userIds: [b.users.fin.id], stakeholderGroupId: groupId },
+    });
+    expect(invited.status).toBe(403);
+    const invitationsOf = () =>
+      api.db
+        .selectFrom("assessment_invitation")
+        .select(["id", "status", "version"])
+        .where("form_id", "=", draft.id)
+        .execute();
+    expect(await invitationsOf()).toEqual([]);
+
+    const inv = await call(api.app, "POST", `${AF}/${draft.id}/invitations`, {
+      session: b.s.bo,
+      body: { userIds: [b.users.fin.id], stakeholderGroupId: groupId },
+    });
+    expect(inv.status, JSON.stringify(inv.body)).toBe(201);
+    const invId = inv.body.items[0].id as string;
+    const cancelled = await revokedCall("POST", `${b.base}/assessment-invitations/${invId}/cancel`, {
+      headers: ifm(1),
+    });
+    expect(cancelled.status).toBe(403);
+    expect(await invitationsOf()).toEqual([{ id: invId, status: "open", version: 1 }]);
+    expect((await auditOf(api.db, invId)).length).toBe(1);
   });
 });
 
