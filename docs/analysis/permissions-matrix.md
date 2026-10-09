@@ -406,3 +406,48 @@ Legend as in 8.3. **D** = decide/approve. Every cell is checked server-side by t
 - **Record-level rules:** submitting needs the KPI's owner or steward, or the assignee of its open `kpi_update_due` work item (403 `kpi_actual.not_owner`); accepting or rejecting needs `kpi_actual.accept`, resolution to the version's `reviewer_party_code` through the role mapping, and not being the submitter (403 `kpi_actual.not_reviewer`, `kpi_actual.sod_submitter`; database `kpi_actual_review_sod`); approving a trajectory needs `kpi_target.approve` and not being its creator (403 `target_trajectory.approver_is_author`).
 - **RAG override (REQ-S07-009):** only `rag.override` holders (TL, BO); anyone else gets 403. Reason, evidence and expiry are required; the calculated RAG is preserved and shown again after expiry.
 - **Changes against sections 1–6, flagged as assumptions:** BO submits actuals (REQ-S07-003 "submit:KDS,BO (assigned)"); SP, TL and BO may act as the configured reviewer (REQ-S07-012 "accept:configured reviewer"); TL and KDS configure thresholds (REQ-S07-007); TO manages the organization's reporting periods.
+
+## 12. P4 implementation, slice B (DG4): benefits and Finance validation permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-03 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the benefits engine: the T14 register, lifecycle, enablers, allocations, shared-benefit groups, overlap warnings, scenarios, valuation methods, planned/forecast values, measurements, the Finance validation queue and decisions, amendments and reversals, and totals (ADR-0029, ADR-0030). The seed is migration `0040_p4_benefit_permissions.sql`, equal to `P4_BENEFIT_PERMISSIONS` / `P4_BENEFIT_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners and Finance must confirm them before production. A Finance validation is a named Finance user's decision; no engineering agent, seed or job grants a real business, Finance or IT approval.
+
+### 12.1 P4 permission catalogue (slice B)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `benefit.edit` | write | Create, edit and archive benefits; enablers; planned and forecast values; propose valuation methods; raise overlap warnings | TL, BO |
+| `benefit.advance` | write | Move a benefit through the six lifecycle steps | BO |
+| `benefit.allocate` | write | Replace a benefit's contribution allocations | TL, BO |
+| `benefit.measure` | write | Record measurements with evidence and submit them for Finance validation | BO, WL, KDS |
+| `benefit_scenario.edit` | write | Create and edit base, upside and downside scenarios and their values | TL, FIN |
+| `benefit_group.manage` | write | Create and edit shared-benefit groups; name the counted member | TL, BO |
+| `finance.validate` (P1, reused) | finance_validation | Decide Finance validations (six items), amend and reverse validated values, validate baselines, decide valuation methods, resolve overlaps | FIN |
+
+None of the six new codes is `business_approval` or `finance_validation`, so the creator-derived assignment (F-DG1-106) and the team view (ADR-0020 §3) are unchanged. AUD and the technical-admin roles (ADM_TECH, ADM_ACCESS, ADM_METHOD) hold none of them, and no technical-admin role can hold `finance.validate` (trigger `role_permission_no_admin_approver`; REQ-S10-003).
+
+### 12.2 Per-entity rights in P4 (slice B)
+
+Legend as in 8.3. **D** = decide/validate. Every cell is checked server-side by the one policy function and re-authorised at commit, plus the record-level rule named.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Benefit register (`benefit`, `benefit_enabler`, `benefit_lifecycle_event`) | V | C E, archive | C E, archive, advance | V | V | V | V | V | V | V | — |
+| Benefit baseline validation (`benefit` baseline columns) | V | V | V | V | D (not the owner) | V | V | V | V | V | — |
+| Planned / forecast values (`benefit_plan_value`) | V | C E | C E | V | V | V | V | V | V | V | — |
+| Allocations (`benefit_allocation`) | V | replace | replace | V | V | V | V | V | V | V | — |
+| Shared-benefit groups (`benefit_group`) | V | C E | C E | V | V | V | V | V | V | V | — |
+| Overlap warnings (`benefit_overlap`) | V | raise | raise | V | D resolve (not an owner of either benefit) | V | V | V | V | V | — |
+| Scenarios (`benefit_scenario`, `benefit_scenario_value`) | V | C E | V | V | C E | V | V | V | V | V | — |
+| Valuation methods (`benefit_valuation_method`) | V | propose | propose | V | D (not the proposer) | V | V | V | V | V | — |
+| Measurements (`benefit_measurement`, inputs, evidence) | V | V | C E submit | C E submit | amend, reverse (as Finance corrections) | V | C E submit | V | V | V | — |
+| Finance validation queue and decisions (`finance_validation`) | V | V | V | V | D (not the submitter) | V | V | V | V | V | — |
+| Value series and totals (`benefit_value_line`, `benefit_counting`; read models) | V | V | V | V | V | V | V | V | V | V | — |
+
+**Rules (binding for the slice B implementers):**
+
+- **AUD (read-only auditor):** every mutating slice B operation returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. KBE-D, KBE-D2 and KBE-E test this on each of their operations (p4-work-split S-4).
+- **Finance only (REQ-PB-013, REQ-S08-014, REQ-S08-015, REQ-S08-017):** `decideFinanceValidation`, `amendFinanceValidation`, `reverseFinanceValidation`, `decideBenefitBaseline`, `decideBenefitValuationMethod` and `resolveBenefitOverlap` need `finance.validate`. A Business Owner gets **403** (the REQ-PB-013 acceptance), and so do AUD and an ADM-only user (REQ-S10-003). The audit event of each decision records the deciding Finance user.
+- **Record-level rules:** the Finance decider is never the submitter (403 `finance_validation.sod_submitter`; database `finance_validation_sod`); a baseline is never validated by the benefit's owner (403 `benefit.baseline_validator_is_owner`); a valuation method is never decided by its proposer (403 `benefit_valuation_method.decider_is_proposer`); an overlap is never resolved by the owner of either benefit (403 `benefit_overlap.resolver_is_owner`).
+- **Changes against sections 1–6, flagged as assumptions:** REQ-PB-013 lists submitters BO, WL and KDS (`benefit.measure`); REQ-PB-074 "advance:BO" (`benefit.advance`); REQ-S08-013 "allocate:BO,TL"; REQ-S08-018 "edit:TL,FIN" (`benefit_scenario.edit`); REQ-S08-003 "create/edit:BO,TL"; shared-benefit groups (no source role) are given to TL and BO, the benefit editors.

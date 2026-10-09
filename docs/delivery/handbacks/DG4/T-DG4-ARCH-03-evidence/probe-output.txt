@@ -1,0 +1,109 @@
+port-policy: PostgreSQL listening on port 23720 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 40 (0001_identity_access.sql .. 0040_p4_benefit_permissions.sql)
+PASS  G00 migration ids are contiguous 1..n  -- last 40
+PASS  G01 fresh database: 0001..last apply  -- applied 40: 0036_p4_kpi_permissions_backfill.sql, 0037_p4_benefit_register.sql, 0038_p4_benefit_measurement_validation.sql, 0039_p4_benefit_value_views.sql, 0040_p4_benefit_permissions.sql
+PASS  G02 P3 database populated (0001-0027, a synthetic transformation with its P3 starter structure and an initiative)  -- applied 27
+PASS  G03 P4 over the P3 database: 0028+ apply  -- applied 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql, 0032_p4_slice_i_c_reserved.sql, 0033_p4_kpi_dictionary_versions.sql, 0034_p4_kpi_trajectories_actuals.sql, 0035_p4_kpi_calculation_runs_quality.sql, 0036_p4_kpi_permissions_backfill.sql, 0037_p4_benefit_register.sql, 0038_p4_benefit_measurem
+PASS  G04 existing P3 rows are unchanged by 0037-0040 (BF counter, initiative)  -- [[{"prefix":"BF","last_value":3}],[{"n":1}]]
+PASS  S01 the six B0121 steps are seeded verbatim, in order  -- ["Benefit profile","Baseline, formula, target, owner","Benefit dependency chain","Evidence / actuals","Recovery plan","BAU owner + control cadence"]
+PASS  S02 six slice B permissions, all 'write'; none held by AUD or a technical admin  -- [{"code":"benefit.advance","category":"write"},{"code":"benefit.allocate","category":"write"},{"code":"benefit.edit","category":"write"},{"code":"benefit.measure","category":"write"},{"code":"benefit_group.manage","category":"write"},{"code":"benefit_scenario.edit","category":"write"}]
+PASS  S03 the Finance queue and overlap work-item kinds are seeded  -- [{"code":"benefit_overlap_review"},{"code":"finance_validation_review"}]
+PASS  S04 finance.validate stays FIN-only (REQ-PB-013)  -- [{"code":"FIN"}]
+PASS  B01 a benefit without its audit event fails at COMMIT  -- 23000 benefit_audit_required no audit_event for benefit 01990000-0000-7000-8000-000000000077 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  B02 a financial benefit with one owner, class and statement line is created at Identify  -- {"code":"B01","lifecycle_step":"identify","value_class":"cash_saving"}
+PASS  B03 a financial benefit without a financial-statement mapping is refused (REQ-S08-003)  -- 23514 benefit_mapping_required new row for relation "benefit" violates check constraint "benefit_mapping_required"
+PASS  B04 a non-financial benefit without an agreed KPI is refused (REQ-S08-003)  -- 23514 benefit_kpi_required new row for relation "benefit" violates check constraint "benefit_kpi_required"
+PASS  B05 a revenue benefit cannot be classed as a cash saving (REQ-S08-009)  -- 23514 benefit_type_fits_class new row for relation "benefit" violates check constraint "benefit_type_fits_class"
+PASS  B06 a CX benefit with a SAR value and no valuation method is refused (REQ-S08-010)  -- 23514 benefit_non_financial_unmonetised new row for relation "benefit" violates check constraint "benefit_non_financial_unmonetised"
+PASS  B07 ... and with a method that Finance has not approved  -- 23514 benefit_valuation_method_approved benefit: the valuation method must be approved by Finance and in the benefit's currency
+PASS  B08 a CX benefit with a SAR value and an approved valuation method is accepted  -- 01990000-0000-7000-8000-000000000084
+PASS  B09 non-stepping version (benefit)  -- 23514 benefit_version_step benefit: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  B10 a new benefit starts at Identify  -- 23514 benefit_lifecycle_step benefit: a new benefit starts at the Identify step
+PASS  B11 Identify -> Enable skips a step and is refused  -- 23514 benefit_lifecycle_step benefit: identify -> enable is not an allowed lifecycle step
+PASS  B12 Plan -> Enable without the Plan outputs (baseline, formula, target) is refused (REQ-PB-074)  -- 23514 benefit_plan_outputs_present new row for relation "benefit" violates check constraint "benefit_plan_outputs_present"
+PASS  B13 Enable -> Measure without an enabler link (the Enable output) is refused  -- 23514 benefit_enablers_required benefit: the Measure step needs the Enable output (at least one enabler link)
+PASS  B14 Enable -> Measure with an enabler; the trigger writes one history row per step  -- [{"from_step":null,"to_step":"identify"},{"from_step":"identify","to_step":"plan"},{"from_step":"plan","to_step":"enable"},{"from_step":"enable","to_step":"measure"}]
+PASS  B15 Measure -> Sustain without a BAU owner and control cadence is refused  -- 23514 benefit_sustain_outputs_present new row for relation "benefit" violates check constraint "benefit_sustain_outputs_present"
+PASS  B16 Measure -> Correct without a recovery plan is refused  -- 23514 benefit_correct_output_present new row for relation "benefit" violates check constraint "benefit_correct_output_present"
+PASS  B17 UPDATE on benefit_lifecycle_event is refused (append-only)  -- 42501 benefit_lifecycle_event is append-only: UPDATE is not allowed
+PASS  B18 two benefits with the same code are refused  -- 23505 benefit_code_key duplicate key value violates unique constraint "benefit_code_key"
+PASS  B19 the Finance validator cannot be the owner  -- 23514 benefit_validator_not_owner new row for relation "benefit" violates check constraint "benefit_validator_not_owner"
+PASS  B20 the baseline validator cannot be the owner  -- 23514 benefit_baseline_validator_not_owner new row for relation "benefit" violates check constraint "benefit_baseline_validator_not_owner"
+PASS  B21 a validated baseline cannot change without resetting its validation  -- 23514 benefit_baseline_validated_frozen benefit: a validated baseline cannot change; reset it to unvalidated with the change
+PASS  B22 a missing benefit update audit fails at COMMIT  -- 23000 benefit_audit_required no audit_event for benefit 01990000-0000-7000-8000-000000000078 at version 6 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  VM01 the proposer cannot approve their own valuation method  -- 23514 benefit_valuation_method_decider_not_proposer new row for relation "benefit_valuation_method" violates check constraint "benefit_valuation_method_decider_not_proposer"
+PASS  VM02 a proposed method's content is fixed  -- 23514 benefit_valuation_method_frozen benefit_valuation_method 01990000-0000-7000-8000-00000000007e: a method is fixed once proposed; propose a new one
+PASS  VM03 a decision without its audit event fails at COMMIT  -- 23000 benefit_valuation_method_audit_required no audit_event for benefit_valuation_method 01990000-0000-7000-8000-00000000007e at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  A01 allocations 60 % + 50 % are refused (above 100 %)  -- 23514 benefit_allocation_total benefit_allocation: the allocations of a benefit total 1.100000 (above 100 %)
+PASS  A02 allocations 60 % + 30 % save and leave 10 % unallocated  -- unallocated 0.100000
+PASS  A03 a row for a set that is not the current one is refused  -- 23514 benefit_allocation_current_set benefit_allocation: rows are added only to the active benefit's current set (1)
+PASS  A04 UPDATE on benefit_allocation is refused (append-only)  -- 42501 benefit_allocation is append-only: UPDATE is not allowed
+PASS  A05 a zero share is refused  -- 23514 benefit_allocation_share_check new row for relation "benefit_allocation" violates check constraint "benefit_allocation_share_check"
+PASS  A06 the allocation set number steps by one  -- 23514 benefit_allocation_set_step benefit: the allocation set number steps by one
+PASS  A07 concurrent 60 % + 60 % on one set: the second waits on lock 730232 and is refused  -- benefit_allocation_total benefit_allocation: the allocations of a benefit total 1.200000 (above 100 %)
+PASS  GR01 the counted benefit of a group must be a member  -- 23514 benefit_group_counted_member benefit_group: the counted benefit must be a member of the group
+PASS  GR02 the counted member cannot leave its group  -- 23514 benefit_group_counted_member benefit: the counted member cannot leave its shared-benefit group; name another counted member first
+PASS  PC01 parent/child is one level deep  -- 23514 benefit_parent_depth benefit: parent/child benefits are one level deep
+PASS  PC02 a parent benefit carries no values of its own  -- 23514 benefit_plan_value_leaf_only benefit_plan_value: a parent benefit is a roll-up of its children and carries no values of its own
+PASS  PC03 a child uses its parent's currency  -- 23514 benefit_parent_currency benefit: a child benefit uses its parent's currency
+PASS  P01 a CX plan value in SAR without an approved method is refused (REQ-S08-010)  -- 23514 benefit_plan_value_unmonetised benefit_plan_value: a non-financial benefit has no SAR value without an approved valuation method
+PASS  P02 a plan value in another currency than the benefit's is refused  -- 23514 benefit_plan_value_currency benefit_plan_value: the value is in USD, but the benefit is in SAR; values are never converted
+PASS  P03 a plan value without its audit event fails at COMMIT  -- 23000 benefit_plan_value_audit_required no audit_event for benefit_plan_value 01990000-0000-7000-8000-0000000000b1 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  D01 decimal: planned 0.1 + 0.2 SAR = exactly 0.3000 (REQ-S16-025)  -- 0.3000
+PASS  D02 decimal: 100000 x 0.02 x 50 SAR = exactly 100000.00 in numeric  -- 100000.00
+PASS  SC01 one active scenario per kind and transformation  -- 23505 benefit_scenario_one_kind_key duplicate key value violates unique constraint "benefit_scenario_one_kind_key"
+PASS  SC02 a scenario value in another currency is refused  -- 23514 benefit_scenario_value_currency benefit_scenario_value: the value is in USD, but the benefit is in SAR; values are never converted
+PASS  SC03 an upside scenario value is stored apart and appears in no value line (REQ-S08-018)  -- 0 lines with the scenario amount
+PASS  M01 a measurement of a benefit before Measure is refused (an enabler is not realized value)  -- 23514 benefit_measurement_step benefit_measurement: the benefit is at the identify step; measurements start at Measure
+PASS  M02 the measurement number steps by one  -- 23514 benefit_measurement_no_step benefit_measurement: the next measurement number of this benefit is 1
+PASS  M03 a submitted measurement needs its measurement period  -- 23514 benefit_measurement_period_required new row for relation "benefit_measurement" violates check constraint "benefit_measurement_period_required"
+PASS  M04 a measurement without its audit event fails at COMMIT  -- 23000 benefit_measurement_audit_required no audit_event for benefit_measurement 01990000-0000-7000-8000-0000000000c3 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  M05 a measurement in another currency is refused  -- 23514 benefit_measurement_currency benefit_measurement: the value is in USD, but the benefit is in SAR; values are never converted
+PASS  M06 submitting a measurement + one queue item leaves the validated total unchanged (REQ-S08-016)  -- validated 0; submitted (pending) 250000.0000
+PASS  M07 a second live measurement of the same benefit and period is refused (counted once)  -- 23505 benefit_measurement_period_key duplicate key value violates unique constraint "benefit_measurement_period_key"
+PASS  FV01 a replayed submission cannot create a second queue item (REQ-S12-014)  -- 23505 finance_validation_one_per_measurement duplicate key value violates unique constraint "finance_validation_one_per_measurement"
+PASS  FV02 the same idempotency key is refused  -- 23505 finance_validation_idempotency_key duplicate key value violates unique constraint "finance_validation_idempotency_key"
+PASS  FV03 a validation without a measurement period is refused (REQ-S08-015)  -- 23514 finance_validation_period_required finance_validation: the measurement period is the measurement's own
+PASS  FV04 a validation snapshot lacking one of the six items is refused  -- 23514 finance_validation_content_complete new row for relation "finance_validation" violates check constraint "finance_validation_content_complete"
+PASS  FV05 approving with an item not accepted is refused  -- 23514 finance_validation_all_items_accepted new row for relation "finance_validation" violates check constraint "finance_validation_all_items_accepted"
+PASS  FV06 rejecting without a note is refused  -- 23514 finance_validation_rejection_reason new row for relation "finance_validation" violates check constraint "finance_validation_rejection_reason"
+PASS  FV07 the submitter cannot validate their own submission  -- 23514 finance_validation_sod finance_validation 01990000-0000-7000-8000-0000000000c7: the submitter cannot validate their own submission
+PASS  FV08 an approved financial value states its approved amount  -- 23514 finance_validation_amount_shape finance_validation 01990000-0000-7000-8000-0000000000c7: an approved financial value states its approved amount; a non-financial one has none
+PASS  FV09 a decision without its audit event fails at COMMIT  -- 23000 finance_validation_audit_required no audit_event for finance_validation 01990000-0000-7000-8000-0000000000c7 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  M08 a measurement marked validated without the Finance decision fails at COMMIT  -- 23000 benefit_measurement_decision_present benefit_measurement 01990000-0000-7000-8000-0000000000c5: validated without the matching Finance validation decision
+PASS  M09 a submitted measurement's value is frozen  -- 23514 benefit_measurement_submitted_frozen benefit_measurement 01990000-0000-7000-8000-0000000000c5: a submitted measurement is frozen until Finance decides it
+PASS  M10 a non-stepping version (benefit_measurement)  -- 23514 benefit_measurement_version_step benefit_measurement: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  M11 validating against an unvalidated comparison basis (formula version) is refused: provisional (REQ-S08-008)  -- 23514 benefit_measurement_basis_validated benefit_measurement 01990000-0000-7000-8000-0000000000de: the comparison basis is not Finance-validated; the value is provisional
+PASS  M12 validating while the benefit's baseline is unvalidated is refused: provisional (REQ-S08-008)  -- 23514 benefit_measurement_basis_validated benefit_measurement 01990000-0000-7000-8000-0000000000ea: the comparison basis is not Finance-validated; the value is provisional
+PASS  M13 Finance approval with all six items accepted raises the validated total by exactly the approved amount  -- 0 -> 240000.5000
+PASS  M14 an in-place edit of a validated value is refused (REQ-S08-017; API 409)  -- 23514 benefit_measurement_validated_immutable benefit_measurement 01990000-0000-7000-8000-0000000000c5: a validated value is never edited in place; record an amendment or a reversal
+PASS  FV10 a decided validation is final  -- 23514 finance_validation_status_step finance_validation 01990000-0000-7000-8000-0000000000c7: approved is final
+PASS  M15 a reversal that does not net the original to zero is refused  -- 23514 benefit_measurement_reversal_amount benefit_measurement: a reversal nets the original to zero (amount -240000.5000)
+PASS  M16 a correction without its Finance correction record fails at COMMIT  -- 23000 benefit_measurement_decision_present benefit_measurement 01990000-0000-7000-8000-0000000000f2: a amendment needs its Finance correction record
+PASS  M17 an amendment (-500.5) then a reversal net the validated total to 0; all three rows stay visible  -- after amendment 239500.0000; after reversal 0.0000; validated rows 3
+PASS  M18 a second reversal of the same original is refused  -- 23514 benefit_measurement_already_reversed benefit_measurement: the original measurement is already reversed
+PASS  M19 a rejected measurement is retained and shown as rejected (REQ-S08-001)  -- [{"value_state":"rejected","amount":"250000.0000"}]
+PASS  M20 an Unknown value (missing reason) is never validated  -- 23514 benefit_measurement_missing_shape new row for relation "benefit_measurement" violates check constraint "benefit_measurement_missing_shape"
+PASS  M21 a forecast never reaches the validated total; changing the class of a benefit with values is refused  -- 23514 benefit_measure_locked benefit 01990000-0000-7000-8000-000000000078: it has values, so its type, class and currency are fixed
+PASS  K01 a recalculated value enters 'submitted' (pending) with no submitter; the validated total is unchanged (REQ-S07-014)  -- pending 250000.0000; validated 0
+PASS  K02 a second pending value for the same benefit and run is refused (one flag per benefit and run)  -- 23505 benefit_measurement_run_key duplicate key value violates unique constraint "benefit_measurement_run_key"
+PASS  I01 a lineage input from another period than the measurement is refused (same period, REQ-S08-008)  -- 23514 benefit_measurement_input_same_period benefit_measurement_input: every input is for the same period as the measurement
+PASS  I02 a same-period input names the KPI actual value version (lineage, REQ-S08-006)  -- input recorded
+PASS  I03 UPDATE on benefit_measurement_input is refused (append-only)  -- 42501 benefit_measurement_input is append-only: UPDATE is not allowed
+PASS  E01 evidence cannot be linked to a validated measurement  -- 23514 benefit_evidence_measurement_open benefit_evidence: evidence is linked to a draft or submitted measurement of the same benefit
+PASS  E02 DELETE on benefit_evidence is refused (append-only)  -- 42501 benefit_evidence is append-only: DELETE is not allowed
+PASS  EN01 an enabler deliverable must belong to the enabling initiative  -- 23514 benefit_enabler_deliverable_initiative benefit_enabler: the deliverable must belong to the enabling initiative
+PASS  O01 the pair is stored in id order  -- 23514 benefit_overlap_pair_order new row for relation "benefit_overlap" violates check constraint "benefit_overlap_pair_order"
+PASS  O02 while the warning is open both benefits are flagged overlap_open (excluded from validated totals)  -- flagged 2
+PASS  O03 a second open warning for the same pair is refused  -- 23505 benefit_overlap_one_open_key duplicate key value violates unique constraint "benefit_overlap_one_open_key"
+PASS  O04 the owner of an overlapping benefit cannot resolve it  -- 23514 benefit_overlap_resolver_not_owner benefit_overlap 01990000-0000-7000-8000-000000000133: the owner of an overlapping benefit cannot resolve the overlap
+PASS  O05 a 'duplicate' resolution names the excluded benefit  -- 23514 benefit_overlap_resolution_complete new row for relation "benefit_overlap" violates check constraint "benefit_overlap_resolution_complete"
+PASS  O06 Finance resolves 'duplicate': the excluded benefit is no longer counted  -- {"counted":false,"exclusion_reason":"overlap_duplicate","overlap_open":false}
+PASS  O07 a resolved warning is final  -- 23514 benefit_overlap_status_step benefit_overlap 01990000-0000-7000-8000-000000000133: only an open warning is resolved, once
+PASS  T01 a 10 000 000 SAR benefit allocated to two initiatives is one line: the total is 10000000.0000, not 20 M  -- 10000000.0000
+PASS  T02 a parent is a roll-up (not counted), its child is counted; only the group's counted member is counted  -- {"01990000-0000-7000-8000-0000000000a3":"group_member_not_counted","01990000-0000-7000-8000-0000000000a1":"counted","01990000-0000-7000-8000-0000000000a8":"counted","01990000-0000-7000-8000-0000000000a6":"parent_rollup"}
+PASS  T03 a CX benefit's value line has Value n/a (amount NULL) and its KPI value; NULL is not summed as 0  -- [{"amount":null,"kpi_value":"45.000000"}]
+PASS  L01 a benefit with values cannot become a parent  -- 23514 benefit_parent_has_values benefit: the parent benefit already has values of its own; a parent is a roll-up of its children
+PROBE RESULT: PASS (all guards fired as specified)
+probe exit=0

@@ -21,6 +21,7 @@ const MIGRATION_CONSTANTS: ReadonlyMap<string, number> = new Map([
   ["kpi_formula_graph_lock_class", ADVISORY_LOCK_CLASSES.kpiFormulaGraph],
   ["kpi_actual_slot_lock_class", ADVISORY_LOCK_CLASSES.kpiActualSlot],
   ["reporting_period_lock_class", ADVISORY_LOCK_CLASSES.reportingPeriod],
+  ["benefit_allocation_lock_class", ADVISORY_LOCK_CLASSES.benefitAllocationSet],
 ]);
 
 function walk(dir: string): string[] {
@@ -31,7 +32,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the eleven classes, each a distinct int4 (730227 and 730231 stay reserved for their P4 blocks)", () => {
+  it("lists the fourteen classes, each a distinct int4 (730227, 730231 and 730235 stay reserved for their P4 blocks)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -44,6 +45,9 @@ describe("advisory-lock class registry", () => {
       kpiFormulaGraph: 730228,
       kpiActualSlot: 730229,
       reportingPeriod: 730230,
+      benefitAllocationSet: 730232,
+      financeValidationQueue: 730233,
+      benefitOverlap: 730234,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);

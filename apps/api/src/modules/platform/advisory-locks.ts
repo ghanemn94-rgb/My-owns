@@ -40,6 +40,14 @@ export const ADVISORY_LOCK_CLASSES = {
   kpiActualSlot: 730229,
   /** Reporting periods of one organization and frequency (kpi reporting periods + trigger 0033). Key: "<organizationId>:<frequency>". */
   reportingPeriod: 730230,
+  // P4 block of T-DG4-ARCH-03 (730232-730235; p4-plan §4, ADR-0029 §10). 730235 is RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it.
+  /** Allocation set of one benefit (benefits allocations + trigger 0037 benefit_allocation_guard). Key: benefit id. */
+  benefitAllocationSet: 730232,
+  /** Finance validation queue item of one benefit measurement (benefits submit, the worker's queue handler; API only). Key: measurement id. */
+  financeValidationQueue: 730233,
+  /** Overlap detection and resolution of one transformation and driver (benefits overlaps; API only). Key: "<transformationId>:<driverKey>". */
+  benefitOverlap: 730234,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

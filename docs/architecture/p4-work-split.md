@@ -1,6 +1,6 @@
 # P4 work split: shared rules, file ownership, contracts and integration order
 
-- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01 and section §A by T-DG4-ARCH-02 (solution-architect), 2026-10-09.
+- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02 and section §B by T-DG4-ARCH-03 (solution-architect), 2026-10-09.
 - **Stage:** P4 "Execution value and sustainment" (DG4).
 - **Rule:** two tasks never edit the same file (REQ-DLV-008). Anything not listed under an owner is **frozen**; changes go through the orchestrator (p4-plan §5.3).
 - **Off-limits to every implementer** (the write guard enforces it): `tools/gates/**`, `tools/agents/**`, `.claude/**`, `docs/source/**`, `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/stages.json`, `docs/delivery/findings.json`, `docs/delivery/candidates/**`, `docs/delivery/runs/**`, `docs/delivery/test-evidence/**`, `CLAUDE.md`, `trading_agent/**`.
@@ -237,3 +237,113 @@ Written by T-DG4-ARCH-02 (solution-architect), 2026-10-09. Binding design: ADR-0
 10. **The override changes the display only.** `calculatedRag` is always returned; `displayedRag` is the override while `status = 'active'` and `now() < expiresAt`.
 11. **Percentages are fractions** (0.12 = 12 %). The pp/% labels come from KBE-A's `change.ts`.
 12. **The formula engine is unchanged** (S-9). KPI formulas bind variables through `formula-binding.ts`; cycle detection is the graph walk, not the engine.
+
+## §B. Slice B (benefits engine and Finance validation) — T-DG4-ARCH-03
+
+Written by T-DG4-ARCH-03 (solution-architect), 2026-10-09. Binding design: ADR-0029 (register, lifecycle, enablers, allocations, groups, overlaps, scenarios, valuation methods) and ADR-0030 (values, measurements, the Finance queue and decision, corrections, value states, totals). Shared rules S-1…S-14 (§1) apply to every task below.
+
+### B.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0029-p4-benefit-register-lifecycle-allocations.md`, `ADR-0030-p4-benefit-values-finance-validation-totals.md` | Binding design, with the refusal codes and English texts (ADR-0029 §11, ADR-0030 §11) |
+| Migrations | `packages/db/migrations/0037_p4_benefit_register.sql`, `0038_p4_benefit_measurement_validation.sql`, `0039_p4_benefit_value_views.sql`, `0040_p4_benefit_permissions.sql` | Applied on a fresh PostgreSQL 16.13 and over a P3-populated database; every guard probed (`docs/delivery/handbacks/DG4/T-DG4-ARCH-03-evidence/probe-output.txt`). **Frozen.** |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (15 tables, 2 views), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts` | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P4_BENEFIT_PERMISSIONS`, `P4_BENEFIT_ROLE_PERMISSIONS`; 6 codes; Finance decisions reuse `finance.validate`) | Equals `0040` |
+| Lock classes | `apps/api/src/modules/platform/advisory-locks.ts` (`benefitAllocationSet` 730232, `financeValidationQueue` 730233, `benefitOverlap` 730234; 730235 reserved), ADR-0016 §6 | Registry test green |
+| Contract | `docs/api/openapi.yaml` 1.3.0-p4: 45 operations (tags `benefits`, `benefit-allocations`, `benefit-groups`, `benefit-overlaps`, `benefit-scenarios`, `benefit-valuation-methods`, `benefit-measurements`, `finance-validations`, `benefit-totals`); one response `BenefitValueConflict`; 6 `PermissionCode` values appended | `pnpm openapi:lint` PASS (405 operations); P1–P3 and slice I/C/A lines unchanged (diff check: 0 lines removed) |
+| Contract-test seams | `apps/api/test/support/p4-pending-arch-03.ts` (slice aggregate; frozen), `p4-pending-kbe-d.ts` (16), `p4-pending-kbe-d2.ts` (13), `p4-pending-kbe-e.ts` (16); `p4-pending.ts` imports the slice; `p4-operations.ts` lists the 45 | §S-10 |
+| ERD §1f, data dictionary "P4 tables, slice B", permissions matrix §12 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+### B.1 KBE-D — register, lifecycle, enablers, allocations, groups (kpi-benefits-engineer; wave W4)
+
+**Owns** (paths under `apps/api/src/modules/`): `benefits/register.ts` (`listBenefits` incl. the T14 row read model of ADR-0029 §4, `createBenefit` with the `B`-code allocation from `record_code_counter`, `getBenefit`, `updateBenefit` incl. the validated-baseline reset, `archiveBenefit`; an exported hook list `onBenefitKeysChanged` that KBE-D2 registers into), `benefits/lifecycle.ts` (`getBenefitLifecycle`, `advanceBenefitLifecycle`; `listBenefitEnablers`, `createBenefitEnabler`, `removeBenefitEnabler`; `realizationState` per ADR-0029 §2–§4), `benefits/allocations.ts` (`getBenefitAllocations`, `replaceBenefitAllocations` under lock 730232 with the set-number step), `benefits/groups.ts` (4 operations), `benefits/counting.ts` (the typed reader of the `benefit_counting` view, shared with KBE-E); the slice B register block of `platform/db-errors.ts` (the ADR-0029 §11 mappings, appended after BE-A's P4 block and slice A's blocks merge); the registration lines in `benefits/routes.ts` and `benefits/index.ts` (**first**); `packages/shared/src/schemas/benefits.ts` (zod mirrors of the KBE-D request bodies and the `BenefitCreate` single-owner rule) and its `schemas/index.ts` line; `test/support/p4-pending-kbe-d.ts`; `test/integration/contract/p4-exercises-kbe-d.ts`; `test/integration/benefits/{register,lifecycle,allocations,groups}.test.ts`, each with its AUD-403 and ADM-only-403 cases.
+
+**Consumes:** ADR-0029 §1–§6, §9, §11, §12; `0037`, `0038` (`benefit_value_lock_guard`), `0039` (`benefit_counting`), `0040`; BE-A's module stubs and `createWorkItemOnce`; the 16 operations in `p4-pending-kbe-d.ts`.
+
+**Requirement rows:** REQ-PB-058 (with KBE-E for the total), REQ-PB-074, REQ-PB-075 (with KBE-E for Realized), REQ-PB-076 (register half), REQ-S08-002, REQ-S08-003, REQ-S08-009 (classes), REQ-S08-013.
+
+### B.2 KBE-D2 — overlaps, scenarios, valuation methods (kpi-benefits-engineer; wave W5, after KBE-D)
+
+**Recommended split for the orchestrator to decide.** p4-plan §5.1 gives slice B two tasks (KBE-D, KBE-E). With 45 operations, KBE-D alone would hold 29; this section separates 13 of them so each task stays near 60–75 minutes. If the orchestrator does not schedule KBE-D2, KBE-D owns everything listed here (and `p4-pending-kbe-d2.ts`) as its second half (the D-059/D-070 salvage rule).
+
+**Owns:** `benefits/overlaps.ts` (`listBenefitOverlaps`, `createBenefitOverlap`, `getBenefitOverlap`, `resolveBenefitOverlap`; the overlap rule `detectBenefitOverlaps(tx, benefit)` under lock 730234, registered into KBE-D's `onBenefitKeysChanged`; the `benefit_overlap_review` work item through `createWorkItemOnce`, key `benefit.overlap:<overlapId>`), `benefits/scenarios.ts` (6 operations), `benefits/valuation-methods.ts` (3 operations); the overlap, scenario and valuation-method lines of the slice B block in `platform/db-errors.ts` (after KBE-D); the registration lines in `benefits/routes.ts` and `benefits/index.ts` (**after** KBE-D); `packages/shared/src/schemas/benefit-scenarios.ts` and its `schemas/index.ts` line; `test/support/p4-pending-kbe-d2.ts`; `test/integration/contract/p4-exercises-kbe-d2.ts`; `test/integration/benefits/{overlaps,scenarios,valuation-methods}.test.ts`, each with AUD-403, ADM-only-403 and, for the Finance endpoints, BO-403.
+
+**Consumes:** ADR-0029 §7, §8, §10, §11; `0037`, `0038` (`benefit_overlap`), `0039`; KBE-D's register service and hook; the 13 operations in `p4-pending-kbe-d2.ts`.
+
+**Requirement rows:** REQ-S08-010, REQ-S08-014 (warning and resolution; KBE-E excludes from totals), REQ-S08-018.
+
+### B.3 KBE-E — values, measurements, Finance queue and decisions, corrections, totals, worker (kpi-benefits-engineer; wave W6)
+
+**Owns:** `benefits/values.ts` (`getBenefitValues`, `createBenefitPlanValue`, `updateBenefitPlanValue`; the T14 Realized fields consumed by KBE-D's register read model through an exported `realizedFor(tx, benefitIds)`), `benefits/measurements.ts` (`listBenefitMeasurements`, `createBenefitMeasurement` incl. the formula evaluation on the DG3 engine and the lineage rows, `getBenefitMeasurement`, `updateBenefitMeasurement` incl. the 409 `benefit_measurement.validated_immutable`, `submitBenefitMeasurement` with the `benefit.evidence_submitted` outbox event under lock 730233), `benefits/finance-validation.ts` (`listFinanceValidationQueue`, `getFinanceValidation`, `decideFinanceValidation`, `decideBenefitBaseline`), `benefits/corrections.ts` (`amendFinanceValidation`, `reverseFinanceValidation`), `benefits/totals.ts` (`getBenefitTotals`, `getPortfolioBenefitTotals`; decimal.js only), `benefits/downstream.ts` (the slice A `DownstreamImpactProvider`, ADR-0030 §6), `apps/worker/src/handlers/benefits.ts` (consumers `benefits.finance_queue` for `benefit.evidence_submitted` and `benefits.recalculate_pending` for `kpi.values_recalculated`; the `benefit.variance_evaluated` event) and `apps/worker/src/queues/benefits.ts`; the measurement and Finance lines of the slice B block in `platform/db-errors.ts` (after KBE-D2); the registration lines in `benefits/routes.ts` and `benefits/index.ts` (**after** KBE-D2); `packages/shared/src/schemas/benefit-values.ts` (incl. the Finance content snapshot schema with the six keys) and its `schemas/index.ts` line; `test/support/p4-pending-kbe-e.ts`; `test/integration/contract/p4-exercises-kbe-e.ts`; `test/integration/benefits/{values,measurements,finance-validation,corrections,totals,entity-group}.test.ts` (the REQ-S16-017 entity-group test, ADR-0030 §12); `apps/worker/test/integration/benefits-queue.test.ts` (replay and restart: still one queue item; one pending value per benefit and run).
+
+**Consumes:** ADR-0030 in full; ADR-0029 §6 (counting) and §8 (baseline); `0038`–`0040`; KBE-C's `kpi.values_recalculated` and `DownstreamImpactProvider` interface; KBE-D's register and `benefits/counting.ts`; BE-A's `runOnce`, `createWorkItemOnce`; `@mth/shared/calc` (`validateFormula`, `evaluateFormula`, `FORMULA_DECIMAL`; unchanged, S-9); the 16 operations in `p4-pending-kbe-e.ts`.
+
+**Requirement rows:** REQ-PB-013, REQ-S07-014, REQ-S08-001, REQ-S08-004 (reuse; no new evaluator), REQ-S08-006, REQ-S08-008, REQ-S08-009 (totals), REQ-S08-011, REQ-S08-015, REQ-S08-016, REQ-S08-017, REQ-S12-014, REQ-S16-017, REQ-S16-025.
+
+**Size note:** 16 operations plus two worker consumers. If KBE-E reaches its time bound, `benefits/totals.ts` and `benefits/corrections.ts` (4 operations) are the separable second half.
+
+### B.4 Migrations of slice B
+
+- `0037`–`0040`: architect, all four numbers used, **frozen**. No number of the range is left free, so ARCH-04's `0041` can merge directly after them (S-12 contiguity).
+- KBE-D, KBE-D2 and KBE-E have no migration number. A schema need goes in their handback, and the orchestrator assigns a number from the repair range `0058`–`0069`.
+
+### B.5 Other slices that consume slice B
+
+- **FE-C** (frontend-ux-engineer, wave W7) owns `apps/web/src/pages/benefits/**` and `pages/finance-validation/**`: the T14 register (ten columns; Value (SAR) "n/a" and Unknown labelled, never 0; Realized with validated, sustained and pending apart; pending labelled), the benefit profile and lifecycle (the six steps with question and output, en and provisional ar; missing outputs listed), allocations (unallocated share), groups, overlaps, scenarios (each value labelled with its kind), valuation methods, measurements with lineage, the Finance queue with the six items and corrections, and totals by class and state with gross, cost and net. "Finance validation" and "business approval" labels, never DG0–DG7 (S-7). Keys go to FE-A's `i18n/{en,ar}/{nav,problems}.json` blocks for every ADR-0029 §11 and ADR-0030 §11 code.
+- **BE-D** (slice E) consumes `benefit.variance_evaluated` (corrective-action case, REQ-PB-085).
+- **BE-J** (slice G) reads validated value per benefit (`benefit_value_line`, `benefit_counting`) for the closure guard and the transition decision (REQ-S03-003, REQ-S11-006/-007).
+- **BE-K** (slice H) reads benefits and validated values for the G6 benefits evidence through a `GateFactsProvider` member.
+- **BE-L** (slice H) treats a change to an approved benefit's baseline, target or formula as a material change (REQ-S04-014).
+- **KBE-G** (slice J) reads the totals service for the T10 Benefits area and the Finance dashboard (REQ-S13-001/-003: drill-down to measurement, validation and lineage).
+- **QA-A** (slice L) writes A10 from the acceptance texts and these ADRs.
+
+### B.6 Integration order
+
+1. **ARCH-03** (this task) merges after ARCH-02, so `0037`–`0040` are contiguous.
+2. **KBE-D** (W4): register, lifecycle, enablers, allocations, groups; its `benefits/routes.ts` lines first.
+3. **KBE-D2** (W5, or KBE-D's second half): overlaps, scenarios, valuation methods.
+4. **KBE-E** (W6, after KBE-C and KBE-D2): values, measurements, Finance queue and decisions, corrections, totals, worker consumers.
+5. **FE-C** (W7), then the consumers in B.5, then **QA-A** (A10).
+
+### B.7 Requirement → owner (the 24 rows of slice B)
+
+| Requirement | Owner task(s) | Where it is proven |
+|---|---|---|
+| REQ-PB-013 | KBE-E | BO → 403 on `decideFinanceValidation`; FIN succeeds; the audit event names the validator; probes S04, FV07 |
+| REQ-PB-058 | KBE-D, KBE-E | two owners → 400; no statement line/KPI → 422; Plan outputs before Enable/Measure; a 10 M SAR benefit shared by two initiatives appears once (probe T01; KBE-E totals test) |
+| REQ-PB-074 | KBE-D | no Measure without Plan outputs (probe B12) and enablers (B13); Sustain needs BAU owner and cadence (B15); history (B14) |
+| REQ-PB-075 | KBE-D, KBE-E | the ten T14 columns in `listBenefits`; a pending value labelled pending and excluded from validated totals (probe M06) |
+| REQ-PB-076 | KBE-D, KBE-E | a CX benefit with Value n/a is excluded from SAR totals and not counted as zero (probe T03; `nonFinancialCount`) |
+| REQ-S07-014 | KBE-E | after an accepted KPI actual the linked benefit shows a pending amount and the validated total is unchanged (probe K01; worker test) |
+| REQ-S08-001 | KBE-E | seven states kept apart (`benefit_value_line`); forecast never validated (M21); rejected kept (M19) |
+| REQ-S08-002 | KBE-D | completing the enabling deliverable gives `enabled_not_yet_measured` and 0 validated (count 0); no measurement before Measure (M01) |
+| REQ-S08-003 | KBE-D | the profile fields (ADR-0029 §1); no statement line / no KPI → 422 (probes B03, B04) |
+| REQ-S08-004 | KBE-E | the DG3 engine reused unchanged (S-9); a non-whitelisted call or JS payload → 422 at parse time on `createBenefitMeasurement` |
+| REQ-S08-006 | KBE-E | `getBenefitMeasurement` returns formula version, input actual versions, rates, assumptions, period (probes I02, I03) |
+| REQ-S08-008 | KBE-E | unvalidated basis → provisional, excluded, validation refused (probes M11, M12); same period (I01) |
+| REQ-S08-009 | KBE-D, KBE-E | type ↔ class (probe B05); separate total lines per class |
+| REQ-S08-010 | KBE-D2 (KBE-D for the benefit row) | SAR value on a CX benefit without an approved method → 422 (probes B06, B07, P01) |
+| REQ-S08-011 | KBE-E | a 1 M SAR initiative cost reduces transformation net by exactly 1 M SAR (totals test) |
+| REQ-S08-013 | KBE-D | 60 % + 50 % → 422; 60 % + 30 % → 10 % unallocated (probes A01, A02, A07) |
+| REQ-S08-014 | KBE-D2, KBE-E | same driver and period → warning; excluded until Finance resolves (probes O02, O06; totals `pendingOverlap`) |
+| REQ-S08-015 | KBE-E | a decision without the measurement-period item → 422; non-Finance → 403 (probes FV03, FV04) |
+| REQ-S08-016 | KBE-E | submit leaves the validated total unchanged; approval adds exactly the approved amount (probes M06, M13) |
+| REQ-S08-017 | KBE-E | in-place edit of a validated value → 409; a reversal nets the total and both records remain visible (probes M14, M17) |
+| REQ-S08-018 | KBE-D2 | upside values never in realized or validated totals (probe SC03) |
+| REQ-S12-014 | KBE-E | one queue item per submission; replay creates none (probes FV01, FV02; worker test) |
+| REQ-S16-017 | KBE-E (with KBE-D, KBE-D2) | the entity-group API test (ADR-0030 §12); ERD §1f and migrations `0037`–`0039` |
+| REQ-S16-025 | KBE-E | 0.1 + 0.2 = 0.30 and 100000 × 0.02 × 50 = 100000.00 in `totals.ts` unit tests (probes D01, D02) |
+
+### B.8 What the implementers of slice B must know
+
+1. **One canonical row per benefit.** Totals sum benefits (`benefit_counting.counted`), never allocations, group members or children's copies. A parent carries no values of its own.
+2. **Plan outputs gate the lifecycle.** Baseline, formula (financial) and target are required from Enable on; measurements only from Measure on. Return the exact ADR-0029 §11 codes before the database refuses.
+3. **Pending is never validated.** A submitted value changes only the `submitted` and `measured` series. Only a Finance decision (all six items accepted) validates it, in one transaction with both rows and two audit events.
+4. **Validated is immutable.** `updateBenefitMeasurement` on a validated row answers 409 `benefit_measurement.validated_immutable`; corrections are `amendFinanceValidation` / `reverseFinanceValidation` (signed rows linked to the original).
+5. **Exactly one queue item.** The submit transaction writes the outbox event; the handler inserts the item with `runOnce` and the idempotency key; a unique violation means "already done".
+6. **Basis first.** Validation needs the benefit's baseline validated by Finance (and the formula version, when used); until then the value is labelled `provisional`.
+7. **Currencies are never converted**; non-financial amounts need an approved valuation method; Value (SAR) n/a and Unknown are never 0.
+8. **Decimal only.** Money numeric(20,4), shares numeric(7,6) as fractions (0.6 = 60 %); decimal.js in code; rounding only at presentation.
+9. **Finance endpoints are FIN-only.** BO, AUD and ADM-only callers get 403; test each.
+10. **The formula engine is unchanged** (S-9). Bind the KPI variable through `measurement_kpi_variable`; the other variables come from the formula version.

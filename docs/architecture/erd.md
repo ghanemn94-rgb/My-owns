@@ -1207,6 +1207,75 @@ erDiagram
 | RAG threshold version (S07-007) | `kpi_rag_threshold` | `id` | `created_by` | `kpi_threshold.configure` (TL, KDS) | `status` | yes | kpi |
 | RAG override (S07-009) | `rag_override` | `id` | `created_by` | `rag.override` (TL, BO) | `status` (+ `expires_at`) | yes | kpi |
 
+## 1f. P4 physical model, slice B (migrations 0037–0040, DG4)
+
+Written by T-DG4-ARCH-03 (ADR-0029, ADR-0030). Columns, constraints and triggers: `data-dictionary.md` "P4 tables, slice B" (generated from the migrated catalogue). Every table except the seed table `benefit_lifecycle_step_definition` has `organization_id` and `transformation_id`, and its foreign keys to other transformation-scoped rows are composite `(transformation_id, id)` (except `benefit.business_case_line_id`, `benefit_measurement.benefit_calculation_id` and `benefit_measurement_input.(kpi_actual_id, kpi_value_no)`, whose targets have no such key; trigger `benefit_guard` checks the business-case line's transformation, and the input's KPI actual is checked by `benefit_measurement_input_guard`). No DELETE grant on any of them.
+
+### 1f.1 Register, lifecycle, enablers, allocations, groups, scenarios, valuation methods — `benefits` module
+
+```mermaid
+erDiagram
+    transformation ||--o{ benefit : "canonical T14 register (code B01…)"
+    benefit }o--|| app_user : "one owner"
+    benefit }o--o| kpi_definition : "agreed non-financial KPI / measurement KPI"
+    benefit }o--o| benefit_formula : "formula (T09, DG3)"
+    benefit }o--o| baseline : "baseline record (DG2)"
+    benefit |o--o| business_case_line : "backs at most one benefit line (DG3)"
+    benefit }o--o| benefit_valuation_method : "approved method (non-financial SAR value)"
+    benefit |o--o{ benefit : "parent of (one level; parent carries no values)"
+    benefit_group |o--o{ benefit : "members"
+    benefit_group |o--o| benefit : "counted member (exactly one counted)"
+    benefit ||--o{ benefit_lifecycle_event : "step history (append-only, by trigger)"
+    benefit_lifecycle_step_definition ||--o{ benefit_lifecycle_event : "B0121 steps (seed)"
+    benefit ||--o{ benefit_enabler : "Enable output"
+    benefit_enabler }o--|| initiative : "enabling initiative"
+    benefit_enabler }o--o| deliverable : "enabling deliverable"
+    benefit_enabler }o--o| capability : "enabling capability"
+    benefit ||--o{ benefit_allocation : "allocation sets (append-only; set in force = allocation_set_no; sum <= 1)"
+    benefit_allocation }o--|| initiative : "share to"
+    transformation ||--o{ benefit_scenario : "base / upside / downside (one active each)"
+    benefit_scenario }o--o| business_case : "for"
+    benefit_scenario ||--o{ benefit_scenario_value : "scenario values (never actuals)"
+    benefit ||--o{ benefit_scenario_value : "valued in"
+```
+
+### 1f.2 Values, measurements, Finance validation, overlaps — `benefits` module and worker
+
+```mermaid
+erDiagram
+    benefit ||--o{ benefit_plan_value : "planned / forecast per period"
+    benefit ||--o{ benefit_measurement : "measurements (one live per period)"
+    benefit_measurement |o--o{ benefit_measurement : "amendment / reversal of (linked, validated)"
+    benefit_measurement }o--o| benefit_formula_version : "computed with (DG3)"
+    benefit_measurement }o--o| benefit_calculation : "lineage row (DG3)"
+    benefit_measurement }o--o| calculation_run : "pending value from KPI run (one per benefit and run)"
+    benefit_measurement ||--o{ benefit_measurement_input : "inputs (append-only, same period)"
+    benefit_measurement_input }o--o| kpi_actual_value : "KPI actual value version"
+    benefit ||--o{ benefit_evidence : "T14 Evidence"
+    benefit_measurement |o--o{ benefit_evidence : "evidence of a measurement"
+    evidence ||--o{ benefit_evidence : "linked (DG2)"
+    benefit_measurement ||--o| finance_validation : "one queue item and decision (kind validation)"
+    finance_validation |o--o{ finance_validation : "amendment / reversal of"
+    benefit ||--o{ benefit_overlap : "overlap warning (as a or b; one open per pair)"
+```
+
+Read views (0039): `benefit_counting` (counted, exclusion reason, open overlap per benefit) and `benefit_value_line` (each stored value with exactly one state: planned, forecast, measured, submitted, validated, sustained, rejected).
+
+### 1f.3 P4 entity register (slice B): §16 entities → tables
+
+| Entity (§16 S16-017) | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **BusinessCase** | `business_case` (0023, DG3) | `id` | `benefit_owner_user_id`, `initiative_owner_user_id` | `business_case.edit` (DG3) | `status` | yes | kpi (DG3) |
+| **Scenario** | `benefit_scenario` (+ `benefit_scenario_value`) | `id` | `created_by` | `benefit_scenario.edit` (TL, FIN) | `status` | yes | benefits |
+| **Benefit** | `benefit` (+ `benefit_enabler`, `benefit_lifecycle_event`, `benefit_plan_value`) | `id` (`code` UK per transformation) | `owner_user_id` | `benefit.edit` (TL, BO); `benefit.advance` (BO); `finance.validate` (baseline) | `lifecycle_step`, `status` | yes | benefits |
+| **BenefitAllocation** | `benefit_allocation` | `id` (`benefit_id`, `set_no`, `initiative_id` UK) | the benefit's owner; `created_by` | `benefit.allocate` (TL, BO) | set in force = `benefit.allocation_set_no` | no (append-only; the benefit's version steps) | benefits |
+| **BenefitFormulaVersion** | `benefit_formula_version` (0023, DG3) | `id` (`formula_id`, `version_no` UK) | `created_by`; `validated_by` | `benefit_formula.edit` (DG3); Finance validation (DG3) | `validation_status` | yes | kpi (DG3) |
+| **BenefitMeasurement** | `benefit_measurement` (+ `benefit_measurement_input`, `benefit_evidence`) | `id` (`benefit_id`, `measurement_no` UK) | `submitted_by`; the benefit's owner | `benefit.measure` (BO, WL, KDS); worker; `finance.validate` (corrections) | `status` | yes | benefits / worker |
+| **FinanceValidation** | `finance_validation` | `id` (one per measurement; `idempotency_key` UK) | `assignee_user_id`; `decided_by` | worker `benefits.finance_queue` (insert); `finance.validate` (FIN) | `status` | yes | benefits / worker |
+| Shared-benefit group (M0173) | `benefit_group` | `id` (`code` UK) | `created_by` | `benefit_group.manage` (TL, BO) | `status` | yes | benefits |
+| Overlap warning (S08-014) | `benefit_overlap` | `id` (one open per pair) | `resolved_by` | overlap rule / `benefit.edit`; `finance.validate` (FIN) | `status` | yes | benefits |
+| Valuation method (S08-010) | `benefit_valuation_method` | `id` (`code` UK) | `created_by`; `decided_by` | `benefit.edit`; `finance.validate` (FIN) | `status` | yes | benefits |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1376,7 +1445,7 @@ erDiagram
 | Entity | Table | Stage |
 |---|---|---|
 | BusinessCase | `business_case` | P3/P4 |
-| Scenario | `business_case_scenario` | P4 |
+| Scenario | `benefit_scenario` (+ `benefit_scenario_value`; the P1 placeholder name `business_case_scenario` was replaced by the physical model, §1f) | P4 |
 | Benefit | `benefit`: **the one benefit register** (T14) | P4 |
 | BenefitAllocation | `benefit_allocation` (shares sum to ≤ 100%, no double counting) | P4 |
 | BenefitFormulaVersion | `benefit_formula_version` (T09, immutable once published) | P4 |

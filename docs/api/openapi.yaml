@@ -71,6 +71,12 @@ info:
     rule is required to activate a version (D-089 Q1). KPI values are decimal strings; percentages are fractions. A
     missing, stale or not computable value is a status with a reason, never 0 or green. RAG comes from the approved
     trajectory and the threshold version in force, never from task completion. Trajectory approval is a business approval.
+
+    **P4 additions, slice B (T-DG4-ARCH-03, ADR-0029, ADR-0030).** Additive within v1: new paths, schemas, tags and one
+    response. Benefit money is a decimal string; Value (SAR) of a non-financial benefit is n/a, and a missing value is
+    Unknown, never 0. Submitted values stay pending until a Finance user validates them on six items; a validated value
+    is never edited in place (409) and is corrected by linked amendments or reversals. Totals count each benefit once and
+    never add value states, scenarios or allocations together. Finance validation is a decision by a named Finance user.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -144,6 +150,24 @@ tags:
     description: Manual RAG overrides with reason, evidence and expiry (P4, ADR-0027).
   - name: data-quality
     description: KPI data-quality findings (P4, ADR-0027).
+  - name: benefits
+    description: T14 Benefits Register, the six-step benefits lifecycle, enablers, value series, planned and forecast values (P4, ADR-0029, ADR-0030).
+  - name: benefit-allocations
+    description: Contribution allocations of a canonical benefit; above 100 % refused, the rest unallocated (P4, ADR-0029).
+  - name: benefit-groups
+    description: Shared-benefit groups with one counted member (P4, ADR-0029).
+  - name: benefit-overlaps
+    description: Overlap warnings and their Finance resolution (P4, ADR-0029).
+  - name: benefit-scenarios
+    description: Base, upside and downside scenarios, never mixed into actuals (P4, ADR-0029).
+  - name: benefit-valuation-methods
+    description: Finance-approved valuation methods for non-financial benefits (P4, ADR-0029).
+  - name: benefit-measurements
+    description: Benefit measurements with lineage and evidence, submitted for Finance validation (P4, ADR-0030).
+  - name: finance-validations
+    description: The Finance validation queue, decisions on six items, amendments and reversals (P4, ADR-0030).
+  - name: benefit-totals
+    description: Benefit totals counted once, by value class and state; gross, implementation cost and net (P4, ADR-0030).
 security:
   - sessionCookie: []
 paths:
@@ -9468,6 +9492,1195 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [benefits]
+      operationId: listBenefits
+      summary: "The T14 Benefits Register (REQ-PB-075): one row per canonical benefit with the ten T14 columns; Value (SAR) is n/a for a non-financial benefit and Unknown when missing, never 0; Realized keeps validated, sustained and pending apart (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/BenefitLifecycleStepQuery"
+        - $ref: "#/components/parameters/BenefitStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitRegisterPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefits]
+      operationId: createBenefit
+      summary: "Create a benefit at the Identify step (benefit.edit; TL, BO). One owner (ownerUserId; a body with two owners is 400). 422 benefit.mapping_required, benefit.kpi_required, benefit.type_class_mismatch, benefit.valuation_method_required, benefit.valuation_method_not_approved, benefit.kpi_variable_unbound, benefit.validator_is_owner, benefit.parent_depth, benefit.parent_has_values, benefit.parent_currency, benefit.case_line_invalid; 409 benefit.case_line_taken. Runs the overlap rule (ADR-0029 §7)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitCreate" }
+      responses:
+        "201":
+          description: "Created (Identify)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Benefit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    get:
+      tags: [benefits]
+      operationId: getBenefit
+      summary: "Read one benefit with its profile, lifecycle step, counting status and realization state (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Benefit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [benefits]
+      operationId: updateBenefit
+      summary: "Change a benefit's profile and step outputs (benefit.edit). Changing a Finance-validated baseline resets its validation to unvalidated. 422 the createBenefit rules and benefit.measure_locked, benefit.plan_outputs_missing (clearing a Plan output after Plan), benefit_group.counted_member_leaving, benefit.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Benefit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/archive:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    post:
+      tags: [benefits]
+      operationId: archiveBenefit
+      summary: "Archive a benefit with a reason (benefit.edit); it is no longer counted. 422 benefit.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Benefit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/lifecycle:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    get:
+      tags: [benefits]
+      operationId: getBenefitLifecycle
+      summary: "The six B0121 steps (question and output, en and provisional ar), which preconditions the benefit meets for each step, and its step history (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitLifecycle" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefits]
+      operationId: advanceBenefitLifecycle
+      summary: "Move the benefit one lifecycle step (benefit.advance; BO). 422 benefit.lifecycle_step, benefit.plan_outputs_missing, benefit.enablers_missing, benefit.recovery_plan_required, benefit.sustain_outputs_missing, benefit.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitLifecycleAdvance" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Benefit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/baseline-validation:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    post:
+      tags: [benefits]
+      operationId: decideBenefitBaseline
+      summary: "Finance validates or rejects the benefit's baseline, the comparison basis of its values (finance.validate; FIN only; REQ-PB-013, REQ-S08-008). 403 benefit.baseline_validator_is_owner; 422 benefit.baseline_missing, benefit.baseline_note_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitBaselineDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Benefit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/enablers:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    get:
+      tags: [benefits]
+      operationId: listBenefitEnablers
+      summary: "The benefit dependency chain (Enable output) with each enabler's delivered flag (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitEnablerPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefits]
+      operationId: createBenefitEnabler
+      summary: "Link an enabling initiative, optionally one of its deliverables or a capability (benefit.edit). A delivered enabler is never realized value. 422 benefit_enabler.deliverable_initiative, benefit.archived; 409 benefit_enabler.exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitEnablerCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitEnabler" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-enablers/{benefitEnablerId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitEnablerId"
+    post:
+      tags: [benefits]
+      operationId: removeBenefitEnabler
+      summary: "Remove an enabler link with a reason (benefit.edit). Final. 422 benefit_enabler.removed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitEnabler" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/values:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    get:
+      tags: [benefits]
+      operationId: getBenefitValues
+      summary: "The benefit's value series kept apart by state: planned, forecast, measured, submitted (pending), validated, rejected and sustained (REQ-S08-001), each with its lines, count and total; never added together (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitValues" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/plan-values:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    post:
+      tags: [benefits]
+      operationId: createBenefitPlanValue
+      summary: "Add a planned or forecast value for a period (benefit.edit). 422 benefit_value.currency_mismatch, benefit_value.unmonetised, benefit_value.parent_rollup, benefit.archived; 409 benefit_value.period_taken."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitPlanValueCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitPlanValue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-plan-values/{benefitPlanValueId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitPlanValueId"
+    patch:
+      tags: [benefits]
+      operationId: updateBenefitPlanValue
+      summary: "Change a planned or forecast value (benefit.edit). Same refusals as createBenefitPlanValue."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitPlanValueUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitPlanValue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/allocations:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    get:
+      tags: [benefit-allocations]
+      operationId: getBenefitAllocations
+      summary: "The allocation set in force: shares per initiative, the allocated share and the unallocated share (1 - sum; REQ-S08-013) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitAllocations" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [benefit-allocations]
+      operationId: replaceBenefitAllocations
+      summary: "Replace the benefit's allocation set (benefit.allocate; TL, BO; If-Match = the benefit's ETag). Shares are fractions; above 1 (100 %) in total is refused; below 1 the rest is unallocated. Totals count the benefit once, never its allocations. 422 benefit_allocation.over_100, benefit_allocation.duplicate_initiative, benefit_allocation.share_invalid, benefit.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitAllocationsReplace" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitAllocations" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-groups:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [benefit-groups]
+      operationId: listBenefitGroups
+      summary: "Shared-benefit groups with their members and counted member (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitGroupPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefit-groups]
+      operationId: createBenefitGroup
+      summary: "Create a shared-benefit group (benefit_group.manage; TL, BO). Until a counted member is named, no member is counted."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitGroupCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-groups/{benefitGroupId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitGroupId"
+    get:
+      tags: [benefit-groups]
+      operationId: getBenefitGroup
+      summary: "Read one group (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [benefit-groups]
+      operationId: updateBenefitGroup
+      summary: "Rename a group or name its counted member (benefit_group.manage). Members join or leave through updateBenefit (benefitGroupId). 422 benefit_group.counted_not_member."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitGroupUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-overlaps:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [benefit-overlaps]
+      operationId: listBenefitOverlaps
+      summary: "Overlap warnings (same driver, population or period), open first (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/BenefitOverlapStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitOverlapPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefit-overlaps]
+      operationId: createBenefitOverlap
+      summary: "Raise an overlap warning between two benefits (benefit.edit); both stay out of validated totals until Finance resolves it, and a Finance task is created. 422 benefit_overlap.same_benefit; 409 benefit_overlap.already_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitOverlapCreate" }
+      responses:
+        "201":
+          description: "Created (open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitOverlap" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-overlaps/{benefitOverlapId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitOverlapId"
+    get:
+      tags: [benefit-overlaps]
+      operationId: getBenefitOverlap
+      summary: "Read one overlap warning (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitOverlap" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-overlaps/{benefitOverlapId}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitOverlapId"
+    post:
+      tags: [benefit-overlaps]
+      operationId: resolveBenefitOverlap
+      summary: "Finance resolves the overlap: no_economic_overlap (both count) or duplicate (the excluded benefit is never counted) (finance.validate; FIN only; REQ-S08-014). 403 benefit_overlap.resolver_is_owner; 422 benefit_overlap.not_open, benefit_overlap.excluded_required, benefit_overlap.note_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitOverlapResolve" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitOverlap" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-scenarios:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [benefit-scenarios]
+      operationId: listBenefitScenarios
+      summary: "Base, upside and downside scenarios (transformation.read). Scenario values are never actuals."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitScenarioPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefit-scenarios]
+      operationId: createBenefitScenario
+      summary: "Create a scenario (benefit_scenario.edit; TL, FIN). 409 benefit_scenario.kind_exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitScenarioCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitScenario" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-scenarios/{benefitScenarioId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitScenarioId"
+    get:
+      tags: [benefit-scenarios]
+      operationId: getBenefitScenario
+      summary: "Read one scenario with its labelled values (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitScenario" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [benefit-scenarios]
+      operationId: updateBenefitScenario
+      summary: "Rename a scenario, change its assumptions or archive it with a reason (benefit_scenario.edit)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitScenarioUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitScenario" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-scenarios/{benefitScenarioId}/values:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitScenarioId"
+    post:
+      tags: [benefit-scenarios]
+      operationId: createBenefitScenarioValue
+      summary: "Add a scenario value for a benefit and period (benefit_scenario.edit). 422 benefit_value.currency_mismatch, benefit_value.unmonetised, benefit_value.parent_rollup; 409 benefit_value.period_taken."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitScenarioValueCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitScenarioValue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-scenario-values/{benefitScenarioValueId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitScenarioValueId"
+    patch:
+      tags: [benefit-scenarios]
+      operationId: updateBenefitScenarioValue
+      summary: "Change a scenario value (benefit_scenario.edit). Same refusals as createBenefitScenarioValue."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitScenarioValueUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitScenarioValue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-valuation-methods:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [benefit-valuation-methods]
+      operationId: listBenefitValuationMethods
+      summary: "Valuation methods for non-financial benefits (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitValuationMethodPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefit-valuation-methods]
+      operationId: createBenefitValuationMethod
+      summary: "Propose a valuation method (benefit.edit); it values a non-financial benefit only after Finance approves it (REQ-S08-010)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitValuationMethodCreate" }
+      responses:
+        "201":
+          description: "Created (proposed)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitValuationMethod" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-valuation-methods/{benefitValuationMethodId}/decision:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitValuationMethodId"
+    post:
+      tags: [benefit-valuation-methods]
+      operationId: decideBenefitValuationMethod
+      summary: "Finance approves, rejects or retires a valuation method (finance.validate; FIN only; not the proposer). 403 benefit_valuation_method.decider_is_proposer; 422 benefit_valuation_method.not_proposed, benefit_valuation_method.note_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitValuationMethodDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitValuationMethod" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/{benefitId}/measurements:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitId"
+    get:
+      tags: [benefit-measurements]
+      operationId: listBenefitMeasurements
+      summary: "Measurements of a benefit with their status, corrections and basis (validated or provisional), newest first (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitMeasurementPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [benefit-measurements]
+      operationId: createBenefitMeasurement
+      summary: "Record a measurement for a period, as a draft or submitted (submit: true) with evidence (benefit.measure; BO, WL, KDS). A submitted value is pending: it never changes the validated total before Finance approves it, and one Finance queue item follows (REQ-S12-014). 422 benefit_measurement.step, benefit_measurement.period_required, benefit_measurement.value_shape, benefit_measurement.evidence_required, benefit_measurement.lineage_period, benefit_value.currency_mismatch, benefit_value.unmonetised, benefit_value.parent_rollup, formula.* (ADR-0024 §6); 409 benefit_measurement.period_taken."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitMeasurementCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitMeasurement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-measurements/{benefitMeasurementId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitMeasurementId"
+    get:
+      tags: [benefit-measurements]
+      operationId: getBenefitMeasurement
+      summary: "Read one measurement with its lineage (formula version, input KPI actual versions, rates and variables, assumptions, period), evidence and Finance validation (transformation.read; REQ-S08-006)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitMeasurement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [benefit-measurements]
+      operationId: updateBenefitMeasurement
+      summary: "Change a draft measurement (benefit.measure). A validated value is never edited in place: 409 benefit_measurement.validated_immutable (REQ-S08-017; use an amendment or reversal). 422 benefit_measurement.not_draft and the createBenefitMeasurement rules."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BenefitMeasurementUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitMeasurement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BenefitValueConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-measurements/{benefitMeasurementId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/BenefitMeasurementId"
+    post:
+      tags: [benefit-measurements]
+      operationId: submitBenefitMeasurement
+      summary: "Submit a draft measurement for Finance validation (benefit.measure). Writes one benefit.evidence_submitted event; the worker creates exactly one Finance queue item (REQ-S12-014). 422 benefit_measurement.not_draft, benefit_measurement.period_required, benefit_measurement.evidence_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitMeasurement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/finance-validations:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [finance-validations]
+      operationId: listFinanceValidationQueue
+      summary: "The Finance validation queue and its decided items, queued first, oldest first (transformation.read). Each item shows the six items of REQ-S08-015."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/FinanceValidationStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinanceValidationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/finance-validations/{financeValidationId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FinanceValidationId"
+    get:
+      tags: [finance-validations]
+      operationId: getFinanceValidation
+      summary: "Read one queue item or decision with its content snapshot and corrections (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinanceValidation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/finance-validations/{financeValidationId}/decision:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FinanceValidationId"
+    post:
+      tags: [finance-validations]
+      operationId: decideFinanceValidation
+      summary: "Approve or reject a queued value with a decision on each of the six items (finance.validate; FIN only: a Business Owner, an auditor or an ADM-only user gets 403; REQ-PB-013). Approval raises the validated total by exactly approvedAmount. The audit event records the validator. 403 finance_validation.sod_submitter; 422 finance_validation.content_incomplete, finance_validation.not_queued, finance_validation.items_not_accepted, finance_validation.rejection_note_required, finance_validation.approved_amount_required, finance_validation.basis_provisional."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FinanceValidationDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinanceValidation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/finance-validations/{financeValidationId}/amendments:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FinanceValidationId"
+    post:
+      tags: [finance-validations]
+      operationId: amendFinanceValidation
+      summary: "Record an amendment of an approved value, linked to the original (finance.validate; REQ-S08-017). The original stays visible; the amendment carries the signed difference. 422 finance_validation.not_approved, finance_validation.already_reversed, finance_validation.reason_required, finance_validation.amendment_unchanged."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FinanceValidationAmendment" }
+      responses:
+        "201":
+          description: "Created (approved amendment)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinanceValidation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/finance-validations/{financeValidationId}/reversals:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FinanceValidationId"
+    post:
+      tags: [finance-validations]
+      operationId: reverseFinanceValidation
+      summary: "Reverse an approved value, linked to the original; the reversal nets the total to zero and both records remain visible (finance.validate; REQ-S08-017). 422 finance_validation.not_approved, finance_validation.already_reversed, finance_validation.reason_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "201":
+          description: "Created (approved reversal)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinanceValidation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefit-totals:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [benefit-totals]
+      operationId: getBenefitTotals
+      summary: "Benefit totals of the transformation, counted once: per currency, one line per value class and state (planned, forecast, measured, submitted, validated, sustained, rejected), pending-overlap lines, gross, implementation cost (each business-case cost line once) and net; non-financial benefits without a valuation method are counted, never summed as 0. initiativeId gives that initiative's allocated view (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/BenefitInitiativeIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitTotals" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/organizations/{organizationId}/benefit-totals:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [benefit-totals]
+      operationId: getPortfolioBenefitTotals
+      summary: "Portfolio totals over the organization's transformations that the caller may read; each benefit counted once (organization.read and transformation.read per transformation)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitTotals" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -9485,6 +10698,81 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    BenefitId:
+      name: benefitId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitEnablerId:
+      name: benefitEnablerId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitPlanValueId:
+      name: benefitPlanValueId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitGroupId:
+      name: benefitGroupId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitOverlapId:
+      name: benefitOverlapId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitScenarioId:
+      name: benefitScenarioId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitScenarioValueId:
+      name: benefitScenarioValueId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitValuationMethodId:
+      name: benefitValuationMethodId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitMeasurementId:
+      name: benefitMeasurementId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    FinanceValidationId:
+      name: financeValidationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BenefitLifecycleStepQuery:
+      name: lifecycleStep
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+    BenefitStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, archived] }
+    BenefitOverlapStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, resolved] }
+    FinanceValidationStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [queued, approved, rejected, withdrawn] }
+    BenefitInitiativeIdQuery:
+      name: initiativeId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
     KpiVersionId:
       name: kpiVersionId
       in: path
@@ -10015,6 +11303,11 @@ components:
       content:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Problem" }
+    BenefitValueConflict:
+      description: A validated benefit value is never edited in place (`urn:mth:problem:invalid-transition`, code `benefit_measurement.validated_immutable`; REQ-S08-017), or If-Match is stale (`urn:mth:problem:version-conflict`). Nothing was written.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
     PreconditionRequired:
       description: If-Match header missing (`urn:mth:problem:precondition-required`).
       content:
@@ -10168,6 +11461,12 @@ components:
         - kpi_actual.accept
         - rag.override
         - data_quality.manage
+        - benefit.edit
+        - benefit.advance
+        - benefit.allocate
+        - benefit.measure
+        - benefit_scenario.edit
+        - benefit_group.manage
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -15791,4 +17090,927 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/DataQualityFinding" } }
+        nextCursor: { type: [string, "null"] }
+
+    # ---- P4 slice B (T-DG4-ARCH-03; ADR-0029, ADR-0030) -------------------------------------------------------------
+    BenefitType:
+      type: string
+      enum: [revenue, cost, working_capital, cx, risk, strategic, other]
+      description: T14 Type (B0123).
+    BenefitValueClass:
+      type: string
+      enum: [revenue_uplift, margin_uplift, cash_saving, avoided_cost, working_capital_release, non_financial]
+      description: "The value class (REQ-S08-009): revenue uplift vs margin and avoided cost vs cash savings are separate classes, never converted. revenue -> revenue_uplift | margin_uplift; cost -> cash_saving | avoided_cost; working_capital -> working_capital_release; risk -> avoided_cost | non_financial; cx, strategic, other -> non_financial."
+    BenefitLifecycleStep:
+      type: string
+      enum: [identify, plan, enable, measure, correct, sustain]
+      description: The six B0121 steps (REQ-PB-074).
+    BenefitValueState:
+      type: string
+      enum: [planned, forecast, measured, submitted, validated, sustained, rejected]
+      description: One value state (REQ-S08-001). A total is always for one state; states are never added together.
+    BenefitAmount:
+      type: object
+      required: [status, amount, currency, reason]
+      additionalProperties: false
+      description: A money value with its status. not_applicable = Value (SAR) n/a of a non-financial benefit; unknown = missing, never 0.
+      properties:
+        status: { type: string, enum: [known, unknown, not_applicable] }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { oneOf: [{ $ref: "#/components/schemas/Currency" }, { type: "null" }] }
+        reason: { type: [string, "null"], description: "i18n key when status is unknown (e.g. benefit.cost_amount_missing)." }
+    BenefitCountingStatus:
+      type: object
+      required: [counted, exclusionReason, overlapOpen]
+      additionalProperties: false
+      properties:
+        counted: { type: boolean, description: "True when the benefit's values may enter a total (ADR-0029 §6)." }
+        exclusionReason: { type: [string, "null"], enum: [archived, parent_rollup, group_counted_member_not_named, group_member_not_counted, overlap_duplicate, null] }
+        overlapOpen: { type: boolean, description: "An open overlap warning keeps the benefit's values out of validated totals until Finance resolves it." }
+    Benefit:
+      type: object
+      description: A canonical benefit (Benefit, REQ-S16-017) with the REQ-S08-003 profile. Money is a decimal string; NULL is Unknown (financial) or n/a (non-financial), never 0.
+      required: [id, transformationId, code, title, description, benefitType, valueClass, ownerUserId, financeValidatorUserId, financeValidationRequired, financialStatementLine, measurementKpiDefinitionId, measurementKpiVariable, businessCaseLineId, benefitFormulaId, baselineId, baselineValue, baselineUnit, baselineDate, counterfactual, baselineValidationStatus, baselineValidatedBy, baselineValidatedAt, baselineValidationNote, driverKey, driverUnits, populationKey, targetValue, targetDate, realizationStart, realizationEnd, recurrence, currency, plannedValue, valuationMethodId, measurementSource, confidence, assumptions, parentBenefitId, benefitGroupId, allocationSetNo, lifecycleStep, recoveryPlan, bauOwnerUserId, controlCadence, statusRag, statusRagNote, realizationState, counting, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^B[0-9]{2,6}$" }
+        title: { type: string }
+        description: { type: string }
+        benefitType: { $ref: "#/components/schemas/BenefitType" }
+        valueClass: { $ref: "#/components/schemas/BenefitValueClass" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        financeValidatorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        financeValidationRequired: { type: boolean }
+        financialStatementLine: { type: [string, "null"] }
+        measurementKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        measurementKpiVariable: { type: [string, "null"] }
+        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitFormulaId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineValue: { $ref: "#/components/schemas/NullableDecimal" }
+        baselineUnit: { type: [string, "null"] }
+        baselineDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        counterfactual: { type: [string, "null"] }
+        baselineValidationStatus: { type: string, enum: [unvalidated, validated, rejected] }
+        baselineValidatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        baselineValidatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        baselineValidationNote: { type: [string, "null"] }
+        driverKey: { type: [string, "null"] }
+        driverUnits: { type: [string, "null"] }
+        populationKey: { type: [string, "null"] }
+        targetValue: { $ref: "#/components/schemas/NullableDecimal" }
+        targetDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        realizationStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        realizationEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        recurrence: { type: [string, "null"], enum: [one_off, recurring, null] }
+        currency: { $ref: "#/components/schemas/Currency" }
+        plannedValue: { $ref: "#/components/schemas/NullableDecimal" }
+        valuationMethodId: { $ref: "#/components/schemas/NullableUuid" }
+        measurementSource: { type: [string, "null"] }
+        confidence: { type: [string, "null"], enum: [H, M, L, null] }
+        assumptions: { type: [string, "null"] }
+        parentBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        allocationSetNo: { type: integer, minimum: 0 }
+        lifecycleStep: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+        recoveryPlan: { type: [string, "null"] }
+        bauOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        controlCadence: { type: [string, "null"], enum: [monthly, quarterly, semiannual, annual, null] }
+        statusRag: { type: [string, "null"], enum: [green, amber, red, null], description: "T14 Status; null is shown as Unknown, never green." }
+        statusRagNote: { type: [string, "null"] }
+        realizationState: { type: string, enum: [not_enabled, enabled_not_yet_measured, measured_pending_validation, validated, sustained], description: "REQ-S08-002: a delivered enabler gives enabled_not_yet_measured, never realized value." }
+        counting: { $ref: "#/components/schemas/BenefitCountingStatus" }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    BenefitCreate:
+      type: object
+      description: "A new benefit at Identify. ownerUserId is ONE user id: a body naming two owners fails validation (400; REQ-PB-058). A financial class needs financialStatementLine; non_financial needs measurementKpiDefinitionId (REQ-S08-003)."
+      required: [title, description, benefitType, valueClass, ownerUserId, currency]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: string, minLength: 1, maxLength: 8000 }
+        benefitType: { $ref: "#/components/schemas/BenefitType" }
+        valueClass: { $ref: "#/components/schemas/BenefitValueClass" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        financeValidatorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        financeValidationRequired: { type: boolean, default: true }
+        financialStatementLine: { type: [string, "null"], minLength: 1, maxLength: 200 }
+        measurementKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        measurementKpiVariable: { type: [string, "null"], pattern: "^[a-z][a-z0-9_]{0,47}$" }
+        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitFormulaId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineValue: { $ref: "#/components/schemas/NullableDecimal" }
+        baselineUnit: { type: [string, "null"], minLength: 1, maxLength: 50 }
+        baselineDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        counterfactual: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        driverKey: { type: [string, "null"], pattern: "^[a-z0-9][a-z0-9_.:-]{0,99}$" }
+        driverUnits: { type: [string, "null"], minLength: 1, maxLength: 100 }
+        populationKey: { type: [string, "null"], pattern: "^[a-z0-9][a-z0-9_.:-]{0,99}$" }
+        targetValue: { $ref: "#/components/schemas/NullableDecimal" }
+        targetDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        realizationStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        realizationEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        recurrence: { type: [string, "null"], enum: [one_off, recurring, null] }
+        currency: { $ref: "#/components/schemas/Currency" }
+        plannedValue: { $ref: "#/components/schemas/NullableDecimal" }
+        valuationMethodId: { $ref: "#/components/schemas/NullableUuid" }
+        measurementSource: { type: [string, "null"], minLength: 1, maxLength: 500 }
+        confidence: { type: [string, "null"], enum: [H, M, L, null] }
+        assumptions: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        parentBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitGroupId: { $ref: "#/components/schemas/NullableUuid" }
+    BenefitUpdate:
+      type: object
+      description: Changes to a benefit's profile and step outputs. The lifecycle step, baseline validation and allocations have their own operations; type, class and currency are fixed once the benefit has values.
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: string, minLength: 1, maxLength: 8000 }
+        benefitType: { $ref: "#/components/schemas/BenefitType" }
+        valueClass: { $ref: "#/components/schemas/BenefitValueClass" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        financeValidatorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        financeValidationRequired: { type: boolean }
+        financialStatementLine: { type: [string, "null"], minLength: 1, maxLength: 200 }
+        measurementKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        measurementKpiVariable: { type: [string, "null"], pattern: "^[a-z][a-z0-9_]{0,47}$" }
+        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitFormulaId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineId: { $ref: "#/components/schemas/NullableUuid" }
+        baselineValue: { $ref: "#/components/schemas/NullableDecimal" }
+        baselineUnit: { type: [string, "null"], minLength: 1, maxLength: 50 }
+        baselineDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        counterfactual: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        driverKey: { type: [string, "null"], pattern: "^[a-z0-9][a-z0-9_.:-]{0,99}$" }
+        driverUnits: { type: [string, "null"], minLength: 1, maxLength: 100 }
+        populationKey: { type: [string, "null"], pattern: "^[a-z0-9][a-z0-9_.:-]{0,99}$" }
+        targetValue: { $ref: "#/components/schemas/NullableDecimal" }
+        targetDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        realizationStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        realizationEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        recurrence: { type: [string, "null"], enum: [one_off, recurring, null] }
+        currency: { $ref: "#/components/schemas/Currency" }
+        plannedValue: { $ref: "#/components/schemas/NullableDecimal" }
+        valuationMethodId: { $ref: "#/components/schemas/NullableUuid" }
+        measurementSource: { type: [string, "null"], minLength: 1, maxLength: 500 }
+        confidence: { type: [string, "null"], enum: [H, M, L, null] }
+        assumptions: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        parentBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitGroupId: { $ref: "#/components/schemas/NullableUuid" }
+        recoveryPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        bauOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        controlCadence: { type: [string, "null"], enum: [monthly, quarterly, semiannual, annual, null] }
+        statusRag: { type: [string, "null"], enum: [green, amber, red, null] }
+        statusRagNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    BenefitRealized:
+      type: object
+      required: [validated, validatedCount, sustained, sustainedCount, pending, pendingCount, kpiActual]
+      additionalProperties: false
+      description: T14 Realized, with its states kept apart. kpiActual is the latest accepted actual of a non-financial benefit's agreed KPI (Unknown when none).
+      properties:
+        validated: { $ref: "#/components/schemas/BenefitAmount" }
+        validatedCount: { type: integer, minimum: 0 }
+        sustained: { $ref: "#/components/schemas/BenefitAmount" }
+        sustainedCount: { type: integer, minimum: 0 }
+        pending: { $ref: "#/components/schemas/BenefitAmount" }
+        pendingCount: { type: integer, minimum: 0 }
+        kpiActual:
+          type: object
+          required: [status, value, reason]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [known, unknown, stale, not_applicable] }
+            value: { $ref: "#/components/schemas/NullableDecimal" }
+            reason: { type: [string, "null"] }
+    BenefitRegisterRow:
+      type: object
+      description: One T14 Benefits Register row (B0123, ten columns) plus the lifecycle step, realization state and counting status.
+      required: [id, code, title, benefitType, valueClass, baseline, target, valueSar, realized, ownerUserId, evidenceCount, latestEvidenceIds, status, lifecycleStep, realizationState, counting, currency, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        title: { type: string }
+        benefitType: { $ref: "#/components/schemas/BenefitType" }
+        valueClass: { $ref: "#/components/schemas/BenefitValueClass" }
+        baseline:
+          type: object
+          required: [value, unit, date, baselineId, validationStatus]
+          additionalProperties: false
+          properties:
+            value: { $ref: "#/components/schemas/NullableDecimal" }
+            unit: { type: [string, "null"] }
+            date: { $ref: "#/components/schemas/NullableBusinessDate" }
+            baselineId: { $ref: "#/components/schemas/NullableUuid" }
+            validationStatus: { type: string, enum: [unvalidated, validated, rejected] }
+        target:
+          type: object
+          required: [value, date]
+          additionalProperties: false
+          properties:
+            value: { $ref: "#/components/schemas/NullableDecimal" }
+            date: { $ref: "#/components/schemas/NullableBusinessDate" }
+        valueSar: { $ref: "#/components/schemas/BenefitAmount" }
+        realized: { $ref: "#/components/schemas/BenefitRealized" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        evidenceCount: { type: integer, minimum: 0 }
+        latestEvidenceIds: { type: array, items: { $ref: "#/components/schemas/Uuid" }, maxItems: 5 }
+        status: { type: string, enum: [green, amber, red, unknown], description: "T14 Status R/A/G; unknown when not set, never green." }
+        lifecycleStep: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+        realizationState: { type: string, enum: [not_enabled, enabled_not_yet_measured, measured_pending_validation, validated, sustained] }
+        counting: { $ref: "#/components/schemas/BenefitCountingStatus" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        version: { $ref: "#/components/schemas/Version" }
+    BenefitLifecycle:
+      type: object
+      required: [benefitId, currentStep, steps, history]
+      additionalProperties: false
+      properties:
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        currentStep: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+        steps:
+          type: array
+          minItems: 6
+          maxItems: 6
+          items:
+            type: object
+            required: [code, ordinal, stepEn, questionEn, outputEn, stepAr, questionAr, outputAr, arIsProvisional, preconditionsMet, missing]
+            additionalProperties: false
+            properties:
+              code: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+              ordinal: { type: integer, minimum: 1, maximum: 6 }
+              stepEn: { type: string }
+              questionEn: { type: string, description: "B0121 verbatim." }
+              outputEn: { type: string, description: "B0121 verbatim." }
+              stepAr: { type: string }
+              questionAr: { type: string }
+              outputAr: { type: string }
+              arIsProvisional: { type: boolean }
+              preconditionsMet: { type: boolean }
+              missing: { type: array, items: { type: string, enum: [baseline, formula, target, owner, enablers, recovery_plan, bau_owner, control_cadence] } }
+        history:
+          type: array
+          items:
+            type: object
+            required: [fromStep, toStep, benefitVersion, occurredAt, actorUserId]
+            additionalProperties: false
+            properties:
+              fromStep: { oneOf: [{ $ref: "#/components/schemas/BenefitLifecycleStep" }, { type: "null" }] }
+              toStep: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+              benefitVersion: { type: integer, minimum: 1 }
+              occurredAt: { $ref: "#/components/schemas/Timestamp" }
+              actorUserId: { $ref: "#/components/schemas/Uuid" }
+    BenefitLifecycleAdvance:
+      type: object
+      required: [toStep]
+      additionalProperties: false
+      properties:
+        toStep: { $ref: "#/components/schemas/BenefitLifecycleStep" }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    BenefitBaselineDecision:
+      type: object
+      required: [decision]
+      additionalProperties: false
+      properties:
+        decision: { type: string, enum: [validated, rejected] }
+        note: { type: string, minLength: 1, maxLength: 2000, description: "Required to reject." }
+    BenefitEnabler:
+      type: object
+      required: [id, benefitId, initiativeId, deliverableId, capabilityId, note, delivered, status, removedAt, removedBy, removeReason, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        deliverableId: { $ref: "#/components/schemas/NullableUuid" }
+        capabilityId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"] }
+        delivered: { type: boolean, description: "The deliverable is accepted, or (without a deliverable) the initiative is completed. Never realized value (REQ-S08-002)." }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removedBy: { $ref: "#/components/schemas/NullableUuid" }
+        removeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitEnablerCreate:
+      type: object
+      required: [initiativeId]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        deliverableId: { $ref: "#/components/schemas/NullableUuid" }
+        capabilityId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    BenefitValueLine:
+      type: object
+      required: [periodStart, periodEnd, amount, kpiValue, recordType, recordId, basis]
+      additionalProperties: false
+      properties:
+        periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        recordType: { type: string, enum: [benefit_plan_value, benefit_measurement] }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        basis: { type: [string, "null"], enum: [validated, provisional, null], description: "For submitted values: provisional while the comparison basis is not Finance-validated (REQ-S08-008)." }
+    BenefitValues:
+      type: object
+      required: [benefitId, currency, series]
+      additionalProperties: false
+      properties:
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        series:
+          type: array
+          minItems: 7
+          maxItems: 7
+          items:
+            type: object
+            required: [state, total, count, lines]
+            additionalProperties: false
+            properties:
+              state: { $ref: "#/components/schemas/BenefitValueState" }
+              total: { $ref: "#/components/schemas/BenefitAmount" }
+              count: { type: integer, minimum: 0 }
+              lines: { type: array, items: { $ref: "#/components/schemas/BenefitValueLine" } }
+    BenefitPlanValue:
+      type: object
+      required: [id, benefitId, valueKind, periodStart, periodEnd, amount, kpiValue, currency, note, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        valueKind: { type: string, enum: [planned, forecast] }
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        note: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitPlanValueCreate:
+      type: object
+      required: [valueKind, periodStart, periodEnd]
+      additionalProperties: false
+      description: At least one of amount and kpiValue. Currency is the benefit's.
+      properties:
+        valueKind: { type: string, enum: [planned, forecast] }
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    BenefitPlanValueUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    BenefitAllocationShare:
+      type: object
+      required: [initiativeId, share]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        share: { $ref: "#/components/schemas/Decimal", description: "A fraction: 0.6 = 60 %. Above 0 and at most 1." }
+        basis: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    BenefitAllocations:
+      type: object
+      required: [benefitId, setNo, allocations, allocatedShare, unallocatedShare]
+      additionalProperties: false
+      properties:
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        setNo: { type: integer, minimum: 0 }
+        allocations: { type: array, items: { $ref: "#/components/schemas/BenefitAllocationShare" } }
+        allocatedShare: { $ref: "#/components/schemas/Decimal" }
+        unallocatedShare: { $ref: "#/components/schemas/Decimal", description: "1 - allocatedShare (REQ-S08-013), e.g. 0.100000 for 60 % + 30 %." }
+    BenefitAllocationsReplace:
+      type: object
+      required: [allocations]
+      additionalProperties: false
+      properties:
+        allocations: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/BenefitAllocationShare" } }
+    BenefitGroup:
+      type: object
+      required: [id, transformationId, code, title, description, countedBenefitId, memberBenefitIds, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      description: A shared-benefit group (REQ-PB-058). Only countedBenefitId is counted; while it is null no member is counted.
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^BG-[0-9]{2,6}$" }
+        title: { type: string }
+        description: { type: [string, "null"] }
+        countedBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        memberBenefitIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitGroupCreate:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: string, minLength: 1, maxLength: 4000 }
+    BenefitGroupUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        countedBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+    BenefitOverlapDimension:
+      type: string
+      enum: [driver, population, period]
+    BenefitOverlap:
+      type: object
+      required: [id, transformationId, benefitAId, benefitBId, dimensions, driverKey, populationKey, overlapStart, overlapEnd, detectedBy, status, resolution, excludedBenefitId, resolutionNote, resolvedBy, resolvedAt, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        benefitAId: { $ref: "#/components/schemas/Uuid" }
+        benefitBId: { $ref: "#/components/schemas/Uuid" }
+        dimensions: { type: array, minItems: 1, items: { $ref: "#/components/schemas/BenefitOverlapDimension" } }
+        driverKey: { type: [string, "null"] }
+        populationKey: { type: [string, "null"] }
+        overlapStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        overlapEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        detectedBy: { type: string, enum: [rule, user] }
+        status: { type: string, enum: [open, resolved] }
+        resolution: { type: [string, "null"], enum: [no_economic_overlap, duplicate, null] }
+        excludedBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        resolutionNote: { type: [string, "null"] }
+        resolvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        resolvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitOverlapCreate:
+      type: object
+      required: [benefitAId, benefitBId, dimensions]
+      additionalProperties: false
+      properties:
+        benefitAId: { $ref: "#/components/schemas/Uuid" }
+        benefitBId: { $ref: "#/components/schemas/Uuid" }
+        dimensions: { type: array, minItems: 1, maxItems: 3, uniqueItems: true, items: { $ref: "#/components/schemas/BenefitOverlapDimension" } }
+    BenefitOverlapResolve:
+      type: object
+      required: [resolution, note]
+      additionalProperties: false
+      properties:
+        resolution: { type: string, enum: [no_economic_overlap, duplicate] }
+        excludedBenefitId: { $ref: "#/components/schemas/Uuid", description: "Required for duplicate: the benefit that is never counted." }
+        note: { type: string, minLength: 3, maxLength: 4000 }
+    BenefitScenarioValue:
+      type: object
+      required: [id, scenarioId, scenarioKind, benefitId, periodStart, periodEnd, amount, kpiValue, currency, note, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      description: A scenario value, always labelled with its scenario kind; never an actual (REQ-S08-018).
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        scenarioId: { $ref: "#/components/schemas/Uuid" }
+        scenarioKind: { type: string, enum: [base, upside, downside] }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        note: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitScenario:
+      type: object
+      required: [id, transformationId, businessCaseId, kind, title, assumptions, values, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        businessCaseId: { $ref: "#/components/schemas/NullableUuid" }
+        kind: { type: string, enum: [base, upside, downside] }
+        title: { type: string }
+        assumptions: { type: [string, "null"] }
+        values: { type: array, items: { $ref: "#/components/schemas/BenefitScenarioValue" } }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitScenarioCreate:
+      type: object
+      required: [kind, title]
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [base, upside, downside] }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        assumptions: { type: string, minLength: 1, maxLength: 8000 }
+        businessCaseId: { $ref: "#/components/schemas/NullableUuid" }
+    BenefitScenarioUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        assumptions: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        archiveReason: { type: string, minLength: 3, maxLength: 1000, description: "Archives the scenario." }
+    BenefitScenarioValueCreate:
+      type: object
+      required: [benefitId, periodStart, periodEnd]
+      additionalProperties: false
+      properties:
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    BenefitScenarioValueUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    BenefitValuationMethod:
+      type: object
+      required: [id, transformationId, code, name, method, appliesToType, kpiDefinitionId, unitValue, currency, status, decidedBy, decidedAt, decisionNote, retiredAt, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^VM-[0-9]{2,6}$" }
+        name: { type: string }
+        method: { type: string }
+        appliesToType: { type: string, enum: [cx, risk, strategic, other] }
+        kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        unitValue: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        status: { type: string, enum: [proposed, approved, rejected, retired] }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decisionNote: { type: [string, "null"] }
+        retiredAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitValuationMethodCreate:
+      type: object
+      required: [name, method, appliesToType, currency]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 300 }
+        method: { type: string, minLength: 1, maxLength: 8000 }
+        appliesToType: { type: string, enum: [cx, risk, strategic, other] }
+        kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        unitValue: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { $ref: "#/components/schemas/Currency" }
+    BenefitValuationMethodDecision:
+      type: object
+      required: [decision]
+      additionalProperties: false
+      properties:
+        decision: { type: string, enum: [approved, rejected, retired] }
+        note: { type: string, minLength: 1, maxLength: 2000, description: "Required to reject." }
+    BenefitMeasurementInput:
+      type: object
+      required: [variableName, kpiActualId, kpiValueNo, value, periodStart, periodEnd]
+      additionalProperties: false
+      properties:
+        variableName: { type: string }
+        kpiActualId: { $ref: "#/components/schemas/NullableUuid" }
+        kpiValueNo: { type: [integer, "null"], minimum: 1 }
+        value: { $ref: "#/components/schemas/Decimal" }
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+    BenefitMeasurement:
+      type: object
+      description: BenefitMeasurement (REQ-S16-017) with its lineage (REQ-S08-006). A validated row is never edited; corrections are linked amendment or reversal rows.
+      required: [id, benefitId, measurementNo, kind, correctsMeasurementId, source, calculationRunId, benefitCalculationId, formulaVersionId, periodStart, periodEnd, amount, kpiValue, currency, missingReason, attribution, assumptions, status, sustainPhase, validatedAmount, basis, inputs, evidenceIds, financeValidationId, submittedBy, submittedAt, decidedBy, decidedAt, reason, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        measurementNo: { type: integer, minimum: 1 }
+        kind: { type: string, enum: [measurement, amendment, reversal] }
+        correctsMeasurementId: { $ref: "#/components/schemas/NullableUuid" }
+        source: { type: string, enum: [manual, kpi_recalculation, correction] }
+        calculationRunId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitCalculationId: { $ref: "#/components/schemas/NullableUuid" }
+        formulaVersionId: { $ref: "#/components/schemas/NullableUuid" }
+        periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        missingReason: { type: [string, "null"] }
+        attribution: { type: [string, "null"] }
+        assumptions: { type: [string, "null"] }
+        status: { type: string, enum: [draft, submitted, validated, rejected, superseded] }
+        sustainPhase: { type: boolean }
+        validatedAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        basis: { type: string, enum: [validated, provisional], description: "provisional while the benefit's baseline (or the formula version used) is not Finance-validated (REQ-S08-008)." }
+        inputs: { type: array, items: { $ref: "#/components/schemas/BenefitMeasurementInput" } }
+        evidenceIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        financeValidationId: { $ref: "#/components/schemas/NullableUuid" }
+        submittedBy: { $ref: "#/components/schemas/NullableUuid" }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitMeasurementCreate:
+      type: object
+      additionalProperties: false
+      description: "One of amount, kpiValue or missingReason. With formulaVersionId the amount is computed by the restricted formula engine from variables (ADR-0024 §6) and the lineage is stored. submit: true submits at once (needs the period and, for a manual value, evidence)."
+      properties:
+        periodStart: { $ref: "#/components/schemas/BusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/BusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        missingReason: { type: string, minLength: 3, maxLength: 1000 }
+        attribution: { type: string, minLength: 1, maxLength: 4000 }
+        assumptions: { type: string, minLength: 1, maxLength: 8000 }
+        formulaVersionId: { $ref: "#/components/schemas/Uuid" }
+        variables: { type: object, maxProperties: 30, additionalProperties: { $ref: "#/components/schemas/Decimal" }, propertyNames: { pattern: "^[a-z][a-z0-9_]{0,47}$" } }
+        evidenceIds: { type: array, maxItems: 50, uniqueItems: true, items: { $ref: "#/components/schemas/Uuid" } }
+        submit: { type: boolean, default: false }
+    BenefitMeasurementUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+        missingReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        attribution: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        assumptions: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        evidenceIds: { type: array, maxItems: 50, uniqueItems: true, items: { $ref: "#/components/schemas/Uuid" }, description: "Evidence links to add (links are append-only)." }
+    FinanceValidationItemDecision:
+      type: object
+      required: [decision]
+      additionalProperties: false
+      properties:
+        decision: { type: string, enum: [accepted, rejected] }
+        note: { type: string, minLength: 1, maxLength: 2000 }
+    FinanceValidationContent:
+      type: object
+      required: [baseline, attribution, calculation, evidence, measurementPeriod, assumptions]
+      additionalProperties: false
+      description: The immutable snapshot presented to the validator (REQ-S08-015).
+      properties:
+        baseline:
+          type: object
+          required: [value, unit, date, baselineId, counterfactual, validationStatus]
+          additionalProperties: false
+          properties:
+            value: { $ref: "#/components/schemas/NullableDecimal" }
+            unit: { type: [string, "null"] }
+            date: { $ref: "#/components/schemas/NullableBusinessDate" }
+            baselineId: { $ref: "#/components/schemas/NullableUuid" }
+            counterfactual: { type: [string, "null"] }
+            validationStatus: { type: string, enum: [unvalidated, validated, rejected] }
+        attribution: { type: [string, "null"] }
+        calculation:
+          type: object
+          required: [formulaVersionId, benefitCalculationId, amount, kpiValue, currency, inputs]
+          additionalProperties: false
+          properties:
+            formulaVersionId: { $ref: "#/components/schemas/NullableUuid" }
+            benefitCalculationId: { $ref: "#/components/schemas/NullableUuid" }
+            amount: { $ref: "#/components/schemas/NullableDecimal" }
+            kpiValue: { $ref: "#/components/schemas/NullableDecimal" }
+            currency: { $ref: "#/components/schemas/Currency" }
+            inputs: { type: array, items: { $ref: "#/components/schemas/BenefitMeasurementInput" } }
+        evidence: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        measurementPeriod:
+          type: object
+          required: [start, end]
+          additionalProperties: false
+          properties:
+            start: { $ref: "#/components/schemas/BusinessDate" }
+            end: { $ref: "#/components/schemas/BusinessDate" }
+        assumptions: { type: [string, "null"] }
+    FinanceValidation:
+      type: object
+      description: FinanceValidation (REQ-S16-017) - a Finance queue item and its decision, or a Finance amendment or reversal linked to the original.
+      required: [id, benefitId, benefitMeasurementId, kind, correctsValidationId, assigneeUserId, status, content, items, approvedAmount, decisionNote, decidedBy, decidedAt, reason, version, createdAt, createdBy, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        benefitId: { $ref: "#/components/schemas/Uuid" }
+        benefitMeasurementId: { $ref: "#/components/schemas/Uuid" }
+        kind: { type: string, enum: [validation, amendment, reversal] }
+        correctsValidationId: { $ref: "#/components/schemas/NullableUuid" }
+        assigneeUserId: { $ref: "#/components/schemas/NullableUuid", description: "null = the transformation's FIN party." }
+        status: { type: string, enum: [queued, approved, rejected, withdrawn] }
+        content: { $ref: "#/components/schemas/FinanceValidationContent" }
+        items:
+          type: object
+          required: [baseline, attribution, calculation, evidence, measurementPeriod, assumptions]
+          additionalProperties: false
+          description: The six item decisions; null while queued.
+          properties:
+            baseline: { oneOf: [{ $ref: "#/components/schemas/FinanceValidationItemDecision" }, { type: "null" }] }
+            attribution: { oneOf: [{ $ref: "#/components/schemas/FinanceValidationItemDecision" }, { type: "null" }] }
+            calculation: { oneOf: [{ $ref: "#/components/schemas/FinanceValidationItemDecision" }, { type: "null" }] }
+            evidence: { oneOf: [{ $ref: "#/components/schemas/FinanceValidationItemDecision" }, { type: "null" }] }
+            measurementPeriod: { oneOf: [{ $ref: "#/components/schemas/FinanceValidationItemDecision" }, { type: "null" }] }
+            assumptions: { oneOf: [{ $ref: "#/components/schemas/FinanceValidationItemDecision" }, { type: "null" }] }
+        approvedAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        decisionNote: { type: [string, "null"] }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    FinanceValidationDecision:
+      type: object
+      required: [decision, items]
+      additionalProperties: false
+      description: "A decision on each of the six items is required; a missing item (e.g. measurementPeriod) is refused with 422 finance_validation.content_incomplete (REQ-S08-015)."
+      properties:
+        decision: { type: string, enum: [approved, rejected] }
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            baseline: { $ref: "#/components/schemas/FinanceValidationItemDecision" }
+            attribution: { $ref: "#/components/schemas/FinanceValidationItemDecision" }
+            calculation: { $ref: "#/components/schemas/FinanceValidationItemDecision" }
+            evidence: { $ref: "#/components/schemas/FinanceValidationItemDecision" }
+            measurementPeriod: { $ref: "#/components/schemas/FinanceValidationItemDecision" }
+            assumptions: { $ref: "#/components/schemas/FinanceValidationItemDecision" }
+        approvedAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        note: { type: string, minLength: 1, maxLength: 2000, description: "Required to reject." }
+    FinanceValidationAmendment:
+      type: object
+      required: [correctedAmount, reason]
+      additionalProperties: false
+      properties:
+        correctedAmount: { $ref: "#/components/schemas/Decimal" }
+        reason: { $ref: "#/components/schemas/Reason" }
+    BenefitTotalLine:
+      type: object
+      required: [valueClass, state, total, count]
+      additionalProperties: false
+      properties:
+        valueClass: { type: string, enum: [revenue_uplift, margin_uplift, cash_saving, avoided_cost, working_capital_release, non_financial_valued] }
+        state: { $ref: "#/components/schemas/BenefitValueState" }
+        total: { $ref: "#/components/schemas/BenefitAmount" }
+        count: { type: integer, minimum: 0 }
+    BenefitTotalsCurrency:
+      type: object
+      required: [currency, lines, pendingOverlap, gross, implementationCost, net]
+      additionalProperties: false
+      properties:
+        currency: { $ref: "#/components/schemas/Currency" }
+        lines: { type: array, items: { $ref: "#/components/schemas/BenefitTotalLine" } }
+        pendingOverlap: { type: array, items: { $ref: "#/components/schemas/BenefitTotalLine" }, description: "Validated and sustained values of benefits with an open overlap warning; never in the validated lines (REQ-S08-014)." }
+        gross:
+          type: object
+          required: [planned, validated]
+          additionalProperties: false
+          properties:
+            planned: { $ref: "#/components/schemas/BenefitAmount" }
+            validated: { $ref: "#/components/schemas/BenefitAmount" }
+        implementationCost:
+          type: object
+          required: [cash, nonCash, total]
+          additionalProperties: false
+          description: Each business-case investment line once (REQ-S08-011).
+          properties:
+            cash: { $ref: "#/components/schemas/BenefitAmount" }
+            nonCash: { $ref: "#/components/schemas/BenefitAmount" }
+            total: { $ref: "#/components/schemas/BenefitAmount" }
+        net:
+          type: object
+          required: [planned, validated]
+          additionalProperties: false
+          properties:
+            planned: { $ref: "#/components/schemas/BenefitAmount" }
+            validated: { $ref: "#/components/schemas/BenefitAmount" }
+    BenefitTotals:
+      type: object
+      required: [scope, scopeId, allocated, transformationIds, currencies, nonFinancialCount, excluded, computedAt]
+      additionalProperties: false
+      description: Totals counted once (ADR-0030 §7). Currencies are never converted. A state with no values is a known 0 with count 0; a missing input is unknown, never 0.
+      properties:
+        scope: { type: string, enum: [transformation, initiative, organization] }
+        scopeId: { $ref: "#/components/schemas/Uuid" }
+        allocated: { type: boolean, description: "true for an initiative view: amounts are share x value, labelled allocated, and never added to a transformation total." }
+        transformationIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        currencies: { type: array, items: { $ref: "#/components/schemas/BenefitTotalsCurrency" } }
+        nonFinancialCount: { type: integer, minimum: 0, description: "Non-financial benefits without a valuation method: Value n/a, not part of any SAR line." }
+        excluded:
+          type: array
+          items:
+            type: object
+            required: [benefitId, code, reason]
+            additionalProperties: false
+            properties:
+              benefitId: { $ref: "#/components/schemas/Uuid" }
+              code: { type: string }
+              reason: { type: string, enum: [archived, parent_rollup, group_counted_member_not_named, group_member_not_counted, overlap_duplicate] }
+        computedAt: { $ref: "#/components/schemas/Timestamp" }
+    BenefitRegisterPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitRegisterRow" } }
+        nextCursor: { type: [string, "null"] }
+    BenefitEnablerPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitEnabler" } }
+        nextCursor: { type: [string, "null"] }
+    BenefitGroupPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitGroup" } }
+        nextCursor: { type: [string, "null"] }
+    BenefitOverlapPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitOverlap" } }
+        nextCursor: { type: [string, "null"] }
+    BenefitScenarioPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitScenario" } }
+        nextCursor: { type: [string, "null"] }
+    BenefitValuationMethodPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitValuationMethod" } }
+        nextCursor: { type: [string, "null"] }
+    BenefitMeasurementPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BenefitMeasurement" } }
+        nextCursor: { type: [string, "null"] }
+    FinanceValidationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FinanceValidation" } }
         nextCursor: { type: [string, "null"] }

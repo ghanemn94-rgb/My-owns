@@ -135,6 +135,54 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0037-0038: the P4 slice B guards are attached (deferred audit and Finance-decision checks, append-only history)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('benefit_lifecycle_step_definition', 'benefit_valuation_method', 'benefit_group',
+         'benefit', 'benefit_enabler', 'benefit_lifecycle_event', 'benefit_allocation', 'benefit_scenario', 'benefit_scenario_value',
+         'benefit_plan_value', 'benefit_measurement', 'benefit_measurement_input', 'benefit_evidence', 'finance_validation',
+         'benefit_overlap')
+         AND t.tgname NOT LIKE '%_row_guard'
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["benefit", "benefit_audit_required", true, true],
+      ["benefit", "benefit_guard", false, false],
+      ["benefit", "benefit_lifecycle_history", false, false],
+      ["benefit", "benefit_value_lock_guard", false, false],
+      ["benefit_allocation", "benefit_allocation_append_only", false, false],
+      ["benefit_allocation", "benefit_allocation_append_only_truncate", false, false],
+      ["benefit_allocation", "benefit_allocation_guard", false, false],
+      ["benefit_enabler", "benefit_enabler_audit_required", true, true],
+      ["benefit_enabler", "benefit_enabler_guard", false, false],
+      ["benefit_evidence", "benefit_evidence_append_only", false, false],
+      ["benefit_evidence", "benefit_evidence_append_only_truncate", false, false],
+      ["benefit_evidence", "benefit_evidence_guard", false, false],
+      ["benefit_group", "benefit_group_audit_required", true, true],
+      ["benefit_group", "benefit_group_guard", false, false],
+      ["benefit_lifecycle_event", "benefit_lifecycle_event_append_only", false, false],
+      ["benefit_lifecycle_event", "benefit_lifecycle_event_append_only_truncate", false, false],
+      ["benefit_measurement", "benefit_measurement_audit_required", true, true],
+      ["benefit_measurement", "benefit_measurement_decision_present", true, true],
+      ["benefit_measurement", "benefit_measurement_guard", false, false],
+      ["benefit_measurement_input", "benefit_measurement_input_append_only", false, false],
+      ["benefit_measurement_input", "benefit_measurement_input_append_only_truncate", false, false],
+      ["benefit_measurement_input", "benefit_measurement_input_guard", false, false],
+      ["benefit_overlap", "benefit_overlap_audit_required", true, true],
+      ["benefit_overlap", "benefit_overlap_guard", false, false],
+      ["benefit_plan_value", "benefit_plan_value_audit_required", true, true],
+      ["benefit_plan_value", "benefit_plan_value_guard", false, false],
+      ["benefit_scenario", "benefit_scenario_audit_required", true, true],
+      ["benefit_scenario_value", "benefit_scenario_value_audit_required", true, true],
+      ["benefit_scenario_value", "benefit_scenario_value_guard", false, false],
+      ["benefit_valuation_method", "benefit_valuation_method_audit_required", true, true],
+      ["benefit_valuation_method", "benefit_valuation_method_guard", false, false],
+      ["finance_validation", "finance_validation_audit_required", true, true],
+      ["finance_validation", "finance_validation_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -257,6 +305,17 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "kpi_actual",
       "data_quality_finding",
       "rag_override",
+      // P4 slice B (0037-0040, T-DG4-ARCH-03; ADR-0029, ADR-0030).
+      "benefit_valuation_method",
+      "benefit_group",
+      "benefit",
+      "benefit_enabler",
+      "benefit_scenario",
+      "benefit_scenario_value",
+      "benefit_plan_value",
+      "benefit_measurement",
+      "finance_validation",
+      "benefit_overlap",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -418,6 +477,25 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       kpi_evaluation: "INSERT,SELECT",
       data_quality_finding: SIU,
       rag_override: SIU,
+      // P4 slice B (0037-0040): still no DELETE anywhere; lifecycle history, allocations, lineage inputs and evidence
+      // links are append-only (INSERT,SELECT); the step definitions and the two value views are read-only.
+      benefit_lifecycle_step_definition: "SELECT",
+      benefit_valuation_method: SIU,
+      benefit_group: SIU,
+      benefit: SIU,
+      benefit_enabler: SIU,
+      benefit_lifecycle_event: "INSERT,SELECT",
+      benefit_allocation: "INSERT,SELECT",
+      benefit_scenario: SIU,
+      benefit_scenario_value: SIU,
+      benefit_plan_value: SIU,
+      benefit_measurement: SIU,
+      benefit_measurement_input: "INSERT,SELECT",
+      benefit_evidence: "INSERT,SELECT",
+      finance_validation: SIU,
+      benefit_overlap: SIU,
+      benefit_counting: "SELECT",
+      benefit_value_line: "SELECT",
     });
   });
 

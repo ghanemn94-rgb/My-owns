@@ -5057,3 +5057,781 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slice A schemas), free-text rules (`freeText`/`hasText`), strict UTF-8, request media types, `If-Match`, decimal strings |
 | Service | Permissions and record-level rules (owner/steward/assignee submits; configured reviewer accepts; not the submitter), commit-time re-authorization, formula validation on the DG3 engine and the unit match, evidence rule, the exact refusal codes and English texts of ADR-0027 §13 |
 | Worker | One run per trigger (`runOnce` + unique trigger key), evaluations per ADR-0028, data-quality findings, `kpi.deviation_evaluated` and `kpi.values_recalculated` outbox events |
+
+# P4 tables, slice B (migrations 0037–0040, DG4)
+
+Written by T-DG4-ARCH-03 (solution-architect), 2026-10-09. Binding design: ADR-0029 (register, lifecycle, enablers, allocations, groups, overlaps, scenarios, valuation methods) and ADR-0030 (values, measurements, Finance validation, corrections, value states, totals). The table sections below are generated from the catalogue of a freshly migrated disposable PostgreSQL 16 by `docs/delivery/handbacks/DG4/T-DG4-ARCH-03-evidence/gen-dictionary.ts`, so they match the migrations exactly. Every money column is numeric(20,4), every KPI/baseline value numeric(24,6), every share numeric(7,6); NULL is Unknown (or n/a for a non-financial Value (SAR)), never 0.
+
+## benefit_lifecycle_step_definition
+
+- **Purpose:** The six B0121 lifecycle steps with their question and output, seeded verbatim in English; Arabic provisional (REQ-PB-074; ADR-0029 §2).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** seed only (read-only for the application). **Lifecycle:** reference data.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| code | text | NOT NULL |  | `CHECK ((code = ANY (ARRAY['identify', 'plan', 'enable', 'measure', 'correct', 'sustain'])))`; PK |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 6)))` |
+| step_en | text | NOT NULL |  | `CHECK (((char_length(step_en) >= 1) AND (char_length(step_en) <= 50)))` |
+| question_en | text | NOT NULL |  | `CHECK (((char_length(question_en) >= 1) AND (char_length(question_en) <= 200)))` |
+| output_en | text | NOT NULL |  | `CHECK (((char_length(output_en) >= 1) AND (char_length(output_en) <= 200)))` |
+| step_ar | text | NOT NULL |  | `CHECK (((char_length(step_ar) >= 1) AND (char_length(step_ar) <= 50)))` |
+| question_ar | text | NOT NULL |  | `CHECK (((char_length(question_ar) >= 1) AND (char_length(question_ar) <= 200)))` |
+| output_ar | text | NOT NULL |  | `CHECK (((char_length(output_ar) >= 1) AND (char_length(output_ar) <= 200)))` |
+| ar_is_provisional | boolean | NOT NULL | `true` |  |
+| source_ref | text | NOT NULL |  | `CHECK ((source_ref = 'B0121'))` |
+
+**Table constraints:**
+
+- `benefit_lifecycle_step_definition_ordinal_key` (UNIQUE): `UNIQUE (ordinal)`
+
+## benefit_valuation_method
+
+- **Purpose:** A method that values a non-financial benefit in SAR (REQ-S08-010; ADR-0029 §8). Only an approved method lets a non-financial benefit carry an amount.
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit.edit` proposes (TL, BO); `finance.validate` (FIN) decides, never the proposer. **Lifecycle:** proposed → approved | rejected; approved → retired.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^VM-[0-9]{2,6}$'))` |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 300)))` |
+| method | text | NOT NULL |  | `CHECK (((char_length(method) >= 1) AND (char_length(method) <= 8000)))` |
+| applies_to_type | text | NOT NULL |  | `CHECK ((applies_to_type = ANY (ARRAY['cx', 'risk', 'strategic', 'other'])))` |
+| kpi_definition_id | uuid | NULL |  |  |
+| unit_value | numeric(20,4) | NULL |  | `CHECK (((unit_value IS NULL) OR (unit_value >= (0)::numeric)))` |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| status | text | NOT NULL | `'proposed'` | `CHECK ((status = ANY (ARRAY['proposed', 'approved', 'rejected', 'retired'])))` |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decision_note | text | NULL |  | `CHECK (((decision_note IS NULL) OR ((char_length(decision_note) >= 1) AND (char_length(decision_note) <= 2000))))` |
+| retired_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_valuation_method_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `benefit_valuation_method_decider_not_proposer` (CHECK): `CHECK (((decided_by IS NULL) OR (decided_by <> created_by)))`
+- `benefit_valuation_method_decision_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'rejected', 'retired'])) = (decided_by IS NOT NULL)) AND ((decided_by IS NULL) = (decided_at IS NULL)) AND ((status <> 'rejected') OR (decision_note IS NOT NULL)) AND ((status = 'retired') = (retired_at IS NOT NULL))))`
+- `benefit_valuation_method_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_valuation_method_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `benefit_valuation_method_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_valuation_method_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_valuation_method_guard()`
+- `benefit_valuation_method_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_group
+
+- **Purpose:** A shared-benefit group (REQ-PB-058, M0173): exactly the named counted member is counted; while none is named no member is counted (ADR-0029 §6).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit_group.manage` (TL, BO). **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^BG-[0-9]{2,6}$'))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 4000))))` |
+| counted_benefit_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_group_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `benefit_group_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `benefit_group_counted_fkey` (FK): `FOREIGN KEY (transformation_id, counted_benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_group_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `benefit_group_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_group_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_group_guard()`
+- `benefit_group_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit
+
+- **Purpose:** Benefit (REQ-S16-017): one canonical T14 register row with the REQ-S08-003 profile, one owner, one value class and currency, and the six-step lifecycle whose source outputs are preconditions (REQ-PB-058, REQ-PB-074, REQ-PB-075, REQ-PB-076; ADR-0029 §1-§2).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit.edit` (TL, BO); `benefit.advance` (BO) for the step; `benefit.allocate` (TL, BO) for allocation_set_no; `finance.validate` (FIN) for the baseline validation. **Lifecycle:** identify → plan → enable → measure ⇄ correct; measure → sustain; active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^B[0-9]{2,6}$'))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| description | text | NOT NULL |  | `CHECK (((char_length(description) >= 1) AND (char_length(description) <= 8000)))` |
+| benefit_type | text | NOT NULL |  | `CHECK ((benefit_type = ANY (ARRAY['revenue', 'cost', 'working_capital', 'cx', 'risk', 'strategic', 'other'])))` |
+| value_class | text | NOT NULL |  | `CHECK ((value_class = ANY (ARRAY['revenue_uplift', 'margin_uplift', 'cash_saving', 'avoided_cost', 'working_capital_release', 'non_financial'])))` |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| finance_validator_user_id | uuid | NULL |  | FK → app_user(id) |
+| finance_validation_required | boolean | NOT NULL | `true` |  |
+| financial_statement_line | text | NULL |  | `CHECK (((financial_statement_line IS NULL) OR ((char_length(financial_statement_line) >= 1) AND (char_length(financial_statement_line) <= 200))))` |
+| measurement_kpi_definition_id | uuid | NULL |  |  |
+| measurement_kpi_variable | text | NULL |  | `CHECK (((measurement_kpi_variable IS NULL) OR (measurement_kpi_variable ~ '^[a-z][a-z0-9_]{0,47}$')))` |
+| business_case_line_id | uuid | NULL |  | FK → business_case_line(id) |
+| benefit_formula_id | uuid | NULL |  |  |
+| baseline_id | uuid | NULL |  |  |
+| baseline_value | numeric(24,6) | NULL |  |  |
+| baseline_unit | text | NULL |  | `CHECK (((baseline_unit IS NULL) OR ((char_length(baseline_unit) >= 1) AND (char_length(baseline_unit) <= 50))))` |
+| baseline_date | date | NULL |  |  |
+| counterfactual | text | NULL |  | `CHECK (((counterfactual IS NULL) OR ((char_length(counterfactual) >= 1) AND (char_length(counterfactual) <= 4000))))` |
+| baseline_validation_status | text | NOT NULL | `'unvalidated'` | `CHECK ((baseline_validation_status = ANY (ARRAY['unvalidated', 'validated', 'rejected'])))` |
+| baseline_validated_by | uuid | NULL |  | FK → app_user(id) |
+| baseline_validated_at | timestamp with time zone | NULL |  |  |
+| baseline_validation_note | text | NULL |  | `CHECK (((baseline_validation_note IS NULL) OR ((char_length(baseline_validation_note) >= 1) AND (char_length(baseline_validation_note) <= 2000))))` |
+| driver_key | text | NULL |  | `CHECK (((driver_key IS NULL) OR (driver_key ~ '^[a-z0-9][a-z0-9_.:-]{0,99}$')))` |
+| driver_units | text | NULL |  | `CHECK (((driver_units IS NULL) OR ((char_length(driver_units) >= 1) AND (char_length(driver_units) <= 100))))` |
+| population_key | text | NULL |  | `CHECK (((population_key IS NULL) OR (population_key ~ '^[a-z0-9][a-z0-9_.:-]{0,99}$')))` |
+| target_value | numeric(24,6) | NULL |  |  |
+| target_date | date | NULL |  |  |
+| realization_start | date | NULL |  |  |
+| realization_end | date | NULL |  |  |
+| recurrence | text | NULL |  | `CHECK (((recurrence IS NULL) OR (recurrence = ANY (ARRAY['one_off', 'recurring']))))` |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| planned_value | numeric(20,4) | NULL |  |  |
+| valuation_method_id | uuid | NULL |  |  |
+| measurement_source | text | NULL |  | `CHECK (((measurement_source IS NULL) OR ((char_length(measurement_source) >= 1) AND (char_length(measurement_source) <= 500))))` |
+| confidence | character(1) | NULL |  | `CHECK (((confidence IS NULL) OR (confidence = ANY (ARRAY['H'::bpchar, 'M'::bpchar, 'L'::bpchar]))))` |
+| assumptions | text | NULL |  | `CHECK (((assumptions IS NULL) OR ((char_length(assumptions) >= 1) AND (char_length(assumptions) <= 8000))))` |
+| parent_benefit_id | uuid | NULL |  |  |
+| benefit_group_id | uuid | NULL |  |  |
+| allocation_set_no | smallint | NOT NULL | `0` | `CHECK ((allocation_set_no >= 0))` |
+| lifecycle_step | text | NOT NULL | `'identify'` | `CHECK ((lifecycle_step = ANY (ARRAY['identify', 'plan', 'enable', 'measure', 'correct', 'sustain'])))` |
+| recovery_plan | text | NULL |  | `CHECK (((recovery_plan IS NULL) OR ((char_length(recovery_plan) >= 1) AND (char_length(recovery_plan) <= 8000))))` |
+| bau_owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| control_cadence | text | NULL |  | `CHECK (((control_cadence IS NULL) OR (control_cadence = ANY (ARRAY['monthly', 'quarterly', 'semiannual', 'annual']))))` |
+| status_rag | text | NULL |  | `CHECK (((status_rag IS NULL) OR (status_rag = ANY (ARRAY['green', 'amber', 'red']))))` |
+| status_rag_note | text | NULL |  | `CHECK (((status_rag_note IS NULL) OR ((char_length(status_rag_note) >= 1) AND (char_length(status_rag_note) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `benefit_baseline_fkey` (FK): `FOREIGN KEY (transformation_id, baseline_id) REFERENCES baseline(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_baseline_validation_complete` (CHECK): `CHECK ((((baseline_validation_status = 'unvalidated') = (baseline_validated_by IS NULL)) AND ((baseline_validated_by IS NULL) = (baseline_validated_at IS NULL)) AND ((baseline_validation_status <> 'rejected') OR (baseline_validation_note IS NOT NULL)) AND ((baseline_validation_status = 'unvalidated') OR (baseline_value IS NOT NULL) OR (baseline_id IS NOT NULL))))`
+- `benefit_baseline_validator_not_owner` (CHECK): `CHECK (((baseline_validated_by IS NULL) OR (baseline_validated_by <> owner_user_id)))`
+- `benefit_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `benefit_correct_output_present` (CHECK): `CHECK (((lifecycle_step <> 'correct') OR (recovery_plan IS NOT NULL)))`
+- `benefit_financial_needs_validation` (CHECK): `CHECK (((value_class = 'non_financial') OR finance_validation_required))`
+- `benefit_formula_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_formula_id) REFERENCES benefit_formula(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_group_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_group_id) REFERENCES benefit_group(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, measurement_kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_kpi_required` (CHECK): `CHECK (((value_class <> 'non_financial') OR (measurement_kpi_definition_id IS NOT NULL)))`
+- `benefit_kpi_variable_bound` (CHECK): `CHECK (((measurement_kpi_variable IS NULL) OR ((measurement_kpi_definition_id IS NOT NULL) AND (benefit_formula_id IS NOT NULL))))`
+- `benefit_mapping_required` (CHECK): `CHECK (((value_class = 'non_financial') OR (financial_statement_line IS NOT NULL)))`
+- `benefit_non_financial_unmonetised` (CHECK): `CHECK (((value_class <> 'non_financial') OR (planned_value IS NULL) OR (valuation_method_id IS NOT NULL)))`
+- `benefit_not_own_parent` (CHECK): `CHECK (((parent_benefit_id IS NULL) OR (parent_benefit_id <> id)))`
+- `benefit_parent_fkey` (FK): `FOREIGN KEY (transformation_id, parent_benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_plan_outputs_present` (CHECK): `CHECK (((lifecycle_step = ANY (ARRAY['identify', 'plan'])) OR (((baseline_value IS NOT NULL) OR (baseline_id IS NOT NULL)) AND (target_value IS NOT NULL) AND ((benefit_formula_id IS NOT NULL) OR (value_class = 'non_financial')))))`
+- `benefit_realization_range` (CHECK): `CHECK (((realization_end IS NULL) OR (realization_start IS NULL) OR (realization_end >= realization_start)))`
+- `benefit_sustain_outputs_present` (CHECK): `CHECK (((lifecycle_step <> 'sustain') OR ((bau_owner_user_id IS NOT NULL) AND (control_cadence IS NOT NULL))))`
+- `benefit_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `benefit_type_fits_class` (CHECK): `CHECK ((((benefit_type = 'revenue') AND (value_class = ANY (ARRAY['revenue_uplift', 'margin_uplift']))) OR ((benefit_type = 'cost') AND (value_class = ANY (ARRAY['cash_saving', 'avoided_cost']))) OR ((benefit_type = 'working_capital') AND (value_class = 'working_capital_release')) OR ((benefit_type = 'risk') AND (value_class = ANY (ARRAY['avoided_cost', 'non_financial']))) OR ((benefit_type = ANY (ARRAY['cx', 'strategic', 'other'])) AND (value_class = 'non_financial'))))`
+- `benefit_validator_not_owner` (CHECK): `CHECK (((finance_validator_user_id IS NULL) OR (finance_validator_user_id <> owner_user_id)))`
+- `benefit_valuation_method_fkey` (FK): `FOREIGN KEY (transformation_id, valuation_method_id) REFERENCES benefit_valuation_method(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_valuation_only_non_financial` (CHECK): `CHECK (((valuation_method_id IS NULL) OR (value_class = 'non_financial')))`
+
+**Indexes:**
+
+- `benefit_driver_idx`: `(transformation_id, driver_key) WHERE ((driver_key IS NOT NULL) AND (status = 'active'))`
+- `benefit_group_idx`: `(benefit_group_id) WHERE (benefit_group_id IS NOT NULL)`
+- `benefit_one_case_line_key`: `UNIQUE (business_case_line_id) WHERE ((business_case_line_id IS NOT NULL) AND (status = 'active'))`
+- `benefit_parent_idx`: `(parent_benefit_id) WHERE (parent_benefit_id IS NOT NULL)`
+- `benefit_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `benefit_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_guard()`
+- `benefit_lifecycle_history`: AFTER INSERT OR UPDATE OF lifecycle_step FOR EACH ROW → `benefit_lifecycle_history()`
+- `benefit_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `benefit_value_lock_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_value_lock_guard()`
+
+## benefit_enabler
+
+- **Purpose:** The Enable output: the initiative (and optionally its deliverable or a capability) a benefit depends on; delivered when the deliverable is accepted or the initiative completed; never realized value (REQ-S08-002; ADR-0029 §3).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit.edit` (TL, BO). **Lifecycle:** active → removed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| initiative_id | uuid | NOT NULL |  |  |
+| deliverable_id | uuid | NULL |  |  |
+| capability_id | uuid | NULL |  |  |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'removed'])))` |
+| removed_at | timestamp with time zone | NULL |  |  |
+| removed_by | uuid | NULL |  | FK → app_user(id) |
+| remove_reason | text | NULL |  | `CHECK (((remove_reason IS NULL) OR ((char_length(remove_reason) >= 3) AND (char_length(remove_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_enabler_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_enabler_capability_fkey` (FK): `FOREIGN KEY (transformation_id, capability_id) REFERENCES capability(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_enabler_deliverable_fkey` (FK): `FOREIGN KEY (transformation_id, deliverable_id) REFERENCES deliverable(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_enabler_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_enabler_removal_complete` (CHECK): `CHECK ((((status = 'removed') = (removed_at IS NOT NULL)) AND ((removed_at IS NULL) = (removed_by IS NULL)) AND ((removed_at IS NULL) = (remove_reason IS NULL))))`
+
+**Indexes:**
+
+- `benefit_enabler_active_key`: `UNIQUE (benefit_id, initiative_id, COALESCE(deliverable_id, '00000000-0000-0000-0000-000000000000'::uuid), COALESCE(capability_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `benefit_enabler_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_enabler_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_enabler_guard()`
+- `benefit_enabler_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_lifecycle_event
+
+- **Purpose:** Append-only history of a benefit's lifecycle steps, written only by the trigger benefit_lifecycle_history (ADR-0029 §2).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** trigger on benefit (actor = benefit.updated_by). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| from_step | text | NULL |  | `CHECK (((from_step IS NULL) OR (from_step = ANY (ARRAY['identify', 'plan', 'enable', 'measure', 'correct', 'sustain']))))` |
+| to_step | text | NOT NULL |  | `CHECK ((to_step = ANY (ARRAY['identify', 'plan', 'enable', 'measure', 'correct', 'sustain'])))` |
+| benefit_version | integer | NOT NULL |  | `CHECK ((benefit_version >= 1))` |
+| occurred_at | timestamp with time zone | NOT NULL | `now()` |  |
+| actor_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_lifecycle_event_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_lifecycle_event_version_key` (UNIQUE): `UNIQUE (benefit_id, benefit_version)`
+
+**Triggers:**
+
+- `benefit_lifecycle_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `benefit_lifecycle_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `benefit_lifecycle_event_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_allocation
+
+- **Purpose:** BenefitAllocation (REQ-S16-017): contribution shares of one canonical benefit to initiatives, per allocation set; at most 1 (100 %) in total under lock 730232; the rest is unallocated (REQ-S08-013; ADR-0029 §5). Totals never sum allocations.
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit.allocate` (TL, BO), with the benefit's set number step. **Lifecycle:** append-only; the set in force is benefit.allocation_set_no.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| set_no | smallint | NOT NULL |  |  |
+| initiative_id | uuid | NOT NULL |  |  |
+| share | numeric(7,6) | NOT NULL |  | `CHECK (((share > (0)::numeric) AND (share <= (1)::numeric)))` |
+| basis | text | NULL |  | `CHECK (((basis IS NULL) OR ((char_length(basis) >= 1) AND (char_length(basis) <= 1000))))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_allocation_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_allocation_initiative_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_allocation_initiative_key` (UNIQUE): `UNIQUE (benefit_id, set_no, initiative_id)`
+- `benefit_allocation_set_no_check1` (CHECK): `CHECK ((set_no >= 1))`
+
+**Triggers:**
+
+- `benefit_allocation_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `benefit_allocation_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `benefit_allocation_guard`: BEFORE INSERT FOR EACH ROW → `benefit_allocation_guard()`
+- `benefit_allocation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_scenario
+
+- **Purpose:** Scenario (REQ-S16-017, REQ-S08-018): base, upside or downside of one transformation; one active per kind (ADR-0029 §10).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit_scenario.edit` (TL, FIN). **Lifecycle:** active → archived.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| business_case_id | uuid | NULL |  |  |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['base', 'upside', 'downside'])))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 300)))` |
+| assumptions | text | NULL |  | `CHECK (((assumptions IS NULL) OR ((char_length(assumptions) >= 1) AND (char_length(assumptions) <= 8000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_scenario_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `benefit_scenario_case_fkey` (FK): `FOREIGN KEY (transformation_id, business_case_id) REFERENCES business_case(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_scenario_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `benefit_scenario_one_kind_key`: `UNIQUE (transformation_id, kind) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `benefit_scenario_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_scenario_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_scenario_value
+
+- **Purpose:** A scenario value of one benefit and period; never read by an actual, realized or validated total (REQ-S08-018).
+- **Migration:** `0037_p4_benefit_register.sql`. **API module:** `benefits`. **Who writes:** `benefit_scenario.edit` (TL, FIN). **Lifecycle:** mutable (versioned).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| scenario_id | uuid | NOT NULL |  |  |
+| benefit_id | uuid | NOT NULL |  |  |
+| period_start | date | NOT NULL |  |  |
+| period_end | date | NOT NULL |  |  |
+| amount | numeric(20,4) | NULL |  |  |
+| kpi_value | numeric(24,6) | NULL |  |  |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_scenario_value_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_scenario_value_period_key` (UNIQUE): `UNIQUE (scenario_id, benefit_id, period_start)`
+- `benefit_scenario_value_period_range` (CHECK): `CHECK ((period_end >= period_start))`
+- `benefit_scenario_value_present` (CHECK): `CHECK ((num_nonnulls(amount, kpi_value) >= 1))`
+- `benefit_scenario_value_scenario_fkey` (FK): `FOREIGN KEY (transformation_id, scenario_id) REFERENCES benefit_scenario(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `benefit_scenario_value_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_scenario_value_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_scenario_value_guard()`
+- `benefit_scenario_value_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_plan_value
+
+- **Purpose:** The planned and forecast value series of a benefit per period (REQ-S08-001; ADR-0030 §1).
+- **Migration:** `0038_p4_benefit_measurement_validation.sql`. **API module:** `benefits`. **Who writes:** `benefit.edit` (TL, BO). **Lifecycle:** mutable (versioned).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| value_kind | text | NOT NULL |  | `CHECK ((value_kind = ANY (ARRAY['planned', 'forecast'])))` |
+| period_start | date | NOT NULL |  |  |
+| period_end | date | NOT NULL |  |  |
+| amount | numeric(20,4) | NULL |  |  |
+| kpi_value | numeric(24,6) | NULL |  |  |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_plan_value_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_plan_value_period_key` (UNIQUE): `UNIQUE (benefit_id, value_kind, period_start)`
+- `benefit_plan_value_period_range` (CHECK): `CHECK ((period_end >= period_start))`
+- `benefit_plan_value_present` (CHECK): `CHECK ((num_nonnulls(amount, kpi_value) >= 1))`
+- `benefit_plan_value_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `benefit_plan_value_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_plan_value_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_plan_value_guard()`
+- `benefit_plan_value_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_measurement
+
+- **Purpose:** BenefitMeasurement (REQ-S16-017): one measured value of a benefit for one period with its lineage, or a Finance amendment or reversal linked to the original validated value (REQ-S08-016, REQ-S08-017; ADR-0030 §2, §4). Validated only with the matching Finance decision (deferred check).
+- **Migration:** `0038_p4_benefit_measurement_validation.sql`. **API module:** `benefits`. **Who writes:** `benefit.measure` (BO, WL, KDS); the worker (`kpi_recalculation`, submitted_by NULL); `finance.validate` (FIN) decides and records corrections. **Lifecycle:** draft → submitted → validated | rejected | superseded (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| measurement_no | integer | NOT NULL |  | `CHECK ((measurement_no >= 1))` |
+| kind | text | NOT NULL | `'measurement'` | `CHECK ((kind = ANY (ARRAY['measurement', 'amendment', 'reversal'])))` |
+| corrects_measurement_id | uuid | NULL |  |  |
+| source | text | NOT NULL |  |  |
+| calculation_run_id | uuid | NULL |  |  |
+| benefit_calculation_id | uuid | NULL |  | FK → benefit_calculation(id) |
+| formula_version_id | uuid | NULL |  |  |
+| period_start | date | NULL |  |  |
+| period_end | date | NULL |  |  |
+| amount | numeric(20,4) | NULL |  |  |
+| kpi_value | numeric(24,6) | NULL |  |  |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| missing_reason | text | NULL |  | `CHECK (((missing_reason IS NULL) OR ((char_length(missing_reason) >= 3) AND (char_length(missing_reason) <= 1000))))` |
+| attribution | text | NULL |  | `CHECK (((attribution IS NULL) OR ((char_length(attribution) >= 1) AND (char_length(attribution) <= 4000))))` |
+| assumptions | text | NULL |  | `CHECK (((assumptions IS NULL) OR ((char_length(assumptions) >= 1) AND (char_length(assumptions) <= 8000))))` |
+| status | text | NOT NULL |  | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'validated', 'rejected', 'superseded'])))` |
+| sustain_phase | boolean | NOT NULL | `false` |  |
+| validated_amount | numeric(20,4) | NULL |  |  |
+| submitted_by | uuid | NULL |  | FK → app_user(id) |
+| submitted_at | timestamp with time zone | NULL |  |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| reason | text | NULL |  | `CHECK (((reason IS NULL) OR ((char_length(reason) >= 3) AND (char_length(reason) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_measurement_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_measurement_correction_shape` (CHECK): `CHECK (((kind = 'measurement') OR ((status = 'validated') AND (reason IS NOT NULL) AND (amount IS NOT NULL) AND (validated_amount = amount))))`
+- `benefit_measurement_corrects_fkey` (FK): `FOREIGN KEY (transformation_id, corrects_measurement_id) REFERENCES benefit_measurement(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_measurement_decided_stamps` (CHECK): `CHECK ((((status = ANY (ARRAY['validated', 'rejected'])) = (decided_at IS NOT NULL)) AND ((decided_at IS NULL) = (decided_by IS NULL))))`
+- `benefit_measurement_formula_version_fkey` (FK): `FOREIGN KEY (transformation_id, formula_version_id) REFERENCES benefit_formula_version(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_measurement_kind_shape` (CHECK): `CHECK ((((kind = 'measurement') = (corrects_measurement_id IS NULL)) AND ((kind = 'measurement') = (source <> 'correction'))))`
+- `benefit_measurement_missing_shape` (CHECK): `CHECK (((missing_reason IS NULL) OR ((amount IS NULL) AND (kpi_value IS NULL) AND (status <> 'validated'))))`
+- `benefit_measurement_no_key` (UNIQUE): `UNIQUE (benefit_id, measurement_no)`
+- `benefit_measurement_period_range` (CHECK): `CHECK (((period_end IS NULL) OR (period_start IS NULL) OR (period_end >= period_start)))`
+- `benefit_measurement_period_required` (CHECK): `CHECK (((status = 'draft') OR ((period_start IS NOT NULL) AND (period_end IS NOT NULL))))`
+- `benefit_measurement_run_fkey` (FK): `FOREIGN KEY (transformation_id, calculation_run_id) REFERENCES calculation_run(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_measurement_source_check1` (CHECK): `CHECK ((source = ANY (ARRAY['manual', 'kpi_recalculation', 'correction'])))`
+- `benefit_measurement_submitted_stamps` (CHECK): `CHECK ((((status = 'draft') = (submitted_at IS NULL)) AND ((submitted_at IS NULL) OR (submitted_by IS NOT NULL) OR (source = 'kpi_recalculation')) AND ((submitted_at IS NOT NULL) OR (submitted_by IS NULL))))`
+- `benefit_measurement_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `benefit_measurement_validated_amount` (CHECK): `CHECK ((((status = 'validated') AND (amount IS NOT NULL)) = (validated_amount IS NOT NULL)))`
+- `benefit_measurement_validator_not_submitter` (CHECK): `CHECK (((kind <> 'measurement') OR (decided_by IS NULL) OR (submitted_by IS NULL) OR (decided_by <> submitted_by)))`
+- `benefit_measurement_value_present` (CHECK): `CHECK (((kind <> 'measurement') OR (num_nonnulls(amount, kpi_value) >= 1) OR (missing_reason IS NOT NULL)))`
+
+**Indexes:**
+
+- `benefit_measurement_benefit_idx`: `(benefit_id, measurement_no DESC)`
+- `benefit_measurement_one_reversal_key`: `UNIQUE (corrects_measurement_id) WHERE (kind = 'reversal')`
+- `benefit_measurement_period_key`: `UNIQUE (benefit_id, period_start, period_end) WHERE ((kind = 'measurement') AND (status = ANY (ARRAY['draft', 'submitted', 'validated'])))`
+- `benefit_measurement_run_key`: `UNIQUE (benefit_id, calculation_run_id) WHERE (calculation_run_id IS NOT NULL)`
+
+**Triggers:**
+
+- `benefit_measurement_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_measurement_decision_present`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `benefit_measurement_decision_present()`
+- `benefit_measurement_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_measurement_guard()`
+- `benefit_measurement_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_measurement_input
+
+- **Purpose:** Calculation lineage: each formula variable bound to a KPI actual value version, with the value used; same period as the measurement (REQ-S08-006, REQ-S08-008; ADR-0030 §5).
+- **Migration:** `0038_p4_benefit_measurement_validation.sql`. **API module:** `benefits`. **Who writes:** in the measurement's transaction (API or worker). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| measurement_id | uuid | NOT NULL |  |  |
+| variable_name | text | NOT NULL |  | `CHECK ((variable_name ~ '^[a-z][a-z0-9_]{0,47}$'))` |
+| kpi_actual_id | uuid | NULL |  |  |
+| kpi_value_no | smallint | NULL |  |  |
+| value | numeric(24,6) | NOT NULL |  |  |
+| period_start | date | NOT NULL |  |  |
+| period_end | date | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_measurement_input_actual_fkey` (FK): `FOREIGN KEY (kpi_actual_id, kpi_value_no) REFERENCES kpi_actual_value(kpi_actual_id, value_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_measurement_input_actual_pair` (CHECK): `CHECK (((kpi_actual_id IS NULL) = (kpi_value_no IS NULL)))`
+- `benefit_measurement_input_measurement_fkey` (FK): `FOREIGN KEY (transformation_id, measurement_id) REFERENCES benefit_measurement(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_measurement_input_name_key` (UNIQUE): `UNIQUE (measurement_id, variable_name)`
+
+**Triggers:**
+
+- `benefit_measurement_input_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `benefit_measurement_input_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `benefit_measurement_input_guard`: BEFORE INSERT FOR EACH ROW → `benefit_measurement_input_guard()`
+- `benefit_measurement_input_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_evidence
+
+- **Purpose:** Evidence linked to a benefit (T14 Evidence) or to one of its draft or submitted measurements (ADR-0030 §3).
+- **Migration:** `0038_p4_benefit_measurement_validation.sql`. **API module:** `benefits`. **Who writes:** `benefit.edit` (benefit links), `benefit.measure` (measurement links). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| measurement_id | uuid | NULL |  |  |
+| evidence_id | uuid | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_evidence_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_evidence_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_evidence_measurement_fkey` (FK): `FOREIGN KEY (transformation_id, measurement_id) REFERENCES benefit_measurement(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:**
+
+- `benefit_evidence_link_key`: `UNIQUE (benefit_id, COALESCE(measurement_id, '00000000-0000-0000-0000-000000000000'::uuid), evidence_id)`
+
+**Triggers:**
+
+- `benefit_evidence_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `benefit_evidence_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `benefit_evidence_guard`: BEFORE INSERT FOR EACH ROW → `benefit_evidence_guard()`
+- `benefit_evidence_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## finance_validation
+
+- **Purpose:** FinanceValidation (REQ-S16-017): the Finance queue item of one submitted measurement (exactly one, REQ-S12-014) and its decision on the six REQ-S08-015 items, or a Finance amendment or reversal linked to the original (ADR-0030 §3-§4).
+- **Migration:** `0038_p4_benefit_measurement_validation.sql`. **API module:** `benefits (worker `benefits.finance_queue`)`. **Who writes:** the worker creates queue items (service actor); `finance.validate` (FIN) decides, never the submitter, and records corrections. **Lifecycle:** queued → approved | rejected | withdrawn (final); corrections are created approved.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_id | uuid | NOT NULL |  |  |
+| benefit_measurement_id | uuid | NOT NULL |  |  |
+| kind | text | NOT NULL | `'validation'` | `CHECK ((kind = ANY (ARRAY['validation', 'amendment', 'reversal'])))` |
+| corrects_validation_id | uuid | NULL |  |  |
+| idempotency_key | text | NOT NULL |  | `CHECK (((char_length(idempotency_key) >= 1) AND (char_length(idempotency_key) <= 200)))` |
+| assignee_user_id | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL |  | `CHECK ((status = ANY (ARRAY['queued', 'approved', 'rejected', 'withdrawn'])))` |
+| content | jsonb | NOT NULL |  |  |
+| measurement_period_start | date | NULL |  |  |
+| measurement_period_end | date | NULL |  |  |
+| baseline_decision | text | NULL |  | `CHECK (((baseline_decision IS NULL) OR (baseline_decision = ANY (ARRAY['accepted', 'rejected']))))` |
+| attribution_decision | text | NULL |  | `CHECK (((attribution_decision IS NULL) OR (attribution_decision = ANY (ARRAY['accepted', 'rejected']))))` |
+| calculation_decision | text | NULL |  | `CHECK (((calculation_decision IS NULL) OR (calculation_decision = ANY (ARRAY['accepted', 'rejected']))))` |
+| evidence_decision | text | NULL |  | `CHECK (((evidence_decision IS NULL) OR (evidence_decision = ANY (ARRAY['accepted', 'rejected']))))` |
+| period_decision | text | NULL |  | `CHECK (((period_decision IS NULL) OR (period_decision = ANY (ARRAY['accepted', 'rejected']))))` |
+| assumptions_decision | text | NULL |  | `CHECK (((assumptions_decision IS NULL) OR (assumptions_decision = ANY (ARRAY['accepted', 'rejected']))))` |
+| baseline_note | text | NULL |  | `CHECK (((baseline_note IS NULL) OR ((char_length(baseline_note) >= 1) AND (char_length(baseline_note) <= 2000))))` |
+| attribution_note | text | NULL |  | `CHECK (((attribution_note IS NULL) OR ((char_length(attribution_note) >= 1) AND (char_length(attribution_note) <= 2000))))` |
+| calculation_note | text | NULL |  | `CHECK (((calculation_note IS NULL) OR ((char_length(calculation_note) >= 1) AND (char_length(calculation_note) <= 2000))))` |
+| evidence_note | text | NULL |  | `CHECK (((evidence_note IS NULL) OR ((char_length(evidence_note) >= 1) AND (char_length(evidence_note) <= 2000))))` |
+| period_note | text | NULL |  | `CHECK (((period_note IS NULL) OR ((char_length(period_note) >= 1) AND (char_length(period_note) <= 2000))))` |
+| assumptions_note | text | NULL |  | `CHECK (((assumptions_note IS NULL) OR ((char_length(assumptions_note) >= 1) AND (char_length(assumptions_note) <= 2000))))` |
+| approved_amount | numeric(20,4) | NULL |  |  |
+| decision_note | text | NULL |  | `CHECK (((decision_note IS NULL) OR ((char_length(decision_note) >= 1) AND (char_length(decision_note) <= 2000))))` |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| reason | text | NULL |  | `CHECK (((reason IS NULL) OR ((char_length(reason) >= 3) AND (char_length(reason) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `finance_validation_all_items_accepted` (CHECK): `CHECK (((kind <> 'validation') OR (status <> 'approved') OR ((baseline_decision = 'accepted') AND (attribution_decision = 'accepted') AND (calculation_decision = 'accepted') AND (evidence_decision = 'accepted') AND (period_decision = 'accepted') AND (assumptions_decision = 'accepted'))))`
+- `finance_validation_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `finance_validation_content_complete` (CHECK): `CHECK (((jsonb_typeof(content) = 'object') AND (content ?& ARRAY['baseline', 'attribution', 'calculation', 'evidence', 'measurementPeriod', 'assumptions'])))`
+- `finance_validation_corrects_fkey` (FK): `FOREIGN KEY (transformation_id, corrects_validation_id) REFERENCES finance_validation(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `finance_validation_decided_stamps` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'rejected'])) = (decided_by IS NOT NULL)) AND ((decided_by IS NULL) = (decided_at IS NULL))))`
+- `finance_validation_idempotency_key` (UNIQUE): `UNIQUE (idempotency_key)`
+- `finance_validation_items_open` (CHECK): `CHECK (((status <> ALL (ARRAY['queued', 'withdrawn'])) OR (num_nonnulls(baseline_decision, attribution_decision, calculation_decision, evidence_decision, period_decision, assumptions_decision, approved_amount) = 0)))`
+- `finance_validation_kind_shape` (CHECK): `CHECK ((((kind = 'validation') = (corrects_validation_id IS NULL)) AND ((kind = 'validation') OR ((status = 'approved') AND (reason IS NOT NULL)))))`
+- `finance_validation_measurement_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_measurement_id) REFERENCES benefit_measurement(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `finance_validation_period_required` (CHECK): `CHECK (((measurement_period_start IS NOT NULL) AND (measurement_period_end IS NOT NULL) AND (measurement_period_end >= measurement_period_start)))`
+- `finance_validation_rejection_reason` (CHECK): `CHECK (((status <> 'rejected') OR ((decision_note IS NOT NULL) AND (num_nonnulls(baseline_decision, attribution_decision, calculation_decision, evidence_decision, period_decision, assumptions_decision) = 6) AND (((((('rejected' = baseline_decision) OR ('rejected' = attribution_decision)) OR ('rejected' = calculation_decision)) OR ('rejected' = evidence_decision)) OR ('rejected' = period_decision)) OR ('rejected' = assumptions_decision)))))`
+- `finance_validation_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `finance_validation_one_per_measurement`: `UNIQUE (benefit_measurement_id) WHERE (kind = 'validation')`
+- `finance_validation_queue_idx`: `(transformation_id, created_at) WHERE (status = 'queued')`
+
+**Triggers:**
+
+- `finance_validation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `finance_validation_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `finance_validation_guard()`
+- `finance_validation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_overlap
+
+- **Purpose:** An overlap warning between two benefits (same driver, population or period); both are excluded from validated totals until Finance resolves it (REQ-S08-014; ADR-0029 §7).
+- **Migration:** `0038_p4_benefit_measurement_validation.sql`. **API module:** `benefits`. **Who writes:** the overlap rule (lock 730234) or `benefit.edit` raises; `finance.validate` (FIN) resolves, not the owner of either benefit. **Lifecycle:** open → resolved (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| benefit_a_id | uuid | NOT NULL |  |  |
+| benefit_b_id | uuid | NOT NULL |  |  |
+| dimensions | text[] | NOT NULL |  | `CHECK (((cardinality(dimensions) >= 1) AND (dimensions <@ ARRAY['driver', 'population', 'period'])))` |
+| driver_key | text | NULL |  | `CHECK (((driver_key IS NULL) OR (driver_key ~ '^[a-z0-9][a-z0-9_.:-]{0,99}$')))` |
+| population_key | text | NULL |  | `CHECK (((population_key IS NULL) OR (population_key ~ '^[a-z0-9][a-z0-9_.:-]{0,99}$')))` |
+| overlap_start | date | NULL |  |  |
+| overlap_end | date | NULL |  |  |
+| detected_by | text | NOT NULL |  | `CHECK ((detected_by = ANY (ARRAY['rule', 'user'])))` |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'resolved'])))` |
+| resolution | text | NULL |  | `CHECK (((resolution IS NULL) OR (resolution = ANY (ARRAY['no_economic_overlap', 'duplicate']))))` |
+| excluded_benefit_id | uuid | NULL |  |  |
+| resolution_note | text | NULL |  | `CHECK (((resolution_note IS NULL) OR ((char_length(resolution_note) >= 3) AND (char_length(resolution_note) <= 4000))))` |
+| resolved_by | uuid | NULL |  | FK → app_user(id) |
+| resolved_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `benefit_overlap_a_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_a_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_overlap_b_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_b_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `benefit_overlap_pair_order` (CHECK): `CHECK ((benefit_a_id < benefit_b_id))`
+- `benefit_overlap_period_range` (CHECK): `CHECK (((overlap_end IS NULL) OR (overlap_start IS NULL) OR (overlap_end >= overlap_start)))`
+- `benefit_overlap_resolution_complete` (CHECK): `CHECK ((((status = 'resolved') = (resolution IS NOT NULL)) AND ((resolution IS NULL) = (resolved_by IS NULL)) AND ((resolved_by IS NULL) = (resolved_at IS NULL)) AND ((resolution IS NULL) = (resolution_note IS NULL)) AND ((resolution = 'duplicate') = (excluded_benefit_id IS NOT NULL)) AND ((excluded_benefit_id IS NULL) OR ((excluded_benefit_id = benefit_a_id) OR (excluded_benefit_id = benefit_b_id)))))`
+- `benefit_overlap_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `benefit_overlap_one_open_key`: `UNIQUE (benefit_a_id, benefit_b_id) WHERE (status = 'open')`
+- `benefit_overlap_transformation_idx`: `(transformation_id, status, created_at DESC)`
+
+**Triggers:**
+
+- `benefit_overlap_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `benefit_overlap_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `benefit_overlap_guard()`
+- `benefit_overlap_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## benefit_counting
+
+- **Purpose:** View: whether each benefit's values may enter a total (counted), why not (exclusion_reason) and whether an overlap warning is open (ADR-0029 §6, ADR-0030 §7).
+- **Migration:** `0039_p4_benefit_value_views.sql`. **API module:** `benefits (read model)`. **Who writes:** none (view). **Lifecycle:** view.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| benefit_id | uuid | NULL |  |  |
+| organization_id | uuid | NULL |  |  |
+| transformation_id | uuid | NULL |  |  |
+| value_class | text | NULL |  |  |
+| currency | character(3) | NULL |  |  |
+| counted | boolean | NULL |  |  |
+| exclusion_reason | text | NULL |  |  |
+| overlap_open | boolean | NULL |  |  |
+
+## benefit_value_line
+
+- **Purpose:** View: every stored benefit value tagged with exactly one state: planned, forecast, measured, submitted, validated, sustained or rejected (REQ-S08-001; ADR-0030 §6). Scenario values are not included.
+- **Migration:** `0039_p4_benefit_value_views.sql`. **API module:** `benefits (read model)`. **Who writes:** none (view). **Lifecycle:** view.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| benefit_id | uuid | NULL |  |  |
+| transformation_id | uuid | NULL |  |  |
+| value_state | text | NULL |  |  |
+| period_start | date | NULL |  |  |
+| period_end | date | NULL |  |  |
+| amount | numeric(20,4) | NULL |  |  |
+| kpi_value | numeric(24,6) | NULL |  |  |
+| currency | character(3) | NULL |  |  |
+| record_table | text | NULL |  |  |
+| record_id | uuid | NULL |  |  |
+
+## P4 seeds (0037, 0040, slice B)
+
+- `benefit_lifecycle_step_definition`: the six B0121 rows (identify, plan, enable, measure, correct, sustain) with step, question and output **verbatim** in English; Arabic provisional (`ar_is_provisional = true`, linguistic review needed).
+- `record_code_counter` prefixes widened with `B` (T14 IDs B01…), `BG` (groups) and `VM` (valuation methods); existing prefixes and counters unchanged.
+- `work_item_kind` `finance_validation_review` (M0234) and `benefit_overlap_review` (M0173), owner module `benefits` (label_ar provisional wording).
+- `permission` (6 rows, each `write`) and `role_permission` (12 rows): exactly `P4_BENEFIT_PERMISSIONS` / `P4_BENEFIT_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). Finance decisions reuse `finance.validate` (FIN only). AUD and the technical-admin roles hold none.
+
+## P4 functions (slice B)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `benefit_valuation_method_guard()` | 0037 | starts proposed; content fixed; proposed → approved/rejected, approved → retired | via trigger |
+| `benefit_guard()` | 0037 | starts at identify; lifecycle step machine; enablers before Measure; allocation set step; validated baseline frozen unless reset; archived read-only; parent/child one level and same currency; approved valuation method; business-case line valid; counted group member stays | via trigger |
+| `benefit_lifecycle_history()` | 0037 | inserts one `benefit_lifecycle_event` per insert and step change | via trigger |
+| `benefit_group_guard()` | 0037 | the counted benefit is a member | via trigger |
+| `benefit_enabler_guard()` | 0037 | deliverable belongs to the initiative; only the note changes; removed is final | via trigger |
+| `benefit_allocation_guard()` | 0037 | rows only for the current set; the set totals at most 1 (lock 730232) | via trigger |
+| `p4_benefit_value_row_valid(uuid, char, numeric, text)` | 0037 | value tables: currency = the benefit's; non-financial amount needs an approved method; no values on a parent; benefit active | via triggers |
+| `benefit_scenario_value_guard()`, `benefit_plan_value_guard()` | 0037, 0038 | fixed scenario/benefit/kind; `p4_benefit_value_row_valid` | via trigger |
+| `benefit_measurement_guard()` | 0038 | number step; Measure step or later; status machine; submitted frozen; validated immutable; corrections target a validated value, keep its period, a reversal nets it to zero, at most one reversal; basis validated before validation; sustain phase | via trigger |
+| `benefit_measurement_decision_present()` | 0038 | deferred: validated/rejected has the matching Finance decision; a correction has its Finance record; superseded has no queued item | via constraint trigger |
+| `benefit_measurement_input_guard()` | 0038 | inputs only with a draft/submitted measurement; same period as the measurement and the KPI actual | via trigger |
+| `benefit_evidence_guard()` | 0038 | a measurement link only while draft or submitted | via trigger |
+| `finance_validation_guard()` | 0038 | subject and period match the measurement; queued → approved/rejected/withdrawn; snapshot frozen; decider not the submitter; approved amount shape | via trigger |
+| `benefit_overlap_guard()` | 0038 | starts open; resolved once; resolver not an owner | via trigger |
+| `benefit_value_lock_guard()` | 0038 | type, class and currency fixed once values exist; a benefit with values cannot become a parent | via trigger |
+
+## P4 validation rules summary (slice B)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, deferred audit coverage, append-only history and lineage); closed sets (types, classes, steps, cadences, statuses, kinds, decisions, dimensions); type ↔ class; statement line or agreed KPI; non-financial unmonetised without an approved method; step outputs as preconditions; one owner column; allocations ≤ 100 % (lock 730232); one counted group member; one live measurement per benefit and period; one queue item per measurement and idempotency key; one pending value per benefit and KPI run; six items accepted to approve; measurement period required; validated values immutable; reversals net to zero; basis validated before validation; SoD (validator ≠ owner, decider ≠ submitter, resolver ≠ owner, method decider ≠ proposer) |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice B schemas, incl. a single `ownerUserId`), free-text rules (`freeText`/`hasText`), strict UTF-8, request media types, `If-Match`, decimal strings, the Finance content snapshot (six keys) |
+| Service | Permissions and record-level rules (ADR-0029 §9, ADR-0030 §9), commit-time re-authorization, the overlap rule (lock 730234), the formula engine (unchanged), evidence on manual submission, the exact refusal codes and English texts of ADR-0029 §11 and ADR-0030 §11 |
+| Worker | `benefits.finance_queue` (exactly one queue item per submission, replay-safe), `benefits.recalculate_pending` (one pending value per benefit and KPI run; supersedes the older pending value), `benefit.variance_evaluated` events |

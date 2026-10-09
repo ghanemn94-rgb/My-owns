@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -109,12 +109,28 @@ export const P4_KPI_PERMISSIONS = {
   "data_quality.manage": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 catalogue, slice B (benefits register and Finance validation; ADR-0029 §9, ADR-0030 §9). Seeded by migration
+ * 0040. Every code is 'write': none is a business approval or a Finance validation, so the DG1/DG2 rules keyed on "a
+ * role holding an approval permission" are unchanged. Finance validation, corrections (amendments and reversals),
+ * overlap resolution, baseline validation and valuation-method decisions reuse finance.validate (P1; FIN only).
+ */
+export const P4_BENEFIT_PERMISSIONS = {
+  "benefit.edit": "write",
+  "benefit.advance": "write",
+  "benefit.allocate": "write",
+  "benefit.measure": "write",
+  "benefit_scenario.edit": "write",
+  "benefit_group.manage": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
   ...P3_PERMISSIONS,
   ...P4_PERMISSIONS,
   ...P4_KPI_PERMISSIONS,
+  ...P4_BENEFIT_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -283,6 +299,21 @@ export const P4_KPI_ROLE_PERMISSIONS = {
   ],
 } as const satisfies Record<string, readonly (keyof typeof P4_KPI_PERMISSIONS)[]>;
 
+/**
+ * P4 role defaults, slice B (seeded by 0040; ADR-0029 §9, ADR-0030 §9, permissions matrix §12). Owner roles of
+ * REQ-PB-058/-074/-075, REQ-S08-001/-003/-013/-018 and REQ-PB-013: TL and BO create and edit benefits, allocate and
+ * manage shared-benefit groups; BO advances the lifecycle; BO, WL and KDS record and submit measurements; TL and FIN
+ * edit scenarios. Finance decisions stay finance.validate (FIN only). AUD, SP, TO, CM, SEC, TD and the technical admins
+ * get none.
+ */
+export const P4_BENEFIT_ROLE_PERMISSIONS = {
+  TL: ["benefit.edit", "benefit.allocate", "benefit_scenario.edit", "benefit_group.manage"],
+  BO: ["benefit.edit", "benefit.advance", "benefit.allocate", "benefit.measure", "benefit_group.manage"],
+  WL: ["benefit.measure"],
+  FIN: ["benefit_scenario.edit"],
+  KDS: ["benefit.measure"],
+} as const satisfies Record<string, readonly (keyof typeof P4_BENEFIT_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -309,6 +340,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.TL,
       ...P4_ROLE_PERMISSIONS.TL,
       ...P4_KPI_ROLE_PERMISSIONS.TL,
+      ...P4_BENEFIT_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -321,12 +353,19 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.BO,
       ...P4_ROLE_PERMISSIONS.BO,
       ...P4_KPI_ROLE_PERMISSIONS.BO,
+      ...P4_BENEFIT_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P2_ROLE_PERMISSIONS.WL, ...P3_ROLE_PERMISSIONS.WL, ...P4_ROLE_PERMISSIONS.WL],
+    permissions: [
+      ...BASE_READ,
+      ...P2_ROLE_PERMISSIONS.WL,
+      ...P3_ROLE_PERMISSIONS.WL,
+      ...P4_ROLE_PERMISSIONS.WL,
+      ...P4_BENEFIT_ROLE_PERMISSIONS.WL,
+    ],
   },
   FIN: {
     kind: "source",
@@ -337,6 +376,7 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.FIN,
       ...P3_ROLE_PERMISSIONS.FIN,
       ...P4_ROLE_PERMISSIONS.FIN,
+      ...P4_BENEFIT_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -363,6 +403,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.KDS,
       ...P4_ROLE_PERMISSIONS.KDS,
       ...P4_KPI_ROLE_PERMISSIONS.KDS,
+      ...P4_BENEFIT_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {

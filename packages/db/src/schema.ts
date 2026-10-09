@@ -2461,6 +2461,373 @@ export interface RagOverrideTable {
   updated_by: string;
 }
 
+// P4 slice B (T-DG4-ARCH-03; ADR-0029, ADR-0030; migrations 0037-0039). Generated from a migrated disposable
+// database (docs/delivery/handbacks/DG4/T-DG4-ARCH-03-evidence/gen-schema.ts).
+export interface BenefitLifecycleStepDefinitionTable {
+  code: string;
+  ordinal: number;
+  step_en: string;
+  question_en: string;
+  output_en: string;
+  step_ar: string;
+  question_ar: string;
+  output_ar: string;
+  ar_is_provisional: Generated<boolean>;
+  source_ref: string;
+}
+
+export interface BenefitValuationMethodTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  name: string;
+  method: string;
+  applies_to_type: string;
+  kpi_definition_id: string | null;
+  unit_value: string | null;
+  currency: string;
+  status: Generated<string>;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  retired_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitGroupTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  counted_benefit_id: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  title: string;
+  description: string;
+  benefit_type: string;
+  value_class: string;
+  owner_user_id: string;
+  finance_validator_user_id: string | null;
+  finance_validation_required: Generated<boolean>;
+  financial_statement_line: string | null;
+  measurement_kpi_definition_id: string | null;
+  measurement_kpi_variable: string | null;
+  business_case_line_id: string | null;
+  benefit_formula_id: string | null;
+  baseline_id: string | null;
+  baseline_value: string | null;
+  baseline_unit: string | null;
+  baseline_date: string | null;
+  counterfactual: string | null;
+  baseline_validation_status: Generated<string>;
+  baseline_validated_by: string | null;
+  baseline_validated_at: NullableTimestamp;
+  baseline_validation_note: string | null;
+  driver_key: string | null;
+  driver_units: string | null;
+  population_key: string | null;
+  target_value: string | null;
+  target_date: string | null;
+  realization_start: string | null;
+  realization_end: string | null;
+  recurrence: string | null;
+  currency: string;
+  planned_value: string | null;
+  valuation_method_id: string | null;
+  measurement_source: string | null;
+  confidence: string | null;
+  assumptions: string | null;
+  parent_benefit_id: string | null;
+  benefit_group_id: string | null;
+  allocation_set_no: Generated<number>;
+  lifecycle_step: Generated<string>;
+  recovery_plan: string | null;
+  bau_owner_user_id: string | null;
+  control_cadence: string | null;
+  status_rag: string | null;
+  status_rag_note: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitEnablerTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  initiative_id: string;
+  deliverable_id: string | null;
+  capability_id: string | null;
+  note: string | null;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitLifecycleEventTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  from_step: string | null;
+  to_step: string;
+  benefit_version: number;
+  occurred_at: TimestampDefault;
+  actor_user_id: string;
+}
+
+export interface BenefitAllocationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  set_no: number;
+  initiative_id: string;
+  share: string;
+  basis: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BenefitScenarioTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  business_case_id: string | null;
+  kind: string;
+  title: string;
+  assumptions: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitScenarioValueTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  scenario_id: string;
+  benefit_id: string;
+  period_start: string;
+  period_end: string;
+  amount: string | null;
+  kpi_value: string | null;
+  currency: string;
+  note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitPlanValueTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  value_kind: string;
+  period_start: string;
+  period_end: string;
+  amount: string | null;
+  kpi_value: string | null;
+  currency: string;
+  note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitMeasurementTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  measurement_no: number;
+  kind: Generated<string>;
+  corrects_measurement_id: string | null;
+  source: string;
+  calculation_run_id: string | null;
+  benefit_calculation_id: string | null;
+  formula_version_id: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  amount: string | null;
+  kpi_value: string | null;
+  currency: string;
+  missing_reason: string | null;
+  attribution: string | null;
+  assumptions: string | null;
+  status: string;
+  sustain_phase: Generated<boolean>;
+  validated_amount: string | null;
+  submitted_by: string | null;
+  submitted_at: NullableTimestamp;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitMeasurementInputTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  measurement_id: string;
+  variable_name: string;
+  kpi_actual_id: string | null;
+  kpi_value_no: number | null;
+  value: string;
+  period_start: string;
+  period_end: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BenefitEvidenceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  measurement_id: string | null;
+  evidence_id: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface FinanceValidationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_id: string;
+  benefit_measurement_id: string;
+  kind: Generated<string>;
+  corrects_validation_id: string | null;
+  idempotency_key: string;
+  assignee_user_id: string | null;
+  status: string;
+  content: Json;
+  measurement_period_start: string | null;
+  measurement_period_end: string | null;
+  baseline_decision: string | null;
+  attribution_decision: string | null;
+  calculation_decision: string | null;
+  evidence_decision: string | null;
+  period_decision: string | null;
+  assumptions_decision: string | null;
+  baseline_note: string | null;
+  attribution_note: string | null;
+  calculation_note: string | null;
+  evidence_note: string | null;
+  period_note: string | null;
+  assumptions_note: string | null;
+  approved_amount: string | null;
+  decision_note: string | null;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitOverlapTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  benefit_a_id: string;
+  benefit_b_id: string;
+  dimensions: string;
+  driver_key: string | null;
+  population_key: string | null;
+  overlap_start: string | null;
+  overlap_end: string | null;
+  detected_by: string;
+  status: Generated<string>;
+  resolution: string | null;
+  excluded_benefit_id: string | null;
+  resolution_note: string | null;
+  resolved_by: string | null;
+  resolved_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface BenefitCountingView {
+  benefit_id: ColumnType<string | null, never, never>;
+  organization_id: ColumnType<string | null, never, never>;
+  transformation_id: ColumnType<string | null, never, never>;
+  value_class: ColumnType<string | null, never, never>;
+  currency: ColumnType<string | null, never, never>;
+  counted: ColumnType<boolean | null, never, never>;
+  exclusion_reason: ColumnType<string | null, never, never>;
+  overlap_open: ColumnType<boolean | null, never, never>;
+}
+
+export interface BenefitValueLineView {
+  benefit_id: ColumnType<string | null, never, never>;
+  transformation_id: ColumnType<string | null, never, never>;
+  value_state: ColumnType<string | null, never, never>;
+  period_start: ColumnType<string | null, never, never>;
+  period_end: ColumnType<string | null, never, never>;
+  amount: ColumnType<string | null, never, never>;
+  kpi_value: ColumnType<string | null, never, never>;
+  currency: ColumnType<string | null, never, never>;
+  record_table: ColumnType<string | null, never, never>;
+  record_id: ColumnType<string | null, never, never>;
+}
+
 export interface Database {
   schema_migration: SchemaMigrationTable;
   organization: OrganizationTable;
@@ -2590,10 +2957,34 @@ export interface Database {
   kpi_evaluation: KpiEvaluationTable;
   data_quality_finding: DataQualityFindingTable;
   rag_override: RagOverrideTable;
+  benefit_lifecycle_step_definition: BenefitLifecycleStepDefinitionTable;
+  benefit_valuation_method: BenefitValuationMethodTable;
+  benefit_group: BenefitGroupTable;
+  benefit: BenefitTable;
+  benefit_enabler: BenefitEnablerTable;
+  benefit_lifecycle_event: BenefitLifecycleEventTable;
+  benefit_allocation: BenefitAllocationTable;
+  benefit_scenario: BenefitScenarioTable;
+  benefit_scenario_value: BenefitScenarioValueTable;
+  benefit_plan_value: BenefitPlanValueTable;
+  benefit_measurement: BenefitMeasurementTable;
+  benefit_measurement_input: BenefitMeasurementInputTable;
+  benefit_evidence: BenefitEvidenceTable;
+  finance_validation: FinanceValidationTable;
+  benefit_overlap: BenefitOverlapTable;
+  benefit_counting: BenefitCountingView;
+  benefit_value_line: BenefitValueLineView;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
-export const VIEW_NAMES = ["actor_display", "approval_decision_record", "business_unit_closure", "scope_node"] as const;
+export const VIEW_NAMES = [
+  "actor_display",
+  "approval_decision_record",
+  "benefit_counting",
+  "benefit_value_line",
+  "business_unit_closure",
+  "scope_node",
+] as const;
 
 export type OrganizationRow = Selectable<OrganizationTable>;
 export type BusinessUnitRow = Selectable<BusinessUnitTable>;
@@ -2680,6 +3071,21 @@ export type CalculationRunRow = Selectable<CalculationRunTable>;
 export type KpiEvaluationRow = Selectable<KpiEvaluationTable>;
 export type DataQualityFindingRow = Selectable<DataQualityFindingTable>;
 export type RagOverrideRow = Selectable<RagOverrideTable>;
+export type BenefitLifecycleStepDefinitionRow = Selectable<BenefitLifecycleStepDefinitionTable>;
+export type BenefitValuationMethodRow = Selectable<BenefitValuationMethodTable>;
+export type BenefitGroupRow = Selectable<BenefitGroupTable>;
+export type BenefitRow = Selectable<BenefitTable>;
+export type BenefitEnablerRow = Selectable<BenefitEnablerTable>;
+export type BenefitLifecycleEventRow = Selectable<BenefitLifecycleEventTable>;
+export type BenefitAllocationRow = Selectable<BenefitAllocationTable>;
+export type BenefitScenarioRow = Selectable<BenefitScenarioTable>;
+export type BenefitScenarioValueRow = Selectable<BenefitScenarioValueTable>;
+export type BenefitPlanValueRow = Selectable<BenefitPlanValueTable>;
+export type BenefitMeasurementRow = Selectable<BenefitMeasurementTable>;
+export type BenefitMeasurementInputRow = Selectable<BenefitMeasurementInputTable>;
+export type BenefitEvidenceRow = Selectable<BenefitEvidenceTable>;
+export type FinanceValidationRow = Selectable<FinanceValidationTable>;
+export type BenefitOverlapRow = Selectable<BenefitOverlapTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -5000,6 +5406,354 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+  ],
+  benefit_lifecycle_step_definition: [
+    "code",
+    "ordinal",
+    "step_en",
+    "question_en",
+    "output_en",
+    "step_ar",
+    "question_ar",
+    "output_ar",
+    "ar_is_provisional",
+    "source_ref",
+  ],
+  benefit_valuation_method: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "name",
+    "method",
+    "applies_to_type",
+    "kpi_definition_id",
+    "unit_value",
+    "currency",
+    "status",
+    "decided_by",
+    "decided_at",
+    "decision_note",
+    "retired_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_group: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "title",
+    "description",
+    "counted_benefit_id",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "title",
+    "description",
+    "benefit_type",
+    "value_class",
+    "owner_user_id",
+    "finance_validator_user_id",
+    "finance_validation_required",
+    "financial_statement_line",
+    "measurement_kpi_definition_id",
+    "measurement_kpi_variable",
+    "business_case_line_id",
+    "benefit_formula_id",
+    "baseline_id",
+    "baseline_value",
+    "baseline_unit",
+    "baseline_date",
+    "counterfactual",
+    "baseline_validation_status",
+    "baseline_validated_by",
+    "baseline_validated_at",
+    "baseline_validation_note",
+    "driver_key",
+    "driver_units",
+    "population_key",
+    "target_value",
+    "target_date",
+    "realization_start",
+    "realization_end",
+    "recurrence",
+    "currency",
+    "planned_value",
+    "valuation_method_id",
+    "measurement_source",
+    "confidence",
+    "assumptions",
+    "parent_benefit_id",
+    "benefit_group_id",
+    "allocation_set_no",
+    "lifecycle_step",
+    "recovery_plan",
+    "bau_owner_user_id",
+    "control_cadence",
+    "status_rag",
+    "status_rag_note",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_enabler: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "initiative_id",
+    "deliverable_id",
+    "capability_id",
+    "note",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_lifecycle_event: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "from_step",
+    "to_step",
+    "benefit_version",
+    "occurred_at",
+    "actor_user_id",
+  ],
+  benefit_allocation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "set_no",
+    "initiative_id",
+    "share",
+    "basis",
+    "created_at",
+    "created_by",
+  ],
+  benefit_scenario: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "business_case_id",
+    "kind",
+    "title",
+    "assumptions",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_scenario_value: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "scenario_id",
+    "benefit_id",
+    "period_start",
+    "period_end",
+    "amount",
+    "kpi_value",
+    "currency",
+    "note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_plan_value: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "value_kind",
+    "period_start",
+    "period_end",
+    "amount",
+    "kpi_value",
+    "currency",
+    "note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_measurement: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "measurement_no",
+    "kind",
+    "corrects_measurement_id",
+    "source",
+    "calculation_run_id",
+    "benefit_calculation_id",
+    "formula_version_id",
+    "period_start",
+    "period_end",
+    "amount",
+    "kpi_value",
+    "currency",
+    "missing_reason",
+    "attribution",
+    "assumptions",
+    "status",
+    "sustain_phase",
+    "validated_amount",
+    "submitted_by",
+    "submitted_at",
+    "decided_by",
+    "decided_at",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_measurement_input: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "measurement_id",
+    "variable_name",
+    "kpi_actual_id",
+    "kpi_value_no",
+    "value",
+    "period_start",
+    "period_end",
+    "created_at",
+    "created_by",
+  ],
+  benefit_evidence: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "measurement_id",
+    "evidence_id",
+    "created_at",
+    "created_by",
+  ],
+  finance_validation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_id",
+    "benefit_measurement_id",
+    "kind",
+    "corrects_validation_id",
+    "idempotency_key",
+    "assignee_user_id",
+    "status",
+    "content",
+    "measurement_period_start",
+    "measurement_period_end",
+    "baseline_decision",
+    "attribution_decision",
+    "calculation_decision",
+    "evidence_decision",
+    "period_decision",
+    "assumptions_decision",
+    "baseline_note",
+    "attribution_note",
+    "calculation_note",
+    "evidence_note",
+    "period_note",
+    "assumptions_note",
+    "approved_amount",
+    "decision_note",
+    "decided_by",
+    "decided_at",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_overlap: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "benefit_a_id",
+    "benefit_b_id",
+    "dimensions",
+    "driver_key",
+    "population_key",
+    "overlap_start",
+    "overlap_end",
+    "detected_by",
+    "status",
+    "resolution",
+    "excluded_benefit_id",
+    "resolution_note",
+    "resolved_by",
+    "resolved_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  benefit_counting: [
+    "benefit_id",
+    "organization_id",
+    "transformation_id",
+    "value_class",
+    "currency",
+    "counted",
+    "exclusion_reason",
+    "overlap_open",
+  ],
+  benefit_value_line: [
+    "benefit_id",
+    "transformation_id",
+    "value_state",
+    "period_start",
+    "period_end",
+    "amount",
+    "kpi_value",
+    "currency",
+    "record_table",
+    "record_id",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
