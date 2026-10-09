@@ -128,11 +128,8 @@ describe("module composition (D-048, P2)", () => {
         expect([m.status, m.deliversIn], m.module).toEqual(["active", "P2"]);
         expect(m.routes.length, m.module).toBeGreaterThan(0);
       }
-      expect(modules.find((m) => m.module === "reporting")).toMatchObject({
-        status: "scaffold",
-        deliversIn: "P5",
-        routes: [],
-      });
+      // P4 (T-DG4-KBE-G): reporting routes the slice J dashboards, so it reports "active" from P4.
+      expect(modules.find((m) => m.module === "reporting")).toMatchObject({ status: "active", deliversIn: "P4" });
       // P3 (T-DG3-KBE-C): kpi routes the T09 benefit formulas (/benefit-formulas, /benefit-formula-examples); the
       // reporting module stays route-free until P5. T-DG4-KBE-C: kpi's P4 reporting periods (contract path
       // /organizations/{id}/reporting-periods, ADR-0027 §3) are KPI periods, not reports, so they are excluded here.

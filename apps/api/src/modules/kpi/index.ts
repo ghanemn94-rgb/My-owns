@@ -70,3 +70,14 @@ export function registerKpiModule(
   const routes = registerKpiRoutes(app, deps, approvals);
   return Object.freeze({ module: "kpi", status: "active", deliversIn: "P2", routes: Object.freeze([...routes]) });
 }
+// P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only KPI facts of the dashboards, through the slice A status service.
+export {
+  loadKpiDashboardStatuses,
+  loadKpiStatusLineage,
+  loadOutcomeRows,
+  type DashboardPeriodFilter,
+  type KpiDashboardStatus,
+  type KpiStatusRequest,
+  type OutcomeKpiRowFact,
+  type OutcomeRowFact,
+} from "./dashboard-facts.ts";
