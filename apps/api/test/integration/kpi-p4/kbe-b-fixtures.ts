@@ -3,7 +3,7 @@
 // operation (calculation runs write them, KBE-C's worker), so `insertFinding` writes a synthetic reporting period (with
 // its audit event, as p2_attach_guards demands), a completed calculation run and an open finding directly. Nothing here
 // grants a business approval or touches the engineering gates DG0-DG7.
-import { insertAuditEvent, sql, type Db } from "@mth/db";
+import { insertAuditEvent, sql, type Db, type Tx } from "@mth/db";
 import { v7 as uuidv7 } from "uuid";
 import { expect } from "vitest";
 import { call, createUser, grant, signIn, type Session, type TestApi } from "../../support/harness.ts";
@@ -68,7 +68,28 @@ export async function activeVersion(api: TestApi, k: KpiWorld, kpiId: string, bo
   return a.body;
 }
 
-let periodDay = 0;
+/** The first day the synthetic ad-hoc periods use (far from every calendar period the tests create). */
+export const FINDING_PERIOD_FIRST_DAY = "2031-01-02";
+/** reporting_period_guard's advisory lock class (migration 0033 `reporting_period_lock_class`; ADR-0016 registry). */
+const REPORTING_PERIOD_LOCK_CLASS = 730230;
+
+/**
+ * The day of the next synthetic ad-hoc period of `organizationId` (T-DG4-KBE-R1 item 2; D-098, D-105): the day after
+ * the organization's latest ad-hoc period, and FINDING_PERIOD_FIRST_DAY for its first. It is read under the advisory
+ * lock reporting_period_guard takes for the organization and frequency, so it is deterministic (a fresh organization
+ * gets 2031-01-02, 2031-01-03, … in call order) and unique per call, even for concurrent calls. The former
+ * `Math.random()` draw could pick a day already used (the data-quality.test.ts "overlaps another ad_hoc period" flake).
+ */
+export async function nextFindingPeriodDay(tx: Tx, organizationId: string): Promise<string> {
+  await sql`SELECT pg_advisory_xact_lock(${REPORTING_PERIOD_LOCK_CLASS}, hashtext(${organizationId}::text || ':ad_hoc'))`.execute(
+    tx,
+  );
+  const next = await sql<{ day: string }>`
+    SELECT greatest(coalesce(max(period_end) + 1, ${FINDING_PERIOD_FIRST_DAY}::date), ${FINDING_PERIOD_FIRST_DAY}::date)::text AS day
+      FROM reporting_period
+     WHERE organization_id = ${organizationId} AND frequency = 'ad_hoc'`.execute(tx);
+  return next.rows[0]!.day;
+}
 
 /** A synthetic open data-quality finding of `kpiDefinitionId` (with its run and an ad-hoc reporting period). */
 export async function insertFinding(
@@ -81,12 +102,9 @@ export async function insertFinding(
   const periodId = uuidv7();
   const runId = uuidv7();
   const findingId = uuidv7();
-  periodDay += 1;
-  // A distinct one-day ad-hoc period per call (periods of one organization and frequency never overlap).
-  const day = new Date(Date.UTC(2031, 0, 1) + periodDay * 86_400_000 + Math.floor(Math.random() * 3000) * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
   await db.transaction().execute(async (tx) => {
+    // A distinct one-day ad-hoc period per call (periods of one organization and frequency never overlap).
+    const day = await nextFindingPeriodDay(tx, organizationId);
     await tx
       .insertInto("reporting_period")
       .values({

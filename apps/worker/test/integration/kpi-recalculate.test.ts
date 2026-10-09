@@ -6,14 +6,25 @@
 //    run (the processed_message ledger and the unique trigger key);
 //  - kpi.reporting_period_open opens a scheduled period whose end is before today's business date, once, with one
 //    audit event, and creates one kpi_update_due task per KPI owner (dedupe key kpi.period_open:<kpi>:<label>:<owner>);
-//    a second run creates nothing.
+//    a second run creates nothing;
+//  - T-DG4-KBE-R1 item 3 (ADR-0027 §8 step 4): a run whose LAST attempt fails is recorded as one `failed`
+//    calculation_run with error_code kpi.recalculate_failed (no evaluation, no kpi.values_recalculated, no ledger row,
+//    no audit event; the slot stays accepted), through the production worker with retries and directly per attempt;
+//    an earlier attempt's failure records nothing; a replay writes no second run.
+//    The failure is forced by a synthetic BEFORE INSERT trigger on kpi_evaluation for the one seeded transformation.
 // The rows are written as the API would write them, each with its audit event (the p2 audit guards). All data is
 // SYNTHETIC; no job decides a business approval or touches the engineering gates DG0-DG7.
 import { insertAuditEvent, sql, type Db } from "@mth/db";
 import type PgBoss from "pg-boss";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { openDuePeriods, recalculate, RECALCULATE_QUEUE } from "../../src/handlers/kpi.ts";
+import {
+  isFinalAttempt,
+  openDuePeriods,
+  recalculate,
+  RECALCULATE_FAILED_CODE,
+  RECALCULATE_QUEUE,
+} from "../../src/handlers/kpi.ts";
 import { ensureQueues } from "../../src/queues/index.ts";
 import { relayOnce } from "../../src/relay.ts";
 import { startWorker, type RunningWorker } from "../../src/worker.ts";
@@ -359,4 +370,164 @@ describe("kpi.reporting_period_open (REQ-S12-005)", () => {
       1,
     );
   });
+});
+
+// ------------------------------------------------------------------------------------------------ T-DG4-KBE-R1 item 3
+
+const FAULT = "kbe_r1_synthetic_fault";
+
+/** Makes every kpi_evaluation insert of `transformationId` fail (a synthetic fault; DDL as the owner, test DB only). */
+async function faultOn(transformationId: string): Promise<void> {
+  if (!/^[0-9a-f-]{36}$/.test(transformationId)) throw new Error("uuid expected");
+  await env.owner.query(`
+    CREATE OR REPLACE FUNCTION ${FAULT}() RETURNS trigger LANGUAGE plpgsql AS $f$
+    BEGIN
+      IF NEW.transformation_id = '${transformationId}'::uuid THEN
+        RAISE EXCEPTION 'synthetic fault (T-DG4-KBE-R1)';
+      END IF;
+      RETURN NEW;
+    END $f$`);
+  await env.owner.query(`DROP TRIGGER IF EXISTS ${FAULT} ON kpi_evaluation`);
+  await env.owner.query(
+    `CREATE TRIGGER ${FAULT} BEFORE INSERT ON kpi_evaluation FOR EACH ROW EXECUTE FUNCTION ${FAULT}()`,
+  );
+}
+async function faultOff(): Promise<void> {
+  await env.owner.query(`DROP TRIGGER IF EXISTS ${FAULT} ON kpi_evaluation`);
+  await env.owner.query(`DROP FUNCTION IF EXISTS ${FAULT}()`);
+}
+
+/** The failed-run shape every check expects: one run, failed, with its code, nothing calculated. */
+async function expectOneFailedRun(s: Seeded) {
+  const runs = await runsOf(env.db, s.actualId);
+  expect(
+    runs.map((r) => [r.trigger_kind, r.status, r.error_code, r.evaluation_count, r.finding_count, r.idempotency_key]),
+  ).toEqual([["actual_accepted", "failed", RECALCULATE_FAILED_CODE, 0, 0, `kpi.actual_accepted:${s.actualId}:1`]]);
+  const run = runs[0]!;
+  expect(run.trigger_record_type).toBe("kpi_actual");
+  expect(run.trigger_slot).toBe(1);
+  expect(run.transformation_id).toBe(s.transformationId);
+  expect(run.completed_at.getTime()).toBeGreaterThanOrEqual(run.started_at.getTime());
+  expect(
+    await env.db.selectFrom("kpi_evaluation").select("id").where("calculation_run_id", "=", run.id).execute(),
+  ).toEqual([]);
+  expect(
+    await env.db
+      .selectFrom("outbox_event")
+      .select("id")
+      .where("event_type", "in", ["kpi.values_recalculated", "kpi.deviation_evaluated"])
+      .where("aggregate_id", "=", run.id)
+      .execute(),
+  ).toEqual([]);
+  // Runs are system lineage: no audit event. The accepted slot is untouched.
+  expect(await env.db.selectFrom("audit_event").select("id").where("record_id", "=", run.id).execute()).toEqual([]);
+  const slot = await env.db
+    .selectFrom("kpi_actual")
+    .select(["status", "accepted_value_no"])
+    .where("id", "=", s.actualId)
+    .executeTakeFirstOrThrow();
+  expect(slot).toEqual({ status: "accepted", accepted_value_no: 1 });
+  return run;
+}
+
+describe("kpi.recalculate: a failure on the last attempt is recorded as a failed run (ADR-0027 §8 step 4; T-DG4-KBE-R1)", () => {
+  it("isFinalAttempt follows pg-boss: retry while retryCount < retryLimit", () => {
+    expect(isFinalAttempt({ retryCount: 0, retryLimit: 2 })).toBe(false);
+    expect(isFinalAttempt({ retryCount: 1, retryLimit: 2 })).toBe(false);
+    expect(isFinalAttempt({ retryCount: 2, retryLimit: 2 })).toBe(true);
+    expect(isFinalAttempt({ retryCount: 0, retryLimit: 0 })).toBe(true);
+  });
+
+  it("per attempt: earlier failures record nothing, the last one records one failed run, a replay writes no second run", async () => {
+    const s = await seedAcceptedActual(env.db);
+    const envelope = await envelopeOf(env.db, s.actualId);
+    await faultOn(s.transformationId);
+    try {
+      for (const retryCount of [0, 1]) {
+        await expect(recalculate(env.db, envelope, "direct", { retryCount, retryLimit: 2 })).rejects.toThrow(
+          /synthetic fault/,
+        );
+        expect(await runsOf(env.db, s.actualId)).toEqual([]);
+      }
+      // No attempt information and no pg-boss job of that id ("direct"): not known to be the last, nothing recorded.
+      await expect(recalculate(env.db, envelope, "direct")).rejects.toThrow(/synthetic fault/);
+      expect(await runsOf(env.db, s.actualId)).toEqual([]);
+      // The last attempt: the error still propagates (pg-boss fails the job), and one failed run is recorded.
+      await expect(recalculate(env.db, envelope, "direct", { retryCount: 2, retryLimit: 2 })).rejects.toThrow(
+        /synthetic fault/,
+      );
+      const run = await expectOneFailedRun(s);
+      // No ledger row was committed by a failing attempt.
+      expect(
+        await env.db
+          .selectFrom("processed_message")
+          .select("idempotency_key")
+          .where("consumer", "=", "kpi.recalculate.v1")
+          .where("idempotency_key", "=", envelope.idempotencyKey)
+          .execute(),
+      ).toEqual([]);
+      // A second "last attempt" (e.g. a manual retry of the dead-lettered job), fault still in place, finds the
+      // trigger's one run before calculating: it neither fails again nor writes a second run.
+      const again = await recalculate(env.db, envelope, "direct", { retryCount: 2, retryLimit: 2 });
+      expect(again).toEqual({ outcome: "already_run", runId: run.id, evaluationCount: 0 });
+      expect((await runsOf(env.db, s.actualId)).map((r) => r.id)).toEqual([run.id]);
+    } finally {
+      await faultOff();
+    }
+    // With the fault gone, a redelivery is a duplicate (the replay above committed the ledger row): still one run.
+    expect((await recalculate(env.db, envelope, "replay")).outcome).toBe("duplicate");
+    expect((await runsOf(env.db, s.actualId)).map((r) => r.status)).toEqual(["failed"]);
+  });
+
+  it(
+    "through the production worker: the attempt that pg-boss retries records nothing, the final attempt records the failed run and the job dead-letters",
+    { timeout: 60_000 },
+    async () => {
+      const s = await seedAcceptedActual(env.db);
+      await faultOn(s.transformationId);
+      // One retry, no delay: the job is sent by the relay with these limits.
+      const policy = { retryLimit: 1, retryDelay: 0, retryBackoff: false };
+      await ensureQueues(boss, policy);
+      let worker: RunningWorker | null = null;
+      try {
+        const relayed = await relayOnce(env.db, boss);
+        expect(relayed.failed).toBe(0);
+        const envelope = await envelopeOf(env.db, s.actualId);
+        worker = await startWorker({
+          db: env.db,
+          boss,
+          timeZone: "Asia/Riyadh",
+          log: quiet,
+          pollIntervalMs: 200,
+          jobPollingIntervalSeconds: 0.5,
+          handlers: KPI_HANDLERS,
+          queuePolicy: policy,
+        });
+        const job = await waitFor(
+          async () => {
+            const r = await env.owner.query(
+              "SELECT id, state, retry_count, retry_limit FROM pgboss.job WHERE name = $1 AND data->>'outboxEventId' = $2",
+              [RECALCULATE_QUEUE, envelope.outboxEventId],
+            );
+            return r.rows[0]?.state === "failed" ? r.rows[0] : null;
+          },
+          30_000,
+          250,
+        );
+        // Two attempts: the first was retried (pg-boss counted it), the second was the last.
+        expect([job.retry_count, job.retry_limit]).toEqual([1, 1]);
+        await expectOneFailedRun(s);
+        // The dead-letter queue keeps the job for an operator (ADR-0008 §4).
+        const dead = await env.owner.query(
+          "SELECT count(*)::int AS n FROM pgboss.job WHERE name = 'ops.failed' AND data->>'outboxEventId' = $1",
+          [envelope.outboxEventId],
+        );
+        expect(dead.rows[0].n).toBe(1);
+      } finally {
+        await worker?.stop();
+        await faultOff();
+        await ensureQueues(boss);
+      }
+    },
+  );
 });
