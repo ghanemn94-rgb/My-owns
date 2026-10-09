@@ -39,3 +39,6 @@ export * from "./tasks.ts";
 export * from "./groups.ts";
 export * from "./delegations.ts";
 export * from "./approvals.ts";
+// P4 slice B register mirrors (kpi-benefits-engineer, T-DG4-KBE-D; p4-work-split §B.1): benefits, lifecycle, enablers,
+// allocations and shared-benefit groups.
+export * from "./benefits.ts";
