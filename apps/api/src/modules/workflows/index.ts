@@ -69,3 +69,16 @@ export function registerWorkflowsModule(
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });
 }
+// P4 slice C (T-DG4-BE-B's approval service, exported for its consumers; appended by T-DG4-BE-C, see its handback):
+// governance registers the governance_matrix_change subject and the T11 router, and requests matrix approvals.
+export {
+  registerApprovalSubject,
+  requestApprovalInTx,
+  setDecisionRightRouter,
+  toApprovals,
+  type ApprovalOutcomeEvent,
+  type DecisionRightRequest,
+  type DecisionRightRouter,
+  type DecisionRightRouting,
+  type DueDate,
+} from "./approvals.ts";
