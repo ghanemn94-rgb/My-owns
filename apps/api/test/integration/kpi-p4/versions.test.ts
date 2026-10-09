@@ -348,7 +348,10 @@ describe("version lifecycle", () => {
     // direct second activation is refused and changes nothing. Activation through the request (supersede + activate,
     // one audit event each, one kpi.version_activated event) is proven in workflows/change-requests.test.ts (BE-L).
     problem(
-      await call(api.app, "POST", `${k.base}/kpi-versions/${v3.body.id}/activate`, { session: k.s.tl, headers: ifMatch(1) }),
+      await call(api.app, "POST", `${k.base}/kpi-versions/${v3.body.id}/activate`, {
+        session: k.s.tl,
+        headers: ifMatch(1),
+      }),
       422,
       "kpi_version.change_request_required",
       "This KPI already has an active version; changing its definition, baseline or target needs an approved change request.",
@@ -356,7 +359,9 @@ describe("version lifecycle", () => {
     const old = await call(api.app, "GET", `${k.base}/kpi-versions/${v1.id}`, { session: k.s.auditor });
     expect([old.body.status, old.body.supersededAt]).toEqual(["active", null]);
     expect((await auditOf(api.db, v3.body.id)).map((a) => a.action)).toEqual(["kpi_version.create"]);
-    expect(await api.db.selectFrom("outbox_event").selectAll().where("aggregate_id", "=", v3.body.id).execute()).toEqual([]);
+    expect(
+      await api.db.selectFrom("outbox_event").selectAll().where("aggregate_id", "=", v3.body.id).execute(),
+    ).toEqual([]);
     const list = await call(api.app, "GET", `${k.base}/kpi-definitions/${kpi.id}/versions?limit=2`, {
       session: k.s.auditor,
     });
