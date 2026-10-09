@@ -25,6 +25,8 @@ import { registerImpactRoutes } from "./impact.ts";
 import { registerPhaseStepRoutes } from "./phase-steps.ts";
 // T-DG4-BE-K (p4-work-split §H H.1): the G5 scale scope, scale transitions and risk dispositions.
 import { registerScaleRoutes } from "./scale.ts";
+// T-DG4-BE-K2 (p4-work-split §H H.2): the per-criterion gate review table, criterion reviews and Under Review.
+import { registerGateReviewRoutes } from "./gate-reviews.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
@@ -69,6 +71,7 @@ export function registerWorkflowsModule(
     ...registerImpactRoutes(app, deps),
     ...registerPhaseStepRoutes(app, deps),
     ...registerScaleRoutes(app, deps),
+    ...registerGateReviewRoutes(app, deps),
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });
 }

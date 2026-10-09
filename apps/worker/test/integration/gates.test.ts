@@ -35,17 +35,27 @@ import { insertInitiative } from "../../../api/test/integration/benefits/fixture
 import { pendingSubmission } from "../../../api/test/integration/portfolio/fixtures.ts";
 import { seedSustainmentWorld } from "../../../api/test/integration/contract/p4-exercises-be-i.ts";
 import {
+  acceptException,
+  coverGate,
   g5Approval,
   pendingGate,
+  plusDays,
+  requestException,
   seedGateWorld,
   stageGates,
+  todayOf,
 } from "../../../api/test/integration/contract/p4-exercises-be-k.ts";
 import {
   approverRoleHolders,
   GATE_DECISION_DUE_KIND,
+  GATE_EXCEPTION_EXPIRED_KIND,
+  GATE_EXCEPTION_EXPIRY_SCAN_QUEUE,
+  GATES_HANDLERS,
   handleGateDecided,
   handleGateSubmitted,
+  runGateExceptionExpiryScan,
 } from "../../src/handlers/gates.ts";
+import { GATES_QUEUES } from "../../src/queues/gates.ts";
 import { QUEUES_FOR_EVENT } from "../../src/queues/index.ts";
 
 let api: TestApi;
@@ -302,5 +312,124 @@ describe("parity and wiring (D-102)", () => {
   it("each gate event maps to its gates.* queue", () => {
     expect(QUEUES_FOR_EVENT["gate.submitted"]).toEqual(["gates.submitted"]);
     expect(QUEUES_FOR_EVENT["gate.decided"]).toEqual(["gates.decided"]);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ T-DG4-BE-K2
+// gate.exception_expiry_scan (ADR-0035 §4; REQ-S04-013 "an expired waiver no longer satisfies the item and the owner
+// is notified"): after expires_on (business date injected through `asOf`) the requester gets one gate_exception_expired
+// task (with its inbox notice) and each gate approver one inbox notice, exactly once; a second scan creates nothing;
+// an unexpired or revoked exception is not touched; the scan changes no exception status and no gate.
+describe("gate.exception_expiry_scan (REQ-S04-013)", () => {
+  it("notifies the requester and the approver exactly once after expiry; a second scan none; status and gate unchanged", async () => {
+    const g = await seedGateWorld(api, w, send);
+    const today = await todayOf(api, g);
+    // Every missing G1 criterion covered by an accepted exception expiring today; then one is replaced by a longer
+    // exception (revoke + a new request) and one is revoked: neither of those two may be notified.
+    const covered = await coverGate(send, g, "G1", today);
+    expect(covered.length).toBeGreaterThan(2);
+    const [expiring, lasting, revokedOne] = covered;
+    const revoke = (id: string, v: number) =>
+      send("POST", `${g.b.base}/gate-exceptions/${id}/revoke`, {
+        session: g.sp.session,
+        headers: { "if-match": `"${v}"` },
+        body: { reason: "Synthetic: replaced by a longer exception." },
+      });
+    expect((await revoke(lasting!.id, 2)).status).toBe(200);
+    const longer = await acceptException(
+      send,
+      g,
+      await requestException(send, g, "G1", lasting!.key, plusDays(today, 30)),
+    );
+    expect((await revoke(revokedOne!.id, 2)).status).toBe(200);
+    const gateBefore = await api.db
+      .selectFrom("gate_instance")
+      .select(["status", "version"])
+      .where("transformation_id", "=", g.b.transformationId)
+      .where("gate_code", "=", "G1")
+      .executeTakeFirstOrThrow();
+
+    // On the expiry date itself nothing has expired yet.
+    const same = await runGateExceptionExpiryScan(api.db, "test-scan-0", { asOf: today });
+    expect(same.steps.filter((s) => [expiring!.id, longer.id].includes(s.exceptionId))).toEqual([]);
+
+    const asOf = plusDays(today, 1);
+    const first = await runGateExceptionExpiryScan(api.db, "test-scan-1", { asOf });
+    const ours = new Set(covered.map((c) => c.id).concat(longer.id));
+    const mine = first.steps.filter((s) => ours.has(s.exceptionId));
+    expect(mine.map((s) => s.exceptionId).sort()).toEqual(
+      covered
+        .map((c) => c.id)
+        .filter((id) => id !== lasting!.id && id !== revokedOne!.id)
+        .sort(),
+    );
+    const step = mine.find((s) => s.exceptionId === expiring!.id)!;
+    expect([step.outcome, step.approverUserIds]).toEqual(["notified", [g.sp.id]]);
+    const task = await api.db
+      .selectFrom("work_item")
+      .select(["assignee_user_id", "kind", "status", "message_key", "message_params"])
+      .where("subject_id", "=", expiring!.id)
+      .where("kind", "=", GATE_EXCEPTION_EXPIRED_KIND)
+      .execute();
+    expect(task).toEqual([
+      {
+        assignee_user_id: g.b.users.tl.id,
+        kind: GATE_EXCEPTION_EXPIRED_KIND,
+        status: "open",
+        message_key: "gates.task.gate_exception_expired",
+        message_params: { gateCode: "G1", criterionKey: expiring!.key, expiresOn: today },
+      },
+    ]);
+    const notices = async () =>
+      api.db
+        .selectFrom("inbox_notification")
+        .select(["recipient_user_id", "message_key"])
+        .where("dedupe_key", "like", `gate_exception_expired:${expiring!.id}%`)
+        .orderBy("recipient_user_id")
+        .execute();
+    expect((await notices()).map((n) => [n.recipient_user_id, n.message_key]).sort()).toEqual(
+      [
+        [g.b.users.tl.id, "gates.task.gate_exception_expired"],
+        [g.sp.id, "gates.notice.gate_exception_expired"],
+      ].sort(),
+    );
+    const row = await api.db
+      .selectFrom("gate_exception")
+      .select(["status", "expiry_notified_at", "version"])
+      .where("id", "=", expiring!.id)
+      .executeTakeFirstOrThrow();
+    expect([row.status, row.expiry_notified_at !== null, row.version]).toEqual(["accepted", true, 3]);
+    expect(
+      (await api.db.selectFrom("audit_event").select("action").where("record_id", "=", expiring!.id).execute()).map(
+        (a) => a.action,
+      ),
+    ).toContain("gate_exception.expiry_notified");
+
+    // A second scan (and a redelivered job) creates nothing.
+    const second = await runGateExceptionExpiryScan(api.db, "test-scan-2", { asOf });
+    expect(second.steps.map((s) => s.exceptionId)).not.toContain(expiring!.id);
+    expect(await notices()).toHaveLength(2);
+    expect(
+      await api.db
+        .selectFrom("work_item")
+        .select("id")
+        .where("subject_id", "=", expiring!.id)
+        .where("kind", "=", GATE_EXCEPTION_EXPIRED_KIND)
+        .execute(),
+    ).toHaveLength(1);
+    // No gate changed.
+    const gateAfter = await api.db
+      .selectFrom("gate_instance")
+      .select(["status", "version"])
+      .where("transformation_id", "=", g.b.transformationId)
+      .where("gate_code", "=", "G1")
+      .executeTakeFirstOrThrow();
+    expect(gateAfter).toEqual(gateBefore);
+  });
+
+  it("the scan queue is registered with its handler and adds no event route", () => {
+    expect(GATES_QUEUES.map((q) => q.name)).toContain(GATE_EXCEPTION_EXPIRY_SCAN_QUEUE);
+    expect(GATES_HANDLERS.map((h) => h.queue)).toContain(GATE_EXCEPTION_EXPIRY_SCAN_QUEUE);
+    expect(Object.values(QUEUES_FOR_EVENT).flat()).not.toContain(GATE_EXCEPTION_EXPIRY_SCAN_QUEUE);
   });
 });

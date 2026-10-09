@@ -89,6 +89,14 @@ import { evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 import { buildG4Snapshot, type GateFactsProvider, type InheritedApprovalFact } from "./g4.ts";
 import { g5SnapshotOf } from "./g5.ts";
 import { g6SnapshotOf } from "./g6.ts";
+// T-DG4-BE-K2 (ADR-0035 §4): gate exceptions covering a missing mandatory criterion at submission and decision time.
+import {
+  coveringExceptions,
+  coveringExceptionsInTx,
+  exceptionBusinessDate,
+  exceptionSnapshotOf,
+  gateExceptionRefusals,
+} from "./gate-exceptions.ts";
 
 const G = "/api/v1/transformations/:transformationId/gates";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -323,7 +331,14 @@ async function gateView(
         .executeTakeFirst()
     : undefined;
   const pending = current?.status === "pending" ? current : undefined;
-  const allComplete = criteria.every((c) => !c.mandatory || c.completeness === "complete");
+  const missing = criteria.filter((c) => c.mandatory && c.completeness !== "complete");
+  // T-DG4-BE-K2 (ADR-0035 §4): a missing mandatory criterion covered today by an accepted exception does not block.
+  // Without an exception (every DG2/DG3 gate) nothing is read and the result is the DG2 one.
+  const covered =
+    missing.length === 0
+      ? new Map()
+      : await coveringExceptions(db, instance.id, await exceptionBusinessDate(db, instance.transformation_id));
+  const allComplete = missing.every((c) => covered.has(c.key));
   const canSubmit =
     def.submissionEnabled &&
     instance.status !== "approved" &&
@@ -637,7 +652,16 @@ async function submitGate(
   // Re-evaluate every criterion INSIDE this transaction and freeze the result (ADR-0015 §2 step 2).
   const facts = await loadGateFacts(tx, transformationId, gateFacts);
   const criteria = evaluateGate(def, facts);
-  const incomplete = criteria.filter((c) => c.mandatory && c.completeness === "incomplete");
+  const missingMandatory = criteria.filter((c) => c.mandatory && c.completeness === "incomplete");
+  // T-DG4-BE-K2 (ADR-0035 §4; D-089 Q2): under the gateException advisory lock, an accepted exception that covers a missing mandatory
+  // criterion on today's business date (transformation timezone) lets the submission proceed; the criterion row is
+  // frozen incomplete with the exception and the snapshot records it. With no missing criterion nothing is read; with
+  // no covering exception the refusal below is the exact DG2 one.
+  const covering =
+    missingMandatory.length === 0
+      ? new Map<string, never>()
+      : await coveringExceptionsInTx(tx, instance.id, await exceptionBusinessDate(tx, transformationId));
+  const incomplete = missingMandatory.filter((c) => !covering.has(c.key));
   // T-DG4-BE-K (ADR-0035 §2): for G5 and G6 only, the detail names the criterion LABELS (B0023), so a refusal lists
   // "Risk closure" / "Ownership transfer" literally; G1-G4 keep the DG2 key form byte for byte.
   const named = (c: GateCriterionEvaluation) => (LABELLED_GATES.has(gateCode) ? c.labelEn : c.key);
@@ -683,12 +707,17 @@ async function submitGate(
     charter: facts.charter ? { id: facts.charter.id, versionNo: facts.charter.version } : null,
     northStar: facts.northStar,
     approver,
-    criteria: criteria.map((c) => ({
-      key: c.key,
-      completeness: c.completeness,
-      missing: c.missing,
-      unverifiedEvidenceIds: c.unverifiedEvidenceIds,
-    })),
+    criteria: criteria.map((c) => {
+      const exception = c.mandatory && c.completeness === "incomplete" ? covering.get(c.key) : undefined;
+      return {
+        key: c.key,
+        completeness: c.completeness,
+        missing: c.missing,
+        unverifiedEvidenceIds: c.unverifiedEvidenceIds,
+        // T-DG4-BE-K2 (ADR-0035 §4): only on a covered criterion, so a snapshot without an exception is unchanged.
+        ...(exception !== undefined ? { exception: exceptionSnapshotOf(exception) } : {}),
+      };
+    }),
     evidence: facts.evidence.map((e) => ({
       evidenceId: e.evidenceId,
       record: `${e.recordType}:${e.recordId}`,
@@ -771,6 +800,8 @@ async function submitGate(
         mandatory: c.mandatory,
         completeness: c.completeness,
         detail: JSON.stringify({ missing: c.missing, unverifiedEvidenceIds: c.unverifiedEvidenceIds }),
+        // T-DG4-BE-K2: the covering exception (0051 trigger gate_submission_criterion_exception_valid re-checks it).
+        gate_exception_id: c.mandatory && c.completeness === "incomplete" ? (covering.get(c.key)?.id ?? null) : null,
       })
       .execute();
   }
@@ -880,6 +911,9 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
     const outOfSequence = await sequenceProblem(tx, transformationId, def, defs);
     if (outOfSequence) throw outOfSequence;
   }
+  // 5a. T-DG4-BE-K2 (ADR-0035 §4 "Decision time"): approving a submission whose snapshot records an exception that has
+  //     expired by today's business date is refused; rejecting, requesting changes or deferring stays allowed.
+  if (body.outcome === "approved") await assertRecordedExceptionsUnexpired(tx, pending.id, transformationId);
   const t = await writableTransformation(tx, transformationId);
   if (scope !== null) await assertScaleScopeValid(tx, t.organization_id, transformationId, scope);
   const audit: AuditContext = { ...auditContextOf(request), ...(onBehalfOf ? { onBehalfOfUserId: onBehalfOf } : {}) };
@@ -1298,6 +1332,26 @@ async function enqueueGateEvent(
       idempotency_key: event.idempotencyKey,
     })
     .execute();
+}
+
+/**
+ * T-DG4-BE-K2 (ADR-0035 §4, §11): 422 gate.exception_expired when an exception recorded on a criterion of the
+ * submission has expired by today's business date (transformation timezone); nothing is written. A submission
+ * recorded without an exception (every DG2/DG3 submission) reads one empty list and is unaffected.
+ */
+async function assertRecordedExceptionsUnexpired(tx: Tx, submissionId: string, transformationId: string) {
+  const recorded = await tx
+    .selectFrom("gate_submission_criterion as s")
+    .innerJoin("gate_exception as e", "e.id", "s.gate_exception_id")
+    .innerJoin("gate_criterion_definition as d", "d.key", "s.criterion_key")
+    .select(["d.label_en", sql<string>`e.expires_on::text`.as("expires_on")])
+    .where("s.gate_submission_id", "=", submissionId)
+    .orderBy("s.ordinal")
+    .execute();
+  if (recorded.length === 0) return;
+  const today = await exceptionBusinessDate(tx, transformationId);
+  const expired = recorded.find((r) => r.expires_on < today);
+  if (expired) throw gateExceptionRefusals.expired(expired.label_en, expired.expires_on);
 }
 
 /** Permissions a gate route declares (for the generated AUD write-deny sweep and documentation). */
