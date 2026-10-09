@@ -307,5 +307,26 @@ describe("authorisation (ADR-0033 §9)", () => {
       .executeTakeFirstOrThrow();
     expect(row).toEqual({ status: "enrolled", version: 1 });
     expect((await auditOf(api.db, t.id)).length).toBe(1);
+    // Commit-time on the create too: nothing is written.
+    const count = async () =>
+      Number(
+        (
+          await api.db
+            .selectFrom("training_record")
+            .select((eb) => eb.fn.countAll<string>().as("n"))
+            .where("transformation_id", "=", b.transformationId)
+            .executeTakeFirstOrThrow()
+        ).n,
+      );
+    const before = await count();
+    const u2 = await extraUser(api, w, b, "WL");
+    const created = await afterIdentity(
+      api,
+      u2.id,
+      () => call(api.app, "POST", TR, { session: u2.session, body, contract: false }),
+      () => revokeAll(api, w.grantor.id, u2.id),
+    );
+    expect(created.status).toBe(403);
+    expect(await count()).toBe(before);
   });
 });

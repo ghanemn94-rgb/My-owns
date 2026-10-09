@@ -387,7 +387,12 @@ describe("REQ-S11-002 A11: a proficiency observation submitted via the form link
       session: wl.session,
       body: { ...base, answers: { can_do: false }, proficiencyResult: "proficient" },
     });
-    expect([sent.status, sent.body.errors[0].pointer]).toEqual([400, "/proficiencyResult"]);
+    // The shared strict parser (S-2) reports an unknown member at its parent pointer, the body root.
+    expect([sent.status, sent.body.errors[0].pointer, sent.body.errors[0].code]).toEqual([
+      400,
+      "",
+      "validation.unknown_field",
+    ]);
     expect(await recordCount()).toBe(before);
   });
 
@@ -496,6 +501,9 @@ describe("review and withdrawal (ADR-0033 §5, §9)", () => {
     });
     expect([aud.status, aud.body.code]).toEqual([403, "assessment_record.not_withdrawable_by_caller"]);
     expect((await call(api.app, "POST", W, { session: wl.session, body: { reason: "Synthetic" } })).status).toBe(428);
+    expect(
+      (await call(api.app, "POST", W, { session: wl.session, headers: ifm(2), body: { reason: "Synthetic" } })).status,
+    ).toBe(409);
     const own = await call(api.app, "POST", W, {
       session: wl.session,
       headers: ifm(1),
@@ -595,5 +603,60 @@ describe("authorisation (ADR-0033 §9)", () => {
       .executeTakeFirstOrThrow();
     expect(row).toEqual({ status: "submitted", version: 1 });
     expect((await auditOf(api.db, id)).length).toBe(1);
+  });
+
+  it("commit-time 403 on a response and on the respondent's own withdrawal; nothing written", async () => {
+    const body = {
+      formId: profForm,
+      stakeholderGroupId: groupId,
+      subjectLabel: "Synthetic commit-time subject",
+      observedOn: "2026-10-05",
+      answers: { can_do: false },
+    };
+    const records = async () =>
+      Number(
+        (
+          await api.db
+            .selectFrom("assessment_record")
+            .select((eb) => eb.fn.countAll<string>().as("n"))
+            .where("transformation_id", "=", b.transformationId)
+            .executeTakeFirstOrThrow()
+        ).n,
+      );
+    // An assessor (WL: assessment.respond + proficiency.record) loses the grant between identity and commit.
+    const assessor = await extraUser(api, w, b, "WL");
+    const before = await records();
+    const created = await afterIdentity(
+      api,
+      assessor.id,
+      () => call(api.app, "POST", AR, { session: assessor.session, body, contract: false }),
+      () => revokeAll(api, w.grantor.id, assessor.id),
+    );
+    expect(created.status).toBe(403);
+    expect(await records()).toBe(before);
+    // The respondent withdraws their own record, but loses the grant before commit.
+    const respondent = await extraUser(api, w, b, "WL");
+    const mine = await call(api.app, "POST", AR, { session: respondent.session, body });
+    expect(mine.status, JSON.stringify(mine.body)).toBe(201);
+    const withdrawn = await afterIdentity(
+      api,
+      respondent.id,
+      () =>
+        call(api.app, "POST", `${AR}/${mine.body.id}/withdraw`, {
+          session: respondent.session,
+          headers: ifm(1),
+          body: { reason: "Synthetic: commit-time" },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, respondent.id),
+    );
+    expect(withdrawn.status).toBe(403);
+    const row = await api.db
+      .selectFrom("assessment_record")
+      .select(["status", "version"])
+      .where("id", "=", mine.body.id)
+      .executeTakeFirstOrThrow();
+    expect(row).toEqual({ status: "submitted", version: 1 });
+    expect((await auditOf(api.db, mine.body.id)).length).toBe(1);
   });
 });
