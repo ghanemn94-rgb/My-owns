@@ -351,7 +351,14 @@ describe("0046 seed equals the P4 part of permissions.ts (slice D)", () => {
 describe("migration files", () => {
   it("are named NNNN_snake_case.sql with strictly increasing ids, and never use plain timestamp in public", () => {
     const files = listMigrationFiles();
-    expect(files.map((f) => f.id)).toEqual(files.map((_, i) => i + 1));
+    // D-089: 0058-0069 are held for repairs and assigned one by one (0058: D-094, T-DG4-BE-B2), so a repair id may
+    // land before the planned 0047-0057 do. Planned ids stay contiguous from 0001; repair ids stay inside their range;
+    // all ids strictly increase (listMigrationFiles refuses anything else).
+    const REPAIR_FIRST = 58;
+    const REPAIR_LAST = 69;
+    const planned = files.filter((f) => f.id < REPAIR_FIRST).map((f) => f.id);
+    expect(planned).toEqual(planned.map((_, i) => i + 1));
+    for (const f of files.filter((f) => f.id >= REPAIR_FIRST)) expect(f.id, f.name).toBeLessThanOrEqual(REPAIR_LAST);
     for (const f of files.filter((f) => !f.name.includes("pgboss"))) {
       const code = f.sql.replace(/--.*$/gm, "");
       expect(code, f.name).not.toMatch(/timestamp(?!tz)(?! with time zone)\b(?!\()/i);

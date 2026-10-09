@@ -8,7 +8,7 @@ import { diffFields, sql } from "@mth/db";
 import { reasonRequest, validationDecision, valuePoolCreate, valuePoolUpdate } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
-import { auditContextOf, principalOf } from "../access/index.ts";
+import { auditContextOf, principalOf, technicalAdminRefusal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { parse, parseBody, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
 import { findValuePool, toValuePool, VALUE_POOL_AUDIT_FIELDS, workstreamExists } from "./repository.ts";
@@ -230,7 +230,12 @@ export function registerValuePoolRoutes(app: FastifyInstance, { db }: ModuleDeps
     const principal = principalOf(request);
     const audit = auditContextOf(request);
     const row = await db.transaction().execute(async (tx) => {
-      await writeScope(tx, request, transformationId, "finance.validate");
+      try {
+        await writeScope(tx, request, transformationId, "finance.validate");
+      } catch (err) {
+        // REQ-S10-003 (D-094): a technical-admin-only caller gets 403, not the read gate's 404.
+        throw technicalAdminRefusal(principal, err, "finance.validate");
+      }
       const expected = requireIfMatch(request);
       const decision = parseBody(validationDecision, request.body);
       const current = await findValuePool(tx, transformationId, id, true);

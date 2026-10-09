@@ -38,7 +38,6 @@ import {
   type Approval,
   type ApprovalDecisionRecord,
 } from "@mth/shared/schemas";
-import { ROLES } from "@mth/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
@@ -50,6 +49,7 @@ import {
   delegatorsOf,
   denialOf,
   effectiveGroupIds,
+  isTechnicalAdminOnly,
   principalOf,
   refreshPrincipal,
   requireAction,
@@ -83,12 +83,6 @@ import {
 import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
 
 const JSON_BODY = ["application/json"] as const;
-/** The technical-administrator roles of the catalogue (ADR-0020; never business approvers, REQ-S10-003). */
-const TECHNICAL_ADMIN_ROLES: ReadonlySet<string> = new Set(
-  Object.entries(ROLES)
-    .filter(([, r]) => r.kind === "technical_admin")
-    .map(([code]) => code),
-);
 /** Per subject record (ADR-0016 §6): a module updating a record that is the subject of an open approval takes it too. */
 export const APPROVAL_SUBJECT_LOCK_CLASS = ADVISORY_LOCK_CLASSES.approvalSubject;
 const OPEN_STATUSES = ["pending", "changes_requested", "deferred"] as const;
@@ -621,12 +615,7 @@ export async function requestApprovalInTx(
 // ------------------------------------------------------------------------------------------------ decide
 
 /** Rule 1 of ADR-0026 §4, with REQ-S10-003: a member of the approval's organization who cannot read it gets 403. */
-/** True when the principal holds grants in the organization and every one of them is a technical-admin role. */
-function isTechnicalAdminOnly(principal: Principal, organizationId: string): boolean {
-  principal.tracker.decisions += 1;
-  const inOrg = principal.grants.filter((g) => g.organizationId === organizationId);
-  return inOrg.length > 0 && inOrg.every((g) => TECHNICAL_ADMIN_ROLES.has(g.roleCode));
-}
+// isTechnicalAdminOnly is shared with the DG1-DG3 gate and Finance endpoints (access/technical-admin.ts; D-094).
 
 async function readGate(
   db: DbOrTx,
@@ -832,6 +821,24 @@ async function decideApproval(tx: Tx, request: FastifyRequest, approvalId: strin
       messageKey: "approvals.task.changes_requested",
       messageParams: { title: a.title, roundNo: a.round_no },
       dedupeKey: `approval.changes:${a.id}:${a.round_no}:${a.requested_by}`,
+    });
+  }
+  if (final) {
+    // ADR-0026 §4 "Outcome behaviour": on approve or reject "the requester gets an inbox reminder". Once per (approval,
+    // round, requester); a request-changes outcome has its own work item above, and a deferral keeps the approval open
+    // with the assignee (no requester reminder in the ADR's table).
+    await createWorkItemOnce(tx, userActor(audit), {
+      organizationId: a.organization_id,
+      transformationId: a.transformation_id,
+      kind: "approval_outcome",
+      assigneeUserId: a.requested_by,
+      subjectType: "approval",
+      subjectId: a.id,
+      linkPath: linkOf(a.id),
+      messageKey: "approvals.task.outcome",
+      messageParams: { title: a.title, roundNo: a.round_no, outcome: status },
+      dueDate: null,
+      dedupeKey: `approval.outcome:${a.id}:${a.round_no}:${a.requested_by}`,
     });
   }
   await emitOutcome(tx, { approval: updated, outcome: status, actorUserId: me, audit });

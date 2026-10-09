@@ -106,8 +106,27 @@ describe("approval.escalation_scan (REQ-S10-019)", () => {
       body: { outcome: "approve", rationale: "Synthetic: approved after escalation.", subjectVersion: 1 },
     });
     expect([decided.status, decided.body.status, decided.body.decidedBy]).toEqual([200, "approved", p.sponsor.id]);
-    const closed = await api.db.selectFrom("work_item").select("status").where("subject_id", "=", a.id).execute();
-    expect(closed.every((t) => t.status === "done")).toBe(true);
+    const closed = await api.db
+      .selectFrom("work_item")
+      .select("status")
+      .where("subject_id", "=", a.id)
+      .where("kind", "in", ["approval_decision", "approval_escalated"])
+      .execute();
+    expect(closed.length > 0 && closed.every((t) => t.status === "done")).toBe(true);
+    // T-DG4-BE-B2 (0058; ADR-0026 §4/§6): the requester's and the assignee's reminders are informational and stay open
+    // for their owners to dismiss: one approval_overdue each from the escalation, one approval_outcome for the requester.
+    const reminders = await api.db
+      .selectFrom("work_item")
+      .select(["kind", "assignee_user_id", "status"])
+      .where("subject_id", "=", a.id)
+      .where("kind", "in", ["approval_overdue", "approval_outcome"])
+      .orderBy("kind")
+      .orderBy("assignee_user_id")
+      .execute();
+    expect(reminders).toEqual([
+      { kind: "approval_outcome", assignee_user_id: p.lead.id, status: "open" },
+      ...[p.lead.id, p.bo.id].sort().map((u) => ({ kind: "approval_overdue", assignee_user_id: u, status: "open" })),
+    ]);
   });
 
   it("an exhausted chain is a visible routing error (no_next_authority); the approval stays pending, never approved", async () => {
