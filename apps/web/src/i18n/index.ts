@@ -45,6 +45,21 @@ import enTeam from "./en/team.json" with { type: "json" };
 import enTransformations from "./en/transformations.json" with { type: "json" };
 import enPortfolio from "./en/portfolio.json" with { type: "json" };
 import enReadiness from "./en/readiness.json" with { type: "json" };
+// P4 slices I and C namespaces (T-DG4-FE-A).
+import arMyWorkP4 from "./ar/myWork.json" with { type: "json" };
+import arApprovalsP4 from "./ar/approvals.json" with { type: "json" };
+import arDelegationsP4 from "./ar/delegations.json" with { type: "json" };
+import arCalendarP4 from "./ar/calendar.json" with { type: "json" };
+import arGroupsP4 from "./ar/groups.json" with { type: "json" };
+import arDecisionRightsP4 from "./ar/decisionRights.json" with { type: "json" };
+import arRaciP4 from "./ar/raci.json" with { type: "json" };
+import enMyWorkP4 from "./en/myWork.json" with { type: "json" };
+import enApprovalsP4 from "./en/approvals.json" with { type: "json" };
+import enDelegationsP4 from "./en/delegations.json" with { type: "json" };
+import enCalendarP4 from "./en/calendar.json" with { type: "json" };
+import enGroupsP4 from "./en/groups.json" with { type: "json" };
+import enDecisionRightsP4 from "./en/decisionRights.json" with { type: "json" };
+import enRaciP4 from "./en/raci.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -79,6 +94,13 @@ export const catalogues = {
     capacity: arCapacity,
     businessCases: arBusinessCases,
     benefitFormulas: arBenefitFormulas,
+    myWork: arMyWorkP4,
+    approvals: arApprovalsP4,
+    delegations: arDelegationsP4,
+    calendar: arCalendarP4,
+    groups: arGroupsP4,
+    decisionRights: arDecisionRightsP4,
+    raci: arRaciP4,
   },
   en: {
     common: enCommon,
@@ -104,6 +126,13 @@ export const catalogues = {
     capacity: enCapacity,
     businessCases: enBusinessCases,
     benefitFormulas: enBenefitFormulas,
+    myWork: enMyWorkP4,
+    approvals: enApprovalsP4,
+    delegations: enDelegationsP4,
+    calendar: enCalendarP4,
+    groups: enGroupsP4,
+    decisionRights: enDecisionRightsP4,
+    raci: enRaciP4,
   },
 } as const;
 
