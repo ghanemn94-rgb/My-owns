@@ -106,6 +106,7 @@ import { exerciseP4BeMOperations, P4_MIRRORS_BE_M } from "./p4-exercises-be-m.ts
 import { exerciseP4KbeBOperations, P4_MIRRORS_KBE_B } from "./p4-exercises-kbe-b.ts";
 import { exerciseP4KbeCOperations, P4_MIRRORS_KBE_C } from "./p4-exercises-kbe-c.ts";
 import { exerciseP4KbeDOperations, P4_MIRRORS_KBE_D } from "./p4-exercises-kbe-d.ts";
+import { exerciseP4KbeD2Operations, P4_MIRRORS_KBE_D2 } from "./p4-exercises-kbe-d2.ts";
 import { exerciseP4KbeEOperations, P4_MIRRORS_KBE_E } from "./p4-exercises-kbe-e.ts";
 import { exerciseP4KbeFOperations, P4_MIRRORS_KBE_F } from "./p4-exercises-kbe-f.ts";
 import { exerciseP4KbeGOperations, P4_MIRRORS_KBE_G } from "./p4-exercises-kbe-g.ts";
@@ -288,6 +289,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P4_MIRRORS_KBE_B,
   ...P4_MIRRORS_KBE_C,
   ...P4_MIRRORS_KBE_D,
+  ...P4_MIRRORS_KBE_D2,
   ...P4_MIRRORS_KBE_E,
   ...P4_MIRRORS_KBE_F,
   ...P4_MIRRORS_KBE_G,
@@ -609,6 +611,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P4 KBE-D operations (p4-exercises-kbe-d.ts)", async () => {
     await exerciseP4KbeDOperations(p3());
   });
+  it("P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)", async () => {
+    await exerciseP4KbeD2Operations(p3());
+  });
   it("P4 KBE-E operations (p4-exercises-kbe-e.ts)", async () => {
     await exerciseP4KbeEOperations(p3());
   });
@@ -671,7 +676,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-KBE-B: + createKpiVersion, updateKpiVersion, withdrawKpiVersion, createKpiRagThreshold,
     // createTargetTrajectory, approveTargetTrajectory, withdrawTargetTrajectory, resolveDataQualityFinding (JSON bodies;
     // activateKpiVersion is bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([184, 183, 1]);
+    // T-DG4-KBE-D2: + createBenefitOverlap, resolveBenefitOverlap, createBenefitScenario, updateBenefitScenario,
+    // createBenefitScenarioValue, updateBenefitScenarioValue, createBenefitValuationMethod, decideBenefitValuationMethod
+    // (8 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([192, 191, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

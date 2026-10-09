@@ -569,6 +569,114 @@ export function mapP4BenefitRegisterError(error: PgErrorLike): HttpProblem | nul
   }
 }
 
+// P4 slice B, KBE-D2 lines (T-DG4-KBE-D2; p4-work-split §B.2; ADR-0029 §11 "Database last-line mappings"): overlap
+// warnings, scenarios and valuation methods. The services check every rule first with the same code and text; these
+// answer only when a request slips past an API check or two requests race. Placeholders the database cannot know
+// ({kind}, {benefitCode}, {periodStart}) are filled from the error's DETAIL where it carries them, else generically.
+
+/** The `kind` of a benefit_scenario_one_kind_key DETAIL ("Key (transformation_id, kind)=(<uuid>, upside) ..."). */
+function scenarioKindOfDetail(error: PgErrorLike): string | null {
+  return /\(transformation_id, kind\)=\([0-9a-f-]{36}, (base|upside|downside)\)/.exec(error.detail ?? "")?.[1] ?? null;
+}
+
+/**
+ * P4 slice B overlap, scenario and valuation-method constraints (ADR-0029 §7, §8, §10, §11): the exact codes and
+ * English texts (S-11). Null when the error is not one of them.
+ */
+export function mapP4BenefitD2Error(error: PgErrorLike): HttpProblem | null {
+  const constraint = error.constraint ?? "";
+  switch (constraint) {
+    // valuation methods (§8)
+    case "benefit_valuation_method_decider_not_proposer":
+      return forbidden403(
+        "benefit_valuation_method.decider_is_proposer",
+        "The person who proposed this valuation method cannot decide it.",
+      );
+    case "benefit_valuation_method_status_step":
+    case "benefit_valuation_method_frozen":
+      return rule422(
+        "benefit_valuation_method.not_proposed",
+        "Only a proposed valuation method can be decided.",
+        "/decision",
+      );
+    case "benefit_valuation_method_decision_complete":
+      return rule422("benefit_valuation_method.note_required", "A rejection needs a note.", "/note");
+    case "benefit_valuation_method_code_key":
+      // A concurrent code allocation: retry.
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    // scenarios (§10)
+    case "benefit_scenario_one_kind_key": {
+      const kind = scenarioKindOfDetail(error);
+      return problems.duplicate(
+        "benefit_scenario.kind_exists",
+        kind === null
+          ? "This transformation already has an active scenario of this kind."
+          : `This transformation already has an active ${kind} scenario.`,
+      );
+    }
+    case "benefit_scenario_value_currency":
+      return rule422(
+        "benefit_value.currency_mismatch",
+        "The value is in another currency than the benefit. Values are never converted.",
+        "/currency",
+      );
+    case "benefit_scenario_value_unmonetised":
+      return rule422(
+        "benefit_value.unmonetised",
+        "A non-financial benefit has no SAR value without an approved valuation method. Record its KPI value instead.",
+        "/amount",
+      );
+    case "benefit_scenario_value_leaf_only":
+      return rule422(
+        "benefit_value.parent_rollup",
+        "This benefit is a parent: its values come from its children.",
+        "/benefitId",
+      );
+    case "benefit_scenario_value_benefit_active":
+      return rule422("benefit.archived", "This benefit is archived and read-only.", "/benefitId");
+    case "benefit_scenario_value_period_key":
+      return problems.duplicate(
+        "benefit_value.period_taken",
+        "This benefit already has a scenario value for the period starting on this date.",
+      );
+    case "benefit_scenario_value_period_range":
+      return rule422("benefit_value.period_range", "The period end cannot be before the period start.", "/periodEnd");
+    case "benefit_scenario_value_present":
+      return rule422("benefit_value.value_required", "A scenario value needs an amount or a KPI value.", "/amount");
+    case "benefit_scenario_value_frozen":
+      return problems.internal();
+    // overlap warnings (§7)
+    case "benefit_overlap_pair_order":
+      return problems.internal();
+    case "benefit_overlap_one_open_key":
+      return problems.duplicate(
+        "benefit_overlap.already_open",
+        "An open overlap warning already exists for these two benefits.",
+      );
+    case "benefit_overlap_status_step":
+      return rule422("benefit_overlap.not_open", "Only an open overlap warning can be resolved.", "");
+    case "benefit_overlap_resolution_complete":
+      return rule422(
+        "benefit_overlap.excluded_required",
+        "A duplicate resolution names which of the two benefits is not counted.",
+        "/excludedBenefitId",
+      );
+    case "benefit_overlap_resolver_not_owner":
+      return forbidden403(
+        "benefit_overlap.resolver_is_owner",
+        "You own one of the overlapping benefits, so you cannot resolve this overlap.",
+      );
+    default:
+      return null;
+  }
+}
+
 /** "<what> % ... %" values of a slice A guard message, e.g. "measure type lower_is_better does not fit the KPI polarity higher_is_better". */
 function wordsAfter(error: PgErrorLike, pattern: RegExp): string[] {
   return (pattern.exec(error.message ?? "") ?? []).slice(1).map((v) => v ?? "given");
@@ -724,6 +832,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4 !== null) return p4;
   const p4BenefitRegister = mapP4BenefitRegisterError(error);
   if (p4BenefitRegister !== null) return p4BenefitRegister;
+  const p4BenefitD2 = mapP4BenefitD2Error(error);
+  if (p4BenefitD2 !== null) return p4BenefitD2;
 
   const p4Kpi = mapP4KpiGuardError(error);
   if (p4Kpi !== null) return p4Kpi;
