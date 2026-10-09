@@ -227,7 +227,9 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
           // event, in THIS transaction - the gate and T01 screens exist as soon as the record does. Both modes
           // (End-to-End and Modular) get the same structure (REQ-PB-003). P3 (T-DG3-BE-A, ADR-0023 §1, ADR-0022 §1):
           // p3_instantiate_transformation() runs the P2 structure and adds the four B0079 waves and T06 weight set v1.
-          await sql`SELECT p3_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute(
+          // P4 (T-DG4-BE-C, ADR-0026 §7): p4_instantiate_transformation() runs the P3 structure and adds the two
+          // governance-matrix headers, the four T11 rows and the six T12 deliverables (36 cells), copied verbatim.
+          await sql`SELECT p4_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute(
             tx,
           );
           // F-DG1-106: a creator authorized only by a non-inheriting business-unit grant (TL) gets an explicit,

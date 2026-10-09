@@ -48,3 +48,6 @@ export * from "./kpi-versions.ts";
 // P4 slice B mirrors of KBE-D2 (kpi-benefits-engineer, T-DG4-KBE-D2; p4-work-split §B.2): overlap warnings, scenarios
 // and valuation methods.
 export * from "./benefit-scenarios.ts";
+// P4 slice C mirrors (backend-workflow-engineer, T-DG4-BE-C; p4-work-split §I+C.3): T11 decision rights, T12 RACI,
+// governance matrices and Transform readiness. Line added by BE-C (see its handback).
+export * from "./governance.ts";
