@@ -981,6 +981,29 @@ export function mapP4RaidError(error: PgErrorLike): HttpProblem | null {
     case "action_item_source_immutable":
       // The API never sends such a write: a programming error.
       return problems.internal();
+    // ---- BE-E: budget lines and initiative durations (ADR-0031 §7-§8, §11).
+    case "budget_line_archived_frozen":
+      return rule422("budget_line.archived", "This budget line is archived and can no longer be changed.", "");
+    case "budget_line_active_key":
+      return problems.duplicate(
+        "budget_line.duplicate",
+        "An active budget line with this label and month already exists for the initiative.",
+      );
+    case "budget_line_period_month_check":
+      return rule422(
+        "budget_line.period_invalid",
+        "The month must be given as its first day (YYYY-MM-01).",
+        "/periodMonth",
+      );
+    case "initiative_schedule_initiative_key":
+      return problems.duplicate(
+        "initiative_schedule.exists",
+        "This initiative already has a planned duration; update it instead.",
+      );
+    case "budget_line_currency_locked":
+    case "initiative_schedule_initiative_immutable":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
     default:
       return null;
   }
