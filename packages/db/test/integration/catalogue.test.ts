@@ -183,6 +183,36 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0041-0042: the P4 slice E guards are attached (deferred audit, status guards, append-only signal log)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('raid_entry', 'corrective_action_rule', 'corrective_case',
+         'corrective_signal', 'budget_line', 'initiative_schedule')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["budget_line", "budget_line_audit_required", true, true],
+      ["budget_line", "budget_line_guard", false, false],
+      ["budget_line", "budget_line_row_guard", false, false],
+      ["corrective_action_rule", "corrective_action_rule_audit_required", true, true],
+      ["corrective_action_rule", "corrective_action_rule_guard", false, false],
+      ["corrective_action_rule", "corrective_action_rule_row_guard", false, false],
+      ["corrective_case", "corrective_case_audit_required", true, true],
+      ["corrective_case", "corrective_case_guard", false, false],
+      ["corrective_case", "corrective_case_row_guard", false, false],
+      ["corrective_signal", "corrective_signal_append_only", false, false],
+      ["corrective_signal", "corrective_signal_append_only_truncate", false, false],
+      ["corrective_signal", "corrective_signal_row_guard", false, false],
+      ["initiative_schedule", "initiative_schedule_audit_required", true, true],
+      ["initiative_schedule", "initiative_schedule_guard", false, false],
+      ["initiative_schedule", "initiative_schedule_row_guard", false, false],
+      ["raid_entry", "raid_entry_audit_required", true, true],
+      ["raid_entry", "raid_entry_guard", false, false],
+      ["raid_entry", "raid_entry_row_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -316,6 +346,12 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "benefit_measurement",
       "finance_validation",
       "benefit_overlap",
+      // P4 slice E (0041-0043, T-DG4-ARCH-04; ADR-0031).
+      "raid_entry",
+      "corrective_action_rule",
+      "corrective_case",
+      "budget_line",
+      "initiative_schedule",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -496,6 +532,15 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       benefit_overlap: SIU,
       benefit_counting: "SELECT",
       benefit_value_line: "SELECT",
+      // P4 slice E (0041-0043): still no DELETE anywhere; the corrective signal log is append-only (INSERT,SELECT);
+      // the RAID register is a read-only view.
+      raid_entry: SIU,
+      raid_register: "SELECT",
+      corrective_action_rule: SIU,
+      corrective_case: SIU,
+      corrective_signal: "INSERT,SELECT",
+      budget_line: SIU,
+      initiative_schedule: SIU,
     });
   });
 

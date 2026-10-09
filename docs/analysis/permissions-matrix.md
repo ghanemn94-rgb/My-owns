@@ -451,3 +451,49 @@ Legend as in 8.3. **D** = decide/validate. Every cell is checked server-side by 
 - **Finance only (REQ-PB-013, REQ-S08-014, REQ-S08-015, REQ-S08-017):** `decideFinanceValidation`, `amendFinanceValidation`, `reverseFinanceValidation`, `decideBenefitBaseline`, `decideBenefitValuationMethod` and `resolveBenefitOverlap` need `finance.validate`. A Business Owner gets **403** (the REQ-PB-013 acceptance), and so do AUD and an ADM-only user (REQ-S10-003). The audit event of each decision records the deciding Finance user.
 - **Record-level rules:** the Finance decider is never the submitter (403 `finance_validation.sod_submitter`; database `finance_validation_sod`); a baseline is never validated by the benefit's owner (403 `benefit.baseline_validator_is_owner`); a valuation method is never decided by its proposer (403 `benefit_valuation_method.decider_is_proposer`); an overlap is never resolved by the owner of either benefit (403 `benefit_overlap.resolver_is_owner`).
 - **Changes against sections 1–6, flagged as assumptions:** REQ-PB-013 lists submitters BO, WL and KDS (`benefit.measure`); REQ-PB-074 "advance:BO" (`benefit.advance`); REQ-S08-013 "allocate:BO,TL"; REQ-S08-018 "edit:TL,FIN" (`benefit_scenario.edit`); REQ-S08-003 "create/edit:BO,TL"; shared-benefit groups (no source role) are given to TL and BO, the benefit editors.
+
+## 13. P4 implementation, slice E (DG4): RAID, actions, corrective actions, budget and schedule permission codes and per-entity rights
+
+- **Added by:** T-DG4-ARCH-04 (solution-architect), 2026-10-09.
+- **Implements:** sections 1–6 for the T15 RAID register on canonical records, RAID-linked actions and the action register, corrective-action cases and their rules, initiative budget lines, execution tracking and initiative durations for the critical path (ADR-0031). The seed is migration `0043_p4_raid_permissions.sql`, equal to `P4_RAID_PERMISSIONS` / `P4_RAID_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`).
+- **Status:** configurable defaults and implementation assumptions. Mobily's business owners must confirm them before production. Nothing in slice E is a business approval; no engineering agent, seed or job grants a real business, Finance or IT approval.
+
+### 13.1 P4 permission catalogue (slice E)
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `raid.edit` | write | Create, edit and close RAID entries (Risk, Assumption, Issue; a Dependency entry also needs `dependency.edit`) | TL, WL, TO |
+| `corrective_action.manage` | write | Open a corrective-action case for a Value Review finding; update and close any case | TL, BO, FIN |
+| `corrective_rule.configure` | configure | Store and change the severity and persistence rule of a source kind | TL, TO |
+| `budget.edit` | write | Create, edit and archive initiative budget lines | TL, FIN |
+| `dependency.edit` (P2, reused) | write | Needed with `raid.edit` for a Dependency entry (the canonical T08 row) | TL, WL, TO, TD |
+| `action.edit` / `action.update_own` (P2, reused) | write | Create and update actions linked to RAID entries and cases; `update_own` only for actions the caller owns | `action.edit`: TL, TO; `action.update_own`: SP, BO, WL, FIN, KDS, TD |
+| `roadmap.edit` (P3, reused) | write | Record and change an initiative's planned duration | TL, WL, TO |
+
+None of the four new codes is `business_approval` or `finance_validation`, so the creator-derived assignment (F-DG1-106) and the team view (ADR-0020 §3) are unchanged. AUD and the technical-admin roles (ADM_TECH, ADM_ACCESS, ADM_METHOD) hold none of them.
+
+### 13.2 Per-entity rights in P4 (slice E)
+
+Legend as in 8.3. **close** = close with a note (final). Every cell is checked server-side by the one policy function and re-authorised at commit.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| RAID Risk / Assumption / Issue (`raid_entry`) | V | C E close | V | C E close | V | C E close | V | V | V | V | — |
+| RAID Dependency entry (`dependency` via `raid_register`) | V | C E close | V | C E close | V | C E close | V | V (T08 edit only) | V | V | — |
+| RAID register and RAID + decision log (`raid_register`, `decision`; read models) | V | V | V | V | V | V | V | V | V | V | — |
+| Actions on RAID entries and cases; action register (`action_item`) | V, C E own | C E | V, C E own | V, C E own | V, C E own | C E | V, C E own | V, C E own | V | V | — |
+| Corrective-action cases (`corrective_case`) | V | C E close | C E close | V | C E close | V | V | V | V | V | — |
+| Corrective signals (`corrective_signal`; worker only) | V | V | V | V | V | V | V | V | V | V | — |
+| Corrective-action rules (`corrective_action_rule`) | V | C E | V | V | V | C E | V | V | V | V | — |
+| Budget lines (`budget_line`) | V | C E archive | V | V | C E archive | V | V | V | V | V | — |
+| Initiative durations (`initiative_schedule`) | V | C E | V | C E | V | C E | V | V | V | V | — |
+| Execution tracking and schedule network (read models) | V | V | V | V | V | V | V | V | V | V | — |
+
+**Rules (binding for the slice E implementers):**
+
+- **AUD (read-only auditor):** every mutating slice E operation returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. BE-D, BE-D2 and BE-E test this on each of their operations (p4-work-split S-4).
+- **Technical admins:** ADM-only users hold no `transformation.read`, so every slice E operation answers 404 for them (ADR-0006 non-disclosure), never a success.
+- **Dependency entries:** a RAID write on a Dependency entry needs both `raid.edit` and `dependency.edit`; TD (who holds `dependency.edit` only) edits the same row through T08, and that edit is the RAID entry's edit (REQ-PB-078).
+- **Worker:** the corrective-case consumers act as the service actor, hold no permission and never decide anything; they create or update cases, signals and work items only (ADR-0031 §5.4).
+- **SoD:** no slice E operation is an approval, so no separation-of-duties rule applies.
+- **Changes against sections 1–6, flagged as assumptions:** REQ-PB-079 "create/edit:WL,TL,TO" (`raid.edit`); REQ-PB-085 "create:BO,TL,FIN" (`corrective_action.manage`, which also covers update and close); REQ-S09-007 "budget:FIN,TL" (`budget.edit`); the corrective-action rule (no source role) is given to TL and TO, the transformation configurers; durations reuse `roadmap.edit` (REQ-S09-009 owner TL).

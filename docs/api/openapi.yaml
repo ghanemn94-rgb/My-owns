@@ -77,6 +77,11 @@ info:
     Unknown, never 0. Submitted values stay pending until a Finance user validates them on six items; a validated value
     is never edited in place (409) and is corrected by linked amendments or reversals. Totals count each benefit once and
     never add value states, scenarios or allocations together. Finance validation is a decision by a named Finance user.
+
+    **P4 additions, slice E (T-DG4-ARCH-04, ADR-0031).** Additive within v1: new paths, schemas and tags. A RAID
+    Dependency entry is the canonical T08 dependency (no copy); Probability is n/a except for a Risk. Corrective-action
+    cases are opened or updated (never duplicated) by the configured severity and persistence rule. Budget amounts are
+    decimal strings and Unknown is never 0. A critical path is claimed only when every duration is known.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -168,6 +173,16 @@ tags:
     description: The Finance validation queue, decisions on six items, amendments and reversals (P4, ADR-0030).
   - name: benefit-totals
     description: Benefit totals counted once, by value class and state; gross, implementation cost and net (P4, ADR-0030).
+  - name: raid
+    description: T15 RAID log on canonical records (Dependency entries are the T08 dependencies) and the integrated RAID and decision log (P4, ADR-0031).
+  - name: actions
+    description: The action register with source links and follow-up dates; the DG2 action operations are unchanged (P4, ADR-0031).
+  - name: corrective-actions
+    description: Corrective-action cases (recovery plans), their source signals and the severity and persistence rules (P4, ADR-0031).
+  - name: budget-lines
+    description: Initiative budget lines (budget, actual, forecast in decimal money) and execution tracking with the working-day slip (P4, ADR-0031).
+  - name: schedule-network
+    description: Initiative durations and the critical path from defined scheduling logic (P4, ADR-0031).
 security:
   - sessionCookie: []
 paths:
@@ -10681,6 +10696,797 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raid:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [raid]
+      operationId: listRaidEntries
+      summary: "The T15 RAID log (REQ-PB-079): Risk, Assumption and Issue rows and the canonical T08 dependencies as Dependency entries, one register with no copy (REQ-PB-078); Probability is n/a (null) except for a Risk (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/RaidTypeQuery"
+        - $ref: "#/components/parameters/RaidStatusQuery"
+        - $ref: "#/components/parameters/RaidOwnerUserIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidEntryPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [raid]
+      operationId: createRaidEntry
+      summary: "Log a RAID entry, status Open (raid.edit; TL, WL, TO; a Dependency entry also needs dependency.edit and is created as the canonical T08 dependency, code DEP-nn). 400 raid.type_invalid (Type outside Risk/Assumption/Issue/Dependency); 422 raid.probability_required, raid.probability_not_applicable."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaidEntryCreate" }
+      responses:
+        "201":
+          description: "Created (Open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidEntry" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raid/{raidEntryId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/RaidEntryId"
+    get:
+      tags: [raid]
+      operationId: getRaidEntry
+      summary: "Read one RAID entry; a Dependency entry is read from its canonical dependency row (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidEntry" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [raid]
+      operationId: updateRaidEntry
+      summary: "Change a RAID entry's T15 fields or move it between Open and In progress (raid.edit; a Dependency entry also needs dependency.edit and changes the canonical row). 422 raid.probability_required, raid.probability_not_applicable, raid.status_transition, raid.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaidEntryUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidEntry" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raid/{raidEntryId}/close:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/RaidEntryId"
+    post:
+      tags: [raid]
+      operationId: closeRaidEntry
+      summary: "Close a RAID entry with a closure note; final (raid.edit; a Dependency entry also needs dependency.edit and becomes resolved). 422 raid.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaidEntryClose" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidEntry" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raid/{raidEntryId}/actions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/RaidEntryId"
+    get:
+      tags: [raid]
+      operationId: listRaidEntryActions
+      summary: "The actions linked to a RAID entry (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidActionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [raid]
+      operationId: createRaidEntryAction
+      summary: "Create an owned action linked to a RAID entry (action.edit, or action.update_own for an action the caller owns). 422 raid.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaidActionCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidAction" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/raid-decision-log:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [raid]
+      operationId: getRaidDecisionLog
+      summary: "The integrated RAID and decision log (B0126; REQ-PB-078): open RAID entries and open design (T04) and executive (T16) decisions, read from their canonical records (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidDecisionLogPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/action-register:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [actions]
+      operationId: listActionRegister
+      summary: "Every action of the transformation with its source (workshop, RAID entry, dependency, corrective case) and follow-up date; the DG2 action operations are unchanged (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ActionSourceKindQuery"
+        - $ref: "#/components/parameters/RaidOwnerUserIdQuery"
+        - $ref: "#/components/parameters/ActionStatusQuery"
+        - $ref: "#/components/parameters/OverdueQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidActionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/action-register/{actionItemId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ActionItemId"
+    get:
+      tags: [actions]
+      operationId: getActionRegisterItem
+      summary: "Read one action with its source and follow-up date (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidAction" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [actions]
+      operationId: updateActionRegisterItem
+      summary: "Update an action, including its follow-up date (action.edit, or action.update_own for the owner); status changes follow the DG2 transitions (422 invalid-transition)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaidActionUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidAction" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-actions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [corrective-actions]
+      operationId: listCorrectiveCases
+      summary: "Corrective-action cases (recovery plans) of the transformation, from KPI deviations, benefit variances, failed adoption or control checks, and Value Review findings (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/CorrectiveSourceKindQuery"
+        - $ref: "#/components/parameters/CorrectiveStatusQuery"
+        - $ref: "#/components/parameters/RaidOwnerUserIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveCasePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [corrective-actions]
+      operationId: createCorrectiveCase
+      summary: "Open a corrective-action case for a Value Review finding with owner and follow-up date (corrective_action.manage; BO, TL, FIN). 409 corrective_case.already_open (an open case for the same finding); 422 corrective_case.follow_up_past."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CorrectiveCaseCreate" }
+      responses:
+        "201":
+          description: "Created (Open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveCase" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-actions/{correctiveCaseId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/CorrectiveCaseId"
+    get:
+      tags: [corrective-actions]
+      operationId: getCorrectiveCase
+      summary: "Read one corrective-action case, with the benefit's lifecycle step when the source is a benefit (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveCase" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [corrective-actions]
+      operationId: updateCorrectiveCase
+      summary: "Change the recovery plan, owner, follow-up date or move between Open and In progress (corrective_action.manage). 422 corrective_case.status_transition, corrective_case.closed, corrective_case.follow_up_past."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CorrectiveCaseUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveCase" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-actions/{correctiveCaseId}/close:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/CorrectiveCaseId"
+    post:
+      tags: [corrective-actions]
+      operationId: closeCorrectiveCase
+      summary: "Close a case with a closure note; final (corrective_action.manage). 422 corrective_case.owner_required, corrective_case.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CorrectiveCaseClose" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveCase" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-actions/{correctiveCaseId}/signals:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/CorrectiveCaseId"
+    get:
+      tags: [corrective-actions]
+      operationId: listCorrectiveCaseSignals
+      summary: "The source signals that created or updated the case, newest first (append-only lineage; transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveSignalPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-actions/{correctiveCaseId}/actions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/CorrectiveCaseId"
+    get:
+      tags: [corrective-actions]
+      operationId: listCorrectiveCaseActions
+      summary: "The actions linked to a corrective-action case (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidActionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [corrective-actions]
+      operationId: createCorrectiveCaseAction
+      summary: "Create an owned recovery action linked to the case (action.edit, or action.update_own for an action the caller owns). 422 corrective_case.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaidActionCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidAction" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-action-rules:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [corrective-actions]
+      operationId: listCorrectiveActionRules
+      summary: "The severity and persistence rule in force for each of the four source kinds; isDefault marks a kind without a stored rule (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveActionRulePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [corrective-actions]
+      operationId: createCorrectiveActionRule
+      summary: "Store the rule of one source kind (corrective_rule.configure; TL, TO). 409 corrective_rule.exists; 422 corrective_rule.severity_kpi_only, corrective_rule.persistence_series_only."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CorrectiveActionRuleCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveActionRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/corrective-action-rules/{sourceKind}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/CorrectiveSourceKindPath"
+    patch:
+      tags: [corrective-actions]
+      operationId: updateCorrectiveActionRule
+      summary: "Change the stored rule of one source kind (corrective_rule.configure); 404 when the kind has no stored rule. 422 corrective_rule.severity_kpi_only, corrective_rule.persistence_series_only."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CorrectiveActionRuleUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CorrectiveActionRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/budget-lines:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    get:
+      tags: [budget-lines]
+      operationId: listBudgetLines
+      summary: "The initiative's budget lines: budget, actual and forecast as decimal strings in the line's currency; null is Unknown, never 0 (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/BudgetLineStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetLinePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [budget-lines]
+      operationId: createBudgetLine
+      summary: "Create a budget line; its currency is the organization default at creation (budget.edit; TL, FIN). 409 budget_line.duplicate; 422 budget_line.amount_invalid, budget_line.period_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetLineCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetLine" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/budget-lines/{budgetLineId}:
+    parameters:
+      - $ref: "#/components/parameters/BudgetLineId"
+    get:
+      tags: [budget-lines]
+      operationId: getBudgetLine
+      summary: "Read one budget line (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetLine" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [budget-lines]
+      operationId: updateBudgetLine
+      summary: "Change a budget line's label, month, amounts, owner or note (budget.edit). 409 budget_line.duplicate or a stale If-Match; 422 budget_line.amount_invalid, budget_line.period_invalid, budget_line.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetLineUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetLine" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/budget-lines/{budgetLineId}/archive:
+    parameters:
+      - $ref: "#/components/parameters/BudgetLineId"
+    post:
+      tags: [budget-lines]
+      operationId: archiveBudgetLine
+      summary: "Archive a budget line with a reason; final (budget.edit). 422 budget_line.archived."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetLine" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/execution:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    get:
+      tags: [budget-lines]
+      operationId: getInitiativeExecution
+      summary: "Execution tracking (REQ-S09-007): approved vs forecast milestone dates with the slip in working days on the business calendar, deliverable acceptance, budget/actual/forecast totals and variances per currency, role-based capacity and FTE demand, dependencies, decisions, and critical-path membership (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeExecution" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/schedule-network:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [schedule-network]
+      operationId: getScheduleNetwork
+      summary: "The initiative network on the canonical dependencies with durations in working days and the critical path by the critical path method (zero total float, REQ-S09-009); with any missing duration no critical path is claimed (status not_computable) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleNetwork" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/initiatives/{initiativeId}/schedule:
+    parameters:
+      - $ref: "#/components/parameters/InitiativeId"
+    post:
+      tags: [schedule-network]
+      operationId: createInitiativeSchedule
+      summary: "Record the initiative's planned duration in working days (roadmap.edit; TL, WL, TO). 409 initiative_schedule.exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InitiativeScheduleCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeSchedule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [schedule-network]
+      operationId: updateInitiativeSchedule
+      summary: "Change the initiative's planned duration (roadmap.edit); 404 when none is recorded."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InitiativeScheduleUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeSchedule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -10698,6 +11504,71 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    RaidEntryId:
+      name: raidEntryId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    CorrectiveCaseId:
+      name: correctiveCaseId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BudgetLineId:
+      name: budgetLineId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    CorrectiveSourceKindPath:
+      name: sourceKind
+      in: path
+      required: true
+      schema: { type: string, enum: [kpi_deviation, benefit_variance, adoption_check, control_check] }
+    RaidTypeQuery:
+      name: type
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/RaidEntryType" }
+    RaidStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/RaidStatus" }
+    RaidOwnerUserIdQuery:
+      name: ownerUserId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ActionSourceKindQuery:
+      name: sourceKind
+      in: query
+      required: false
+      schema: { type: string, enum: [workshop, raid_entry, dependency, corrective_case, none] }
+    ActionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, in_progress, done, cancelled] }
+    OverdueQuery:
+      name: overdue
+      in: query
+      required: false
+      schema: { type: boolean }
+    CorrectiveSourceKindQuery:
+      name: sourceKind
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/CorrectiveSourceKind" }
+    CorrectiveStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, in_progress, closed] }
+    BudgetLineStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, archived] }
     BenefitId:
       name: benefitId
       in: path
@@ -11467,6 +12338,10 @@ components:
         - benefit.measure
         - benefit_scenario.edit
         - benefit_group.manage
+        - raid.edit
+        - corrective_action.manage
+        - corrective_rule.configure
+        - budget.edit
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -18013,4 +18888,532 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/FinanceValidation" } }
+        nextCursor: { type: [string, "null"] }
+
+    # ---- P4 slice E (T-DG4-ARCH-04; ADR-0031) -----------------------------------------------------------------------
+    RaidEntryType:
+      type: string
+      enum: [risk, assumption, issue, dependency]
+      description: "T15 Type (B0128). Any other value is 400 with error code raid.type_invalid (REQ-PB-079)."
+    RaidLevel:
+      type: string
+      enum: [high, medium, low]
+      description: T15 H/M/L (B0128).
+    RaidStatus:
+      type: string
+      enum: [open, in_progress, closed]
+      description: "T15 Status; new entries are open (B0128). A Dependency entry maps open and at_risk to open, resolved to closed."
+    RaidEntry:
+      type: object
+      description: "One T15 row (B0128). A Dependency entry is the canonical T08 dependency itself (recordTable dependency), never a copy (REQ-PB-078). Probability is null (n/a) unless type is risk (REQ-PB-080); impact null is Unknown."
+      required: [id, transformationId, type, code, description, impact, probability, ownerUserId, dueDate, mitigation, status, recordStatus, recordTable, initiativeId, closedAt, closedBy, closureNote, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        type: { $ref: "#/components/schemas/RaidEntryType" }
+        code: { type: string, pattern: "^(R|A|I|DEP)-[0-9]{2,6}$", description: "R-nn, A-nn, I-nn; a Dependency entry keeps its DEP-nn code (D-089 Q5)." }
+        description: { type: string, minLength: 1, maxLength: 4000 }
+        impact: { oneOf: [{ $ref: "#/components/schemas/RaidLevel" }, { type: "null" }] }
+        probability: { oneOf: [{ $ref: "#/components/schemas/RaidLevel" }, { type: "null" }] }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        mitigation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        status: { $ref: "#/components/schemas/RaidStatus" }
+        recordStatus: { type: string, description: "The canonical row's own status (raid_entry: open, in_progress, closed; dependency: open, at_risk, resolved)." }
+        recordTable: { type: string, enum: [raid_entry, dependency] }
+        initiativeId: { $ref: "#/components/schemas/NullableUuid" }
+        closedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        closedBy: { $ref: "#/components/schemas/NullableUuid" }
+        closureNote: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    RaidEntryCreate:
+      type: object
+      required: [type, description, impact, ownerUserId]
+      additionalProperties: false
+      properties:
+        type: { $ref: "#/components/schemas/RaidEntryType" }
+        description: { type: string, minLength: 1, maxLength: 4000 }
+        impact: { $ref: "#/components/schemas/RaidLevel" }
+        probability: { oneOf: [{ $ref: "#/components/schemas/RaidLevel" }, { type: "null" }], description: "Required for a Risk (422 raid.probability_required); must be absent or null otherwise (422 raid.probability_not_applicable)." }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        mitigation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        initiativeId: { $ref: "#/components/schemas/NullableUuid" }
+        fromInitiativeId: { $ref: "#/components/schemas/NullableUuid", description: "Dependency entries only: the T08 From initiative." }
+        toInitiativeId: { $ref: "#/components/schemas/NullableUuid", description: "Dependency entries only: the T08 To initiative." }
+        dependencyType: { type: string, pattern: "^[a-z][a-z0-9_]{1,47}$", description: "Dependency entries only: a T08 dependency type code (default other)." }
+    RaidEntryUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        description: { type: string, minLength: 1, maxLength: 4000 }
+        impact: { $ref: "#/components/schemas/RaidLevel" }
+        probability: { oneOf: [{ $ref: "#/components/schemas/RaidLevel" }, { type: "null" }] }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        mitigation: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        initiativeId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [open, in_progress], description: "Closing is closeRaidEntry (422 raid.status_transition)." }
+    RaidEntryClose:
+      type: object
+      required: [closureNote]
+      additionalProperties: false
+      properties:
+        closureNote: { type: string, minLength: 3, maxLength: 2000 }
+    RaidDecisionLogItem:
+      type: object
+      required: [itemKind, id, code, kind, title, ownerUserId, dueDate, status]
+      additionalProperties: false
+      properties:
+        itemKind: { type: string, enum: [raid_entry, decision] }
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        kind: { type: string, enum: [risk, assumption, issue, dependency, design, executive] }
+        title: { type: string, description: "The RAID description or the decision title, from the canonical record." }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string }
+    RaidAction:
+      type: object
+      description: "An owned action (Action, REQ-S16-018) with its P4 source link and follow-up date. Always person-authored."
+      required: [id, transformationId, title, description, ownerUserId, dueDate, followUpDate, status, sourceKind, sourceWorkshopItemId, raidEntryId, dependencyId, correctiveCaseId, overdue, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        followUpDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [open, in_progress, done, cancelled] }
+        sourceKind: { type: string, enum: [workshop, raid_entry, dependency, corrective_case, none] }
+        sourceWorkshopItemId: { $ref: "#/components/schemas/NullableUuid" }
+        raidEntryId: { $ref: "#/components/schemas/NullableUuid" }
+        dependencyId: { $ref: "#/components/schemas/NullableUuid" }
+        correctiveCaseId: { $ref: "#/components/schemas/NullableUuid" }
+        overdue: { type: boolean, description: "Due date before today's business date while open or in progress." }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    RaidActionCreate:
+      type: object
+      required: [title, ownerUserId]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        followUpDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+    RaidActionUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        followUpDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [open, in_progress, done, cancelled] }
+    CorrectiveSourceKind:
+      type: string
+      enum: [kpi_deviation, benefit_variance, adoption_check, control_check, value_review]
+    CorrectiveCase:
+      type: object
+      description: "A recovery plan / corrective-action case (REQ-PB-085, REQ-S12-016). At most one case that is not closed per source; a failed check gets one case ever. createdBy is null for a case the worker created (its audit actor is the service)."
+      required: [id, transformationId, code, sourceKind, sourceScopeKey, kpiDefinitionId, kpiScopeKind, kpiScopeId, benefitId, benefitLifecycleStep, sourceRecordType, sourceRecordId, title, recoveryPlan, ownerUserId, ownerStatus, followUpDate, followUpUnknownReason, status, consecutiveOffTrack, signalCount, lastSignalAt, closedAt, closedBy, closureNote, createdSource, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^CA-[0-9]{2,6}$" }
+        sourceKind: { $ref: "#/components/schemas/CorrectiveSourceKind" }
+        sourceScopeKey: { type: string, minLength: 1, maxLength: 200 }
+        kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
+        kpiScopeKind: { type: [string, "null"], enum: [transformation, business_unit, initiative, null] }
+        kpiScopeId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitId: { $ref: "#/components/schemas/NullableUuid" }
+        benefitLifecycleStep: { type: [string, "null"], description: "The benefit's current lifecycle step (read, never changed by the case)." }
+        sourceRecordType: { type: [string, "null"] }
+        sourceRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        recoveryPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerStatus: { type: string, enum: [assigned, unassigned], description: "unassigned = no owner resolved; shown as a routing error, never skipped." }
+        followUpDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        followUpUnknownReason: { type: [string, "null"], enum: [calendar_not_configured, null] }
+        status: { type: string, enum: [open, in_progress, closed] }
+        consecutiveOffTrack: { type: [integer, "null"], minimum: 0 }
+        signalCount: { type: integer, minimum: 0 }
+        lastSignalAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        closedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        closedBy: { $ref: "#/components/schemas/NullableUuid" }
+        closureNote: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+        createdSource: { type: string, enum: [api, worker] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    CorrectiveCaseCreate:
+      type: object
+      required: [findingRef, title, ownerUserId, followUpDate]
+      additionalProperties: false
+      properties:
+        findingRef: { type: string, minLength: 1, maxLength: 150, description: "The Value Review finding this case answers; one open case per finding." }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        recoveryPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        followUpDate: { $ref: "#/components/schemas/BusinessDate" }
+    CorrectiveCaseUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        recoveryPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        followUpDate: { $ref: "#/components/schemas/BusinessDate" }
+        status: { type: string, enum: [open, in_progress], description: "Closing is closeCorrectiveCase (422 corrective_case.status_transition)." }
+    CorrectiveCaseClose:
+      type: object
+      required: [closureNote]
+      additionalProperties: false
+      properties:
+        closureNote: { type: string, minLength: 3, maxLength: 2000 }
+    CorrectiveSignal:
+      type: object
+      required: [id, sourceKind, sourceEventKey, periodKey, periodStart, periodEnd, observedRag, offTrack, rulePersistence, consecutiveOffTrack, outcome, correctiveCaseId, receivedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        sourceKind: { type: string, enum: [kpi_deviation, benefit_variance, adoption_check, control_check] }
+        sourceEventKey: { type: string }
+        periodKey: { type: string }
+        periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        observedRag: { type: [string, "null"], enum: [green, amber, red, unknown, stale, not_computable, null] }
+        offTrack: { type: [boolean, "null"], description: "null = Unknown: neither off track nor recovered." }
+        rulePersistence: { type: [integer, "null"] }
+        consecutiveOffTrack: { type: [integer, "null"] }
+        outcome: { type: string, enum: [recorded, case_created, case_updated, rule_disabled] }
+        correctiveCaseId: { $ref: "#/components/schemas/NullableUuid" }
+        receivedAt: { $ref: "#/components/schemas/Timestamp" }
+    CorrectiveActionRule:
+      type: object
+      required: [id, sourceKind, minKpiRag, persistenceCycles, followUpWorkingDays, enabled, isDefault, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/NullableUuid" }
+        sourceKind: { type: string, enum: [kpi_deviation, benefit_variance, adoption_check, control_check] }
+        minKpiRag: { type: [string, "null"], enum: [amber, red, null] }
+        persistenceCycles: { type: integer, minimum: 1, maximum: 12 }
+        followUpWorkingDays: { type: integer, minimum: 1, maximum: 60 }
+        enabled: { type: boolean }
+        isDefault: { type: boolean, description: "True when no rule is stored and the ADR-0031 §5.2 default applies (id and version null)." }
+        version: { type: [integer, "null"], minimum: 1 }
+    CorrectiveActionRuleCreate:
+      type: object
+      required: [sourceKind, persistenceCycles, followUpWorkingDays]
+      additionalProperties: false
+      properties:
+        sourceKind: { type: string, enum: [kpi_deviation, benefit_variance, adoption_check, control_check] }
+        minKpiRag: { type: [string, "null"], enum: [amber, red, null] }
+        persistenceCycles: { type: integer, minimum: 1, maximum: 12 }
+        followUpWorkingDays: { type: integer, minimum: 1, maximum: 60 }
+        enabled: { type: boolean }
+    CorrectiveActionRuleUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        minKpiRag: { type: [string, "null"], enum: [amber, red, null] }
+        persistenceCycles: { type: integer, minimum: 1, maximum: 12 }
+        followUpWorkingDays: { type: integer, minimum: 1, maximum: 60 }
+        enabled: { type: boolean }
+    BudgetLine:
+      type: object
+      description: "One budget line of an initiative (REQ-S09-007). Amounts are decimal strings in the line's currency, never converted; null is Unknown, never 0."
+      required: [id, transformationId, initiativeId, label, periodMonth, currency, budgetAmount, actualAmount, forecastAmount, ownerUserId, note, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        label: { type: string, minLength: 1, maxLength: 200 }
+        periodMonth: { $ref: "#/components/schemas/NullableBusinessDate" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        budgetAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        actualAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        forecastAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        status: { type: string, enum: [active, archived] }
+        archivedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        archivedBy: { $ref: "#/components/schemas/NullableUuid" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    BudgetLineCreate:
+      type: object
+      required: [label]
+      additionalProperties: false
+      properties:
+        label: { type: string, minLength: 1, maxLength: 200 }
+        periodMonth: { $ref: "#/components/schemas/NullableBusinessDate" }
+        budgetAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        actualAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        forecastAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    BudgetLineUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        label: { type: string, minLength: 1, maxLength: 200 }
+        periodMonth: { $ref: "#/components/schemas/NullableBusinessDate" }
+        budgetAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        actualAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        forecastAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    ExecutionAmount:
+      type: object
+      required: [status, amount, knownAmount, missingCount, reason]
+      additionalProperties: false
+      description: "A decimal total or variance. known only when every active line of the currency has the operand(s); otherwise unknown with the known part and the number of lines missing it. Never 0 for missing data."
+      properties:
+        status: { type: string, enum: [known, unknown] }
+        amount: { $ref: "#/components/schemas/NullableDecimal" }
+        knownAmount: { $ref: "#/components/schemas/NullableDecimal" }
+        missingCount: { type: [integer, "null"], minimum: 0 }
+        reason: { type: [string, "null"] }
+    ExecutionBudgetTotal:
+      type: object
+      required: [currency, budget, actual, forecast, forecastVariance, actualVariance]
+      additionalProperties: false
+      properties:
+        currency: { $ref: "#/components/schemas/Currency" }
+        budget: { $ref: "#/components/schemas/ExecutionAmount" }
+        actual: { $ref: "#/components/schemas/ExecutionAmount" }
+        forecast: { $ref: "#/components/schemas/ExecutionAmount" }
+        forecastVariance: { $ref: "#/components/schemas/ExecutionAmount" }
+        actualVariance: { $ref: "#/components/schemas/ExecutionAmount" }
+    WorkingDaySlip:
+      type: object
+      required: [status, value, reason]
+      additionalProperties: false
+      description: "Forecast slip vs the approved date in working days on the organization's business calendar (ADR-0031 §7); unknown with a reason, never a calendar-day guess."
+      properties:
+        status: { type: string, enum: [known, unknown] }
+        value: { type: [integer, "null"] }
+        reason: { type: [string, "null"], enum: [approved_date_missing, forecast_date_missing, calendar_not_configured, range_too_long, null] }
+    ExecutionMilestone:
+      type: object
+      required: [milestoneId, title, approvedDate, forecastDate, status, calendarVarianceDays, slipWorkingDays]
+      additionalProperties: false
+      properties:
+        milestoneId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string }
+        approvedDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        forecastDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        status: { type: string, enum: [planned, achieved, missed, cancelled] }
+        calendarVarianceDays: { type: [integer, "null"], description: "The DG3 varianceDays (calendar days), unchanged." }
+        slipWorkingDays: { $ref: "#/components/schemas/WorkingDaySlip" }
+    ExecutionDeliverable:
+      type: object
+      required: [deliverableId, title, dueDate, acceptanceStatus]
+      additionalProperties: false
+      properties:
+        deliverableId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        acceptanceStatus: { type: string, enum: [pending, submitted, accepted, rejected] }
+    ExecutionDemand:
+      type: object
+      required: [resourceDemandId, resourceRoleId, periodMonth, demandFte, status, availableFte, capacityStatus]
+      additionalProperties: false
+      properties:
+        resourceDemandId: { $ref: "#/components/schemas/Uuid" }
+        resourceRoleId: { $ref: "#/components/schemas/Uuid" }
+        periodMonth: { $ref: "#/components/schemas/BusinessDate" }
+        demandFte: { $ref: "#/components/schemas/Fte" }
+        status: { type: string, enum: [planned, committed, released, archived] }
+        availableFte: { oneOf: [{ $ref: "#/components/schemas/Fte" }, { type: "null" }] }
+        capacityStatus: { type: string, enum: [known, unknown], description: "unknown when the role has no active capacity row for the month." }
+    ExecutionDependency:
+      type: object
+      required: [dependencyId, code, direction, status, neededBy, impact]
+      additionalProperties: false
+      properties:
+        dependencyId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        direction: { type: string, enum: [incoming, outgoing] }
+        status: { type: string }
+        neededBy: { $ref: "#/components/schemas/NullableBusinessDate" }
+        impact: { oneOf: [{ $ref: "#/components/schemas/RaidLevel" }, { type: "null" }] }
+    ExecutionDecision:
+      type: object
+      required: [decisionId, code, kind, status, title]
+      additionalProperties: false
+      properties:
+        decisionId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        kind: { type: string, enum: [design, executive, gate] }
+        status: { type: string }
+        title: { type: string }
+    InitiativeExecution:
+      type: object
+      description: "Execution tracking per initiative (REQ-S09-007), read from the canonical records; nothing is copied."
+      required: [initiativeId, calendarId, milestones, deliverables, budgetLineCount, budgetUnknownReason, budgetTotals, demand, dependencies, decisions, onCriticalPath]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        calendarId: { $ref: "#/components/schemas/NullableUuid" }
+        milestones: { type: array, items: { $ref: "#/components/schemas/ExecutionMilestone" } }
+        deliverables: { type: array, items: { $ref: "#/components/schemas/ExecutionDeliverable" } }
+        budgetLineCount: { type: integer, minimum: 0 }
+        budgetUnknownReason: { type: [string, "null"], enum: [no_budget_lines, null] }
+        budgetTotals: { type: array, items: { $ref: "#/components/schemas/ExecutionBudgetTotal" } }
+        demand: { type: array, items: { $ref: "#/components/schemas/ExecutionDemand" } }
+        dependencies: { type: array, items: { $ref: "#/components/schemas/ExecutionDependency" } }
+        decisions: { type: array, items: { $ref: "#/components/schemas/ExecutionDecision" } }
+        onCriticalPath: { type: [boolean, "null"], description: "null when the critical path is not computable." }
+    ScheduleNode:
+      type: object
+      required: [initiativeId, code, name, durationWorkingDays, earliestStart, earliestFinish, latestStart, latestFinish, totalFloat, critical]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
+        durationWorkingDays: { type: [integer, "null"] }
+        earliestStart: { type: [integer, "null"], description: "Working-day offset from 0." }
+        earliestFinish: { type: [integer, "null"] }
+        latestStart: { type: [integer, "null"] }
+        latestFinish: { type: [integer, "null"] }
+        totalFloat: { type: [integer, "null"] }
+        critical: { type: [boolean, "null"], description: "true iff total float is 0; null when not computable (never claimed)." }
+    ScheduleEdge:
+      type: object
+      required: [dependencyId, code, fromInitiativeId, toInitiativeId, critical]
+      additionalProperties: false
+      properties:
+        dependencyId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        fromInitiativeId: { $ref: "#/components/schemas/Uuid" }
+        toInitiativeId: { $ref: "#/components/schemas/Uuid" }
+        critical: { type: [boolean, "null"] }
+    ScheduleMissingDuration:
+      type: object
+      required: [initiativeId, code, name]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        name: { type: string }
+    ScheduleNetwork:
+      type: object
+      description: "The critical path by the critical path method on finish-to-start edges with zero lag (ADR-0031 §8). With any missing duration the status is not_computable and nothing is marked critical."
+      required: [transformationId, algorithm, status, reason, projectDurationWorkingDays, missingDurations, nodes, edges, criticalPaths, truncated]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        algorithm: { type: string, enum: [cpm-fs/1] }
+        status: { type: string, enum: [computed, not_computable] }
+        reason: { type: [string, "null"], enum: [missing_durations, no_initiatives, cycle, null] }
+        projectDurationWorkingDays: { type: [integer, "null"] }
+        missingDurations: { type: array, items: { $ref: "#/components/schemas/ScheduleMissingDuration" } }
+        nodes: { type: array, items: { $ref: "#/components/schemas/ScheduleNode" } }
+        edges: { type: array, items: { $ref: "#/components/schemas/ScheduleEdge" } }
+        criticalPaths: { type: array, maxItems: 20, items: { type: array, items: { $ref: "#/components/schemas/Uuid" } } }
+        truncated: { type: boolean }
+    InitiativeSchedule:
+      type: object
+      required: [id, initiativeId, durationWorkingDays, note, version, createdAt, createdBy, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        durationWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 2600 }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    InitiativeScheduleCreate:
+      type: object
+      required: [durationWorkingDays]
+      additionalProperties: false
+      properties:
+        durationWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 2600 }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    InitiativeScheduleUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        durationWorkingDays: { type: [integer, "null"], minimum: 0, maximum: 2600 }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    RaidEntryPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RaidEntry" } }
+        nextCursor: { type: [string, "null"] }
+    RaidActionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RaidAction" } }
+        nextCursor: { type: [string, "null"] }
+    RaidDecisionLogPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RaidDecisionLogItem" } }
+        nextCursor: { type: [string, "null"] }
+    CorrectiveCasePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/CorrectiveCase" } }
+        nextCursor: { type: [string, "null"] }
+    CorrectiveSignalPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/CorrectiveSignal" } }
+        nextCursor: { type: [string, "null"] }
+    CorrectiveActionRulePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/CorrectiveActionRule" } }
+        nextCursor: { type: [string, "null"] }
+    BudgetLinePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BudgetLine" } }
         nextCursor: { type: [string, "null"] }

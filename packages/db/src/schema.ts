@@ -1054,6 +1054,11 @@ export interface ActionItemTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  /** P4 (0041, ADR-0031 §6): at most one source link (with source_workshop_item_id) and a follow-up date. */
+  raid_entry_id: string | null;
+  dependency_id: string | null;
+  corrective_case_id: string | null;
+  follow_up_date: string | null;
 }
 
 export interface DependencyTable {
@@ -1084,6 +1089,8 @@ export interface DependencyTable {
   /** P3 (0022): initiative endpoints of a T08 dependency. */
   from_initiative_id: string | null;
   to_initiative_id: string | null;
+  /** P4 (0041, ADR-0031 §2): the T15 Impact of the RAID Dependency entry (NULL = Unknown). */
+  impact: string | null;
 }
 
 export interface GateInstanceTable {
@@ -2804,6 +2811,165 @@ export interface BenefitOverlapTable {
   updated_by: string;
 }
 
+// ---------------------------------------------------------------------------------------------------- P4 slice E
+// 0041-0042 (T-DG4-ARCH-04; ADR-0031): RAID entries, corrective-action rules, cases and signals, budget lines and
+// initiative durations; the raid_register view.
+
+export interface RaidEntryTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  entry_type: string;
+  code: string;
+  description: string;
+  impact: string;
+  probability: string | null;
+  owner_user_id: string;
+  due_date: string | null;
+  mitigation: string | null;
+  initiative_id: string | null;
+  status: Generated<string>;
+  closed_at: NullableTimestamp;
+  closed_by: string | null;
+  closure_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface RaidRegisterView {
+  id: ColumnType<string | null, never, never>;
+  organization_id: ColumnType<string | null, never, never>;
+  transformation_id: ColumnType<string | null, never, never>;
+  entry_type: ColumnType<string | null, never, never>;
+  code: ColumnType<string | null, never, never>;
+  description: ColumnType<string | null, never, never>;
+  impact: ColumnType<string | null, never, never>;
+  probability: ColumnType<string | null, never, never>;
+  owner_user_id: ColumnType<string | null, never, never>;
+  due_date: ColumnType<string | null, never, never>;
+  mitigation: ColumnType<string | null, never, never>;
+  raid_status: ColumnType<string | null, never, never>;
+  record_status: ColumnType<string | null, never, never>;
+  record_table: ColumnType<string | null, never, never>;
+  initiative_id: ColumnType<string | null, never, never>;
+  version: ColumnType<number | null, never, never>;
+  created_at: ColumnType<Date | null, never, never>;
+  updated_at: ColumnType<Date | null, never, never>;
+}
+
+export interface CorrectiveActionRuleTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  source_kind: string;
+  min_kpi_rag: string | null;
+  persistence_cycles: number;
+  follow_up_working_days: number;
+  enabled: Generated<boolean>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface CorrectiveCaseTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  code: string;
+  source_kind: string;
+  source_scope_key: string;
+  kpi_definition_id: string | null;
+  kpi_scope_kind: string | null;
+  kpi_scope_id: string | null;
+  benefit_id: string | null;
+  source_record_type: string | null;
+  source_record_id: string | null;
+  title: string;
+  recovery_plan: string | null;
+  owner_user_id: string | null;
+  follow_up_date: string | null;
+  follow_up_calendar_id: string | null;
+  follow_up_calendar_version: number | null;
+  status: Generated<string>;
+  consecutive_off_track: number | null;
+  signal_count: Generated<number>;
+  last_signal_at: NullableTimestamp;
+  closed_at: NullableTimestamp;
+  closed_by: string | null;
+  closure_note: string | null;
+  /** 'api' (a person's Value Review case) or 'worker' (event-driven; created_by NULL, audit actor = service). */
+  created_source: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface CorrectiveSignalTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  source_kind: string;
+  source_scope_key: string;
+  source_event_key: string;
+  period_key: string;
+  period_start: string | null;
+  period_end: string | null;
+  observed_rag: string | null;
+  off_track: boolean | null;
+  rule_persistence: number | null;
+  consecutive_off_track: number | null;
+  outcome: string;
+  corrective_case_id: string | null;
+  payload: Json;
+  received_at: TimestampDefault;
+}
+
+export interface BudgetLineTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  label: string;
+  period_month: string | null;
+  currency: string;
+  /** numeric(20,4) as a decimal string; NULL = Unknown, never 0. */
+  budget_amount: string | null;
+  actual_amount: string | null;
+  forecast_amount: string | null;
+  owner_user_id: string | null;
+  note: string | null;
+  status: Generated<string>;
+  archived_at: NullableTimestamp;
+  archived_by: string | null;
+  archive_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface InitiativeScheduleTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  initiative_id: string;
+  duration_working_days: number | null;
+  note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
 export interface BenefitCountingView {
   benefit_id: ColumnType<string | null, never, never>;
   organization_id: ColumnType<string | null, never, never>;
@@ -2974,6 +3140,13 @@ export interface Database {
   benefit_overlap: BenefitOverlapTable;
   benefit_counting: BenefitCountingView;
   benefit_value_line: BenefitValueLineView;
+  raid_entry: RaidEntryTable;
+  raid_register: RaidRegisterView;
+  corrective_action_rule: CorrectiveActionRuleTable;
+  corrective_case: CorrectiveCaseTable;
+  corrective_signal: CorrectiveSignalTable;
+  budget_line: BudgetLineTable;
+  initiative_schedule: InitiativeScheduleTable;
 }
 
 /** Relations that are views (read-only); excluded from the table/column drift test's table list. */
@@ -2983,6 +3156,7 @@ export const VIEW_NAMES = [
   "benefit_counting",
   "benefit_value_line",
   "business_unit_closure",
+  "raid_register",
   "scope_node",
 ] as const;
 
@@ -3086,6 +3260,13 @@ export type BenefitMeasurementInputRow = Selectable<BenefitMeasurementInputTable
 export type BenefitEvidenceRow = Selectable<BenefitEvidenceTable>;
 export type FinanceValidationRow = Selectable<FinanceValidationTable>;
 export type BenefitOverlapRow = Selectable<BenefitOverlapTable>;
+export type RaidEntryRow = Selectable<RaidEntryTable>;
+export type RaidRegisterRow = Selectable<RaidRegisterView>;
+export type CorrectiveActionRuleRow = Selectable<CorrectiveActionRuleTable>;
+export type CorrectiveCaseRow = Selectable<CorrectiveCaseTable>;
+export type CorrectiveSignalRow = Selectable<CorrectiveSignalTable>;
+export type BudgetLineRow = Selectable<BudgetLineTable>;
+export type InitiativeScheduleRow = Selectable<InitiativeScheduleTable>;
 
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
@@ -4045,6 +4226,10 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "raid_entry_id",
+    "dependency_id",
+    "corrective_case_id",
+    "follow_up_date",
   ],
   dependency: [
     "id",
@@ -4073,6 +4258,7 @@ export const SCHEMA_COLUMNS = {
     "updated_by",
     "from_initiative_id",
     "to_initiative_id",
+    "impact",
   ],
   gate_instance: [
     "id",
@@ -5754,6 +5940,152 @@ export const SCHEMA_COLUMNS = {
     "currency",
     "record_table",
     "record_id",
+  ],
+  raid_entry: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "entry_type",
+    "code",
+    "description",
+    "impact",
+    "probability",
+    "owner_user_id",
+    "due_date",
+    "mitigation",
+    "initiative_id",
+    "status",
+    "closed_at",
+    "closed_by",
+    "closure_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  raid_register: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "entry_type",
+    "code",
+    "description",
+    "impact",
+    "probability",
+    "owner_user_id",
+    "due_date",
+    "mitigation",
+    "raid_status",
+    "record_status",
+    "record_table",
+    "initiative_id",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  corrective_action_rule: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "source_kind",
+    "min_kpi_rag",
+    "persistence_cycles",
+    "follow_up_working_days",
+    "enabled",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  corrective_case: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "code",
+    "source_kind",
+    "source_scope_key",
+    "kpi_definition_id",
+    "kpi_scope_kind",
+    "kpi_scope_id",
+    "benefit_id",
+    "source_record_type",
+    "source_record_id",
+    "title",
+    "recovery_plan",
+    "owner_user_id",
+    "follow_up_date",
+    "follow_up_calendar_id",
+    "follow_up_calendar_version",
+    "status",
+    "consecutive_off_track",
+    "signal_count",
+    "last_signal_at",
+    "closed_at",
+    "closed_by",
+    "closure_note",
+    "created_source",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  corrective_signal: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "source_kind",
+    "source_scope_key",
+    "source_event_key",
+    "period_key",
+    "period_start",
+    "period_end",
+    "observed_rag",
+    "off_track",
+    "rule_persistence",
+    "consecutive_off_track",
+    "outcome",
+    "corrective_case_id",
+    "payload",
+    "received_at",
+  ],
+  budget_line: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "label",
+    "period_month",
+    "currency",
+    "budget_amount",
+    "actual_amount",
+    "forecast_amount",
+    "owner_user_id",
+    "note",
+    "status",
+    "archived_at",
+    "archived_by",
+    "archive_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  initiative_schedule: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "initiative_id",
+    "duration_working_days",
+    "note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

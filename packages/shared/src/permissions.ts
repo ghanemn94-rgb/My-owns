@@ -124,6 +124,19 @@ export const P4_BENEFIT_PERMISSIONS = {
   "benefit_group.manage": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P4 catalogue, slice E (RAID, corrective actions, budget lines; ADR-0031 §9). Seeded by migration 0043. Every code is
+ * 'write' or 'configure': none is a business approval or a Finance validation, so the DG1/DG2 rules keyed on "a role
+ * holding an approval permission" are unchanged. Actions reuse action.edit / action.update_own (P2); initiative
+ * durations reuse roadmap.edit (P3); a RAID Dependency entry also needs dependency.edit (P2).
+ */
+export const P4_RAID_PERMISSIONS = {
+  "raid.edit": "write",
+  "corrective_action.manage": "write",
+  "corrective_rule.configure": "configure",
+  "budget.edit": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -131,6 +144,7 @@ export const PERMISSIONS = {
   ...P4_PERMISSIONS,
   ...P4_KPI_PERMISSIONS,
   ...P4_BENEFIT_PERMISSIONS,
+  ...P4_RAID_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -314,6 +328,19 @@ export const P4_BENEFIT_ROLE_PERMISSIONS = {
   KDS: ["benefit.measure"],
 } as const satisfies Record<string, readonly (keyof typeof P4_BENEFIT_PERMISSIONS)[]>;
 
+/**
+ * P4 role defaults, slice E (seeded by 0043; ADR-0031 §9, permissions matrix §13). Owner roles of REQ-PB-079 ("create/
+ * edit:WL,TL,TO"), REQ-PB-085 ("create:BO,TL,FIN") and REQ-S09-007 ("budget:FIN,TL"); TL and TO configure the
+ * corrective-action rules. AUD, SP, KDS, TD, CM, SEC and the technical admins get none.
+ */
+export const P4_RAID_ROLE_PERMISSIONS = {
+  TL: ["raid.edit", "corrective_action.manage", "corrective_rule.configure", "budget.edit"],
+  BO: ["corrective_action.manage"],
+  WL: ["raid.edit"],
+  FIN: ["corrective_action.manage", "budget.edit"],
+  TO: ["raid.edit", "corrective_rule.configure"],
+} as const satisfies Record<string, readonly (keyof typeof P4_RAID_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -341,6 +368,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.TL,
       ...P4_KPI_ROLE_PERMISSIONS.TL,
       ...P4_BENEFIT_ROLE_PERMISSIONS.TL,
+      ...P4_RAID_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -354,6 +382,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.BO,
       ...P4_KPI_ROLE_PERMISSIONS.BO,
       ...P4_BENEFIT_ROLE_PERMISSIONS.BO,
+      ...P4_RAID_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -365,6 +394,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.WL,
       ...P4_ROLE_PERMISSIONS.WL,
       ...P4_BENEFIT_ROLE_PERMISSIONS.WL,
+      ...P4_RAID_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -377,6 +407,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.FIN,
       ...P4_ROLE_PERMISSIONS.FIN,
       ...P4_BENEFIT_ROLE_PERMISSIONS.FIN,
+      ...P4_RAID_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -392,6 +423,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.TO,
       ...P4_ROLE_PERMISSIONS.TO,
       ...P4_KPI_ROLE_PERMISSIONS.TO,
+      ...P4_RAID_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {

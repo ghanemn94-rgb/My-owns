@@ -1,0 +1,100 @@
+port-policy: PostgreSQL listening on port 23740 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 43 (0001_identity_access.sql .. 0043_p4_raid_permissions.sql)
+PASS  G00 migration ids are contiguous 1..n  -- last 43
+PASS  G01 fresh database: 0001..last apply  -- applied 43: 0039_p4_benefit_value_views.sql, 0040_p4_benefit_permissions.sql, 0041_p4_raid_actions_corrective.sql, 0042_p4_budget_schedule.sql, 0043_p4_raid_permissions.sql
+PASS  G02 P3 database populated (0001-0027, a synthetic transformation, a DG2 action and a T08 dependency)  -- applied 27
+PASS  G03 P4 over the P3 database: 0028+ apply  -- applied 0028_p4_calendar_jobs_work_items.sql, 0029_p4_groups_role_mapping_delegation.sql, 0030_p4_decision_rights_raci.sql, 0031_p4_approvals_permissions.sql, 0032_p4_slice_i_c_reserved.sql, 0033_p4_kpi_dictionary_versions.sql, 0034_p4_kpi_trajectories_actuals.sql, 0035_p4_kpi_calculation_runs_quality.sql, 0036_p4_kpi_permissions_backfill.sql, 0037_p4_benefit_register.sql, 0038_p4_benefit_measurem
+PASS  G04 existing rows are unchanged by 0041-0043 (action version 1, new columns NULL; dependency version 1, impact NULL = Unknown)  -- [[{"version":1,"status":"open","raid_entry_id":null,"dependency_id":null,"corrective_case_id":null,"follow_up_date":null}],[{"version":1,"impact":null}]]
+PASS  G05 the pre-P4 T08 dependency is a RAID Dependency entry (DEP code kept, probability n/a, status open), with no copy  -- [{"entry_type":"dependency","code":"DEP-07","probability":null,"impact":null,"raid_status":"open","record_table":"dependency"}]
+PASS  S01 four slice E permissions (write/configure); none held by AUD or a technical admin; no approval category  -- [[{"code":"budget.edit","category":"write"},{"code":"corrective_action.manage","category":"write"},{"code":"corrective_rule.configure","category":"configure"},{"code":"raid.edit","category":"write"}],[{"p":"budget.edit","roles":"FIN,TL"},{"p":"corrective_action.manage","roles":"BO,FIN,TL"},{"p":"corrective_rule.configure","roles":"TL,TO"},{"p":"raid.edit","roles":"TL,TO,WL"}]]
+PASS  S02 role defaults: raid.edit TL,TO,WL (REQ-PB-079); corrective_action.manage BO,FIN,TL (REQ-PB-085); budget.edit FIN,TL (REQ-S09-007)  -- {"budget.edit":"FIN,TL","corrective_action.manage":"BO,FIN,TL","corrective_rule.configure":"TL,TO","raid.edit":"TL,TO,WL"}
+PASS  S03 the two slice E work-item kinds are seeded  -- [{"code":"corrective_case_follow_up"},{"code":"raid_action_due"}]
+PASS  S04 record_code_counter accepts the R, A, I and CA prefixes  -- 4 counters
+PASS  S05 an unknown prefix is still refused  -- 23514 record_code_counter_prefix_check new row for relation "record_code_counter" violates check constraint "record_code_counter_prefix_check"
+PASS  R01 a RAID entry without its audit event fails at COMMIT  -- 23000 raid_entry_audit_required no audit_event for raid_entry 01990000-0000-7000-8000-00000000006c at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  R02 a Risk with all nine T15 columns (ID, Type, Description, Impact, Probability, Owner, Due, Mitigation, Status) is created Open  -- {"code":"R-01","entry_type":"risk","description":"Synthetic RAID entry","impact":"high","probability":"medium","owner":true,"due_date":"2026-11-30","mitigation":"Synthetic mitigation","status":"open"}
+PASS  R03 a Risk without Probability is refused (REQ-PB-080)  -- 23514 raid_entry_probability_applicable new row for relation "raid_entry" violates check constraint "raid_entry_probability_applicable"
+PASS  R04 an Issue with Probability H is refused (REQ-PB-080)  -- 23514 raid_entry_probability_applicable new row for relation "raid_entry" violates check constraint "raid_entry_probability_applicable"
+PASS  R05 an Assumption with Probability is refused (n/a, B0128)  -- 23514 raid_entry_probability_applicable new row for relation "raid_entry" violates check constraint "raid_entry_probability_applicable"
+PASS  R06 an Assumption and an Issue without Probability are created  -- [{"code":"A-06","entry_type":"assumption","probability":null},{"code":"I-07","entry_type":"issue","probability":null}]
+PASS  R07 a Type outside Risk/Assumption/Issue is refused by the closed-set CHECKs (type list and type-code format; Dependency entries are canonical dependency rows)  -- 23514 raid_entry_code_format new row for relation "raid_entry" violates check constraint "raid_entry_code_format"
+PASS  R08 a code that does not match its type is refused  -- 23514 raid_entry_code_format new row for relation "raid_entry" violates check constraint "raid_entry_code_format"
+PASS  R09 impact outside H/M/L is refused  -- 23514 raid_entry_impact_check new row for relation "raid_entry" violates check constraint "raid_entry_impact_check"
+PASS  R10 a duplicate code in one transformation is refused  -- 23505 raid_entry_code_key duplicate key value violates unique constraint "raid_entry_code_key"
+PASS  R11 a new entry must start Open (B0128 Status: Open)  -- 23514 raid_entry_starts_open raid_entry 01990000-0000-7000-8000-00000000007a: a new RAID entry starts with status open
+PASS  R12 organization_id must equal the transformation's  -- 23514 raid_entry_organization_matches raid_entry: organization_id must equal the transformation's organization
+PASS  R13 a version that does not step by 1 is refused  -- 23514 raid_entry_version_step raid_entry: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  R14 an update without its audit event fails at COMMIT  -- 23000 raid_entry_audit_required no audit_event for raid_entry 01990000-0000-7000-8000-00000000006d at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  R15 the type is immutable  -- 23514 raid_entry_type_immutable raid_entry 01990000-0000-7000-8000-00000000006d: the type and code are immutable
+PASS  R16 closing without a closure note is refused  -- 23514 raid_entry_closed_complete new row for relation "raid_entry" violates check constraint "raid_entry_closed_complete"
+PASS  R17 open -> in_progress -> closed with a note is allowed  -- {"status":"closed","version":3}
+PASS  R18 a closed entry is final (no edit, no reopening)  -- 23514 raid_entry_closed_final raid_entry 01990000-0000-7000-8000-00000000006d: a closed RAID entry is final
+PASS  D01 a T08 dependency with impact H is a RAID Dependency entry in raid_register  -- {"entry_type":"dependency","code":"DEP-01","impact":"high","probability":null,"due_date":"2026-12-15","raid_status":"open"}
+PASS  D02 a dependency impact outside H/M/L is refused  -- 23514 dependency_impact_check new row for relation "dependency" violates check constraint "dependency_impact_check"
+PASS  D03 editing the dependency's owner (as T08 does) changes the same RAID entry; there is no second copy (A01)  -- [{"owner_user_id":"01990000-0000-7000-8000-000000000006","version":2,"record_table":"dependency"}]
+PASS  D04 a resolved dependency shows RAID status closed; an archived one is not listed  -- [{"id":"01990000-0000-7000-8000-00000000007e","raid_status":"closed","record_status":"resolved"}]
+PASS  D05 no RAID Dependency entry has a Probability; the register has exactly the four T15 types  -- [{"entry_type":"assumption"},{"entry_type":"dependency"},{"entry_type":"issue"},{"entry_type":"risk"}]
+PASS  AC01 an action linked to a RAID entry with a follow-up date is created (person-authored)  -- ok
+PASS  AC02 an action with two sources is refused  -- 23514 action_item_one_source new row for relation "action_item" violates check constraint "action_item_one_source"
+PASS  AC03 the source link is immutable  -- 23514 action_item_source_immutable action_item 01990000-0000-7000-8000-000000000086: the source link is immutable
+PASS  AC04 an action cannot link a RAID entry of another transformation  -- 23503 action_item_raid_entry_id_fkey insert or update on table "action_item" violates foreign key constraint "action_item_raid_entry_id_fkey"
+PASS  AC05 a worker cannot create an action without a human author (created_by stays NOT NULL)  -- 23502 null value in column "created_by" of relation "action_item" violates not-null constraint
+PASS  RU01 a two-cycle red KPI rule is stored  -- kpi_deviation red x2
+PASS  RU02 a KPI rule without a severity is refused  -- 23514 corrective_action_rule_severity_kpi_only new row for relation "corrective_action_rule" violates check constraint "corrective_action_rule_severity_kpi_only"
+PASS  RU03 a benefit rule with a KPI severity is refused  -- 23514 corrective_action_rule_severity_kpi_only new row for relation "corrective_action_rule" violates check constraint "corrective_action_rule_severity_kpi_only"
+PASS  RU04 a check rule with persistence > 1 is refused (a failed check is one event)  -- 23514 corrective_action_rule_persistence_series_only new row for relation "corrective_action_rule" violates check constraint "corrective_action_rule_persistence_series_only"
+PASS  RU05 a second rule for the same source is refused  -- 23505 corrective_action_rule_source_key duplicate key value violates unique constraint "corrective_action_rule_source_key"
+PASS  RU06 the source kind is immutable  -- 23514 corrective_action_rule_source_immutable corrective_action_rule 01990000-0000-7000-8000-00000000008b: the source kind is immutable
+PASS  RU07 a rule change without its audit event fails at COMMIT  -- 23000 corrective_action_rule_audit_required no audit_event for corrective_action_rule 01990000-0000-7000-8000-00000000008b at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  C01 a worker case without its (service) audit event fails at COMMIT  -- 23000 corrective_case_audit_required no audit_event for corrective_case 01990000-0000-7000-8000-000000000094 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  C02 a KPI deviation persisting two cycles opens one case (worker: no human author, service audit actor)  -- {"code":"CA-02","status":"open","created_source":"worker","created_by":null,"consecutive_off_track":2}
+PASS  C03 a second open case for the same KPI and scope is refused (never duplicated)  -- 23505 corrective_case_one_open_key duplicate key value violates unique constraint "corrective_case_one_open_key"
+PASS  C04 the third off-track cycle UPDATES the open case (service update: version +1, updated_by NULL)  -- [{"n":1,"v":2,"k":3}]
+PASS  C05 a new case cannot start in progress  -- 23514 corrective_case_starts_open corrective_case 01990000-0000-7000-8000-0000000000a0: a new case starts with status open
+PASS  C06 the source of a case is immutable  -- 23514 corrective_case_source_immutable corrective_case 01990000-0000-7000-8000-000000000097: the code, source and creation source are immutable
+PASS  C07 a KPI case without its KPI is refused (source fields per kind)  -- 23514 corrective_case_source_fields new row for relation "corrective_case" violates check constraint "corrective_case_source_fields"
+PASS  C08 a benefit case carrying KPI fields is refused  -- 23514 corrective_case_source_fields new row for relation "corrective_case" violates check constraint "corrective_case_source_fields"
+PASS  C09 a worker cannot create a Value Review case (person-only)  -- 23514 corrective_case_created_source new row for relation "corrective_case" violates check constraint "corrective_case_created_source"
+PASS  C10 a person's Value Review case needs an owner  -- 23514 corrective_case_created_source new row for relation "corrective_case" violates check constraint "corrective_case_created_source"
+PASS  C11 a person's Value Review case needs a follow-up date  -- 23514 corrective_case_created_source new row for relation "corrective_case" violates check constraint "corrective_case_created_source"
+PASS  C12 a person's Value Review case with owner and follow-up date is created  -- 01990000-0000-7000-8000-0000000000b4
+PASS  C13 a failed control check opens one owned case with a follow-up date (REQ-S12-016)  -- {"code":"CA-11","owned":true,"follow_up_date":"2026-10-15"}
+PASS  C14 closing without a closure note is refused  -- 23514 corrective_case_closed_complete new row for relation "corrective_case" violates check constraint "corrective_case_closed_complete"
+PASS  C15 the owner closes the case with a note  -- closed
+PASS  C16 a closed case is final  -- 23514 corrective_case_closed_final corrective_case 01990000-0000-7000-8000-0000000000b9: a closed case is final
+PASS  C17 the same failed check never gets a second case, even after closure (one per failed check)  -- 23505 corrective_case_one_per_check_key duplicate key value violates unique constraint "corrective_case_one_per_check_key"
+PASS  C18 a worker case whose owner does not resolve is stored unassigned (visible), never silently skipped  -- 01990000-0000-7000-8000-0000000000c1
+PASS  C19 a case without an owner cannot be closed  -- 23514 corrective_case_owner_required corrective_case 01990000-0000-7000-8000-0000000000c1: a case without an owner cannot be closed; assign an owner first
+PASS  C20 after a KPI case is closed, a NEW off-track run opens a new case (no reopening)  -- 01990000-0000-7000-8000-0000000000c6
+PASS  C21 a version that does not step by 1 is refused  -- 23514 corrective_case_version_step corrective_case: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  C22 an API case without a human author is refused  -- 23514 corrective_case_created_source new row for relation "corrective_case" violates check constraint "corrective_case_created_source"
+PASS  SG01 a signal is lineage: inserted without an audit event of its own  -- 01990000-0000-7000-8000-0000000000cd
+PASS  SG02 a redelivered source event is refused by its unique key  -- 23505 corrective_signal_event_key duplicate key value violates unique constraint "corrective_signal_event_key"
+PASS  SG03 UPDATE on the signal log is refused  -- 42501 corrective_signal is append-only: UPDATE is not allowed
+PASS  SG04 DELETE on the signal log is refused  -- 42501 corrective_signal is append-only: DELETE is not allowed
+PASS  SG05 TRUNCATE on the signal log is refused  -- 42501 corrective_signal is append-only: TRUNCATE is not allowed
+PASS  SG06 a 'case_created' signal must name its case  -- 23514 corrective_signal_outcome_case new row for relation "corrective_signal" violates check constraint "corrective_signal_outcome_case"
+PASS  SG07 a benefit signal cannot carry a KPI RAG  -- 23514 corrective_signal_rag_kpi_only new row for relation "corrective_signal" violates check constraint "corrective_signal_rag_kpi_only"
+PASS  SG08 an Unknown signal (off_track NULL) is recorded as Unknown, not as on-track  -- {"off_track":null}
+PASS  BU01 a budget line without its audit event fails at COMMIT  -- 23000 budget_line_audit_required no audit_event for budget_line 01990000-0000-7000-8000-0000000000d2 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  BU02 decimal SAR: budget 0.1 + actual 0.2 = 0.3000 exactly (numeric, never float); forecast NULL stays Unknown  -- {"s":"0.3000","forecast_amount":null,"currency":"SAR"}
+PASS  BU03 100000 x 0.02 x 50 = 100000.0000 on a stored amount  -- 100000.0000
+PASS  BU04 a negative amount is refused  -- 23514 budget_line_forecast_amount_check new row for relation "budget_line" violates check constraint "budget_line_forecast_amount_check"
+PASS  BU05 a period that is not the first day of a month is refused  -- 23514 budget_line_period_month_check new row for relation "budget_line" violates check constraint "budget_line_period_month_check"
+PASS  BU06 a lower-case currency code is refused  -- 23514 budget_line_currency_check new row for relation "budget_line" violates check constraint "budget_line_currency_check"
+PASS  BU07 the currency is immutable (amounts are never converted)  -- 23514 budget_line_currency_locked budget_line 01990000-0000-7000-8000-0000000000d3: the currency and initiative are immutable
+PASS  BU08 a second active line with the same label (any case) and month is refused  -- 23505 budget_line_active_key duplicate key value violates unique constraint "budget_line_active_key"
+PASS  BU09 archiving without a reason is refused  -- 23514 budget_line_archive_complete new row for relation "budget_line" violates check constraint "budget_line_archive_complete"
+PASS  BU10 archive with a reason; the same label can then be used again  -- archived and replaced
+PASS  BU11 an archived line is frozen  -- 23514 budget_line_archived_frozen budget_line 01990000-0000-7000-8000-0000000000d3: an archived budget line is frozen
+PASS  BU12 a version that does not step by 1 is refused  -- 23514 budget_line_version_step budget_line: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  SC01 a duration row without its audit event fails at COMMIT  -- 23000 initiative_schedule_audit_required no audit_event for initiative_schedule 01990000-0000-7000-8000-0000000000de at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  SC02 an initiative gets one duration row (10 working days); NULL means missing input  -- INI-01 10 wd, INI-02 missing
+PASS  SC03 a second duration row for one initiative is refused  -- 23505 initiative_schedule_initiative_key duplicate key value violates unique constraint "initiative_schedule_initiative_key"
+PASS  SC04 a negative duration is refused  -- 23514 initiative_schedule_duration_working_days_check new row for relation "initiative_schedule" violates check constraint "initiative_schedule_duration_working_days_check"
+PASS  SC05 the initiative of a duration row is immutable  -- 23514 initiative_schedule_initiative_immutable initiative_schedule 01990000-0000-7000-8000-0000000000df: the initiative is immutable
+PASS  P01 mth_app cannot DELETE a RAID entry (no DELETE grant)  -- 42501 permission denied for table raid_entry
+PASS  P02 mth_app cannot UPDATE the signal log (INSERT, SELECT only)  -- 42501 permission denied for table corrective_signal
+PASS  P03 mth_app cannot write the raid_register view (SELECT grant only; a UNION view is not updatable)  -- 55000 cannot update view "raid_register"
+PROBE RESULT: PASS (all guards fired as specified)

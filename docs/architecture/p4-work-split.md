@@ -1,6 +1,6 @@
 # P4 work split: shared rules, file ownership, contracts and integration order
 
-- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02 and section §B by T-DG4-ARCH-03 (solution-architect), 2026-10-09.
+- **Plan:** `docs/architecture/p4-plan.md` (T-DG4-ARCH-00), adopted by D-089. This file holds one section per architecture task (p4-plan §4); each ARCH task writes only its own section. Section §I+C is written by T-DG4-ARCH-01, section §A by T-DG4-ARCH-02, section §B by T-DG4-ARCH-03 and section §E by T-DG4-ARCH-04 (solution-architect), 2026-10-09.
 - **Stage:** P4 "Execution value and sustainment" (DG4).
 - **Rule:** two tasks never edit the same file (REQ-DLV-008). Anything not listed under an owner is **frozen**; changes go through the orchestrator (p4-plan §5.3).
 - **Off-limits to every implementer** (the write guard enforces it): `tools/gates/**`, `tools/agents/**`, `.claude/**`, `docs/source/**`, `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/stages.json`, `docs/delivery/findings.json`, `docs/delivery/candidates/**`, `docs/delivery/runs/**`, `docs/delivery/test-evidence/**`, `CLAUDE.md`, `trading_agent/**`.
@@ -347,3 +347,101 @@ Written by T-DG4-ARCH-03 (solution-architect), 2026-10-09. Binding design: ADR-0
 8. **Decimal only.** Money numeric(20,4), shares numeric(7,6) as fractions (0.6 = 60 %); decimal.js in code; rounding only at presentation.
 9. **Finance endpoints are FIN-only.** BO, AUD and ADM-only callers get 403; test each.
 10. **The formula engine is unchanged** (S-9). Bind the KPI variable through `measurement_kpi_variable`; the other variables come from the formula version.
+
+## §E. Slice E (RAID, actions, corrective actions, execution tracking) — T-DG4-ARCH-04
+
+Written by T-DG4-ARCH-04 (solution-architect), 2026-10-09. Binding design: ADR-0031 (RAID on canonical records, actions, corrective-action cases with the severity and persistence rule, budget/actual/forecast and the working-day slip, the critical path). Shared rules S-1…S-14 (§1) apply to every task below.
+
+### E.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0031-p4-raid-actions-corrective-execution.md` | Binding design, with the refusal codes and English texts (§11) |
+| Migrations | `packages/db/migrations/0041_p4_raid_actions_corrective.sql`, `0042_p4_budget_schedule.sql`, `0043_p4_raid_permissions.sql` | Applied on a fresh PostgreSQL 16.13 and over a P3-populated database; every guard probed (`docs/delivery/handbacks/DG4/T-DG4-ARCH-04-evidence/probe-output.txt`). **Frozen.** |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (6 tables, 1 view, 4 `action_item` columns, 1 `dependency` column), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts` | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P4_RAID_PERMISSIONS`, `P4_RAID_ROLE_PERMISSIONS`; 4 codes) | Equals `0043` |
+| Lock class | `apps/api/src/modules/platform/advisory-locks.ts` (`correctiveCase` 730236; 730237 reserved), ADR-0016 §6 | Registry test green |
+| Contract | `docs/api/openapi.yaml` 1.3.0-p4: 31 operations (tags `raid`, `actions`, `corrective-actions`, `budget-lines`, `schedule-network`); 4 `PermissionCode` values appended | `pnpm openapi:lint` PASS (436 operations); every earlier line unchanged (diff check: 0 lines removed) |
+| Contract-test seams | `apps/api/test/support/p4-pending-arch-04.ts` (slice aggregate; frozen), `p4-pending-be-d.ts` (11), `p4-pending-be-d2.ts` (11), `p4-pending-be-e.ts` (9); `p4-pending.ts` imports the slice; `p4-operations.ts` lists the 31; `contract.test.ts` pins 436 operations | §S-10 |
+| ERD §1g, data dictionary "P4 tables, slice E", permissions matrix §13 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+### E.1 BE-D — the T15 RAID register, Dependency entries through T08, actions (backend-workflow-engineer; wave W5)
+
+**Owns** (paths under `apps/api/src/modules/` unless they start with `apps/`, `packages/` or `tests/`): `raid/register.ts` (`listRaidEntries`, `createRaidEntry`, `getRaidEntry`, `updateRaidEntry`, `closeRaidEntry`, `getRaidDecisionLog`; reads `raid_register`; `R`/`A`/`I` codes from `record_code_counter`), `raid/dependency-port.ts` (the `RaidDependencyPort` interface the module consumes; ADR-0031 §2), `raid/actions.ts` (`listRaidEntryActions`, `createRaidEntryAction`, `listActionRegister`, `getActionRegisterItem`, `updateActionRegisterItem`; the `raid_action_due` work item through `createWorkItemOnce`; an exported `createLinkedAction(tx, link, body)` that BE-D2 reuses for case actions), `raid/index.ts` (the port parameter of `registerRaidModule`), the registration lines in `raid/routes.ts` (**first**); in `workflows/t08-dependencies.ts` **only** the exported `raidDependencyPort` implementation (create, update, resolve through the existing T08 service functions; no T08 route, schema or text change) and in `server.ts` **only** the one wiring line that passes it to `registerRaidModule` (the `T08ScheduleFlagsProvider` precedent, ADR-0023 §8); the RAID and action lines of the slice E block in `platform/db-errors.ts` (ADR-0031 §11); `packages/shared/src/schemas/raid.ts` (zod mirrors of the RAID and action bodies; `raid.type_invalid` on `/type`) and its `schemas/index.ts` line; `test/support/p4-pending-be-d.ts`; `test/integration/contract/p4-exercises-be-d.ts` (**first**); `test/integration/raid/{register,dependency-entries,actions}.test.ts`, each with its AUD-403 and ADM-only-404 cases.
+
+**Consumes:** ADR-0031 §1–§4, §9–§11; `0041`, `0043`; BE-A's module stub, `createWorkItemOnce`; the T08 service functions (DG3, unchanged); the 11 operations in `p4-pending-be-d.ts`.
+
+**Requirement rows:** REQ-PB-078, REQ-PB-079, REQ-PB-080, REQ-S16-018 (Risk, Assumption, Issue, Action halves).
+
+**Proofs it must include:** the nine T15 columns persist on create and read (REQ-PB-079 A01); `type: "opportunity"` → 400 `raid.type_invalid`; an Issue with Probability `high` → 422 `raid.probability_not_applicable`; a Risk without Probability → 422 `raid.probability_required` (REQ-PB-080); editing a dependency's owner with `updateT08Dependency` changes `getRaidEntry` of the same id, and `listRaidEntries` has exactly one row for it (REQ-PB-078 A01); a Dependency entry created through RAID is listed by `listT08Dependencies` with its `DEP-nn` code; a closed entry answers 422 `raid.closed`.
+
+### E.2 BE-D2 — corrective-action cases, rules, signals and the four consumers (backend-workflow-engineer; wave W5–W6, after BE-D)
+
+**Recommended split for the orchestrator to decide.** p4-plan §5.1 gives slice E's `raid/**` to one task (BE-D). With 22 `raid` operations plus four worker consumers, BE-D alone would exceed 75 minutes; this section separates the corrective half. If the orchestrator does not schedule BE-D2, BE-D owns everything listed here (and `p4-pending-be-d2.ts`) as its second half (the D-059/D-070 salvage rule).
+
+**Owns:** `raid/corrective-cases.ts` (`listCorrectiveCases`, `createCorrectiveCase`, `getCorrectiveCase`, `updateCorrectiveCase`, `closeCorrectiveCase`, `listCorrectiveCaseSignals`, `listCorrectiveCaseActions`, `createCorrectiveCaseAction` through BE-D's `createLinkedAction`), `raid/corrective-rules.ts` (the ADR-0031 §5.2 default constants; `listCorrectiveActionRules`, `createCorrectiveActionRule`, `updateCorrectiveActionRule`), `raid/corrective-engine.ts` (`applySignal(tx, signal)`: rule lookup, signal insert, consecutive count, create-or-update under lock 730236, owner resolution, follow-up date with `addWorkingDays`, the `corrective_case_follow_up` work item; ADR-0031 §5.4–§5.6), `apps/worker/src/handlers/raid.ts` and `apps/worker/src/queues/raid.ts` (consumers `raid.corrective_kpi`, `raid.corrective_benefit`, `raid.corrective_adoption`, `raid.corrective_control`, each `runOnce` with the event's idempotency key, calling `applySignal`); the registration lines in `raid/routes.ts` (**after** BE-D); the corrective lines of the slice E block in `platform/db-errors.ts` (after BE-D); `packages/shared/src/schemas/corrective.ts` and its `schemas/index.ts` line; `test/support/p4-pending-be-d2.ts`; its exercises appended to `test/integration/contract/p4-exercises-be-d.ts` (**after** BE-D; no new seam file, so `contract.test.ts` is not edited); `test/integration/raid/{corrective-cases,corrective-rules,entity-group}.test.ts` (the REQ-S16-018 entity-group test, ADR-0031 §12); `apps/worker/test/integration/raid-corrective.test.ts`.
+
+**Consumes:** ADR-0031 §5, §6, §9–§12; `0041`, `0043`; the producers' events (`kpi.deviation_evaluated`, ADR-0027 §8; `benefit.variance_evaluated`, ADR-0030 §6; `adoption.check_failed` and `control_check.failed` with the ADR-0031 §5.4 payload, from slices F and G); BE-A's `runOnce`, `createWorkItemOnce`, `addWorkingDays`, `businessDateOf`; BE-D's `createLinkedAction`; the 11 operations in `p4-pending-be-d2.ts`.
+
+**Requirement rows:** REQ-PB-085, REQ-S12-016, REQ-S16-018 (the entity-group test).
+
+**Proofs it must include** (worker tests drive the consumers with synthetic events; the producers need not be merged): under a two-cycle red rule, red in periods 1 and 2 opens exactly one case at the second event and red in period 3 updates it (version + 1, `consecutiveOffTrack` 3, still one case); a redelivered event changes nothing; an amber, Unknown or green period ends the run and never closes the case; a benefit `offTrack: true` opens one case and a repeated evaluation updates it; a `control_check.failed` event opens one case with an owner, a follow-up date 5 working days after its business date on the default calendar, and one `corrective_case_follow_up` work item; replaying it or restarting the worker creates none; an unresolved owner gives `ownerStatus: "unassigned"` and no work item; `closeCorrectiveCase` without an owner → 422 `corrective_case.owner_required`; BO, TL and FIN may create a Value Review case, AUD gets 403, a second open case for the same finding → 409 `corrective_case.already_open`. Entity-group test: create and read a Risk, an Assumption, an Issue, an Action, a design Decision and an Approval through the API, each with AUD-403 on the write and 404 outside scope; the ChangeRequest case is added by BE-L (slice H).
+
+### E.3 BE-E — budget lines, execution tracking, durations and the critical path (backend-workflow-engineer; wave W5)
+
+**Owns:** `portfolio/budget.ts` (`listBudgetLines`, `createBudgetLine`, `getBudgetLine`, `updateBudgetLine`, `archiveBudgetLine`, `getInitiativeExecution`; decimal.js totals per currency; the working-day slip through `@mth/shared/time`), `portfolio/schedule-network.ts` (`getScheduleNetwork`, `createInitiativeSchedule`, `updateInitiativeSchedule`; reads the canonical dependency edges read-only), `packages/shared/src/schedule/critical-path.ts` and `packages/shared/src/schedule/working-day-slip.ts` (pure; unit tests with the ADR-0031 §7 slip examples and the §8 fixture network), the `schedule/**` export line in the `@mth/shared/calc` barrel (after KBE-A's lines merge; p4-plan §5.3), the budget and schedule lines of the slice E block in `platform/db-errors.ts`; `packages/shared/src/schemas/execution.ts` and its `schemas/index.ts` line; `test/support/p4-pending-be-e.ts`; `test/integration/contract/p4-exercises-be-e.ts`; `test/integration/portfolio/{budget,execution,schedule-network}.test.ts`, each with AUD-403 and ADM-only-404 cases.
+
+**Consumes:** ADR-0031 §7–§11; `0042`, `0043`; ADR-0023 §2, §5, §6 (milestones, the dependency graph, capacity and demand; unchanged); BE-A's `addWorkingDays`/`isWorkingDay` and the calendar reader; the 9 operations in `p4-pending-be-e.ts`.
+
+**Requirement rows:** REQ-S09-007, REQ-S09-009.
+
+**Proofs it must include:** budget/actual/forecast round-trip as decimal strings (`0.1` + `0.2` = `0.3` in totals; `100000 × 0.02 × 50 = 100000.00` in a unit test); a missing amount gives an `unknown` total, never 0; an initiative without lines gives `budgetUnknownReason: "no_budget_lines"`; slip +5 / +4 (holiday) / −5 / 0 for the §7 examples; a missing date or calendar gives `unknown` with its reason; the §8 fixture gives the path `INI-01 → INI-02 → INI-04` and `P = 18`; removing one duration gives `not_computable` with that initiative listed and no node marked critical; `createInitiativeSchedule` twice → 409 `initiative_schedule.exists`.
+
+### E.4 Migrations of slice E
+
+- `0041`–`0043`: architect, all three numbers used, **frozen**. No number of the range is left free, so ARCH-05's `0044` can merge directly after them (S-12 contiguity).
+- BE-D, BE-D2 and BE-E have no migration number. A schema need goes in their handback, and the orchestrator assigns a number from the repair range `0058`–`0069`.
+
+### E.5 Other slices that consume slice E
+
+- **FE-D** (frontend-ux-engineer, wave W8) owns `apps/web/src/pages/raid/**` and `pages/actions/**`: the T15 register (nine columns; Probability shown "n/a" for Assumption, Issue and Dependency; the Mitigation / action header per type; Dependency entries link to T08), the integrated RAID + decision log, the action register (source, follow-up date, overdue), corrective-action cases (source, owner or "unassigned", follow-up date or Unknown, signals, recovery plan, the benefit's step), the rules (with "default" labels); en and ar; every ADR-0031 §11 code translated (keys requested from FE-A's `problems.json` block). Budget lines, the execution view and the schedule network are on the initiative page (`pages/initiatives/**` is DG3 FE-B's area: FE-D adds the panels as new components and requests the route/nav entries from FE-A; never "critical" styling when `status` is `not_computable`).
+- **ARCH-06** (slices F and G) must emit `adoption.check_failed` and `control_check.failed` with the ADR-0031 §5.4 payload and idempotency key.
+- **BE-G** (slice D) may read `raid_register` (blockers: open Issues and at-risk Dependencies) for PB-082; slice E adds no escalation.
+- **BE-K** (slice H) reads open Risks for the G5 "risk closure" evidence through a `GateFactsProvider` member that BE-D2 or BE-K adds (named in ARCH-07).
+- **BE-L** (slice H) adds the ChangeRequest case to `test/integration/raid/entity-group.test.ts` (REQ-S16-018).
+- **KBE-G** (slice J) reads open cases, overdue actions and the RAID register for My Work, the Executive Overview and the workspace header's RAID link (REQ-S03-008, REQ-S03-011).
+- **QA** (slice L): A04/A11 cite REQ-PB-085; A05 cites REQ-S09-007/-009; A09 cites REQ-S16-018.
+
+### E.6 Integration order
+
+1. **ARCH-04** (this task) merges after ARCH-03, so `0041`–`0043` are contiguous.
+2. **BE-E** (W5) and **BE-D** (W5) in parallel: different modules (`portfolio` vs `raid`); BE-E's barrel line waits for KBE-A's.
+3. **BE-D2** (after BE-D): corrective cases, rules and the four consumers.
+4. **FE-D** (W8), then the consumers in E.5.
+
+### E.7 Requirement → owner (the 8 rows of slice E)
+
+| Requirement | Owner task(s) | Where it is proven |
+|---|---|---|
+| REQ-PB-078 | BE-D | T08 owner edit = the same RAID entry, one row (probe D03; `dependency-entries.test.ts`); one decision model, RAID + decision log reads canonical rows |
+| REQ-PB-079 | BE-D | nine columns persist (probe R02; `register.test.ts`); Type outside the four → 400 `raid.type_invalid` (probe R07 for the table) |
+| REQ-PB-080 | BE-D | Issue with Probability H → 422; Risk without Probability → 422 (probes R03–R05; `register.test.ts`); Dependency has no probability (probe D05) |
+| REQ-PB-085 | BE-D2 | two-cycle rule: one case, third cycle updates (probes C02–C04; worker test); benefit below plan → one case; replay → none |
+| REQ-S09-007 | BE-E | decimal SAR budget/actual/forecast (probes BU02, BU03; `budget.test.ts`); slip in working days (`working-day-slip` unit test; `execution.test.ts`) |
+| REQ-S09-009 | BE-E | the fixture's critical path; missing duration → no claim (`critical-path` unit test; `schedule-network.test.ts`) |
+| REQ-S12-016 | BE-D2 | a failed control check → one owned case with a follow-up date (probes C13, C17; worker test) |
+| REQ-S16-018 | BE-D, BE-D2 (BE-L for ChangeRequest) | ERD §1g and `0041`; `entity-group.test.ts` (ADR-0031 §12) |
+
+### E.8 What the implementers of slice E must know
+
+1. **One canonical record per thing.** A Dependency entry is the `dependency` row; never insert a RAID copy. Decisions stay in `decision`. Read the register from `raid_register`.
+2. **Probability is n/a except for a Risk.** Return the exact 422 codes before the database refuses (`raid_entry_probability_applicable` is the last line).
+3. **Cases are opened or updated, never duplicated.** Take lock 730236 on `<transformationId>:<sourceKind>:<sourceScopeKey>` before reading the open case; `corrective_case_one_open_key` is the backstop. A closed case is never reopened: a new run opens a new case.
+4. **Unknown is never on track.** An Unknown KPI RAG or benefit variance ends a persistence run and never closes a case; a missing amount, slip, duration or follow-up date is Unknown with a reason, never 0 or a guessed date.
+5. **The worker has no author.** Worker cases have `created_by` NULL and a service audit actor; worker code never writes `action_item` (its `created_by` is NOT NULL).
+6. **Decimal only.** Money `numeric(20,4)` with the line's own currency; decimal.js in code; no conversion between currencies.
+7. **Working days come from the business calendar** (ADR-0025 §1), never elapsed days; the DG3 `varianceDays` stays in calendar days beside the new slip.
+8. **No critical path without complete inputs.** `critical` is `null` everywhere when any duration is missing; the UI must not highlight anything then.
+9. **AUD is read-only and ADM-only users see nothing** in these transformation-scoped operations: test 403 and 404 on each operation.
+10. **The DG2 action and T08 dependency operations are byte-stable.** New fields live only on the P4 paths and schemas.
+

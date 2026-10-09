@@ -5835,3 +5835,340 @@ Written by T-DG4-ARCH-03 (solution-architect), 2026-10-09. Binding design: ADR-0
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slice B schemas, incl. a single `ownerUserId`), free-text rules (`freeText`/`hasText`), strict UTF-8, request media types, `If-Match`, decimal strings, the Finance content snapshot (six keys) |
 | Service | Permissions and record-level rules (ADR-0029 §9, ADR-0030 §9), commit-time re-authorization, the overlap rule (lock 730234), the formula engine (unchanged), evidence on manual submission, the exact refusal codes and English texts of ADR-0029 §11 and ADR-0030 §11 |
 | Worker | `benefits.finance_queue` (exactly one queue item per submission, replay-safe), `benefits.recalculate_pending` (one pending value per benefit and KPI run; supersedes the older pending value), `benefit.variance_evaluated` events |
+
+# P4 tables, slice E (migrations 0041–0043, DG4)
+
+Written by T-DG4-ARCH-04 (solution-architect), 2026-10-09. Binding design: ADR-0031 (RAID on canonical records, actions, corrective-action cases, budget/actual/forecast with the working-day slip, critical path). The table sections below are generated from the catalogue of a freshly migrated disposable PostgreSQL 16 by `docs/delivery/handbacks/DG4/T-DG4-ARCH-04-evidence/gen-dictionary.ts`, so they match the migrations exactly. Every money column is numeric(20,4) with a per-row char(3) currency; NULL is Unknown, never 0. Durations are integer working days.
+
+## Changes to existing tables (0041)
+
+- **`dependency`** (DG2 `0017`, canonical, shared by T08 and RAID): new column `impact text NULL` with `dependency_impact_check` = `impact IS NULL OR impact IN ('high', 'medium', 'low')` (the T15 Impact of the RAID Dependency entry; NULL = Unknown). No probability column: Probability is n/a by construction (REQ-PB-080). Existing rows unchanged.
+- **`action_item`** (DG2 `0017`): new columns `raid_entry_id uuid NULL` (FK `action_item_raid_entry_id_fkey` (transformation_id, raid_entry_id) → raid_entry), `dependency_id uuid NULL` (FK `action_item_dependency_id_fkey` → dependency), `corrective_case_id uuid NULL` (FK `action_item_corrective_case_id_fkey` → corrective_case), `follow_up_date date NULL`; CHECK `action_item_one_source` = `num_nonnulls(source_workshop_item_id, raid_entry_id, dependency_id, corrective_case_id) <= 1`; trigger `action_item_source_immutable` (BEFORE UPDATE OF the three links) keeps the source link fixed; partial indexes `action_item_raid_entry_idx`, `action_item_dependency_idx`, `action_item_corrective_case_idx`. `created_by` stays NOT NULL (actions are person-authored). Existing rows unchanged.
+- **`record_code_counter`**: `record_code_counter_prefix_check` widened with `R`, `A`, `I` (T15 IDs R-01, A-01, I-01) and `CA` (corrective cases); existing prefixes and counters unchanged.
+
+## raid_entry
+
+- **Purpose:** Risk, Assumption and Issue (REQ-S16-018): T15 rows with the nine B0128 columns; Probability only for a Risk (REQ-PB-079, REQ-PB-080; ADR-0031 §1). Dependency entries are the canonical dependency rows, not stored here.
+- **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** `raid.edit` (TL, WL, TO). **Lifecycle:** open ⇄ in_progress; open | in_progress → closed (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| entry_type | text | NOT NULL |  | `CHECK ((entry_type = ANY (ARRAY['risk', 'assumption', 'issue'])))` |
+| code | text | NOT NULL |  |  |
+| description | text | NOT NULL |  | `CHECK (((char_length(description) >= 1) AND (char_length(description) <= 4000)))` |
+| impact | text | NOT NULL |  | `CHECK ((impact = ANY (ARRAY['high', 'medium', 'low'])))` |
+| probability | text | NULL |  | `CHECK (((probability IS NULL) OR (probability = ANY (ARRAY['high', 'medium', 'low']))))` |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| due_date | date | NULL |  |  |
+| mitigation | text | NULL |  | `CHECK (((mitigation IS NULL) OR ((char_length(mitigation) >= 1) AND (char_length(mitigation) <= 4000))))` |
+| initiative_id | uuid | NULL |  |  |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'in_progress', 'closed'])))` |
+| closed_at | timestamp with time zone | NULL |  |  |
+| closed_by | uuid | NULL |  | FK → app_user(id) |
+| closure_note | text | NULL |  | `CHECK (((closure_note IS NULL) OR ((char_length(closure_note) >= 3) AND (char_length(closure_note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `raid_entry_closed_complete` (CHECK): `CHECK ((((status = 'closed') = (closed_at IS NOT NULL)) AND ((closed_at IS NULL) = (closed_by IS NULL)) AND ((closed_at IS NULL) = (closure_note IS NULL))))`
+- `raid_entry_code_format` (CHECK): `CHECK ((((entry_type = 'risk') AND (code ~ '^R-[0-9]{2,6}$')) OR ((entry_type = 'assumption') AND (code ~ '^A-[0-9]{2,6}$')) OR ((entry_type = 'issue') AND (code ~ '^I-[0-9]{2,6}$'))))`
+- `raid_entry_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `raid_entry_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `raid_entry_probability_applicable` (CHECK): `CHECK (((entry_type = 'risk') = (probability IS NOT NULL)))`
+- `raid_entry_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `raid_entry_open_owner_idx`: `(owner_user_id) WHERE (status <> 'closed')`
+- `raid_entry_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
+- `raid_entry_type_status_idx`: `(transformation_id, entry_type, status)`
+
+**Triggers:**
+
+- `raid_entry_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `raid_entry_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `raid_entry_guard()`
+- `raid_entry_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## raid_register
+
+- **Purpose:** View: the T15 register as one read model over raid_entry and the non-archived canonical dependency rows, with no copy (REQ-PB-078 A01; ADR-0031 §2). Dependency probability is always NULL (n/a).
+- **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** none (view). **Lifecycle:** derived.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NULL |  |  |
+| organization_id | uuid | NULL |  |  |
+| transformation_id | uuid | NULL |  |  |
+| entry_type | text | NULL |  |  |
+| code | text | NULL |  |  |
+| description | text | NULL |  |  |
+| impact | text | NULL |  |  |
+| probability | text | NULL |  |  |
+| owner_user_id | uuid | NULL |  |  |
+| due_date | date | NULL |  |  |
+| mitigation | text | NULL |  |  |
+| raid_status | text | NULL |  |  |
+| record_status | text | NULL |  |  |
+| record_table | text | NULL |  |  |
+| initiative_id | uuid | NULL |  |  |
+| version | integer | NULL |  |  |
+| created_at | timestamp with time zone | NULL |  |  |
+| updated_at | timestamp with time zone | NULL |  |  |
+
+## corrective_action_rule
+
+- **Purpose:** The configured severity and persistence rule per transformation and source kind (M0227; ADR-0031 §5.2). Without a row the code defaults apply.
+- **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** `corrective_rule.configure` (TL, TO). **Lifecycle:** mutable, versioned; source kind immutable.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| source_kind | text | NOT NULL |  | `CHECK ((source_kind = ANY (ARRAY['kpi_deviation', 'benefit_variance', 'adoption_check', 'control_check'])))` |
+| min_kpi_rag | text | NULL |  | `CHECK (((min_kpi_rag IS NULL) OR (min_kpi_rag = ANY (ARRAY['amber', 'red']))))` |
+| persistence_cycles | smallint | NOT NULL |  | `CHECK (((persistence_cycles >= 1) AND (persistence_cycles <= 12)))` |
+| follow_up_working_days | smallint | NOT NULL |  | `CHECK (((follow_up_working_days >= 1) AND (follow_up_working_days <= 60)))` |
+| enabled | boolean | NOT NULL | `true` |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `corrective_action_rule_persistence_series_only` (CHECK): `CHECK (((source_kind = ANY (ARRAY['kpi_deviation', 'benefit_variance'])) OR (persistence_cycles = 1)))`
+- `corrective_action_rule_severity_kpi_only` (CHECK): `CHECK (((source_kind = 'kpi_deviation') = (min_kpi_rag IS NOT NULL)))`
+- `corrective_action_rule_source_key` (UNIQUE): `UNIQUE (transformation_id, source_kind)`
+
+**Triggers:**
+
+- `corrective_action_rule_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `corrective_action_rule_guard`: BEFORE UPDATE FOR EACH ROW → `corrective_action_rule_guard()`
+- `corrective_action_rule_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## corrective_case
+
+- **Purpose:** A recovery plan / corrective-action case (REQ-PB-085, REQ-S12-016; ADR-0031 §5): at most one case that is not closed per source; one case ever per failed check; worker cases have no human author (service audit actor).
+- **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** the worker consumers (kpi_deviation, benefit_variance, adoption_check, control_check); `corrective_action.manage` (TL, BO, FIN) for value_review cases and person updates. **Lifecycle:** open ⇄ in_progress; open | in_progress → closed (final; needs an owner).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^CA-[0-9]{2,6}$'))` |
+| source_kind | text | NOT NULL |  | `CHECK ((source_kind = ANY (ARRAY['kpi_deviation', 'benefit_variance', 'adoption_check', 'control_check', 'value_review'])))` |
+| source_scope_key | text | NOT NULL |  | `CHECK (((char_length(source_scope_key) >= 1) AND (char_length(source_scope_key) <= 200)))` |
+| kpi_definition_id | uuid | NULL |  |  |
+| kpi_scope_kind | text | NULL |  | `CHECK (((kpi_scope_kind IS NULL) OR (kpi_scope_kind = ANY (ARRAY['transformation', 'business_unit', 'initiative']))))` |
+| kpi_scope_id | uuid | NULL |  |  |
+| benefit_id | uuid | NULL |  |  |
+| source_record_type | text | NULL |  | `CHECK (((source_record_type IS NULL) OR (source_record_type ~ '^[a-z][a-z0-9_]{1,62}$')))` |
+| source_record_id | uuid | NULL |  |  |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 500)))` |
+| recovery_plan | text | NULL |  | `CHECK (((recovery_plan IS NULL) OR ((char_length(recovery_plan) >= 1) AND (char_length(recovery_plan) <= 8000))))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| follow_up_date | date | NULL |  |  |
+| follow_up_calendar_id | uuid | NULL |  |  |
+| follow_up_calendar_version | integer | NULL |  | `CHECK (((follow_up_calendar_version IS NULL) OR (follow_up_calendar_version >= 1)))` |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'in_progress', 'closed'])))` |
+| consecutive_off_track | smallint | NULL |  | `CHECK (((consecutive_off_track IS NULL) OR (consecutive_off_track >= 0)))` |
+| signal_count | integer | NOT NULL | `0` | `CHECK ((signal_count >= 0))` |
+| last_signal_at | timestamp with time zone | NULL |  |  |
+| closed_at | timestamp with time zone | NULL |  |  |
+| closed_by | uuid | NULL |  | FK → app_user(id) |
+| closure_note | text | NULL |  | `CHECK (((closure_note IS NULL) OR ((char_length(closure_note) >= 3) AND (char_length(closure_note) <= 2000))))` |
+| created_source | text | NOT NULL |  | `CHECK ((created_source = ANY (ARRAY['api', 'worker'])))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `corrective_case_benefit_fkey` (FK): `FOREIGN KEY (transformation_id, benefit_id) REFERENCES benefit(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `corrective_case_calendar_fkey` (FK): `FOREIGN KEY (organization_id, follow_up_calendar_id) REFERENCES business_calendar(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `corrective_case_closed_complete` (CHECK): `CHECK ((((status = 'closed') = (closed_at IS NOT NULL)) AND ((closed_at IS NULL) = (closed_by IS NULL)) AND ((closed_at IS NULL) = (closure_note IS NULL))))`
+- `corrective_case_code_key` (UNIQUE): `UNIQUE (transformation_id, code)`
+- `corrective_case_created_source` (CHECK): `CHECK ((((created_source = 'api') = (source_kind = 'value_review')) AND ((created_source = 'worker') OR ((created_by IS NOT NULL) AND (updated_by IS NOT NULL) AND (owner_user_id IS NOT NULL) AND (follow_up_date IS NOT NULL))) AND ((created_source = 'api') OR (created_by IS NULL))))`
+- `corrective_case_follow_up_calendar` (CHECK): `CHECK (((follow_up_calendar_id IS NULL) = (follow_up_calendar_version IS NULL)))`
+- `corrective_case_kpi_fkey` (FK): `FOREIGN KEY (transformation_id, kpi_definition_id) REFERENCES kpi_definition(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `corrective_case_source_fields` (CHECK): `CHECK ((((source_kind = 'kpi_deviation') = (kpi_definition_id IS NOT NULL)) AND ((kpi_definition_id IS NULL) = (kpi_scope_kind IS NULL)) AND ((kpi_definition_id IS NULL) = (kpi_scope_id IS NULL)) AND ((source_kind = 'benefit_variance') = (benefit_id IS NOT NULL)) AND ((source_kind = ANY (ARRAY['adoption_check', 'control_check'])) = (source_record_id IS NOT NULL)) AND ((source_record_id IS NULL) = (source_record_type IS NULL))))`
+- `corrective_case_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `corrective_case_one_open_key`: `UNIQUE (transformation_id, source_kind, source_scope_key) WHERE (status <> 'closed')`
+- `corrective_case_one_per_check_key`: `UNIQUE (transformation_id, source_kind, source_scope_key) WHERE (source_kind = ANY (ARRAY['adoption_check', 'control_check']))`
+- `corrective_case_open_owner_idx`: `(owner_user_id) WHERE (status <> 'closed')`
+- `corrective_case_transformation_updated_idx`: `(transformation_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `corrective_case_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `corrective_case_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `corrective_case_guard()`
+- `corrective_case_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## corrective_signal
+
+- **Purpose:** Append-only log of every consumed source event, with its period, off-track flag (NULL = Unknown), consecutive count and outcome (ADR-0031 §5.3). System lineage: no audit event of its own.
+- **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** the worker consumers. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| source_kind | text | NOT NULL |  | `CHECK ((source_kind = ANY (ARRAY['kpi_deviation', 'benefit_variance', 'adoption_check', 'control_check'])))` |
+| source_scope_key | text | NOT NULL |  | `CHECK (((char_length(source_scope_key) >= 1) AND (char_length(source_scope_key) <= 200)))` |
+| source_event_key | text | NOT NULL |  | `CHECK (((char_length(source_event_key) >= 1) AND (char_length(source_event_key) <= 200)))` |
+| period_key | text | NOT NULL |  | `CHECK (((char_length(period_key) >= 1) AND (char_length(period_key) <= 100)))` |
+| period_start | date | NULL |  |  |
+| period_end | date | NULL |  |  |
+| observed_rag | text | NULL |  | `CHECK (((observed_rag IS NULL) OR (observed_rag = ANY (ARRAY['green', 'amber', 'red', 'unknown', 'stale', 'not_computable']))))` |
+| off_track | boolean | NULL |  |  |
+| rule_persistence | smallint | NULL |  | `CHECK (((rule_persistence IS NULL) OR ((rule_persistence >= 1) AND (rule_persistence <= 12))))` |
+| consecutive_off_track | smallint | NULL |  | `CHECK (((consecutive_off_track IS NULL) OR (consecutive_off_track >= 0)))` |
+| outcome | text | NOT NULL |  | `CHECK ((outcome = ANY (ARRAY['recorded', 'case_created', 'case_updated', 'rule_disabled'])))` |
+| corrective_case_id | uuid | NULL |  |  |
+| payload | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(payload) = 'object'))` |
+| received_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `corrective_signal_case_fkey` (FK): `FOREIGN KEY (transformation_id, corrective_case_id) REFERENCES corrective_case(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `corrective_signal_event_key` (UNIQUE): `UNIQUE (source_event_key)`
+- `corrective_signal_outcome_case` (CHECK): `CHECK (((outcome = ANY (ARRAY['case_created', 'case_updated'])) = (corrective_case_id IS NOT NULL)))`
+- `corrective_signal_period_range` (CHECK): `CHECK (((period_end IS NULL) OR (period_start IS NULL) OR (period_end >= period_start)))`
+- `corrective_signal_rag_kpi_only` (CHECK): `CHECK (((source_kind = 'kpi_deviation') OR (observed_rag IS NULL)))`
+
+**Indexes:**
+
+- `corrective_signal_case_idx`: `(corrective_case_id) WHERE (corrective_case_id IS NOT NULL)`
+- `corrective_signal_scope_idx`: `(transformation_id, source_kind, source_scope_key, period_start DESC, received_at DESC)`
+
+**Triggers:**
+
+- `corrective_signal_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `corrective_signal_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `corrective_signal_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## budget_line
+
+- **Purpose:** One budget line of an initiative: budget, actual and forecast as numeric(20,4) in the line's own currency, NULL = Unknown (REQ-S09-007; ADR-0031 §7).
+- **Migration:** `0042_p4_budget_schedule.sql`. **API module:** `portfolio`. **Who writes:** `budget.edit` (TL, FIN). **Lifecycle:** active → archived (final).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| label | text | NOT NULL |  | `CHECK (((char_length(label) >= 1) AND (char_length(label) <= 200)))` |
+| period_month | date | NULL |  | `CHECK (((period_month IS NULL) OR (EXTRACT(day FROM period_month) = (1)::numeric)))` |
+| currency | character(3) | NOT NULL |  | `CHECK ((currency ~ '^[A-Z]{3}$'))` |
+| budget_amount | numeric(20,4) | NULL |  | `CHECK (((budget_amount IS NULL) OR (budget_amount >= (0)::numeric)))` |
+| actual_amount | numeric(20,4) | NULL |  | `CHECK (((actual_amount IS NULL) OR (actual_amount >= (0)::numeric)))` |
+| forecast_amount | numeric(20,4) | NULL |  | `CHECK (((forecast_amount IS NULL) OR (forecast_amount >= (0)::numeric)))` |
+| owner_user_id | uuid | NULL |  | FK → app_user(id) |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'archived'])))` |
+| archived_at | timestamp with time zone | NULL |  |  |
+| archived_by | uuid | NULL |  | FK → app_user(id) |
+| archive_reason | text | NULL |  | `CHECK (((archive_reason IS NULL) OR ((char_length(archive_reason) >= 3) AND (char_length(archive_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `budget_line_archive_complete` (CHECK): `CHECK ((((status = 'archived') = (archived_at IS NOT NULL)) AND ((archived_at IS NULL) = (archived_by IS NULL)) AND ((archived_at IS NULL) = (archive_reason IS NULL))))`
+- `budget_line_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `budget_line_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Indexes:**
+
+- `budget_line_active_key`: `UNIQUE (initiative_id, lower(label), COALESCE(period_month, '0001-01-01'::date)) WHERE (status = 'active')`
+- `budget_line_initiative_idx`: `(initiative_id, period_month NULLS FIRST, id) WHERE (status = 'active')`
+
+**Triggers:**
+
+- `budget_line_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `budget_line_guard`: BEFORE UPDATE FOR EACH ROW → `budget_line_guard()`
+- `budget_line_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## initiative_schedule
+
+- **Purpose:** The planned duration of an initiative in working days, the input of the critical path (REQ-S09-009; ADR-0031 §8). NULL = missing input: no critical path is claimed.
+- **Migration:** `0042_p4_budget_schedule.sql`. **API module:** `portfolio`. **Who writes:** `roadmap.edit` (TL, WL, TO). **Lifecycle:** mutable, versioned; one row per initiative.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| initiative_id | uuid | NOT NULL |  |  |
+| duration_working_days | integer | NULL |  | `CHECK (((duration_working_days IS NULL) OR ((duration_working_days >= 0) AND (duration_working_days <= 2600))))` |
+| note | text | NULL |  | `CHECK (((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `initiative_schedule_initiative_id_fkey` (FK): `FOREIGN KEY (transformation_id, initiative_id) REFERENCES initiative(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `initiative_schedule_initiative_key` (UNIQUE): `UNIQUE (initiative_id)`
+- `initiative_schedule_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+
+**Triggers:**
+
+- `initiative_schedule_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `initiative_schedule_guard`: BEFORE UPDATE FOR EACH ROW → `initiative_schedule_guard()`
+- `initiative_schedule_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P4 seeds (0041, 0043, slice E)
+
+- `work_item_kind` `corrective_case_follow_up` (M0236) and `raid_action_due` (M0143), owner module `raid` (label_ar provisional wording).
+- `permission` (4 rows: `raid.edit` write, `corrective_action.manage` write, `corrective_rule.configure` configure, `budget.edit` write) and `role_permission` (10 rows): exactly `P4_RAID_PERMISSIONS` / `P4_RAID_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). AUD and the technical-admin roles hold none; none is an approval category.
+- No RAID entry, case, rule, budget line or duration is seeded.
+
+## P4 functions (slice E)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `raid_entry_guard()` | 0041 | starts open; type and code immutable; open ⇄ in_progress, → closed; closed is final | via trigger |
+| `corrective_action_rule_guard()` | 0041 | source kind immutable | via trigger |
+| `corrective_case_guard()` | 0041 | starts open; code, source and creation source immutable; open ⇄ in_progress, → closed; closed is final; no closing without an owner | via trigger |
+| `action_item_source_immutable()` | 0041 | the RAID/dependency/case link of an action never changes | via trigger |
+| `budget_line_guard()` | 0042 | currency and initiative immutable; archived is frozen | via trigger |
+| `initiative_schedule_guard()` | 0042 | the initiative is immutable | via trigger |
+
+## P4 validation rules summary (slice E)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, organization = transformation's, deferred audit coverage; append-only signal log); closed sets (RAID types, H/M/L, statuses, source kinds, outcomes, RAG values); Probability only for a Risk; RAID code prefix per type; one case not closed per source (`corrective_case_one_open_key`) and one case per failed check (`corrective_case_one_per_check_key`); source fields per kind; worker vs person authorship; closure note and owner on close; one signal per source event; one active budget line per initiative, label and month; non-negative decimal amounts; first-of-month periods; one duration row per initiative, 0–2600 working days |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice E schemas; `type` outside the four T15 values is 400 `raid.type_invalid`), free-text rules, strict UTF-8, request media types, `If-Match`, decimal strings with at most 16 + 4 digits |
+| Service | Permissions (ADR-0031 §9; a Dependency entry needs `raid.edit` and `dependency.edit`), commit-time re-authorization, the T08 port for Dependency entries, the exact refusal codes and English texts of ADR-0031 §11, the working-day slip on the business calendar, the critical path method (no claim with a missing duration), decimal.js totals per currency |
+| Worker | `raid.corrective_kpi`, `raid.corrective_benefit`, `raid.corrective_adoption`, `raid.corrective_control`: the severity and persistence rule under lock 730236, one case created or updated (never duplicated), replay-safe (`processed_message` and `corrective_signal_event_key`), follow-up work item through `createWorkItemOnce` |

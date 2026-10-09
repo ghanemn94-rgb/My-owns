@@ -48,6 +48,10 @@ export const ADVISORY_LOCK_CLASSES = {
   financeValidationQueue: 730233,
   /** Overlap detection and resolution of one transformation and driver (benefits overlaps; API only). Key: "<transformationId>:<driverKey>". */
   benefitOverlap: 730234,
+  // P4 block of T-DG4-ARCH-04 (730236-730237; p4-plan §4, ADR-0031 §5). 730237 is RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it.
+  /** Corrective-action case of one source (raid corrective cases: the event consumers and the API; one open case is also held by the unique index corrective_case_one_open_key). Key: "<transformationId>:<sourceKind>:<sourceScopeKey>". */
+  correctiveCase: 730236,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

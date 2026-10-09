@@ -1276,6 +1276,57 @@ Read views (0039): `benefit_counting` (counted, exclusion reason, open overlap p
 | Overlap warning (S08-014) | `benefit_overlap` | `id` (one open per pair) | `resolved_by` | overlap rule / `benefit.edit`; `finance.validate` (FIN) | `status` | yes | benefits |
 | Valuation method (S08-010) | `benefit_valuation_method` | `id` (`code` UK) | `created_by`; `decided_by` | `benefit.edit`; `finance.validate` (FIN) | `status` | yes | benefits |
 
+## 1g. P4 physical model, slice E (migrations 0041–0043, DG4)
+
+Written by T-DG4-ARCH-04 (ADR-0031). Columns, constraints and triggers: `data-dictionary.md` "P4 tables, slice E" (generated from the migrated catalogue). Every new table has `organization_id` and `transformation_id`, and its foreign keys to other transformation-scoped rows are composite `(transformation_id, id)`, except `corrective_case.follow_up_calendar_id` (composite `(organization_id, id)` onto `business_calendar`) and `corrective_case.source_record_id` (a slice F/G check record, named by `source_record_type`; no foreign key, because those tables do not exist yet). No DELETE grant on any of them.
+
+### 1g.1 RAID on canonical records, actions, corrective cases — `raid` module and worker
+
+```mermaid
+erDiagram
+    transformation ||--o{ raid_entry : "T15 Risk / Assumption / Issue (R-nn, A-nn, I-nn)"
+    raid_entry }o--|| app_user : "owner"
+    raid_entry }o--o| initiative : "affected initiative"
+    transformation ||--o{ dependency : "T15 Dependency entries ARE the canonical T08 rows (DEP-nn; + impact)"
+    raid_entry ||--o{ action_item : "mitigation / action (raid_entry_id)"
+    dependency ||--o{ action_item : "action (dependency_id)"
+    corrective_case ||--o{ action_item : "recovery actions (corrective_case_id)"
+    transformation ||--o{ corrective_action_rule : "severity and persistence rule per source kind"
+    transformation ||--o{ corrective_case : "recovery plan / corrective action (CA-nn)"
+    corrective_case }o--o| kpi_definition : "source: KPI deviation (with scope)"
+    corrective_case }o--o| benefit : "source: benefit variance"
+    corrective_case }o--o| app_user : "owner (NULL = unassigned, visible)"
+    corrective_case }o--o| business_calendar : "follow-up date computed on"
+    corrective_case ||--o{ corrective_signal : "signals that created / updated it (append-only)"
+```
+
+Read view (0041): `raid_register` = `raid_entry` rows `UNION ALL` the non-archived `dependency` rows (type `dependency`, probability NULL, due = `needed_by`); one register, no copy (REQ-PB-078).
+
+### 1g.2 Budget lines and initiative durations — `portfolio` module
+
+```mermaid
+erDiagram
+    initiative ||--o{ budget_line : "budget / actual / forecast (numeric(20,4), own currency)"
+    initiative ||--o| initiative_schedule : "planned duration (working days)"
+    dependency }o--o| initiative : "finish-to-start edge (from / to; the critical-path network)"
+```
+
+### 1g.3 P4 entity register (slice E): §16 S16-018 entities → tables
+
+| Entity (§16 S16-018, M0324) | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| **Risk** | `raid_entry` (`entry_type = 'risk'`) | `id` (`code` R-nn UK per transformation) | `owner_user_id` | `raid.edit` (TL, WL, TO) | `status` (open, in_progress, closed) | yes | raid |
+| **Assumption** | `raid_entry` (`entry_type = 'assumption'`) | `id` (`A-nn`) | `owner_user_id` | `raid.edit` | `status` | yes | raid |
+| **Issue** | `raid_entry` (`entry_type = 'issue'`) | `id` (`I-nn`) | `owner_user_id` | `raid.edit` | `status` | yes | raid |
+| **Action** | `action_item` (0017, extended by 0041) | `id` | `owner_user_id` | `action.edit` (TL, TO); `action.update_own` (owner) | `status` (open, in_progress, done, cancelled) | yes | workflows (DG2 paths); raid (P4 paths) |
+| **Decision** | `decision` (0017; one decision model, kinds design, gate, executive) | `id` (`code` D-nn, GD-nn, DEC-nn) | `owner_user_id` | `decision.edit`, `decision.decide` (DG2); T16 slice D | `status` (open, decided, deferred, cancelled) | yes | workflows; governance (T16) |
+| **ChangeRequest** | not yet built: slice H (ARCH-07, migrations 0051–0054) | — | — | — | — | — | workflows (BE-L) |
+| **Approval** | `approval` (0031, D-089 Q10) | `id` | `requested_by`; assignee party/user/group | `approval.request`; `approval.decide` (SP, BO, FIN) | `status` (pending, changes_requested, deferred, approved, rejected, withdrawn) | yes | workflows |
+| RAID Dependency entry (PB-078) | `dependency` (0017/0022, + `impact` 0041) via `raid_register` | `id` (`DEP-nn`) | `owner_user_id` | `raid.edit` + `dependency.edit`, or T08 | `status` (open, at_risk, resolved, archived) | yes | workflows (T08); raid (through the T08 port) |
+| Corrective-action case (PB-085, S12-016) | `corrective_case` (+ `corrective_signal`, `corrective_action_rule`) | `id` (`CA-nn`) | `owner_user_id` | worker consumers; `corrective_action.manage` (TL, BO, FIN) | `status` (open, in_progress, closed) | yes (signals append-only) | raid / worker |
+| Budget line (S09-007) | `budget_line` | `id` | `owner_user_id` | `budget.edit` (TL, FIN) | `status` (active, archived) | yes | portfolio |
+| Initiative duration (S09-009) | `initiative_schedule` | `id` (one per initiative) | `created_by` | `roadmap.edit` (TL, WL, TO) | — | yes | portfolio |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1468,10 +1519,10 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| Risk, Assumption, Issue | `risk`, `assumption`, `issue` (T15) | P3/P4 |
+| Risk, Assumption, Issue | `raid_entry` (T15 typed rows, `entry_type`; T-DG4-ARCH-04 built one typed table instead of the three planned ones, ADR-0031 §1; see §1g) | P4 |
 | Action | `action_item` (also corrective actions) | **P2** (workshop actions), P3/P4 |
 | Decision | `decision` + `decision_option`: **the one decision model** (T04/T11/T16/gate/funding) | **P2** (design + gate decisions), P4 |
-| ChangeRequest | `change_request` | P4 |
+| ChangeRequest | `change_request` (slice H, ARCH-07; not yet built at T-DG4-ARCH-04) | P4 |
 | Approval | P2: `gate_decision` (approver basis, submission number, rationale, timestamp; SoD). Generic `approval`: P4 | **P2** (gates), P4 |
 
 ### 2.9 Governance forums and meetings (REQ-S16-019; DG4)

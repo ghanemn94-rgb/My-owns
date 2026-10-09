@@ -32,7 +32,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the fourteen classes, each a distinct int4 (730227, 730231 and 730235 stay reserved for their P4 blocks)", () => {
+  it("lists the fifteen classes, each a distinct int4 (730227, 730231, 730235 and 730237 stay reserved for their P4 blocks)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -48,6 +48,7 @@ describe("advisory-lock class registry", () => {
       benefitAllocationSet: 730232,
       financeValidationQueue: 730233,
       benefitOverlap: 730234,
+      correctiveCase: 730236,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);
