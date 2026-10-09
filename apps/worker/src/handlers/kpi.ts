@@ -11,7 +11,9 @@
 //        (ON CONFLICT DO NOTHING: at most one open finding per KPI, scope, period and rule);
 //      - recalculates: the slot's evaluations (bases period and cumulative), the roll-up to the transformation scope
 //        when the entry scope is narrower, and every formula KPI that reads the KPI transitively, for the same period
-//        (an accepted actual); or the KPI's slots of its current reporting period (the other three triggers);
+//        (an accepted actual); or the KPI's slots of its current reporting period (the other three triggers). A formula
+//        input the run does not recalculate is bound to its source's value from the source's accepted values
+//        (T-DG4-KBE-R1);
 //      - evaluates deviations: RAG from the approved trajectory and the threshold version in force, NEVER from task
 //        completion (the inputs are values, the active version, the trajectory, the thresholds and the business date);
 //      - inserts exactly one calculation_run (unique trigger key: a redelivery or a restart writes no second run) and
@@ -621,23 +623,118 @@ export interface RecalculateResult {
   readonly evaluationCount: number;
 }
 
-/** One calculation run for one trigger (ADR-0027 §8 step 2). Exported for the tests (REQ-S16-014). */
-export async function recalculate(db: Db, data: unknown, _jobId: string): Promise<RecalculateResult> {
+/**
+ * The attempt a pg-boss job is on: `retryCount` retries already made (0 on the first attempt) of `retryLimit`. pg-boss
+ * retries a failed job while retry_count < retry_limit, so the attempt with retryCount >= retryLimit is the last one.
+ */
+export interface JobAttempt {
+  readonly retryCount: number;
+  readonly retryLimit: number;
+}
+
+export const isFinalAttempt = (a: JobAttempt): boolean => a.retryCount >= a.retryLimit;
+
+/** The error_code of a run that failed on its last attempt (calculation_run_failed_shape; `^[a-z_]+\.[a-z_.]{1,80}$`). */
+export const RECALCULATE_FAILED_CODE = "kpi.recalculate_failed";
+
+/**
+ * The attempt of job `jobId` of the kpi.recalculate queue, read from pg-boss's own job row (pg-boss 11, schema pgboss;
+ * the worker connects as mth_app, which runs pg-boss's DML), or null when there is no such job (a direct call). The
+ * JobHandler interface (spec.ts) passes only the data and the id, so the handler reads the count itself.
+ */
+export async function recalculateAttemptOf(db: Db, jobId: string): Promise<JobAttempt | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId)) return null;
+  const r = await sql<{ retry_count: number; retry_limit: number }>`
+    SELECT retry_count, retry_limit FROM pgboss.job WHERE name = ${RECALCULATE_QUEUE} AND id = ${jobId}::uuid`.execute(
+    db,
+  );
+  const row = r.rows[0];
+  return row ? { retryCount: row.retry_count, retryLimit: row.retry_limit } : null;
+}
+
+/**
+ * One calculation run for one trigger (ADR-0027 §8 step 2). Exported for the tests (REQ-S16-014).
+ *
+ * Failure (ADR-0027 §8 step 4; T-DG4-KBE-R1 item 3): when the calculation throws, the run's transaction rolls back and
+ * the error is rethrown, so pg-boss retries (ADR-0008 §4). On the LAST attempt (`attempt`, else the job's own retry
+ * count; isFinalAttempt) the handler first writes one `failed` calculation_run with error_code
+ * `kpi.recalculate_failed`, zero evaluations and zero findings, in a separate transaction, and then rethrows, so the job
+ * still lands in ops.failed. The run is append-only and unique per trigger and per idempotency key, so the failed run is
+ * the trigger's one run: a replay of the dead-lettered job finds it and writes nothing (already_run). The accepted slot
+ * is not touched; the read model keeps showing the last evaluation with its age. No audit event (system lineage, §7).
+ */
+export async function recalculate(
+  db: Db,
+  data: unknown,
+  jobId: string,
+  attempt?: JobAttempt,
+): Promise<RecalculateResult> {
   const envelope = outboxEnvelope.parse(data);
   const trigger = triggerOf(envelope.eventType, envelope.schemaVersion, envelope.payload);
   const startedAt = new Date();
-  const res = await runOnce(db, RECALCULATE_CONSUMER, envelope.idempotencyKey, async (tx) => {
-    const existing = await tx
-      .selectFrom("calculation_run")
-      .select("id")
-      .where("trigger_kind", "=", trigger.kind)
-      .where("trigger_record_id", "=", trigger.recordId)
-      .where("trigger_slot", "=", trigger.slot)
-      .executeTakeFirst();
-    if (existing) return { outcome: "already_run" as const, runId: existing.id, evaluationCount: 0 };
-    return runCalculation(tx, envelope.organizationId, trigger, startedAt, envelope.idempotencyKey);
+  try {
+    const res = await runOnce(db, RECALCULATE_CONSUMER, envelope.idempotencyKey, async (tx) => {
+      const existing = await tx
+        .selectFrom("calculation_run")
+        .select("id")
+        .where("trigger_kind", "=", trigger.kind)
+        .where("trigger_record_id", "=", trigger.recordId)
+        .where("trigger_slot", "=", trigger.slot)
+        .executeTakeFirst();
+      if (existing) return { outcome: "already_run" as const, runId: existing.id, evaluationCount: 0 };
+      return runCalculation(tx, envelope.organizationId, trigger, startedAt, envelope.idempotencyKey);
+    });
+    return res.outcome === "duplicate" ? { outcome: "duplicate", runId: null, evaluationCount: 0 } : res.result;
+  } catch (err) {
+    // A failed lookup counts as "not known to be the last attempt": the original error is what pg-boss records.
+    const current = attempt ?? (await recalculateAttemptOf(db, jobId).catch(() => null));
+    if (current !== null && isFinalAttempt(current)) {
+      try {
+        await recordFailedRun(db, envelope.organizationId, trigger, startedAt, envelope.idempotencyKey);
+      } catch (recordErr) {
+        throw new AggregateError(
+          [err, recordErr],
+          "kpi.recalculate: the last attempt failed and its failed run could not be recorded",
+        );
+      }
+    }
+    throw err;
+  }
+}
+
+/** The `failed` run of a trigger's last attempt, in its own transaction; nothing when the trigger already has a run. */
+async function recordFailedRun(
+  db: Db,
+  organizationId: string,
+  trigger: Trigger,
+  startedAt: Date,
+  idempotencyKey: string,
+): Promise<void> {
+  await db.transaction().execute(async (tx) => {
+    const runId = (await sql<{ id: string }>`SELECT mth_uuid_v7() AS id`.execute(tx)).rows[0]!.id;
+    await tx
+      .insertInto("calculation_run")
+      .values({
+        id: runId,
+        organization_id: organizationId,
+        transformation_id: trigger.transformationId,
+        trigger_kind: trigger.kind,
+        trigger_record_type: trigger.recordType,
+        trigger_record_id: trigger.recordId,
+        trigger_slot: trigger.slot,
+        idempotency_key: idempotencyKey,
+        status: "failed",
+        error_code: RECALCULATE_FAILED_CODE,
+        evaluation_count: 0,
+        finding_count: 0,
+        formula_engine_version: ENGINE_VERSION,
+        kpi_rules_version: KPI_RULES_VERSION,
+        started_at: startedAt,
+      })
+      // Either unique key (trigger, idempotency key) taken: the trigger already has its one run.
+      .onConflict((oc) => oc.doNothing())
+      .execute();
   });
-  return res.outcome === "duplicate" ? { outcome: "duplicate", runId: null, evaluationCount: 0 } : res.result;
 }
 
 async function runCalculation(
@@ -726,7 +823,7 @@ async function runCalculation(
 
   // Inputs of the formula readers (and their source KPIs' types).
   const formulaInputs = new Map<string, { variable: string; source: string; basis: ValueBasis; type: Kpi }[]>();
-  for (const reader of readers) {
+  const loadFormulaInputs = async (reader: Kpi) => {
     const rows = await tx
       .selectFrom("kpi_formula_input")
       .select(["variable_name", "source_kpi_definition_id", "input_basis"])
@@ -738,26 +835,61 @@ async function runCalculation(
       if (src) list.push({ variable: r.variable_name, source: src.id, basis: r.input_basis as ValueBasis, type: src });
     }
     formulaInputs.set(reader.id, list);
-  }
+  };
+  for (const reader of readers) await loadFormulaInputs(reader);
 
   const valuesByKpi = new Map<string, Map<string, Map<string, Accepted>>>();
+  const valuesOf = async (kpiId: string) => {
+    if (!valuesByKpi.has(kpiId)) valuesByKpi.set(kpiId, await acceptedValues(tx, kpiId));
+    return valuesByKpi.get(kpiId)!;
+  };
+  const scopesReportedBy = (values: Map<string, Map<string, Accepted>>, period: Context["periods"][number]) =>
+    [...values.entries()]
+      .filter(([, byPeriod]) =>
+        [...byPeriod.keys()].some((pid) => {
+          const p = ctx.periods.find((x) => x.id === pid);
+          return p !== undefined && p.periodEnd <= period.periodEnd;
+        }),
+      )
+      .map(([scopeId]) => scopeId);
+  // A formula input this run did not compute (T-DG4-KBE-R1): the source KPI's slot of the same scope, period and input
+  // basis, evaluated from its ACCEPTED values exactly as its own run evaluates it (a formula source from its own
+  // inputs, recursively; the reference graph is acyclic, kpi_formula_no_cycle). It only binds the input: it is not
+  // stored as an evaluation of this run and records no finding, so the run's rows and events for other KPIs are
+  // unchanged. Before this, such an input was Unknown, so a formula over two separately accepted inputs never computed.
+  const bindingOnly = new Map<string, string[]>();
+  const ensureInput = async (
+    src: Kpi,
+    scopeKind: string,
+    scopeId: string,
+    period: Context["periods"][number],
+    basis: ValueBasis,
+    depth: number,
+  ): Promise<void> => {
+    const k = key(src.id, scopeId, period.id, basis);
+    if (ctx.computed.has(k) || !src.version || depth > 32) return;
+    if (src.version.calculationMethod === "formula") {
+      if (!formulaInputs.has(src.id)) await loadFormulaInputs(src);
+      for (const i of formulaInputs.get(src.id)!)
+        await ensureInput(i.type, scopeKind, scopeId, period, i.basis, depth + 1);
+    }
+    const values = await valuesOf(src.id);
+    if (!bindingOnly.has(src.id)) bindingOnly.set(src.id, scopesReportedBy(values, period));
+    const findingsBefore = ctx.findings.length;
+    const e = evaluateSlot(ctx, src, scopeKind, scopeId, period, basis, values, formulaInputs, bindingOnly);
+    ctx.findings.length = findingsBefore;
+    ctx.computed.set(k, e.result);
+  };
+
   const previouslyReporting = new Map<string, string[]>();
   const evaluations: EvaluationRow[] = [];
   for (const t of targets) {
-    if (!valuesByKpi.has(t.kpi.id)) valuesByKpi.set(t.kpi.id, await acceptedValues(tx, t.kpi.id));
-    const values = valuesByKpi.get(t.kpi.id)!;
+    const values = await valuesOf(t.kpi.id);
     const period = ctx.periods.find((p) => p.id === t.periodId)!;
-    if (!previouslyReporting.has(t.kpi.id)) {
-      const scopesBefore = [...values.entries()]
-        .filter(([, byPeriod]) =>
-          [...byPeriod.keys()].some((pid) => {
-            const p = ctx.periods.find((x) => x.id === pid);
-            return p !== undefined && p.periodEnd <= period.periodEnd;
-          }),
-        )
-        .map(([scopeId]) => scopeId);
-      previouslyReporting.set(t.kpi.id, scopesBefore);
-    }
+    if (!previouslyReporting.has(t.kpi.id)) previouslyReporting.set(t.kpi.id, scopesReportedBy(values, period));
+    if (t.kpi.version!.calculationMethod === "formula")
+      for (const i of formulaInputs.get(t.kpi.id) ?? [])
+        await ensureInput(i.type, t.scopeKind, t.scopeId, period, i.basis, 0);
     const bases: ValueBasis[] = t.kpi.version!.valueNature === "milestone" ? ["period"] : ["period", "cumulative"];
     for (const basis of bases) {
       const e = evaluateSlot(

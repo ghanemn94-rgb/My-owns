@@ -17,10 +17,10 @@
 // reason and value null, never 0, and proficiency never derives from training (REQ-PB-072). A target other than a
 // stakeholder group aggregates over the transformation's active groups by summing numerators and denominators.
 //
-// createKpi: slice A exposes no create service through kpi/index.ts (its create lives in the route), so the KPI row is
-// inserted here exactly as slice A's createKpiDefinition writes it (same columns, same `kpi_definition.create` audit
-// event and fields, the same 409 for a taken name), from the template: name = the measure's English name,
-// is_leading = true, the template's unit and polarity, the owner from the request.
+// createKpi: the KPI row is written by slice A's create service (kpi/index.ts createKpiDefinitionRow; T-DG4-KBE-R1), the
+// one createKpiDefinition uses (same columns, same `kpi_definition.create` audit event and fields, the same 409 for a
+// taken name), from the template: name = the measure's English name, is_leading = true, the template's unit and
+// polarity, the owner from the request.
 //
 // Every mutation: the read gate first (ADM-only callers and outsiders get 404), adoption.edit re-checked at commit time
 // (AUD 403), validation, If-Match on the removal (428/409; creates are version 1), one audit event per written row in
@@ -69,6 +69,7 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
+import { createKpiDefinitionRow } from "../kpi/index.ts";
 import { assertActiveUsers } from "../transformations/index.ts";
 import {
   adoptionRule,
@@ -99,23 +100,6 @@ export const ADOPTION_METRIC_LINK_AUDIT_FIELDS = [
   "removed_at",
   "removed_by",
 ] as const satisfies readonly (keyof AdoptionMetricLinkRow & string)[];
-
-/** The fields slice A audits on `kpi_definition.create` (kpi/repository.ts KPI_DEFINITION_AUDIT_FIELDS; not public). */
-const KPI_DEFINITION_AUDIT_FIELDS = [
-  "name",
-  "description",
-  "business_purpose",
-  "unit_kind",
-  "unit_label",
-  "currency",
-  "polarity",
-  "frequency",
-  "is_leading",
-  "data_source",
-  "owner_user_id",
-  "steward_user_id",
-  "status",
-] as const satisfies readonly (keyof KpiDefinitionRow & string)[];
 
 /** The default staleness window of slice A when a KPI has no active version (kpi-status.ts; ADR-0028 §6). */
 const DEFAULT_STALE_AFTER_DAYS = 45;
@@ -303,37 +287,16 @@ async function createKpiFromTemplate(
     .where("status", "<>", "archived")
     .executeTakeFirst();
   if (taken) throw KPI_NAME_TAKEN();
-  const id = uuidv7();
-  const row = await tx
-    .insertInto("kpi_definition")
-    .values({
-      id,
-      organization_id: ctx.organizationId,
-      transformation_id: transformationId,
-      name: template.measure_en,
-      unit_kind: template.unit_kind,
-      polarity: template.polarity,
-      is_leading: true,
-      owner_user_id: ownerUserId,
-      created_by: ctx.userId,
-      updated_by: ctx.userId,
-    })
-    .returningAll()
-    .executeTakeFirstOrThrow()
-    .catch((e: { code?: string; constraint?: string }) => {
-      if (e.code === "23505" && e.constraint === "kpi_definition_name_key") throw KPI_NAME_TAKEN();
-      throw e;
-    });
-  await record(tx, ctx.audit, {
-    action: "kpi_definition.create",
-    recordType: "kpi_definition",
-    recordId: id,
+  return createKpiDefinitionRow(tx, ctx.audit, {
     organizationId: ctx.organizationId,
     transformationId,
-    newVersion: 1,
-    changes: diffFields({} as KpiDefinitionRow, row, [...KPI_DEFINITION_AUDIT_FIELDS]),
+    actorUserId: ctx.userId,
+    name: template.measure_en,
+    unitKind: template.unit_kind,
+    polarity: template.polarity,
+    isLeading: true,
+    ownerUserId,
   });
-  return row;
 }
 
 async function createLink(tx: Tx, request: FastifyRequest): Promise<AdoptionMetricLinkRow> {
