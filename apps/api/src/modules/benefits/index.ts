@@ -4,6 +4,8 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerBenefitRoutes } from "./routes.ts";
+// T-DG4-KBE-E (ADR-0030 §6): the slice A DownstreamImpactProvider (financeReview pending / not_applicable).
+import { registerBenefitDownstreamProvider } from "./downstream.ts";
 
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG4-BE-A
@@ -11,6 +13,7 @@ import { registerBenefitRoutes } from "./routes.ts";
  */
 export function registerBenefitsModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
   const routes = [...registerBenefitRoutes(app, deps)];
+  registerBenefitDownstreamProvider();
   return Object.freeze({
     module: "benefits",
     status: routes.length > 0 ? "active" : "scaffold",

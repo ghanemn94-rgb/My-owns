@@ -81,7 +81,8 @@ describe("direct-accept route (REQ-S07-012, REQ-S07-013, REQ-S07-017)", () => {
     ]);
     // REQ-S07-017: the response lists the downstream views, whether review is pending and the Finance review state.
     expect(res.body.reviewPending).toBe(false);
-    expect(res.body.financeReview).toBe("unknown");
+    // T-DG4-KBE-E registers slice B's DownstreamImpactProvider (ADR-0030 §6): this KPI feeds no benefit.
+    expect(res.body.financeReview).toBe("not_applicable");
     expect(res.body.downstream.map((d: Body) => d.kind)).toEqual(["kpi_panel", "executive_overview_outcomes"]);
     expect(res.body.downstream[0]).toEqual({ kind: "kpi_panel", id: kpi.id, labelKey: "kpi.downstream.kpi_panel" });
     // Exactly one audit event on the slot and one outbox event for the accepted value.
