@@ -1,0 +1,109 @@
+port-policy: PostgreSQL listening on port 24001 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applying 0028_p4_calendar_jobs_work_items.sql
+mth-db migrate: applying 0029_p4_groups_role_mapping_delegation.sql
+mth-db migrate: applying 0030_p4_decision_rights_raci.sql
+mth-db migrate: applying 0031_p4_approvals_permissions.sql
+mth-db migrate: applying 0032_p4_slice_i_c_reserved.sql
+mth-db migrate: applying 0033_p4_kpi_dictionary_versions.sql
+mth-db migrate: applying 0034_p4_kpi_trajectories_actuals.sql
+mth-db migrate: applying 0035_p4_kpi_calculation_runs_quality.sql
+mth-db migrate: applying 0036_p4_kpi_permissions_backfill.sql
+mth-db migrate: applying 0037_p4_benefit_register.sql
+mth-db migrate: applying 0038_p4_benefit_measurement_validation.sql
+mth-db migrate: applying 0039_p4_benefit_value_views.sql
+mth-db migrate: applying 0040_p4_benefit_permissions.sql
+mth-db migrate: applying 0041_p4_raid_actions_corrective.sql
+mth-db migrate: applying 0042_p4_budget_schedule.sql
+mth-db migrate: applying 0043_p4_raid_permissions.sql
+mth-db migrate: applying 0044_p4_forums_meetings.sql
+mth-db migrate: applying 0045_p4_t16_escalation.sql
+mth-db migrate: applying 0046_p4_governance_permissions.sql
+mth-db migrate: applying 0047_p4_adoption.sql
+mth-db migrate: applying 0048_p4_sustainment.sql
+mth-db migrate: applying 0049_p4_adoption_sustainment_permissions.sql
+mth-db migrate: applying 0050_p4_sustainment_schedules.sql
+mth-db migrate: applying 0051_p4_phases_gates_g5_g6_exceptions.sql
+mth-db migrate: applying 0052_p4_change_control.sql
+mth-db migrate: applying 0053_p4_gates_change_permissions.sql
+mth-db migrate: applying 0054_p4_gate_exception_expiry_schedule.sql
+mth-db migrate: applying 0058_p4_approval_reminder_kinds.sql
+mth-db migrate: applied 55 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 24002 (attempt 1)
+API: http://localhost:24002 (APP_BASE_URL=http://localhost:24002, PORT=24002)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 34 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:70:1 › role mapping: unmapped roles show the routing error; the Lead maps the Sponsor (5.0s)
+  ✓   2 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:97:1 › decision rights and RACI: seeded rows; exact RACI values; a second accountable is refused (6.7s)
+  ✓   3 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:132:1 › the Lead requests a business approval routed by the T11 row (3.5s)
+  ✓   4 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:155:1 › the Sponsor decides from My Work: defer needs a date, then approve with a rationale (6.3s)
+  ✓   5 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:196:1 › a record changed after the request: 409 'the record changed' with a link to its history (3.3s)
+  ✓   6 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:234:1 › delegations: the Sponsor delegates to the Business Owner; the reverse is refused as a loop (8.5s)
+  ✓   7 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:274:1 › the auditor sees the approval records and a read-only RACI (4.0s)
+  ✓   8 [chromium-en] › apps/web/e2e/p4-governance.spec.ts:290:1 › administration: calendar and jobs; governance: groups and Transform readiness (9.4s)
+  ✓   9 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:118:1 › 1. KPIs: the dictionary says what is missing before the KPI can be measured (2.5s)
+  ✓  10 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:136:1 › 1b. reporting periods (transformation office): the update due date is Unknown without a calendar (2.8s)
+  ✓  11 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:149:1 › 2. versions, threshold and trajectory through the UI (business approval of the trajectory) (5.8s)
+  ✓  12 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:199:1 › 3. before any actual the RAG panel is Unknown, grey and labelled, never 0 or green (3.0s)
+  ✓  13 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:213:1 › 4. the KPI owner completes the four-step update with the keyboard only (6.3s)
+  ✓  14 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:263:1 › 5. the reviewer accepts from the review queue; the owner is never offered a decision (3.0s)
+  ✓  15 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:284:1 › 6. the RAG panel: seven elements; the explanation names threshold version 1 (4.1s)
+  ✓  16 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:307:1 › 7. a manual override is displayed beside the calculated RAG (3.5s)
+  ✓  17 [chromium-en] › apps/web/e2e/p4-kpi.spec.ts:330:1 › 8. data quality, auditor read-only, 390 px and 200 % text (11.5s)
+  ✓  18 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:70:1 › role mapping: unmapped roles show the routing error; the Lead maps the Sponsor (4.4s)
+  ✓  19 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:97:1 › decision rights and RACI: seeded rows; exact RACI values; a second accountable is refused (6.1s)
+  ✓  20 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:132:1 › the Lead requests a business approval routed by the T11 row (3.3s)
+  ✓  21 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:155:1 › the Sponsor decides from My Work: defer needs a date, then approve with a rationale (5.2s)
+  ✓  22 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:196:1 › a record changed after the request: 409 'the record changed' with a link to its history (2.5s)
+  ✓  23 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:234:1 › delegations: the Sponsor delegates to the Business Owner; the reverse is refused as a loop (8.1s)
+  ✓  24 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:274:1 › the auditor sees the approval records and a read-only RACI (3.8s)
+  ✓  25 [chromium-ar] › apps/web/e2e/p4-governance.spec.ts:290:1 › administration: calendar and jobs; governance: groups and Transform readiness (8.7s)
+  ✓  26 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:118:1 › 1. KPIs: the dictionary says what is missing before the KPI can be measured (2.6s)
+  ✓  27 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:136:1 › 1b. reporting periods (transformation office): the update due date is Unknown without a calendar (2.7s)
+  ✓  28 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:149:1 › 2. versions, threshold and trajectory through the UI (business approval of the trajectory) (6.2s)
+  ✓  29 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:199:1 › 3. before any actual the RAG panel is Unknown, grey and labelled, never 0 or green (3.2s)
+  ✓  30 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:213:1 › 4. the KPI owner completes the four-step update with the keyboard only (5.7s)
+  ✓  31 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:263:1 › 5. the reviewer accepts from the review queue; the owner is never offered a decision (2.5s)
+  ✓  32 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:284:1 › 6. the RAG panel: seven elements; the explanation names threshold version 1 (3.3s)
+  ✓  33 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:307:1 › 7. a manual override is displayed beside the calculated RAG (3.3s)
+  ✓  34 [chromium-ar] › apps/web/e2e/p4-kpi.spec.ts:330:1 › 8. data quality, auditor read-only, 390 px and 200 % text (10.2s)
+
+  34 passed (2.9m)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m

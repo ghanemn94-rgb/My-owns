@@ -15,6 +15,11 @@ import { TransformReadinessPage } from "../pages/decision-rights/TransformReadin
 import { DelegationsPage } from "../pages/delegations/DelegationsPage.tsx";
 import { GroupDetailPage, GroupsPage } from "../pages/groups/GroupsPage.tsx";
 import { RoleMappingsPage } from "../pages/groups/RoleMappingsPage.tsx";
+import { DataQualityPage } from "../pages/kpi/DataQualityPage.tsx";
+import { KpiActualPage, KpiReviewPage } from "../pages/kpi/KpiActualPage.tsx";
+import { KpiPage } from "../pages/kpi/KpiPage.tsx";
+import { KpisPage } from "../pages/kpi/KpisPage.tsx";
+import { KpiUpdatePage } from "../pages/kpi/KpiUpdatePage.tsx";
 import { MyWorkPage } from "../pages/my-work/MyWorkPage.tsx";
 import { RaciPage } from "../pages/raci/RaciPage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
@@ -65,13 +70,7 @@ const entryRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.workspaceTab).map((
  * `/transformations/:id/benefit-overlaps/:overlapId` (KBE-D2).
  */
 export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
-  // FE-B (slice A: KPI engine)
-  { path: "transformations/:id/kpis", feature: "kpis", owner: "FE-B" },
-  { path: "transformations/:id/kpis/:kpiId", feature: "kpi", owner: "FE-B" },
-  { path: "transformations/:id/kpis/:kpiId/actuals", feature: "kpiActuals", owner: "FE-B" },
-  { path: "transformations/:id/kpis/:kpiId/actuals/:actualId", feature: "kpiActuals", owner: "FE-B" },
-  { path: "transformations/:id/kpi-review", feature: "kpiReview", owner: "FE-B" },
-  { path: "transformations/:id/data-quality", feature: "dataQuality", owner: "FE-B" },
+  // FE-B (slice A: KPI engine): built by T-DG4-FE-B, see the KPI routes below.
   // FE-C (slice B: benefits and Finance validation)
   { path: "transformations/:id/benefits", feature: "benefits", owner: "FE-C" },
   { path: "transformations/:id/benefits/:benefitId", feature: "benefit", owner: "FE-C" },
@@ -129,6 +128,13 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/raci", element: <RaciPage /> },
       { path: "transformations/:id/transform-readiness", element: <TransformReadinessPage /> },
       { path: "transformations/:id/approval-decisions", element: <ApprovalRecordsPage /> },
+      // P4 slice A: the KPI engine screens (T-DG4-FE-B; p4-work-split §A.5). The actual's path is KBE-C's work-item link.
+      { path: "transformations/:id/kpis", element: <KpisPage /> },
+      { path: "transformations/:id/kpis/:kpiId", element: <KpiPage /> },
+      { path: "transformations/:id/kpis/:kpiId/actuals", element: <KpiUpdatePage /> },
+      { path: "transformations/:id/kpis/:kpiId/actuals/:actualId", element: <KpiActualPage /> },
+      { path: "transformations/:id/kpi-review", element: <KpiReviewPage /> },
+      { path: "transformations/:id/data-quality", element: <DataQualityPage /> },
       { path: "transformations", element: <TransformationListPage /> },
       { path: "transformations/new", element: <TransformationCreatePage /> },
       { path: "transformations/:id", element: <TransformationDetailPage /> },
