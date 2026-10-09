@@ -66,3 +66,6 @@ export * from "./corrective.ts";
 // P4 slice E mirrors of BE-E (backend-workflow-engineer, T-DG4-BE-E; p4-work-split §E.3): budget lines, the execution
 // view with the working-day slip, initiative durations and the schedule network with the critical path.
 export * from "./execution.ts";
+// P4 slice F mirrors of BE-H (backend-workflow-engineer, T-DG4-BE-H; p4-work-split §F+G FG.1): the T13 Stakeholder &
+// Adoption Plan, champions, adoption interventions, impacted-team involvement and champion constraints.
+export * from "./adoption-register.ts";
