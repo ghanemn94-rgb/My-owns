@@ -108,12 +108,101 @@ export interface InheritedApprovalFact {
   readonly createdAt: string;
 }
 
+// ------------------------------------------------------------------------------------------------ P4 G5/G6 facts
+// T-DG4-BE-K (ADR-0035 §2): the five read-only members the G5/G6 evaluators (g5.ts, g6.ts) read through. Each owning
+// module implements its loader in its own gate-facts.ts and server.ts wires it (the G4 pattern; workflows imports none
+// of those modules). Absent fields = not loaded (fail closed: every criterion that needs them is incomplete).
+
+/** One RAID risk with High impact (ADR-0035 §2 "High-impact" = raid_entry.impact = 'high'), with its dispositions. */
+export interface RaidHighRiskFact {
+  readonly id: string;
+  readonly code: string;
+  readonly status: string;
+  readonly dispositions: ReadonlyArray<{
+    readonly id: string;
+    readonly disposition: string;
+    readonly approvalId: string | null;
+    /** The canonical approval's status (type risk_disposition); only `approved` counts. */
+    readonly approvalStatus: string | null;
+  }>;
+}
+export interface RaidGateFacts {
+  readonly transformationId: string;
+  readonly highRisks?: readonly RaidHighRiskFact[];
+}
+
+/** One active adoption metric link (ADR-0033 §3) with its current value status (read-time staleness applied). */
+export interface AdoptionIndicatorFact {
+  readonly metricLinkId: string;
+  readonly templateKey: string;
+  readonly kpiDefinitionId: string | null;
+  /** ok | unknown | stale | not_computable (KPI statuses) or the record-fed measure's status. */
+  readonly valueStatus: string;
+  readonly valueReason: string | null;
+}
+export interface AdoptionGateFacts {
+  readonly transformationId: string;
+  readonly indicators?: readonly AdoptionIndicatorFact[];
+}
+
+/** One row of the T16 executive decision log (the executive_decision_log view; ADR-0032). */
+export interface T16DecisionFact {
+  readonly id: string;
+  readonly t16Id: string | null;
+  readonly status: string;
+  /** YYYY-MM-DD or null (Unknown: "date missing", never overdue and never on time). */
+  readonly decisionDate: string | null;
+}
+export interface GovernanceGateFacts {
+  readonly transformationId: string;
+  readonly decisions?: readonly T16DecisionFact[];
+  /** Today's business date in the organization's timezone. */
+  readonly businessDate?: string;
+}
+
+/** One non-retired performance area with the facts G6 reads in its CURRENT cycle (ADR-0034). */
+export interface PerformanceAreaFact {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly cycleNo: number;
+  /** The accepted handover of the current cycle, or null. */
+  readonly acceptedHandoverId: string | null;
+  readonly activeControlIds: readonly string[];
+}
+export interface SustainmentGateFacts {
+  readonly transformationId: string;
+  readonly performanceAreas?: readonly PerformanceAreaFact[];
+  /** improvement_item ids whose origin transformation is this one. */
+  readonly improvementItemIds?: readonly string[];
+}
+
+/** One active benefit with its Finance-validated measurements and approved transition decisions. */
+export interface BenefitEvidenceFact {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly validatedMeasurementIds: readonly string[];
+  readonly approvedTransitionDecisionIds: readonly string[];
+}
+export interface BenefitsGateFacts {
+  readonly transformationId: string;
+  readonly benefits?: readonly BenefitEvidenceFact[];
+}
+
 /** The P3 fact loaders the G4 evaluators (and the gate annotation) read through (wired by server.ts). */
 export interface GateFactsProvider {
   readonly portfolio: (db: DbOrTx, transformationId: string) => Promise<PortfolioGateFacts>;
   readonly kpi: (db: DbOrTx, transformationId: string) => Promise<KpiP3GateFacts>;
   /** Every inherited-approval dispensation of the transformation (portfolio; ADR-0021 §5, F-DG3-120). */
   readonly inheritedApprovals: (db: DbOrTx, transformationId: string) => Promise<readonly InheritedApprovalFact[]>;
+  // P4 (T-DG4-BE-K; ADR-0035 §2): the G5/G6 members, implemented in raid/, adoption/, governance/, sustainment/ and
+  // benefits/ gate-facts.ts. Optional so that an older wiring (tests) stays valid; absent = not loaded = fail closed.
+  readonly raid?: (db: DbOrTx, transformationId: string) => Promise<RaidGateFacts>;
+  readonly adoption?: (db: DbOrTx, transformationId: string) => Promise<AdoptionGateFacts>;
+  readonly governance?: (db: DbOrTx, transformationId: string) => Promise<GovernanceGateFacts>;
+  readonly sustainment?: (db: DbOrTx, transformationId: string) => Promise<SustainmentGateFacts>;
+  readonly benefits?: (db: DbOrTx, transformationId: string) => Promise<BenefitsGateFacts>;
 }
 
 /**

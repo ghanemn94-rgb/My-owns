@@ -31,7 +31,9 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows).toEqual([{ tgname: "gate_decision_g1_agreements", deferrable: true, deferred: true }]);
   });
 
-  it("0026: product gate G4 is submittable; G5 and G6 stay closed (ADR-0021 §7)", async () => {
+  // T-DG4-BE-K (ADR-0035 §2 "Enabling"): 0059 opens G5 and G6 once their evaluators exist, so after every migration all
+  // six product gates are submittable. 0026 itself still asserted G5/G6 closed when it ran (its own guard, in P3).
+  it("0026 + 0059: product gate G4 is submittable (0026); G5 and G6 open with their evaluators (0059, ADR-0035 §2)", async () => {
     const rows = await q<{ code: string; submission_enabled: boolean }>(
       `SELECT code, submission_enabled FROM gate_definition ORDER BY ordinal`,
     );
@@ -40,8 +42,8 @@ describe("schema.ts matches the migrated database", () => {
       ["G2", true],
       ["G3", true],
       ["G4", true],
-      ["G5", false],
-      ["G6", false],
+      ["G5", true],
+      ["G6", true],
     ]);
   });
 
