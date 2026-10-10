@@ -10,7 +10,8 @@
 //    write; one hop of delegation decides for the approver;
 //  - after expiry (business date after expires_on, clock injected) the exception no longer covers: the live view and
 //    the submission report the criterion missing again; approving a submission whose recorded exception expired ->
-//    422 gate.exception_expired (requesting changes stays allowed);
+//    422 gate.exception_expired (requesting changes stays allowed); T-DG4-BE-R2 (ADR-0035 amendment A1): one whose
+//    recorded exception was revoked -> 422 gate.exception_revoked, checked first (rejecting stays allowed);
 //  - revoke (reason required, only accepted), withdraw (requester only, only pending), If-Match 428/409 on every
 //    action, one audit event per mutation.
 // All data is SYNTHETIC; every exception decision is a demo in-product decision by a test person that approves nothing
@@ -358,6 +359,96 @@ describe("expiry (REQ-S04-013; clock injected)", () => {
       },
     });
     expect(changes.status, JSON.stringify(changes.body)).toBe(201);
+  });
+
+  // T-DG4-BE-R2 (ADR-0035 amendment A1): a revoked exception blocks approval, beside the expired one above.
+  const labelOf = async (key: string) =>
+    (
+      await api.db
+        .selectFrom("gate_criterion_definition")
+        .select("label_en")
+        .where("key", "=", key)
+        .executeTakeFirstOrThrow()
+    ).label_en;
+  const g1Decision = (g: GateWorld, submissionNo: number, outcome: string) =>
+    send("POST", `${g.gates}/G1/decision`, {
+      session: g.sp.session,
+      body: {
+        submissionNo,
+        outcome,
+        rationale: "Synthetic demo decision; approves nothing real.",
+        ...(outcome === "approved" ? { agreements: { problem: true, baseline: true, materialValuePools: true } } : {}),
+      },
+    });
+  const gateDecisionsOf = async (g: GateWorld) =>
+    (
+      await api.db
+        .selectFrom("gate_decision")
+        .select("id")
+        .where("transformation_id", "=", g.b.transformationId)
+        .execute()
+    ).length;
+
+  it("approving a submission whose recorded exception was revoked -> 422 gate.exception_revoked (exact text); nothing written; reject allowed", async () => {
+    const g = await seedGateWorld(api, w);
+    const today = await todayOf(api, g);
+    const covered = await coverGate(send, g, "G1", plusDays(today, 30));
+    const sub = await submitThroughApi(api, send, g, "G1");
+    expect(sub.status, JSON.stringify(sub.body)).toBe(201);
+    const snapshotBefore = await api.db
+      .selectFrom("gate_submission")
+      .selectAll()
+      .where("id", "=", (sub.body as Body).id)
+      .executeTakeFirstOrThrow();
+    const revoked = await send("POST", `${EXC(g)}/${covered[0]!.id}/revoke`, {
+      session: g.sp.session,
+      headers: ifm(2),
+      body: { reason: "Synthetic: the compensating action was not taken" },
+    });
+    expect([revoked.status, (revoked.body as Body).status]).toEqual([200, "revoked"]);
+    const approve = await g1Decision(g, (sub.body as Body).submissionNo, "approved");
+    expect([approve.status, (approve.body as Body).code, (approve.body as Body).detail]).toEqual([
+      422,
+      "gate.exception_revoked",
+      `The exception for ${await labelOf(covered[0]!.key)} was revoked on ${today}; it no longer covers the missing evidence.`,
+    ]);
+    expect(await gateDecisionsOf(g)).toBe(0);
+    // The frozen submission and its snapshot are never changed.
+    expect(
+      await api.db
+        .selectFrom("gate_submission")
+        .selectAll()
+        .where("id", "=", (sub.body as Body).id)
+        .executeTakeFirstOrThrow(),
+    ).toEqual(snapshotBefore);
+    const reject = await g1Decision(g, (sub.body as Body).submissionNo, "rejected");
+    expect(reject.status, JSON.stringify(reject.body)).toBe(201);
+    expect(await gateDecisionsOf(g)).toBe(1);
+  });
+
+  it("revoked AND expired reports the revoke; an unrevoked, unexpired exception still lets the approver approve", async () => {
+    const g = await seedGateWorld(api, w);
+    const today = await todayOf(api, g);
+    const covered = await coverGate(send, g, "G1", today);
+    const sub = await submitThroughApi(api, send, g, "G1");
+    expect(sub.status).toBe(201);
+    const revoked = await send("POST", `${EXC(g)}/${covered[0]!.id}/revoke`, {
+      session: g.sp.session,
+      headers: ifm(2),
+      body: { reason: "Synthetic revoke" },
+    });
+    expect(revoked.status).toBe(200);
+    later(2);
+    const both = await g1Decision(g, (sub.body as Body).submissionNo, "approved");
+    expect([both.status, (both.body as Body).code]).toEqual([422, "gate.exception_revoked"]);
+    setGateExceptionClock(null);
+
+    const g2 = await seedGateWorld(api, w);
+    await coverGate(send, g2, "G1", plusDays(await todayOf(api, g2), 30));
+    const sub2 = await submitThroughApi(api, send, g2, "G1");
+    expect(sub2.status).toBe(201);
+    const ok = await g1Decision(g2, (sub2.body as Body).submissionNo, "approved");
+    expect([ok.status, (ok.body as Body).outcome], JSON.stringify(ok.body)).toEqual([201, "approved"]);
   });
 
   it("the injected clock also moves the create check: an expiry before the injected business date -> 422", async () => {

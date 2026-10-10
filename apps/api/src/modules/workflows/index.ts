@@ -77,12 +77,19 @@ export function registerWorkflowsModule(
 }
 // P4 slice C (T-DG4-BE-B's approval service, exported for its consumers; appended by T-DG4-BE-C, see its handback):
 // governance registers the governance_matrix_change subject and the T11 router, and requests matrix approvals.
+// T-DG4-BE-R2 (ADR-0026 amendment A2-A4): the in-transaction resubmit and withdraw, for the subject modules whose own
+// submit resubmits and whose own withdraw withdraws (governance matrices, transition decisions, change requests).
 export {
   registerApprovalSubject,
   requestApprovalInTx,
+  resubmitApprovalInTx,
   setDecisionRightRouter,
   toApprovals,
+  withdrawApprovalInTx,
+  type ApprovalInTxServices,
   type ApprovalOutcomeEvent,
+  type ApprovalResubmitInput,
+  type ApprovalWithdrawInput,
   type DecisionRightRequest,
   type DecisionRightRouter,
   type DecisionRightRouting,

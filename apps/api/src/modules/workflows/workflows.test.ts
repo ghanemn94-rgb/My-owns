@@ -49,8 +49,11 @@ describe("workflows module (P2)", () => {
       "registerApprovalSubject",
       "registerWorkflowsModule",
       "requestApprovalInTx",
+      // T-DG4-BE-R2 (ADR-0026 amendment A2, A3): in-transaction resubmit and withdraw for the subject modules.
+      "resubmitApprovalInTx",
       "setDecisionRightRouter",
       "toApprovals",
+      "withdrawApprovalInTx",
     ]);
   });
 

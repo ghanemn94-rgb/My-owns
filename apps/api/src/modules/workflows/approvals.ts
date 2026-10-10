@@ -7,7 +7,9 @@
 //   GET  /approvals/{id}                               one approval with its decisions and escalations
 //   POST /approvals/{id}/decisions                     approve | reject | request_changes | defer (approval.decide and
 //                                                      assigned; If-Match). The checks run in ADR-0026 §4's order
-//   POST /approvals/{id}/resubmit                      after request changes: a newer subject version (the requester)
+//   POST /approvals/{id}/resubmit                      after request changes: a newer subject version (the requester);
+//                                                      422 approval.resubmit_through_record for a type whose record's
+//                                                      own submit resubmits (ADR-0026 amendment A4)
 //   POST /approvals/{id}/withdraw                      the requester, with a reason. Final
 //   GET  /transformations/{id}/approval-decisions      read-only union of business-approval decisions (D-089 Q10)
 //
@@ -20,6 +22,9 @@
 // registers its subject provider with `registerApprovalSubject`, and requests through `requestApprovalInTx` (with the
 // routing from `routeByDecisionRight` where T11 applies). It never writes approval, approval_decision or
 // approval_escalation itself. `onOutcome` runs in the deciding transaction (e.g. the governance matrix becomes approved).
+// A module whose record is resubmitted or withdrawn through its own action (governance matrices, transition decisions,
+// change requests; ADR-0026 amendment A2-A4) sets `resubmitThroughSubject` and calls `resubmitApprovalInTx` /
+// `withdrawApprovalInTx` in its own transaction; those two never call onOutcome.
 import {
   sql,
   type ApprovalDecisionRow,
@@ -32,6 +37,7 @@ import {
   approvalDecisionCreate,
   approvalRequestCreate,
   approvalResubmit,
+  BLANK_TEXT_CODE,
   hasText,
   reasonRequest,
   uuid,
@@ -177,6 +183,9 @@ export const approvalRefusals = {
       "Configure the organization's default business calendar before deferring this approval.",
       "/deferUntil",
     ),
+  // ADR-0026 amendment A4 (2026-10-09): the approval types whose provider sets `resubmitThroughSubject`.
+  resubmitThroughRecord: () =>
+    problems.businessRule("approval.resubmit_through_record", "Resubmit this request by submitting its record again."),
 } as const;
 
 // ------------------------------------------------------------------------------------------------ subject registry
@@ -203,6 +212,23 @@ export interface ApprovalSubjectProvider {
   readonly currentVersion?: (db: DbOrTx, subjectId: string, transformationId: string) => Promise<number | null>;
   /** Applies the outcome to the subject in the same transaction (e.g. the matrix becomes approved / draft). */
   readonly onOutcome?: (tx: Tx, event: ApprovalOutcomeEvent) => Promise<void>;
+  /**
+   * ADR-0026 amendment A4: the subject's own module resubmits (its submit calls `resubmitApprovalInTx`), so
+   * `POST /approvals/{id}/resubmit` refuses this type with 422 approval.resubmit_through_record and writes nothing.
+   */
+  readonly resubmitThroughSubject?: boolean;
+  /**
+   * Called once at registration with the in-transaction services, for a module that reaches this service through a
+   * port and may not import workflows (sustainment, ADR-0002): its registration line already passes
+   * `registerApprovalSubject`, so the composition root needs no further wiring.
+   */
+  readonly bindServices?: (services: ApprovalInTxServices) => void;
+}
+
+/** The in-transaction resubmit and withdraw (ADR-0026 amendment A2, A3), as handed to `bindServices`. */
+export interface ApprovalInTxServices {
+  readonly resubmit: (tx: Tx, audit: AuditContext, input: ApprovalResubmitInput) => Promise<ApprovalRow>;
+  readonly withdraw: (tx: Tx, audit: AuditContext, input: ApprovalWithdrawInput) => Promise<ApprovalRow>;
 }
 
 const SUBJECTS = new Map<string, ApprovalSubjectProvider>();
@@ -210,6 +236,7 @@ const SUBJECTS = new Map<string, ApprovalSubjectProvider>();
 /** Registers (or replaces, so a second server instance in one process is harmless) a subject provider. */
 export function registerApprovalSubject(approvalType: string, provider: ApprovalSubjectProvider): void {
   SUBJECTS.set(approvalType, provider);
+  provider.bindServices?.({ resubmit: resubmitApprovalInTx, withdraw: withdrawApprovalInTx });
 }
 
 /** The subject's current version, read FOR SHARE (a concurrent subject update waits); null when it does not exist. */
@@ -847,48 +874,68 @@ async function decideApproval(tx: Tx, request: FastifyRequest, approvalId: strin
 
 // ------------------------------------------------------------------------------------------------ resubmit / withdraw
 
-/** Requester-only actions: read gate (404), commit-time reload, then 403 approval.not_requester for anyone else. */
-async function openAsRequester(tx: Tx, request: FastifyRequest, approvalId: string) {
-  const seen = await findApproval(tx, approvalId);
-  if (!seen) throw problems.notFound();
-  await requireTransformationRead(tx, principalOf(request), seen.transformation_id);
-  const fresh = await refreshPrincipal(tx, request);
-  const a = (await findApproval(tx, approvalId, true))!;
-  const target = await targetOfApproval(tx, a);
-  try {
-    await requireTransformationRead(tx, fresh, a.transformation_id);
-  } catch (err) {
-    throw commitTimeDenial(err);
-  }
-  if (fresh.userId !== a.requested_by)
-    throw approvalRefusals.notRequester().withDenial(denialOf("approval.request", target));
-  return { a, target, me: fresh.userId, fresh };
+export interface ApprovalResubmitInput {
+  readonly approvalId: string;
+  /** The subject's version the new round is for (it must be newer than the approval's and current). */
+  readonly subjectVersion: number;
+  readonly requestNote?: string | null;
+  /** The approval's version the caller saw (the route's If-Match); omitted by a subject module's own submit. */
+  readonly expectedApprovalVersion?: number;
 }
 
-async function resubmitApproval(tx: Tx, request: FastifyRequest, approvalId: string): Promise<ApprovalRow> {
-  const body = parseBody(approvalResubmit, request.body);
-  const { a, target, me, fresh } = await openAsRequester(tx, request, approvalId);
-  try {
-    await requireAction(tx, fresh, "approval.request", target);
-  } catch (err) {
-    throw commitTimeDenial(err);
-  }
-  const expected = requireIfMatch(request);
-  if (a.version !== expected) throw problems.versionConflict(a.version);
+export interface ApprovalWithdrawInput {
+  readonly approvalId: string;
+  readonly reason: string;
+  readonly expectedApprovalVersion?: number;
+}
+
+/** ADR-0026 amendment A2/A3 checks 1-3: the approval FOR UPDATE (404), the requester (403), its version (409). */
+async function lockAsRequester(
+  tx: Tx,
+  audit: AuditContext,
+  approvalId: string,
+  expectedApprovalVersion: number | undefined,
+): Promise<{ a: ApprovalRow; target: ResolvedTarget & { transformationId: string }; me: string }> {
+  const me = audit.actorUserId;
+  if (me === null) throw new Error("approvals: a person resubmits or withdraws an approval");
+  const a = await findApproval(tx, approvalId, true);
+  if (!a) throw problems.notFound();
+  const target = await targetOfApproval(tx, a);
+  if (me !== a.requested_by) throw approvalRefusals.notRequester().withDenial(denialOf("approval.request", target));
+  if (expectedApprovalVersion !== undefined && a.version !== expectedApprovalVersion)
+    throw problems.versionConflict(a.version);
+  return { a, target, me };
+}
+
+/**
+ * Resubmits an approval with changes requested, in the caller's transaction (ADR-0026 amendment A2). Checks, in order,
+ * with nothing written on a refusal: 404; 403 approval.not_requester (`audit.actorUserId` is not the requester); 409
+ * version conflict (`expectedApprovalVersion`, when given); 422 invalid_transition (not changes_requested); 422
+ * approval.resubmit_needs_new_version; 409 approval.stale_version (the subject is not at `subjectVersion`, read under
+ * the approvalSubject lock). Effects: pending, round + 1, the new subject version, the note when given, version + 1, the audit
+ * event approval.resubmit, the requester's changes-requested items closed done, one approval_decision task per
+ * approver. It does NOT call the subject provider's onOutcome: the caller is the subject's module (or the route, which
+ * emits `resubmitted` itself). The caller has authorised its own action; this checks only the above.
+ */
+export async function resubmitApprovalInTx(
+  tx: Tx,
+  audit: AuditContext,
+  input: ApprovalResubmitInput,
+): Promise<ApprovalRow> {
+  const { a, target, me } = await lockAsRequester(tx, audit, input.approvalId, input.expectedApprovalVersion);
   if (a.status !== "changes_requested") throw approvalRefusals.notResubmittable(a.status);
-  if (!(body.subjectVersion > a.subject_version)) throw approvalRefusals.resubmitNeedsNewVersion();
+  if (!(input.subjectVersion > a.subject_version)) throw approvalRefusals.resubmitNeedsNewVersion();
   await lockSubject(tx, a.subject_id);
   const current = await subjectVersionOf(tx, a.approval_type, a.subject_id, a.transformation_id);
   if (current === null) throw approvalRefusals.subjectUnknown();
-  if (current !== body.subjectVersion) throw approvalRefusals.stale(body.subjectVersion, current);
-  const audit = auditContextOf(request);
+  if (current !== input.subjectVersion) throw approvalRefusals.stale(input.subjectVersion, current);
   const updated = await tx
     .updateTable("approval")
     .set({
       status: "pending",
       round_no: a.round_no + 1,
-      subject_version: body.subjectVersion,
-      ...(body.requestNote !== undefined ? { request_note: body.requestNote } : {}),
+      subject_version: input.subjectVersion,
+      ...(input.requestNote !== undefined ? { request_note: input.requestNote } : {}),
       version: sql<number>`version + 1`,
       updated_at: sql<Date>`now()`,
       updated_by: me,
@@ -923,17 +970,26 @@ async function resubmitApproval(tx: Tx, request: FastifyRequest, approvalId: str
     "done",
   );
   await createApproverTasks(tx, audit, updated, await assigneeApprovers(tx, updated, target));
-  await emitOutcome(tx, { approval: updated, outcome: "resubmitted", actorUserId: me, audit });
   return updated;
 }
 
-async function withdrawApproval(tx: Tx, request: FastifyRequest, approvalId: string): Promise<ApprovalRow> {
-  const body = parseBody(reasonRequest, request.body);
-  const { a, me } = await openAsRequester(tx, request, approvalId);
-  const expected = requireIfMatch(request);
-  if (a.version !== expected) throw problems.versionConflict(a.version);
+/**
+ * Withdraws an open approval, in the caller's transaction (ADR-0026 amendment A3). `reason` must have text (400
+ * validation.blank at /reason). Then 404; 403 approval.not_requester; 409 version conflict (when
+ * `expectedApprovalVersion` is given); 422 approval.not_open (not pending, deferred or changes_requested). Effects:
+ * withdrawn (final), version + 1, the audit event approval.withdraw with the reason, every open work item of the
+ * approval cancelled. It does NOT call onOutcome; the subject's module then steps its own row in the same transaction
+ * (a withdrawn approval is final, so that later update cannot make it stale).
+ */
+export async function withdrawApprovalInTx(
+  tx: Tx,
+  audit: AuditContext,
+  input: ApprovalWithdrawInput,
+): Promise<ApprovalRow> {
+  if (!hasText(input.reason))
+    throw problems.validation([{ pointer: "/reason", code: BLANK_TEXT_CODE, message: BLANK_TEXT_CODE }]);
+  const { a, me } = await lockAsRequester(tx, audit, input.approvalId, input.expectedApprovalVersion);
   if (!(OPEN_STATUSES as readonly string[]).includes(a.status)) throw approvalRefusals.notOpen(a.status);
-  const audit = auditContextOf(request);
   const updated = await tx
     .updateTable("approval")
     .set({ status: "withdrawn", version: sql<number>`version + 1`, updated_at: sql<Date>`now()`, updated_by: me })
@@ -949,7 +1005,7 @@ async function withdrawApproval(tx: Tx, request: FastifyRequest, approvalId: str
     transformationId: a.transformation_id,
     priorVersion: a.version,
     newVersion: updated.version,
-    reason: body.reason,
+    reason: input.reason,
     changes: { status: { from: a.status, to: "withdrawn" } },
   });
   await closeWorkItemsOfSubject(
@@ -958,6 +1014,61 @@ async function withdrawApproval(tx: Tx, request: FastifyRequest, approvalId: str
     { organizationId: a.organization_id, subjectType: "approval", subjectId: a.id },
     "cancelled",
   );
+  return updated;
+}
+
+/** Requester-only route actions: read gate (404), commit-time reload, then 403 approval.not_requester for anyone else. */
+async function openAsRequester(tx: Tx, request: FastifyRequest, approvalId: string) {
+  const seen = await findApproval(tx, approvalId);
+  if (!seen) throw problems.notFound();
+  await requireTransformationRead(tx, principalOf(request), seen.transformation_id);
+  const fresh = await refreshPrincipal(tx, request);
+  const a = (await findApproval(tx, approvalId, true))!;
+  const target = await targetOfApproval(tx, a);
+  try {
+    await requireTransformationRead(tx, fresh, a.transformation_id);
+  } catch (err) {
+    throw commitTimeDenial(err);
+  }
+  if (fresh.userId !== a.requested_by)
+    throw approvalRefusals.notRequester().withDenial(denialOf("approval.request", target));
+  return { a, target, me: fresh.userId, fresh };
+}
+
+/** POST /approvals/{id}/resubmit: the route's gates, then resubmitApprovalInTx and the `resubmitted` outcome. */
+async function resubmitApproval(tx: Tx, request: FastifyRequest, approvalId: string): Promise<ApprovalRow> {
+  const body = parseBody(approvalResubmit, request.body);
+  const { a, target, me, fresh } = await openAsRequester(tx, request, approvalId);
+  try {
+    await requireAction(tx, fresh, "approval.request", target);
+  } catch (err) {
+    throw commitTimeDenial(err);
+  }
+  // ADR-0026 amendment A4: a type resubmitted through its record's own submit (nothing written).
+  if (SUBJECTS.get(a.approval_type)?.resubmitThroughSubject === true) throw approvalRefusals.resubmitThroughRecord();
+  const expected = requireIfMatch(request);
+  const audit = auditContextOf(request);
+  const updated = await resubmitApprovalInTx(tx, audit, {
+    approvalId,
+    subjectVersion: body.subjectVersion,
+    ...(body.requestNote !== undefined ? { requestNote: body.requestNote } : {}),
+    expectedApprovalVersion: expected,
+  });
+  await emitOutcome(tx, { approval: updated, outcome: "resubmitted", actorUserId: me, audit });
+  return updated;
+}
+
+/** POST /approvals/{id}/withdraw: the route's gates, then withdrawApprovalInTx and the `withdrawn` outcome. */
+async function withdrawApproval(tx: Tx, request: FastifyRequest, approvalId: string): Promise<ApprovalRow> {
+  const body = parseBody(reasonRequest, request.body);
+  const { me } = await openAsRequester(tx, request, approvalId);
+  const expected = requireIfMatch(request);
+  const audit = auditContextOf(request);
+  const updated = await withdrawApprovalInTx(tx, audit, {
+    approvalId,
+    reason: body.reason,
+    expectedApprovalVersion: expected,
+  });
   await emitOutcome(tx, { approval: updated, outcome: "withdrawn", actorUserId: me, audit });
   return updated;
 }

@@ -92,4 +92,52 @@ describe("D-107: submitTransitionDecision through the real server's wiring", () 
     expect(approvals).toEqual([{ approval_type: "benefit_transition_decision", status: "pending", subject_id: td.id }]);
     expect(wiring.calls).toBe(1);
   });
+
+  // T-DG4-BE-R2 (ADR-0026 amendment A4): the in-transaction resubmit and withdraw reach sustainment through the subject
+  // registration (`bindServices`) of the same server.ts line, so nothing more is wired. Unbound, both fail closed
+  // with 500 (transition-decisions.ts), so the 2xx answers below are only possible through the real server's wiring.
+  it("round 2 resubmits through the decision's submit, and a withdrawal withdraws the open approval", async () => {
+    const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call(api.app, m, u, o);
+    const decideAs = async (approvalId: string, outcome: string) => {
+      const a = await api.db.selectFrom("approval").selectAll().where("id", "=", approvalId).executeTakeFirstOrThrow();
+      return call(api.app, "POST", `/api/v1/approvals/${approvalId}/decisions`, {
+        session: c.sp.session,
+        headers: ifm(a.version),
+        body: { outcome, rationale: "Synthetic decision on synthetic data", subjectVersion: a.subject_version },
+      });
+    };
+    const submitted = async () => {
+      const ben = await pendingBenefit(api, c, await launchedInitiative(api.db, c.b));
+      const td = await draftDecision(send, c, ben.id);
+      const sub = await send("POST", `${c.transitions}/${td.id}/submit`, { session: c.b.s.bo, headers: ifm(1) });
+      expect(sub.status, JSON.stringify(sub.body)).toBe(200);
+      return { id: td.id, approvalId: (sub.body as { approvalId: string }).approvalId };
+    };
+    const r = await submitted();
+    expect((await decideAs(r.approvalId, "request_changes")).status).toBe(200);
+    const edited = await send("PATCH", `${c.transitions}/${r.id}`, {
+      session: c.b.s.bo,
+      headers: ifm(1),
+      body: { rationale: "Synthetic: revised as requested" },
+    });
+    expect(edited.status, JSON.stringify(edited.body)).toBe(200);
+    const re = await send("POST", `${c.transitions}/${r.id}/submit`, { session: c.b.s.bo, headers: ifm(2) });
+    expect([re.status, re.body.status], JSON.stringify(re.body)).toEqual([200, "submitted"]);
+    const round2 = await api.db
+      .selectFrom("approval")
+      .select(["id", "status", "round_no", "subject_version"])
+      .where("subject_id", "=", r.id)
+      .execute();
+    expect(round2).toEqual([{ id: r.approvalId, status: "pending", round_no: 2, subject_version: 2 }]);
+    const wdTarget = await submitted();
+    const wd = await send("PATCH", `${c.transitions}/${wdTarget.id}`, {
+      session: c.b.s.bo,
+      headers: ifm(1),
+      body: { status: "withdrawn" },
+    });
+    expect([wd.status, wd.body.status], JSON.stringify(wd.body)).toEqual([200, "withdrawn"]);
+    const a = await api.db.selectFrom("approval").select("status").where("id", "=", wdTarget.approvalId).execute();
+    expect(a).toEqual([{ status: "withdrawn" }]);
+    expect(wiring.calls).toBe(1);
+  });
 });

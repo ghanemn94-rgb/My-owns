@@ -551,17 +551,12 @@ describe("REQ-S07-015: a KPI target change (preview, refusal, approval, the old 
     expect([ownSub.status, ownSub.body.routePartyCode]).toEqual([200, "BO"]);
     const sod = await decide(send, ownSub.body.approvalId, c.bo.session);
     expect([sod.status, sod.body.code]).toEqual([403, "approval.sod_requester"]);
-    // Withdrawing a request in approval goes through its approval; the request follows in the same transaction.
+    // Withdrawing a request in approval (T-DG4-BE-R2, ADR-0026 amendment A4): the request's own withdraw withdraws
+    // its approval first and then the request, in one transaction (change_request.withdraw_via_approval is retired).
     const viaCr = await send("POST", `${CR()}/${own.body.id}/withdraw`, { session: c.bo.session, headers: ifm(2) });
-    expect([viaCr.status, viaCr.body.code]).toEqual([422, "change_request.withdraw_via_approval"]);
+    expect([viaCr.status, viaCr.body.status], JSON.stringify(viaCr.body)).toEqual([200, "withdrawn"]);
     const appr = await send("GET", `/api/v1/approvals/${ownSub.body.approvalId}`, { session: c.bo.session });
-    const wd = await send("POST", `/api/v1/approvals/${ownSub.body.approvalId}/withdraw`, {
-      session: c.bo.session,
-      headers: ifm(appr.body.version),
-      body: { reason: "Synthetic: raised by the wrong person" },
-    });
-    expect(wd.status, JSON.stringify(wd.body)).toBe(200);
-    expect((await send("GET", `${CR()}/${own.body.id}`, { session: c.bo.session })).body.status).toBe("withdrawn");
+    expect(appr.body.status).toBe("withdrawn");
 
     const created = await send("POST", CR(), { session: c.lead.session, body });
     expect(created.status, JSON.stringify(created.body)).toBe(201);
