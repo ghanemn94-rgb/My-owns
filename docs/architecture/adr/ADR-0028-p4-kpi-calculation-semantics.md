@@ -157,3 +157,11 @@ The roll-up of an entry scope narrower than the transformation (business units o
 | `kpi.no_approved_trajectory` | reason key | accepted | Unknown: the KPI has no approved target trajectory. |
 | `kpi.calculation_pending` | reason key | accepted | Unknown: an accepted actual is waiting for its calculation run. |
 | `kpi.value_out_of_range` | reason key | accepted | Not computable: the result does not fit the stored decimal range. |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): the lineage of formula inputs
+
+§8 "Evaluation" binds each variable to the source KPI's evaluated value of the same scope, period and `input_basis`.
+
+- **Since KBE-R1** that value is the source's value computed from its **accepted** values, whether or not the source is evaluated in the same run. A binding-only source is not stored as an evaluation and records no finding.
+- **What the evaluation stores per variable:** the source's version, slot, value and its own input lineage, down to the accepted `kpi_actual_value` versions. ADR-0027 amendment C1 specifies the shape.
+- **Unchanged:** the formula engine (`packages/shared/src/formula/**`), the units table and every refusal of §8.

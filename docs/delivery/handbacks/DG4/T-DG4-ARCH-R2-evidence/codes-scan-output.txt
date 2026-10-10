@@ -1,0 +1,877 @@
+a.accepted_value_no
+    api:benefits/measurements.ts:321: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.accepted_value_no"),
+    api:benefits/measurements.ts:328: .where("a.accepted_value_no", "is not", null)
+    api:benefits/register.ts:347: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.accepted_value_no"),
+a.approval_type
+    api:raid/gate-facts.ts:42: .on("a.approval_type", "=", "risk_disposition")
+a.assignee_group_id
+    api:workflows/approvals.ts:1138: ? [eb("a.assignee_group_id", "in", groups), eb("a.escalated_to_group_id", "in", groups)]
+a.assignee_user_id
+    api:workflows/approvals.ts:1135: eb("a.assignee_user_id", "in", people),
+a.benefit_id
+    api:benefits/dashboard-facts.ts:156: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+    api:benefits/dashboard-facts.ts:158: .select(["a.benefit_id", "a.initiative_id", "a.share"])
+    api:benefits/dashboard-facts.ts:160: .orderBy("a.benefit_id")
+a.created_by
+    worker:handlers/benefits.ts:534: .select(["a.id", "a.period_start", "a.period_end", "a.decided_by", "a.created_by", "v.value_no", "v.value"])
+a.current_handover_id
+    api:sustainment/closure.ts:280: .innerJoin("performance_area as a", "a.current_handover_id", "h.id")
+a.current_value_no
+    api:kpi/actuals.ts:1094: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.current_value_no"),
+a.decided_by
+    worker:handlers/benefits.ts:534: .select(["a.id", "a.period_start", "a.period_end", "a.decided_by", "a.created_by", "v.value_no", "v.value"])
+a.escalated_to_group_id
+    api:workflows/approvals.ts:1138: ? [eb("a.assignee_group_id", "in", groups), eb("a.escalated_to_group_id", "in", groups)]
+a.escalated_to_user_id
+    api:workflows/approvals.ts:1136: eb("a.escalated_to_user_id", "in", people),
+a.initiative_id
+    api:benefits/dashboard-facts.ts:158: .select(["a.benefit_id", "a.initiative_id", "a.share"])
+    api:benefits/dashboard-facts.ts:161: .orderBy("a.initiative_id")
+    api:benefits/register.ts:474: .innerJoin("initiative as i", "i.id", "a.initiative_id")
+a.kpi_definition_id
+    api:benefits/measurements.ts:324: .where("a.kpi_definition_id", "=", kpiDefinitionId)
+    api:benefits/register.ts:349: .select(["a.kpi_definition_id", "v.value", "a.period_end"])
+    api:benefits/register.ts:350: .where("a.kpi_definition_id", "in", [...kpiIds])
+a.next_review_date
+    worker:handlers/sustainment.ts:190: .where("a.next_review_date", "is not", null)
+a.period_end
+    api:benefits/measurements.ts:327: .where("a.period_end", "=", periodEnd)
+    api:benefits/register.ts:349: .select(["a.kpi_definition_id", "v.value", "a.period_end"])
+    api:benefits/register.ts:353: .orderBy("a.period_end", "desc")
+a.period_start
+    api:benefits/measurements.ts:326: .where("a.period_start", "=", periodStart)
+    worker:handlers/benefits.ts:534: .select(["a.id", "a.period_start", "a.period_end", "a.decided_by", "a.created_by", "v.value_no", "v.value"])
+a.reporting_period_id
+    worker:handlers/benefits.ts:537: .where("a.reporting_period_id", "=", payload.reportingPeriodId)
+    worker:handlers/kpi.ts:263: "a.reporting_period_id",
+a.requested_by
+    api:workflows/approvals.ts:1130: if (query.role === "requester") q = q.where("a.requested_by", "=", me);
+a.scope_kind
+    api:benefits/measurements.ts:325: .where("a.scope_kind", "=", "transformation")
+    api:benefits/register.ts:351: .where("a.scope_kind", "=", "transformation")
+    worker:handlers/benefits.ts:536: .where("a.scope_kind", "=", "transformation")
+a.set_no
+    api:benefits/dashboard-facts.ts:156: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+    api:benefits/register.ts:472: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+    api:benefits/totals.ts:300: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+a.share
+    api:benefits/dashboard-facts.ts:158: .select(["a.benefit_id", "a.initiative_id", "a.share"])
+    api:benefits/totals.ts:302: .select(["a.benefit_id", "a.share"])
+a.status
+    api:kpi/actuals.ts:1100: .where("a.status", "=", "submitted")
+    api:sustainment/closure.ts:283: .where("a.status", "=", "bau")
+    api:workflows/approvals.ts:1143: if (query.status) q = q.where("a.status", "=", query.status);
+a.subject_id
+    api:raid/gate-facts.ts:41: .onRef("a.subject_id", "=", "d.id")
+a.submitted_at
+    api:kpi/actuals.ts:1106: .orderBy("a.submitted_at")
+a.submitted_by
+    api:kpi/actuals.ts:1101: .where("a.submitted_by", "<>", userId)
+a.transformation_id
+    api:benefits/dashboard-facts.ts:159: .where("a.transformation_id", "in", ids)
+    api:kpi/actuals.ts:1099: .where("a.transformation_id", "=", transformationId)
+    api:raid/gate-facts.ts:43: .onRef("a.transformation_id", "=", "d.transformation_id"),
+agenda_item.meeting_id
+    api:governance/meeting-series.ts:338: .whereRef("agenda_item.meeting_id", "=", "m.id")
+agenda_item.not_published
+    api:governance/agenda.ts:175: problems.businessRule("agenda_item.not_published", "Only a published agenda item can take an outcome."),
+agenda_item.ordinal_taken
+    api:governance/agenda.ts:184: problems.duplicate("agenda_item.ordinal_taken", "Another agenda item of this meeting has this position."),
+    api:platform/db-errors.ts:1994: return problems.duplicate("agenda_item.ordinal_taken", "Another agenda item of this meeting has this position.");
+agenda_item.outcome_not_ask
+    api:governance/agenda.ts:179: "agenda_item.outcome_not_ask",
+ai.id
+    api:sustainment/status-model.ts:243: .select("ai.id")
+ai.metric_link_id
+    api:sustainment/status-model.ts:254: .whereRef("ml.id", "=", "ai.metric_link_id")
+ai.origin
+    api:sustainment/status-model.ts:245: .where("ai.origin", "=", "below_trajectory")
+ai.scope_id
+    api:sustainment/status-model.ts:249: eb.and([eb("ai.scope_kind", "=", "initiative"), eb("ai.scope_id", "=", initiativeId)]),
+ai.scope_kind
+    api:sustainment/status-model.ts:249: eb.and([eb("ai.scope_kind", "=", "initiative"), eb("ai.scope_id", "=", initiativeId)]),
+ai.status
+    api:sustainment/status-model.ts:246: .where("ai.status", "in", ["planned", "in_progress"])
+ai.transformation_id
+    api:sustainment/status-model.ts:244: .where("ai.transformation_id", "=", transformationId)
+approval.escalation_scan.v1
+    worker:handlers/approvals.ts:26: export const ESCALATION_CONSUMER = "approval.escalation_scan.v1";
+b.allocation_set_no
+    api:benefits/dashboard-facts.ts:156: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+    api:benefits/register.ts:472: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+    api:benefits/totals.ts:300: j.onRef("b.id", "=", "a.benefit_id").onRef("b.allocation_set_no", "=", "a.set_no"),
+b.bau_owner_user_id
+    api:sustainment/status-model.ts:118: .select(["b.id", "b.code", "b.bau_owner_user_id"])
+b.benefit_formula_id
+    api:workflows/impact.ts:383: .select(["b.id", "b.code", "b.title", "b.benefit_formula_id"])
+b.currency
+    api:benefits/dashboard-facts.ts:78: "b.currency",
+    api:benefits/totals.ts:237: "b.currency",
+b.finance_validation_required
+    worker:handlers/benefits.ts:516: .where("b.finance_validation_required", "=", true)
+b.lifecycle_step
+    worker:handlers/benefits.ts:517: .where("b.lifecycle_step", "in", ["measure", "correct", "sustain"])
+b.measurement_kpi_definition_id
+    api:workflows/impact.ts:388: eb("b.measurement_kpi_definition_id", "=", kpiId),
+    worker:handlers/benefits.ts:518: .where("b.measurement_kpi_definition_id", "in", payload.kpiDefinitionIds)
+b.owner_user_id
+    api:benefits/dashboard-facts.ts:76: "b.owner_user_id",
+b.title
+    api:benefits/dashboard-facts.ts:75: "b.title",
+    api:transformations/missing-links-facts.ts:104: "b.title",
+    api:workflows/impact.ts:383: .select(["b.id", "b.code", "b.title", "b.benefit_formula_id"])
+b.transformation_id
+    api:benefits/dashboard-facts.ts:73: "b.transformation_id",
+    api:benefits/dashboard-facts.ts:83: .where("b.transformation_id", "in", ids)
+    api:benefits/totals.ts:243: .where("b.transformation_id", "in", [...transformationIds])
+b.valuation_method_id
+    api:benefits/dashboard-facts.ts:70: .leftJoin("benefit_valuation_method as m", "m.id", "b.valuation_method_id")
+    api:benefits/totals.ts:232: .leftJoin("benefit_valuation_method as m", "m.id", "b.valuation_method_id")
+    api:workflows/impact.ts:393: .whereRef("m.id", "=", "b.valuation_method_id")
+b.value_class
+    api:benefits/dashboard-facts.ts:77: "b.value_class",
+    api:benefits/totals.ts:236: "b.value_class",
+ba.benefit_id
+    api:sustainment/status-model.ts:129: .whereRef("ba.benefit_id", "=", "b.id")
+ba.id
+    api:sustainment/status-model.ts:128: .select("ba.id")
+ba.initiative_id
+    api:sustainment/status-model.ts:131: .where("ba.initiative_id", "=", initiativeId),
+ba.set_no
+    api:sustainment/status-model.ts:130: .whereRef("ba.set_no", "=", "b.allocation_set_no")
+baseline.date
+    packages/shared/src/kpi/trajectory.ts:76: const bd = dayNumber(b.date, "baseline.date");
+bau_handover.evidence_add
+    api:sustainment/handovers.ts:503: await updateHandoverRow(ctx, current, {}, "bau_handover.evidence_add");
+bau_handover.return
+    api:sustainment/handovers.ts:753: "bau_handover.return",
+bau_handover.submit
+    api:sustainment/handovers.ts:522: "bau_handover.submit",
+bau_handover.update
+    api:sustainment/handovers.ts:451: "bau_handover.update",
+be.benefit_id
+    api:sustainment/status-model.ts:137: .whereRef("be.benefit_id", "=", "b.id")
+be.id
+    api:sustainment/status-model.ts:136: .select("be.id")
+be.initiative_id
+    api:sustainment/status-model.ts:139: .where("be.initiative_id", "=", initiativeId),
+be.status
+    api:sustainment/status-model.ts:138: .where("be.status", "=", "active")
+benefits.finance_queue.v1
+    worker:handlers/benefits.ts:40: export const FINANCE_QUEUE_CONSUMER = "benefits.finance_queue.v1";
+benefits.recalculate_pending.v1
+    worker:handlers/benefits.ts:42: export const RECALCULATE_PENDING_CONSUMER = "benefits.recalculate_pending.v1";
+benefits.value_decided
+    worker:handlers/benefits.ts:43: export const VALUE_DECIDED_QUEUE = "benefits.value_decided";
+    worker:queues/benefits.ts:10: { name: "benefits.value_decided" },
+    worker:queues/benefits.ts:15: "benefit.value_validated": "benefits.value_decided",
+benefits.value_decided.v1
+    worker:handlers/benefits.ts:44: export const VALUE_DECIDED_CONSUMER = "benefits.value_decided.v1";
+blocker_status.meeting_id
+    api:governance/meeting-series.ts:357: .whereRef("blocker_status.meeting_id", "=", "m.id"),
+business_calendar_holiday.remove
+    api:organization/calendar.ts:599: ? "business_calendar_holiday.remove"
+business_calendar_holiday.update
+    api:organization/calendar.ts:600: : "business_calendar_holiday.update",
+c.benefit_id
+    api:benefits/dashboard-facts.ts:69: .innerJoin("benefit as b", "b.id", "c.benefit_id")
+    api:benefits/totals.ts:231: .innerJoin("benefit as b", "b.id", "c.benefit_id")
+c.counted
+    api:benefits/dashboard-facts.ts:79: "c.counted",
+    api:benefits/totals.ts:238: "c.counted",
+c.exclusion_reason
+    api:benefits/totals.ts:239: "c.exclusion_reason",
+c.gate_definition_id
+    api:workflows/gate-exceptions.ts:397: .innerJoin("gate_definition as d", "d.id", "c.gate_definition_id")
+c.initiative_id
+    api:benefits/totals.ts:284: if (initiativeId !== null) q = q.where("c.level", "=", "initiative").where("c.initiative_id", "=", initiativeId);
+    api:transformations/missing-links-facts.ts:79: .whereRef("c.initiative_id", "=", "i.id")
+    api:workflows/impact.ts:555: .where("c.initiative_id", "=", initiativeId)
+c.key
+    api:workflows/gate-exceptions.ts:398: .select(["c.key", "c.mandatory"])
+    api:workflows/gate-exceptions.ts:399: .where("c.key", "=", body.criterionKey)
+c.level
+    api:benefits/totals.ts:284: if (initiativeId !== null) q = q.where("c.level", "=", "initiative").where("c.initiative_id", "=", initiativeId);
+c.mandatory
+    api:workflows/gate-exceptions.ts:398: .select(["c.key", "c.mandatory"])
+c.next_check_date
+    worker:handlers/sustainment.ts:279: .where("c.next_check_date", "is not", null)
+c.organization_id
+    worker:handlers/sustainment.ts:274: sql<string>`(${horizonExpr(opts, sql.ref("c.organization_id"))})::text`.as("horizon"),
+    worker:handlers/sustainment.ts:277: .$if(opts.organizationId !== undefined, (q) => q.where("c.organization_id", "=", opts.organizationId!))
+    worker:handlers/sustainment.ts:280: .where(sql<boolean>`c.next_check_date <= ${horizonExpr(opts, sql.ref("c.organization_id"))}`)
+c.overlap_open
+    api:benefits/dashboard-facts.ts:80: "c.overlap_open",
+    api:benefits/totals.ts:240: "c.overlap_open",
+c.performance_area_id
+    worker:handlers/sustainment.ts:269: .innerJoin("performance_area as a", "a.id", "c.performance_area_id")
+c.source_record_id
+    api:sustainment/controls.ts:288: .whereRef("c.source_record_id", "=", "k.id")
+c.source_record_type
+    api:sustainment/controls.ts:287: .where("c.source_record_type", "=", "control_check")
+c.status
+    api:benefits/dashboard-facts.ts:139: .where("c.status", "<>", "archived")
+    api:benefits/totals.ts:283: .where("c.status", "<>", "archived");
+    api:transformations/missing-links-facts.ts:80: .where("c.status", "=", "active"),
+c.version
+    worker:handlers/sustainment.ts:272: "c.version",
+change_request.approve
+    api:workflows/change-requests.ts:1474: "change_request.approve",
+change_request.create
+    api:workflows/change-requests.ts:884: await audit(tx, input.audit, "change_request.create", null, row);
+change_request.reject
+    api:workflows/change-requests.ts:1479: await set({ status: "rejected", decided_at: sql<Date>`now()` }, "change_request.reject");
+change_request.return
+    api:workflows/change-requests.ts:1482: await set({ status: "changes_requested" }, "change_request.return");
+change_request.submit
+    api:workflows/change-requests.ts:1103: await audit(tx, actor.audit, "change_request.submit", cr, submitted);
+change_request.update
+    api:workflows/change-requests.ts:986: await audit(tx, ctx.audit, "change_request.update", cr, updated);
+change_request.withdraw
+    api:workflows/change-requests.ts:1193: await audit(tx, auditCtx, "change_request.withdraw", cr, updated);
+d.acceptance_status
+    api:benefits/lifecycle.ts:217: .select(["e.id", "e.deliverable_id", "d.acceptance_status", "i.status as initiative_status"])
+    api:benefits/register.ts:327: .select(["e.benefit_id", "e.deliverable_id", "d.acceptance_status", "i.status as initiative_status"])
+d.benefit_id
+    api:sustainment/transition-decisions.ts:811: if (query.benefitId !== undefined) q = q.where("d.benefit_id", "=", query.benefitId);
+d.blocker_record_id
+    worker:handlers/escalations.ts:824: .whereRef("d.blocker_record_id", "=", "s.source_record_id")
+d.blocker_record_type
+    worker:handlers/escalations.ts:823: .whereRef("d.blocker_record_type", "=", "s.source_record_type")
+d.created_at
+    api:raid/gate-facts.ts:48: .orderBy("d.created_at")
+d.decision_id
+    api:reporting/dashboards/engine.ts:270: "d.decision_id",
+d.description_ar
+    api:workflows/gate-reviews.ts:148: "d.description_ar",
+d.description_en
+    api:workflows/gate-reviews.ts:147: "d.description_en",
+d.disposition
+    api:raid/gate-facts.ts:45: .select(["d.id", "d.raid_entry_id", "d.disposition", "a.id as approval_id", "a.status as approval_status"])
+d.from_initiative_id
+    api:reporting/dashboards/engine.ts:271: "d.from_initiative_id",
+    api:workflows/impact.ts:541: .where("d.from_initiative_id", "=", initiativeId)
+d.gate_submission_id
+    api:workflows/impact.ts:233: j.onRef("d.gate_submission_id", "=", "s.id").on("d.outcome", "=", "approved"),
+d.id
+    api:benefits/lifecycle.ts:216: .leftJoin("deliverable as d", "d.id", "e.deliverable_id")
+    api:benefits/register.ts:326: .leftJoin("deliverable as d", "d.id", "e.deliverable_id")
+    api:governance/escalations.ts:227: .innerJoin("decision as d", "d.id", "e.decision_id")
+d.key
+    api:workflows/gate-reviews.ts:138: .innerJoin("gate_criterion_definition as d", "d.key", "s.criterion_key")
+    api:workflows/gates.ts:1369: .innerJoin("gate_criterion_definition as d", "d.key", "s.criterion_key")
+d.kind
+    api:portfolio/budget.ts:486: .select(["d.id", "d.code", "d.kind", "d.status", "d.title"])
+d.label_ar
+    api:workflows/gate-reviews.ts:146: "d.label_ar",
+d.label_en
+    api:workflows/gate-reviews.ts:145: "d.label_en",
+    api:workflows/gates.ts:1372: "d.label_en",
+d.name
+    api:reporting/traceability.ts:276: .select(["k.id", "k.status", "k.kpi_definition_id", "d.name"])
+d.next_monitoring_date
+    worker:handlers/sustainment.ts:494: .where("d.next_monitoring_date", "is not", null)
+d.organization_id
+    worker:handlers/sustainment.ts:490: sql<string>`(${horizonExpr(opts, sql.ref("d.organization_id"))})::text`.as("horizon"),
+    worker:handlers/sustainment.ts:493: .$if(opts.organizationId !== undefined, (q) => q.where("d.organization_id", "=", opts.organizationId!))
+    worker:handlers/sustainment.ts:496: .where(sql<boolean>`d.next_monitoring_date <= ${horizonExpr(opts, sql.ref("d.organization_id"))}`)
+d.outcome
+    api:workflows/impact.ts:233: j.onRef("d.gate_submission_id", "=", "s.id").on("d.outcome", "=", "approved"),
+d.raid_entry_id
+    api:raid/gate-facts.ts:45: .select(["d.id", "d.raid_entry_id", "d.disposition", "a.id as approval_id", "a.status as approval_status"])
+    api:raid/gate-facts.ts:47: .where("d.raid_entry_id", "in", ids)
+d.status
+    api:portfolio/budget.ts:486: .select(["d.id", "d.code", "d.kind", "d.status", "d.title"])
+    api:sustainment/transition-decisions.ts:814: else if (query.status === "draft") q = q.where("d.status", "=", "draft").where(sql<boolean>`NOT ${inApproval}`);
+    api:sustainment/transition-decisions.ts:815: else if (query.status !== undefined) q = q.where("d.status", "=", query.status);
+d.title
+    api:portfolio/budget.ts:486: .select(["d.id", "d.code", "d.kind", "d.status", "d.title"])
+d.to_initiative_id
+    api:reporting/dashboards/engine.ts:272: "d.to_initiative_id",
+    api:workflows/impact.ts:537: .innerJoin("initiative as i", "i.id", "d.to_initiative_id")
+d.transformation_id
+    api:raid/gate-facts.ts:43: .onRef("a.transformation_id", "=", "d.transformation_id"),
+    api:raid/gate-facts.ts:46: .where("d.transformation_id", "=", transformationId)
+    api:sustainment/transition-decisions.ts:810: .where("d.transformation_id", "=", transformationId);
+d.version
+    worker:handlers/sustainment.ts:487: "d.version",
+decision.sla_due_date
+    worker:handlers/escalations.ts:485: .whereRef("e.sla_due_date", "=", "decision.sla_due_date"),
+decision.transformation_id
+    worker:handlers/escalations.ts:496: .whereRef("g.transformation_id", "=", "decision.transformation_id")
+delegation.expiry_sweep.v1
+    worker:handlers/access.ts:13: export const EXPIRY_CONSUMER = "delegation.expiry_sweep.v1";
+e.benefit_id
+    api:benefits/register.ts:327: .select(["e.benefit_id", "e.deliverable_id", "d.acceptance_status", "i.status as initiative_status"])
+    api:benefits/register.ts:328: .where("e.benefit_id", "in", [...benefitIds])
+e.calculation_run_id
+    api:adoption/gate-facts.ts:111: .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
+    api:adoption/indicators.ts:466: .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
+    api:kpi/calculation-runs.ts:124: .whereRef("e.calculation_run_id", "=", "r.id")
+e.decision_id
+    api:governance/escalations.ts:227: .innerJoin("decision as d", "d.id", "e.decision_id")
+    api:governance/escalations.ts:231: if (query.decisionId !== undefined) q = q.where("e.decision_id", "=", query.decisionId);
+    worker:handlers/escalations.ts:484: .whereRef("e.decision_id", "=", "decision.id")
+e.deliverable_id
+    api:benefits/lifecycle.ts:216: .leftJoin("deliverable as d", "d.id", "e.deliverable_id")
+    api:benefits/lifecycle.ts:217: .select(["e.id", "e.deliverable_id", "d.acceptance_status", "i.status as initiative_status"])
+    api:benefits/register.ts:326: .leftJoin("deliverable as d", "d.id", "e.deliverable_id")
+e.expiry_notified_at
+    worker:handlers/gates.ts:502: .where("e.expiry_notified_at", "is", null)
+e.kpi_definition_id
+    api:adoption/gate-facts.ts:113: .where("e.kpi_definition_id", "=", kpiId)
+    api:adoption/indicators.ts:468: .where("e.kpi_definition_id", "=", kpiId)
+    api:kpi/calculation-runs.ts:125: .where("e.kpi_definition_id", "=", kpiId),
+e.link_id
+    api:transformations/missing-links-facts.ts:109: .select("e.link_id")
+e.reporting_period_id
+    api:adoption/gate-facts.ts:116: .where("e.reporting_period_id", "=", period.id)
+    api:adoption/indicators.ts:471: .where("e.reporting_period_id", "=", periodId)
+    api:kpi/rag-overrides.ts:160: .where("e.reporting_period_id", "=", slot.reportingPeriodId)
+e.scope_id
+    api:adoption/gate-facts.ts:115: .where("e.scope_id", "=", scope.id)
+    api:adoption/indicators.ts:470: .where("e.scope_id", "=", scope.id)
+    api:kpi/rag-overrides.ts:159: .where("e.scope_id", "=", slot.scopeId)
+e.scope_kind
+    api:adoption/gate-facts.ts:114: .where("e.scope_kind", "=", scope.kind)
+    api:adoption/indicators.ts:469: .where("e.scope_kind", "=", scope.kind)
+    api:kpi/rag-overrides.ts:158: .where("e.scope_kind", "=", slot.scopeKind)
+e.sla_due_date
+    worker:handlers/escalations.ts:485: .whereRef("e.sla_due_date", "=", "decision.sla_due_date"),
+e.title
+    api:benefits/dashboard-facts.ts:177: .select(["e.id", "e.title", "e.review_status", "l.measurement_id"])
+    api:kpi/dashboard-facts.ts:238: .select(["e.id", "e.title", "e.review_status"])
+e.to_id
+    api:transformations/missing-links-facts.ts:112: .whereRef("e.to_id", "=", "b.id"),
+e.to_type
+    api:transformations/missing-links-facts.ts:111: .where("e.to_type", "=", "benefit")
+e.value_basis
+    api:adoption/gate-facts.ts:117: .where("e.value_basis", "=", "period")
+    api:adoption/indicators.ts:472: .where("e.value_basis", "=", "period")
+    api:kpi/rag-overrides.ts:161: .where("e.value_basis", "=", "period")
+f.template_key
+    api:governance/meetings.ts:312: .where("f.template_key", "=", "executive_steerco")
+g.adoption_kpi_definition_id
+    api:adoption/register.ts:1064: .leftJoin("kpi_definition as k", "k.id", "g.adoption_kpi_definition_id")
+g.code
+    api:adoption/register.ts:1069: .orderBy("g.code")
+g.current_submission_id
+    api:workflows/impact.ts:231: .innerJoin("gate_submission as s", "s.id", "g.current_submission_id")
+g.effective_from
+    api:governance/attendance.ts:99: .where("g.effective_from", "<=", sql<Date>`now()`)
+g.effective_to
+    api:governance/attendance.ts:100: .where((eb) => eb.or([eb("g.effective_to", "is", null), eb("g.effective_to", ">", sql<Date>`now()`)]))
+    api:governance/attendance.ts:100: .where((eb) => eb.or([eb("g.effective_to", "is", null), eb("g.effective_to", ">", sql<Date>`now()`)]))
+g.enabled
+    worker:handlers/escalations.ts:498: .where("g.enabled", "=", false),
+g.gate_code
+    api:workflows/impact.ts:236: "g.gate_code",
+    api:workflows/impact.ts:244: .where("g.gate_code", "in", [...codes])
+    api:workflows/impact.ts:245: .orderBy("g.gate_code")
+g.group_id
+    api:governance/attendance.ts:93: .innerJoin("access_group_member as g", "g.group_id", "p.group_id")
+g.id
+    api:access/groups.ts:140: .innerJoin("access_group as g", "g.id", "m.group_id")
+    api:access/groups.ts:155: .innerJoin("access_group as g", "g.id", "m.group_id")
+    api:transformations/missing-links-facts.ts:87: .select("g.id")
+g.initiative_id
+    api:transformations/missing-links-facts.ts:88: .whereRef("g.initiative_id", "=", "i.id")
+g.removed_at
+    api:governance/attendance.ts:98: .where("g.removed_at", "is", null)
+g.rule_kind
+    worker:handlers/escalations.ts:497: .where("g.rule_kind", "=", "decision_sla")
+g.status
+    api:access/groups.ts:143: .where("g.status", "=", "active")
+    api:access/groups.ts:159: .where("g.status", "=", "active")
+    api:adoption/register.ts:1068: .where("g.status", "=", "active")
+g.target_type
+    api:transformations/missing-links-facts.ts:90: .where("g.target_type", "=", "tom_gap"),
+g.transformation_id
+    api:adoption/register.ts:1067: .where("g.transformation_id", "=", transformationId)
+    api:workflows/impact.ts:243: .where("g.transformation_id", "=", transformationId)
+    worker:handlers/escalations.ts:496: .whereRef("g.transformation_id", "=", "decision.transformation_id")
+g.user_id
+    api:governance/attendance.ts:97: .where("g.user_id", "=", userId)
+gates.decided
+    worker:handlers/gates.ts:37: export const GATES_DECIDED_QUEUE = "gates.decided";
+    worker:handlers/gates.ts:39: export const GATES_DECIDED_CONSUMER = "gates.decided";
+    worker:queues/gates.ts:13: { name: "gates.decided" },
+gates.submitted
+    worker:handlers/gates.ts:36: export const GATES_SUBMITTED_QUEUE = "gates.submitted";
+    worker:handlers/gates.ts:38: export const GATES_SUBMITTED_CONSUMER = "gates.submitted";
+    worker:queues/gates.ts:12: { name: "gates.submitted" },
+gm.group_id
+    worker:handlers/benefits.ts:144: .innerJoin("access_group as g", "g.id", "gm.group_id")
+    worker:handlers/benefits.ts:147: .where("gm.group_id", "=", m.group_id)
+gm.user_id
+    worker:handlers/benefits.ts:145: .innerJoin("app_user as u", "u.id", "gm.user_id")
+    worker:handlers/benefits.ts:146: .select("gm.user_id")
+governance.task.meeting_action_due
+    api:governance/meeting-actions.ts:56: export const MEETING_ACTION_TASK_MESSAGE = "governance.task.meeting_action_due";
+governance.task.minutes_to_approve
+    api:governance/minutes.ts:58: export const MINUTES_TASK_MESSAGE = "governance.task.minutes_to_approve";
+h.id
+    api:sustainment/closure.ts:280: .innerJoin("performance_area as a", "a.current_handover_id", "h.id")
+    api:sustainment/closure.ts:281: .select("h.id")
+    api:sustainment/closure.ts:285: .orderBy("h.id")
+h.status
+    api:sustainment/closure.ts:284: .where("h.status", "=", "accepted")
+i.code
+    api:benefits/register.ts:475: .select(["a.benefit_id", "i.id", "i.code", "i.name"])
+    api:benefits/register.ts:481: .orderBy("i.code")
+    api:portfolio/schedule-network.ts:53: .select(["i.id", "i.code", "i.name", "s.duration_working_days"])
+i.executive_owner_user_id
+    worker:handlers/gates.ts:369: "i.executive_owner_user_id",
+i.kpi_version_id
+    api:kpi/downstream.ts:48: .innerJoin("kpi_version as v", "v.id", "i.kpi_version_id")
+    api:kpi/kpi-formulas.ts:118: .innerJoin("kpi_version as v", "v.id", "i.kpi_version_id")
+    api:workflows/impact.ts:371: .innerJoin("kpi_version as v", "v.id", "i.kpi_version_id")
+i.name
+    api:benefits/register.ts:475: .select(["a.benefit_id", "i.id", "i.code", "i.name"])
+    api:portfolio/schedule-network.ts:53: .select(["i.id", "i.code", "i.name", "s.duration_working_days"])
+    api:transformations/missing-links-facts.ts:73: "i.name",
+i.source_kpi_definition_id
+    api:kpi/downstream.ts:53: .where("i.source_kpi_definition_id", "in", frontier)
+    api:workflows/impact.ts:376: .where("i.source_kpi_definition_id", "=", kpiId)
+    worker:handlers/kpi.ts:786: .where("i.source_kpi_definition_id", "in", frontier)
+i.status
+    api:portfolio/schedule-network.ts:55: .where("i.status", "<>", "cancelled")
+    api:transformations/missing-links-facts.ts:95: .where("i.status", "not in", ["draft", "cancelled"])
+i.transformation_id
+    api:portfolio/schedule-network.ts:54: .where("i.transformation_id", "=", transformationId)
+    api:transformations/missing-links-facts.ts:94: .where("i.transformation_id", "=", transformationId)
+    api:workflows/impact.ts:375: .where("i.transformation_id", "=", T)
+i.variable_name
+    api:kpi/kpi-formulas.ts:123: .orderBy("i.variable_name")
+i.workstream_lead_user_id
+    worker:handlers/gates.ts:370: "i.workstream_lead_user_id",
+inherited_record.create
+    api:reporting/modular.ts:301: "inherited_record.create",
+inherited_record.record_not_found
+    api:platform/db-errors.ts:2372: "inherited_record.record_not_found",
+    api:reporting/modular.ts:271: throw rule("inherited_record.record_not_found", INHERITED_TEXT.recordNotFound, pointer);
+inherited_record.withdraw
+    api:reporting/modular.ts:350: "inherited_record.withdraw",
+k.frequency
+    worker:handlers/kpi.ts:1342: .where("k.frequency", "=", p.frequency)
+k.id
+    api:adoption/register.ts:1064: .leftJoin("kpi_definition as k", "k.id", "g.adoption_kpi_definition_id")
+    api:kpi/actuals.ts:830: .innerJoin("kpi_version as k", "k.id", "v.kpi_version_id")
+    api:kpi/actuals.ts:1096: .innerJoin("kpi_version as k", "k.id", "v.kpi_version_id")
+k.kpi_definition_id
+    api:reporting/traceability.ts:275: .innerJoin("kpi_definition as d", "d.id", "k.kpi_definition_id")
+    api:reporting/traceability.ts:276: .select(["k.id", "k.status", "k.kpi_definition_id", "d.name"])
+k.name
+    api:workflows/g5.ts:60: .select(["k.id", "k.name"])
+    api:workflows/g5.ts:64: .orderBy("k.name")
+    api:workflows/impact.ts:373: .select(["k.id", "k.name"])
+k.outcome_id
+    api:transformations/missing-links-facts.ts:59: .whereRef("k.outcome_id", "=", "o.id")
+k.owner_user_id
+    worker:handlers/kpi.ts:1338: .select(["k.id", "k.name", "k.owner_user_id", "k.transformation_id"])
+    worker:handlers/kpi.ts:1343: .where("k.owner_user_id", "is not", null)
+k.performance_area_id
+    api:sustainment/controls.ts:714: if (query.performanceAreaId !== undefined) q = q.where("k.performance_area_id", "=", query.performanceAreaId);
+k.reviewer_party_code
+    api:kpi/actuals.ts:831: .select(["k.reviewer_party_code"])
+    api:kpi/actuals.ts:1102: .where("k.reviewer_party_code", "in", parties);
+k.status
+    api:reporting/traceability.ts:276: .select(["k.id", "k.status", "k.kpi_definition_id", "d.name"])
+    api:sustainment/controls.ts:715: if (query.status !== undefined) q = q.where("k.status", "=", query.status);
+    api:transformations/missing-links-facts.ts:60: .where("k.status", "=", "active")
+k.transformation_id
+    api:reporting/traceability.ts:277: .where("k.transformation_id", "=", t)
+    api:sustainment/controls.ts:293: .where("k.transformation_id", "=", transformationId);
+    worker:handlers/kpi.ts:1337: .innerJoin("transformation as t", "t.id", "k.transformation_id")
+kpi.rag.no_
+    worker:handlers/kpi.ts:1232: else if (!explanationKey.startsWith("kpi.rag.no_") && explanationKey !== "kpi.rag.before_trajectory")
+kpi.recalculate.v1
+    worker:handlers/kpi.ts:65: export const RECALCULATE_CONSUMER = "kpi.recalculate.v1";
+kpi.recalculate_failed
+    worker:handlers/kpi.ts:632: export const RECALCULATE_FAILED_CODE = "kpi.recalculate_failed";
+kpi.reporting_period_open.v1
+    worker:handlers/kpi.ts:67: export const PERIOD_OPEN_CONSUMER = "kpi.reporting_period_open.v1";
+kpi_actual.save_draft
+    api:kpi/actuals.ts:579: : "kpi_actual.save_draft";
+kpi_version.create
+    api:kpi/kpi-versions.ts:633: await auditOf(ctx, "kpi_version.create", null, row);
+kpi_version.supersede
+    api:kpi/kpi-versions.ts:739: await auditOf(ctx, "kpi_version.supersede", previous, superseded);
+kpi_version.update
+    api:kpi/kpi-versions.ts:660: await auditOf(ctx, "kpi_version.update", current, updated);
+kpi_version.withdraw
+    api:kpi/kpi-versions.ts:794: await auditOf(ctx, "kpi_version.withdraw", current, updated, reason);
+l.amount
+    api:benefits/dashboard-facts.ts:135: .select(["l.id", "l.transformation_id", "l.business_case_id", "l.title", "l.amount", "l.currency"])
+    api:benefits/totals.ts:279: .select(["l.amount", "l.currency", "l.value_basis"])
+l.business_case_id
+    api:benefits/dashboard-facts.ts:134: .innerJoin("business_case as c", "c.id", "l.business_case_id")
+    api:benefits/dashboard-facts.ts:135: .select(["l.id", "l.transformation_id", "l.business_case_id", "l.title", "l.amount", "l.currency"])
+    api:benefits/totals.ts:278: .innerJoin("business_case as c", "c.id", "l.business_case_id")
+l.currency
+    api:benefits/dashboard-facts.ts:135: .select(["l.id", "l.transformation_id", "l.business_case_id", "l.title", "l.amount", "l.currency"])
+    api:benefits/totals.ts:279: .select(["l.amount", "l.currency", "l.value_basis"])
+l.decision_id
+    api:portfolio/budget.ts:485: .innerJoin("decision as d", "d.id", "l.decision_id")
+l.id
+    api:adoption/gate-facts.ts:56: .orderBy("l.id")
+    api:adoption/indicators.ts:658: .orderBy("l.id")
+    api:benefits/dashboard-facts.ts:135: .select(["l.id", "l.transformation_id", "l.business_case_id", "l.title", "l.amount", "l.currency"])
+l.initiative_id
+    api:portfolio/budget.ts:487: .where("l.initiative_id", "=", initiativeId)
+l.kpi_actual_id
+    api:kpi/dashboard-facts.ts:239: .where("l.kpi_actual_id", "=", actual.id)
+l.line_kind
+    api:benefits/dashboard-facts.ts:137: .where("l.line_kind", "=", "investment")
+    api:benefits/totals.ts:281: .where("l.line_kind", "=", "investment")
+l.measurement_id
+    api:benefits/dashboard-facts.ts:177: .select(["e.id", "e.title", "e.review_status", "l.measurement_id"])
+    api:benefits/dashboard-facts.ts:178: .where("l.measurement_id", "in", [...measurementIds])
+l.phase_step_id
+    api:workflows/g5.ts:118: .innerJoin("phase_step as s", "s.id", "l.phase_step_id")
+    api:workflows/phase-steps.ts:368: .where("l.phase_step_id", "=", stepId)
+l.published_at
+    api:sustainment/lessons.ts:313: .orderBy("l.published_at", "desc")
+l.target_kind
+    api:adoption/indicators.ts:649: .where("l.target_kind", "=", query.targetKind)
+l.template_key
+    api:adoption/gate-facts.ts:49: .innerJoin("adoption_indicator_template as t", "t.key", "l.template_key")
+    api:adoption/indicators.ts:645: .innerJoin("adoption_indicator_template as t", "t.key", "l.template_key")
+l.title
+    api:benefits/dashboard-facts.ts:135: .select(["l.id", "l.transformation_id", "l.business_case_id", "l.title", "l.amount", "l.currency"])
+    api:workflows/impact.ts:553: .select(["l.id", "l.title"])
+l.value_basis
+    api:benefits/totals.ts:279: .select(["l.amount", "l.currency", "l.value_basis"])
+l.value_no
+    api:kpi/dashboard-facts.ts:240: .where("l.value_no", "=", actual.accepted_value_no!)
+later.cycle_date
+    worker:handlers/escalations.ts:813: .whereRef("later.cycle_date", ">", "s.cycle_date"),
+later.forum_id
+    worker:handlers/escalations.ts:810: .whereRef("later.forum_id", "=", "s.forum_id")
+later.id
+    worker:handlers/escalations.ts:809: .select("later.id")
+later.source_record_id
+    worker:handlers/escalations.ts:812: .whereRef("later.source_record_id", "=", "s.source_record_id")
+later.source_record_type
+    worker:handlers/escalations.ts:811: .whereRef("later.source_record_type", "=", "s.source_record_type")
+m.forum_id
+    api:governance/meetings.ts:309: .innerJoin("forum as f", "f.id", "m.forum_id")
+m.group_id
+    api:access/groups.ts:140: .innerJoin("access_group as g", "g.id", "m.group_id")
+    api:access/groups.ts:141: .select("m.group_id")
+    api:access/groups.ts:155: .innerJoin("access_group as g", "g.id", "m.group_id")
+m.id
+    api:access/groups.ts:378: .orderBy("m.id")
+    api:benefits/dashboard-facts.ts:70: .leftJoin("benefit_valuation_method as m", "m.id", "b.valuation_method_id")
+    api:benefits/totals.ts:232: .leftJoin("benefit_valuation_method as m", "m.id", "b.valuation_method_id")
+m.kpi_definition_id
+    api:workflows/impact.ts:394: .where("m.kpi_definition_id", "=", kpiId),
+m.organization_id
+    api:governance/meeting-series.ts:329: .select(["m.id", "m.version", "m.organization_id", "m.transformation_id"])
+m.scheduled_date
+    api:governance/meeting-series.ts:332: .where("m.scheduled_date", ">", today)
+    api:governance/meeting-series.ts:367: .orderBy("m.scheduled_date")
+    api:governance/meetings.ts:310: .select("m.scheduled_date")
+m.series_id
+    api:governance/meeting-series.ts:330: .where("m.series_id", "=", series.id)
+m.status
+    api:governance/meeting-series.ts:331: .where("m.status", "=", "scheduled")
+    api:governance/meetings.ts:313: .where("m.status", "in", ["scheduled", "agenda_published"])
+m.transformation_id
+    api:governance/meeting-series.ts:329: .select(["m.id", "m.version", "m.organization_id", "m.transformation_id"])
+    api:governance/meetings.ts:311: .where("m.transformation_id", "=", transformationId)
+m.user_id
+    api:access/groups.ts:142: .where("m.user_id", "=", userId)
+    api:access/groups.ts:156: .innerJoin("app_user as u", "u.id", "m.user_id")
+    api:access/groups.ts:157: .select("m.user_id")
+m.version
+    api:governance/meeting-series.ts:329: .select(["m.id", "m.version", "m.organization_id", "m.transformation_id"])
+meeting.cancel
+    api:governance/meetings.ts:388: : "meeting.cancel";
+meeting.close
+    api:governance/meetings.ts:387: ? "meeting.close"
+meeting.publish_agenda
+    api:governance/meetings.ts:383: ? "meeting.publish_agenda"
+meeting.start
+    api:governance/meetings.ts:385: ? "meeting.start"
+meeting_action_link.meeting_id
+    api:governance/meeting-series.ts:352: .whereRef("meeting_action_link.meeting_id", "=", "m.id"),
+meeting_attendance.meeting_id
+    api:governance/meeting-series.ts:342: .whereRef("meeting_attendance.meeting_id", "=", "m.id"),
+meeting_minutes.approve
+    api:governance/minutes.ts:295: const updated = await updateMinutes(tx, audit, current, userId, "meeting_minutes.approve", {
+meeting_minutes.meeting_id
+    api:governance/meeting-series.ts:362: .whereRef("meeting_minutes.meeting_id", "=", "m.id"),
+meeting_minutes.publish
+    api:governance/minutes.ts:344: const updated = await updateMinutes(tx, audit, current, userId, "meeting_minutes.publish", {
+meeting_minutes.return
+    api:governance/minutes.ts:268: const updated = await updateMinutes(tx, audit, current, userId, "meeting_minutes.return", {
+meeting_minutes.update
+    api:governance/minutes.ts:278: return updateMinutes(tx, audit, current, userId, "meeting_minutes.update", { body: body.body! });
+meeting_output.meeting_id
+    api:governance/meeting-series.ts:347: .whereRef("meeting_output.meeting_id", "=", "m.id"),
+method.id
+    worker:handlers/benefits.ts:511: .leftJoin("benefit_valuation_method as method", "method.id", "b.valuation_method_id")
+ml.id
+    api:sustainment/status-model.ts:253: .select("ml.id")
+    api:sustainment/status-model.ts:254: .whereRef("ml.id", "=", "ai.metric_link_id")
+ml.initiative_id
+    api:sustainment/status-model.ts:256: .where("ml.initiative_id", "=", initiativeId),
+ml.target_kind
+    api:sustainment/status-model.ts:255: .where("ml.target_kind", "=", "initiative")
+o.created_at
+    api:transformations/missing-links-facts.ts:65: .orderBy("o.created_at")
+o.id
+    api:transformations/missing-links-facts.ts:54: "o.id",
+    api:transformations/missing-links-facts.ts:59: .whereRef("k.outcome_id", "=", "o.id")
+    api:transformations/missing-links-facts.ts:66: .orderBy("o.id")
+o.statement
+    api:transformations/missing-links-facts.ts:55: "o.statement",
+    api:workflows/impact.ts:362: .select(["o.id", "o.statement"])
+o.status
+    api:transformations/missing-links-facts.ts:64: .where("o.status", "<>", "archived")
+    api:workflows/impact.ts:366: .where("o.status", "<>", "archived")
+o.transformation_id
+    api:transformations/missing-links-facts.ts:63: .where("o.transformation_id", "=", transformationId)
+ok.id
+    api:workflows/impact.ts:293: .where("ok.id", "=", id)
+ok.kpi_definition_id
+    api:workflows/g5.ts:59: .innerJoin("kpi_definition as k", "k.id", "ok.kpi_definition_id")
+    api:workflows/impact.ts:291: .innerJoin("kpi_definition as k", "k.id", "ok.kpi_definition_id")
+    api:workflows/impact.ts:365: .where("ok.kpi_definition_id", "=", kpiId)
+ok.outcome_id
+    api:workflows/impact.ts:361: .innerJoin("outcome as o", "o.id", "ok.outcome_id")
+ok.status
+    api:workflows/g5.ts:63: .where("ok.status", "=", "active")
+ok.transformation_id
+    api:workflows/g5.ts:62: .where("ok.transformation_id", "=", transformationId)
+    api:workflows/impact.ts:364: .where("ok.transformation_id", "=", T)
+p.counts_for_quorum
+    api:governance/attendance.ts:94: .select("p.counts_for_quorum")
+    api:governance/attendance.ts:101: .orderBy("p.counts_for_quorum", "desc")
+p.forum_id
+    api:governance/attendance.ts:95: .where("p.forum_id", "=", forumId)
+p.group_id
+    api:governance/attendance.ts:93: .innerJoin("access_group_member as g", "g.group_id", "p.group_id")
+p.ordinal
+    api:workflows/phase-steps.ts:215: .orderBy("p.ordinal")
+p.status
+    api:governance/attendance.ts:96: .where("p.status", "=", "active")
+period.end
+    packages/shared/src/adoption/measures.ts:84: assertDate(p.end, "period.end");
+period.start
+    packages/shared/src/adoption/measures.ts:83: assertDate(p.start, "period.start");
+r.description
+    api:reporting/dashboards/engine.ts:266: "r.description",
+r.due_date
+    api:reporting/dashboards/engine.ts:268: "r.due_date",
+    api:reporting/dashboards/engine.ts:277: .orderBy("r.due_date")
+r.form_id
+    api:adoption/assessments.ts:1121: if (query.assessmentFormId !== undefined) q = q.where("r.form_id", "=", query.assessmentFormId);
+r.form_version_id
+    api:adoption/assessments.ts:352: .innerJoin("assessment_form_version as v", "v.id", "r.form_version_id")
+r.owner_user_id
+    api:reporting/dashboards/engine.ts:267: "r.owner_user_id",
+r.raid_status
+    api:reporting/dashboards/engine.ts:275: .where("r.raid_status", "=", "open")
+r.record_status
+    api:reporting/dashboards/engine.ts:269: "r.record_status",
+r.record_table
+    api:reporting/dashboards/engine.ts:274: .where("r.record_table", "=", "dependency")
+r.seq
+    api:adoption/gate-facts.ts:118: .orderBy("r.seq", "desc")
+    api:adoption/indicators.ts:473: .orderBy("r.seq", "desc")
+    api:kpi/calculation-runs.ts:131: .orderBy("r.seq", "desc")
+r.stakeholder_group_id
+    api:adoption/assessments.ts:1120: if (query.stakeholderGroupId !== undefined) q = q.where("r.stakeholder_group_id", "=", query.stakeholderGroupId);
+r.status
+    api:adoption/assessments.ts:1123: if (query.status !== undefined) q = q.where("r.status", "=", query.status);
+r.transformation_id
+    api:adoption/assessments.ts:355: .where("r.transformation_id", "=", transformationId);
+    api:kpi/calculation-runs.ts:116: let q = db.selectFrom("calculation_run as r").selectAll("r").where("r.transformation_id", "=", transformationId);
+    api:reporting/dashboards/engine.ts:264: "r.transformation_id",
+s.business_unit_id
+    worker:handlers/gates.ts:367: "s.business_unit_id",
+s.completeness
+    api:workflows/gate-reviews.ts:143: "s.completeness",
+s.completion_rule
+    api:workflows/phase-steps.ts:213: "s.completion_rule",
+s.criterion_key
+    api:workflows/gate-reviews.ts:138: .innerJoin("gate_criterion_definition as d", "d.key", "s.criterion_key")
+    api:workflows/gate-reviews.ts:140: "s.criterion_key",
+    api:workflows/gates.ts:1369: .innerJoin("gate_criterion_definition as d", "d.key", "s.criterion_key")
+s.cycle_date
+    worker:handlers/escalations.ts:813: .whereRef("later.cycle_date", ">", "s.cycle_date"),
+s.default_owner_role_code
+    api:workflows/phase-steps.ts:211: "s.default_owner_role_code",
+s.duration_working_days
+    api:portfolio/schedule-network.ts:53: .select(["i.id", "i.code", "i.name", "s.duration_working_days"])
+s.forum_id
+    worker:handlers/escalations.ts:796: "s.forum_id",
+    worker:handlers/escalations.ts:810: .whereRef("later.forum_id", "=", "s.forum_id")
+    worker:handlers/escalations.ts:829: .groupBy(["s.organization_id", "s.transformation_id", "s.forum_id", "s.source_record_type", "s.source_record_id"]);
+s.gate_decision_id
+    worker:handlers/gates.ts:372: .where("s.gate_decision_id", "=", p.gateDecisionId)
+s.gate_exception_id
+    api:workflows/gate-reviews.ts:144: "s.gate_exception_id",
+    api:workflows/gates.ts:1368: .innerJoin("gate_exception as e", "e.id", "s.gate_exception_id")
+s.gate_submission_id
+    api:workflows/gate-reviews.ts:150: .where("s.gate_submission_id", "=", submission.id)
+    api:workflows/gates.ts:1378: .where("s.gate_submission_id", "=", submissionId)
+s.initiative_id
+    api:portfolio/schedule-network.ts:52: .leftJoin("initiative_schedule as s", "s.initiative_id", "i.id")
+    worker:handlers/gates.ts:363: .innerJoin("initiative as i", "i.id", "s.initiative_id")
+    worker:handlers/gates.ts:366: "s.initiative_id",
+s.key
+    api:workflows/phase-steps.ts:204: "s.key",
+s.mandatory
+    api:workflows/gate-reviews.ts:142: "s.mandatory",
+s.ordinal
+    api:workflows/gate-reviews.ts:141: "s.ordinal",
+    api:workflows/gate-reviews.ts:151: .orderBy("s.ordinal")
+    api:workflows/gates.ts:1379: .orderBy("s.ordinal")
+s.organization_id
+    worker:handlers/escalations.ts:829: .groupBy(["s.organization_id", "s.transformation_id", "s.forum_id", "s.source_record_type", "s.source_record_id"]);
+    worker:handlers/escalations.ts:830: if (organizationId !== undefined) q = q.where("s.organization_id", "=", organizationId);
+s.phase_code
+    api:workflows/phase-steps.ts:202: .innerJoin("phase_definition as p", "p.code", "s.phase_code")
+    api:workflows/phase-steps.ts:205: "s.phase_code",
+s.procedure_ar
+    api:workflows/phase-steps.ts:208: "s.procedure_ar",
+s.rag
+    worker:handlers/escalations.ts:804: .where("s.rag", "=", "red")
+s.required_evidence_ar
+    api:workflows/phase-steps.ts:210: "s.required_evidence_ar",
+s.required_evidence_en
+    api:workflows/phase-steps.ts:209: "s.required_evidence_en",
+s.reviewer_role_code
+    api:workflows/phase-steps.ts:212: "s.reviewer_role_code",
+s.source_procedure_en
+    api:workflows/phase-steps.ts:207: "s.source_procedure_en",
+s.source_record_id
+    worker:handlers/escalations.ts:798: "s.source_record_id",
+    worker:handlers/escalations.ts:812: .whereRef("later.source_record_id", "=", "s.source_record_id")
+    worker:handlers/escalations.ts:824: .whereRef("d.blocker_record_id", "=", "s.source_record_id")
+s.source_record_type
+    worker:handlers/escalations.ts:797: "s.source_record_type",
+    worker:handlers/escalations.ts:811: .whereRef("later.source_record_type", "=", "s.source_record_type")
+    worker:handlers/escalations.ts:823: .whereRef("d.blocker_record_type", "=", "s.source_record_type")
+s.step_key
+    api:workflows/g5.ts:122: .where("s.step_key", "=", PILOT_STEP_KEY)
+s.submission_no
+    api:workflows/impact.ts:239: "s.submission_no",
+t.currency
+    api:reporting/dashboards/scope.ts:27: const COLUMNS = ["t.id", "t.organization_id", "t.code", "t.name", "t.status", "t.current_phase", "t.currency"] as const;
+t.indicator_ordinal
+    api:adoption/gate-facts.ts:51: .select(["t.value_source", "t.indicator_ordinal", "t.measure_ordinal"])
+    api:adoption/gate-facts.ts:54: .orderBy("t.indicator_ordinal")
+    api:adoption/indicators.ts:647: .select(["t.value_source", "t.indicator_ordinal", "t.measure_ordinal"])
+t.key
+    api:adoption/gate-facts.ts:49: .innerJoin("adoption_indicator_template as t", "t.key", "l.template_key")
+    api:adoption/indicators.ts:645: .innerJoin("adoption_indicator_template as t", "t.key", "l.template_key")
+t.measure_ordinal
+    api:adoption/gate-facts.ts:51: .select(["t.value_source", "t.indicator_ordinal", "t.measure_ordinal"])
+    api:adoption/gate-facts.ts:55: .orderBy("t.measure_ordinal")
+    api:adoption/indicators.ts:647: .select(["t.value_source", "t.indicator_ordinal", "t.measure_ordinal"])
+t.value_source
+    api:adoption/gate-facts.ts:51: .select(["t.value_source", "t.indicator_ordinal", "t.measure_ordinal"])
+    api:adoption/indicators.ts:647: .select(["t.value_source", "t.indicator_ordinal", "t.measure_ordinal"])
+target_trajectory.approve
+    api:kpi/trajectories.ts:356: await auditOf(ctx, "target_trajectory.approve", current, approved, comment);
+target_trajectory.create
+    api:kpi/trajectories.ts:274: await auditOf(ctx, "target_trajectory.create", null, row, null, { points: { from: null, to: stored } });
+target_trajectory.supersede
+    api:kpi/trajectories.ts:339: await auditOf(ctx, "target_trajectory.supersede", previous, superseded);
+target_trajectory.withdraw
+    api:kpi/trajectories.ts:395: await auditOf(ctx, "target_trajectory.withdraw", current, updated, reason);
+trace_link.create
+    api:reporting/traceability.ts:677: await auditLink(ctx, "trace_link.create", id, { next: 1 }, changes);
+trace_link.remove
+    api:reporting/traceability.ts:784: "trace_link.remove",
+trace_link.update
+    api:reporting/traceability.ts:755: await auditLink(ctx, "trace_link.update", linkId, { prior: current.version, next: updated.version }, changes);
+trajectory.points
+    packages/shared/src/kpi/trajectory.ts:61: throw new KpiInputError("trajectory.points", "an approved trajectory has at least one point");
+    packages/shared/src/kpi/trajectory.ts:71: throw new KpiInputError("trajectory.points", `two points share the date ${known[i]!.point.date}`);
+transition_decision.approve
+    api:sustainment/transition-decisions.ts:612: approved ? "transition_decision.approve" : "transition_decision.reject",
+transition_decision.reject
+    api:sustainment/transition-decisions.ts:612: approved ? "transition_decision.approve" : "transition_decision.reject",
+transition_decision.submit
+    api:sustainment/transition-decisions.ts:599: "transition_decision.submit",
+v.achieved_on
+    worker:handlers/kpi.ts:269: "v.achieved_on",
+v.data_as_of
+    worker:handlers/kpi.ts:271: "v.data_as_of",
+v.denominator
+    worker:handlers/kpi.ts:267: "v.denominator",
+v.kpi_actual_id
+    api:benefits/measurements.ts:321: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.accepted_value_no"),
+    api:benefits/register.ts:347: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.accepted_value_no"),
+    api:kpi/actuals.ts:832: .where("v.kpi_actual_id", "=", current.id)
+v.kpi_definition_id
+    api:kpi/downstream.ts:49: .select("v.kpi_definition_id")
+    api:kpi/downstream.ts:54: .orderBy("v.kpi_definition_id")
+    api:kpi/kpi-formulas.ts:122: .where("v.kpi_definition_id", "<>", skip)
+v.kpi_version_id
+    api:kpi/actuals.ts:830: .innerJoin("kpi_version as k", "k.id", "v.kpi_version_id")
+    api:kpi/actuals.ts:1096: .innerJoin("kpi_version as k", "k.id", "v.kpi_version_id")
+v.milestone_achieved
+    worker:handlers/kpi.ts:268: "v.milestone_achieved",
+v.missing_reason
+    worker:handlers/kpi.ts:270: "v.missing_reason",
+v.numerator
+    worker:handlers/kpi.ts:266: "v.numerator",
+v.status
+    api:kpi/downstream.ts:52: .where("v.status", "=", "active")
+    api:kpi/kpi-formulas.ts:121: .where("v.status", "=", "active")
+    api:workflows/impact.ts:377: .where("v.status", "in", ["active", "draft"])
+v.transformation_id
+    api:kpi/downstream.ts:51: .where("v.transformation_id", "=", transformationId)
+    api:kpi/kpi-formulas.ts:120: .where("v.transformation_id", "=", transformationId)
+v.value
+    api:benefits/measurements.ts:323: .select(["a.id", "v.value_no", "v.value"])
+    api:benefits/register.ts:349: .select(["a.kpi_definition_id", "v.value", "a.period_end"])
+    worker:handlers/benefits.ts:534: .select(["a.id", "a.period_start", "a.period_end", "a.decided_by", "a.created_by", "v.value_no", "v.value"])
+v.value_no
+    api:benefits/measurements.ts:321: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.accepted_value_no"),
+    api:benefits/measurements.ts:323: .select(["a.id", "v.value_no", "v.value"])
+    api:benefits/register.ts:347: j.onRef("v.kpi_actual_id", "=", "a.id").onRef("v.value_no", "=", "a.accepted_value_no"),
+validation.agenda_ask_shape
+    api:governance/agenda.ts:190: code: "validation.agenda_ask_shape",
+validation.agenda_item_unknown
+    api:governance/meeting-outputs.ts:128: code: "validation.agenda_item_unknown",
+validation.attendance_proxy
+    api:governance/attendance.ts:60: code: "validation.attendance_proxy",
+    api:platform/db-errors.ts:2038: code: "validation.attendance_proxy",
+validation.evidence_unknown
+    api:governance/agenda.ts:199: code: "validation.evidence_unknown",
+validation.record_pair
+    api:governance/meeting-outputs.ts:116: code: "validation.record_pair",
+    api:platform/db-errors.ts:2062: code: "validation.record_pair",
+x.calculated_rag
+    worker:handlers/kpi.ts:1168: .select("x.calculated_rag")
+x.calculation_run_id
+    worker:handlers/kpi.ts:1154: .innerJoin("calculation_run as r", "r.id", "x.calculation_run_id")
+    worker:handlers/kpi.ts:1167: .innerJoin("calculation_run as r", "r.id", "x.calculation_run_id")
+x.kpi_definition_id
+    worker:handlers/kpi.ts:1156: .where("x.kpi_definition_id", "=", e.kpiDefinitionId)
+    worker:handlers/kpi.ts:1169: .where("x.kpi_definition_id", "=", e.kpiDefinitionId)
+x.reporting_period_id
+    worker:handlers/kpi.ts:1159: .where("x.reporting_period_id", "=", previousPeriod.id)
+    worker:handlers/kpi.ts:1172: .where("x.reporting_period_id", "=", e.period.id)
+x.scope_id
+    worker:handlers/kpi.ts:1158: .where("x.scope_id", "=", e.scopeId)
+    worker:handlers/kpi.ts:1171: .where("x.scope_id", "=", e.scopeId)
+x.scope_kind
+    worker:handlers/kpi.ts:1157: .where("x.scope_kind", "=", e.scopeKind)
+    worker:handlers/kpi.ts:1170: .where("x.scope_kind", "=", e.scopeKind)
+x.value
+    worker:handlers/kpi.ts:1155: .select(["x.value", "x.value_status", "x.value_reason"])
+x.value_basis
+    worker:handlers/kpi.ts:1160: .where("x.value_basis", "=", e.basis)
+    worker:handlers/kpi.ts:1173: .where("x.value_basis", "=", e.basis)
+x.value_reason
+    worker:handlers/kpi.ts:1155: .select(["x.value", "x.value_status", "x.value_reason"])
+x.value_status
+    worker:handlers/kpi.ts:1155: .select(["x.value", "x.value_status", "x.value_reason"])

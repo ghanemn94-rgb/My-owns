@@ -169,3 +169,58 @@ Evidence: `docs/delivery/handbacks/DG4/T-DG4-ARCH-01-evidence/probe-output.txt` 
 | `validation.job_code` | 400 field | accepted | A job code is two lower-case words joined by a dot, such as kpi.reporting_period_open. |
 | `validation.link_path` | 400 field | accepted | A link must be a path inside this application that starts with a single '/'. |
 | `validation.pattern` | 400 field | accepted | Use lower-case letters and '_' only. |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): §3 and §4 as built (BE-R1, BE-R2), and a subject-neutral `work_item.system_managed` text
+
+Sources: BE-R1 handback §6 items 1 and 3; BE-R2 handback §5 (D-109, D-110). Nothing above is removed. Where this amendment and §3 or §4 differ, this amendment wins.
+
+### D1. §3: the worker passes each handler its attempt (BE-R2)
+
+Added to the rules for every P4 job handler, as rule 7:
+
+- `apps/worker/src/worker.ts` subscribes every domain handler with `includeMetadata: true`.
+- It passes `{ retryCount, retryLimit }` from the job's metadata as the fourth argument of `JobHandler.handle(db, data, jobId, attempt?)`. The type is `JobAttempt`, in `apps/worker/src/handlers/spec.ts`.
+- `retryCount` is the number of retries already made (0 on the first attempt). An attempt is the **last** when `retryCount >= retryLimit`, pg-boss's own rule.
+- A handler that must record something on its last attempt reads only this argument. `kpi.recalculate` does (ADR-0027 amendment C2). A handler never reads pg-boss's job table.
+- When `attempt` is absent (a direct call), the call is not known to be the last attempt.
+
+### D2. §4: work items follow their source (BE-R1; D-102, D-105)
+
+**Two services in `apps/api/src/modules/tasks/service.ts`**, exported by `tasks/index.ts`, with twins in `apps/worker/src/kit.ts` (ADR-0002 rule 5). The parity test `apps/api/test/integration/tasks/work-items.test.ts` proves that both produce the same rows and audit events.
+
+- **`rescheduleWorkItemsOfSubject(tx, actor, { organizationId, subjectType, subjectId, kinds }, dueDate)`.**
+  - Locks the source's **open** items of the given kinds `FOR UPDATE`, in id order.
+  - Sets `due_date` on each item whose date differs (null = no due date, never guessed), with `version + 1`.
+  - Writes one audit event per moved item: the new action **`work_item.reschedule`**, with `changes: { due_date: { from, to } }` and the prior and new versions.
+  - Returns how many items moved. Items already on that date are skipped, so a repeat call writes nothing.
+  - `kinds` must not be empty (a programming error otherwise).
+- **`reassignWorkItemOfSubject(tx, actor, input)`** (`input` is a `createWorkItemOnce` input).
+  - Makes `input.assigneeUserId` the holder of the source's only open item of `input.kind`.
+  - Every open item of another assignee is cancelled. Each cancellation is the existing action `work_item.cancel`, with `reason: "reassigned"` and `changes.status` `open → cancelled`.
+  - If the new assignee already holds an open item, nothing else happens: `unchanged` when nothing was cancelled, else `reassigned`.
+  - Otherwise one item is created through `createWorkItemOnce`. The key is the ADR dedupe key when it is free, else its first free variant **`<dedupeKey>#n`** (n = 2, 3, …), with at most 100 keys tried and then a programming-error throw. Its notification takes the same key.
+- **Why `#n`.** The `0028` guard `work_item_guard` keeps the assignee and the dedupe key immutable, and a closed item never reopens. So an owner who returns (A → B → A) gets a new item under a new key. The base key stays reserved, so a redelivered creation still creates nothing.
+- **Concurrency.** The caller holds the source row's `FOR UPDATE` lock, so reassignments of one source are serialised.
+- **Consumers** (BE-R1): RAID actions (`raid/actions.ts`), corrective cases (follow-up date), adoption interventions (due date) and executive-decision asks (required date). Each calls reassign only when the owner changed, and reschedule only when the date changed. So a plain edit never recreates an item that its owner has already completed by hand.
+- **Dedupe keys elsewhere.** Every dedupe key that the ADRs give for a reassignable task (ADR-0031 §4 `raid.action:…`, §5.6 `corrective.follow_up:…`, ADR-0033's intervention task, ADR-0032 §6's executive-ask task) also exists in the `#n` form after an A → B → A reassignment. A reader of `work_item.dedupe_key` must match the base key or `^<base>#[0-9]+$`, never only the exact base.
+
+### D3. §4: `work_item.system_managed`, a subject-neutral text (BE-R1 handback §6 item 3)
+
+- **As built,** three kinds refuse manual completion (`SYSTEM_MANAGED_KINDS` in `tasks/routes.ts`): `approval_decision` and `approval_escalated` close when the approval is decided, and `corrective_case_follow_up` closes when the corrective case closes (ADR-0031 §5.6). The §4 text, "This task closes automatically when its approval is decided.", is untrue for the third kind.
+- **Decided text** for every kind (replaces the §4 row):
+
+  | Status | Code | English text (exact) |
+  |---|---|---|
+  | 422 | `work_item.system_managed` | "This task closes automatically when the record it belongs to is decided or closed." |
+
+- **Implementer change (BE-R3):** `taskRefusals.systemManaged` in `apps/api/src/modules/tasks/routes.ts`, and its assertion in `tasks.test.ts` and any integration test that pins the old text.
+- **Implementer change (FE task):** `work_item__system_managed` in `apps/web/src/i18n/en/problems.json`, with the new English text, and in `ar/problems.json`, a new Arabic text marked provisional.
+- **Unchanged:** the code, the status and the kinds.
+- The §4 operations table line "A kind whose task closes with its subject (`approval_decision`, `approval_escalated`) …" is to be read with `corrective_case_follow_up` added.
+
+### D4. Codes and keys
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `work_item.system_managed` | 422 | text changed (D3) | This task closes automatically when the record it belongs to is decided or closed. |
+| `work_item.reschedule` | audit action | accepted (BE-R1) | Task due date changed (the audit-trail label the FE task adds; the server sends only the action) |

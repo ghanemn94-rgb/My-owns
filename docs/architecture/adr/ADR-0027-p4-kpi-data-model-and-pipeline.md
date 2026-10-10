@@ -275,3 +275,67 @@ Every KPI value, threshold, bound and expected value is `numeric(24,6)` (ADR-001
 | `kpi.downstream.formula_kpi` | label key | accepted | Formula KPI that reads this KPI |
 | `kpi.downstream.outcome_kpi` | label key | accepted | Outcome KPI |
 | `kpi.downstream.executive_overview_outcomes` | label key | accepted | Executive Overview: outcomes |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): formula lineage, §8 step 4 as built, and the code added since ARCH-R1
+
+Sources: KBE-R1 handback §5.2–§5.4, KBE-R2 handback §5.2 item 4, BE-R2 handback §5 (D-109, D-110). Nothing above is removed. Where this amendment and §7 or §8 differ, this amendment wins.
+
+### C1. Formula lineage: the stored shape of `kpi_evaluation.inputs` (decided)
+
+**The gap.** §2 and ADR-0028 §8 define the formula inputs (`kpi_formula_input`) but not what an evaluation records about the values that fed them. As built (`apps/worker/src/handlers/kpi.ts`), a formula evaluation stores `{formula, values: {var: value}}` (or `{formula}` when an input is Unknown). The values are there, but the accepted actual versions behind them are not. Since KBE-R1, an input may be bound from the source KPI's accepted values *without* the source being evaluated in the same run ("binding only"), so not even a same-run row exists to follow.
+
+**Decided: store the lineage per variable; do not leave it at the input-value level.** The reason is REQ-S08-006: "any displayed number can show its lineage", including the input actual versions. A formula KPI is a displayed number, so it needs this. The column is already `jsonb` with `CHECK (jsonb_typeof(inputs) = 'object')` (`0035`), so **no migration**. The contract keeps `KpiEvaluation.inputs: { type: object }`; only its description changes.
+
+**Shapes, by `value_source`** (members marked *new* are added by this amendment; the others are as built and unchanged):
+
+- `entered`: `{ kpiActualId, valueNo, window? }`. As built: the accepted slot and value number (`kpi_actual_value`), and for a cumulative window the period ids. `{}` when no value is accepted (`value_source = 'none'`).
+- `rolled_up`: as built, either `{}` (no roll-up: milestone or rule `none`) or `{ expectedScopes, missingScopes }`. *New:* `entries: [{ scopeId, kpiActualId, valueNo }]`, one per scope whose accepted value entered the roll-up, ordered by `scopeId`. A scope without an accepted value is not listed (it is in `missingScopes`).
+- `formula`: `{ formula, values?, sources }`, where:
+  - `formula` and `values` are as built (`values` only when every input is known);
+  - *new* `sources` is an object keyed by variable name, in `kpi_formula_input` order. Each entry is `{ kpiDefinitionId, kpiVersionId, inputBasis, scopeKind, scopeId, reportingPeriodId, valueSource, valueStatus, value, inputs }`:
+    - `kpiDefinitionId`, `kpiVersionId`: the source KPI and the version it was evaluated with (null only when the source has no active version);
+    - `inputBasis`: `period` | `cumulative`;
+    - `scopeKind`, `scopeId`, `reportingPeriodId`: the source slot;
+    - `valueSource`, `valueStatus`, `value`: what the binding used (`value` a decimal string or null);
+    - `inputs`: **the source slot's own `inputs`, in the shape of this list**. For an entered source that is `{ kpiActualId, valueNo, window? }`, i.e. the accepted actual version. For a formula source it is that source's own `{ formula, values?, sources }`, so lineage reaches the actuals through every level. The depth is bounded by the acyclic formula graph (`kpi_formula_no_cycle`) and by the worker's existing depth limit of 32.
+  - **The same shape whether the source was evaluated in this run or bound only** (KBE-R1's `ensureInput`). A binding-only source is still not stored as an evaluation of the run, and still records no finding. Only its lineage is copied into the consumer's `sources` entry.
+
+**Reading it.** `getCalculationRun` already returns the run's evaluations with `inputs`. The KPI drill-down (`loadKpiStatusLineage`) may expose `sources` later. Its contract is unchanged here, and no exposure is claimed by this amendment.
+
+**Implementer (kpi-benefits-engineer task):**
+1. In `evaluateSlot`, record each bound input's `{valueSource, valueStatus, value, inputs, kpiVersionId}` next to `ctx.computed`, for the same key, in both the run path and `ensureInput`.
+2. Build `sources` from that record.
+3. Add `entries` to the roll-up inputs.
+
+**Tests:**
+- T = a + b with a and b accepted in separate runs: T's `sources.a.inputs` and `sources.b.inputs` name each accepted `kpiActualId` and `valueNo`.
+- A formula over a formula source nests one level.
+- An Unknown input appears in `sources` with `valueStatus` unknown and `inputs: {}`, and `values` is absent.
+- A roll-up lists its `entries`.
+- The run's other rows, findings and events are unchanged (the KBE-R1 byte comparison).
+
+### C2. §8 step 4 as built (KBE-R1, BE-R2)
+
+Step 4 reads, as built:
+
+**Failure.** pg-boss retries (ADR-0008 §4). A retry finds no committed run (its transaction rolled back) and computes again.
+
+- **Where the attempt comes from.** `apps/worker/src/worker.ts` subscribes with `includeMetadata: true` and passes every domain handler `{ retryCount, retryLimit }` from the job's metadata, as the fourth argument of `JobHandler.handle` (`apps/worker/src/handlers/spec.ts`, `JobAttempt`; BE-R2). The KBE-R1 read of pg-boss's job table is removed.
+- **The last attempt.** An attempt is the last when `retryCount >= retryLimit` (pg-boss's own rule; `isFinalAttempt`). When `recalculate` throws on it, the handler first writes one `calculation_run` in a separate transaction:
+  - `status = 'failed'`, `error_code = 'kpi.recalculate_failed'`;
+  - zero evaluations and zero findings;
+  - no outbox event, no ledger row and no audit event.
+
+  It then rethrows, so the job still lands in `ops.failed`.
+- **Earlier attempts** record nothing and rethrow.
+- **A call without an attempt** (a direct call in a test) is never treated as the last attempt.
+- **Replays.** The failed run is the trigger's one run (unique trigger key and idempotency key; the insert does nothing on conflict). So a replay of the dead-lettered job answers `already_run` and writes nothing.
+- **What the reader sees.** The accepted slot is not touched, and the panel shows the last evaluation with its age (Stale when the data-quality rule says so).
+
+### C3. Code added since ARCH-R1 (accepted, with its exact English text)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `kpi.recalculate_failed` | `calculation_run.error_code` (stored; no HTTP response) | accepted (KBE-R1) | The calculation failed after its last retry; the last calculated status is still shown. |
+
+The text is authored here for the screens that show a failed run (`getCalculationRun`, `listCalculationRuns`): the server stores only the code.

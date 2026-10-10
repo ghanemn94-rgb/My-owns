@@ -188,3 +188,22 @@ The REQ-S16-017 integration test (KBE-E, `test/integration/benefits/entity-group
 |---|---|---|---|
 | `benefits.task.finance_validation_review` | message key | accepted | Validate the value of {benefitCode} for {periodStart} to {periodEnd}. |
 | `kpi.downstream.benefit` | label key | accepted | Benefit measured by this KPI |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): reading one plan value for its version
+
+### P1. `getBenefitPlanValue` (FE-C handback decision 1; KBE-R2 handback §5.1 item 3)
+
+**The gap.** `updateBenefitPlanValue` needs `If-Match`. The only read of plan values is `getBenefitValues`, whose `BenefitValueLine` has `recordId` but no `version` and sets `additionalProperties: false`. So no client can learn the current version of an existing plan value, and `createBenefitPlanValue`'s `Location` (`…/benefit-plan-values/{id}`) has no read behind it.
+
+**Decided: a plan-value read, not `version` on the line.**
+
+- `GET /api/v1/transformations/{transformationId}/benefit-plan-values/{benefitPlanValueId}`, operation `getBenefitPlanValue`, tag `benefits`, permission `transformation.read` (§9: "values" are read with `transformation.read`, AUD included; 404 outside scope).
+- 200 `BenefitPlanValue` (the schema the create and the update already return, with `version`, `note` and `valueKind`) and `ETag` = the row's `version`. 404 when the id is not a `benefit_plan_value` row of that transformation. 400 for a malformed id; 401; 429. A read: no write, no audit event.
+- **Edit flow (FE):** the values screen takes `recordId` from a `benefit_plan_value` line of `getBenefitValues`, calls `getBenefitPlanValue` to get the record and its `ETag`, and sends that ETag as `If-Match` to `updateBenefitPlanValue`. A 409 shows the current version (the platform conflict pattern).
+
+**Why not `version` on `BenefitValueLine`:**
+1. It changes the response of an existing operation (`getBenefitValues`) and a shared schema that also describes `benefit_measurement` lines, whose edits go through their own record reads.
+2. The line does not carry `note` and `valueKind` in edit form, so an edit form would still need a record read.
+3. The single read also makes `createBenefitPlanValue`'s `Location` resolve, the precedent of `getAdoptionMetricLink` (ADR-0033 amendment of 2026-10-09) and `getInheritedRecord` (ADR-0038 amendment B3).
+
+`getBenefitValues` and `BenefitValueLine` are unchanged. Pending in `apps/api/test/support/p4-pending-arch-r2.ts` until a kpi-benefits-engineer task routes it in KBE-E's `benefits` files and exercises it in the contract test.
