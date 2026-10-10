@@ -25,19 +25,20 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-113.
-  - **Done and integrated through W16 (`c441586`):**
-    - every architecture task (ARCH-01 to ARCH-08, ARCH-R1, ARCH-R2);
-    - every backend and KPI/benefits implementer task, including the repair rounds R1–R3;
-    - FE-A to FE-G, FE-D2 and FE-R1;
-    - QA-A (acceptance suites A04, A05, A10).
-  - **Merged-tree verification of `c441586`:** every check exits 0 (D-113): unit 2659 + 259/2 in both locale settings, integration 1780/1780, e2e 298/298 with no agent running.
-  - **In flight:** W17, ARCH-R3, FE-F2, FE-G2 and QA-B, started 08:43Z in their own worktrees.
+- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-114.
+  - **Done and integrated through W17 (`0a3da46`):**
+    - every architecture task (ARCH-01 to ARCH-08, ARCH-R1 to ARCH-R3);
+    - every backend and KPI/benefits task, including the repair rounds R1–R3;
+    - every planned P4 screen (FE-A to FE-G, FE-D2, FE-F2, FE-G2, FE-R1);
+    - QA-A and QA-B (A04, A05, A08, A09, A10).
+  - **Merged-tree verification of `0a3da46` (D-114):**
+    - e2e 324/324 and unit 2719 + 259/2 in both locale settings;
+    - **integration 1831/1832:** `benefits-queue.test.ts` times out in the full suite with no load. It is assigned to KBE-R4, and the tree is not green until it is fixed.
   - **Remaining builds:**
-    - W18: BE-R4 (implements ARCH-R3), QA-C, and FE-R2 (route-level code splitting, D-111);
-    - W19: FE-R3 (adopts ARCH-R3's reads) and AN-P4 (the register update before the freeze).
+    - W18: BE-R4 and KBE-R4 (implement ARCH-R3; KBE-R4 also root-causes the queue test), QA-C (A11, A03, the REQ-DLV-036 run), FE-R2 (code splitting);
+    - W19: FE-R3 (adopts ARCH-R3) and AN-P4 (the register update before the freeze).
   - **Then:** the freeze, the three reviews and the audit.
-- **Next action:** integrate each W17 run as it finishes. Verify the merged tree, with e2e run between waves and no agent running (D-112). Then create the W18 worktrees before any W18 run starts (D-100).
+- **Next action:** integrate each W18 run as it finishes, then verify. W19 starts only after BE-R4 and KBE-R4 are merged, because FE-R3 depends on both.
 
 ## DG2 scope (P2 — diagnose, define and design)
 
