@@ -36,6 +36,18 @@ import {
   TransformationFinanceQueuePage,
 } from "../pages/finance-validation/FinanceValidationPages.tsx";
 import { MyWorkPage } from "../pages/my-work/MyWorkPage.tsx";
+import { ActionItemPage, ActionsPage } from "../pages/actions/ActionsPage.tsx";
+import {
+  EscalationsPage,
+  ExecutiveDecisionPage,
+  ExecutiveDecisionsPage,
+} from "../pages/executive-decisions/ExecutiveDecisionsPage.tsx";
+import { ForumPage, ForumsPage } from "../pages/forums/ForumsPage.tsx";
+import { MeetingPage } from "../pages/meetings/MeetingPage.tsx";
+import { MeetingsPage } from "../pages/meetings/MeetingsPage.tsx";
+import { CorrectiveActionsPage, CorrectiveCasePage, CorrectiveRulesPage } from "../pages/raid/CorrectivePages.tsx";
+import { RaidDecisionLogPage } from "../pages/raid/DecisionLogPage.tsx";
+import { RaidPage } from "../pages/raid/RaidPage.tsx";
 import { RaciPage } from "../pages/raci/RaciPage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
 import { BenefitFormulaPage } from "../pages/benefit-formulas/BenefitFormulaPage.tsx";
@@ -63,7 +75,7 @@ import { TransformationCreatePage } from "../pages/transformations/Transformatio
 import { TransformationDetailPage } from "../pages/transformations/TransformationDetailPage.tsx";
 import { TransformationEditPage } from "../pages/transformations/TransformationEditPage.tsx";
 import { TransformationListPage } from "../pages/transformations/TransformationListPage.tsx";
-import { NAV_AREAS } from "./nav.ts";
+import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
 import { Shell } from "./Shell.tsx";
 
 const placeholderRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.availability === "planned").map((a) => ({
@@ -77,6 +89,12 @@ const entryRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.workspaceTab).map((
   element: <AreaEntryPage area={a.id} tab={a.workspaceTab!} moreTabs={a.moreWorkspaceTabs ?? []} />,
 }));
 
+/** T-DG4-FE-D: area sub-entries that open one workspace tab of a chosen transformation (nav.ts NAV_SUBPAGES). */
+const subEntryRoutes: RouteObject[] = NAV_SUBPAGES.filter((s) => s.workspaceTab).map((s) => ({
+  path: s.path.slice(1),
+  element: <AreaEntryPage area={s.area} tab={s.workspaceTab!} />,
+}));
+
 /**
  * The P4 routes of FE-B…FE-G (p4-plan §5.1), registered up front by T-DG4-FE-A (p4-plan §5.3). Each one shows the
  * `P4BeingBuiltPage` placeholder (`nav.p4.<feature>.*`) until its owning task replaces the element through an
@@ -87,14 +105,7 @@ const entryRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.workspaceTab).map((
 export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
   // FE-B (slice A: KPI engine): built by T-DG4-FE-B, see the KPI routes below.
   // FE-C (slice B: benefits and Finance validation): built by T-DG4-FE-C, see the benefit routes below.
-  // FE-D (slices E and D: RAID, actions, forums, meetings, T16)
-  { path: "transformations/:id/raid", feature: "raid", owner: "FE-D" },
-  { path: "transformations/:id/actions", feature: "actions", owner: "FE-D" },
-  { path: "transformations/:id/corrective-actions", feature: "correctiveActions", owner: "FE-D" },
-  { path: "transformations/:id/forums", feature: "forums", owner: "FE-D" },
-  { path: "transformations/:id/meetings", feature: "meetings", owner: "FE-D" },
-  { path: "transformations/:id/meetings/:meetingId", feature: "meeting", owner: "FE-D" },
-  { path: "transformations/:id/executive-decisions", feature: "executiveDecisions", owner: "FE-D" },
+  // FE-D (slices E and D: RAID, actions, forums, meetings, T16): built by T-DG4-FE-D, see the routes below.
   // FE-E (slices F and G: adoption, BAU, improvement, lessons)
   { path: "transformations/:id/adoption", feature: "adoption", owner: "FE-E" },
   { path: "transformations/:id/bau", feature: "bau", owner: "FE-E" },
@@ -156,6 +167,24 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/benefit-overlaps/:overlapId", element: <BenefitOverlapPage /> },
       { path: "transformations/:id/benefit-scenarios", element: <BenefitScenariosPage /> },
       { path: "transformations/:id/benefit-valuation-methods", element: <ValuationMethodsPage /> },
+      // P4 slices E and D: RAID, actions, corrective actions, forums, meetings, T16 (T-DG4-FE-D; p4-work-split §E.5,
+      // §D.5). The action-register, corrective-action, meeting and executive-decision detail paths are the backend's
+      // work-item links (raid_action_due, corrective_case_follow_up, minutes_to_approve, meeting_action_due,
+      // executive_decision_due), so a reminder never leads to "page not found".
+      { path: "transformations/:id/raid", element: <RaidPage /> },
+      { path: "transformations/:id/raid-decision-log", element: <RaidDecisionLogPage /> },
+      { path: "transformations/:id/actions", element: <ActionsPage /> },
+      { path: "transformations/:id/action-register/:actionItemId", element: <ActionItemPage /> },
+      { path: "transformations/:id/corrective-actions", element: <CorrectiveActionsPage /> },
+      { path: "transformations/:id/corrective-actions/:caseId", element: <CorrectiveCasePage /> },
+      { path: "transformations/:id/corrective-action-rules", element: <CorrectiveRulesPage /> },
+      { path: "transformations/:id/forums", element: <ForumsPage /> },
+      { path: "transformations/:id/forums/:forumId", element: <ForumPage /> },
+      { path: "transformations/:id/meetings", element: <MeetingsPage /> },
+      { path: "transformations/:id/meetings/:meetingId", element: <MeetingPage /> },
+      { path: "transformations/:id/executive-decisions", element: <ExecutiveDecisionsPage /> },
+      { path: "transformations/:id/executive-decisions/:decisionId", element: <ExecutiveDecisionPage /> },
+      { path: "transformations/:id/escalations", element: <EscalationsPage /> },
       { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },
       {
         path: "transformations/:id/finance-validations/:financeValidationId",
@@ -198,6 +227,7 @@ export const routes: RouteObject[] = [
       { path: "about", element: <AboutPage /> },
       ...p4PlannedRoutes,
       ...entryRoutes,
+      ...subEntryRoutes,
       ...placeholderRoutes,
       { path: "*", element: <NotFoundPage /> },
     ],
