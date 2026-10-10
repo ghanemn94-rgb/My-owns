@@ -1,0 +1,7 @@
+First run of the evidence-only spec (before plan-value-evidence-run.log), exit=1, both projects:
+  part 1 (edit, PATCH If-Match "1", saved, version 2) passed; part 2 failed at
+  `await expect(alert).toHaveAttribute("data-state", "conflict")` - element(s) not found.
+Cause (the evidence spec, not the product): part 2 tried to provoke the 409 by making the intercepted GET answer an
+older version, but the reopened dialog used the plan-value query already cached at version 2, so the PATCH succeeded.
+The spec was changed to the realistic case (another session saves through the real API after this user's read; the
+save then answers 409) and the second run passed in both languages (plan-value-evidence-run.log).

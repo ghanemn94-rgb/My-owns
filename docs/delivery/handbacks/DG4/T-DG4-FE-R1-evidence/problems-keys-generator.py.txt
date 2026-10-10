@@ -1,0 +1,100 @@
+import json
+P = {
+ # ---- ARCH-R1/R2 code-table codes (slices I, C, H, J, K)
+ "approval.resubmit_through_record": ("Resubmit this request by submitting its record again.", "أعد تقديم هذا الطلب بتقديم سجله مرة أخرى."),
+ "gate.exception_revoked": ("The exception for a criterion of this submission was revoked; it no longer covers the missing evidence.", "أُلغي الاستثناء الخاص بأحد معايير هذا التقديم؛ ولم يعد يغطي الأدلة الناقصة."),
+ "gate.modular_links_missing": ("Modular entry: supply the missing baseline and outcome links, or record an authorized waiver, before submitting this gate.", "الدخول بالنمط الجزئي المرن: قدّم خط الأساس وروابط النتائج الناقصة، أو سجّل إعفاءً معتمدًا، قبل تقديم هذه البوابة."),
+ "gate.modular_waiver_revoked": ("The waiver of the missing baseline and outcome links was revoked; supply them or record a new waiver, then resubmit G3.", "أُلغي الإعفاء من خط الأساس وروابط النتائج الناقصة؛ قدّمها أو سجّل إعفاءً جديدًا، ثم أعد تقديم G3."),
+ "gate.modular_waiver_expired": ("The waiver of the missing baseline and outcome links has expired; supply them or record a new waiver, then resubmit G3.", "انتهت صلاحية الإعفاء من خط الأساس وروابط النتائج الناقصة؛ قدّمها أو سجّل إعفاءً جديدًا، ثم أعد تقديم G3."),
+ "baseline_missing": ("No active baseline with a value is recorded.", "لا يوجد خط أساس نشط مسجّل بقيمة."),
+ "outcome_link_missing": ("No active outcome has an active KPI.", "لا توجد نتيجة نشطة لها مؤشر أداء نشط."),
+ "inherited_record.record_not_found": ("The evidence item or baseline does not exist in this transformation or is archived.", "عنصر الدليل أو خط الأساس غير موجود في هذا التحوّل أو مؤرشف."),
+ "validation.duplicate_scope_item": ("Each item can appear only once in the scale scope.", "لا يظهر كل عنصر إلا مرة واحدة في نطاق التوسّع."),
+ "validation.proposed_change": ("This proposed change does not fit the kind of change requested.", "هذا التغيير المقترح لا يناسب نوع التغيير المطلوب."),
+ "validation.proposed_change_size": ("A change request proposes between 1 and 20 changes.", "يقترح طلب التغيير ما بين 1 و20 تغييرًا."),
+ "validation.ratio_range": ("Enter a decimal ratio from 0 to 1.", "أدخل نسبة عشرية من 0 إلى 1."),
+ "validation.basis_needs_share": ("An allocation basis needs a share.", "يتطلب أساس التخصيص حصة."),
+ "validation.root_pair": ("Give rootType and rootId together.", "أدخل rootType وrootId معًا."),
+ "validation.share_range": ("A share is more than 0 and at most 1 (100 %).", "الحصة أكبر من 0 وبحد أقصى 1 (100 %)."),
+ # ---- ADR-0035 (slice H: phases, G5/G6, gate reviews and exceptions)
+ "gate.exception_expired": ("The exception for a criterion of this submission has expired; it no longer covers the missing evidence.", "انتهت صلاحية الاستثناء الخاص بأحد معايير هذا التقديم؛ ولم يعد يغطي الأدلة الناقصة."),
+ "gate.scale_scope_required": ("A G5 approval must record the approved scale scope.", "يجب أن تسجّل موافقة G5 نطاق التوسّع المعتمد."),
+ "gate.scale_scope_not_applicable": ("A scale scope is recorded only with a G5 approval.", "لا يُسجَّل نطاق التوسّع إلا مع موافقة G5."),
+ "gate.scale_scope_invalid": ("Each scope item names an initiative of this transformation and a business unit of its organization.", "يحدد كل عنصر في النطاق مبادرة من هذا التحوّل ووحدة أعمال من مؤسسته."),
+ "gate.g5_not_approved": ("Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.", "يتطلب التوسّع موافقة الأعمال G5 (التوسّع)، وهي غير معتمدة لهذا التحوّل."),
+ "scale.outside_approved_scope": ("This initiative and business unit are outside the scale scope approved at G5.", "هذه المبادرة ووحدة الأعمال خارج نطاق التوسّع المعتمد في G5."),
+ "scale.already_scaled": ("This initiative is already scaled into this business unit.", "هذه المبادرة موسَّعة بالفعل في وحدة الأعمال هذه."),
+ "gate.review_not_open": ("Only a submitted or under-review gate submission can be reviewed.", "لا يمكن مراجعة تقديم البوابة إلا إذا كان مقدَّمًا أو قيد المراجعة."),
+ "gate.reviewer_is_submitter": ("The submitter cannot review their own gate submission.", "لا يمكن لمقدّم تقديم البوابة مراجعة تقديمه."),
+ "gate.review_condition_required": ("An open condition is required when the criterion meets with conditions.", "يلزم شرط مفتوح عندما يُستوفى المعيار بشروط."),
+ "gate_exception.criterion_not_mandatory": ("An exception can only cover a mandatory criterion of this gate.", "لا يغطي الاستثناء إلا معيارًا إلزاميًا لهذه البوابة."),
+ "gate_exception.already_pending": ("An exception for this criterion is already awaiting a decision.", "يوجد بالفعل استثناء لهذا المعيار بانتظار قرار."),
+ "gate_exception.expiry_in_past": ("The expiry date must be today or later.", "يجب أن يكون تاريخ الانتهاء اليوم أو بعده."),
+ "gate_exception.not_approver": ("Only the configured approver of this gate can decide its exceptions.", "لا يبتّ في استثناءات هذه البوابة إلا المعتمِد المحدد لها."),
+ "gate_exception.requester_cannot_decide": ("The requester cannot decide their own exception.", "لا يمكن لمقدّم الطلب البتّ في استثنائه."),
+ "gate_exception.not_pending": ("Only a pending exception can be decided or withdrawn.", "لا يمكن البتّ في الاستثناء أو سحبه إلا إذا كان معلّقًا."),
+ "gate_exception.not_accepted": ("Only an accepted exception can be revoked.", "لا يمكن إلغاء الاستثناء إلا إذا كان مقبولًا."),
+ "gate_exception.revoke_reason_required": ("A reason is required to revoke an exception.", "يلزم سبب لإلغاء الاستثناء."),
+ "phase_step.completion_rule_unmet": ("The completion rule of this step is not met.", "قاعدة إكمال هذه الخطوة غير مستوفاة."),
+ "phase_step.not_owner": ("Only the owner of this step can do this.", "لا يستطيع ذلك إلا مالك هذه الخطوة."),
+ "phase_step.reviewer_is_owner": ("The owner cannot review their own step.", "لا يمكن للمالك مراجعة خطوته."),
+ "phase_step.invalid_transition": ("A step moves only as the phase procedure allows.", "لا تنتقل الخطوة إلا بحسب ما يسمح به إجراء المرحلة."),
+ "phase_step.owner_required": ("Assign an owner before the step can be reviewed.", "عيّن مالكًا قبل أن يمكن مراجعة الخطوة."),
+ "phase_step.return_note_required": ("A note is required to return a step.", "تلزم ملاحظة لإعادة الخطوة."),
+ "phase_step_evidence.exists": ("This evidence is already linked to the step.", "هذا الدليل مرتبط بالخطوة بالفعل."),
+ "phase_step.complete": ("This step is complete; its evidence can no longer change.", "اكتملت هذه الخطوة؛ ولم يعد بالإمكان تغيير أدلتها."),
+ "risk_disposition.not_open_risk": ("Only an open risk can be given a disposition.", "لا يمكن تحديد معالجة إلا لخطر مفتوح."),
+ # ---- ADR-0036 (slice H: change control)
+ "change_request.kind_subject_mismatch": ("This kind of change does not apply to that record.", "هذا النوع من التغيير لا ينطبق على ذلك السجل."),
+ "change_request.subject_not_approved": ("Only an approved record goes through change control; edit the draft directly.", "لا يمر عبر ضبط التغيير إلا سجل معتمد؛ عدّل المسودة مباشرة."),
+ "change_request.already_open": ("This record already has an open change request.", "لهذا السجل طلب تغيير مفتوح بالفعل."),
+ "change_request.reason_required": ("A reason is required for a change request.", "يلزم سبب لطلب التغيير."),
+ "change_request.proposed_change_invalid": ("The proposed change does not match the fields of this kind of change.", "التغيير المقترح لا يطابق حقول هذا النوع من التغيير."),
+ "change_request.not_editable": ("Only a draft change request, or one returned for changes, can be edited.", "لا يمكن تعديل طلب التغيير إلا إذا كان مسودة أو أُعيد لإجراء تعديلات."),
+ "change_request.not_submittable": ("Only a draft change request, or one returned for changes, can be submitted.", "لا يمكن تقديم طلب التغيير إلا إذا كان مسودة أو أُعيد لإجراء تعديلات."),
+ "change_request.not_withdrawable": ("A decided change request cannot be withdrawn.", "لا يمكن سحب طلب تغيير تم البتّ فيه."),
+ "change_request.subject_moved": ("The record changed after this request was submitted; withdraw it and raise a new one.", "تغيّر السجل بعد تقديم هذا الطلب؛ اسحبه وارفع طلبًا جديدًا."),
+ "change_request.retrospective_not_supported": ("A retrospective restatement is not supported; changes take effect from now on.", "لا تُدعم إعادة الصياغة بأثر رجعي؛ تسري التغييرات من الآن فصاعدًا."),
+ "change_request.not_requester": ("Only the requester or the transformation lead can change this request.", "لا يستطيع تغيير هذا الطلب إلا مقدّمه أو قائد التحوّل."),
+ "kpi_version.change_request_required": ("This KPI already has an active version; changing its definition, baseline or target needs an approved change request.", "لهذا المؤشر نسخة نشطة بالفعل؛ ويتطلب تغيير تعريفه أو خط أساسه أو مستهدفه طلب تغيير معتمدًا."),
+ "milestone.rebaseline_requires_change_request": ("This date change exceeds the material threshold; raise a change request to rebaseline it.", "يتجاوز تغيير التاريخ هذا حد الأهمية؛ ارفع طلب تغيير لإعادة تحديد خط أساسه."),
+ "budget_line.rebaseline_requires_change_request": ("This budget change exceeds the material threshold; raise a change request to rebaseline it.", "يتجاوز تغيير الميزانية هذا حد الأهمية؛ ارفع طلب تغيير لإعادة تحديد خط أساسه."),
+ "change_control.threshold_invalid": ("Thresholds are a number of working days from 0 to 250 and a ratio from 0 to 10.", "الحدود عدد أيام عمل من 0 إلى 250 ونسبة من 0 إلى 10."),
+ # ---- ADR-0037 (slice J: dashboards)
+ "dashboard.period_not_found": ("The reporting period does not exist in this organization.", "فترة التقرير غير موجودة في هذه المؤسسة."),
+ "dashboard.owner_not_found": ("The owner is not a user of this organization.", "المالك ليس مستخدمًا في هذه المؤسسة."),
+ "dashboard.metric_subject_mismatch": ("This drill-down needs a record of the kind the metric is about.", "يتطلب هذا التفصيل سجلًا من النوع الذي يخصه المقياس."),
+ "dashboard.workstream_archived": ("This workstream is archived; open its transformation's dashboard instead.", "مسار العمل هذا مؤرشف؛ افتح لوحة معلومات التحوّل الخاص به بدلًا من ذلك."),
+ "dashboard_rag_policy.threshold_order": ("The amber threshold cannot be beyond the red threshold.", "لا يمكن أن يتجاوز الحد الكهرماني الحد الأحمر."),
+ # ---- ADR-0038 (slice K: traceability, Modular entry, portfolios)
+ "trace_link.pair_not_allowed": ("This kind of link cannot connect these two records.", "لا يمكن لهذا النوع من الروابط ربط هذين السجلين."),
+ "trace_link.record_not_found": ("The linked record does not exist in this transformation.", "السجل المرتبط غير موجود في هذا التحوّل."),
+ "trace_link.record_inactive": ("The linked record is archived or removed.", "السجل المرتبط مؤرشف أو محذوف."),
+ "trace_link.duplicate": ("These two records are already linked.", "هذان السجلان مرتبطان بالفعل."),
+ "trace_link.share_not_allowed": ("A share can be set only on a link into a KPI or a benefit.", "لا تُحدَّد الحصة إلا على رابط إلى مؤشر أداء أو منفعة."),
+ "trace_link.allocation_exceeds_total": ("The allocations into this record would total more than 100%.", "سيتجاوز مجموع التخصيصات إلى هذا السجل 100%."),
+ "trace_link.not_active": ("This link has been removed.", "أُزيل هذا الرابط."),
+ "contribution.allocation_needs_kpi": ("A share needs the contribution's KPI; name the KPI first.", "تتطلب الحصة مؤشر أداء المساهمة؛ حدّد المؤشر أولًا."),
+ "contribution.not_active": ("This contribution has been removed.", "أُزيلت هذه المساهمة."),
+ "inherited_record.not_modular": ("Inherited records can be recorded only for a transformation in Modular entry.", "لا تُسجَّل السجلات الموروثة إلا لتحوّل بالدخول الجزئي المرن."),
+ "inherited_record.prior_approval_use_dispensation": ("Record a prior approval as an inherited gate approval; it is never stored as a platform approval.", "سجّل الموافقة السابقة بوصفها موافقة بوابة موروثة؛ ولا تُخزَّن أبدًا بوصفها موافقة في المنصة."),
+ "inherited_record.duplicate": ("This record is already recorded as inherited.", "هذا السجل مسجّل بالفعل بوصفه موروثًا."),
+ "inherited_record.not_active": ("This inherited record has already been withdrawn.", "سُحب هذا السجل الموروث بالفعل."),
+ "portfolio.code_taken": ("Another portfolio of this organization uses this code.", "تستخدم محفظة أخرى في هذه المؤسسة هذا الرمز."),
+ "portfolio.transformation_already_placed": ("This transformation already sits in a portfolio.", "هذا التحوّل موجود بالفعل في محفظة."),
+ "portfolio.archived": ("This portfolio is archived.", "هذه المحفظة مؤرشفة."),
+ "workstream.initiative_already_assigned": ("This initiative already belongs to a workstream.", "هذه المبادرة تنتمي بالفعل إلى مسار عمل."),
+ "workstream.archived": ("This workstream is archived.", "مسار العمل هذا مؤرشف."),
+ "membership.not_active": ("This membership has already been removed.", "أُزيلت هذه العضوية بالفعل."),
+}
+for i,l in enumerate(["en","ar"]):
+    p=f"apps/web/src/i18n/{l}/problems.json"
+    d=json.load(open(p))
+    added=0
+    for code,v in P.items():
+        k=code.replace(".","__")
+        assert k not in d, (l,k)
+        d[k]=v[i]; added+=1
+    open(p,"w").write(json.dumps(d,ensure_ascii=False,indent=2)+"\n")
+    print(l,added)
+json.dump(sorted(P.keys()),open("/dev/stdout","w"))
