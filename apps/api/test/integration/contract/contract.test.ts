@@ -722,7 +722,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG4-BE-M: + createTraceLink, updateTraceLink, removeTraceLink, setOutcomeContributionAllocation (4 JSON bodies).
     // T-DG4-BE-L2: + updatePhaseStep, reviewPhaseStep, linkPhaseStepEvidence (3 JSON bodies; requestPhaseStepReview and
     // removePhaseStepEvidence are bodiless).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([304, 303, 1]);
+    // T-DG4-BE-M2: + createInheritedRecord, withdrawInheritedRecord (2 JSON bodies; getMissingLinks and
+    // listInheritedRecords are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([306, 305, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
