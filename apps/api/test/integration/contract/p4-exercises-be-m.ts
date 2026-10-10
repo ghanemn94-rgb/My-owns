@@ -17,6 +17,14 @@ import {
   traceabilityGraph,
   traceLink,
   traceLinkPage,
+  portfolio,
+  portfolioPage,
+  portfolioTransformation,
+  portfolioTransformationPage,
+  workstream,
+  workstreamInitiative,
+  workstreamInitiativePage,
+  workstreamPage,
 } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { expect } from "vitest";
@@ -30,9 +38,16 @@ import {
   type Session,
   type TestApi,
   type World,
+  uniq,
 } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
-import { insertDeliverable, seedBenefitWorld, type BenefitWorld, type Caller } from "../benefits/fixtures.ts";
+import {
+  insertDeliverable,
+  insertInitiative,
+  seedBenefitWorld,
+  type BenefitWorld,
+  type Caller,
+} from "../benefits/fixtures.ts";
 import { createOutcomeRow } from "../kpi/fixtures.ts";
 
 export const P4_MIRRORS_BE_M: Readonly<Record<string, z.ZodType>> = {
@@ -51,6 +66,21 @@ export const P4_MIRRORS_BE_M: Readonly<Record<string, z.ZodType>> = {
   listInheritedRecords: inheritedRecordPage,
   createInheritedRecord: inheritedRecord,
   withdrawInheritedRecord: inheritedRecord,
+  // T-DG4-BE-M3 (ADR-0038 §9): portfolios and workstreams.
+  listPortfolios: portfolioPage,
+  createPortfolio: portfolio,
+  getPortfolio: portfolio,
+  updatePortfolio: portfolio,
+  listPortfolioTransformations: portfolioTransformationPage,
+  addPortfolioTransformation: portfolioTransformation,
+  removePortfolioTransformation: portfolioTransformation,
+  listWorkstreams: workstreamPage,
+  createWorkstream: workstream,
+  getWorkstream: workstream,
+  updateWorkstream: workstream,
+  listWorkstreamInitiatives: workstreamInitiativePage,
+  addWorkstreamInitiative: workstreamInitiative,
+  removeWorkstreamInitiative: workstreamInitiative,
 };
 
 // ------------------------------------------------------------------------------------------------ fixture
@@ -370,6 +400,8 @@ export async function exerciseP4BeMOperations(ctx: P4ExerciseContext): Promise<v
 
   // T-DG4-BE-M2 (appended after BE-M, p4-work-split §J+K JK.0): the four Modular-entry operations.
   await exerciseP4BeM2Operations(ctx);
+  // T-DG4-BE-M3 (appended after BE-M2, p4-work-split §J+K JK.0): the 14 portfolio and workstream operations.
+  await exerciseP4BeM3Operations(ctx);
 }
 
 // ------------------------------------------------------------------------------------------------ BE-M2: Modular entry
@@ -623,4 +655,82 @@ export async function exerciseP4BeM2Operations(ctx: P4ExerciseContext): Promise<
   expect([withdrawn.status, withdrawn.body.status, withdrawn.body.version]).toEqual([200, "withdrawn", 2]);
   const again = await m("POST", W, { session: s.tl, headers: ifm(2), body: { reason: "Synthetic: again" } });
   expect([again.status, again.body.code]).toEqual([422, "inherited_record.not_active"]);
+}
+
+// ------------------------------------------------------------------------------------------------ BE-M3: structure
+// T-DG4-BE-M3 (ADR-0038 §9-§12; REQ-S03-001): portfolios with their transformations and workstreams with their
+// initiatives. All data is SYNTHETIC; a portfolio or workstream grants no access and approves nothing.
+
+export async function exerciseP4BeM3Operations(ctx: P4ExerciseContext): Promise<void> {
+  const m = ctx.mirrored;
+  const w = ctx.world;
+  const b = await seedBenefitWorld(ctx.api, w, m);
+  const office = await signIn(ctx.api.app, w.office.subject);
+  const s = b.s;
+  const P = `/api/v1/organizations/${w.orgA.id}/portfolios`;
+
+  // createPortfolio: TO 201 (version 1); AUD 403; a taken code 409.
+  const code = uniq("PF");
+  const created = await m("POST", P, { session: office, body: { code, name: "Synthetic customer portfolio" } });
+  expect([created.status, created.body.version, created.body.status], JSON.stringify(created.body)).toEqual([
+    201,
+    1,
+    "active",
+  ]);
+  expect((await m("POST", P, { session: s.auditor, body: { code: uniq("PF"), name: "AUD" } })).status).toBe(403);
+  const taken = await m("POST", P, { session: office, body: { code, name: "Again" } });
+  expect([taken.status, taken.body.code]).toEqual([409, "portfolio.code_taken"]);
+  const PF = `/api/v1/portfolios/${created.body.id}`;
+
+  // listPortfolios, getPortfolio (organization.read); updatePortfolio: 428, 409, 200.
+  const list = await m("GET", P, { session: s.auditor });
+  expect(list.status).toBe(200);
+  expect(list.body.items.some((p: { id: string }) => p.id === created.body.id)).toBe(true);
+  expect((await m("GET", PF, { session: s.auditor })).status).toBe(200);
+  expect((await m("GET", PF, { session: s.outsider })).status).toBe(404);
+  expect((await m("PATCH", PF, { session: office, body: { name: "Renamed" } })).status).toBe(428);
+  expect((await m("PATCH", PF, { session: office, headers: ifm(9), body: { name: "Renamed" } })).status).toBe(409);
+  const renamed = await m("PATCH", PF, { session: office, headers: ifm(1), body: { name: "Synthetic portfolio 2" } });
+  expect([renamed.status, renamed.body.version, renamed.body.name]).toEqual([200, 2, "Synthetic portfolio 2"]);
+
+  // addPortfolioTransformation: 201; a second placement 422; listPortfolioTransformations; remove: 428, 409, 200, 422.
+  const M = `${PF}/transformations`;
+  const placed = await m("POST", M, { session: office, body: { transformationId: b.transformationId } });
+  expect([placed.status, placed.body.status], JSON.stringify(placed.body)).toEqual([201, "active"]);
+  const twice = await m("POST", M, { session: office, body: { transformationId: b.transformationId } });
+  expect([twice.status, twice.body.code]).toEqual([422, "portfolio.transformation_already_placed"]);
+  const members = await m("GET", M, { session: s.auditor });
+  expect([members.status, members.body.items.length]).toEqual([200, 1]);
+  const R = `${M}/${placed.body.id}/remove`;
+  expect((await m("POST", R, { session: office, body: { reason: "Synthetic: moved" } })).status).toBe(428);
+  expect((await m("POST", R, { session: office, headers: ifm(5), body: { reason: "Synthetic" } })).status).toBe(409);
+  const removed = await m("POST", R, { session: office, headers: ifm(1), body: { reason: "Synthetic: moved" } });
+  expect([removed.status, removed.body.status, removed.body.version]).toEqual([200, "removed", 2]);
+  const again = await m("POST", R, { session: office, headers: ifm(2), body: { reason: "Synthetic: again" } });
+  expect([again.status, again.body.code]).toEqual([422, "membership.not_active"]);
+
+  // createWorkstream: TL 201 WS-01; AUD 403; listWorkstreams, getWorkstream; updateWorkstream: 428, 409, 200.
+  const W = `${b.base}/workstreams`;
+  const ws = await m("POST", W, { session: s.tl, body: { name: "Synthetic digital channels" } });
+  expect([ws.status, ws.body.code, ws.body.version], JSON.stringify(ws.body)).toEqual([201, "WS-01", 1]);
+  expect((await m("POST", W, { session: s.auditor, body: { name: "AUD" } })).status).toBe(403);
+  expect((await m("GET", W, { session: s.auditor })).body.items.length).toBe(1);
+  const WS = `${W}/${ws.body.id}`;
+  expect((await m("GET", WS, { session: s.auditor })).status).toBe(200);
+  expect((await m("PATCH", WS, { session: s.tl, body: { name: "Renamed" } })).status).toBe(428);
+  expect((await m("PATCH", WS, { session: s.tl, headers: ifm(4), body: { name: "Renamed" } })).status).toBe(409);
+  const wsRenamed = await m("PATCH", WS, { session: s.tl, headers: ifm(1), body: { name: "Synthetic channels" } });
+  expect([wsRenamed.status, wsRenamed.body.version]).toEqual([200, 2]);
+
+  // addWorkstreamInitiative: 201; listWorkstreamInitiatives; removeWorkstreamInitiative: 428, 200.
+  const initiativeId = await insertInitiative(ctx.api.db, b);
+  const I = `${WS}/initiatives`;
+  const assigned = await m("POST", I, { session: s.tl, body: { initiativeId } });
+  expect([assigned.status, assigned.body.initiativeId], JSON.stringify(assigned.body)).toEqual([201, initiativeId]);
+  expect((await m("POST", I, { session: s.auditor, body: { initiativeId } })).status).toBe(403);
+  expect((await m("GET", I, { session: s.auditor })).body.items.length).toBe(1);
+  const IR = `${I}/${assigned.body.id}/remove`;
+  expect((await m("POST", IR, { session: s.tl, body: { reason: "Synthetic: regrouped" } })).status).toBe(428);
+  const unassigned = await m("POST", IR, { session: s.tl, headers: ifm(1), body: { reason: "Synthetic: regrouped" } });
+  expect([unassigned.status, unassigned.body.status]).toEqual([200, "removed"]);
 }
