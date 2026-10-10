@@ -1,0 +1,33 @@
+MUTATION BASE-A05-S16-025 file package.json exit 0
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a05-calculation-correctness.test.ts -t REQ-S16-025
+   ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests | 16 skipped) 2144ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  1153ms
+   Tests  1 passed | 16 skipped (17)
+--- runner exit 0
+MUTATION MUT-A05-2 decimal plus replaced by float addition (API) file packages/shared/src/formula/evaluate.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a05-calculation-correctness.test.ts -t REQ-S16-025
+   × A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00 37ms
+   Tests  1 failed | 16 skipped (17)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00
+   AssertionError: expected [ 200, '900719925474099.4' ] to deeply equal [ 200, '900719925474099.3' ]
+--- runner exit 0
+MUTATION MUT-A05-2u decimal plus replaced by float addition (unit) file packages/shared/src/formula/evaluate.ts exit 1
+CMD pnpm vitest run --configLoader runner --project unit-node tests/qa/unit/a05-calc-units.test.ts -t 0.1 \+ 0.2
+   × REQ-S16-025 / REQ-S08-004: decimal formula engine without dynamic code > 0.1 + 0.2 SAR = 0.3 exactly; 100000 x 0.02 x 50 SAR = 100000 exactly 15ms
+   Tests  1 failed | 14 skipped (15)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |unit-node| tests/qa/unit/a05-calc-units.test.ts > REQ-S16-025 / REQ-S08-004: decimal formula engine without dynamic code > 0.1 + 0.2 SAR = 0.3 exactly; 100000 x 0.02 x 50 SAR = 100000 exactly
+   AssertionError: expected '900719925474099.4' to match /^900719925474099\.30*$/
+--- runner exit 0
+MIGRATION MUTATED: 0037 benefit_allocation_guard 'IF total > 1' -> 'IF total > 2' (copy only)
+MUTATION MUT-A10-1b over-100 % accepted (API check and database trigger disabled) file apps/api/src/modules/benefits/allocations.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a10-benefit-integrity.test.ts -t REQ-S08-013
+   × A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated 451ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted  307ms
+   Tests  1 failed | 1 passed | 14 skipped (16)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+   AssertionError: {"benefitId":"01a1247f-e581-743c-948d-16b66f3704c2","setNo":1,"allocations":[{"initiativeId":"01a1247f-e5de-709a-98f4-9d01540ae29e","share":"0.600000","basis":null},{"initiativeId":"01a1247f-e5e2-7342-86ed-19da09845b92","share":"0.500000","basis":null}],"allocatedShare":"1.1","unallocatedShare":"0.000000"}: expected 200 to be 422 // Object.is equality
+--- runner exit 0
+MIGRATION RESTORED (identical to worktree)

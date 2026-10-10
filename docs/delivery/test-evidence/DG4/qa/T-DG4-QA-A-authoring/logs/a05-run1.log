@@ -1,0 +1,190 @@
+port-policy: PostgreSQL listening on port 25652 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-qa-a
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1zm8r5_d7dd1abf (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests | 7 failed) 3701ms
+   × A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG 384ms
+     → {"kpiDefinitionId":"01a12468-17f5-76e8-85a0-f6609c817149","kpiName":"Synthetic KPI 53c760","kpiVersionId":"01a12468-183b-77bf-b0fb-1a9ed3e1c5ac","unitKind":"count","currency":null,"scopeKind":"transformation","scopeId":"01a12468-16ab-7234-a98e-a5b3168fd7aa","reportingPeriodId":"01a12468-17a0-705c-b676-dd731895ca1d","periodLabel":"2026-01","finalTarget":null,"finalTargetDate":null,"changeLabel":"unit","actual":"80","actualStatus":"stale","actualReason":"kpi.stale","expectedToDate":"100","expectedReason":null,"variance":"-20","varianceRatio":"-0.2","trend":"unknown","freshness":{"status":"stale","dataAsOf":"2026-02-28","staleAfterDays":45},"explanation":{"key":"kpi.rag.stale","params":{"actual":"80","reason":"kpi.stale","expected":null,"redThreshold":null,"toleranceMode":null,"amberThreshold":null,"deviationValue":null,"thresholdSource":"none","thresholdVersion":null,"trajectoryVersion":1},"thresholdSource":"none","thresholdVersion":null,"toleranceMode":null,"amberThreshold":null,"redThreshold":null,"trajectoryVersion":1},"calculatedRag":"stale","displayedRag":"stale","override":null,"evaluationId":"01a12468-192c-7271-8739-621014531248","calculationRunId":"01a12468-1920-7a88-8073-15deff25b639"}: expected [ '80', '100', 'stale' ] to deeply equal [ '80', '100', 'red' ]
+   × A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: lower-is-better 80 against 90 is favourable (green); higher-is-better 80 against 90 is adverse (not green) 40ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The measure type lower_is_better does not fit the KPI's polarity higher_is_better.","code":"kpi_version.measure_mismatch","requestId":"01a12468-1984-71d8-affa-3a57cce79f77","errors":[{"pointer":"/measureType","code":"kpi_version.measure_mismatch","message":"The measure type lower_is_better does not fit the KPI's polarity higher_is_better."}]}: expected 422 to be 201 // Object.is equality
+   × A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: an acceptable band 5-10 with actual 12 is outside the band (not green) 35ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The measure type acceptable_band does not fit the KPI's polarity higher_is_better.","code":"kpi_version.measure_mismatch","requestId":"01a12468-19ac-7749-bf74-273a63bb50d1","errors":[{"pointer":"/measureType","code":"kpi_version.measure_mismatch","message":"The measure type acceptable_band does not fit the KPI's polarity higher_is_better."}]}: expected 422 to be 201 // Object.is equality
+   × A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a KPI with no actual for the period renders Unknown (labelled), never 0 or green 110ms
+     → /api/v1/transformations/01a12468-16ab-7234-a98e-a5b3168fd7aa/kpi-status?reportingPeriodId=01a12468-17a0-705c-b676-dd731895ca1d: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12468-1a19-7206-b51b-ab982c8707c0","errors":[{"pointer":"/query/","code":"validation.unknown_field","message":"Unrecognized key: \"reportingPeriodId\""}]}: expected 400 to be 200 // Object.is equality
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a roll-up with a scope that reported before but is missing now is Unknown, not a sum with 0 294ms
+   × A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-005: a zero denominator is 'Not computable' (no division error, not 0) 10ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Kind mismatch: saved (count) / handled (count) is not allowed","code":"formula.kind_mismatch","requestId":"01a12468-1b4c-7754-b169-5e6c3715a4a0","errors":[{"pointer":"/expression","code":"formula.kind_mismatch","message":"Kind mismatch: saved (count) / handled (count) is not allowed"}]}: expected 422 to be 200 // Object.is equality
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: a percentage KPI moving 0.10 -> 0.12 is labelled in percentage points (pp), rates stored as fractions 97ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: the cumulative (YTD) value of a flow KPI equals the sum of its period flows 146ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages  332ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: summing SAR with USD without conversion is rejected 59ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-011: KPI A = B + 1 and B = A * 2 is rejected as circular; adding SAR to a count is rejected 61ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-004: a function outside the whitelist or a JavaScript payload is rejected at parse time 41ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  609ms
+   × A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference 304ms
+     → {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"01a12468-21ad-741e-9e43-187c717d5676"}: expected 428 to be 201 // Object.is equality
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-007: budget/actual/forecast use decimal SAR; forecast slip vs approved date is shown in working days 191ms
+   × A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-009: the fixture network's critical path is the expected chain; with a missing duration no path is claimed 92ms
+     → new row for relation "initiative" violates check constraint "initiative_code_check"
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S15-008: an actual for period 2026-10 keeps observation period, a Riyadh business date and a UTC event timestamp 89ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG
+AssertionError: {"kpiDefinitionId":"01a12468-17f5-76e8-85a0-f6609c817149","kpiName":"Synthetic KPI 53c760","kpiVersionId":"01a12468-183b-77bf-b0fb-1a9ed3e1c5ac","unitKind":"count","currency":null,"scopeKind":"transformation","scopeId":"01a12468-16ab-7234-a98e-a5b3168fd7aa","reportingPeriodId":"01a12468-17a0-705c-b676-dd731895ca1d","periodLabel":"2026-01","finalTarget":null,"finalTargetDate":null,"changeLabel":"unit","actual":"80","actualStatus":"stale","actualReason":"kpi.stale","expectedToDate":"100","expectedReason":null,"variance":"-20","varianceRatio":"-0.2","trend":"unknown","freshness":{"status":"stale","dataAsOf":"2026-02-28","staleAfterDays":45},"explanation":{"key":"kpi.rag.stale","params":{"actual":"80","reason":"kpi.stale","expected":null,"redThreshold":null,"toleranceMode":null,"amberThreshold":null,"deviationValue":null,"thresholdSource":"none","thresholdVersion":null,"trajectoryVersion":1},"thresholdSource":"none","thresholdVersion":null,"toleranceMode":null,"amberThreshold":null,"redThreshold":null,"trajectoryVersion":1},"calculatedRag":"stale","displayedRag":"stale","override":null,"evaluationId":"01a12468-192c-7271-8739-621014531248","calculationRunId":"01a12468-1920-7a88-8073-15deff25b639"}: expected [ '80', '100', 'stale' ] to deeply equal [ '80', '100', 'red' ]
+
+- Expected
++ Received
+
+  [
+    "80",
+    "100",
+-   "red",
++   "stale",
+  ]
+
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:88:92
+     86|     const a = await accepted(kpi.id, { reportingPeriodId: jan.id, valu…
+     87|     let s = await status(kpi.id, `?reportingPeriodId=${jan.id}`);
+     88|     expect([canon(s.actual), canon(s.expectedToDate), s.calculatedRag]…
+       |                                                                                            ^
+     89|     expect((await runsOf(a.id)).map((r) => r.trigger_kind)).toEqual(["…
+     90|     // Threshold version: 20 % shortfall is inside a 25 % amber tolera…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: lower-is-better 80 against 90 is favourable (green); higher-is-better 80 against 90 is adverse (not green)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The measure type lower_is_better does not fit the KPI's polarity higher_is_better.","code":"kpi_version.measure_mismatch","requestId":"01a12468-1984-71d8-affa-3a57cce79f77","errors":[{"pointer":"/measureType","code":"kpi_version.measure_mismatch","message":"The measure type lower_is_better does not fit the KPI's polarity higher_is_better."}]}: expected 422 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 422
+
+ ❯ ownedKpi apps/api/test/integration/kpi-p4/kbe-c-fixtures.ts:92:44
+     90|   const kpi = await createKpi(api, k, { ...def, ownerUserId: k.users.k…
+     91|   const v = await postVersion(api, k, kpi.id, version);
+     92|   expect(v.status, JSON.stringify(v.body)).toBe(201);
+       |                                            ^
+     93|   const a = await call(api.app, "POST", `${k.base}/kpi-versions/${v.bo…
+     94|     session: k.s.kds,
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:103:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: an acceptable band 5-10 with actual 12 is outside the band (not green)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The measure type acceptable_band does not fit the KPI's polarity higher_is_better.","code":"kpi_version.measure_mismatch","requestId":"01a12468-19ac-7749-bf74-273a63bb50d1","errors":[{"pointer":"/measureType","code":"kpi_version.measure_mismatch","message":"The measure type acceptable_band does not fit the KPI's polarity higher_is_better."}]}: expected 422 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 422
+
+ ❯ ownedKpi apps/api/test/integration/kpi-p4/kbe-c-fixtures.ts:92:44
+     90|   const kpi = await createKpi(api, k, { ...def, ownerUserId: k.users.k…
+     91|   const v = await postVersion(api, k, kpi.id, version);
+     92|   expect(v.status, JSON.stringify(v.body)).toBe(201);
+       |                                            ^
+     93|   const a = await call(api.app, "POST", `${k.base}/kpi-versions/${v.bo…
+     94|     session: k.s.kds,
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:114:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a KPI with no actual for the period renders Unknown (labelled), never 0 or green
+AssertionError: /api/v1/transformations/01a12468-16ab-7234-a98e-a5b3168fd7aa/kpi-status?reportingPeriodId=01a12468-17a0-705c-b676-dd731895ca1d: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12468-1a19-7206-b51b-ab982c8707c0","errors":[{"pointer":"/query/","code":"validation.unknown_field","message":"Unrecognized key: \"reportingPeriodId\""}]}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ get200 tests/qa/support/p4.ts:102:57
+    100| export async function get200(api: TestApi, session: Session, url: stri…
+    101|   const r = await call<Body>(api.app, "GET", url, { session });
+    102|   expect(r.status, `${url}: ${JSON.stringify(r.body)}`).toBe(200);
+       |                                                         ^
+    103|   return r.body;
+    104| }
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:138:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-005: a zero denominator is 'Not computable' (no division error, not 0)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Kind mismatch: saved (count) / handled (count) is not allowed","code":"formula.kind_mismatch","requestId":"01a12468-1b4c-7754-b169-5e6c3715a4a0","errors":[{"pointer":"/expression","code":"formula.kind_mismatch","message":"Kind mismatch: saved (count) / handled (count) is not allowed"}]}: expected 422 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 422
+
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:161:46
+    159|       ],
+    160|     });
+    161|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+    162|     expect(r.body.result).toBeNull();
+    163|     expect((r.body.errors as Body[]).map((e) => e.code)).toContain("fo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference
+AssertionError: {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"01a12468-21ad-741e-9e43-187c717d5676"}: expected 428 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 428
+
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:454:48
+    452|       },
+    453|     });
+    454|     expect(v2.status, JSON.stringify(v2.body)).toBe(201);
+       |                                                ^
+    455|     const again = await get200(api, b.s.auditor, `${b.base}/benefit-me…
+    456|     expect(again.formulaVersionId).toBe(formula.versionId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-009: the fixture network's critical path is the expected chain; with a missing duration no path is claimed
+error: new row for relation "initiative" violates check constraint "initiative_code_check"
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:90:49
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ InsertQueryBuilder.execute node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-builder/insert-query-builder.js:1106:24
+ ❯ apps/api/test/integration/portfolio/execution-fixtures.ts:78:5
+     76|   const by = x.users.tl.id;
+     77|   await db.transaction().execute(async (tx) => {
+     78|     await tx
+       |     ^
+     79|       .insertInto(table)
+     80|       .values({
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/kysely.js:571:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:102:41
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ InsertQueryBuilder.execute node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-builder/insert-query-builder.js:1106:24
+ ❯ apps/api/test/integration/portfolio/execution-fixtures.ts:78:5
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/kysely.js:571:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ insertAudited apps/api/test/integration/portfolio/execution-fixtures.ts:77:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 10 passed (17)
+   Start at  06:02:32
+   Duration  14.06s (transform 3.70s, setup 0ms, collect 7.72s, tests 3.70s, environment 0ms, prepare 108ms)
+
