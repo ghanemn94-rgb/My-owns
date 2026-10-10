@@ -1,0 +1,97 @@
+# mutation M5-PB085-two-cycle: apps/worker/src/handlers/raid.ts
+# perl -0pi -e 's/count < rule\.persistenceCycles\)/count < 1)/'
+# diff vs candidate:
+--- /home/user/wt/dg4-qa-c/apps/worker/src/handlers/raid.ts	2026-10-10 12:38:36.056138926 +0000
++++ apps/worker/src/handlers/raid.ts	2026-10-10 13:11:55.723866594 +0000
+@@ -345,7 +345,7 @@
+     return insertSignal("case_updated", open.id, count);
+   }
+ 
+-  if (offTrack !== true || count < rule.persistenceCycles) return insertSignal("recorded", null, count);
++  if (offTrack !== true || count < 1) return insertSignal("recorded", null, count);
+   if (!isSeries(kind)) {
+     // A failed check gets one case ever: a closed case for this check is never reopened or duplicated.
+     const any = await tx
+# test: tests/qa/integration/a11-value-closure.test.ts 
+port-policy: PostgreSQL listening on port 25840 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.sUZ6wv/claude-0/qa-c-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2eyi84_1b71da18 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a11-value-closure.test.ts (11 tests | 1 failed) 5565ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: delivery Complete leaves adoption, value and closure exactly as they were 55ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009: the label is exactly 'Delivered — value validation pending', never 'successful' 11ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009, REQ-S03-003: closing while validated value is pending is 422 invalid-transition; nothing is written 29ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: with an approved transition decision for the pending benefit the closure is accepted 259ms
+   ✓ A11 REQ-S11-006: all initiatives complete with value pending: 'Delivery complete - value validation pending' > REQ-S11-006: the transformation shows delivery complete and value pending as separate states, never successful  479ms
+   ✓ A11 REQ-S08-002: completing the enabling deliverable marks the benefit 'enabled - not yet measured' > REQ-S08-002: realization state enabled_not_yet_measured; validated value stays zero (nothing validated)  597ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: without the Plan outputs a benefit cannot move towards Measure (422); nothing changes 98ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: at Measure, Sustain without a BAU owner and control cadence is 422; with both it succeeds  797ms
+   ✓ A11 REQ-S11-007: after the transition decision the forecast stays forecast; monitoring goes to the residual owner > REQ-S11-007: forecast unchanged and not sustained/validated; the residual owner gets the monitoring task  542ms
+   ✓ A11 REQ-PB-085: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it > REQ-PB-085: two below-plan validated values and a redelivery leave exactly one open case for the benefit  484ms
+   × A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated 742ms
+     → expected [ { …(31) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a11-value-closure.test.ts > A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated
+AssertionError: expected [ { …(31) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "benefitId": null,[39m
+[31m+     "benefitLifecycleStep": null,[39m
+[31m+     "closedAt": null,[39m
+[31m+     "closedBy": null,[39m
+[31m+     "closureNote": null,[39m
+[31m+     "code": "CA-01",[39m
+[31m+     "consecutiveOffTrack": 1,[39m
+[31m+     "createdAt": "2026-10-10T13:12:17.721Z",[39m
+[31m+     "createdBy": null,[39m
+[31m+     "createdSource": "worker",[39m
+[31m+     "followUpDate": null,[39m
+[31m+     "followUpUnknownReason": "calendar_not_configured",[39m
+[31m+     "id": "01a125f1-5e3e-71b8-8e33-eb3d12c4e8dc",[39m
+[31m+     "kpiDefinitionId": "01a125f1-5d35-70ec-a165-7b1ca23c9c4e",[39m
+[31m+     "kpiScopeId": "01a125f1-5bf0-71a6-b637-0b2f41b2abe1",[39m
+[31m+     "kpiScopeKind": "transformation",[39m
+[31m+     "lastSignalAt": "2026-10-10T13:12:17.721Z",[39m
+[31m+     "ownerStatus": "assigned",[39m
+[31m+     "ownerUserId": "01a125f1-5c2e-7542-a1d7-45098456b40a",[39m
+[31m+     "recoveryPlan": null,[39m
+[31m+     "signalCount": 1,[39m
+[31m+     "sourceKind": "kpi_deviation",[39m
+[31m+     "sourceRecordId": null,[39m
+[31m+     "sourceRecordType": null,[39m
+[31m+     "sourceScopeKey": "01a125f1-5d35-70ec-a165-7b1ca23c9c4e:transformation:01a125f1-5bf0-71a6-b637-0b2f41b2abe1",[39m
+[31m+     "status": "open",[39m
+[31m+     "title": "Synthetic KPI 94d378",[39m
+[31m+     "transformationId": "01a125f1-5bf0-71a6-b637-0b2f41b2abe1",[39m
+[31m+     "updatedAt": "2026-10-10T13:12:17.721Z",[39m
+[31m+     "updatedBy": null,[39m
+[31m+     "version": 1,[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a11-value-closure.test.ts:465:24
+    463|       history.push(await kpiCases());
+    464|     }
+    465|     expect(history[0]).toEqual([]);
+       |                        ^
+    466|     expect(history[1]).toHaveLength(1);
+    467|     expect(history[1]![0].consecutiveOffTrack).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  13:11:59
+   Duration  18.64s (transform 4.36s, setup 0ms, collect 9.64s, tests 5.56s, environment 0ms, prepare 96ms)
+
+EXIT=1

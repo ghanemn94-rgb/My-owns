@@ -1,0 +1,47 @@
+port-policy: PostgreSQL listening on port 25820 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-qa-c
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2eaqv4_19d1ed4e (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a11-value-closure.test.ts (11 tests | 1 failed) 3676ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: delivery Complete leaves adoption, value and closure exactly as they were 57ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009: the label is exactly 'Delivered — value validation pending', never 'successful' 10ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009, REQ-S03-003: closing while validated value is pending is 422 invalid-transition; nothing is written 30ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: with an approved transition decision for the pending benefit the closure is accepted 165ms
+   ✓ A11 REQ-S11-006: all initiatives complete with value pending: 'Delivery complete - value validation pending' > REQ-S11-006: the transformation shows delivery complete and value pending as separate states, never successful 261ms
+   × A11 REQ-S08-002: completing the enabling deliverable marks the benefit 'enabled - not yet measured' > REQ-S08-002: realization state enabled_not_yet_measured; validated value stays zero (nothing validated) 285ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a125e0-5501-71ad-8efd-23e8c4c6fc73","errors":[{"pointer":"/result","code":"validation.invalid_value","message":"Invalid option: expected one of \"accepted\"|\"rejected\""},{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"decision\""}]}: expected 400 to be 200 // Object.is equality
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: without the Plan outputs a benefit cannot move towards Measure (422); nothing changes 77ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: at Measure, Sustain without a BAU owner and control cadence is 422; with both it succeeds  425ms
+   ✓ A11 REQ-S11-007: after the transition decision the forecast stays forecast; monitoring goes to the residual owner > REQ-S11-007: forecast unchanged and not sustained/validated; the residual owner gets the monitoring task  304ms
+   ✓ A11 REQ-PB-085: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it > REQ-PB-085: two below-plan validated values and a redelivery leave exactly one open case for the benefit  567ms
+   ✓ A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated  658ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a11-value-closure.test.ts > A11 REQ-S08-002: completing the enabling deliverable marks the benefit 'enabled - not yet measured' > REQ-S08-002: realization state enabled_not_yet_measured; validated value stays zero (nothing validated)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a125e0-5501-71ad-8efd-23e8c4c6fc73","errors":[{"pointer":"/result","code":"validation.invalid_value","message":"Invalid option: expected one of \"accepted\"|\"rejected\""},{"pointer":"","code":"validation.unknown_field","message":"Unrecognized key: \"decision\""}]}: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ tests/qa/integration/a11-value-closure.test.ts:216:50
+    214|       body: { decision: "accepted", note: "Synthetic QA acceptance of …
+    215|     });
+    216|     expect(acc.status, JSON.stringify(acc.body)).toBe(200);
+       |                                                  ^
+    217| 
+    218|     const after = await get200(api, c.b.s.auditor, B);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  12:53:30
+   Duration  12.66s (transform 3.33s, setup 0ms, collect 6.62s, tests 3.68s, environment 0ms, prepare 74ms)
+
