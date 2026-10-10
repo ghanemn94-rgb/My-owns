@@ -61,6 +61,11 @@ export const WORKSPACE_TABS = [
   { id: "forums", path: "/forums", labelKey: "governanceP4.tab.forums" },
   { id: "meetings", path: "/meetings", labelKey: "governanceP4.tab.meetings" },
   { id: "executive-decisions", path: "/executive-decisions", labelKey: "governanceP4.tab.decisions" },
+  // P4 slices F and G (T-DG4-FE-E; labels from each page's own namespace).
+  { id: "adoption", path: "/adoption", labelKey: "adoptionP4.tab.adoption" },
+  { id: "bau", path: "/bau", labelKey: "sustainP4.tab.bau" },
+  { id: "improvement", path: "/improvement", labelKey: "sustainP4.tab.improvement" },
+  { id: "lessons", path: "/lessons", labelKey: "sustainP4.tab.lessons" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 

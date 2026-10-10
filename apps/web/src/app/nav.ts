@@ -31,7 +31,12 @@ export type AreaWorkspaceTab =
   | "corrective-actions"
   | "forums"
   | "meetings"
-  | "executive-decisions";
+  | "executive-decisions"
+  // P4 slices F and G (T-DG4-FE-E).
+  | "adoption"
+  | "bau"
+  | "improvement"
+  | "lessons";
 
 export type AreaId =
   | "myWork"
@@ -125,7 +130,13 @@ export interface NavSubPage {
     | "correctiveActions"
     | "forums"
     | "meetings"
-    | "executiveDecisions";
+    | "executiveDecisions"
+    // T-DG4-FE-E: the adoption, BAU, improvement and lesson screens of each transformation, and the lesson search.
+    | "adoptionPlan"
+    | "performanceAreas"
+    | "improvementBacklog"
+    | "lessons"
+    | "lessonSearch";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -159,4 +170,11 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
     path: "/governance/executive-decisions",
     workspaceTab: "executive-decisions",
   },
+  // T-DG4-FE-E: Change and Adoption and BAU and Improvement stay "planned" (their cross-portfolio views are planned);
+  // their transformation screens are reachable through these sub-entries and the workspace tabs.
+  { id: "adoptionPlan", area: "change", path: "/change-adoption/adoption", workspaceTab: "adoption" },
+  { id: "performanceAreas", area: "bau", path: "/bau-improvement/bau", workspaceTab: "bau" },
+  { id: "improvementBacklog", area: "bau", path: "/bau-improvement/improvement", workspaceTab: "improvement" },
+  { id: "lessons", area: "bau", path: "/bau-improvement/lessons", workspaceTab: "lessons" },
+  { id: "lessonSearch", area: "bau", path: "/lessons", requiresAny: ["lesson.search"] },
 ];
