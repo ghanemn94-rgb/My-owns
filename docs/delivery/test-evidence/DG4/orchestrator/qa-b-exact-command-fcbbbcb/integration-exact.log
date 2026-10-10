@@ -1,0 +1,64 @@
+port-policy: PostgreSQL listening on port 24600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/verify
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv285555_739a5822 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a08-gate-controls.test.ts (31 tests) 15789ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  670ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception  348ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  609ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  557ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  647ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  881ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  1094ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  627ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  623ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007: an approved disposition resolves the risk and G5 can be submitted  397ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  359ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/  2942ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-018: 'request changes' returns the item to the requester without closing it  309ms
+ ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests) 6430ms
+   ✓ A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-PB-066: a Business scope change approval gets a due date 5 working days after it is raised on the default calendar (weekend and configured holiday skipped)  566ms
+   ✓ A09 approval timers escalate but never approve (REQ-S10-019) > after the due date plus retries the approval is escalated exactly once and remains undecided  530ms
+   ✓ A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none  810ms
+   ✓ A09 Executive Decision Log and the Decisions area (REQ-PB-081, REQ-PB-064, REQ-S10-012, REQ-PB-068) > REQ-PB-068, REQ-S10-012: publishing an executive-ask agenda item missing 'Impact of delay' is rejected by the API; a complete one publishes and creates its T16 ask  319ms
+   ✓ A09 committee workflow: quorum, immutable minutes, actions in My Work (REQ-S10-011) > no decision below quorum; published minutes are immutable; actions appear in the owners' My Work  1076ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: a KPI actual for period 2026-10 keeps observation period 2026-10, the Asia/Riyadh business date of its entry and a UTC event timestamp  654ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: changing the organization's default currency affects only new records (an existing transformation keeps SAR)  303ms
+ ✓ |integration| tests/qa/integration/a04-kpi-propagation.test.ts (8 tests) 12777ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-013, REQ-S12-006: the worker makes exactly one calculation run and one pending benefit value with one queue item  3503ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-012: with review configured, a submitted actual is not used until accepted; after acceptance one run  1219ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-001: a user scoped to transformation X sees nothing of Y on any of the six dashboards  505ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values  3201ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 5232ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2761ms
+ ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests) 5424ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the totals  389ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: two initiative records of one shared benefit in a shared-benefit group count once  302ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  782ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves  742ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-015, REQ-PB-013: a validation lacking a measurement period is rejected; non-Finance 403; the audit records the validator  570ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  448ms
+ ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests) 6630ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG  492ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: lower-is-better 80 against 90 is favourable (green); higher-is-better 80 against 90 is adverse (not green)  384ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: the cumulative (YTD) value of a flow KPI equals the sum of its period flows  379ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages  1031ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  941ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference  655ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-009: the fixture network's critical path is the expected chain; with a missing duration no path is claimed  560ms
+ ✓ |integration| tests/qa/integration/a04-a05-a10-partials.test.ts (4 tests) 3501ms
+   ✓ QA-A partial: REQ-S07-007 'with all tasks complete' > REQ-S07-007: with every Diagnose phase task and every action complete, an actual below the red threshold is Red  1839ms
+   ✓ QA-A partial: REQ-S13-003 'the validated benefit total drills to its benefit records' > REQ-S13-003: the Value area's validated headline drills to exactly the validated benefit records, whose decimal sum equals the headline  690ms
+   ✓ QA-A partial: REQ-S08-015 exact refusal codes > REQ-S08-015: a Finance decision without the measurement-period item is 422 finance_validation.content_incomplete; with the item not accepted it is 422 finance_validation.items_not_accepted; nothing is validated  340ms
+   ✓ QA-A partial: REQ-PB-075 'T14 persists all 10 columns' > REQ-PB-075: the T14 register row carries ID, Benefit, Type, Baseline, Target, Value (SAR), Realized, Owner, Evidence and Status  468ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 1597ms
+   ✓ A14 transformation PATCH > create returns version 1 with a strong ETag  433ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 1243ms
+
+ Test Files  9 passed (9)
+      Tests  117 passed (117)
+   Start at  10:01:11
+   Duration  92.58s (transform 5.85s, setup 0ms, collect 31.19s, tests 58.62s, environment 0ms, prepare 72ms)
+
