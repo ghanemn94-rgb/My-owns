@@ -115,6 +115,14 @@ info:
     before `updateBenefitPlanValue`. Description text only: the gate dispensations name the Modular G3 waiver of the
     missing-links precondition (D-110; ADR-0021 and ADR-0038 amendments of 2026-10-10), and `KpiEvaluation.inputs`
     names its lineage shapes (ADR-0027 amendment C1). No schema, status or other operation changes.
+
+    **P4 repairs (T-DG4-ARCH-R3, 2026-10-10).** Three new reads: `getInitiativeSchedule` (the `If-Match` source of
+    `updateInitiativeSchedule`), `listScaleScopeBusinessUnits` (the units a G5 scale scope may name) and
+    `getAssessmentFormVersion` (the question version a record was answered on). `getDashboardDrilldown` gains an optional
+    `valueClass` and the metrics `value.measured`, `value.rejected` and `value.sustained`, so every Finance class line can
+    drill. `Problem` gains an optional `params` member, sent only by the codes an ADR names (today
+    `gate.modular_waiver_revoked` and `gate.modular_waiver_expired`). Description text: `KpiEvaluation.inputs` (member
+    order, cumulative roll-up entries) and `FinanceValueLine.drilldownHref`. Every other operation is unchanged.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -11564,6 +11572,22 @@ paths:
   /api/v1/initiatives/{initiativeId}/schedule:
     parameters:
       - $ref: "#/components/parameters/InitiativeId"
+    get:
+      tags: [schedule-network]
+      operationId: getInitiativeSchedule
+      summary: "Read the initiative's recorded planned duration with its version; the target of createInitiativeSchedule's Location and the source of updateInitiativeSchedule's If-Match (ARCH-R3; ADR-0031 amendment S1) (transformation.read). 404 when the initiative is not readable or no schedule row is recorded for it; the client then offers createInitiativeSchedule. A row whose duration is null answers 200 with durationWorkingDays null."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InitiativeSchedule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
     post:
       tags: [schedule-network]
       operationId: createInitiativeSchedule
@@ -13488,6 +13512,25 @@ paths:
         "409": { $ref: "#/components/responses/VersionConflict" }
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}/versions/{versionNo}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/AssessmentFormId"
+      - $ref: "#/components/parameters/VersionNo"
+    get:
+      tags: [assessment-forms]
+      operationId: getAssessmentFormVersion
+      summary: "Read one append-only question version of a form, e.g. the formVersionNo an AssessmentRecord was answered on (ARCH-R3; ADR-0033 amendment V1) (transformation.read). 404 when the form is not readable or has no such version. The version row never changes, so no ETag."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentFormVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
   /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}/publish:
     parameters:
@@ -15697,6 +15740,26 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/scale-scope/business-units:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [scale]
+      operationId: listScaleScopeBusinessUnits
+      summary: "The business units a G5 scale scope of this transformation may name (every active unit of its organization, the set gate.scale_scope_invalid accepts), plus any unit an approved scale-scope item or scale transition of this transformation names, whatever its status; identity and names only, ordered by code then id (ARCH-R3; ADR-0035 amendment R1) (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScaleScopeBusinessUnitPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /api/v1/transformations/{transformationId}/scale-transitions:
     parameters:
       - $ref: "#/components/parameters/TransformationId"
@@ -16219,9 +16282,10 @@ paths:
     get:
       tags: [dashboards]
       operationId: getDashboardDrilldown
-      summary: "Drill-down of one headline number: contributing records (paginated), period, calculation and evidence; zero, unknown and not_applicable are distinct states (REQ-S13-003) (transformation.read in scope). 422 dashboard.metric_subject_mismatch, dashboard.period_not_found, dashboard.owner_not_found."
+      summary: "Drill-down of one headline number or Finance class line: contributing records (paginated), period, calculation and evidence; zero, unknown and not_applicable are distinct states (REQ-S13-003) (transformation.read in scope). 422 dashboard.metric_subject_mismatch, dashboard.period_not_found, dashboard.owner_not_found, dashboard.value_class_not_applicable (ADR-0037 amendment K1)."
       parameters:
         - $ref: "#/components/parameters/DrilldownMetricQuery"
+        - $ref: "#/components/parameters/DrilldownValueClassQuery"
         - $ref: "#/components/parameters/OrganizationIdQuery"
         - $ref: "#/components/parameters/TransformationIdsQuery"
         - $ref: "#/components/parameters/OwnerUserIdQuery"
@@ -17169,6 +17233,12 @@ components:
       in: query
       required: false
       schema: { $ref: "#/components/schemas/Uuid" }
+    DrilldownValueClassQuery:
+      name: valueClass
+      in: query
+      required: false
+      description: "Only with the seven value-state metrics (value.planned, value.forecast, value.submitted, value.validated, value.measured, value.rejected, value.sustained): narrows the drill-down to the benefits of this Finance class, the records the Finance class line of the same state sums (ADR-0037 amendment K1). Any other metric: 422 dashboard.value_class_not_applicable."
+      schema: { $ref: "#/components/schemas/FinanceValueClass" }
     MyWorkSectionQuery:
       name: section
       in: query
@@ -18524,6 +18594,10 @@ components:
           type: array
           items: { $ref: "#/components/schemas/FieldError" }
         currentVersion: { $ref: "#/components/schemas/Version" }
+        params:
+          type: object
+          description: "Values of the placeholders in the translated text of `code`, in the shape of WorkItem.messageParams. Sent only with the codes whose ADR names it (ADR-0038 amendment Q1: gate.modular_waiver_revoked and gate.modular_waiver_expired, params.date as YYYY-MM-DD); absent from every other problem."
+          additionalProperties: { type: [string, number, boolean, "null"] }
     FieldError:
       type: object
       required: [pointer, code, message]
@@ -23866,7 +23940,7 @@ components:
         valueReason: { oneOf: [{ $ref: "#/components/schemas/KpiReasonCode" }, { type: "null" }] }
         valueSource: { type: string, enum: [entered, rolled_up, formula, none] }
         currency: { oneOf: [{ $ref: "#/components/schemas/Currency" }, { type: "null" }] }
-        inputs: { type: object, description: "Lineage of the value, by valueSource (ADR-0027 amendment C1): entered {kpiActualId, valueNo, window?}; rolled_up {} or {expectedScopes, missingScopes, entries[]}; formula {formula, values?, sources} with each source's own inputs; none {}." }
+        inputs: { type: object, description: "Lineage of the value, by valueSource (ADR-0027 amendment C1): entered {kpiActualId, valueNo, window?}; rolled_up {} or {expectedScopes, missingScopes, entries[]}; formula {formula, values?, sources} with each source's own inputs; none {}. Object members (sources, values) carry no order: look them up by variable name (ADR-0027 amendment C4). On the cumulative basis the entered shape and each roll-up entry also carry windowValues[] (C5)." }
         rounding: { type: [object, "null"] }
         expectedValue: { $ref: "#/components/schemas/NullableDecimal" }
         finalTarget: { $ref: "#/components/schemas/NullableDecimal" }
@@ -27793,6 +27867,25 @@ components:
         decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         items: { type: array, items: { $ref: "#/components/schemas/ScaleScopeItem" } }
         conditions: { type: array, items: { $ref: "#/components/schemas/GateCondition" } }
+    ScaleScopeBusinessUnit:
+      type: object
+      description: "A business unit as a G5 scale scope names it (ADR-0035 amendment R1): identity, names and status only."
+      required: [id, code, nameEn, nameAr, status, selectable]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        status: { $ref: "#/components/schemas/ActiveStatus" }
+        selectable: { type: boolean, description: "true iff a new scope item may name it (status active)." }
+    ScaleScopeBusinessUnitPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ScaleScopeBusinessUnit" } }
+        nextCursor: { type: [string, "null"] }
     ScaleTransition:
       type: object
       required: [id, transformationId, initiativeId, businessUnitId, gateDecisionId, note, transitionedBy, transitionedAt]
@@ -28006,7 +28099,7 @@ components:
       enum: [outcomes, value, portfolio, dependencies, decisions, people_adoption]
     DashboardMetric:
       type: string
-      enum: [outcomes.kpi_status, outcomes.area, value.planned, value.forecast, value.validated, value.submitted, value.investment, value.gap, portfolio.initiatives, dependencies.open, decisions.open, decisions.overdue, adoption.indicators, finance.pending_validation]
+      enum: [outcomes.kpi_status, outcomes.area, value.planned, value.forecast, value.validated, value.submitted, value.investment, value.gap, portfolio.initiatives, dependencies.open, decisions.open, decisions.overdue, adoption.indicators, finance.pending_validation, value.measured, value.rejected, value.sustained]
     MyWorkSection:
       type: string
       enum: [assigned_actions, drafts, reviews, approvals, missing_updates, other]
@@ -28159,7 +28252,11 @@ components:
         state: { type: string, enum: [planned, forecast, measured, submitted, validated, rejected, sustained] }
         currency: { type: string, pattern: '^[A-Z]{3}$' }
         total: { $ref: "#/components/schemas/DashboardValue" }
-        drilldownHref: { type: [string, "null"] }
+        drilldownHref: { type: [string, "null"], description: "The drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1): every class line and gross line carries one; null only on a net line, a derived difference that is not a sum of records." }
+    FinanceValueClass:
+      type: string
+      description: "A Finance class line's value class that a drill-down can narrow to (ADR-0030 §7; ADR-0037 amendment K1)."
+      enum: [revenue_uplift, margin_uplift, cash_saving, avoided_cost, working_capital_release, non_financial_valued]
     FinanceDashboard:
       type: object
       required: [organizationId, generatedAt, businessDate, appliedFilters, lines, headlines, pendingValidationCount, nonFinancialCount, transformations]
