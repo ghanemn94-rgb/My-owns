@@ -1454,12 +1454,25 @@ type ModularLinksSnapshot = {
   waiver: { dispensationId: string; expiresOn: string; reason: string; decidedBy: string };
 };
 
-/** T-DG4-BE-R3 (ADR-0038 amendment B1, B4): 422 when the recorded Modular-links waiver was revoked on {date}. */
+/**
+ * The 422 of a Modular waiver refusal (ADR-0038 amendment B1, B4) with `params.date`, the same business date `detail`
+ * names (amendment Q1, T-DG4-BE-R4). Status, type, title, code and detail are those of `problems.businessRule`.
+ */
+const modularWaiverRefusal = (code: string, detail: string, date: string) =>
+  new HttpProblem({
+    status: 422,
+    type: "urn:mth:problem:validation",
+    code,
+    title: "Business rule violated",
+    detail,
+    params: { date },
+  });
+/** T-DG4-BE-R3 (ADR-0038 amendment B1, B4, Q1): 422 when the recorded Modular-links waiver was revoked on {date}. */
 export const gateModularWaiverRevoked = (date: string) =>
-  problems.businessRule("gate.modular_waiver_revoked", modularWaiverRevokedDetail(date));
-/** T-DG4-BE-R3 (ADR-0038 amendment B1, B4): 422 when the recorded Modular-links waiver expired on {date}. */
+  modularWaiverRefusal("gate.modular_waiver_revoked", modularWaiverRevokedDetail(date), date);
+/** T-DG4-BE-R3 (ADR-0038 amendment B1, B4, Q1): 422 when the recorded Modular-links waiver expired on {date}. */
 export const gateModularWaiverExpired = (date: string) =>
-  problems.businessRule("gate.modular_waiver_expired", modularWaiverExpiredDetail(date));
+  modularWaiverRefusal("gate.modular_waiver_expired", modularWaiverExpiredDetail(date), date);
 
 /**
  * T-DG4-BE-R3 (ADR-0038 amendment B1): at G3 approval, the waiver recorded in the pending submission's snapshot

@@ -12,4 +12,6 @@ export const problem = z.object({
   requestId: z.string(),
   errors: z.array(fieldError).optional(),
   currentVersion: z.number().int().min(1).optional(),
+  // ADR-0038 amendment Q1: placeholder values of the translated `code` text (the WorkItem.messageParams shape).
+  params: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
 });

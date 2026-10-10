@@ -5,6 +5,9 @@
 //   POST /transformations/{t}/assessment-forms                        create a draft with question version 1
 //                                                                     (assessment_form.manage; BO, WL)
 //   GET  /transformations/{t}/assessment-forms/{f}                    one form with its current version
+//   GET  /transformations/{t}/assessment-forms/{f}/versions/{n}       one append-only question version, published or not,
+//                                                                     of any form status; no ETag (ADR-0033 amendment
+//                                                                     V1, T-DG4-BE-R4)
 //   PATCH /transformations/{t}/assessment-forms/{f}                   edit; new questions insert the next version and
 //                                                                     step current_version_no in the same transaction
 //   POST /transformations/{t}/assessment-forms/{f}/publish            publish the current version (If-Match)
@@ -59,6 +62,7 @@ import {
   assessmentRecordCreate,
   assessmentReview,
   type AssessmentForm,
+  type AssessmentFormVersion,
   type AssessmentInvitation,
   type AssessmentRecord,
 } from "@mth/shared/schemas";
@@ -102,6 +106,7 @@ export type AssessmentRecordRow = Selectable<AssessmentRecordTable>;
 
 export const ASSESSMENT_FORMS = `${T_BASE}/assessment-forms`;
 export const ASSESSMENT_FORM = `${ASSESSMENT_FORMS}/:assessmentFormId`;
+export const ASSESSMENT_FORM_VERSION = `${ASSESSMENT_FORM}/versions/:versionNo`;
 export const ASSESSMENT_FORM_PUBLISH = `${ASSESSMENT_FORM}/publish`;
 export const ASSESSMENT_FORM_RETIRE = `${ASSESSMENT_FORM}/retire`;
 export const ASSESSMENT_FORM_INVITATIONS = `${ASSESSMENT_FORM}/invitations`;
@@ -248,6 +253,15 @@ interface VersionRow {
   readonly created_by: string;
 }
 
+function toFormVersion(v: Omit<VersionRow, "form_id">): AssessmentFormVersion {
+  return {
+    versionNo: v.version_no,
+    schema: v.schema as AssessmentFormSchemaJson,
+    createdAt: iso(v.created_at),
+    createdBy: v.created_by,
+  };
+}
+
 function toAssessmentForm(r: AssessmentFormRow, v: VersionRow): AssessmentForm {
   return {
     id: r.id,
@@ -257,12 +271,7 @@ function toAssessmentForm(r: AssessmentFormRow, v: VersionRow): AssessmentForm {
     description: r.description,
     stakeholderGroupId: r.stakeholder_group_id,
     status: r.status as AssessmentForm["status"],
-    currentVersion: {
-      versionNo: v.version_no,
-      schema: v.schema as AssessmentFormSchemaJson,
-      createdAt: iso(v.created_at),
-      createdBy: v.created_by,
-    },
+    currentVersion: toFormVersion(v),
     publishedVersionNo: r.published_version_no,
     publishedAt: isoOrNull(r.published_at),
     publishedBy: r.published_by,
@@ -374,6 +383,8 @@ const userActor = (ctx: WriteContext): AuditActor => ({
 // ------------------------------------------------------------------------------------------------ params
 
 const formParams = z.strictObject({ transformationId: z.uuid(), assessmentFormId: z.uuid() });
+// The contract's VersionNo (integer, minimum 1); the column is a PostgreSQL integer, so a larger value is a 400.
+const formVersionParams = formParams.extend({ versionNo: z.coerce.number().int().min(1).max(2_147_483_647) });
 const invitationParams = z.strictObject({ transformationId: z.uuid(), assessmentInvitationId: z.uuid() });
 const recordParams = z.strictObject({ transformationId: z.uuid(), assessmentRecordId: z.uuid() });
 
@@ -1047,6 +1058,23 @@ export function registerAssessmentRoutes(app: FastifyInstance, { db }: ModuleDep
     return sendVersioned(reply, 200, (await presentForms(db, [row]))[0]!);
   });
 
+  // ADR-0033 amendment V1: the form must be in the transformation and have that version, else 404. No ETag: the
+  // version row is append-only, so there is nothing to send If-Match for.
+  app.get(ASSESSMENT_FORM_VERSION, { config: read }, async (request) => {
+    const { transformationId, assessmentFormId, versionNo } = parse(formVersionParams, request.params, "params");
+    await requireTransformationRead(db, principalOf(request), transformationId);
+    const v = await db
+      .selectFrom("assessment_form_version as v")
+      .innerJoin("assessment_form as f", "f.id", "v.form_id")
+      .select(["v.version_no", "v.schema", "v.created_at", "v.created_by"])
+      .where("f.id", "=", assessmentFormId)
+      .where("f.transformation_id", "=", transformationId)
+      .where("v.version_no", "=", versionNo)
+      .executeTakeFirst();
+    if (!v) throw problems.notFound();
+    return toFormVersion(v);
+  });
+
   app.patch(ASSESSMENT_FORM, { config: manage }, async (request, reply) => {
     const out = await db
       .transaction()
@@ -1157,6 +1185,7 @@ export function registerAssessmentRoutes(app: FastifyInstance, { db }: ModuleDep
     `GET ${ASSESSMENT_FORMS}`,
     `POST ${ASSESSMENT_FORMS}`,
     `GET ${ASSESSMENT_FORM}`,
+    `GET ${ASSESSMENT_FORM_VERSION}`,
     `PATCH ${ASSESSMENT_FORM}`,
     `POST ${ASSESSMENT_FORM_PUBLISH}`,
     `POST ${ASSESSMENT_FORM_RETIRE}`,

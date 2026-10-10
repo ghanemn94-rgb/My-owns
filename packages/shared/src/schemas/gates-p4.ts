@@ -9,7 +9,7 @@
 // - A risk disposition is immutable; its approval is a canonical approval of type risk_disposition, decided by a person
 //   other than the proposer (approval.decide). Nothing here approves anything, and nothing touches DG0-DG7.
 import { z } from "zod";
-import { freeText, page, timestamp, uuid, version } from "./common.ts";
+import { activeStatus, code, freeText, name, page, timestamp, uuid, version } from "./common.ts";
 import { businessDate } from "./kpi.ts";
 
 const nullableUuid = uuid.nullable();
@@ -72,6 +72,21 @@ export const scaleScope = z.strictObject({
   conditions: z.array(gateCondition),
 });
 export type ScaleScope = z.infer<typeof scaleScope>;
+
+/**
+ * A business unit as a G5 scale scope names it (ADR-0035 amendment R1; OpenAPI ScaleScopeBusinessUnit, T-DG4-BE-R4):
+ * identity, names and status only; `selectable` is true iff a new scope item may name it (status active).
+ */
+export const scaleScopeBusinessUnit = z.strictObject({
+  id: uuid,
+  code,
+  nameEn: name,
+  nameAr: name,
+  status: activeStatus,
+  selectable: z.boolean(),
+});
+export type ScaleScopeBusinessUnit = z.infer<typeof scaleScopeBusinessUnit>;
+export const scaleScopeBusinessUnitPage = page(scaleScopeBusinessUnit);
 
 // ------------------------------------------------------------------------------------------------ scale transitions
 

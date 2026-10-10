@@ -293,3 +293,27 @@ describe("the minutes state machine, the chair rule and the chair's work item", 
     expect([row.body, row.version]).toEqual(["Synthetic", 1]);
   });
 });
+
+describe("ADR-0025 amendment L1, ADR-0032 amendment G3: the forum's two names in the minutes task (T-DG4-BE-R4)", () => {
+  it("a new minutes_to_approve item carries forum (name_en), forumAr (name_ar) and meetingDate", async () => {
+    const m = await heldMeeting("transformation_review", x.lead.id);
+    const d = await send("POST", `${m.url}/minutes`, { session: x.office.session, body: { body: "Synthetic" } });
+    expect(d.status, JSON.stringify(d.body)).toBe(201);
+    const forum = await api.db
+      .selectFrom("forum")
+      .select(["name_en", "name_ar"])
+      .where("id", "=", x.forums.transformation_review)
+      .executeTakeFirstOrThrow();
+    expect(forum.name_ar).not.toEqual(forum.name_en);
+    const meeting = (await send("GET", m.url, { session: x.auditor.session })).body;
+    const mine = await send("GET", "/api/v1/me/work-items?kind=minutes_to_approve&status=open", {
+      session: x.lead.session,
+    });
+    expect(mine.status).toBe(200);
+    const item = mine.body.items.find((i: Body) => i.subjectId === d.body.id);
+    expect([item.messageKey, item.messageParams]).toEqual([
+      "governance.task.minutes_to_approve",
+      { forum: forum.name_en, forumAr: forum.name_ar, meetingDate: meeting.scheduledDate },
+    ]);
+  });
+});
