@@ -1,112 +1,265 @@
 // Routes (React Router 7, data-router library mode; ADR-0009). Everything below the shell needs a session.
-import { Navigate, createBrowserRouter, type RouteObject } from "react-router";
+import { lazy, Suspense, useState, type ComponentType } from "react";
+import { Navigate, createBrowserRouter, matchRoutes, type RouteObject } from "react-router";
 import { RequireSession } from "../auth/session.tsx";
-import { AdminHomePage } from "../pages/admin/AdminHomePage.tsx";
-import { AssignmentsPage } from "../pages/admin/AssignmentsPage.tsx";
-import { BusinessUnitEditPage, OrganizationDetailPage, OrganizationsPage } from "../pages/admin/OrganizationsPage.tsx";
-import { UserDetailPage, UsersPage } from "../pages/admin/UsersPage.tsx";
-import { AboutPage, AreaEntryPage, AreaPlaceholderPage, NotFoundPage, P4BeingBuiltPage } from "../pages/AreaPages.tsx";
-import { ApprovalDetailPage, ApprovalsPage } from "../pages/approvals/ApprovalsPage.tsx";
-import { ApprovalRecordsPage } from "../pages/approvals/ApprovalRecordsPage.tsx";
-import { CalendarPage } from "../pages/calendar/CalendarPage.tsx";
-import { JobsPage } from "../pages/calendar/JobsPage.tsx";
-import { DecisionRightsPage } from "../pages/decision-rights/DecisionRightsPage.tsx";
-import { TransformReadinessPage } from "../pages/decision-rights/TransformReadinessPage.tsx";
-import { DelegationsPage } from "../pages/delegations/DelegationsPage.tsx";
-import { GroupDetailPage, GroupsPage } from "../pages/groups/GroupsPage.tsx";
-import { RoleMappingsPage } from "../pages/groups/RoleMappingsPage.tsx";
-import { DataQualityPage } from "../pages/kpi/DataQualityPage.tsx";
-import { KpiActualPage, KpiReviewPage } from "../pages/kpi/KpiActualPage.tsx";
-import { KpiPage } from "../pages/kpi/KpiPage.tsx";
-import { KpisPage } from "../pages/kpi/KpisPage.tsx";
-import { KpiUpdatePage } from "../pages/kpi/KpiUpdatePage.tsx";
-import { BenefitPage } from "../pages/benefits/BenefitPage.tsx";
-import { BenefitsPage } from "../pages/benefits/BenefitsPage.tsx";
-import { MeasurementPage } from "../pages/benefits/MeasurementPage.tsx";
-import {
-  BenefitGroupsPage,
-  BenefitOverlapPage,
-  BenefitOverlapsPage,
-  BenefitScenariosPage,
-  ValuationMethodsPage,
-} from "../pages/benefits/RegisterPages.tsx";
-import {
-  FinanceValidationDetailPage,
-  FinanceValidationPage,
-  TransformationFinanceQueuePage,
-} from "../pages/finance-validation/FinanceValidationPages.tsx";
-import { MyWorkPage } from "../pages/my-work/MyWorkPage.tsx";
-import { DashboardPage, DashboardsHubPage } from "../pages/dashboards/DashboardsPage.tsx";
-import {
-  TransformationDashboardPage,
-  WorkstreamDashboardPage,
-} from "../pages/dashboards/TransformationDashboardPage.tsx";
-import { ExecutiveOverviewPage } from "../pages/executive-overview/ExecutiveOverviewPage.tsx";
-import { RagPolicyPage } from "../pages/dashboards/RagPolicyPage.tsx";
-import { TraceabilityPage } from "../pages/traceability/TraceabilityPage.tsx";
-import { ModularEntryPage } from "../pages/traceability/ModularPage.tsx";
-import {
-  PortfolioDetailPage,
-  PortfoliosPage,
-  WorkstreamPage,
-  WorkstreamsPage,
-} from "../pages/traceability/StructurePages.tsx";
-import { ActionItemPage, ActionsPage } from "../pages/actions/ActionsPage.tsx";
-import {
-  EscalationsPage,
-  ExecutiveDecisionPage,
-  ExecutiveDecisionsPage,
-} from "../pages/executive-decisions/ExecutiveDecisionsPage.tsx";
-import { ForumPage, ForumsPage } from "../pages/forums/ForumsPage.tsx";
-import { MeetingPage } from "../pages/meetings/MeetingPage.tsx";
-import { MeetingsPage } from "../pages/meetings/MeetingsPage.tsx";
-import { CorrectiveActionsPage, CorrectiveCasePage, CorrectiveRulesPage } from "../pages/raid/CorrectivePages.tsx";
-import { RaidDecisionLogPage } from "../pages/raid/DecisionLogPage.tsx";
-import { RaidPage } from "../pages/raid/RaidPage.tsx";
-import { RaciPage } from "../pages/raci/RaciPage.tsx";
-import { AdoptionPage } from "../pages/adoption/AdoptionPage.tsx";
-import { FormPage, FormsPage } from "../pages/adoption/FormsPage.tsx";
-import { IndicatorsPage } from "../pages/adoption/IndicatorsPage.tsx";
-import { InterventionPage, InterventionsPage } from "../pages/adoption/InterventionsPage.tsx";
-import { RecordPage } from "../pages/adoption/RecordPage.tsx";
-import { TrainingPage } from "../pages/adoption/TrainingPage.tsx";
-import { AreaPage, BauPage } from "../pages/bau/BauPage.tsx";
-import { ControlsPage, ReviewsPage } from "../pages/bau/ControlsPage.tsx";
-import { HandoverPage, HandoversPage } from "../pages/bau/HandoverPage.tsx";
-import { ImprovementPage } from "../pages/improvement/ImprovementPage.tsx";
-import { LessonSearchPage, LessonsPage } from "../pages/lessons/LessonsPage.tsx";
-import { ClosurePage } from "../pages/closure/ClosurePage.tsx";
-import { ChangeRequestPage } from "../pages/change-requests/ChangeRequestPage.tsx";
-import { ChangeRequestsPage } from "../pages/change-requests/ChangeRequestsPage.tsx";
-import { PhasesPage } from "../pages/phases/PhasesPage.tsx";
+import { RouteLoadFailed, RouteLoadingFallback } from "../components/RouteFallback.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
-import { BenefitFormulaPage } from "../pages/benefit-formulas/BenefitFormulaPage.tsx";
-import { BenefitFormulasPage } from "../pages/benefit-formulas/BenefitFormulasPage.tsx";
-import { BusinessCasePage } from "../pages/business-cases/BusinessCasePage.tsx";
-import { BusinessCasesPage } from "../pages/business-cases/BusinessCasesPage.tsx";
-import { CapacityPage } from "../pages/capacity/CapacityPage.tsx";
-import { DecisionsPage } from "../pages/decisions/DecisionsPage.tsx";
-import { CharterPage } from "../pages/define/CharterPage.tsx";
-import { DefinePage } from "../pages/define/DefinePage.tsx";
-import { DependenciesPage } from "../pages/dependencies/DependenciesPage.tsx";
-import { DesignPage } from "../pages/design/DesignPage.tsx";
-import { DiagnosePage } from "../pages/diagnose/DiagnosePage.tsx";
-import { DispensationsPage } from "../pages/dispensations/DispensationsPage.tsx";
-import { EvidencePage } from "../pages/evidence/EvidencePage.tsx";
-import { GateDetailPage } from "../pages/gates/GateDetailPage.tsx";
-import { GatesPage } from "../pages/gates/GatesPage.tsx";
-import { InitiativePage } from "../pages/portfolio/InitiativePage.tsx";
-import { PortfolioPage } from "../pages/portfolio/PortfolioPage.tsx";
-import { PrioritizationPage } from "../pages/prioritization/PrioritizationPage.tsx";
-import { ReadinessPage } from "../pages/readiness/ReadinessPage.tsx";
-import { RoadmapPage } from "../pages/roadmap/RoadmapPage.tsx";
-import { TeamPage } from "../pages/team/TeamPage.tsx";
-import { TransformationCreatePage } from "../pages/transformations/TransformationCreatePage.tsx";
-import { TransformationDetailPage } from "../pages/transformations/TransformationDetailPage.tsx";
-import { TransformationEditPage } from "../pages/transformations/TransformationEditPage.tsx";
-import { TransformationListPage } from "../pages/transformations/TransformationListPage.tsx";
 import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
 import { Shell } from "./Shell.tsx";
+
+/**
+ * T-DG4-FE-R2 (D-111): route-level code splitting. Every page of the shell is loaded on first use with React.lazy and
+ * a dynamic import(), so a page load no longer parses every screen of the product. The chunks are emitted by Vite and
+ * served by the app itself (no CDN, no remote loading). The shell, the session guard (RequireSession), the sign-in page
+ * and the redirects stay eager. While a chunk loads, the ONE shared fallback (components/RouteFallback.tsx) shows a
+ * translated status; a chunk that fails to load shows an error with a reload.
+ *
+ * Each page keeps its own name in this file and its own route element (`element: <Page />`): the route tree and the
+ * props are unchanged. `load()` resolves to the page component itself (from its fixed file and export), for the seam
+ * tests and for preloading.
+ */
+export type LazyPage<P extends object> = ComponentType<P> & { load: () => Promise<ComponentType<P>> };
+
+export function lazyPage<P extends object>(load: () => Promise<ComponentType<P>>): LazyPage<P> {
+  // One load per page (shared by the render and by preloadRoute); a failed load may be tried again.
+  let pending: Promise<ComponentType<P>> | undefined;
+  let resolved: ComponentType<P> | undefined;
+  const once = () =>
+    (pending ??= load().then(
+      (Page) => (resolved = Page),
+      (error: unknown) => {
+        pending = undefined;
+        throw error;
+      },
+    ));
+  const Lazy = lazy(() =>
+    once().then(
+      (Page) => ({ default: Page }),
+      // A chunk that cannot be fetched: an error with a reload in the page's place, never a blank main area.
+      () => ({ default: RouteLoadFailed as ComponentType<P> }),
+    ),
+  );
+  function RoutePage(props: P) {
+    // Decided once per mount, so the tree never changes shape under a mounted page: a page whose chunk is already
+    // loaded (preloaded, or visited before) renders at once, without a fallback flash.
+    const [Page] = useState<ComponentType<P>>(() => resolved ?? Lazy);
+    return (
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <Page {...props} />
+      </Suspense>
+    );
+  }
+  return Object.assign(RoutePage, { load: once });
+}
+
+const AdminHomePage = lazyPage(() => import("../pages/admin/AdminHomePage.tsx").then((m) => m.AdminHomePage));
+const AssignmentsPage = lazyPage(() => import("../pages/admin/AssignmentsPage.tsx").then((m) => m.AssignmentsPage));
+const BusinessUnitEditPage = lazyPage(() =>
+  import("../pages/admin/OrganizationsPage.tsx").then((m) => m.BusinessUnitEditPage),
+);
+const OrganizationDetailPage = lazyPage(() =>
+  import("../pages/admin/OrganizationsPage.tsx").then((m) => m.OrganizationDetailPage),
+);
+const OrganizationsPage = lazyPage(() =>
+  import("../pages/admin/OrganizationsPage.tsx").then((m) => m.OrganizationsPage),
+);
+const UserDetailPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UserDetailPage));
+const UsersPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UsersPage));
+const AboutPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AboutPage));
+const AreaEntryPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaEntryPage));
+const AreaPlaceholderPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaPlaceholderPage));
+const NotFoundPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.NotFoundPage));
+const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P4BeingBuiltPage));
+const ApprovalDetailPage = lazyPage(() =>
+  import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalDetailPage),
+);
+const ApprovalsPage = lazyPage(() => import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalsPage));
+const ApprovalRecordsPage = lazyPage(() =>
+  import("../pages/approvals/ApprovalRecordsPage.tsx").then((m) => m.ApprovalRecordsPage),
+);
+const CalendarPage = lazyPage(() => import("../pages/calendar/CalendarPage.tsx").then((m) => m.CalendarPage));
+const JobsPage = lazyPage(() => import("../pages/calendar/JobsPage.tsx").then((m) => m.JobsPage));
+const DecisionRightsPage = lazyPage(() =>
+  import("../pages/decision-rights/DecisionRightsPage.tsx").then((m) => m.DecisionRightsPage),
+);
+const TransformReadinessPage = lazyPage(() =>
+  import("../pages/decision-rights/TransformReadinessPage.tsx").then((m) => m.TransformReadinessPage),
+);
+const DelegationsPage = lazyPage(() =>
+  import("../pages/delegations/DelegationsPage.tsx").then((m) => m.DelegationsPage),
+);
+const GroupDetailPage = lazyPage(() => import("../pages/groups/GroupsPage.tsx").then((m) => m.GroupDetailPage));
+const GroupsPage = lazyPage(() => import("../pages/groups/GroupsPage.tsx").then((m) => m.GroupsPage));
+const RoleMappingsPage = lazyPage(() => import("../pages/groups/RoleMappingsPage.tsx").then((m) => m.RoleMappingsPage));
+const DataQualityPage = lazyPage(() => import("../pages/kpi/DataQualityPage.tsx").then((m) => m.DataQualityPage));
+const KpiActualPage = lazyPage(() => import("../pages/kpi/KpiActualPage.tsx").then((m) => m.KpiActualPage));
+const KpiReviewPage = lazyPage(() => import("../pages/kpi/KpiActualPage.tsx").then((m) => m.KpiReviewPage));
+const KpiPage = lazyPage(() => import("../pages/kpi/KpiPage.tsx").then((m) => m.KpiPage));
+const KpisPage = lazyPage(() => import("../pages/kpi/KpisPage.tsx").then((m) => m.KpisPage));
+const KpiUpdatePage = lazyPage(() => import("../pages/kpi/KpiUpdatePage.tsx").then((m) => m.KpiUpdatePage));
+const BenefitPage = lazyPage(() => import("../pages/benefits/BenefitPage.tsx").then((m) => m.BenefitPage));
+const BenefitsPage = lazyPage(() => import("../pages/benefits/BenefitsPage.tsx").then((m) => m.BenefitsPage));
+const MeasurementPage = lazyPage(() => import("../pages/benefits/MeasurementPage.tsx").then((m) => m.MeasurementPage));
+const BenefitGroupsPage = lazyPage(() =>
+  import("../pages/benefits/RegisterPages.tsx").then((m) => m.BenefitGroupsPage),
+);
+const BenefitOverlapPage = lazyPage(() =>
+  import("../pages/benefits/RegisterPages.tsx").then((m) => m.BenefitOverlapPage),
+);
+const BenefitOverlapsPage = lazyPage(() =>
+  import("../pages/benefits/RegisterPages.tsx").then((m) => m.BenefitOverlapsPage),
+);
+const BenefitScenariosPage = lazyPage(() =>
+  import("../pages/benefits/RegisterPages.tsx").then((m) => m.BenefitScenariosPage),
+);
+const ValuationMethodsPage = lazyPage(() =>
+  import("../pages/benefits/RegisterPages.tsx").then((m) => m.ValuationMethodsPage),
+);
+const FinanceValidationDetailPage = lazyPage(() =>
+  import("../pages/finance-validation/FinanceValidationPages.tsx").then((m) => m.FinanceValidationDetailPage),
+);
+const FinanceValidationPage = lazyPage(() =>
+  import("../pages/finance-validation/FinanceValidationPages.tsx").then((m) => m.FinanceValidationPage),
+);
+const TransformationFinanceQueuePage = lazyPage(() =>
+  import("../pages/finance-validation/FinanceValidationPages.tsx").then((m) => m.TransformationFinanceQueuePage),
+);
+const MyWorkPage = lazyPage(() => import("../pages/my-work/MyWorkPage.tsx").then((m) => m.MyWorkPage));
+const DashboardPage = lazyPage(() => import("../pages/dashboards/DashboardsPage.tsx").then((m) => m.DashboardPage));
+const DashboardsHubPage = lazyPage(() =>
+  import("../pages/dashboards/DashboardsPage.tsx").then((m) => m.DashboardsHubPage),
+);
+const TransformationDashboardPage = lazyPage(() =>
+  import("../pages/dashboards/TransformationDashboardPage.tsx").then((m) => m.TransformationDashboardPage),
+);
+const WorkstreamDashboardPage = lazyPage(() =>
+  import("../pages/dashboards/TransformationDashboardPage.tsx").then((m) => m.WorkstreamDashboardPage),
+);
+const ExecutiveOverviewPage = lazyPage(() =>
+  import("../pages/executive-overview/ExecutiveOverviewPage.tsx").then((m) => m.ExecutiveOverviewPage),
+);
+const RagPolicyPage = lazyPage(() => import("../pages/dashboards/RagPolicyPage.tsx").then((m) => m.RagPolicyPage));
+const TraceabilityPage = lazyPage(() =>
+  import("../pages/traceability/TraceabilityPage.tsx").then((m) => m.TraceabilityPage),
+);
+const ModularEntryPage = lazyPage(() =>
+  import("../pages/traceability/ModularPage.tsx").then((m) => m.ModularEntryPage),
+);
+const PortfolioDetailPage = lazyPage(() =>
+  import("../pages/traceability/StructurePages.tsx").then((m) => m.PortfolioDetailPage),
+);
+const PortfoliosPage = lazyPage(() => import("../pages/traceability/StructurePages.tsx").then((m) => m.PortfoliosPage));
+const WorkstreamPage = lazyPage(() => import("../pages/traceability/StructurePages.tsx").then((m) => m.WorkstreamPage));
+const WorkstreamsPage = lazyPage(() =>
+  import("../pages/traceability/StructurePages.tsx").then((m) => m.WorkstreamsPage),
+);
+const ActionItemPage = lazyPage(() => import("../pages/actions/ActionsPage.tsx").then((m) => m.ActionItemPage));
+const ActionsPage = lazyPage(() => import("../pages/actions/ActionsPage.tsx").then((m) => m.ActionsPage));
+const EscalationsPage = lazyPage(() =>
+  import("../pages/executive-decisions/ExecutiveDecisionsPage.tsx").then((m) => m.EscalationsPage),
+);
+const ExecutiveDecisionPage = lazyPage(() =>
+  import("../pages/executive-decisions/ExecutiveDecisionsPage.tsx").then((m) => m.ExecutiveDecisionPage),
+);
+const ExecutiveDecisionsPage = lazyPage(() =>
+  import("../pages/executive-decisions/ExecutiveDecisionsPage.tsx").then((m) => m.ExecutiveDecisionsPage),
+);
+const ForumPage = lazyPage(() => import("../pages/forums/ForumsPage.tsx").then((m) => m.ForumPage));
+const ForumsPage = lazyPage(() => import("../pages/forums/ForumsPage.tsx").then((m) => m.ForumsPage));
+const MeetingPage = lazyPage(() => import("../pages/meetings/MeetingPage.tsx").then((m) => m.MeetingPage));
+const MeetingsPage = lazyPage(() => import("../pages/meetings/MeetingsPage.tsx").then((m) => m.MeetingsPage));
+const CorrectiveActionsPage = lazyPage(() =>
+  import("../pages/raid/CorrectivePages.tsx").then((m) => m.CorrectiveActionsPage),
+);
+const CorrectiveCasePage = lazyPage(() =>
+  import("../pages/raid/CorrectivePages.tsx").then((m) => m.CorrectiveCasePage),
+);
+const CorrectiveRulesPage = lazyPage(() =>
+  import("../pages/raid/CorrectivePages.tsx").then((m) => m.CorrectiveRulesPage),
+);
+const RaidDecisionLogPage = lazyPage(() =>
+  import("../pages/raid/DecisionLogPage.tsx").then((m) => m.RaidDecisionLogPage),
+);
+const RaidPage = lazyPage(() => import("../pages/raid/RaidPage.tsx").then((m) => m.RaidPage));
+const RaciPage = lazyPage(() => import("../pages/raci/RaciPage.tsx").then((m) => m.RaciPage));
+const AdoptionPage = lazyPage(() => import("../pages/adoption/AdoptionPage.tsx").then((m) => m.AdoptionPage));
+const FormPage = lazyPage(() => import("../pages/adoption/FormsPage.tsx").then((m) => m.FormPage));
+const FormsPage = lazyPage(() => import("../pages/adoption/FormsPage.tsx").then((m) => m.FormsPage));
+const IndicatorsPage = lazyPage(() => import("../pages/adoption/IndicatorsPage.tsx").then((m) => m.IndicatorsPage));
+const InterventionPage = lazyPage(() =>
+  import("../pages/adoption/InterventionsPage.tsx").then((m) => m.InterventionPage),
+);
+const InterventionsPage = lazyPage(() =>
+  import("../pages/adoption/InterventionsPage.tsx").then((m) => m.InterventionsPage),
+);
+const RecordPage = lazyPage(() => import("../pages/adoption/RecordPage.tsx").then((m) => m.RecordPage));
+const TrainingPage = lazyPage(() => import("../pages/adoption/TrainingPage.tsx").then((m) => m.TrainingPage));
+const AreaPage = lazyPage(() => import("../pages/bau/BauPage.tsx").then((m) => m.AreaPage));
+const BauPage = lazyPage(() => import("../pages/bau/BauPage.tsx").then((m) => m.BauPage));
+const ControlsPage = lazyPage(() => import("../pages/bau/ControlsPage.tsx").then((m) => m.ControlsPage));
+const ReviewsPage = lazyPage(() => import("../pages/bau/ControlsPage.tsx").then((m) => m.ReviewsPage));
+const HandoverPage = lazyPage(() => import("../pages/bau/HandoverPage.tsx").then((m) => m.HandoverPage));
+const HandoversPage = lazyPage(() => import("../pages/bau/HandoverPage.tsx").then((m) => m.HandoversPage));
+const ImprovementPage = lazyPage(() =>
+  import("../pages/improvement/ImprovementPage.tsx").then((m) => m.ImprovementPage),
+);
+const LessonSearchPage = lazyPage(() => import("../pages/lessons/LessonsPage.tsx").then((m) => m.LessonSearchPage));
+const LessonsPage = lazyPage(() => import("../pages/lessons/LessonsPage.tsx").then((m) => m.LessonsPage));
+const ClosurePage = lazyPage(() => import("../pages/closure/ClosurePage.tsx").then((m) => m.ClosurePage));
+const ChangeRequestPage = lazyPage(() =>
+  import("../pages/change-requests/ChangeRequestPage.tsx").then((m) => m.ChangeRequestPage),
+);
+const ChangeRequestsPage = lazyPage(() =>
+  import("../pages/change-requests/ChangeRequestsPage.tsx").then((m) => m.ChangeRequestsPage),
+);
+const PhasesPage = lazyPage(() => import("../pages/phases/PhasesPage.tsx").then((m) => m.PhasesPage));
+const BenefitFormulaPage = lazyPage(() =>
+  import("../pages/benefit-formulas/BenefitFormulaPage.tsx").then((m) => m.BenefitFormulaPage),
+);
+const BenefitFormulasPage = lazyPage(() =>
+  import("../pages/benefit-formulas/BenefitFormulasPage.tsx").then((m) => m.BenefitFormulasPage),
+);
+const BusinessCasePage = lazyPage(() =>
+  import("../pages/business-cases/BusinessCasePage.tsx").then((m) => m.BusinessCasePage),
+);
+const BusinessCasesPage = lazyPage(() =>
+  import("../pages/business-cases/BusinessCasesPage.tsx").then((m) => m.BusinessCasesPage),
+);
+const CapacityPage = lazyPage(() => import("../pages/capacity/CapacityPage.tsx").then((m) => m.CapacityPage));
+const DecisionsPage = lazyPage(() => import("../pages/decisions/DecisionsPage.tsx").then((m) => m.DecisionsPage));
+const CharterPage = lazyPage(() => import("../pages/define/CharterPage.tsx").then((m) => m.CharterPage));
+const DefinePage = lazyPage(() => import("../pages/define/DefinePage.tsx").then((m) => m.DefinePage));
+const DependenciesPage = lazyPage(() =>
+  import("../pages/dependencies/DependenciesPage.tsx").then((m) => m.DependenciesPage),
+);
+const DesignPage = lazyPage(() => import("../pages/design/DesignPage.tsx").then((m) => m.DesignPage));
+const DiagnosePage = lazyPage(() => import("../pages/diagnose/DiagnosePage.tsx").then((m) => m.DiagnosePage));
+const DispensationsPage = lazyPage(() =>
+  import("../pages/dispensations/DispensationsPage.tsx").then((m) => m.DispensationsPage),
+);
+const EvidencePage = lazyPage(() => import("../pages/evidence/EvidencePage.tsx").then((m) => m.EvidencePage));
+const GateDetailPage = lazyPage(() => import("../pages/gates/GateDetailPage.tsx").then((m) => m.GateDetailPage));
+const GatesPage = lazyPage(() => import("../pages/gates/GatesPage.tsx").then((m) => m.GatesPage));
+const InitiativePage = lazyPage(() => import("../pages/portfolio/InitiativePage.tsx").then((m) => m.InitiativePage));
+const PortfolioPage = lazyPage(() => import("../pages/portfolio/PortfolioPage.tsx").then((m) => m.PortfolioPage));
+const PrioritizationPage = lazyPage(() =>
+  import("../pages/prioritization/PrioritizationPage.tsx").then((m) => m.PrioritizationPage),
+);
+const ReadinessPage = lazyPage(() => import("../pages/readiness/ReadinessPage.tsx").then((m) => m.ReadinessPage));
+const RoadmapPage = lazyPage(() => import("../pages/roadmap/RoadmapPage.tsx").then((m) => m.RoadmapPage));
+const TeamPage = lazyPage(() => import("../pages/team/TeamPage.tsx").then((m) => m.TeamPage));
+const TransformationCreatePage = lazyPage(() =>
+  import("../pages/transformations/TransformationCreatePage.tsx").then((m) => m.TransformationCreatePage),
+);
+const TransformationDetailPage = lazyPage(() =>
+  import("../pages/transformations/TransformationDetailPage.tsx").then((m) => m.TransformationDetailPage),
+);
+const TransformationEditPage = lazyPage(() =>
+  import("../pages/transformations/TransformationEditPage.tsx").then((m) => m.TransformationEditPage),
+);
+const TransformationListPage = lazyPage(() =>
+  import("../pages/transformations/TransformationListPage.tsx").then((m) => m.TransformationListPage),
+);
 
 const placeholderRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.availability === "planned").map((a) => ({
   path: a.path.slice(1),
@@ -300,6 +453,21 @@ export const routes: RouteObject[] = [
   },
 ];
 
+/**
+ * Starts loading the chunk of the page at `pathname` without rendering it. At start-up this runs in parallel with the
+ * session check (GET /me in RequireSession), so a full page load does not wait for /me and THEN for the page's chunk.
+ * A failure is ignored here: the page's own render shows it (RouteLoadFailed).
+ */
+export function preloadRoute(pathname: string): void {
+  // RouteObject vs matchRoutes' agnostic route type under exactOptionalPropertyTypes: the same objects, read only.
+  const matches = matchRoutes(routes as unknown as Parameters<typeof matchRoutes>[0], pathname) ?? [];
+  for (const match of matches) {
+    const type = ((match.route as { element?: unknown }).element as { type?: unknown } | null | undefined)?.type;
+    if (typeof type === "function" && "load" in type) void (type as LazyPage<object>).load().catch(() => undefined);
+  }
+}
+
 export function createAppRouter() {
+  preloadRoute(window.location.pathname);
   return createBrowserRouter(routes);
 }
