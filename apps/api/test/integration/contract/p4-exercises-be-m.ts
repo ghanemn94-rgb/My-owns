@@ -9,6 +9,9 @@ import { insertAuditEvent, type Db } from "@mth/db";
 import {
   allocationSet,
   contributionAllocation,
+  inheritedRecord,
+  inheritedRecordPage,
+  missingLinks,
   orphanReportPage,
   recordImpact,
   traceabilityGraph,
@@ -18,7 +21,16 @@ import {
 import { v7 as uuidv7 } from "uuid";
 import { expect } from "vitest";
 import type { z } from "zod";
-import { call, type P4ExerciseContext, type TestApi, type World } from "../../support/harness.ts";
+import {
+  call,
+  createUser,
+  grant,
+  signIn,
+  type P4ExerciseContext,
+  type Session,
+  type TestApi,
+  type World,
+} from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
 import { insertDeliverable, seedBenefitWorld, type BenefitWorld, type Caller } from "../benefits/fixtures.ts";
 import { createOutcomeRow } from "../kpi/fixtures.ts";
@@ -34,6 +46,11 @@ export const P4_MIRRORS_BE_M: Readonly<Record<string, z.ZodType>> = {
   removeTraceLink: traceLink,
   getAllocationSet: allocationSet,
   setOutcomeContributionAllocation: contributionAllocation,
+  // T-DG4-BE-M2 (ADR-0038 §7): Modular entry.
+  getMissingLinks: missingLinks,
+  listInheritedRecords: inheritedRecordPage,
+  createInheritedRecord: inheritedRecord,
+  withdrawInheritedRecord: inheritedRecord,
 };
 
 // ------------------------------------------------------------------------------------------------ fixture
@@ -350,4 +367,260 @@ export async function exerciseP4BeMOperations(ctx: P4ExerciseContext): Promise<v
     ),
   ).toBe(true);
   expect((await m("GET", `/api/v1/records/benefit/${t.benefitId}/impact`, { session: s.outsider })).status).toBe(404);
+
+  // T-DG4-BE-M2 (appended after BE-M, p4-work-split §J+K JK.0): the four Modular-entry operations.
+  await exerciseP4BeM2Operations(ctx);
+}
+
+// ------------------------------------------------------------------------------------------------ BE-M2: Modular entry
+// T-DG4-BE-M2 (ADR-0038 §7; REQ-PB-005, REQ-S03-005): `seedModularWorld`, the Modular-entry fixture the BE-M2 tests
+// reuse (a SYNTHETIC transformation entering at Design), its helpers, and the exercises of the four operations. Every
+// approval here (the inherited G2 approval accepted by the synthetic Sponsor, the fixture gate exceptions and waiver)
+// is synthetic demo data and approves nothing real.
+
+export type ModularActor = "tl" | "sp" | "bo" | "to" | "auditor" | "outsider";
+
+/** A Modular transformation entering at Design, with a KPI definition and one outcome WITHOUT a KPI row. */
+export interface ModularWorld {
+  readonly transformationId: string;
+  readonly organizationId: string;
+  readonly base: string;
+  readonly kpiDefinitionId: string;
+  readonly outcomeId: string;
+  readonly users: Readonly<Record<ModularActor, { id: string }>>;
+  readonly s: Readonly<Record<ModularActor, Session>>;
+}
+
+/** tl: TL (BU scope; creates it); sp: SP and bo: BO (transformation scope); to: TO, auditor: AUD (org); outsider: TO
+ *  of org B. `mode` defaults to modular at Design; `end_to_end` gives the same world as an End-to-End transformation. */
+export async function seedModularWorld(
+  api: TestApi,
+  w: World,
+  send?: Caller,
+  mode: "modular" | "end_to_end" = "modular",
+): Promise<ModularWorld> {
+  const req: Caller = send ?? ((m, u, o) => call(api.app, m, u, o));
+  const tl = await createUser(api.db, w.orgA.id);
+  await grant(api.db, w.grantor.id, tl.id, "TL", { type: "business_unit", id: w.a1 }, w.orgA.id);
+  const tlSession = await signIn(api.app, tl.subject);
+  const t = await req("POST", "/api/v1/transformations", {
+    session: tlSession,
+    body:
+      mode === "modular"
+        ? { businessUnitId: w.a1, name: "Synthetic Modular entry at Design", mode: "modular", entryPhase: "design" }
+        : { businessUnitId: w.a1, name: "Synthetic End-to-End transformation", mode: "end_to_end" },
+  });
+  expect(t.status, JSON.stringify(t.body)).toBe(201);
+  const transformationId = (t.body as { id: string }).id;
+  const scope = { type: "transformation" as const, id: transformationId };
+  const mk = async (role: string) => {
+    const u = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, u.id, role, scope, w.orgA.id);
+    return u;
+  };
+  const sp = await mk("SP");
+  const bo = await mk("BO");
+  const base = `/api/v1/transformations/${transformationId}`;
+  const def = await req("POST", `${base}/kpi-definitions`, {
+    session: tlSession,
+    body: { name: "Synthetic order cycle time", unitKind: "count", polarity: "lower_is_better" },
+  });
+  expect(def.status, JSON.stringify(def.body)).toBe(201);
+  const outcomeId = await createOutcomeRow(api.db, transformationId, w.orgA.id, tl.id);
+  return {
+    transformationId,
+    organizationId: w.orgA.id,
+    base,
+    kpiDefinitionId: (def.body as { id: string }).id,
+    outcomeId,
+    users: { tl, sp, bo, to: w.office, auditor: w.auditor, outsider: w.officeB },
+    s: {
+      tl: tlSession,
+      sp: await signIn(api.app, sp.subject),
+      bo: await signIn(api.app, bo.subject),
+      to: await signIn(api.app, w.office.subject),
+      auditor: await signIn(api.app, w.auditor.subject),
+      outsider: await signIn(api.app, w.officeB.subject),
+    },
+  };
+}
+
+/** Inserts one fixture row with its audit event (the P2 audit guard demands one; the routes belong to other modules). */
+export async function insertModularFixture(
+  db: Db,
+  mw: ModularWorld,
+  table: "outcome_kpi" | "gate_exception" | "gate_dispensation",
+  values: Record<string, unknown>,
+): Promise<string> {
+  const id = uuidv7();
+  const by = mw.users.tl.id;
+  await db.transaction().execute(async (tx) => {
+    await tx
+      .insertInto(table)
+      .values({
+        id,
+        organization_id: mw.organizationId,
+        transformation_id: mw.transformationId,
+        created_by: by,
+        updated_by: by,
+        ...values,
+      } as never)
+      .execute();
+    await insertAuditEvent(
+      tx,
+      { actorType: "user", actorUserId: by, requestId: `fixture-${id}`, source: "api" },
+      {
+        action: `${table}.create`,
+        recordType: table,
+        recordId: id,
+        organizationId: mw.organizationId,
+        transformationId: mw.transformationId,
+        newVersion: 1,
+      },
+    );
+  });
+  return id;
+}
+
+/** A baseline with a value, through the kpi module's route (TL holds baseline.edit). */
+export async function addBaseline(req: Caller, mw: ModularWorld, value: string | null = "42"): Promise<string> {
+  const res = await req("POST", `${mw.base}/baselines`, {
+    session: mw.s.tl,
+    body: {
+      metric: "Synthetic order cycle time",
+      unit: "days",
+      scope: "operational",
+      ...(value !== null ? { value } : {}),
+    },
+  });
+  expect(res.status, JSON.stringify(res.body)).toBe(201);
+  return (res.body as { id: string }).id;
+}
+
+/** An active outcome KPI row (T02) on the world's outcome. */
+export function addOutcomeKpi(db: Db, mw: ModularWorld): Promise<string> {
+  return insertModularFixture(db, mw, "outcome_kpi", {
+    outcome_id: mw.outcomeId,
+    kpi_definition_id: mw.kpiDefinitionId,
+    target_date: "2027-12-31",
+  });
+}
+
+/** A note evidence item, verified by the TO when `verify` (an inherited approval counts only on verified evidence). */
+export async function addEvidence(req: Caller, mw: ModularWorld, verify = true): Promise<string> {
+  const ev = await req("POST", `${mw.base}/evidence`, {
+    session: mw.s.tl,
+    body: {
+      kind: "note",
+      title: "Synthetic prior-programme document",
+      noteBody: "Synthetic minutes.",
+      ownerUserId: mw.users.tl.id,
+    },
+  });
+  expect(ev.status, JSON.stringify(ev.body)).toBe(201);
+  const body = ev.body as { id: string; version: number };
+  if (verify) {
+    const review = await req("POST", `${mw.base}/evidence/${body.id}/review`, {
+      session: mw.s.to,
+      headers: ifm(body.version),
+      body: { result: "verified", accessibilityStatus: "accessible", note: "Synthetic: document read." },
+    });
+    expect(review.status, JSON.stringify(review.body)).toBe(200);
+  }
+  return body.id;
+}
+
+/** The inherited G2 approval (ADR-0021 §5, the DG3 route), accepted by the synthetic Sponsor when `accept`. */
+export async function addInheritedApproval(
+  req: Caller,
+  mw: ModularWorld,
+  evidenceId: string,
+  accept = true,
+  gateCode = "G2",
+): Promise<string> {
+  const D = `${mw.base}/gate-dispensations`;
+  const created = await req("POST", D, {
+    session: mw.s.tl,
+    body: {
+      kind: "inherited_approval",
+      gateCode,
+      approvingBody: "Synthetic prior programme board",
+      approvedOn: "2026-01-15",
+      evidenceId,
+    },
+  });
+  expect(created.status, JSON.stringify(created.body)).toBe(201);
+  const d = created.body as { id: string; version: number };
+  if (accept) {
+    const decided = await req("POST", `${D}/${d.id}/decision`, {
+      session: mw.s.sp,
+      headers: ifm(d.version),
+      body: { result: "accepted", note: "Synthetic demo decision." },
+    });
+    expect(decided.status, JSON.stringify(decided.body)).toBe(200);
+  }
+  return d.id;
+}
+
+export async function exerciseP4BeM2Operations(ctx: P4ExerciseContext): Promise<void> {
+  const m = ctx.mirrored;
+  const mw = await seedModularWorld(ctx.api, ctx.world, m);
+  const R = `${mw.base}/inherited-records`;
+  const s = mw.s;
+
+  // getMissingLinks: the empty Modular entry at Design lists both blocking items; G2 inherited once accepted.
+  const empty = await m("GET", `${mw.base}/missing-links`, { session: s.auditor });
+  expect(empty.status, JSON.stringify(empty.body)).toBe(200);
+  expect(empty.body.items.filter((i: { severity: string }) => i.severity === "blocking").length).toBe(2);
+  const g2Evidence = await addEvidence(m, mw);
+  await addInheritedApproval(m, mw, g2Evidence);
+  const labelled = await m("GET", `${mw.base}/missing-links`, { session: s.tl });
+  expect(labelled.body.gates.find((g: { gateCode: string }) => g.gateCode === "G2").label).toBe("inherited");
+  expect((await m("GET", `${mw.base}/missing-links`, { session: s.outsider })).status).toBe(404);
+
+  // createInheritedRecord: evidence and baseline 201; AUD 403; prior_approval 422; duplicate 409.
+  const evidenceId = await addEvidence(m, mw, false);
+  const ev = await m("POST", R, {
+    session: s.tl,
+    body: { kind: "evidence", evidenceId, sourceDescription: "Synthetic: prior programme archive" },
+  });
+  expect([ev.status, ev.body.version, ev.body.label], JSON.stringify(ev.body)).toEqual([201, 1, "inherited"]);
+  const baselineId = await addBaseline(m, mw);
+  const bl = await m("POST", R, {
+    session: s.to,
+    body: {
+      kind: "baseline",
+      baselineId,
+      sourceDescription: "Synthetic: 2025 operations report",
+      originalOwner: "Synthetic operations office",
+      originalDate: "2025-12-31",
+    },
+  });
+  expect(bl.status, JSON.stringify(bl.body)).toBe(201);
+  expect(
+    (await m("POST", R, { session: s.auditor, body: { kind: "evidence", evidenceId, sourceDescription: "AUD" } }))
+      .status,
+  ).toBe(403);
+  const prior = await m("POST", R, { session: s.tl, body: { kind: "prior_approval", sourceDescription: "Board" } });
+  expect([prior.status, prior.body.code]).toEqual([422, "inherited_record.prior_approval_use_dispensation"]);
+  const dup = await m("POST", R, { session: s.tl, body: { kind: "evidence", evidenceId, sourceDescription: "Again" } });
+  expect([dup.status, dup.body.code]).toEqual([409, "inherited_record.duplicate"]);
+
+  // listInheritedRecords: the two records and the prior_approval entry.
+  const list = await m("GET", R, { session: s.auditor });
+  expect(list.status).toBe(200);
+  expect(list.body.items.map((i: { kind: string }) => i.kind).sort()).toEqual([
+    "baseline",
+    "evidence",
+    "prior_approval",
+  ]);
+
+  // withdrawInheritedRecord: 428 without If-Match, 409 stale, 200, then 422 not_active.
+  const W = `${R}/${ev.body.id}/withdraw`;
+  expect((await m("POST", W, { session: s.tl, body: { reason: "Synthetic: superseded" } })).status).toBe(428);
+  expect((await m("POST", W, { session: s.tl, headers: ifm(7), body: { reason: "Synthetic" } })).status).toBe(409);
+  const withdrawn = await m("POST", W, { session: s.tl, headers: ifm(1), body: { reason: "Synthetic: superseded" } });
+  expect([withdrawn.status, withdrawn.body.status, withdrawn.body.version]).toEqual([200, "withdrawn", 2]);
+  const again = await m("POST", W, { session: s.tl, headers: ifm(2), body: { reason: "Synthetic: again" } });
+  expect([again.status, again.body.code]).toEqual([422, "inherited_record.not_active"]);
 }

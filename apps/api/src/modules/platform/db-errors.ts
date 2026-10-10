@@ -2229,6 +2229,45 @@ export function mapP4TraceabilityError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P4 slice K, BE-M2 lines (T-DG4-BE-M2; ADR-0038 §12): the 0055 `inherited_record` guards. The API refuses each case
+ * first with the same code and text (reporting/modular.ts); these are the last line when a concurrent write slips past
+ * a check, so it never surfaces as a 500. Null when the error is not one of them. (Slices J/K block, after BE-M.)
+ */
+export function mapP4ModularEntryError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "inherited_record_modular_only":
+      return problems.businessRule(
+        "inherited_record.not_modular",
+        "Inherited records can be recorded only for a transformation in Modular entry.",
+      );
+    case "inherited_record_one_active_key":
+      return problems.duplicate("inherited_record.duplicate", "This record is already recorded as inherited.");
+    case "inherited_record_evidence_fkey":
+    case "inherited_record_baseline_fkey":
+      return traceRule(
+        "inherited_record.record_not_found",
+        "The evidence item or baseline does not exist in this transformation or is archived.",
+        error.constraint === "inherited_record_evidence_fkey" ? "/evidenceId" : "/baselineId",
+      );
+    case "inherited_record_immutable":
+      return new HttpProblem({
+        status: 422,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "inherited_record.not_active",
+        title: "Invalid transition",
+        detail: "This inherited record has already been withdrawn.",
+      });
+    case "inherited_record_starts_active":
+    case "inherited_record_kind_shape":
+    case "inherited_record_withdrawal_complete":
+      // The API writes these shapes itself: reaching the constraint is a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * P4 slice J, KBE-G lines (ADR-0037 §13; T-DG4-KBE-G): the 0056 dashboard RAG policy constraints. The API checks the
  * order first with the exact ADR text (dashboards/rag-policy.ts); these are the last line. Null when the error is not
  * one of them. (Slices J/K block: appended after BE-M's lines at merge, p4-work-split §J+K JK.4.)
@@ -2382,6 +2421,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4ChangeControl !== null) return p4ChangeControl;
   const p4Traceability = mapP4TraceabilityError(error); // BE-M (slices J/K block)
   if (p4Traceability !== null) return p4Traceability;
+  const p4ModularEntry = mapP4ModularEntryError(error); // BE-M2 (slices J/K block)
+  if (p4ModularEntry !== null) return p4ModularEntry;
   const p4Dashboard = mapP4DashboardError(error); // KBE-G (slices J/K block)
   if (p4Dashboard !== null) return p4Dashboard;
   const p4PhaseStep = mapP4PhaseStepError(error); // BE-L2 (slice H block)
