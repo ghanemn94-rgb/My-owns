@@ -23,7 +23,13 @@
 // forecast and unvalidated values are never shown as validated. Nothing here is a Finance approval.
 import type { DbOrTx } from "@mth/db";
 import { FORMULA_DECIMAL as D } from "@mth/shared/calc";
-import type { DashboardValue, FinanceDashboard, FinanceLineState, FinanceValueLine } from "@mth/shared/schemas";
+import type {
+  DashboardMetric,
+  DashboardValue,
+  FinanceDashboard,
+  FinanceLineState,
+  FinanceValueLine,
+} from "@mth/shared/schemas";
 import { FINANCE_LINE_STATES } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -70,8 +76,38 @@ export function financeClassOf(b: ValueBenefitFact): string | null {
 }
 
 /** Whether a line of a benefit enters its Finance line: an open overlap holds back validated and sustained values. */
-function entersLine(b: ValueBenefitFact, state: string): boolean {
+export function entersLine(b: ValueBenefitFact, state: string): boolean {
   return !(b.overlapOpen && (state === "validated" || state === "sustained"));
+}
+
+/**
+ * ADR-0037 amendment K1 item 3: whether a value line enters the value-state sum of `state` narrowed to `valueClass`
+ * (null: the five financial classes, the rule of the four original value metrics). The ONE rule shared by the Finance
+ * class lines (financeClassLines) and the value-state drill-downs (drilldown.ts), so a class line and its drill-down
+ * sum the same records by construction:
+ *  - the benefit is counted once and monetised (financeClassOf is not null) and of the class asked for;
+ *  - the line is of the state and in its window (lineInWindow);
+ *  - an open overlap holds back validated and sustained lines (entersLine).
+ */
+export function lineEntersClassSum(
+  b: ValueBenefitFact | undefined,
+  line: ValueLineFact,
+  state: string,
+  valueClass: string | null,
+  clock: DashboardClock,
+): boolean {
+  if (b === undefined || line.state !== state || !benefitInClass(b, valueClass)) return false;
+  return entersLine(b, state) && lineInWindow(line, state, clock);
+}
+
+/**
+ * Whether a benefit is counted once, monetised and of `valueClass` (null: one of the five financial classes), i.e. a
+ * benefit a Finance class line exists for, whatever its lines (an overlap-held benefit still has its class lines).
+ */
+export function benefitInClass(b: ValueBenefitFact, valueClass: string | null): boolean {
+  const c = financeClassOf(b);
+  if (c === null) return false;
+  return valueClass === null ? FINANCIAL_VALUE_CLASSES.includes(c) : c === valueClass;
 }
 
 /**
@@ -95,14 +131,7 @@ export function financeClassLines(
         const amounts = lines
           .filter((l) => {
             const b = byId.get(l.benefitId);
-            return (
-              b !== undefined &&
-              l.state === state &&
-              b.currency === currency &&
-              financeClassOf(b) === valueClass &&
-              entersLine(b, state) &&
-              lineInWindow(l, state, clock)
-            );
+            return b !== undefined && b.currency === currency && lineEntersClassSum(b, l, state, valueClass, clock);
           })
           .map((l) => l.amount);
         out.push({
@@ -187,16 +216,35 @@ export function grossNetLines(
   return out;
 }
 
-/** The states a value drill-down metric exists for (the others' lines have no drill-down of their own). */
-const DRILL_METRIC_OF: ReadonlyMap<
+/** The value-state drill-down metric of each Finance line state (ADR-0037 amendment K1: every state has one). */
+export const DRILL_METRIC_OF: ReadonlyMap<FinanceLineState, DashboardMetric> = new Map<
   FinanceLineState,
-  "value.planned" | "value.forecast" | "value.submitted" | "value.validated"
-> = new Map([
+  DashboardMetric
+>([
   ["planned", "value.planned"],
   ["forecast", "value.forecast"],
+  ["measured", "value.measured"],
   ["submitted", "value.submitted"],
   ["validated", "value.validated"],
+  ["rejected", "value.rejected"],
+  ["sustained", "value.sustained"],
 ]);
+
+/** The states the engine's facts do not carry (`EXTRA_STATES`): their lines are read by loadExtraStateLines. */
+export const isExtraState = (state: string): boolean => (EXTRA_STATES as readonly string[]).includes(state);
+
+/**
+ * The measured, rejected and sustained lines of the scope, narrowed to the benefits of the context (owner filter):
+ * the same rows the Finance class lines read.
+ */
+export async function extraStateLinesOf(
+  db: DbOrTx,
+  ctx: DashboardContext,
+  transformationIds: readonly string[],
+): Promise<ValueLineFact[]> {
+  const kept = new Set(ctx.facts.benefits.map((b) => b.benefitId));
+  return (await loadExtraStateLines(db, transformationIds)).filter((l) => kept.has(l.benefitId));
+}
 
 /** The measured, rejected and sustained lines of the scope (benefit_value_line, ADR-0030 §6), read-only. */
 async function loadExtraStateLines(db: DbOrTx, transformationIds: readonly string[]): Promise<ValueLineFact[]> {
@@ -268,29 +316,24 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
           workstream: false,
         });
         const hrefOf = (metric: string) => drilldownHref(metric, filters, { transformationIds });
-        const kept = new Set(ctx.facts.benefits.map((b) => b.benefitId));
-        const extra = (
-          await loadExtraStateLines(
-            tx,
-            scope.map((t) => t.id),
-          )
-        ).filter((l) => kept.has(l.benefitId));
+        const extra = await extraStateLinesOf(
+          tx,
+          ctx,
+          scope.map((t) => t.id),
+        );
         const raw = financeClassLines(ctx.facts.benefits, [...ctx.facts.lines, ...extra], ctx.clock);
-        const classLines = raw.map((l): FinanceValueLine => {
-          // A class line drills to its state's value drill-down only when it IS that state's whole figure in its
-          // currency (the only financial class there), so the drill-down's decimal sum equals the line (ADR-0037 §5).
-          // Otherwise its records are a subset of that drill-down, and it carries no href (a contract need: the
-          // drill-down has no value-class parameter; see the handback).
-          const metric = DRILL_METRIC_OF.get(l.state);
-          const financialClasses = new Set(
-            raw
-              .filter((x) => x.currency === l.currency && FINANCIAL_VALUE_CLASSES.includes(x.valueClass))
-              .map((x) => x.valueClass),
-          );
-          const whole =
-            metric !== undefined && FINANCIAL_VALUE_CLASSES.includes(l.valueClass) && financialClasses.size === 1;
-          return { ...l, drilldownHref: whole ? hrefOf(metric) : null };
-        });
+        // ADR-0037 amendment K1 item 5: every class line drills to its state's value drill-down narrowed to its class
+        // (`valueClass`), which sums exactly the records the line sums (lineEntersClassSum), so the drill-down's decimal
+        // sum in the line's currency equals the line's total (or both are Unknown). gross keeps its href; net is derived.
+        const classLines = raw.map(
+          (l): FinanceValueLine => ({
+            ...l,
+            drilldownHref: drilldownHref(DRILL_METRIC_OF.get(l.state)!, filters, {
+              transformationIds,
+              valueClass: l.valueClass,
+            }),
+          }),
+        );
         const pending = pendingValidationCount(ctx);
         const valueArea = areas.find((a) => a.code === "value")!;
         return {

@@ -9,9 +9,23 @@
 //    unchanged": kpi.values_recalculated of the accept run gives ONE pending (submitted) measurement per benefit and
 //    run, computed by the DG3 engine from the accepted KPI value version (lineage recorded), with its queue item; a
 //    replay creates none; a newer accepted value supersedes the earlier pending value and withdraws its queue item.
+// Isolation (T-DG4-KBE-R4, D-114): this file starts the PRODUCTION worker, which consumes its queues in pg-boss order
+// (oldest first). In the shared per-run database those queues also hold the jobs of every other file's events (the
+// relay publishes every unpublished outbox row, and no other file runs a worker on these queues), and the worker drains
+// them first, about one per 0.5 s polling interval: measured in the full suite at 0a3da46, 31 benefits.finance_queue
+// jobs of other files were ahead of this test's job, which started 15.5 s after the worker, past the 15 s wait. So the
+// file runs on its OWN scratch database of the run's cluster (created, migrated by the real runner and dropped here; the
+// tests/qa A04 precedent), and the test asserts that its job is the only one in the queue before the worker starts.
 // All data is SYNTHETIC; no job decides a Finance validation or touches the engineering gates DG0-DG7.
 import type PgBoss from "pg-boss";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { migrate } from "../../../../packages/db/src/migrate.ts";
+import {
+  createScratchDatabase,
+  dropScratchDatabase,
+  roleUrl,
+  testDatabase,
+} from "../../../../packages/db/test/helpers.ts";
 import { call, seedWorld, startApi, type TestApi, type World } from "../../../api/test/support/harness.ts";
 import { seedBenefitWorld, type BenefitWorld } from "../../../api/test/integration/benefits/fixtures.ts";
 import {
@@ -40,8 +54,12 @@ import { bossFor, waitFor } from "../support.ts";
 let api: TestApi;
 let w: World;
 let boss: PgBoss;
+let dbName: string | undefined;
 beforeAll(async () => {
-  api = await startApi();
+  const { adminUrl } = testDatabase();
+  dbName = await createScratchDatabase(adminUrl, "mth_bq");
+  await migrate(roleUrl(adminUrl, dbName, "mth_owner"));
+  api = await startApi({ database: dbName });
   w = await seedWorld(api.db);
   boss = bossFor(api.config.databaseUrl!);
   boss.on("error", () => undefined);
@@ -49,8 +67,9 @@ beforeAll(async () => {
   await ensureQueues(boss);
 }, 60_000);
 afterAll(async () => {
-  await boss.stop({ graceful: false, wait: true, timeout: 5000 });
-  await api.close();
+  await boss?.stop({ graceful: false, wait: true, timeout: 5000 });
+  await api?.close();
+  if (dbName) await dropScratchDatabase(testDatabase().adminUrl, dbName);
 }, 60_000);
 
 const quiet = { info: () => undefined, error: () => undefined };
@@ -104,6 +123,13 @@ describe("benefits.finance_queue through the relay and the production worker (RE
       180_000,
       0,
     );
+    // The precondition the isolation gives (D-114): no job of another file is queued ahead of this test's job.
+    const queued = await api.owner.query(
+      "SELECT data->>'outboxEventId' AS event FROM pgboss.job WHERE name = $1 AND state IN ('created', 'retry')",
+      [FINANCE_QUEUE],
+    );
+    const ours = (await envelopeOf(api, m.body.id, "benefit.evidence_submitted"))!.outboxEventId;
+    expect(queued.rows.map((r) => r.event)).toEqual([ours]);
     let running: RunningWorker = await worker();
     try {
       const item = await waitFor(async () => (await queueItemOf(api, m.body.id)) ?? null);

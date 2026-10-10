@@ -149,7 +149,9 @@ describe("a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 i
     });
     // The run's other rows, findings and events are unchanged by the lineage: B's own evaluations carry the entered
     // shape as built, the run records no finding (A's binding-only slot records none), and its events are one
-    // kpi.deviation_evaluated per period-basis row plus one kpi.values_recalculated.
+    // kpi.deviation_evaluated per period-basis row plus one kpi.values_recalculated. B's cumulative row (a known value
+    // over a one-period window) gains windowValues, the member ADR-0027 amendment C5 adds (T-DG4-KBE-R4); its period
+    // row is unchanged.
     const bRows = await api.db
       .selectFrom("kpi_evaluation")
       .select(["id", "value_basis", "value_source", "inputs"])
@@ -158,7 +160,16 @@ describe("a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 i
       .orderBy("value_basis")
       .execute();
     expect(bRows.map((r) => [r.value_basis, r.value_source, r.inputs])).toEqual([
-      ["cumulative", "entered", { kpiActualId: bActualId, valueNo: 1, window: [period.id] }],
+      [
+        "cumulative",
+        "entered",
+        {
+          kpiActualId: bActualId,
+          valueNo: 1,
+          window: [period.id],
+          windowValues: [{ reportingPeriodId: period.id, kpiActualId: bActualId, valueNo: 1 }],
+        },
+      ],
       ["period", "entered", { kpiActualId: bActualId, valueNo: 1 }],
     ]);
     expect([bRun!.evaluation_count, bRun!.finding_count]).toEqual([4, 0]);

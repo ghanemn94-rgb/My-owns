@@ -193,14 +193,15 @@ describe("Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7)", () => {
       expect(line.drilldownHref, state).not.toBeNull();
       expect(await drillSum(line.drilldownHref, "SAR"), state).toBe(dec(line.total.value));
     }
-    // The only financial class in SAR: its line IS the state's figure and drills to it.
+    // Every class line drills to its state's metric narrowed to its class (ADR-0037 amendment K1; T-DG4-KBE-R4), so
+    // its drill-down sums exactly its records; net is derived (from gross and investment) and keeps no href.
     const cls = lineOf(r.body, "revenue_uplift", "validated");
     expect(await drillSum(cls.drilldownHref, "SAR")).toBe("900");
-    // States without a drill-down metric of their own carry no href; net is derived (from gross and investment).
-    expect([
-      lineOf(r.body, "revenue_uplift", "measured").drilldownHref,
-      lineOf(r.body, "net", "planned").drilldownHref,
-    ]).toEqual([null, null]);
+    const measured = lineOf(r.body, "revenue_uplift", "measured");
+    expect(measured.drilldownHref).toContain("metric=value.measured");
+    expect(measured.drilldownHref).toContain("valueClass=revenue_uplift");
+    expect(await drillSum(measured.drilldownHref, "SAR")).toBe("1150");
+    expect(lineOf(r.body, "net", "planned").drilldownHref).toBeNull();
     const pending = (r.body.headlines as Body[]).find((h) => h.metric === "finance.pending_validation");
     expect(pending.value).toMatchObject({ state: "value", value: "1" });
     const d = await get(pending.drilldownHref);
