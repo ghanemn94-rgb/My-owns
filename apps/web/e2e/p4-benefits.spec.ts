@@ -525,3 +525,70 @@ test("8. Auditor read-only; register and benefit page at 390 px and 200 % text; 
   }
   await aud.close();
 });
+
+// T-DG4-FE-D2 (D-112; append-only): plan-value editing through the REAL getBenefitPlanValue read and its If-Match.
+// FE-R1 proved it with an intercepted read only; the route is merged now. A stale edit is a 409 and never overwrites.
+test("9. Plan-value edit: If-Match from the real read; a stale edit is the 409 conflict and never overwrites", async ({
+  browser,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  const boApi = await apiSession(playwright, owner.username);
+  const pv = await boApi.call<{ id: string; version: number }>("POST", `${T}/benefits/${benefitId}/plan-values`, {
+    valueKind: "planned",
+    periodStart: "2027-01-01",
+    periodEnd: "2027-12-31",
+    amount: "1000000.0000",
+    note: "Synthetic planned value for the edit check (demo data).",
+  });
+  const PV = `${T}/benefit-plan-values/${pv.id}`;
+  const bo = await asUser(browser, lang, owner.username);
+  const page = bo.page;
+  const foreign = trackRequests(page);
+  await go(page, `/transformations/${tid}/benefits/${benefitId}`);
+  const editButton = page
+    .locator("[data-series='planned'] [data-action='edit-plan-value']")
+    .filter({ hasText: "2027-01-01" });
+  // 1. The edit reads the plan value (real route) and sends THAT read's version as If-Match.
+  const read = page.waitForResponse((r) => r.request().method() === "GET" && r.url().endsWith(PV));
+  await editButton.click();
+  const readRes = await read;
+  expect(readRes.status()).toBe(200);
+  const seen = (await readRes.json()) as { version: number; amount: string };
+  expect(seen.version).toBe(pv.version);
+  let dialog = page.getByRole("dialog");
+  await expect(dialog.locator("[data-field='amount']")).toHaveValue("1000000.0000");
+  await dialog.locator("[data-field='amount']").fill("1200000");
+  const patch = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(PV));
+  await dialog.locator("[data-action='submit']").click();
+  const sent = await patch;
+  expect(sent.headers()["if-match"]).toBe(`"${seen.version}"`);
+  expect(sent.postDataJSON()).toEqual({ amount: "1200000" });
+  await expect(dialog).toBeHidden();
+  const v2 = await boApi.call<{ version: number; amount: string }>("GET", PV);
+  expect(v2.amount).toBe("1200000.0000");
+  expect(v2.version).toBe(seen.version + 1);
+  await shot(page, lang, "p4ben-29-plan-value-edited");
+  // 2. Stale edit: the dialog read version v2; another change lands meanwhile; the save is a 409, nothing overwritten.
+  // The save's refresh already re-read the plan value (real route) while the dialog was open, so reopening uses that
+  // read: the dialog shows version v2, and v2 is what the save sends as If-Match.
+  await editButton.click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText(tr(lang, "benefitsP4.values.editVersion", { version: v2.version }));
+  await boApi.call("PATCH", PV, { amount: "1300000" }, { ifMatch: v2.version });
+  await dialog.locator("[data-field='amount']").fill("1400000");
+  const stale = page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().endsWith(PV));
+  await dialog.locator("[data-action='submit']").click();
+  const staleRes = await stale;
+  expect(staleRes.status()).toBe(409);
+  expect(staleRes.request().headers()["if-match"]).toBe(`"${v2.version}"`);
+  await expect(dialog.getByRole("alert")).toHaveAttribute("data-state", "conflict");
+  await expect(dialog.getByRole("alert")).toContainText(tr(lang, "myWork.ui.conflictReloaded"));
+  await shot(page, lang, "p4ben-30-plan-value-stale-409");
+  await expectAccessible(page, lang, "p4ben-30-plan-value-stale-409");
+  const final = await boApi.call<{ version: number; amount: string }>("GET", PV);
+  expect(final.amount).toBe("1300000.0000");
+  expect(final.version).toBe(v2.version + 1);
+  expect(foreign).toEqual([]);
+  await bo.close();
+});
