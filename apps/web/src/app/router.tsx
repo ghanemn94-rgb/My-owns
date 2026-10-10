@@ -67,6 +67,9 @@ import { HandoverPage, HandoversPage } from "../pages/bau/HandoverPage.tsx";
 import { ImprovementPage } from "../pages/improvement/ImprovementPage.tsx";
 import { LessonSearchPage, LessonsPage } from "../pages/lessons/LessonsPage.tsx";
 import { ClosurePage } from "../pages/closure/ClosurePage.tsx";
+import { ChangeRequestPage } from "../pages/change-requests/ChangeRequestPage.tsx";
+import { ChangeRequestsPage } from "../pages/change-requests/ChangeRequestsPage.tsx";
+import { PhasesPage } from "../pages/phases/PhasesPage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
 import { BenefitFormulaPage } from "../pages/benefit-formulas/BenefitFormulaPage.tsx";
 import { BenefitFormulasPage } from "../pages/benefit-formulas/BenefitFormulasPage.tsx";
@@ -126,8 +129,7 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   // FE-D (slices E and D: RAID, actions, forums, meetings, T16): built by T-DG4-FE-D, see the routes below.
   // FE-E (slices F and G: adoption, BAU, improvement, lessons): built by T-DG4-FE-E, see the routes below.
   // FE-F (slice H: G5/G6 views live in pages/gates; change control and closure)
-  { path: "transformations/:id/change-requests", feature: "changeRequests", owner: "FE-F" },
-  { path: "transformations/:id/change-requests/:changeRequestId", feature: "changeRequest", owner: "FE-F" },
+  // change requests: built by T-DG4-FE-F2 (pages/change-requests), see the routes below.
   // closure: built by T-DG4-FE-F (pages/closure), see the routes below.
   // FE-G (slices J and K): the six dashboards and the Executive Overview are built by T-DG4-FE-G, see the routes below;
   // traceability is FE-G2's.
@@ -229,6 +231,10 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/workstreams/:workstreamId/dashboard", element: <WorkstreamDashboardPage /> },
       // P4 slice G closure and transition decisions (T-DG4-FE-F; p4-work-split §F+G FG.8; ADR-0034 §1-§3, §7).
       { path: "transformations/:id/closure", element: <ClosurePage /> },
+      // P4 slice H change control and the phase workspace (T-DG4-FE-F2; p4-work-split §H H.6; ADR-0035 §1, ADR-0036).
+      { path: "transformations/:id/change-requests", element: <ChangeRequestsPage /> },
+      { path: "transformations/:id/change-requests/:changeRequestId", element: <ChangeRequestPage /> },
+      { path: "transformations/:id/phases", element: <PhasesPage /> },
       { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },
       {
         path: "transformations/:id/finance-validations/:financeValidationId",
