@@ -1,0 +1,29 @@
+Interleaved A/B of apps/web/e2e/p2-journeys.spec.ts, chromium-en, --workers=1, each run on a fresh stack; same machine and time window per pair.
+'before' = the base router (no splitting) built from this tree; the main chunk differs from the base build only by the 2 new common.* keys.
+Define -> G2 (line 828) failed with the 30 s test timeout in ALL 12 runs of both arms (load average 5-17, from other agents' runs); the tests after it did not run (serial mode).
+
+A/B 1: after = split WITHOUT the start-up preload (first implementation)
+ line test                       before (3 runs, s)         after (3 runs, s)          mean before / after
+   42 lead creates an End-to-E   [5.9, 5.2, 5.6]            [7.0, 6.5, 6.2]              5.6 /   6.6
+   83 Diagnose: six T01 dimens   [13.1, 12.2, 11.7]         [15.4, 15.3, 12.2]          12.3 /  14.3
+  168 Charter: create, save a    [9.8, 8.9, 9.5]            [12.8, 10.7, 9.5]            9.4 /  11.0
+  248 Define: North Star, the    [9.0, 8.1, 7.8]            [10.7, 8.6, 8.2]             8.3 /   9.2
+  332 Design: ten canvas boxes   [10.1, 11.0, 10.5]         [11.9, 9.9, 11.1]           10.5 /  11.0
+  414 Evidence: note, filename   [11.3, 12.8, 12.3]         [12.9, 12.7, 12.9]          12.1 /  12.8
+  608 Gates: G1 shows unverifi   [9.8, 12.2, 10.3]          [10.4, 11.6, 11.1]          10.8 /  11.0
+  675 Gates: the approver's de   [9.1, 10.7, 9.5]           [10.7, 10.0, 10.3]           9.8 /  10.3
+  828 Define → G2: activate a    [32.6, 32.4, 31.9]         [32.2, 32.6, 32.0]          32.3 /  32.3
+sum of the 8 tests before Define -> G2 over 3 runs: before 236.4 s, after 258.6 s (+9.4 %)
+
+A/B 2: after2 = split WITH the start-up preload of the matched page (final implementation)
+ line test                       before (3 runs, s)         after2 (3 runs, s)         mean before / after2
+   42 lead creates an End-to-E   [6.1, 6.5, 7.8]            [6.7, 8.7, 6.4]              6.8 /   7.3
+   83 Diagnose: six T01 dimens   [15.5, 14.2, 14.6]         [15.4, 15.6, 16.4]          14.8 /  15.8
+  168 Charter: create, save a    [11.0, 10.7, 10.7]         [10.4, 11.8, 10.2]          10.8 /  10.8
+  248 Define: North Star, the    [9.7, 9.8, 9.9]            [10.4, 11.1, 10.5]           9.8 /  10.7
+  332 Design: ten canvas boxes   [11.4, 13.3, 12.4]         [12.9, 13.2, 13.4]          12.4 /  13.2
+  414 Evidence: note, filename   [13.7, 14.3, 14.4]         [12.8, 16.2, 12.6]          14.1 /  13.9
+  608 Gates: G1 shows unverifi   [12.8, 13.8, 14.4]         [11.7, 13.2, 12.0]          13.7 /  12.3
+  675 Gates: the approver's de   [10.9, 11.3, 9.8]          [11.7, 13.5, 11.3]          10.7 /  12.2
+  828 Define → G2: activate a    [31.9, 32.8, 32.2]         [32.0, 32.9, 31.4]          32.3 /  32.1
+sum of the 8 tests before Define -> G2 over 3 runs: before 279.0 s, after2 288.1 s (+3.3 %)
