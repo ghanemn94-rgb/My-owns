@@ -25,7 +25,17 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **Next action:** DG4 (P4). Run `node tools/gates/validate.mjs --historical --stage DG3` (exit 0) before any DG4 implementation, then plan DG4 from the master prompt and the register (`final_gate` = DG4), architecture first, as for DG3 (D-078).
+- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-111.
+  - **Done:** every architecture task (ARCH-01 to ARCH-08, ARCH-R1, ARCH-R2) and every backend and KPI/benefits implementer task, including the repair rounds R1–R3. Also FE-A to FE-D.
+  - **Integrated locally, not yet pushed:** W14 (D-111) and, from W15, KBE-R3 and BE-R3 (`86a5a8d`).
+  - **In flight:** FE-R1 and FE-E (W15).
+  - **Remaining builds:**
+    - W16: FE-D2, FE-F, FE-G, QA-A;
+    - W17: FE-F2, FE-G2, QA-B, QA-C, and an FE repair adding route-level code splitting (D-111);
+    - then AN-P4 (the register update before the freeze).
+  - **Then:** the freeze, the three reviews and the audit.
+  - **Open verification item:** the merged-tree e2e suite has not been green since W13 (D-111: four 30 s timeouts under load). It is re-run with W15 with no agent running.
+- **Next action:** merge FE-R1 and FE-E, verify the merged tree in `/home/user/wt/verify` (e2e with no agent running), write D-112, push, then create the W16 worktrees before any W16 run starts (D-100).
 
 ## DG2 scope (P2 — diagnose, define and design)
 
