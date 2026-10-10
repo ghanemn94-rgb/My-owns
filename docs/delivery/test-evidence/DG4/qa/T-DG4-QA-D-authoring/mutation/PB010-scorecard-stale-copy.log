@@ -1,0 +1,45 @@
+port-policy: PostgreSQL listening on port 25650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.UyD3q9/claude-0/review-qa-d-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2q4e4o_63bda710 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts (2 tests | 1 failed) 1135ms
+   ✓ REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > before the rename, the scorecard and the traceability view show the original name (the baseline) 100ms
+   × REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row 150ms
+     → expected [ [ 'initiative', 'INI-7001', …(2) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(2) ] ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts > REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row
+AssertionError: expected [ [ 'initiative', 'INI-7001', …(2) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(2) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    [[22m
+[2m      "initiative",[22m
+[2m      "INI-7001",[22m
+[32m-     "Synthetic QA-D renamed scorecard initiative",[39m
+[31m+     "Synthetic launched initiative 1",[39m
+[2m      "/api/v1/initiatives/01a1270f-5d8b-742e-a662-88072b6d66dd",[22m
+[2m    ],[22m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts:130:70
+    128|     const items = await scorecardItems();
+    129|     const mine = items.filter((i) => i.recordId === initiativeId);
+    130|     expect(mine.map((i) => [i.recordType, i.code, i.label, i.href])).t…
+       |                                                                      ^
+    131|       ["initiative", code, rows[0]!.name, `/api/v1/initiatives/${initi…
+    132|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  18:24:29
+   Duration  11.38s (transform 3.81s, setup 0ms, collect 7.68s, tests 1.13s, environment 0ms, prepare 70ms)
+
