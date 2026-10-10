@@ -6,6 +6,9 @@
 //   POST /transformations/{t}/adoption-metric-links                  attach one; a KPI-fed measure names a KPI of the
 //                                                                    transformation or creates one from the template
 //                                                                    (createKpi) in the same transaction (adoption.edit)
+//   GET  /transformations/{t}/adoption-metric-links/{l}              one link, active or removed, with its ETag; the
+//                                                                    target of the create's Location (ADR-0033
+//                                                                    amendment A2; T-DG4-KBE-R2) (transformation.read)
 //   POST /transformations/{t}/adoption-metric-links/{l}/remove       remove; final (If-Match; adoption.edit)
 //   GET  /transformations/{t}/adoption-indicators                    the measures of a target for a reporting period
 //
@@ -86,7 +89,8 @@ type KpiDefinitionRow = Selectable<KpiDefinitionTable>;
 
 export const ADOPTION_INDICATOR_TEMPLATES = "/api/v1/adoption-indicator-templates";
 export const ADOPTION_METRIC_LINKS = `${T_BASE}/adoption-metric-links`;
-export const ADOPTION_METRIC_LINK_REMOVE = `${ADOPTION_METRIC_LINKS}/:adoptionMetricLinkId/remove`;
+export const ADOPTION_METRIC_LINK = `${ADOPTION_METRIC_LINKS}/:adoptionMetricLinkId`;
+export const ADOPTION_METRIC_LINK_REMOVE = `${ADOPTION_METRIC_LINK}/remove`;
 export const ADOPTION_INDICATORS = `${T_BASE}/adoption-indicators`;
 
 export const ADOPTION_METRIC_LINK_AUDIT_FIELDS = [
@@ -741,6 +745,22 @@ export function registerAdoptionIndicatorRoutes(app: FastifyInstance, { db }: Mo
     return sendVersioned(reply, 201, toAdoptionMetricLink(row), `${request.url.split("?")[0]!}/${row.id}`);
   });
 
+  // ADR-0033 amendment A2: the single read, active or removed. The transformation read gate first (outsiders and
+  // ADM-only callers 404); a link of another transformation is 404 too.
+  app.get(ADOPTION_METRIC_LINK, { config: read }, async (request, reply) => {
+    const { transformationId, adoptionMetricLinkId } = parse(linkParams, request.params, "params");
+    parseQuery(z.strictObject({}), request.query);
+    await requireTransformationRead(db, principalOf(request), transformationId);
+    const row = await db
+      .selectFrom("adoption_metric_link")
+      .selectAll()
+      .where("id", "=", adoptionMetricLinkId)
+      .where("transformation_id", "=", transformationId)
+      .executeTakeFirst();
+    if (!row) throw problems.notFound();
+    return sendVersioned(reply, 200, toAdoptionMetricLink(row));
+  });
+
   app.post(ADOPTION_METRIC_LINK_REMOVE, { config: bodiless }, async (request, reply) => {
     const row = await db.transaction().execute((tx) => removeLink(tx, request));
     return sendVersioned(reply, 200, toAdoptionMetricLink(row));
@@ -752,6 +772,7 @@ export function registerAdoptionIndicatorRoutes(app: FastifyInstance, { db }: Mo
     `GET ${ADOPTION_INDICATOR_TEMPLATES}`,
     `GET ${ADOPTION_METRIC_LINKS}`,
     `POST ${ADOPTION_METRIC_LINKS}`,
+    `GET ${ADOPTION_METRIC_LINK}`,
     `POST ${ADOPTION_METRIC_LINK_REMOVE}`,
     `GET ${ADOPTION_INDICATORS}`,
   ];
