@@ -1,6 +1,7 @@
-// The drill-down of one headline number (ADR-0037 §5; REQ-S13-003, REQ-PB-062, REQ-S03-009):
+// The drill-down of one headline number or Finance class line (ADR-0037 §5 and amendment K1; REQ-S13-003,
+// REQ-PB-062, REQ-S03-009):
 //   GET /dashboard-drilldown?metric=&organizationId=&transformationId=&ownerUserId=&periodId=&phase=&status=
-//                            &subjectId=&cursor=&limit=
+//                            &subjectId=&valueClass=&cursor=&limit=
 // Its contributing records (paginated), period, calculation and evidence, over exactly the facts the headline was
 // computed from (the same scope, filters, window and rules: engine.ts), so for a sum metric the decimal sum of
 // `items[].value` over all pages equals the headline value, per currency (the invariant KBE-G tests). Currencies are
@@ -11,6 +12,7 @@ import type { DbOrTx } from "@mth/db";
 import { FORMULA_DECIMAL as D } from "@mth/shared/calc";
 import {
   dashboardMetric,
+  financeValueClass,
   type DashboardDrilldown,
   type DashboardMetric,
   type DashboardValue,
@@ -41,8 +43,9 @@ import {
   RATIO_ROUNDING,
   sumValue,
   unknownValue,
+  VALUE_HEADLINE_STATES,
   valueLinesOf,
-  type ValueHeadlineState,
+  type ValueBenefitFact,
 } from "./areas.ts";
 import {
   computeAreas,
@@ -54,6 +57,7 @@ import {
   type DashboardContext,
 } from "./engine.ts";
 import { appliedFilters, asIdList, dashboardRefusal, organizationFilterShape, resolveFilters } from "./filters.ts";
+import { benefitInClass, extraStateLinesOf, isExtraState, lineEntersClassSum } from "./finance.ts";
 import { readableTransformations } from "./scope.ts";
 
 export const DASHBOARD_DRILLDOWN = "/api/v1/dashboard-drilldown";
@@ -61,6 +65,8 @@ const drilldownQuery = z.strictObject({
   metric: dashboardMetric,
   ...organizationFilterShape,
   subjectId: z.uuid().optional(),
+  // ADR-0037 amendment K1: only with the seven value-state metrics (else 422 dashboard.value_class_not_applicable).
+  valueClass: financeValueClass.optional(),
   cursor: cursorSchema,
   limit: limitSchema,
 });
@@ -75,11 +81,15 @@ interface Drill {
   readonly evidence: DrilldownEvidence[];
 }
 
-const VALUE_STATE_OF: ReadonlyMap<DashboardMetric, ValueHeadlineState> = new Map<DashboardMetric, ValueHeadlineState>([
+/** The seven value-state metrics and their state (ADR-0037 §5 and amendment K1). */
+const VALUE_STATE_OF: ReadonlyMap<DashboardMetric, string> = new Map<DashboardMetric, string>([
   ["value.planned", "planned"],
   ["value.forecast", "forecast"],
   ["value.submitted", "submitted"],
   ["value.validated", "validated"],
+  ["value.measured", "measured"],
+  ["value.rejected", "rejected"],
+  ["value.sustained", "sustained"],
 ]);
 
 /** The metrics whose `subjectId` names one record (ADR-0037 §5); the others take none. */
@@ -89,6 +99,9 @@ const SUBJECT_METRICS: readonly DashboardMetric[] = [
   "value.forecast",
   "value.submitted",
   "value.validated",
+  "value.measured",
+  "value.rejected",
+  "value.sustained",
   "portfolio.initiatives",
   "decisions.open",
   "decisions.overdue",
@@ -110,13 +123,35 @@ function period(ctx: DashboardContext) {
   };
 }
 
-/** value.planned / forecast / submitted / validated: one item per benefit (its eligible lines summed). */
-async function valueDrill(db: DbOrTx, ctx: DashboardContext, state: ValueHeadlineState, subjectId: string | null) {
+/**
+ * A value-state drill-down (value.planned, forecast, submitted, validated, measured, rejected, sustained): one item per
+ * benefit, its lines of the state summed. The lines are selected by the Finance class line's own rule
+ * (lineEntersClassSum, ADR-0037 amendment K1 item 3): with `valueClass` the benefits of that Finance class, without it
+ * the five financial classes. Measured, rejected and sustained lines are the benefit_value_line rows the Finance
+ * dashboard reads (extraStateLinesOf).
+ *
+ * The drill-down's own `value` and `inputs` are per currency. For the four original metrics without `valueClass` the
+ * currencies are those of the selected lines, as built (byte-stable). For the three new metrics, and for any request
+ * with `valueClass`, they are the currencies of the eligible benefits (those the Finance dashboard shows a class line
+ * for), so an eligible class with no line in the state is a known zero in its own currency, like its Finance line
+ * (ADR-0030 §7 item 7), and a scope with no eligible benefit is not_applicable with its reason, never a fabricated 0.
+ */
+async function valueDrill(
+  db: DbOrTx,
+  ctx: DashboardContext,
+  scopeIds: readonly string[],
+  state: string,
+  valueClass: string | null,
+  subjectId: string | null,
+) {
   const byId = new Map(ctx.facts.benefits.map((b) => [b.benefitId, b]));
-  let lines = valueLinesOf(byId, ctx.facts.lines, state, ctx.clock);
+  const source = isExtraState(state) ? await extraStateLinesOf(db, ctx, scopeIds) : ctx.facts.lines;
+  let lines = source.filter((l) => lineEntersClassSum(byId.get(l.benefitId), l, state, valueClass, ctx.clock));
+  let eligible: ValueBenefitFact[] = ctx.facts.benefits.filter((b) => benefitInClass(b, valueClass));
   if (subjectId !== null) {
     if (!byId.has(subjectId)) throw dashboardRefusal("dashboard.metric_subject_mismatch", "/subjectId");
     lines = lines.filter((l) => l.benefitId === subjectId);
+    eligible = eligible.filter((b) => b.benefitId === subjectId);
   }
   const benefitIds = [...new Set(lines.map((l) => l.benefitId))];
   const items: DrilldownItem[] = benefitIds.map((id) => {
@@ -136,8 +171,12 @@ async function valueDrill(db: DbOrTx, ctx: DashboardContext, state: ValueHeadlin
       period: period(ctx),
     };
   });
+  const asBuilt = valueClass === null && (VALUE_HEADLINE_STATES as readonly string[]).includes(state);
+  const currencies = asBuilt
+    ? [...new Set(lines.map((l) => byId.get(l.benefitId)!.currency))].sort()
+    : [...new Set(eligible.map((b) => b.currency))].sort();
   const byCurrency = new Map<string, DashboardValue>();
-  for (const c of [...new Set(lines.map((l) => byId.get(l.benefitId)!.currency))].sort())
+  for (const c of currencies)
     byCurrency.set(
       c,
       sumValue(
@@ -156,7 +195,10 @@ async function valueDrill(db: DbOrTx, ctx: DashboardContext, state: ValueHeadlin
     recordId: e.measurement_id!,
   }));
   return {
-    value: oneCurrency(byCurrency, "currency"),
+    value:
+      !asBuilt && byCurrency.size === 0
+        ? notApplicableValue("dashboard.value.no_financial_benefit", "currency")
+        : oneCurrency(byCurrency, "currency"),
     items,
     ruleKey: `dashboard.value.sum_${state}`,
     expression: null,
@@ -172,11 +214,16 @@ async function drill(
   r: AreaResults,
   metric: DashboardMetric,
   subjectId: string | null,
+  valueClass: string | null,
+  scopeIds: readonly string[],
 ): Promise<Drill> {
+  const state = VALUE_STATE_OF.get(metric);
+  // ADR-0037 amendment K1 item 1: a value class narrows only a value-state drill-down.
+  if (valueClass !== null && state === undefined)
+    throw dashboardRefusal("dashboard.value_class_not_applicable", "/valueClass");
   if (subjectId !== null && !SUBJECT_METRICS.includes(metric))
     throw dashboardRefusal("dashboard.metric_subject_mismatch", "/subjectId");
-  const state = VALUE_STATE_OF.get(metric);
-  if (state !== undefined) return valueDrill(db, ctx, state, subjectId);
+  if (state !== undefined) return valueDrill(db, ctx, scopeIds, state, valueClass, subjectId);
   const base = { expression: null, rounding: null, evidence: [] as DrilldownEvidence[] };
   switch (metric) {
     case "outcomes.area": {
@@ -484,6 +531,8 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
         phase: query.phase ?? null,
         status: query.status ?? null,
         subjectId: query.subjectId ?? null,
+        // Only when given, so the cursor of every request without it is unchanged (byte stability, K1 item 6).
+        ...(query.valueClass === undefined ? {} : { valueClass: query.valueClass }),
       });
       const after = decodeCursor(query.cursor, hash, 1);
       return readOnly(db, async (tx) => {
@@ -507,6 +556,8 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           computeAreas(ctx.facts, ctx.clock, ctx.policy),
           query.metric,
           query.subjectId ?? null,
+          query.valueClass ?? null,
+          scope.map((t) => t.id),
         );
         // Offset pagination over the deterministic item order (the cursor is bound to the filters by its hash).
         const start = after ? Number(after[0]) : 0;

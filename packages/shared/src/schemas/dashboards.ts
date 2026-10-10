@@ -54,9 +54,25 @@ export const DASHBOARD_METRICS = [
   "decisions.overdue",
   "adoption.indicators",
   "finance.pending_validation",
+  // ADR-0037 amendment K1 (T-DG4-KBE-R4): drill-down only; no headline uses them.
+  "value.measured",
+  "value.rejected",
+  "value.sustained",
 ] as const;
 export type DashboardMetric = (typeof DASHBOARD_METRICS)[number];
 export const dashboardMetric = z.enum(DASHBOARD_METRICS);
+
+/** OpenAPI `FinanceValueClass` (ADR-0030 §7; ADR-0037 amendment K1): the class a value-state drill-down narrows to. */
+export const FINANCE_VALUE_CLASSES = [
+  "revenue_uplift",
+  "margin_uplift",
+  "cash_saving",
+  "avoided_cost",
+  "working_capital_release",
+  "non_financial_valued",
+] as const;
+export type FinanceValueClass = (typeof FINANCE_VALUE_CLASSES)[number];
+export const financeValueClass = z.enum(FINANCE_VALUE_CLASSES);
 
 /** OpenAPI `DashboardValue.state` (ADR-0037 §5): value and zero are known; unknown and not_applicable carry no value. */
 export const DASHBOARD_VALUE_STATES = ["value", "zero", "unknown", "stale", "not_applicable"] as const;
@@ -337,6 +353,8 @@ export const DASHBOARD_REFUSALS = {
   "dashboard.metric_subject_mismatch": "This drill-down needs a record of the kind the metric is about.",
   "dashboard.workstream_archived": "This workstream is archived; open its transformation's dashboard instead.",
   "dashboard_rag_policy.threshold_order": "The amber threshold cannot be beyond the red threshold.",
+  // ADR-0037 amendment K2 (exact text).
+  "dashboard.value_class_not_applicable": "A value class narrows only a drill-down of benefit values by state.",
 } as const;
 export type DashboardRefusalCode = keyof typeof DASHBOARD_REFUSALS;
 
