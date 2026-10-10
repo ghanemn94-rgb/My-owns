@@ -69,6 +69,10 @@ import arRaidP4 from "./ar/raidP4.json" with { type: "json" };
 import enRaidP4 from "./en/raidP4.json" with { type: "json" };
 import arGovernanceP4 from "./ar/governanceP4.json" with { type: "json" };
 import enGovernanceP4 from "./en/governanceP4.json" with { type: "json" };
+import arAdoptionP4 from "./ar/adoptionP4.json" with { type: "json" };
+import enAdoptionP4 from "./en/adoptionP4.json" with { type: "json" };
+import arSustainP4 from "./ar/sustainP4.json" with { type: "json" };
+import enSustainP4 from "./en/sustainP4.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -114,6 +118,8 @@ export const catalogues = {
     benefitsP4: arBenefitsP4,
     raidP4: arRaidP4,
     governanceP4: arGovernanceP4,
+    adoptionP4: arAdoptionP4,
+    sustainP4: arSustainP4,
   },
   en: {
     common: enCommon,
@@ -150,6 +156,8 @@ export const catalogues = {
     benefitsP4: enBenefitsP4,
     raidP4: enRaidP4,
     governanceP4: enGovernanceP4,
+    adoptionP4: enAdoptionP4,
+    sustainP4: enSustainP4,
   },
 } as const;
 

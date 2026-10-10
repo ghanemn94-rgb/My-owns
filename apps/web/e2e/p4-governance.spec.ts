@@ -369,7 +369,7 @@ test("administration: calendar and jobs; governance: groups and Transform readin
   await expect(office.locator("[data-check]")).toHaveCount(4);
   await shot(office, lang, "p4-21-transform-readiness");
   await expectAccessible(office, lang, "p4-transform-readiness");
-  await go(office, `/transformations/${tid}/adoption`);
+  await go(office, `/transformations/${tid}/closure`);
   await expect(office.locator("[data-state='being-built']")).toBeVisible();
   await shot(office, lang, "p4-22-planned-route");
   await expectAccessible(office, lang, "p4-planned-route");
