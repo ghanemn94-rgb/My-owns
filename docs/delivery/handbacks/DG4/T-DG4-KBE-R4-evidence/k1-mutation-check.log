@@ -1,0 +1,76 @@
+# mutant: valueDrill ignores valueClass in its line selection (drilldown.ts: lineEntersClassSum(..., null, ...))
++  financeValueClass,
++  VALUE_HEADLINE_STATES,
+-  type ValueHeadlineState,
++  type ValueBenefitFact,
++  // ADR-0037 amendment K1: only with the seven value-state metrics (else 422 dashboard.value_class_not_applicable).
++  valueClass: financeValueClass.optional(),
++  ["value.measured", "measured"],
++  ["value.rejected", "rejected"],
++  ["value.sustained", "sustained"],
++  "value.measured",
++  "value.rejected",
++  "value.sustained",
++ * A value-state drill-down (value.planned, forecast, submitted, validated, measured, rejected, sustained): one item per
++ * benefit, its lines of the state summed. The lines are selected by the Finance class line's own rule
++ * (lineEntersClassSum, ADR-0037 amendment K1 item 3): with `valueClass` the benefits of that Finance class, without it
++ * the five financial classes. Measured, rejected and sustained lines are the benefit_value_line rows the Finance
++ * dashboard reads (extraStateLinesOf).
++ *
++ * The drill-down's own `value` and `inputs` are per currency. For the four original metrics without `valueClass` the
++ * currencies are those of the selected lines, as built (byte-stable). For the three new metrics, and for any request
++ * with `valueClass`, they are the currencies of the eligible benefits (those the Finance dashboard shows a class line
++ * for), so an eligible class with no line in the state is a known zero in its own currency, like its Finance line
++ * (ADR-0030 §7 item 7), and a scope with no eligible benefit is not_applicable with its reason, never a fabricated 0.
++ */
++  db: DbOrTx,
++  ctx: DashboardContext,
++  scopeIds: readonly string[],
++  state: string,
++  valueClass: string | null,
++  subjectId: string | null,
+-  let lines = valueLinesOf(byId, ctx.facts.lines, state, ctx.clock);
++  const source = isExtraState(state) ? await extraStateLinesOf(db, ctx, scopeIds) : ctx.facts.lines;
++  let lines = source.filter((l) => lineEntersClassSum(byId.get(l.benefitId), l, state, null, ctx.clock));
++  let eligible: ValueBenefitFact[] = ctx.facts.benefits.filter((b) => benefitInClass(b, valueClass));
++    eligible = eligible.filter((b) => b.benefitId === subjectId);
++  const asBuilt = valueClass === null && (VALUE_HEADLINE_STATES as readonly string[]).includes(state);
++  const currencies = asBuilt
++    ? [...new Set(lines.map((l) => byId.get(l.benefitId)!.currency))].sort()
++    : [...new Set(eligible.map((b) => b.currency))].sort();
+-  for (const c of [...new Set(lines.map((l) => byId.get(l.benefitId)!.currency))].sort())
++  for (const c of currencies)
+-    value: oneCurrency(byCurrency, "currency"),
++    value:
++      !asBuilt && byCurrency.size === 0
++        ? notApplicableValue("dashboard.value.no_financial_benefit", "currency")
++        : oneCurrency(byCurrency, "currency"),
++  valueClass: string | null,
++  scopeIds: readonly string[],
++  const state = VALUE_STATE_OF.get(metric);
++  // ADR-0037 amendment K1 item 1: a value class narrows only a value-state drill-down.
++  if (valueClass !== null && state === undefined)
++    throw dashboardRefusal("dashboard.value_class_not_applicable", "/valueClass");
+-  const state = VALUE_STATE_OF.get(metric);
+-  if (state !== undefined) return valueDrill(db, ctx, state, subjectId);
++  if (state !== undefined) return valueDrill(db, ctx, scopeIds, state, valueClass, subjectId);
++        // Only when given, so the cursor of every request without it is unchanged (byte stability, K1 item 6).
++        ...(query.valueClass === undefined ? {} : { valueClass: query.valueClass }),
++          query.valueClass ?? null,
++          scope.map((t) => t.id),
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > the fixture has two financial classes in one currency, two currencies, an overlap hold and a valued CX line 84ms
+   × K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page 226ms
+   × K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > gross lines keep their hrefs (no valueClass); net lines keep null; the drill-down's total_<currency> input equals the line 134ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > valueClass with a metric that is not a value state is 422 dashboard.value_class_not_applicable (exact K2 text) 62ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > a value class outside FinanceValueClass is a 400 validation (gross, net, non_financial are not classes) 20ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > value.measured, value.rejected and value.sustained without a class sum the five financial classes 128ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > the three metrics take a benefit subjectId, as the four original value metrics do 103ms
+   × K1 items 1-2: the parameter, the refusal and the three metrics > Unknown, never 0: a class with no benefit drills to an empty, labelled n/a; an empty state of a class is a known zero 23ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > the cursor is bound to the value class 31ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > the organization-wide auditor sees Y in each new metric (so the sweep can fail) 86ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1693ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > an explicit Y transformation with a value class is 404; a Y benefit as subject is not disclosed 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+EXIT=1

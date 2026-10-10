@@ -1,0 +1,7 @@
+# A = disposable copy of the base tree 48eba10 ($TMPDIR/repro, source identical to 0a3da46); B = this worktree.
+# The evidence test file is copied in for one run and removed afterwards (it is not part of the candidate).
+cp ab/kbe-r4-transcript.test.ts <tree>/apps/api/test/integration/reporting/kbe-r4-transcript.test.ts
+MTH_KBE_R4_TRANSCRIPT=<evidence>/ab/A-transcript.jsonl QA_PG_PORT=26030 MTH_PORT_POOL=26031-26039 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/kbe-r4-transcript.test.ts   # in A
+MTH_KBE_R4_TRANSCRIPT=<evidence>/ab/B-transcript.jsonl QA_PG_PORT=26030 MTH_PORT_POOL=26031-26039 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/kbe-r4-transcript.test.ts   # in B
+rm <tree>/apps/api/test/integration/reporting/kbe-r4-transcript.test.ts
+python3 ab/compare.py ab/A-transcript.jsonl ab/B-transcript.jsonl > ab/compare.txt   # exit 0; asserts that only the stated members changed
