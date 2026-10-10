@@ -66,6 +66,8 @@ export const WORKSPACE_TABS = [
   { id: "bau", path: "/bau", labelKey: "sustainP4.tab.bau" },
   { id: "improvement", path: "/improvement", labelKey: "sustainP4.tab.improvement" },
   { id: "lessons", path: "/lessons", labelKey: "sustainP4.tab.lessons" },
+  // P4 slice G closure and transition decisions (T-DG4-FE-F; p4-work-split §F+G FG.8).
+  { id: "closure", path: "/closure", labelKey: "closureP4.tab" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 
