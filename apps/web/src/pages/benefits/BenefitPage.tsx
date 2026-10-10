@@ -38,12 +38,14 @@ import {
   useBenefitLifecycle,
   useBenefitMeasurements,
   useBenefitOverlaps,
+  useBenefitPlanValue,
   useBenefitValues,
   useInitiativeOptions,
   type Benefit,
   type BenefitAllocations,
   type BenefitLifecycle,
   type BenefitMeasurement,
+  type BenefitPlanValue,
   type BenefitValues,
 } from "./api.ts";
 import { BENEFIT_WRITE_PERMISSIONS, useProfileOptions } from "./BenefitsPage.tsx";
@@ -815,6 +817,7 @@ function Values({ b }: { b: Benefit }) {
   const values = useBenefitValues(ws.tid, b.id);
   const canEdit = ws.can("benefit.edit") && b.status === "active";
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   return (
     <Section
       id="benefit-values"
@@ -828,13 +831,19 @@ function Values({ b }: { b: Benefit }) {
         ) : null
       }
     >
-      <QueryState query={values}>{(v) => <ValuesTable v={v} b={b} />}</QueryState>
+      <QueryState query={values}>
+        {(v) => <ValuesTable v={v} b={b} {...(canEdit ? { onEdit: setEditing } : {})} />}
+      </QueryState>
       {adding ? <PlanValueDialog b={b} onClose={() => setAdding(false)} /> : null}
+      {editing ? <EditPlanValue planValueId={editing} onClose={() => setEditing(null)} /> : null}
     </Section>
   );
 }
 
-function ValuesTable({ v, b }: { v: BenefitValues; b: Benefit }) {
+/** Planned and forecast lines are plan-value records, editable by a benefit editor (the other states are not). */
+const EDITABLE_SERIES: ReadonlySet<string> = new Set(["planned", "forecast"]);
+
+function ValuesTable({ v, b, onEdit }: { v: BenefitValues; b: Benefit; onEdit?: (planValueId: string) => void }) {
   const { t } = useTranslation();
   const series = SERIES_ORDER.map((s) => v.series.find((x) => x.state === s)).filter((x) => x !== undefined);
   return (
@@ -879,6 +888,27 @@ function ValuesTable({ v, b }: { v: BenefitValues; b: Benefit }) {
                           <span className="status-chip status-chip--unknown" data-basis="provisional">
                             {t("benefitsP4.measurements.provisional")}
                           </span>
+                        ) : null}
+                        {onEdit && EDITABLE_SERIES.has(s.state) && l.recordType === "benefit_plan_value" ? (
+                          <>
+                            {" "}
+                            <button
+                              type="button"
+                              className="button button--secondary button--small"
+                              data-action="edit-plan-value"
+                              onClick={() => onEdit(l.recordId)}
+                            >
+                              {t("benefitsP4.values.editPlan")}
+                              <span className="visually-hidden">
+                                {" "}
+                                {t(`benefitsP4.state.${s.state}`)}{" "}
+                                {t("benefitsP4.values.editPlanPeriod", {
+                                  start: l.periodStart ?? "",
+                                  end: l.periodEnd ?? "",
+                                })}
+                              </span>
+                            </button>
+                          </>
                         ) : null}
                         {l.recordType === "benefit_measurement" ? (
                           <>
@@ -979,6 +1009,93 @@ function PlanValueDialog({ b, onClose }: { b: Benefit; onClose: () => void }) {
       onClose={onClose}
     />
   );
+}
+
+/**
+ * Edit one planned or forecast value (T-DG4-FE-R1; FE-C decision 1). The value lines carry no version, so the record
+ * is read first (getBenefitPlanValue) and the version of THAT read is sent as If-Match: a change by someone else after
+ * the read answers 409 (shown as a conflict; the values are re-read and the dialog must be reopened to see them), never
+ * a silent overwrite. Only changed fields are sent; an unchanged form is refused here (`validation.empty_patch`).
+ */
+function EditPlanValue({ planValueId, onClose }: { planValueId: string; onClose: () => void }) {
+  const { t } = useTranslation();
+  const ws = useWorkspace();
+  const read = useBenefitPlanValue(ws.tid, planValueId);
+  if (read.data !== undefined) return <EditPlanValueForm read={read.data} onClose={onClose} />;
+  // Loading and a failed read are shown in the section (one dialog only, opened from the Edit button, so focus
+  // returns to it): never an editable form with guessed values or without the version to send as If-Match.
+  return (
+    <div className="plan-value-read" data-plan-value-read={read.isError ? "error" : "loading"}>
+      <QueryState query={read}>{() => null}</QueryState>
+      {read.isError ? (
+        <button type="button" className="button button--secondary button--small" onClick={onClose}>
+          {t("common.action.cancel")}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function EditPlanValueForm({ read, onClose }: { read: BenefitPlanValue; onClose: () => void }) {
+  const { t } = useTranslation();
+  const ws = useWorkspace();
+  const refresh = useP4Refresh(ws.tid);
+  // The version and values the user saw, pinned: a refetch after a 409 must not move If-Match under typed values.
+  const [seen] = useState(read);
+  return (
+    <P4FormDialog
+      title={t("benefitsP4.values.editPlanTitle")}
+      description={
+        <>
+          <p>{t("benefitsP4.values.planIntro", { currency: seen.currency })}</p>
+          <p className="small muted" data-plan-kind={seen.valueKind}>
+            {t("benefitsP4.values.kind")}: {t(`benefitsP4.state.${seen.valueKind}`)} ·{" "}
+            {t("benefitsP4.values.editVersion", { version: seen.version })}
+          </p>
+        </>
+      }
+      fields={planFields(t, false)}
+      initial={{
+        periodStart: seen.periodStart,
+        periodEnd: seen.periodEnd,
+        amount: seen.amount ?? "",
+        kpiValue: seen.kpiValue ?? "",
+        note: seen.note ?? "",
+      }}
+      submitLabel={t("common.action.save")}
+      method="PATCH"
+      url={benefitPaths.planValue(ws.tid, seen.id)}
+      version={seen.version}
+      namespaces={NS}
+      toBody={(v) => planPatch(v, seen)}
+      onDone={() => refresh()}
+      onClose={onClose}
+    />
+  );
+}
+
+/** The PATCH body of a plan value: only what differs from the record read; at least one member (minProperties 1). */
+export function planPatch(
+  v: Record<string, string | boolean>,
+  pv: Pick<BenefitPlanValue, "periodStart" | "periodEnd" | "amount" | "kpiValue" | "note">,
+): Record<string, unknown> | { fieldErrors: Record<string, string> } {
+  const built = planBody(v, false);
+  if ("fieldErrors" in built) return built as { fieldErrors: Record<string, string> };
+  const body: Record<string, unknown> = {};
+  const start = (v["periodStart"] as string) ?? "";
+  const end = (v["periodEnd"] as string) ?? "";
+  if (start === "") return { fieldErrors: { periodStart: "validation.required" } };
+  if (end === "") return { fieldErrors: { periodEnd: "validation.required" } };
+  if (start !== pv.periodStart) body["periodStart"] = start;
+  if (end !== pv.periodEnd) body["periodEnd"] = end;
+  if (built["amount"] !== pv.amount) body["amount"] = built["amount"];
+  if (built["kpiValue"] !== pv.kpiValue) body["kpiValue"] = built["kpiValue"];
+  if (built["amount"] === null && built["kpiValue"] === null)
+    return { fieldErrors: { amount: "benefit_value.value_required" } };
+  const note = textOf(v["note"]) ?? null;
+  if (note !== pv.note) body["note"] = note;
+  if (Object.keys(body).length === 0) return { fieldErrors: { periodStart: "validation.empty_patch" } };
+  return body;
 }
 
 // ------------------------------------------------------------------------------------------------ measurements

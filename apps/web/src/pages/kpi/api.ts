@@ -23,7 +23,6 @@ import { api } from "../../api/client.ts";
 import type { Evidence } from "../../api/types.ts";
 import { p4Keys } from "../../api/p4.ts";
 import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
-import { isNoPermission } from "../../lib/problem.ts";
 
 export type {
   CalculationRun,
@@ -61,6 +60,7 @@ export const kpiPaths = {
   withdrawTrajectory: (tid: string, id: string) => `${tBase(tid)}/target-trajectories/${id}/withdraw`, // withdrawTargetTrajectory
   // reporting periods (KBE-C; organization level)
   periods: (orgId: string) => `${v1}/organizations/${orgId}/reporting-periods`, // list/createReportingPeriod
+  transformationPeriods: (tid: string) => `${tBase(tid)}/reporting-periods`, // listTransformationReportingPeriods
   period: (orgId: string, id: string) => `${v1}/organizations/${orgId}/reporting-periods/${id}`, // getReportingPeriod
   openPeriod: (orgId: string, id: string) => `${v1}/organizations/${orgId}/reporting-periods/${id}/open`, // openReportingPeriod
   closePeriod: (orgId: string, id: string) => `${v1}/organizations/${orgId}/reporting-periods/${id}/close`, // closeReportingPeriod
@@ -226,56 +226,51 @@ export function useEvidenceOptions(tid: string, enabled = true) {
   });
 }
 
-/** A reporting period the user can pick: from the organization's list, or the KPI's current period (fallback). */
+/**
+ * The reporting periods of the transformation's organization, read through the transformation
+ * (listTransformationReportingPeriods; ARCH-R1 item 9, REQ-S07-017 "select period"): `transformation.read` is enough, so a
+ * Lead or KPI owner without `organization.read` lists them too (the organization list answers 404 to them).
+ */
+export function useTransformationReportingPeriods(tid: string, query: Record<string, string> = {}) {
+  return useQuery({
+    queryKey: p4Keys.area("reporting-periods", tid, "transformation", JSON.stringify(query)),
+    queryFn: () => fetchAllPages<ReportingPeriod>(kpiPaths.transformationPeriods(tid), query),
+    enabled: Boolean(tid),
+    ...opts,
+  });
+}
+
+/** A reporting period the user can pick. */
 export interface PeriodChoice {
   readonly id: string;
   readonly label: string;
-  readonly start: string | null;
-  readonly end: string | null;
+  readonly start: string;
+  readonly end: string;
   readonly updateDueDate: string | null;
-  readonly status: ReportingPeriod["status"] | null;
+  readonly status: ReportingPeriod["status"];
 }
 
 /**
- * The periods a KPI's actual or override can use. Listing the organization's periods needs `organization.read`, which a
- * transformation-scoped role (Lead, KPI owner) does not hold: the API then answers 404, and the KPI's CURRENT period
- * (getKpiStatus: the latest open or closed period of its frequency) is offered instead (`orgListed` false). Its status
- * and dates are then Unknown here, and the server still refuses a closed period (422 kpi_actual.period_not_open).
+ * The periods a KPI's actual or override can use (T-DG4-FE-R1, KBE-R2): the transformation's reporting periods of the
+ * KPI's frequency, latest first as the API orders them; `openOnly` asks the server for open periods only (an actual is
+ * entered only in an open period; the server still refuses a closed one, 422 kpi_actual.period_not_open). This replaces
+ * FE-B's fallback to the KPI's current period, which was all a transformation-scoped role could choose.
  */
-export function usePeriodChoices(
-  tid: string,
-  orgId: string,
-  kpiId: string,
-  frequency: string | null | undefined,
-  openOnly: boolean,
-) {
-  const periods = useReportingPeriods(tid, orgId, openOnly ? { status: "open" } : {});
-  const noList = periods.isError && isNoPermission(periods.error);
-  const status = useKpiStatus(noList ? tid : "", kpiId);
-  const choices: PeriodChoice[] = noList
-    ? status.data?.reportingPeriodId
-      ? [
-          {
-            id: status.data.reportingPeriodId,
-            label: status.data.periodLabel ?? "",
-            start: null,
-            end: null,
-            updateDueDate: null,
-            status: null,
-          },
-        ]
-      : []
-    : (periods.data ?? [])
-        .filter((p) => !frequency || p.frequency === frequency)
-        .map((p) => ({
-          id: p.id,
-          label: p.periodLabel,
-          start: p.periodStart,
-          end: p.periodEnd,
-          updateDueDate: p.updateDueDate,
-          status: p.status,
-        }));
-  const pending = noList ? status.isPending : periods.isPending;
-  const error = noList ? (status.isError ? status.error : null) : periods.isError ? periods.error : null;
-  return { choices, orgListed: !noList, pending, error };
+export function usePeriodChoices(tid: string, frequency: string | null | undefined, openOnly: boolean) {
+  const query: Record<string, string> = {};
+  if (openOnly) query["status"] = "open";
+  if (frequency) query["frequency"] = frequency;
+  const periods = useTransformationReportingPeriods(frequency === undefined ? "" : tid, query);
+  const choices: PeriodChoice[] = (periods.data ?? [])
+    .filter((p) => !frequency || p.frequency === frequency)
+    .filter((p) => !openOnly || p.status === "open")
+    .map((p) => ({
+      id: p.id,
+      label: p.periodLabel,
+      start: p.periodStart,
+      end: p.periodEnd,
+      updateDueDate: p.updateDueDate,
+      status: p.status,
+    }));
+  return { choices, pending: periods.isPending, error: periods.isError ? periods.error : null };
 }

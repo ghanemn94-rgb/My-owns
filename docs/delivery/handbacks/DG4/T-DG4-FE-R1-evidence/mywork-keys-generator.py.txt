@@ -1,0 +1,62 @@
+import json
+MSG = {
+ "benefits__task__finance_validation_review": ("Validate the value of benefit {{benefitCode}} for {{periodStart}} to {{periodEnd}}", "تحقّق من قيمة المنفعة {{benefitCode}} للفترة من {{periodStart}} إلى {{periodEnd}}"),
+ "raid__task__action_due": ("Your action on {{sourceCode}} is due", "حان موعد إجرائك على {{sourceCode}}"),
+ "raid__task__action_due_bare": ("Your action is due", "حان موعد إجرائك"),
+ "raid__task__corrective_follow_up": ("Follow up corrective case {{caseCode}}", "تابِع الحالة التصحيحية {{caseCode}}"),
+ "governance__task__executive_decision_due": ("Decide the executive ask {{code}}: “{{title}}”", "اتخذ القرار في الطلب التنفيذي {{code}}: «{{title}}»"),
+ "governance__task__executive_decision_escalated": ("Escalated to you: executive ask {{code}} (“{{title}}”) passed its SLA date {{slaDueDate}} (level {{level}})", "صُعّد إليك: تجاوز الطلب التنفيذي {{code}} («{{title}}») تاريخ مستوى الخدمة {{slaDueDate}} (المستوى {{level}})"),
+ "adoption__task__intervention_due": ("Adoption intervention {{code}} is due", "حان موعد تدخّل التبنّي {{code}}"),
+ "adoption__task__assessment_invitation": ("Please complete the form “{{formName}}”", "يُرجى استكمال النموذج «{{formName}}»"),
+ "adoption__task__assessment_to_review": ("Review the submitted form “{{formName}}”", "راجع النموذج المقدَّم «{{formName}}»"),
+ "sustainment__task__bau_handover_to_accept": ("Accept or return the BAU handover {{handoverCode}} for {{areaCode}} {{areaName}}", "اقبل تسليم التشغيل الاعتيادي {{handoverCode}} أو أعِده، للمجال {{areaCode}} {{areaName}}"),
+ "sustainment__task__performance_review_due": ("Review performance area {{areaCode}} by {{dueDate}}", "راجع مجال الأداء {{areaCode}} بحلول {{dueDate}}"),
+ "sustainment__task__control_check_due": ("Run the control check {{controlCode}} by {{dueDate}}", "نفّذ فحص الضابط {{controlCode}} بحلول {{dueDate}}"),
+ "sustainment__task__benefit_monitoring_due": ("Monitor the residual benefit of transition decision {{decisionCode}} by {{dueDate}}", "راقب المنفعة المتبقية لقرار الانتقال {{decisionCode}} بحلول {{dueDate}}"),
+ "gates__task__gate_decision_due": ("Decide gate {{gateCode}}, submission {{submissionNo}}", "اتخذ قرار البوابة {{gateCode}}، التقديم {{submissionNo}}"),
+ "gates__task__gate_condition_due": ("Meet condition {{ordinal}} of the {{gateCode}} decision", "استوفِ الشرط {{ordinal}} من قرار البوابة {{gateCode}}"),
+ "gates__task__gate_exception_to_decide": ("Decide an exception for {{criterionKey}} at gate {{gateCode}} (expires {{expiresOn}})", "بُتّ في استثناء للمعيار {{criterionKey}} عند البوابة {{gateCode}} (ينتهي في {{expiresOn}})"),
+ "gates__task__gate_exception_expired": ("The exception for {{criterionKey}} at gate {{gateCode}} expired on {{expiresOn}}. Close the evidence gap", "انتهى الاستثناء للمعيار {{criterionKey}} عند البوابة {{gateCode}} في {{expiresOn}}. أغلِق فجوة الأدلة"),
+ "gates__task__phase_step_enabled": ("Phase step {{stepKey}} ({{phaseCode}}) can start", "يمكن بدء خطوة المرحلة {{stepKey}} ({{phaseCode}})"),
+ "gates__task__phase_step_review": ("Review phase step {{stepKey}} ({{phaseCode}})", "راجع خطوة المرحلة {{stepKey}} ({{phaseCode}})"),
+ "gates__task__scale_scope_enabled": ("Scale-out of {{initiativeCode}} is enabled in its approved scope", "التوسّع في {{initiativeCode}} مُفعَّل ضمن نطاقه المعتمد"),
+ "governance__task__meeting_action_due": ("Meeting action assigned to you: “{{title}}” (meeting of {{meetingDate}})", "أُسند إليك إجراء اجتماع: «{{title}}» (اجتماع {{meetingDate}})"),
+ "governance__task__minutes_to_approve": ("Approve the minutes of the {{forum}} meeting of {{meetingDate}}", "اعتمد محضر اجتماع {{forum}} بتاريخ {{meetingDate}}"),
+ "governance__notice__executive_decision_escalated": ("The executive ask {{code}} (“{{title}}”) passed its SLA date {{slaDueDate}} and was escalated (level {{level}})", "تجاوز الطلب التنفيذي {{code}} («{{title}}») تاريخ مستوى الخدمة {{slaDueDate}} وصُعّد (المستوى {{level}})"),
+ "governance__notice__blocker_ask_calendar_not_configured": ("A blocker has been red for {{redCycles}} cycles, but no executive ask was raised: the organization has no business calendar to set its SLA date", "ظلّ عائق باللون الأحمر لعدد {{redCycles}} من الدورات، لكن لم يُرفع طلب تنفيذي: لا يوجد لدى المؤسسة تقويم أعمال لتحديد تاريخ مستوى الخدمة"),
+ "governance__notice__blocker_ask_owner_unassigned": ("The executive ask {{code}} (“{{title}}”) has no owner: {{partyCode}} has no mapped person ({{routingError}})", "لا مالك للطلب التنفيذي {{code}} («{{title}}»): لا يوجد شخص مُسنَد إلى {{partyCode}} ({{routingError}})"),
+ "governance__notice__series_calendar_not_configured": ("No meetings were generated for this series: the organization has no business calendar for working days", "لم تُنشأ اجتماعات لهذه السلسلة: لا يوجد لدى المؤسسة تقويم أعمال لأيام العمل"),
+ "gates__notice__gate_exception_expired": ("The exception for {{criterionKey}} at gate {{gateCode}} expired on {{expiresOn}}; it no longer covers the missing evidence", "انتهى الاستثناء للمعيار {{criterionKey}} عند البوابة {{gateCode}} في {{expiresOn}}؛ ولم يعد يغطي الأدلة الناقصة"),
+ "routing__role_unmapped": ("Gate {{gateCode}}, submission {{submissionNo}} could not be routed: no person or group is mapped to {{roleCode}} in this transformation. Map the role in the transformation team", "تعذّر توجيه البوابة {{gateCode}}، التقديم {{submissionNo}}: لا يوجد شخص أو مجموعة مُسنَدة إلى {{roleCode}} في هذا التحوّل. أسنِد الدور في فريق التحوّل"),
+}
+KIND = {
+ "adoption_intervention_due": ("Adoption intervention due", "تدخّل تبنٍّ مستحق"),
+ "assessment_invitation": ("Form to complete", "نموذج للاستكمال"),
+ "assessment_to_review": ("Form to review", "نموذج للمراجعة"),
+ "bau_handover_to_accept": ("BAU handover to accept", "تسليم تشغيل اعتيادي بانتظار القبول"),
+ "benefit_monitoring_due": ("Residual benefit monitoring due", "مراقبة منفعة متبقية مستحقة"),
+ "control_check_due": ("Control check due", "فحص ضابط مستحق"),
+ "gate_decision_due": ("Gate decision due", "قرار بوابة مستحق"),
+ "gate_condition_due": ("Gate condition due", "شرط بوابة مستحق"),
+ "gate_exception_to_decide": ("Gate exception to decide", "استثناء بوابة للبتّ فيه"),
+ "gate_exception_expired": ("Gate exception expired", "استثناء بوابة منتهٍ"),
+ "performance_review_due": ("Performance review due", "مراجعة أداء مستحقة"),
+ "phase_step_enabled": ("Phase step can start", "خطوة مرحلة جاهزة للبدء"),
+ "phase_step_review": ("Phase step to review", "خطوة مرحلة بانتظار المراجعة"),
+ "scale_scope_enabled": ("Scale-out enabled", "التوسّع مُفعَّل"),
+}
+for i,l in enumerate(["en","ar"]):
+    p=f"apps/web/src/i18n/{l}/myWork.json"
+    d=json.load(open(p))
+    msg=d["message"]; fb=msg.pop("fallback")
+    for k,v in MSG.items():
+        assert k not in msg, k
+        msg[k]=v[i]
+    msg["fallback"]=fb
+    kind=d["kind"]; other=kind.pop("other")
+    for k,v in KIND.items():
+        assert k not in kind, k
+        kind[k]=v[i]
+    kind["other"]=other
+    open(p,"w").write(json.dumps(d,ensure_ascii=False,indent=2)+"\n")
+print(len(MSG), len(KIND))

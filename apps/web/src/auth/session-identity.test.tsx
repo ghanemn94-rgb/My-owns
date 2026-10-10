@@ -286,9 +286,16 @@ for (const lang of ["en", "ar"] as const) {
       fireEvent.change(screen.getByLabelText(T.auth.dev.username), { target: { value: "dev.b" } });
       fireEvent.click(screen.getByRole("button", { name: T.auth.dev.submit }));
       await screen.findByText("Synthetic User B");
+      // T-DG4-FE-R1 (the D-084 / BE-D / BE-H2 failures): signing in with no returnTo lands on "/", and the index
+      // route redirects to /my-work from an effect (`<Navigate to="/my-work" replace />`, router.tsx). B's header
+      // already renders at "/", before that redirect commits. Navigating in that gap raced it: under load the
+      // redirect committed last, the page ended on /my-work and the empty state below never rendered. Wait for the
+      // landing page to settle (a state, not a longer timeout), then navigate.
+      await waitFor(() => expect(router.state.location.pathname).toBe("/my-work"));
       await act(async () => {
         await router.navigate("/transformations");
       });
+      expect(router.state.location.pathname).toBe("/transformations");
       await wait(100);
       expect(screen.queryByText(A_SECRET)).toBeNull();
       server.releaseB();

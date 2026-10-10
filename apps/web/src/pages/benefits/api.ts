@@ -82,7 +82,7 @@ export const benefitPaths = {
   // values (KBE-E)
   values: (tid: string, id: string) => `${tBase(tid)}/benefits/${id}/values`, // getBenefitValues
   planValues: (tid: string, id: string) => `${tBase(tid)}/benefits/${id}/plan-values`, // createBenefitPlanValue
-  planValue: (tid: string, id: string) => `${tBase(tid)}/benefit-plan-values/${id}`, // updateBenefitPlanValue
+  planValue: (tid: string, id: string) => `${tBase(tid)}/benefit-plan-values/${id}`, // getBenefitPlanValue / updateBenefitPlanValue
   // allocations (KBE-D)
   allocations: (tid: string, id: string) => `${tBase(tid)}/benefits/${id}/allocations`, // getBenefitAllocations / replaceBenefitAllocations
   // groups (KBE-D)
@@ -124,6 +124,20 @@ export function useBenefitRegister(tid: string, query: Record<string, string> = 
     queryKey: p4Keys.area("benefits", tid, "register", JSON.stringify(query)),
     queryFn: () => fetchAllPages<BenefitRegisterRow>(benefitPaths.benefits(tid), query),
     enabled: Boolean(tid),
+    ...opts,
+  });
+}
+
+/**
+ * One planned or forecast value with its version (getBenefitPlanValue; ARCH-R2, ADR-0030 amendment P1). The value
+ * lines of getBenefitValues carry no version, so an edit reads the record first and sends this version as If-Match
+ * (T-DG4-FE-R1; FE-C decision 1). Keyed under the benefits area, so `useP4Refresh` re-reads it after a 409.
+ */
+export function useBenefitPlanValue(tid: string, planValueId: string) {
+  return useQuery({
+    queryKey: p4Keys.area("benefits", tid, "plan-value", planValueId),
+    queryFn: () => api.get<BenefitPlanValue>(benefitPaths.planValue(tid, planValueId)),
+    enabled: Boolean(tid && planValueId),
     ...opts,
   });
 }

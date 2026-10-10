@@ -1,0 +1,136 @@
+// EVIDENCE ONLY (T-DG4-FE-R1), not part of the product e2e suite: removed from the tree after its run and kept as
+// docs/delivery/handbacks/DG4/T-DG4-FE-R1-evidence/plan-value-evidence.spec.ts.txt.
+// Plan-value editing on the REAL stack EXCEPT ONE READ: getBenefitPlanValue is routed by KBE-R3 concurrently and is
+// not in this base (P4_PENDING_ARCH_R2), so `GET …/benefit-plan-values/{id}` is answered here with the record the
+// REAL API returned (createBenefitPlanValue's 201 body, then updateBenefitPlanValue's 200 body), with its ETag. The
+// create, the PATCH (If-Match) and its 409 are the real API's. SYNTHETIC data only.
+import { expect, test, type Route } from "@playwright/test";
+import { asUser, syntheticUser, type SyntheticUser } from "./support/p3-journey-setup.ts";
+import { SYN_RETAIL, apiSession, expectAccessible, fieldLabel, langOf, shot, tr } from "./support/ui.ts";
+
+test.describe.configure({ mode: "serial" });
+
+let tid = "";
+let T = "";
+let benefitId = "";
+let owner: SyntheticUser;
+type PlanValue = { id: string; version: number; kpiValue: string | null };
+let record: PlanValue;
+const stamp = Date.now().toString(36);
+
+test.beforeAll(async ({ playwright }, info) => {
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const admin = await apiSession(playwright, "dev.admin");
+  tid = (
+    await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+      businessUnitId: SYN_RETAIL,
+      name: `Synthetic FE-R1 plan values ${lang.toUpperCase()} ${stamp}`,
+      mode: "end_to_end",
+    })
+  ).id;
+  T = `/api/v1/transformations/${tid}`;
+  const orgId = (await admin.call<{ organization: { id: string } }>("GET", "/api/v1/me")).organization.id;
+  owner = await syntheticUser(
+    admin,
+    orgId,
+    tid,
+    `dev.fer1.bo.${lang}.${stamp}`,
+    `Synthetic Benefit Owner ${lang}`,
+    "BO",
+    lang,
+  );
+  const kpi = await lead.call<{ id: string }>("POST", `${T}/kpi-definitions`, {
+    name: `Synthetic NPS ${lang} ${stamp}`,
+    unitKind: "score",
+    polarity: "higher_is_better",
+  });
+  const bo = await apiSession(playwright, owner.username);
+  benefitId = (
+    await bo.call<{ id: string }>("POST", `${T}/benefits`, {
+      title: `Synthetic NPS uplift ${lang.toUpperCase()} ${stamp}`,
+      description: "Better experience on the synthetic care journey.",
+      benefitType: "cx",
+      valueClass: "non_financial",
+      ownerUserId: owner.id,
+      currency: "SAR",
+      measurementKpiDefinitionId: kpi.id,
+    })
+  ).id;
+  record = await bo.call<PlanValue>(
+    "POST",
+    `${T}/benefits/${benefitId}/plan-values`,
+    { valueKind: "forecast", periodStart: "2027-01-01", periodEnd: "2027-12-31", kpiValue: "4.5" },
+    { expect: 201 },
+  );
+});
+
+test("plan value: Edit reads the record, PATCHes with its If-Match; a save after another's answers 409 (real API)", async ({
+  browser,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  const bo = await asUser(browser, lang, owner.username);
+  const ifMatch: string[] = [];
+  await bo.page.route(`**${T}/benefit-plan-values/*`, async (route: Route) => {
+    const req = route.request();
+    if (req.method() === "GET") {
+      const body = record;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { ETag: `"${body.version}"` },
+        body: JSON.stringify(body),
+      });
+      return;
+    }
+    ifMatch.push(req.headers()["if-match"] ?? "");
+    const response = await route.fetch();
+    if (response.status() === 200) record = (await response.json()) as PlanValue;
+    await route.fulfill({ response });
+  });
+  await bo.page.goto(`/transformations/${tid}/benefits/${benefitId}`);
+  const forecast = bo.page.locator("[data-series='forecast']");
+  const edit = forecast.locator("[data-action='edit-plan-value']");
+  await expect(edit).toBeVisible();
+  await bo.page.locator("#benefit-values").scrollIntoViewIfNeeded();
+  await shot(bo.page, lang, "fer1-plan-01-values-with-edit");
+  await expectAccessible(bo.page, lang, "fer1-plan-01-values-with-edit");
+
+  // 1. edit: the form is pre-filled from the read; the PATCH carries If-Match "1" and only the changed member
+  await edit.click();
+  const dialog = bo.page.getByRole("dialog", { name: tr(lang, "benefitsP4.values.editPlanTitle") });
+  const kpiValue = dialog.getByLabel(fieldLabel(lang, "benefitsP4.field.kpiValue"));
+  await expect(kpiValue).toHaveValue(/^4\.5/);
+  await expect(dialog.locator("[data-plan-kind='forecast']")).toContainText(
+    tr(lang, "benefitsP4.values.editVersion", { version: 1 }),
+  );
+  await shot(bo.page, lang, "fer1-plan-02-edit-dialog");
+  await expectAccessible(bo.page, lang, "fer1-plan-02-edit-dialog");
+  await kpiValue.fill("5");
+  await dialog.locator("[data-action='submit']").click();
+  await expect(dialog).toBeHidden();
+  expect(ifMatch).toEqual(['"1"']);
+  expect(record.version).toBe(2);
+  await expect(forecast).toContainText("5");
+  await expect(edit).toBeFocused(); // focus returns to the Edit button
+  await shot(bo.page, lang, "fer1-plan-03-saved");
+
+  // 2. someone else saves after this user's read (another session, the real API): the save answers 409 (conflict)
+  await edit.click();
+  const again = bo.page.getByRole("dialog", { name: tr(lang, "benefitsP4.values.editPlanTitle") });
+  await expect(again.locator("[data-plan-kind='forecast']")).toContainText(
+    tr(lang, "benefitsP4.values.editVersion", { version: 2 }),
+  );
+  const other = await apiSession(playwright, owner.username);
+  await other.call("PATCH", `${T}/benefit-plan-values/${record.id}`, { kpiValue: "5.5" }, { ifMatch: 2 });
+  await again.getByLabel(fieldLabel(lang, "benefitsP4.field.kpiValue")).fill("6");
+  await again.locator("[data-action='submit']").click();
+  const alert = again.getByRole("alert");
+  await expect(alert).toHaveAttribute("data-state", "conflict");
+  await expect(alert).toContainText(tr(lang, "myWork.ui.conflictReloaded"));
+  expect(ifMatch).toEqual(['"1"', '"2"']);
+  await shot(bo.page, lang, "fer1-plan-04-conflict");
+  await expectAccessible(bo.page, lang, "fer1-plan-04-conflict");
+  await bo.close();
+});
