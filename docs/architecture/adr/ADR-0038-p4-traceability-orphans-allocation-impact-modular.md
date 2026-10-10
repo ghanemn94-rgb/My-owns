@@ -303,13 +303,16 @@ Source: FE-F handback §5 item 2. Nothing above is removed. Where this amendment
 
 **Contract change.** `Problem` gains the optional property `params` (`type: object`, `additionalProperties: {type: [string, number, boolean, "null"]}`), with a description naming this amendment. No response, status or other schema changes. The change is additive to a P1 component: every response valid before is valid after.
 
+**Why this needs no DG1 reopen (orchestrator answer, D-114).** The DG1-approved `Problem` schema has no `additionalProperties: false`, so it already admits extension members. Declaring the optional `params` member therefore changes no P1 response and no P1 validation: a P1–P3 problem body that validated before validates the same way after, and none of them carries `params`. ADR-0007 is not edited; this amendment is where `params` is decided.
+
 **Implementer (backend):**
 1. `packages/shared/src/problem.ts`: `ProblemDetails` gains `readonly params?: Readonly<Record<string, string | number | boolean | null>>`.
+   The zod mirror `packages/shared/src/schemas/problem.ts` (`problem`, a non-strict `z.object`) gains `params: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional()`, so the mirror declares the member instead of stripping it.
 2. `apps/api/src/modules/platform/problem.ts`: `HttpProblem` gains an optional `params` (constructor and field), and `toBody` appends `params` after `currentVersion`, only when it is defined.
 3. `apps/api/src/modules/workflows/gates.ts`: `gateModularWaiverRevoked(date)` and `gateModularWaiverExpired(date)` build the problem with `params: { date }`.
 4. **Tests:** both refusals carry `params.date` equal to the date in `detail`, and a contract-test response validates against `Problem`. The existing problem tests pass unchanged, which shows that no other body gained the member.
 
-**Implementer (web):** the problem renderer passes `problem.params` to the translation of `problems.<code>`. `gate__modular_waiver_revoked` and `gate__modular_waiver_expired` gain `{date}` in EN and AR, rendered as a localized date. When `params` is absent (an older server), the text is the one shown today, without the date.
+**Implementer (web):** the problem renderer passes `problem.params` to the translation of `problems.<code>`. `gate__modular_waiver_revoked` and `gate__modular_waiver_expired` gain the placeholder `{{date}}` (the web's i18next form of this ADR's `{date}`) in EN and AR, filled with the business date formatted for the locale. When `params` is absent (an older server), the text is the one shown today, without the date.
 
 ### Q2. Codes and keys
 

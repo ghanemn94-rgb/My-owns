@@ -1,0 +1,39 @@
+apps/api/src/modules/benefits/corrections.ts:169:`benefit_measurement.${kind}`
+apps/api/src/modules/benefits/corrections.ts:179:`finance_validation.${kind}`
+apps/api/src/modules/governance/executive-decisions.ts:699:`executive_decision.${body.outcome === "decided" ? "decide" : body.outcome === "deferred" ? "defer" : "cancel"}`
+apps/api/src/modules/governance/forums.ts:110:`validation.${what}_unknown`
+apps/api/src/modules/platform/db-errors.ts:2658:`validation.${rule.code}`
+apps/api/src/modules/platform/validation.ts:24:`validation.${issue.code}`
+apps/api/src/modules/portfolio/repository.ts:159:`initiative.status.${status}`
+apps/api/src/modules/portfolio/selections.ts:117:`portfolio_selection.${action === "selected" ? "select" : "deselect"}`
+apps/api/src/modules/portfolio/selections.ts:133:`initiative.${action === "selected" ? "select" : "deselect"}`
+apps/api/src/modules/reporting/dashboards/areas.ts:468:`dashboard.portfolio.slip_${slip.reason}`
+apps/api/src/modules/reporting/dashboards/drilldown.ts:161:`dashboard.value.sum_${state}`
+apps/api/src/modules/reporting/dashboards/drilldown.ts:243:`dashboard.kpi.${s.displayedRag}`
+apps/api/src/modules/sustainment/controls.ts:536:`control_check.${body.result}`
+apps/api/src/modules/sustainment/improvement.ts:248:`improvement_item.${body.status}`
+apps/api/src/modules/sustainment/lessons.ts:302:`l.${c}`
+apps/api/src/modules/transformations/registers.ts:70:`validation.${code}`
+packages/shared/src/kpi/aggregate.ts:197:`inputs.${v.scopeId}`
+packages/shared/src/kpi/aggregate.ts:198:`inputs.${v.scopeId}.numerator`
+packages/shared/src/kpi/aggregate.ts:199:`inputs.${v.scopeId}.denominator`
+packages/shared/src/kpi/aggregate.ts:208:`inputs.${v.scopeId}`
+packages/shared/src/kpi/aggregate.ts:209:`inputs.${v.scopeId}.value`
+packages/shared/src/kpi/periods.ts:190:`values.${id}`
+packages/shared/src/schemas/kpi.ts:24:`validation.decimal_${column.name}_scale`
+
+# Classification (T-DG4-ARCH-R3B). Command:
+#   git ls-files apps/api/src apps/worker/src packages/shared/src | grep '\.ts$' | grep -v '\.test\.' |
+#     xargs grep -noE '`[a-z][a-z0-9_]*\.[a-z0-9_.]*\$\{[^}]*\}[a-z0-9_.]*`' | sort -u
+# - dashboard.value.sum_${state}: rule keys; planned/forecast/submitted/validated + measured/rejected/sustained in
+#   ADR-0037 amendment K2 (investment was already in A2).
+# - dashboard.portfolio.slip_${slip.reason}: reason keys; the four SlipUnknownReason values, added to ADR-0037 K2.
+# - dashboard.kpi.${s.displayedRag}: rule keys; the six KpiRag values, added to ADR-0037 K2.
+# - audit action names (not codes): benefit_measurement.*, finance_validation.*, executive_decision.*,
+#   portfolio_selection.*, initiative.select/deselect, control_check.*, improvement_item.*.
+# - validation.${...}: validation-code families whose members are in ADR tables (validation.user_unknown and
+#   validation.group_unknown in ADR-0032; validation.decimal_*_scale in ADR-0029/ADR-0038) or are the platform's
+#   generic zod/db mapping (platform/validation.ts, db-errors.ts, transformations/registers.ts).
+# - initiative.status.${status}: a DG3 display-status key family (T-DG3-BE-B, commit 657850b, inside the DG3-approved
+#   candidate source d3e6fe6); not a P4 code, so outside the P4 code table.
+# - inputs.${scopeId}..., values.${id}: error pointers/paths of the KPI kernel; l.${c}: an SQL column alias.
