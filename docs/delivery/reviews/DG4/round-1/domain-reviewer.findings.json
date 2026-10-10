@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-120",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-065",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "T11 Decision Rights page in Arabic shows the Recommend/Approve/Consult/Inform/SLA source labels in English only, with no provisional-Arabic notice",
+      "reproduction": "Real stack (with-stack.sh, synthetic dev seed). Sign in as dev.lead and switch to Arabic. Create a transformation and open /transformations/{id}/decision-rights (dom-ui.mjs step 'decision-rights-T11'). Compare the page with the forums page of the same transformation and with GET /api/v1/decision-right-templates.",
+      "expected": "Every user-facing string is available in Arabic RTL (CLAUDE.md; master prompt bilingual rule). The template already holds Arabic texts for these columns (recommendAr, approveAr, consultAr, informAr and slaAr, for example '5 أيام عمل'), and ADR-0026 says 'Arabic is provisional'. So the Arabic T11 view should show those Arabic texts, or the English source under a provisional-Arabic label, as the forums page does (governanceP4.arProvisional).",
+      "actual": "In Arabic, the Decision column is Arabic, but the Recommend, Approve, Consult, Inform and SLA cells show the English source labels ('Transformation Lead', 'Sponsor', 'Business owners / Finance', 'Workstreams', '5 working days') next to Arabic party chips, with no provisional or source-text notice. The per-transformation DecisionRight contract has only one label per column (recommendLabel … slaLabel, copied from the English source), so the Arabic template texts are never carried to the transformation's copy. The probe assertion 'ar.T11.four-rows' fails on the missing '5 أيام عمل' in both runs (dom-ui.log, dom-ui-run2.log). The data and routing are correct, and T11 is seeded verbatim in English (DOM-R1-04 PASS), so this is a localization gap with no behavioural effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-1/screens/ar-decision-rights-T11.png",
+        "docs/delivery/test-evidence/DG4/domain/round-1/screens/en-decision-rights-T11.png",
+        "docs/delivery/test-evidence/DG4/domain/round-1/screens/ar-forums-five-layers.png",
+        "docs/delivery/test-evidence/DG4/domain/round-1/dom-ui-run2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-1/dom-api-run2.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-10-10T22:20:00Z", "status": "OPEN", "note": "Raised by domain-reviewer in DG4 round 1 (T-DG4-REV-DOM-R1). Low, non-blocking: a bilingual-display gap on the T11 page. The template's Arabic texts exist but are not shown, and no provisional-Arabic label is shown (ADR-0026: 'Arabic is provisional'). The fix may need a contract or data change (Arabic labels per transformation row) or a render-time fallback to the template's Arabic while a label is unchanged. The solution-architect decides which." }
+      ]
+    },
+    {
+      "id": "F-DG4-121",
+      "stage_id": "DG4",
+      "requirement": "REQ-S08-009",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Benefit totals 'Gross benefit' and 'Net' headlines add revenue uplift to margin uplift, and avoided cost to cash saving, in one SAR figure",
+      "reproduction": "Disposable PostgreSQL, real API (Fastify inject), integration project. Run zz-domain-r1.test.ts 'DOM-GROSS' (copied into the clone only). In one benefit world, create four financial benefits: revenue_uplift, margin_uplift, cash_saving and avoided_cost. Record planned values of 300, 70, 20 and 45 SAR for 2026-01..06. Then GET /transformations/{t}/benefit-totals. The Finance dashboard and the benefits page render the same gross and net (Totals.tsx 'Gross benefit'; dashboards 'Net (gross - implementation cost)').",
+      "expected": "Master prompt M0172 (§8): 'Keep revenue uplift separate from profit or margin benefit. Keep avoided cost separate from cash savings … Show gross benefits, implementation cost and net value separately'. A headline benefit or net-value figure should not add a top-line revenue amount to a margin (profit) amount, or a non-cash avoided cost to a cash saving. Doing so double counts the margin on incremental revenue, as in the playbook roaming example (B0145), which lists 'Incremental roaming revenue' and 'margin improvement' as separate benefits. Gross and net should be computed per compatible basis, for example net on margin/cash classes, or with revenue and avoided cost shown beside them and not summed. Otherwise the composition should at least be stated as a decision with Finance's rationale.",
+      "actual": "The per-class lines are correct and separate: revenue_uplift 300, margin_uplift 70, cash_saving 20, avoided_cost 45. But gross.planned = 435 = 300 + 70 + 20 + 45, and net.planned = 435 − 0 cost = 435 (integration-run-1.log, 'DOM-GROSS'). totals.ts sums FINANCIAL_TOTAL_CLASSES = [revenue_uplift, margin_uplift, cash_saving, avoided_cost, working_capital_release] into gross, and net = gross − implementation cost (ADR-0030 §7.6). The literal acceptance texts of REQ-S08-009 ('separate lines'; 'cost avoidance is not counted in cash savings') and REQ-S08-011 (cost subtracted once) are met, and validated totals are not affected by the composition. But the headline figures shown to executives and Finance combine revenue with profit and non-cash with cash, which the source tells the product to keep separate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-1/integration-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-1/zz-domain-r1.test.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/domain-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-10-10T22:20:00Z", "status": "OPEN", "note": "Raised by domain-reviewer in DG4 round 1 (T-DG4-REV-DOM-R1). Medium, not mandatory: no literal acceptance clause is broken, and the per-class lines, currencies, n/a and validated totals are correct. But the gross and net headlines contradict M0172's 'keep separate' instruction. A change needs an ADR-0030 §7 amendment (solution-architect) before the kpi-benefits-engineer changes totals.ts and the web labels." }
+      ]
+    }
+  ]
+}
