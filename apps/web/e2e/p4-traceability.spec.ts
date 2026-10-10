@@ -4,7 +4,8 @@
 // engineering gate (DG0-DG7).
 //  1. Modular entry (REQ-PB-005, REQ-S03-005): a Modular transformation entering at Design lists the missing baseline
 //     and outcome links as blocking; no gate is labelled "approved"; an inherited baseline is recorded through the form
-//     with its provenance and the inherited label, read back (getInheritedRecord) and withdrawn with a reason.
+//     with its provenance and the inherited label, read back (getInheritedRecord) and withdrawn with a reason; an
+//     accepted Modular-links waiver (G3, no initiative) is then shown as in force, and the links stay missing.
 //  2. Traceability (REQ-PB-044, REQ-S03-006): an initiative without a TOM gap is in the orphan report; clicking its
 //     graph node opens the initiative; a capability → KPI link of 60 % and a contribution share of 40 % make the KPI's
 //     set 100 % (0 % unallocated); raising the link to 70 % is refused (110 %), translated; the impact of the KPI
@@ -34,6 +35,7 @@ test.describe.configure({ mode: "serial" });
 let tid = "";
 let base = "";
 let lead: ApiSession;
+let sponsor: ApiSession;
 let baselineId = "";
 let iniId = "";
 let iniName = "";
@@ -75,11 +77,13 @@ test.beforeAll(async ({ playwright }, info) => {
     me.organization.id,
     tid,
     `dev.p4trace.sp.${lang}.${stamp}`,
-    `Synthetic Sponsor ${lang}`,
+    // Sorts after "Synthetic Transformation Lead": journeys.spec.ts expects that user on page 1 of /admin/users, and
+    // the chromium-ar run sees every user the chromium-en specs created (W17 e2e finding).
+    `Synthetic Waiver Sponsor trace ${lang}`,
     "SP",
     lang,
   );
-  const sponsor = await apiSession(playwright, sp.username);
+  sponsor = await apiSession(playwright, sp.username);
   for (const gateCode of ["G1", "G2"]) {
     const ev = await lead.call<{ id: string; version: number }>("POST", `${base}/evidence`, {
       kind: "note",
@@ -136,7 +140,7 @@ test("1. Modular entry: blocking missing links, no gate labelled approved; inher
   // REQ-S03-005: the inherited G2 (and G1) approval is labelled Inherited, never Approved.
   for (const g of ["G1", "G2"]) {
     await expect(page.locator(`[data-gate='${g}']`)).toHaveAttribute("data-gate-label", "inherited");
-    await expect(page.locator(`[data-gate='${g}']`)).toContainText(tr(lang, "traceability.gateLabel.inherited"));
+    await expect(page.locator(`[data-gate='${g}']`)).toContainText(tr(lang, "traceability.inheritedLabel"));
     await expect(page.locator(`[data-gate='${g}']`)).not.toContainText(tr(lang, "traceability.gateLabel.approved"));
   }
   // The prior approvals are listed read-only with the inherited label.
@@ -181,6 +185,31 @@ test("1. Modular entry: blocking missing links, no gate labelled approved; inher
   ).toBeVisible();
   await shot(page, lang, "p4trace-04-inherited-withdrawn");
   await expectAccessible(page, lang, "p4trace-inherited-withdrawn");
+
+  // REQ-PB-005 / D-110 (a): a Modular-links waiver (G3, no initiative) recorded by the Lead and accepted by the
+  // synthetic Sponsor (a demo acceptance approves nothing real) is shown as in force; the links stay listed as missing.
+  const expires = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  const waiver = await lead.call<{ id: string; version: number }>("POST", `${base}/gate-dispensations`, {
+    kind: "waiver",
+    gateCode: "G3",
+    reason: `Synthetic: the inherited baseline is being located ${lang} ${stamp}`,
+    expiresOn: expires,
+  });
+  await sponsor.call(
+    "POST",
+    `${base}/gate-dispensations/${waiver.id}/decision`,
+    { result: "accepted", note: "Synthetic demo acceptance (approves nothing real)" },
+    { ifMatch: waiver.version },
+  );
+  await go(page, `/transformations/${tid}/modular-entry`);
+  const inForce = page.locator(`[data-waiver='${waiver.id}']`);
+  await expect(inForce).toHaveAttribute("data-waiver-expires", expires);
+  await expect(inForce).toContainText(`Synthetic: the inherited baseline is being located ${lang} ${stamp}`);
+  await expect(page.locator("[data-missing='baseline_missing'][data-severity='blocking']")).toBeVisible();
+  await expect(page.locator("[data-missing='outcome_link_missing'][data-severity='blocking']")).toBeVisible();
+  await expect(page.locator("[data-gate-label='approved']")).toHaveCount(0);
+  await shot(page, lang, "p4trace-04b-waiver-in-force");
+  await expectAccessible(page, lang, "p4trace-waiver-in-force");
   expect(foreign).toEqual([]);
   await tl.close();
 });

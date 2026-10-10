@@ -498,7 +498,7 @@ describe.each(["en", "ar"] as const)("Modular entry (%s)", (locale) => {
     renderApp(`/transformations/${TR_ID}/modular-entry`, { i18n: createI18n(locale) });
     const g2 = await el("[data-gate='G2']");
     expect(g2.getAttribute("data-gate-label")).toBe("inherited");
-    expect(g2.textContent).toContain(t("traceability.gateLabel.inherited"));
+    expect(g2.textContent).toContain(t("traceability.inheritedLabel"));
     expect(g2.textContent).not.toContain(t("traceability.gateLabel.approved"));
     expect(document.querySelector("[data-blocking='2']")).not.toBeNull();
     const items = [...document.querySelectorAll("[data-missing]")].map((x) => x.getAttribute("data-missing"));

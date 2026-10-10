@@ -844,7 +844,9 @@ export function TraceLinkDialog({
           if (v["contributionStatement"] !== link.contributionStatement)
             patch["contributionStatement"] = v["contributionStatement"];
           if (SHARE_LINK_KINDS.has(link.linkKind)) {
-            if ((share || null) !== link.allocationShare) patch["allocationShare"] = share || null;
+            // Compared as numeric(7,6) strings, so "0.6" and the stored "0.600000" are the same share (no empty patch).
+            const typed = share === "" ? null : traceAllocationTotals([share]).total;
+            if (typed !== link.allocationShare) patch["allocationShare"] = share || null;
             if (basis !== link.allocationBasis) patch["allocationBasis"] = basis;
           }
           return Object.keys(patch).length === 0
