@@ -36,7 +36,10 @@ export type AreaWorkspaceTab =
   | "adoption"
   | "bau"
   | "improvement"
-  | "lessons";
+  | "lessons"
+  // P4 slice H (T-DG4-FE-F2).
+  | "phases"
+  | "change-requests";
 
 export type AreaId =
   | "myWork"
@@ -139,7 +142,10 @@ export interface NavSubPage {
     | "lessons"
     | "lessonSearch"
     // T-DG4-FE-G: the six dashboards (M0244) under the Executive Overview.
-    | "dashboards";
+    | "dashboards"
+    // T-DG4-FE-F2: the phase workspace (Playbook and Phases) and change requests (Governance).
+    | "phaseWorkspace"
+    | "changeRequests";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -182,4 +188,7 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "lessonSearch", area: "bau", path: "/lessons", requiresAny: ["lesson.search"] },
   // T-DG4-FE-G: the dashboards hub (executive, transformation, workstream, Finance, adoption, personal).
   { id: "dashboards", area: "executive", path: "/dashboards" },
+  // T-DG4-FE-F2: the guided phase steps of each transformation, and its change requests.
+  { id: "phaseWorkspace", area: "playbook", path: "/playbook/phases", workspaceTab: "phases" },
+  { id: "changeRequests", area: "governance", path: "/governance/change-requests", workspaceTab: "change-requests" },
 ];
