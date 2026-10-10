@@ -2,8 +2,11 @@
 // participants, meeting series and meetings. Every call goes through `ctx.mirrored` (OpenAPI status/body/headers +
 // problem mirror) and every success body is parsed with the zod mirror in P4_MIRRORS_BE_F. BE-F2 appends its agenda,
 // attendance, minutes, output and action exercises to this file after BE-F (no new seam file). All data is synthetic; a
-// meeting approves nothing and nothing here touches the engineering gates DG0-DG7.
+// meeting approves nothing and nothing here touches the engineering gates DG0-DG7. T-DG4-BE-F2's 18 operations are
+// exercised by exerciseP4BeF2Operations at the end of exerciseP4BeFOperations, on the same meeting world.
 import {
+  agendaItem,
+  agendaItemPage,
   forum,
   forumPage,
   forumParticipant,
@@ -13,6 +16,13 @@ import {
   meetingSeries,
   meetingSeriesPage,
   meetingSeriesResult,
+  meetingAction,
+  meetingActionPage,
+  meetingAttendance,
+  meetingAttendancePage,
+  meetingMinutes,
+  meetingOutput,
+  meetingOutputPage,
 } from "@mth/shared/schemas";
 import { expect } from "vitest";
 import type { z } from "zod";
@@ -24,6 +34,7 @@ import {
   isoWeekday,
   plusDays,
   setupMeetingWorld,
+  type MeetingWorld,
 } from "../governance/meeting-fixtures.ts";
 
 export const P4_MIRRORS_BE_F: Readonly<Record<string, z.ZodType>> = {
@@ -47,6 +58,25 @@ export const P4_MIRRORS_BE_F: Readonly<Record<string, z.ZodType>> = {
   startMeeting: meeting,
   closeMeeting: meeting,
   cancelMeeting: meeting,
+  // T-DG4-BE-F2 (agenda items, attendance, minutes, outputs, actions).
+  listAgendaItems: agendaItemPage,
+  createAgendaItem: agendaItem,
+  updateAgendaItem: agendaItem,
+  publishAgendaItem: agendaItem,
+  withdrawAgendaItem: agendaItem,
+  recordAgendaItemOutcome: agendaItem,
+  listMeetingAttendance: meetingAttendancePage,
+  recordMeetingAttendance: meetingAttendance,
+  updateMeetingAttendance: meetingAttendance,
+  getMeetingMinutes: meetingMinutes,
+  createMeetingMinutes: meetingMinutes,
+  updateMeetingMinutes: meetingMinutes,
+  approveMeetingMinutes: meetingMinutes,
+  publishMeetingMinutes: meetingMinutes,
+  listMeetingOutputs: meetingOutputPage,
+  createMeetingOutput: meetingOutput,
+  listMeetingActions: meetingActionPage,
+  createMeetingAction: meetingAction,
 };
 
 export async function exerciseP4BeFOperations(ctx: P4ExerciseContext): Promise<void> {
@@ -196,4 +226,143 @@ export async function exerciseP4BeFOperations(ctx: P4ExerciseContext): Promise<v
   expect([ended.status, ended.body.series.status]).toEqual([200, "ended"]);
   const endedAgain = await m("POST", `${SI}/end`, { session: office, headers: ifm(3) });
   expect([endedAgain.status, endedAgain.body.code]).toEqual([422, "meeting_series.ended"]);
+
+  await exerciseP4BeF2Operations(ctx, x);
+}
+
+/**
+ * T-DG4-BE-F2 (p4-work-split §D.3, §1 S-10): the 18 committee-workflow operations of slice D, on BE-F's meeting world.
+ * A Transformation Review meeting (chair: TL, quorum 2) takes an executive-ask brief that is refused without "Impact of
+ * delay", completed and published into T16; the SP owner's decision is refused below quorum and recorded at quorum; an
+ * output, an action, attendance and minutes complete the meeting, whose published minutes are then immutable.
+ */
+async function exerciseP4BeF2Operations(ctx: P4ExerciseContext, x: MeetingWorld): Promise<void> {
+  const m = ctx.mirrored;
+  const T = `/api/v1/transformations/${x.transformationId}`;
+  const today = await businessToday(ctx.api);
+  const forumId = x.forums.transformation_review;
+  for (const userId of [x.lead.id, x.sponsor.id]) {
+    const p = await m("POST", `${T}/forums/${forumId}/participants`, { session: x.office.session, body: { userId } });
+    expect(p.status, JSON.stringify(p.body)).toBe(201);
+  }
+  const created = await m("POST", `${T}/meetings`, {
+    session: x.lead.session,
+    body: { forumId, scheduledDate: plusDays(today, 9), startTime: "10:00", durationMinutes: 60 },
+  });
+  expect([created.status, created.body.chairUserId]).toEqual([201, x.lead.id]);
+  const MI = `${T}/meetings/${created.body.id}`;
+  let mv = (await m("PATCH", MI, { session: x.lead.session, headers: ifm(1), body: { quorumMin: 2 } })).body.version;
+
+  // ------------------------------------------------------------------ agenda items (ADR-0032 §3.2)
+  const A = `${MI}/agenda-items`;
+  const ask = await m("POST", A, {
+    session: x.lead.session,
+    body: {
+      itemKind: "executive_ask",
+      title: "Synthetic: vendor decision",
+      brief: {
+        decisionRequired: "Synthetic: choose the vendor",
+        whyNow: "Synthetic: the renewal window closes",
+        options: ["Switch vendor", "Renew"],
+        recommendation: "A",
+        ownerUserId: x.sponsor.id,
+        requiredDate: plusDays(today, 20),
+      },
+    },
+  });
+  expect([ask.status, ask.body.status, ask.body.missingElements]).toEqual([201, "draft", ["impact_of_delay"]]);
+  const AI = `${A}/${ask.body.id}`;
+  const incomplete = await m("POST", `${AI}/publish`, { session: x.lead.session, headers: ifm(1) });
+  expect([incomplete.status, incomplete.body.code, incomplete.body.errors[0].pointer]).toEqual([
+    422,
+    "agenda_item.executive_ask_incomplete",
+    "/brief/impactOfDelay",
+  ]);
+  const completed = await m("PATCH", AI, {
+    session: x.lead.session,
+    headers: ifm(1),
+    body: { brief: { impactOfDelay: "Synthetic: another quarter on the old terms" } },
+  });
+  expect([completed.status, completed.body.missingElements]).toEqual([200, []]);
+  const published = await m("POST", `${AI}/publish`, { session: x.lead.session, headers: ifm(2) });
+  expect([published.status, published.body.status, published.body.brief]).toEqual([200, "published", null]);
+  const decisionId = published.body.decisionId as string;
+  const info = await m("POST", A, { session: x.lead.session, body: { itemKind: "information", title: "Synthetic" } });
+  expect(info.status).toBe(201);
+  const withdrawn = await m("POST", `${A}/${info.body.id}/withdraw`, { session: x.lead.session, headers: ifm(1) });
+  expect([withdrawn.status, withdrawn.body.status]).toEqual([200, "withdrawn"]);
+  const agenda = await m("GET", A, { session: x.auditor.session });
+  expect([agenda.status, agenda.body.items.length]).toEqual([200, 2]);
+
+  // ------------------------------------------------------------------ attendance and quorum (ADR-0032 §3.3)
+  const AT = `${MI}/attendance`;
+  const lead = await m("POST", AT, { session: x.lead.session, body: { userId: x.lead.id, attendance: "present" } });
+  expect([lead.status, lead.body.countsForQuorum]).toEqual([201, true]);
+  const absent = await m("POST", AT, { session: x.lead.session, body: { userId: x.sponsor.id, attendance: "absent" } });
+  expect(absent.status).toBe(201);
+  mv = (await m("POST", `${MI}/start`, { session: x.office.session, headers: ifm(mv) })).body.version;
+  const outcome = { outcome: "decided", chosenOptionLabel: "A", outcomeText: "Synthetic: switch", decisionVersion: 1 };
+  const below = await m("POST", `${AI}/outcome`, { session: x.sponsor.session, headers: ifm(3), body: outcome });
+  expect([below.status, below.body.code]).toEqual([422, "meeting.quorum_not_met"]);
+  const present = await m("PATCH", `${AT}/${absent.body.id}`, {
+    session: x.lead.session,
+    headers: ifm(1),
+    body: { attendance: "present" },
+  });
+  expect([present.status, present.body.attendance]).toEqual([200, "present"]);
+  expect((await m("GET", AT, { session: x.auditor.session })).body.items.length).toBe(2);
+  const decided = await m("POST", `${AI}/outcome`, { session: x.sponsor.session, headers: ifm(3), body: outcome });
+  expect([decided.status, decided.body.outcome, decided.body.outcomeQuorumPresent]).toEqual([200, "decided", 2]);
+  const t16 = await m("GET", `${T}/executive-decisions/${decisionId}`, { session: x.auditor.session });
+  expect([t16.body.status, t16.body.askOrigin]).toEqual(["decided", "agenda"]);
+
+  // ------------------------------------------------------------------ outputs and actions (ADR-0032 §4, §5.4)
+  const O = `${MI}/outputs`;
+  const note = await m("POST", O, {
+    session: x.lead.session,
+    body: { outputKind: "integrated_status", note: "Synthetic: amber overall" },
+  });
+  expect([note.status, note.body.recordType]).toEqual([201, null]);
+  const wrongKind = await m("POST", O, {
+    session: x.lead.session,
+    body: { outputKind: "forecast", recordType: "benefit", recordId: decisionId },
+  });
+  expect([wrongKind.status, wrongKind.body.code]).toEqual([422, "meeting_output.kind_not_in_forum"]);
+  const outputs = await m("GET", O, { session: x.auditor.session });
+  expect([outputs.status, outputs.body.items.map((o: { outputKind: string }) => o.outputKind).sort()]).toEqual([
+    200,
+    ["decision_log", "integrated_status"],
+  ]);
+  const ACT = `${MI}/actions`;
+  const action = await m("POST", ACT, {
+    session: x.lead.session,
+    body: { title: "Synthetic: draft the vendor notice", ownerUserId: x.contributor.id, dueDate: plusDays(today, 5) },
+  });
+  expect([action.status, action.body.linkKind, action.body.action.ownerUserId]).toEqual([
+    201,
+    "assigned",
+    x.contributor.id,
+  ]);
+  const actions = await m("GET", ACT, { session: x.auditor.session });
+  expect([actions.status, actions.body.items.length, actions.body.items[0].overdue]).toEqual([200, 1, false]);
+
+  // ------------------------------------------------------------------ minutes (ADR-0032 §5)
+  const held = await m("POST", `${MI}/close`, { session: x.office.session, headers: ifm(mv) });
+  expect([held.status, held.body.status]).toEqual([200, "held"]);
+  const MN = `${MI}/minutes`;
+  const draft = await m("POST", MN, { session: x.lead.session, body: { body: "Synthetic minutes" } });
+  expect([draft.status, draft.body.status]).toEqual([201, "draft"]);
+  const again = await m("POST", MN, { session: x.lead.session, body: { body: "Synthetic minutes" } });
+  expect([again.status, again.body.code]).toEqual([409, "meeting_minutes.exists"]);
+  const edited = await m("PATCH", MN, { session: x.lead.session, headers: ifm(1), body: { body: "Synthetic v2" } });
+  expect([edited.status, edited.body.version]).toEqual([200, 2]);
+  const approved = await m("POST", `${MN}/approve`, { session: x.lead.session, headers: ifm(2) });
+  expect([approved.status, approved.body.status]).toEqual([200, "approved"]);
+  const minutesPublished = await m("POST", `${MN}/publish`, { session: x.lead.session, headers: ifm(3) });
+  expect([minutesPublished.status, minutesPublished.body.status]).toEqual([200, "published"]);
+  const got = await m("GET", MN, { session: x.auditor.session });
+  expect([got.status, got.headers.etag]).toEqual([200, '"4"']);
+  const immutable = await m("PATCH", MN, { session: x.lead.session, headers: ifm(4), body: { body: "Changed" } });
+  expect([immutable.status, immutable.body.code]).toEqual([422, "meeting_minutes.published"]);
+  expect((await m("GET", MI, { session: x.auditor.session })).body.status).toBe("minutes_published");
 }

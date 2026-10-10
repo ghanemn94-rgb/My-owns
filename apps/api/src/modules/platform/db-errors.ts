@@ -1958,6 +1958,130 @@ export function mapP4GovernanceMeetingError(error: PgErrorLike): HttpProblem | n
     case "governance_escalation_rule_kind_immutable":
       // The API never sends such a write (decision escalations are written by the worker only): a programming error.
       return problems.internal();
+    // ---- BE-F2 (T-DG4-BE-F2): agenda items, attendance, minutes, outputs and action links (ADR-0032 §11). The
+    // services answer each of these before their write, with the same codes and texts; these are the last lines.
+    case "agenda_item_quorum_met": {
+      const q = /quorum (\d+) not met \((\d+) counted present\)/.exec(error.message ?? "");
+      return problems.businessRule(
+        "meeting.quorum_not_met",
+        `This meeting has not reached its quorum: ${q?.[2] ?? "fewer"} of ${q?.[1] ?? "its quorum"} counted present. Decisions cannot be recorded below quorum.`,
+      );
+    }
+    case "agenda_item_meeting_not_in_session":
+      return problems.businessRule(
+        "meeting.not_in_session",
+        "Decisions and blocker status are recorded while the meeting is in session or held.",
+      );
+    case "agenda_item_executive_asks_only":
+      return problems.businessRule(
+        "agenda_item.executive_asks_only",
+        "Escalate decisions, not status: this forum's agenda takes executive asks only.",
+      );
+    case "agenda_item_published_ask_linked":
+      // The guard cannot list the missing elements; the API lists them before the write.
+      return rule422(
+        "agenda_item.executive_ask_incomplete",
+        "An executive agenda item must state the decision required, why now, options, recommendation, impact of delay, decision owner and required date before it is published. Missing: decision required.",
+        "/brief",
+      );
+    case "agenda_item_final": {
+      const status = /a ([a-z_]+) item is final/.exec(error.message ?? "")?.[1] ?? "closed";
+      return problems.businessRule("agenda_item.final", `This agenda item is ${status} and can no longer be changed.`);
+    }
+    case "agenda_item_published_frozen":
+      return problems.businessRule("agenda_item.not_draft", "Only a draft agenda item can be changed.");
+    case "agenda_item_ordinal_key":
+      return problems.duplicate("agenda_item.ordinal_taken", "Another agenda item of this meeting has this position.");
+    case "meeting_minutes_published_immutable":
+      return problems.businessRule("meeting_minutes.published", "Published minutes are immutable.");
+    case "meeting_minutes_status_transition": {
+      const [from, to] = meetingEdgeOf(error.message);
+      return problems.businessRule(
+        "meeting_minutes.status_transition",
+        `These minutes cannot move from ${from} to ${to}.`,
+      );
+    }
+    case "meeting_minutes_approved_frozen":
+      return problems.businessRule(
+        "meeting_minutes.approved_frozen",
+        "Approved minutes are edited only after they are returned to draft.",
+      );
+    case "meeting_minutes_meeting_held":
+      return problems.businessRule(
+        "meeting_minutes.meeting_not_held",
+        "Minutes are published after the meeting is held.",
+      );
+    case "meeting_minutes_required_output": {
+      // The guard names the required kinds ("… at least one output of {benefit_evidence,forecast}"), not the forum.
+      const kinds =
+        /output of \{([^}]*)\}/
+          .exec(error.message ?? "")?.[1]
+          ?.split(",")
+          .join(", ") ?? "its outputs";
+      return problems.businessRule(
+        "meeting_minutes.required_output_missing",
+        `A forum meeting cannot be published without at least one of: ${kinds.replaceAll("_", " ")}.`,
+      );
+    }
+    case "meeting_minutes_meeting_key":
+      return problems.duplicate("meeting_minutes.exists", "This meeting already has minutes; update them instead.");
+    case "meeting_attendance_person_key":
+      return problems.duplicate(
+        "meeting_attendance.exists",
+        "Attendance for this person is already recorded; update it instead.",
+      );
+    case "meeting_attendance_proxy_present":
+    case "meeting_attendance_not_self_proxy":
+      return problems.validation([
+        {
+          pointer: "/onBehalfOfUserId",
+          code: "validation.attendance_proxy",
+          message: "A representative is recorded only for a present person, and never for themselves.",
+        },
+      ]);
+    case "meeting_output_kind_of_forum": {
+      const kind = /meeting_output: ([a-z_]+) is not an output/.exec(error.message ?? "")?.[1] ?? "This kind";
+      return rule422("meeting_output.kind_not_in_forum", `${kind} is not an output of this forum.`, "/outputKind");
+    }
+    case "meeting_output_record_type":
+      return rule422(
+        "meeting_output.record_required",
+        "This output links a record of type its kind requires.",
+        "/recordType",
+      );
+    case "meeting_output_record_ref":
+      return rule422(
+        "meeting_output.record_not_found",
+        "The linked record does not exist in this transformation.",
+        "/recordId",
+      );
+    case "meeting_output_record_pair":
+      return problems.validation([
+        {
+          pointer: "/recordId",
+          code: "validation.record_pair",
+          message: "A linked record names both its record type and its record.",
+        },
+      ]);
+    case "meeting_output_note_or_record":
+      return problems.validation([
+        { pointer: "/note", code: "validation.required", message: "A required value is missing." },
+      ]);
+    case "agenda_item_starts_draft":
+    case "agenda_item_identity_immutable":
+    case "agenda_item_status_transition":
+    case "agenda_item_ask_shape":
+    case "agenda_item_published_complete":
+    case "agenda_item_outcome_complete":
+    case "meeting_attendance_identity":
+    case "meeting_minutes_starts_draft":
+    case "meeting_minutes_identity":
+    case "meeting_minutes_approved_complete":
+    case "meeting_minutes_published_complete":
+    case "meeting_output_kind_valid":
+    case "meeting_action_link_key":
+      // The API never sends such a write: a programming error.
+      return problems.internal();
     default:
       return null;
   }
