@@ -29,7 +29,8 @@ function flatten(tree: Tree, prefix = ""): Map<string, string> {
 const ar = flatten(catalogues.ar as unknown as Tree);
 const en = flatten(catalogues.en as unknown as Tree);
 // "{{n}}" and the formatted form "{{date, businessDate}}" (ADR-0038 Q1): both name a variable that must match.
-const vars = (s: string) => [...s.matchAll(/\{\{\s*(\w+)\s*(?:,\s*(\w+)\s*)?\}\}/g)].map((m) => `${m[1]}${m[2] ? `,${m[2]}` : ""}`).sort();
+const vars = (s: string) =>
+  [...s.matchAll(/\{\{\s*(\w+)\s*(?:,\s*(\w+)\s*)?\}\}/g)].map((m) => `${m[1]}${m[2] ? `,${m[2]}` : ""}`).sort();
 
 const SRC = join(import.meta.dirname, "..");
 function sourceFiles(dir: string): string[] {

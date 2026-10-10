@@ -278,6 +278,63 @@ test("2. Schedule network: no critical claim with a missing duration; recording 
   await tl.close();
 });
 
+test("2b. Change a duration (T-DG4-FE-R3, ADR-0031 S1): If-Match is getInitiativeSchedule's real ETag; a concurrent change is a 409 that re-reads and never overwrites", async ({
+  browser,
+}, info) => {
+  const lang = langOf(info);
+  const tl = await asUser(browser, lang, "dev.lead");
+  const page = tl.page;
+  await go(page, initiativePath(ini.C.id));
+  const path = `/initiatives/${ini.C.id}/schedule`;
+  // Opening the dialog reads the row; its ETag is what the change is sent against.
+  const read = page.waitForResponse((r) => r.request().method() === "GET" && r.url().endsWith(path));
+  await page.locator("#schedule-network [data-action='change-duration']").click();
+  const readRes = await read;
+  expect(readRes.status()).toBe(200);
+  const etag = readRes.headers()["etag"]!;
+  const readBody = (await readRes.json()) as { version: number; durationWorkingDays: number | null };
+  expect(etag).toBe(`"${readBody.version}"`);
+  expect(readBody.durationWorkingDays).toBe(4);
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("[data-current-duration='4']")).toHaveAttribute(
+    "data-schedule-version",
+    String(readBody.version),
+  );
+  await expect(field(dialog, "durationWorkingDays")).toHaveValue("4");
+  // Someone else changes the duration meanwhile (the API, as the same Lead in another session).
+  await lead.call("PATCH", `/api/v1${path}`, { durationWorkingDays: 7 }, { ifMatch: readBody.version });
+  await field(dialog, "durationWorkingDays").fill("6");
+  const stale = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(path));
+  const staleRes = page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().endsWith(path));
+  await submitOf(dialog).click();
+  expect((await stale).headers()["if-match"]).toBe(etag);
+  expect((await staleRes).status()).toBe(409);
+  // Nothing saved: the dialog re-reads and shows the current value (7) and version; the typed 6 is kept, unsent.
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("alert")).toBeVisible();
+  await expect(dialog.locator("[data-current-duration='7']")).toHaveAttribute(
+    "data-schedule-version",
+    String(readBody.version + 1),
+  );
+  await expect(field(dialog, "durationWorkingDays")).toHaveValue("6");
+  expect((await lead.call<{ durationWorkingDays: number | null }>("GET", `/api/v1${path}`)).durationWorkingDays).toBe(
+    7,
+  );
+  await shot(page, lang, "p4exec-07b-duration-conflict");
+  await expectAccessible(page, lang, "p4exec-07b-duration-conflict");
+  // Saving again sends the re-read ETag and succeeds.
+  const again = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(path));
+  await submitOf(dialog).click();
+  expect((await again).headers()["if-match"]).toBe(`"${readBody.version + 1}"`);
+  await expect(dialog).toBeHidden();
+  await expect(page.locator("#schedule-network [data-own-duration='6']")).toBeVisible();
+  const after = await lead.call<{ durationWorkingDays: number | null; version: number }>("GET", `/api/v1${path}`);
+  expect(after).toMatchObject({ durationWorkingDays: 6, version: readBody.version + 2 });
+  // Restore C's §8 duration (4) for the steps that follow.
+  await lead.call("PATCH", `/api/v1${path}`, { durationWorkingDays: 4 }, { ifMatch: after.version });
+  await tl.close();
+});
+
 test("3. Auditor: read-only panels; 390 px wide and 200 % text without page-level horizontal scroll", async ({
   browser,
 }, info) => {

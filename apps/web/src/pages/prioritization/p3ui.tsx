@@ -10,7 +10,7 @@ import { ApiError } from "../../api/client.ts";
 import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Icon } from "../../components/Icon.tsx";
-import { errorMessage, fieldErrorMessage, problemKey, problemText } from "../../lib/problem.ts";
+import { errorMessage, fieldErrorMessage, problemText } from "../../lib/problem.ts";
 
 /** "prioritization.weights_total" -> "prioritization__weights_total" (the key form used in FE-B's `problem` maps). */
 export const codeKey = (code: string) => code.replace(/\./g, "__");

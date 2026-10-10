@@ -71,11 +71,11 @@ const DATE_PARAMS = new Set([
   "meetingDate",
 ]);
 
-/** The translated text of a work item or reminder (S-6: rendered from messageKey + messageParams at render time). */
 /** `k` is `<param>Ar` and `<param>` is also sent: the Arabic member of a bilingual name (ADR-0025 amendment L1). */
 const isArabicNameOf = (k: string, params: Readonly<Record<string, unknown>>) =>
   k.length > 2 && k.endsWith("Ar") && Object.hasOwn(params, k.slice(0, -2));
 
+/** The translated text of a work item or reminder (S-6: rendered from messageKey + messageParams at render time). */
 export function renderMessage(
   t: TFunction,
   locale: Locale,

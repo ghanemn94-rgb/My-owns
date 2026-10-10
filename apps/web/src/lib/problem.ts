@@ -39,7 +39,8 @@ export function problemText(t: TFunction, code: string, params?: ProblemParams |
   const needed = placeholdersOf(template);
   if (needed.length === 0) return t(key, { defaultValue: "" });
   const filled =
-    params != null &&
+    params !== undefined &&
+    params !== null &&
     needed.every((p) => {
       const v = params[p];
       return (typeof v === "string" && v.trim() !== "") || (typeof v === "number" && Number.isFinite(v));

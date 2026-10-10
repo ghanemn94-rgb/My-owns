@@ -14,7 +14,7 @@
 //  6. Modular G3 waiver (REQ-PB-005, D-110): the dispensations page refuses a Modular G2 waiver (DG3 text) and records
 //     a G3 waiver of the missing links; with it accepted, G3 is submitted and the submission shows the missing links
 //     and the waiver; after the waiver is revoked, the approval is refused with the translated
-//     gate.modular_waiver_revoked text.
+//     gate.modular_waiver_revoked text, which shows the revoke's date (`params.date`, ADR-0038 Q1) localized.
 //  7. Closure (REQ-S03-003, REQ-S11-006): the four statuses side by side and the label; closing is refused, translated.
 //  8. Transition decisions (REQ-S11-007; ADR-0026 E1-E6): the Business Owner drafts and submits one; the Sponsor
 //     returns it; round 2 is submitted after an edit; another Business Owner's withdrawal is refused (403
@@ -256,6 +256,22 @@ test("2. the Lead submits G5 with exceptions; the submission records the excepti
   await go(page, `/transformations/${tid}/gates/G5`);
   await page.getByRole("button", { name: tr(lang, "gates.submit.action"), exact: true }).click();
   const dialog = page.getByRole("dialog");
+  // QA-C O-1 (T-DG4-FE-R3): incomplete outputs covered by accepted exceptions are not announced as a refusal; the
+  // note counts them from the live gate view, and the server accepts the submission below.
+  const live = await lead.call<GateViewLite>("GET", `${T}/gates/G5`);
+  const mandatory = live.criteria.filter((c) => c.mandatory);
+  const complete = mandatory.filter((c) => c.completeness === "complete").length;
+  expect(complete).toBeLessThan(mandatory.length);
+  await expect(dialog.locator("[data-submit-coverage='covered']")).toContainText(
+    tr(lang, "gates.submit.coveredNote", {
+      complete,
+      total: mandatory.length,
+      covered: mandatory.length - complete,
+    }),
+  );
+  await expect(dialog.locator("[data-submit-coverage='refused']")).toHaveCount(0);
+  await shot(page, lang, "p4-gates-03b-submit-dialog-covered");
+  await expectAccessible(page, lang, "p4-gates-03b-submit-dialog-covered");
   await dialog.getByRole("button", { name: tr(lang, "gates.submit.confirm") }).click();
   await expect(dialog).toBeHidden();
   await page
@@ -319,7 +335,20 @@ test("4. G5 approval needs the scale scope; approved with one item; the Sponsor 
   const lang = langOf(info);
   const spUi = await asUser(browser, lang, sp.username);
   const page = spUi.page;
+  // T-DG4-FE-R3 (ADR-0035 R1): the scope's units come from listScaleScopeBusinessUnits, read with transformation.read.
+  const unitsRead = page.waitForResponse(
+    (r) => r.request().method() === "GET" && /\/scale-scope\/business-units(\?|$)/.test(r.url()),
+  );
   await go(page, `/transformations/${tid}/gates/G5`);
+  const unitsRes = await unitsRead;
+  expect(unitsRes.status()).toBe(200);
+  const units = (
+    (await unitsRes.json()) as {
+      items: { id: string; code: string; nameEn: string; nameAr: string; selectable: boolean }[];
+    }
+  ).items;
+  const retail = units.find((u) => u.id === SYN_RETAIL)!;
+  expect(retail.selectable).toBe(true);
   await expect(page.locator("[data-scale-scope='none']")).toBeVisible();
   await page.getByRole("button", { name: tr(lang, "gates.decision.action"), exact: true }).click();
   const dialog = page.getByRole("dialog");
@@ -330,12 +359,20 @@ test("4. G5 approval needs the scale scope; approved with one item; the Sponsor 
     tr(lang, "gates.scale.itemIncomplete"),
   );
   await dialog.locator("[data-scope-initiative='0']").selectOption(iniId);
+  // Exactly the selectable units are offered (plus "Choose"), each labelled "CODE name" in the page language.
+  const offered = dialog.locator("[data-scope-unit='0'] option:not([value=''])");
+  await expect(offered).toHaveCount(units.filter((u) => u.selectable).length);
+  await expect(dialog.locator(`[data-scope-unit='0'] option[value='${SYN_RETAIL}']`)).toHaveText(
+    `${retail.code} ${lang === "ar" ? retail.nameAr : retail.nameEn}`,
+  );
   await dialog.locator("[data-scope-unit='0']").selectOption(SYN_RETAIL);
   await shot(page, lang, "p4-gates-06-g5-decision-scope");
   await expectAccessible(page, lang, "p4-gates-06-g5-decision-scope");
   await dialog.getByRole("button", { name: tr(lang, "gates.decision.confirm") }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.locator(`[data-scope-item='${iniId}:${SYN_RETAIL}']`)).toBeVisible();
+  await expect(
+    page.locator(`[data-scope-item='${iniId}:${SYN_RETAIL}'] [data-scale-unit='${retail.code}']`),
+  ).toContainText(lang === "ar" ? retail.nameAr : retail.nameEn);
   // Revoke: the criterion is missing again from now on; the reason is shown.
   const row = page.locator("[data-exception='g5.performance_evidence']");
   await row.locator("[data-action='revoke-exception']").click();
@@ -454,10 +491,30 @@ test("6. Modular G3: a G2 waiver is refused (DG3); a G3 links waiver is recorded
   const decide = spUi.page.getByRole("dialog");
   await decide.getByRole("radio", { name: tr(lang, "gates.outcome.approved") }).check();
   await decide.locator("textarea").first().fill(RATIONALE);
+  const refusal = spUi.page.waitForResponse(
+    (r) => r.request().method() === "POST" && r.url().endsWith(`${M}/gates/G3/decision`),
+  );
   await decide.getByRole("button", { name: tr(lang, "gates.decision.confirm") }).click();
+  // T-DG4-FE-R3 (ADR-0038 Q1): the refusal carries params.date (the revoke's business date, the date in `detail`),
+  // and the screen shows it as a localized business date inside the translated text, never as the raw "YYYY-MM-DD".
+  const refusedRes = await refusal;
+  expect(refusedRes.status()).toBe(422);
+  const problem = (await refusedRes.json()) as { code: string; detail: string; params?: { date?: string } };
+  expect(problem.code).toBe("gate.modular_waiver_revoked");
+  const date = problem.params?.date ?? "";
+  expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(problem.detail).toContain(date);
   const alert = decide.getByRole("alert");
   await expect(alert).toHaveAttribute("data-problem", "gate.modular_waiver_revoked");
-  await expect(alert).toContainText(tr(lang, "problems.gate__modular_waiver_revoked"));
+  // The date as lib/format.ts formatBusinessDate renders it, computed by the same browser.
+  const shown = await spUi.page.evaluate(
+    ([d, l]) => new Intl.DateTimeFormat(l, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T00:00:00Z`)),
+    [date, lang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-GB"] as const,
+  );
+  const [before, after] = tr(lang, "problems.gate__modular_waiver_revoked").split("{{date, businessDate}}");
+  expect(after, "the text has its date placeholder").toBeDefined();
+  await expect(alert).toContainText(`${before}${shown}${after}`);
+  await expect(alert).not.toContainText(date);
   await shot(spUi.page, lang, "p4-gates-12-g3-approval-refused-waiver-revoked");
   await expectAccessible(spUi.page, lang, "p4-gates-12-g3-approval-refused-waiver-revoked");
   await spUi.close();

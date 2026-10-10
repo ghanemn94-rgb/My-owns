@@ -311,7 +311,9 @@ describe.each(["en", "ar"] as const)("adoption screens (%s)", (locale) => {
         ...form().currentVersion,
         versionNo: 2,
         schema: {
-          questions: [{ ...form().currentVersion.schema.questions[0]!, label_en: "Relabelled v2", label_ar: "تسمية ٢" }],
+          questions: [
+            { ...form().currentVersion.schema.questions[0]!, label_en: "Relabelled v2", label_ar: "تسمية ٢" },
+          ],
         },
       },
     });

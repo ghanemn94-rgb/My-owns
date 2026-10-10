@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initiativeSchedule, scheduleNetwork } from "@mth/shared/schemas";
 import { createI18n } from "../../i18n/index.ts";
 import { problem, route } from "../../test/fixtures.tsx";
-import { TRP, esc, json } from "../my-work/p4fixtures.ts";
+import { json } from "../my-work/p4fixtures.ts";
 import { INI_2, NETWORK_COMPUTED, NETWORK_MISSING, renderInitiative } from "./executionFixtures.ts";
 
 beforeEach(() => localStorage.clear());
@@ -22,7 +22,6 @@ afterEach(() => {
 });
 
 const SCHEDULE = new RegExp(`/api/v1/initiatives/${INI_2}/schedule$`);
-const NETWORK = new RegExp(`${esc(TRP)}/schedule-network$`);
 
 /** The network with this initiative (INI-02) given `duration` (the rest as in the computed fixture). */
 const withOwnDuration = (duration: number | null) => ({
@@ -170,7 +169,9 @@ describe.each(["en", "ar"] as const)("schedule network panel (%s)", (locale) => 
     expect(post.body).toEqual({ durationWorkingDays: 12 });
     expect(post.headers["if-match"]).toBeUndefined();
     // The row was re-read: its current value and version are shown; the typed value is kept; nothing else was sent.
-    await waitFor(() => expect(dialog.querySelector("[data-current-duration='9'][data-schedule-version='1']")).toBeTruthy());
+    await waitFor(() =>
+      expect(dialog.querySelector("[data-current-duration='9'][data-schedule-version='1']")).toBeTruthy(),
+    );
     expect((dialog.querySelector("[data-field='durationWorkingDays']") as HTMLInputElement).value).toBe("12");
     expect(api.requests.some((r) => r.method === "PATCH")).toBe(false);
     fireEvent.click(within(dialog).getByRole("button", { name: t("common.action.save") }));
@@ -270,7 +271,9 @@ describe.each(["en", "ar"] as const)("schedule network panel (%s)", (locale) => 
         (req) => {
           if (req.method !== "GET" || !SCHEDULE.test(req.url)) return undefined;
           reads += 1;
-          return reads === 1 ? problem(500, "internal") : { status: 200, body: scheduleRow(6, 2), headers: { ETag: '"2"' } };
+          return reads === 1
+            ? problem(500, "internal")
+            : { status: 200, body: scheduleRow(6, 2), headers: { ETag: '"2"' } };
         },
       ],
       { network: withOwnDuration(6) },

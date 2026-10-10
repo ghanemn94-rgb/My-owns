@@ -120,8 +120,9 @@ describe.each(["en", "ar"] as const)("slice H, I, C, A, J, K problem keys (%s)",
 
   it("the guard would have caught row 186: an untranslated amendment code is reported", () => {
     // A catalogue without the row-186 key: the check reports exactly that code (the same check as below).
-    const without: TFunction = ((k: string, o?: object) =>
-      k === key("dashboard.value_class_not_applicable") ? "" : t(k, (o ?? {}) as Record<string, unknown>)) as TFunction;
+    const real = t as unknown as (k: string, o?: object) => string;
+    const without = ((k: string, o?: object) =>
+      k === key("dashboard.value_class_not_applicable") ? "" : real(k, o)) as unknown as TFunction;
     expect(untranslated(without, adrCodes())).toEqual(["dashboard.value_class_not_applicable"]);
     // The old classic-only scan could not report it.
     expect(untranslated(without, adrCodes(["classic"]))).toEqual([]);
@@ -137,7 +138,12 @@ describe.each(["en", "ar"] as const)("slice H, I, C, A, J, K problem keys (%s)",
       "| `x.audit` | audit action | accepted | Label. |",
       "| `x.message` | `forum` = `forum.name_en` | add `forumAr` |",
     ].join("\n");
-    expect([...refusalCodes(sample)].sort()).toEqual(["validation.x_field", "x.code_one", "x.code_three", "x.code_two"]);
+    expect([...refusalCodes(sample)].sort()).toEqual([
+      "validation.x_field",
+      "x.code_one",
+      "x.code_three",
+      "x.code_two",
+    ]);
   });
 
   it("every refusal code of the slice ADRs is translated (both table formats)", () => {
