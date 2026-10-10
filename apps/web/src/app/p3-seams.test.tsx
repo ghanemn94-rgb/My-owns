@@ -36,7 +36,7 @@ import {
 } from "../test/fixtures.tsx";
 import { METHODOLOGY, leadGrants } from "../test/p2fixtures.ts";
 import { NAV_AREAS } from "./nav.ts";
-import { routes } from "./router.tsx";
+import { routes, type LazyPage } from "./router.tsx";
 
 beforeEach(() => {
   localStorage.clear();
@@ -101,12 +101,15 @@ function renderWorkspace(path: string, locale: Locale) {
 }
 
 describe("P3 routes", () => {
-  it("each P3 path renders its page component from the fixed file and export", () => {
+  it("each P3 path renders its page component from the fixed file and export", async () => {
     const children = shellChildren();
     for (const [path, Page] of P3_ROUTES) {
       const r = children.find((c) => c.path === path);
       expect(r, path).toBeTruthy();
-      expect((r!.element as { type: unknown }).type, path).toBe(Page);
+      // T-DG4-FE-R2: the route element is the page's lazy wrapper (router.tsx lazyPage); awaiting its load() yields
+      // the page component itself, which must be the one of the fixed file and export.
+      const lazyType = (r!.element as unknown as { type: LazyPage<object> }).type;
+      expect(await lazyType.load(), path).toBe(Page);
     }
   });
 
