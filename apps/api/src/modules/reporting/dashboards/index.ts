@@ -4,7 +4,9 @@
 // one write is the RAG policy.
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../../platform/index.ts";
+import { registerAdoptionDashboardRoutes } from "./adoption.ts"; // KBE-G2
 import { registerDrilldownRoutes } from "./drilldown.ts";
+import { registerFinanceDashboardRoutes } from "./finance.ts"; // KBE-G2
 import { registerRagPolicyRoutes } from "./rag-policy.ts";
 import { registerTransformationDashboardRoutes } from "./transformation.ts";
 import { registerWorkstreamDashboardRoutes } from "./workstream.ts";
@@ -16,5 +18,7 @@ export function registerDashboardRoutes(app: FastifyInstance, deps: ModuleDeps):
     ...registerWorkstreamDashboardRoutes(app, deps),
     ...registerDrilldownRoutes(app, deps),
     ...registerRagPolicyRoutes(app, deps),
+    ...registerFinanceDashboardRoutes(app, deps),
+    ...registerAdoptionDashboardRoutes(app, deps),
   ];
 }

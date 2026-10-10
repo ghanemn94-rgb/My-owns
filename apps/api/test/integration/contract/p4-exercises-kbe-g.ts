@@ -12,10 +12,14 @@
 // nothing here reads or writes the engineering gates DG0-DG7.
 import { insertAuditEvent, sql, type Db } from "@mth/db";
 import {
+  adoptionDashboard,
   dashboardDrilldown,
   dashboardRagPolicy,
   executiveOverview,
+  financeDashboard,
+  myWork,
   transformationDashboard,
+  workspaceHeader,
   workstreamDashboard,
 } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
@@ -49,6 +53,11 @@ export const P4_MIRRORS_KBE_G: Readonly<Record<string, z.ZodType>> = {
   getDashboardDrilldown: dashboardDrilldown,
   getDashboardRagPolicy: dashboardRagPolicy,
   putDashboardRagPolicy: dashboardRagPolicy,
+  // KBE-G2 (T-DG4-KBE-G2; p4-work-split §J+K JK.5): the Finance and adoption dashboards, My Work and the header.
+  getFinanceDashboard: financeDashboard,
+  getAdoptionDashboard: adoptionDashboard,
+  getMyWork: myWork,
+  getWorkspaceHeader: workspaceHeader,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -674,4 +683,36 @@ export async function exerciseP4KbeGOperations(ctx: P4ExerciseContext): Promise<
     },
   );
   expect([bad.status, bad.body.code]).toEqual([422, "dashboard.metric_subject_mismatch"]);
+
+  // KBE-G2 (appended after KBE-G, p4-work-split JK.0/JK.5): the 4 operations of p4-pending-kbe-g2.ts.
+  await exerciseP4KbeG2Operations(ctx, k);
+}
+
+/** The KBE-G2 exercises: getFinanceDashboard, getAdoptionDashboard, getMyWork, getWorkspaceHeader. */
+async function exerciseP4KbeG2Operations(ctx: P4ExerciseContext, k: KpiWorld): Promise<void> {
+  const m = ctx.mirrored;
+  const { world: w } = ctx;
+  const q = `organizationId=${w.orgA.id}&transformationId=${k.transformationId}`;
+
+  // getFinanceDashboard (a scoped reader; 404 for an organization without a grant)
+  const fin = await m("GET", `/api/v1/dashboards/finance?${q}`, { session: k.s.fin });
+  expect([fin.status, fin.body.transformations.length], JSON.stringify(fin.body)).toEqual([200, 1]);
+  expect((await m("GET", `/api/v1/dashboards/finance?organizationId=${w.orgB.id}`, { session: k.s.fin })).status).toBe(
+    404,
+  );
+
+  // getAdoptionDashboard
+  const ad = await m("GET", `/api/v1/dashboards/adoption?${q}`, { session: k.s.auditor });
+  expect([ad.status, ad.body.area.code], JSON.stringify(ad.body)).toEqual([200, "people_adoption"]);
+
+  // getMyWork (overview, then one section)
+  const mw = await m("GET", "/api/v1/me/work", { session: k.s.tl });
+  expect([mw.status, mw.body.sections.length], JSON.stringify(mw.body)).toEqual([200, 6]);
+  const drafts = await m("GET", "/api/v1/me/work?section=drafts&limit=10", { session: k.s.tl });
+  expect([drafts.status, drafts.body.sections.map((x: Body) => x.section)]).toEqual([200, ["drafts"]]);
+
+  // getWorkspaceHeader (404 outside the scope)
+  const h = await m("GET", `${k.base}/summary`, { session: k.s.auditor });
+  expect([h.status, h.body.transformationId], JSON.stringify(h.body)).toEqual([200, k.transformationId]);
+  expect((await m("GET", `${k.base}/summary`, { session: k.s.outsider })).status).toBe(404);
 }
