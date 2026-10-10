@@ -1,5 +1,6 @@
 // P4 contract exercises of KBE-E (T-DG4-KBE-E; p4-work-split §B.3, §1 S-10): the 16 slice B operations of values,
-// measurements, the Finance queue and decisions, corrections and totals. Every call of these operations goes through
+// measurements, the Finance queue and decisions, corrections and totals; T-DG4-KBE-R3 adds getBenefitPlanValue (ADR-0030
+// amendment P1). Every call of these operations goes through
 // `ctx.mirrored` (OpenAPI status/body/headers + problem mirror) and every success body is parsed with the zod mirror in
 // P4_MIRRORS_KBE_E. Set-up records (benefits at Measure, formulas, evidence) come from the shared fixtures. All data is
 // synthetic; nothing here grants a real business or Finance approval or touches the engineering gates DG0-DG7.
@@ -31,6 +32,7 @@ export const P4_MIRRORS_KBE_E: Readonly<Record<string, z.ZodType>> = {
   decideBenefitBaseline: benefit,
   getBenefitValues: benefitValues,
   createBenefitPlanValue: benefitPlanValue,
+  getBenefitPlanValue: benefitPlanValue,
   updateBenefitPlanValue: benefitPlanValue,
   listBenefitMeasurements: benefitMeasurementPage,
   createBenefitMeasurement: benefitMeasurement,
@@ -91,10 +93,25 @@ export async function exerciseP4KbeEOperations(ctx: P4ExerciseContext): Promise<
   ).toBe(422);
   expect((await m("POST", P, { session: s.bo, body: { valueKind: "upside" } })).status).toBe(400);
   const PV = `${b.base}/benefit-plan-values/${pv.body.id}`;
+  // getBenefitPlanValue (ADR-0030 amendment P1; T-DG4-KBE-R3): the create's Location resolves to 200 with its ETag,
+  // AUD reads it; outside the scope, an unknown id and a benefit id are 404; a malformed id is 400.
+  expect(pv.headers.location).toBe(PV);
+  const pvr = await m("GET", PV, { session: s.auditor });
+  expect([pvr.status, pvr.headers.etag, pvr.body.version, pvr.body.valueKind]).toEqual([200, '"1"', 1, "planned"]);
+  expect((await m("GET", PV, { session: s.outsider })).status).toBe(404);
+  expect((await m("GET", `${b.base}/benefit-plan-values/${uuidv7()}`, { session: s.bo })).status).toBe(404);
+  expect((await m("GET", `${b.base}/benefit-plan-values/${ben.id}`, { session: s.bo })).status).toBe(404);
+  expect((await m("GET", `${b.base}/benefit-plan-values/not-a-uuid`, { session: s.bo })).status).toBe(400);
   expect((await m("PATCH", PV, { session: s.bo, body: { amount: "1" } })).status).toBe(428);
   expect((await m("PATCH", PV, { session: s.bo, headers: ifm(5), body: { amount: "1" } })).status).toBe(409);
-  const pvu = await m("PATCH", PV, { session: s.bo, headers: ifm(1), body: { amount: "310000" } });
+  const pvu = await m("PATCH", PV, {
+    session: s.bo,
+    headers: { "if-match": pvr.headers.etag as string },
+    body: { amount: "310000" },
+  });
   expect([pvu.status, pvu.body.amount]).toEqual([200, "310000.0000"]);
+  const pvr2 = await m("GET", PV, { session: s.bo });
+  expect([pvr2.status, pvr2.headers.etag, pvr2.body.amount]).toEqual([200, '"2"', "310000.0000"]);
   const vals = await m("GET", `${b.base}/benefits/${ben.id}/values`, { session: s.auditor });
   expect([vals.status, vals.body.series.length]).toEqual([200, 7]);
   expect((await m("GET", `${b.base}/benefits/${ben.id}/values`, { session: s.outsider })).status).toBe(404);

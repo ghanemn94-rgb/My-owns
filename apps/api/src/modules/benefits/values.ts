@@ -2,6 +2,8 @@
 // REQ-PB-075, REQ-PB-076, REQ-S08-010):
 //   GET   /transformations/{t}/benefits/{benefitId}/values            the seven value states kept apart (transformation.read)
 //   POST  /transformations/{t}/benefits/{benefitId}/plan-values       add a planned or forecast value (benefit.edit)
+//   GET   /transformations/{t}/benefit-plan-values/{planValueId}      read one with its version and ETag (transformation.read;
+//                                                                     ADR-0030 amendment P1; T-DG4-KBE-R3)
 //   PATCH /transformations/{t}/benefit-plan-values/{planValueId}      change one (benefit.edit; If-Match)
 //
 // - A value state is ONE of planned, forecast, measured, submitted, validated, sustained, rejected (the benefit_value_line
@@ -35,6 +37,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
+import { principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { iso, parse, parseBody, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
 import { bumpStamps, maybeIdempotent, sendCreated, type WriteContext } from "../transformations/index.ts";
@@ -429,6 +432,29 @@ async function createPlanValue(tx: Tx, ctx: WriteContext, benefitId: string, req
 
 const planValueParams = z.strictObject({ transformationId: z.uuid(), benefitPlanValueId: z.uuid() });
 
+/**
+ * getBenefitPlanValue (ADR-0030 amendment P1): one planned or forecast value with its version, the target of
+ * createBenefitPlanValue's Location and the source of updateBenefitPlanValue's If-Match. The read gate first (404
+ * outside scope, AUD included as a reader), then 404 when the id is not a benefit_plan_value row of that transformation.
+ * A read: no write, no audit event.
+ */
+export async function readPlanValue(
+  db: DbOrTx,
+  request: FastifyRequest,
+  transformationId: string,
+  planValueId: string,
+): Promise<BenefitPlanValueRow> {
+  await requireTransformationRead(db, principalOf(request), transformationId);
+  const row = await db
+    .selectFrom("benefit_plan_value")
+    .selectAll()
+    .where("id", "=", planValueId)
+    .where("transformation_id", "=", transformationId)
+    .executeTakeFirst();
+  if (!row) throw problems.notFound();
+  return row;
+}
+
 async function updatePlanValue(tx: Tx, request: FastifyRequest, transformationId: string, planValueId: string) {
   const ctx = await openBenefitWrite(tx, request, transformationId, BENEFIT_EDIT);
   const body = parseBody(benefitPlanValueUpdate, request.body);
@@ -506,6 +532,12 @@ export function registerBenefitValueRoutes(app: FastifyInstance, { db }: ModuleD
     return sendCreated(request, reply, result, `/api/v1/transformations/${transformationId}/benefit-plan-values`);
   });
 
+  app.get(BENEFIT_PLAN_VALUE_ITEM, { config: read }, async (request, reply) => {
+    const { transformationId, benefitPlanValueId } = parse(planValueParams, request.params, "params");
+    const row = await readPlanValue(db, request, transformationId, benefitPlanValueId);
+    return sendVersioned(reply, 200, toBenefitPlanValue(row));
+  });
+
   app.patch(BENEFIT_PLAN_VALUE_ITEM, { config: write }, async (request, reply) => {
     const { transformationId, benefitPlanValueId } = parse(planValueParams, request.params, "params");
     const body = await db
@@ -516,5 +548,5 @@ export function registerBenefitValueRoutes(app: FastifyInstance, { db }: ModuleD
     return sendVersioned(reply, 200, body);
   });
 
-  return [`GET ${VALUES}`, `POST ${PLAN}`, `PATCH ${BENEFIT_PLAN_VALUE_ITEM}`];
+  return [`GET ${VALUES}`, `POST ${PLAN}`, `GET ${BENEFIT_PLAN_VALUE_ITEM}`, `PATCH ${BENEFIT_PLAN_VALUE_ITEM}`];
 }

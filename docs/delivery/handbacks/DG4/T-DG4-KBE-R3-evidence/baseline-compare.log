@@ -1,0 +1,187 @@
+port-policy: PostgreSQL listening on port 25350 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1tviey_c5303e69 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/kpi-p4/formula-recalc.test.ts (1 test | 1 failed) 4212ms
+   × a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 item 4) > is Unknown until every input is accepted, then a + b of the accepted values, re-evaluated on each acceptance 1566ms
+     → expected { values: { a: '120', b: null }, …(1) } to deeply equal { formula: 'a + b', sources: { …(2) } }
+     → expected { values: { a: '120', b: '30' }, …(1) } to deeply equal { formula: 'a + b', …(2) }
+     → expected { values: { a: '125', b: '30' }, …(1) } to deeply equal { formula: 'a + b', …(2) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi-p4/formula-recalc.test.ts > a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 item 4) > is Unknown until every input is accepted, then a + b of the accepted values, re-evaluated on each acceptance
+AssertionError: expected { values: { a: '120', b: null }, …(1) } to deeply equal { formula: 'a + b', sources: { …(2) } }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "formula": "a + b",[22m
+[32m-   "sources": {[39m
+[32m-     "a": {[39m
+[32m-       "inputBasis": "period",[39m
+[32m-       "inputs": {[39m
+[32m-         "kpiActualId": "01a123d5-b971-7297-a46b-b755ccc2e6b3",[39m
+[32m-         "valueNo": 1,[39m
+[32m-       },[39m
+[32m-       "kpiDefinitionId": "01a123d5-b735-70c8-9233-bb5f2637aced",[39m
+[32m-       "kpiVersionId": "01a123d5-b79b-75d8-aab6-5aeb0559ad3b",[39m
+[32m-       "reportingPeriodId": "01a123d5-b6bf-760b-974a-f7fe2b45e46d",[39m
+[32m-       "scopeId": "01a123d5-b22e-7149-aff2-1b8f17743e1e",[39m
+[32m-       "scopeKind": "transformation",[39m
+[32m-       "value": "120",[39m
+[32m-       "valueSource": "entered",[39m
+[32m-       "valueStatus": "ok",[39m
+[32m-     },[39m
+[32m-     "b": {[39m
+[32m-       "inputBasis": "period",[39m
+[32m-       "inputs": {},[39m
+[32m-       "kpiDefinitionId": "01a123d5-b856-73ab-8eac-02c3866c2509",[39m
+[32m-       "kpiVersionId": "01a123d5-b878-7472-9868-cf88dfcd5e21",[39m
+[32m-       "reportingPeriodId": "01a123d5-b6bf-760b-974a-f7fe2b45e46d",[39m
+[32m-       "scopeId": "01a123d5-b22e-7149-aff2-1b8f17743e1e",[39m
+[32m-       "scopeKind": "transformation",[39m
+[32m-       "value": null,[39m
+[32m-       "valueSource": "none",[39m
+[32m-       "valueStatus": "unknown",[39m
+[32m-     },[39m
+[31m+   "values": {[39m
+[31m+     "a": "120",[39m
+[31m+     "b": null,[39m
+[2m    },[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/kpi-p4/formula-recalc.test.ts:116:29
+    114|     // Lineage with an Unknown input: b has no accepted value (valueSo…
+    115|     // a names A's accepted actual version.
+    116|     expect.soft(t1!.inputs).toEqual({
+       |                             ^
+    117|       formula: "a + b",
+    118|       sources: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi-p4/formula-recalc.test.ts > a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 item 4) > is Unknown until every input is accepted, then a + b of the accepted values, re-evaluated on each acceptance
+AssertionError: expected { values: { a: '120', b: '30' }, …(1) } to deeply equal { formula: 'a + b', …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "formula": "a + b",[22m
+[32m-   "sources": {[39m
+[32m-     "a": {[39m
+[32m-       "inputBasis": "period",[39m
+[32m-       "inputs": {[39m
+[32m-         "kpiActualId": "01a123d5-b971-7297-a46b-b755ccc2e6b3",[39m
+[32m-         "valueNo": 1,[39m
+[32m-       },[39m
+[32m-       "kpiDefinitionId": "01a123d5-b735-70c8-9233-bb5f2637aced",[39m
+[32m-       "kpiVersionId": "01a123d5-b79b-75d8-aab6-5aeb0559ad3b",[39m
+[32m-       "reportingPeriodId": "01a123d5-b6bf-760b-974a-f7fe2b45e46d",[39m
+[32m-       "scopeId": "01a123d5-b22e-7149-aff2-1b8f17743e1e",[39m
+[32m-       "scopeKind": "transformation",[39m
+[32m-       "value": "120",[39m
+[32m-       "valueSource": "entered",[39m
+[32m-       "valueStatus": "ok",[39m
+[32m-     },[39m
+[32m-     "b": {[39m
+[32m-       "inputBasis": "period",[39m
+[32m-       "inputs": {[39m
+[32m-         "kpiActualId": "01a123d5-bb36-754a-82b5-cf1903eea239",[39m
+[32m-         "valueNo": 1,[39m
+[32m-       },[39m
+[32m-       "kpiDefinitionId": "01a123d5-b856-73ab-8eac-02c3866c2509",[39m
+[32m-       "kpiVersionId": "01a123d5-b878-7472-9868-cf88dfcd5e21",[39m
+[32m-       "reportingPeriodId": "01a123d5-b6bf-760b-974a-f7fe2b45e46d",[39m
+[32m-       "scopeId": "01a123d5-b22e-7149-aff2-1b8f17743e1e",[39m
+[32m-       "scopeKind": "transformation",[39m
+[32m-       "value": "30",[39m
+[32m-       "valueSource": "entered",[39m
+[32m-       "valueStatus": "ok",[39m
+[32m-     },[39m
+[32m-   },[39m
+[2m    "values": {[22m
+[2m      "a": "120",[22m
+[2m      "b": "30",[22m
+[2m    },[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/kpi-p4/formula-recalc.test.ts:142:29
+    140|     // variable the source slot down to its ACCEPTED actual version: A…
+    141|     // bound only here) and B's actual value 1 (accepted now). T = a +…
+    142|     expect.soft(t2!.inputs).toEqual({
+       |                             ^
+    143|       formula: "a + b",
+    144|       values: { a: "120", b: "30" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi-p4/formula-recalc.test.ts > a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 item 4) > is Unknown until every input is accepted, then a + b of the accepted values, re-evaluated on each acceptance
+AssertionError: expected { values: { a: '125', b: '30' }, …(1) } to deeply equal { formula: 'a + b', …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "formula": "a + b",[22m
+[32m-   "sources": {[39m
+[32m-     "a": {[39m
+[32m-       "inputBasis": "period",[39m
+[32m-       "inputs": {[39m
+[32m-         "kpiActualId": "01a123d5-b971-7297-a46b-b755ccc2e6b3",[39m
+[32m-         "valueNo": 2,[39m
+[32m-       },[39m
+[32m-       "kpiDefinitionId": "01a123d5-b735-70c8-9233-bb5f2637aced",[39m
+[32m-       "kpiVersionId": "01a123d5-b79b-75d8-aab6-5aeb0559ad3b",[39m
+[32m-       "reportingPeriodId": "01a123d5-b6bf-760b-974a-f7fe2b45e46d",[39m
+[32m-       "scopeId": "01a123d5-b22e-7149-aff2-1b8f17743e1e",[39m
+[32m-       "scopeKind": "transformation",[39m
+[32m-       "value": "125",[39m
+[32m-       "valueSource": "entered",[39m
+[32m-       "valueStatus": "ok",[39m
+[32m-     },[39m
+[32m-     "b": {[39m
+[32m-       "inputBasis": "period",[39m
+[32m-       "inputs": {[39m
+[32m-         "kpiActualId": "01a123d5-bb36-754a-82b5-cf1903eea239",[39m
+[32m-         "valueNo": 1,[39m
+[32m-       },[39m
+[32m-       "kpiDefinitionId": "01a123d5-b856-73ab-8eac-02c3866c2509",[39m
+[32m-       "kpiVersionId": "01a123d5-b878-7472-9868-cf88dfcd5e21",[39m
+[32m-       "reportingPeriodId": "01a123d5-b6bf-760b-974a-f7fe2b45e46d",[39m
+[32m-       "scopeId": "01a123d5-b22e-7149-aff2-1b8f17743e1e",[39m
+[32m-       "scopeKind": "transformation",[39m
+[32m-       "value": "30",[39m
+[32m-       "valueSource": "entered",[39m
+[32m-       "valueStatus": "ok",[39m
+[32m-     },[39m
+[32m-   },[39m
+[2m    "values": {[22m
+[2m      "a": "125",[22m
+[2m      "b": "30",[22m
+[2m    },[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/kpi-p4/formula-recalc.test.ts:213:29
+    211|     expect(t3).toMatchObject({ value: "155.000000", value_status: "ok"…
+    212|     // A's accepted correction is value 2 of the same actual; B's acce…
+    213|     expect.soft(t3!.inputs).toEqual({
+       |                             ^
+    214|       formula: "a + b",
+    215|       values: { a: "125", b: "30" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  03:21:47
+   Duration  65.09s (transform 8.43s, setup 0ms, collect 57.36s, tests 4.21s, environment 0ms, prepare 92ms)
+
