@@ -123,6 +123,8 @@ const KPI_P4_KBE_C_OPERATIONS = [
   "createRagOverride",
   "revokeRagOverride",
 ];
+/** The ARCH-R1 repair operation of the kpi module (ADR-0027 amendment A1; routed by T-DG4-KBE-R2). */
+const KPI_P4_ARCH_R1_OPERATIONS = ["listTransformationReportingPeriods"];
 /**
  * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
  * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
@@ -216,7 +218,7 @@ describe("kpi module (P2)", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B and the P4 KBE-C operations, and reports them", async () => {
+  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B, the P4 KBE-C and the ARCH-R1 operations, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
@@ -228,11 +230,14 @@ describe("kpi module (P2)", () => {
         ...KPI_P3_BENEFIT_FORMULA_OPERATIONS,
         ...KPI_P4_KBE_B_OPERATIONS,
         ...KPI_P4_KBE_C_OPERATIONS,
+        ...KPI_P4_ARCH_R1_OPERATIONS,
       ].sort(),
     );
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
-    expect(registration.routes).toHaveLength(48 + KPI_P4_KBE_B_OPERATIONS.length + KPI_P4_KBE_C_OPERATIONS.length);
+    expect(registration.routes).toHaveLength(
+      48 + KPI_P4_KBE_B_OPERATIONS.length + KPI_P4_KBE_C_OPERATIONS.length + KPI_P4_ARCH_R1_OPERATIONS.length,
+    );
     expect(Object.isFrozen(registration)).toBe(true);
   });
 

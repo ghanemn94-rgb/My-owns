@@ -4,6 +4,9 @@
 //   GET  /organizations/{o}/reporting-periods/{p}                     (organization.read)
 //   POST /organizations/{o}/reporting-periods/{p}/open                scheduled -> open (If-Match; no body)
 //   POST /organizations/{o}/reporting-periods/{p}/close               open -> closed, final in P4 (If-Match; no body)
+//   GET  /transformations/{t}/reporting-periods                       the same list for the transformation's organization
+//                                                                     (transformation.read; ADR-0027 amendment A1,
+//                                                                     REQ-S07-017 "select period"; T-DG4-KBE-R2)
 //
 // - One row per organization, frequency and label (409 reporting_period.label_taken). Periods of one organization and
 //   frequency never overlap (422 reporting_period.overlap; checked here under the reportingPeriod lock class with the other period's label,
@@ -56,8 +59,10 @@ import { ruleProblem } from "./support.ts";
 
 const JSON_BODY = ["application/json"] as const;
 const ORG_BASE = "/api/v1/organizations/:organizationId/reporting-periods";
+const T_BASE = "/api/v1/transformations/:transformationId/reporting-periods";
 const ITEM = `${ORG_BASE}/:reportingPeriodId`;
 const READ = "organization.read" as const;
+const T_READ = "transformation.read" as const;
 const MANAGE = "reporting_period.manage" as const;
 
 export const REPORTING_PERIOD_AUDIT_FIELDS = [
@@ -75,6 +80,7 @@ export const REPORTING_PERIOD_AUDIT_FIELDS = [
 
 const orgParams = z.strictObject({ organizationId: z.uuid() });
 const itemParams = z.strictObject({ organizationId: z.uuid(), reportingPeriodId: z.uuid() });
+const transformationParams = z.strictObject({ transformationId: z.uuid() });
 const listQuery = z.strictObject({
   cursor: cursorSchema,
   limit: limitSchema,
@@ -284,6 +290,34 @@ async function stepPeriod(
   return updated;
 }
 
+// ------------------------------------------------------------------------------------------------ list
+
+/** One page of an organization's periods, latest first (period_start, id), with its filter-bound cursor. */
+async function listPeriods(
+  db: DbOrTx,
+  organizationId: string,
+  query: z.infer<typeof listQuery>,
+): Promise<{ items: ReportingPeriod[]; nextCursor: string | null }> {
+  const hash = filterHash({
+    list: "reporting-periods",
+    organizationId,
+    frequency: query.frequency ?? null,
+    status: query.status ?? null,
+  });
+  const after = decodeCursor(query.cursor, hash, 2);
+  let q = db.selectFrom("reporting_period").selectAll().where("organization_id", "=", organizationId);
+  if (query.frequency) q = q.where("frequency", "=", query.frequency);
+  if (query.status) q = q.where("status", "=", query.status);
+  if (after) q = q.where(sql<boolean>`(period_start, id) < (${String(after[0])}::date, ${String(after[1])}::uuid)`);
+  const rows = await q
+    .orderBy("period_start", "desc")
+    .orderBy("id", "desc")
+    .limit(query.limit + 1)
+    .execute();
+  const page = paginate(rows, query.limit, (r) => [r.period_start, r.id], hash);
+  return { items: page.items.map(toReportingPeriod), nextCursor: page.nextCursor };
+}
+
 // ------------------------------------------------------------------------------------------------ routes
 
 export function registerReportingPeriodRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
@@ -295,24 +329,20 @@ export function registerReportingPeriodRoutes(app: FastifyInstance, deps: Module
     const { organizationId } = parse(orgParams, request.params, "params");
     const query = parseQuery(listQuery, request.query);
     await readOrganization(db, request, organizationId);
-    const hash = filterHash({
-      list: "reporting-periods",
-      organizationId,
-      frequency: query.frequency ?? null,
-      status: query.status ?? null,
+    return listPeriods(db, organizationId, query);
+  });
+
+  // ADR-0027 amendment A1: the people who submit actuals hold transformation.read, not organization.read. The page is
+  // exactly listReportingPeriods' for the transformation's organization (same filters, order and cursor); an outsider,
+  // or an ADM-only caller without a transformation grant, gets 404 as on every transformation read.
+  app.get(T_BASE, { config: { access: { permission: T_READ } } }, async (request) => {
+    const { transformationId } = parse(transformationParams, request.params, "params");
+    const query = parseQuery(listQuery, request.query);
+    const target = await requireRead(db, principalOf(request), T_READ, {
+      type: "transformation",
+      id: transformationId,
     });
-    const after = decodeCursor(query.cursor, hash, 2);
-    let q = db.selectFrom("reporting_period").selectAll().where("organization_id", "=", organizationId);
-    if (query.frequency) q = q.where("frequency", "=", query.frequency);
-    if (query.status) q = q.where("status", "=", query.status);
-    if (after) q = q.where(sql<boolean>`(period_start, id) < (${String(after[0])}::date, ${String(after[1])}::uuid)`);
-    const rows = await q
-      .orderBy("period_start", "desc")
-      .orderBy("id", "desc")
-      .limit(query.limit + 1)
-      .execute();
-    const page = paginate(rows, query.limit, (r) => [r.period_start, r.id], hash);
-    return { items: page.items.map(toReportingPeriod), nextCursor: page.nextCursor };
+    return listPeriods(db, target.organizationId, query);
   });
 
   app.post(ORG_BASE, { config: write(true) }, async (request, reply) => {
@@ -352,5 +382,12 @@ export function registerReportingPeriodRoutes(app: FastifyInstance, deps: Module
     });
   }
 
-  return [`GET ${ORG_BASE}`, `POST ${ORG_BASE}`, `GET ${ITEM}`, `POST ${ITEM}/open`, `POST ${ITEM}/close`];
+  return [
+    `GET ${ORG_BASE}`,
+    `POST ${ORG_BASE}`,
+    `GET ${ITEM}`,
+    `POST ${ITEM}/open`,
+    `POST ${ITEM}/close`,
+    `GET ${T_BASE}`,
+  ];
 }
