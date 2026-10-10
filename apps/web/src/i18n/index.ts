@@ -73,6 +73,9 @@ import arAdoptionP4 from "./ar/adoptionP4.json" with { type: "json" };
 import enAdoptionP4 from "./en/adoptionP4.json" with { type: "json" };
 import arSustainP4 from "./ar/sustainP4.json" with { type: "json" };
 import enSustainP4 from "./en/sustainP4.json" with { type: "json" };
+// P4 slice J namespace (T-DG4-FE-G): dashboards, Executive Overview, workspace header, My Work sections.
+import arDashboards from "./ar/dashboards.json" with { type: "json" };
+import enDashboards from "./en/dashboards.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -120,6 +123,7 @@ export const catalogues = {
     governanceP4: arGovernanceP4,
     adoptionP4: arAdoptionP4,
     sustainP4: arSustainP4,
+    dashboards: arDashboards,
   },
   en: {
     common: enCommon,
@@ -158,6 +162,7 @@ export const catalogues = {
     governanceP4: enGovernanceP4,
     adoptionP4: enAdoptionP4,
     sustainP4: enSustainP4,
+    dashboards: enDashboards,
   },
 } as const;
 
