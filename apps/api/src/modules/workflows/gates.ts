@@ -913,6 +913,7 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
   }
   // 5a. T-DG4-BE-K2 (ADR-0035 §4 "Decision time"): approving a submission whose snapshot records an exception that has
   //     expired by today's business date is refused; rejecting, requesting changes or deferring stays allowed.
+  //     T-DG4-BE-R2 (ADR-0035 amendment A1): one that has been revoked is refused first (gate.exception_revoked).
   if (body.outcome === "approved") await assertRecordedExceptionsUnexpired(tx, pending.id, transformationId);
   const t = await writableTransformation(tx, transformationId);
   if (scope !== null) await assertScaleScopeValid(tx, t.organization_id, transformationId, scope);
@@ -1335,20 +1336,43 @@ async function enqueueGateEvent(
 }
 
 /**
+ * T-DG4-BE-R2 (ADR-0035 amendment A1): the decision-time refusal of a G-approval whose snapshot records an exception
+ * that has since been revoked. {date} is the revoke's business date in the transformation's timezone.
+ */
+export const gateExceptionRevoked = (label: string, date: string) =>
+  problems.businessRule(
+    "gate.exception_revoked",
+    `The exception for ${label} was revoked on ${date}; it no longer covers the missing evidence.`,
+  );
+
+/**
  * T-DG4-BE-K2 (ADR-0035 §4, §11): 422 gate.exception_expired when an exception recorded on a criterion of the
  * submission has expired by today's business date (transformation timezone); nothing is written. A submission
  * recorded without an exception (every DG2/DG3 submission) reads one empty list and is unaffected.
+ * T-DG4-BE-R2 (ADR-0035 amendment A1): before that, 422 gate.exception_revoked when a recorded exception has been
+ * revoked (status `revoked`, whatever the revoke date relative to the submission), so an exception that is both revoked
+ * and expired reports the revoke. The frozen submission and its snapshot are never changed.
  */
 async function assertRecordedExceptionsUnexpired(tx: Tx, submissionId: string, transformationId: string) {
   const recorded = await tx
     .selectFrom("gate_submission_criterion as s")
     .innerJoin("gate_exception as e", "e.id", "s.gate_exception_id")
     .innerJoin("gate_criterion_definition as d", "d.key", "s.criterion_key")
-    .select(["d.label_en", sql<string>`e.expires_on::text`.as("expires_on")])
+    .innerJoin("transformation as t", "t.id", "e.transformation_id")
+    .select([
+      "d.label_en",
+      "e.status",
+      sql<string>`e.expires_on::text`.as("expires_on"),
+      sql<string | null>`CASE WHEN e.revoked_at IS NULL THEN NULL
+        ELSE p4_business_date(e.revoked_at, t.timezone)::text END`.as("revoked_on"),
+    ])
     .where("s.gate_submission_id", "=", submissionId)
     .orderBy("s.ordinal")
     .execute();
   if (recorded.length === 0) return;
+  const revoked = recorded.find((r) => r.status === "revoked");
+  // gate_exception_revoked_complete: a revoked row always has revoked_at.
+  if (revoked) throw gateExceptionRevoked(revoked.label_en, revoked.revoked_on!);
   const today = await exceptionBusinessDate(tx, transformationId);
   const expired = recorded.find((r) => r.expires_on < today);
   if (expired) throw gateExceptionRefusals.expired(expired.label_en, expired.expires_on);
