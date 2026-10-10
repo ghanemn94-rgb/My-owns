@@ -40,6 +40,7 @@ import { QueryState } from "../../components/States.tsx";
 import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney } from "../../lib/format.ts";
 import { reasonText as kpiReasonText } from "../kpi/ui.tsx";
 import { useBusinessUnitTransformations, useDashboardPeriods, useDrilldown, type DashboardQuery } from "./api.ts";
+import { useReadableTransformations } from "../traceability/api.ts";
 
 /** The page namespace (its `problem.*` texts are read before `problems.*`). */
 export const NS = ["dashboards"] as const;
@@ -788,7 +789,15 @@ export interface FilterState {
   readonly bu: string;
   readonly phase: string;
   readonly status: string;
+  /**
+   * T-DG4-FE-G2 (REQ-S13-002, ADR-0037 §4): the repeatable transformation chip of the organization-wide dashboards
+   * (URL `?tr=<id>&tr=<id>`, at most 50). `set("tr", ids)` takes the ids joined by commas.
+   */
+  readonly tr: readonly string[];
 }
+
+/** ADR-0037 §4: `transformationId` is repeatable, at most 50. */
+export const MAX_TRANSFORMATION_FILTER = 50;
 
 export function useFilterState(): [FilterState, (key: keyof FilterState, value: string) => void, () => void] {
   const [params, setParams] = useSearchParams();
@@ -798,12 +807,16 @@ export function useFilterState(): [FilterState, (key: keyof FilterState, value: 
     bu: params.get("bu") ?? "",
     phase: params.get("phase") ?? "",
     status: params.get("status") ?? "",
+    tr: params.getAll("tr").slice(0, MAX_TRANSFORMATION_FILTER),
   };
   const set = (key: keyof FilterState, value: string) =>
     setParams(
       (p) => {
         const next = new URLSearchParams(p);
-        if (value) next.set(key, value);
+        if (key === "tr") {
+          next.delete("tr");
+          for (const id of value.split(",").filter(Boolean).slice(0, MAX_TRANSFORMATION_FILTER)) next.append("tr", id);
+        } else if (value) next.set(key, value);
         else next.delete(key);
         return next;
       },
@@ -832,11 +845,20 @@ export function useOrgQuery(state: FilterState): {
     ...(state.phase ? { phase: state.phase } : {}),
     ...(state.status ? { status: state.status } : {}),
   };
-  if (!state.bu) return { query: base, blocked: null, loading: false };
+  // T-DG4-FE-G2: the transformation chip narrows by its ids; with a business unit too, the two are intersected (an empty
+  // intersection sends no request, so it is never read as "all").
+  if (!state.bu)
+    return {
+      query: state.tr.length > 0 ? { ...base, transformationId: state.tr } : base,
+      blocked: null,
+      loading: false,
+    };
   if (bu.isPending) return { query: base, blocked: null, loading: true };
-  const ids = (bu.data?.items ?? []).map((x) => x.id);
+  const unitIds = (bu.data?.items ?? []).map((x) => x.id);
+  const ids = state.tr.length > 0 ? unitIds.filter((x) => state.tr.includes(x)) : unitIds;
   if (ids.length === 0) return { query: base, blocked: "none", loading: false };
-  if (ids.length > 50 || bu.data?.nextCursor) return { query: base, blocked: "too_many", loading: false };
+  if (ids.length > MAX_TRANSFORMATION_FILTER || (state.tr.length === 0 && bu.data?.nextCursor))
+    return { query: base, blocked: "too_many", loading: false };
   return { query: { ...base, transformationId: ids }, blocked: null, loading: false };
 }
 
@@ -879,8 +901,20 @@ export function FilterBar({
     : [{ id: me.user.id, label: `${me.user.displayName} · ${t("common.people.me")}` }, ...owners];
   const periodList = periods.data ?? [];
   const unitList = units.data ?? [];
+  // T-DG4-FE-G2: only transformations the caller may read are offered (DG1 listTransformations is scope-filtered).
+  const readable = useReadableTransformations(me.organization.id, orgWide);
+  const readableList = readable.data ?? [];
+  const trFull = state.tr.length >= MAX_TRANSFORMATION_FILTER;
 
-  const chips: { key: keyof FilterState; label: string }[] = [];
+  const chips: { key: keyof FilterState; label: string; id?: string }[] = [];
+  for (const trId of state.tr) {
+    const x = readableList.find((r) => r.id === trId);
+    chips.push({
+      key: "tr",
+      id: trId,
+      label: `${t("dashboards.filter.transformation")}: ${x ? `${x.code} · ${x.name}` : "…"}`,
+    });
+  }
   if (state.period) {
     const p = periodList.find((x) => x.id === state.period);
     chips.push({
@@ -942,6 +976,40 @@ export function FilterBar({
             <span className="small muted block">{t("dashboards.filter.periodsUnavailable")}</span>
           ) : null}
         </div>
+        {orgWide ? (
+          <div className="filters__select">
+            <label htmlFor={`${id}-tr`}>{t("dashboards.filter.transformation")}</label>
+            <select
+              id={`${id}-tr`}
+              data-filter="transformation"
+              value=""
+              disabled={readable.isError || trFull}
+              aria-describedby={`${id}-tr-hint`}
+              onChange={(e) => {
+                if (e.target.value) set("tr", [...state.tr, e.target.value].join(","));
+              }}
+            >
+              <option value="">{t("dashboards.filter.addTransformation")}</option>
+              {readableList
+                .filter((x) => !state.tr.includes(x.id))
+                .map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.code} · {x.name}
+                  </option>
+                ))}
+            </select>
+            <span id={`${id}-tr-hint`} className="small muted block">
+              {readable.isError
+                ? t("dashboards.filter.transformationsUnavailable")
+                : trFull
+                  ? t("dashboards.filter.transformationLimit", { max: MAX_TRANSFORMATION_FILTER })
+                  : t("dashboards.filter.transformationHint", {
+                      n: state.tr.length,
+                      max: MAX_TRANSFORMATION_FILTER,
+                    })}
+            </span>
+          </div>
+        ) : null}
         {orgWide ? (
           <div className="filters__select">
             <label htmlFor={`${id}-bu`}>{t("dashboards.filter.businessUnit")}</label>
@@ -1020,7 +1088,14 @@ export function FilterBar({
       {chips.length > 0 ? (
         <div className="chips" aria-label={t("common.filter.active")} role="group" data-chips={chips.length}>
           {chips.map((c) => (
-            <button key={c.key} type="button" className="filter-chip" data-chip={c.key} onClick={() => set(c.key, "")}>
+            <button
+              key={c.id ? `${c.key}-${c.id}` : c.key}
+              type="button"
+              className="filter-chip"
+              data-chip={c.key}
+              {...(c.id ? { "data-chip-id": c.id } : {})}
+              onClick={() => set(c.key, c.id ? state.tr.filter((x) => x !== c.id).join(",") : "")}
+            >
               {c.label} <Icon name="cross" />
               <span className="visually-hidden">{t("common.filter.remove")}</span>
             </button>
@@ -1029,6 +1104,12 @@ export function FilterBar({
             {t("dashboards.filter.clear")}
           </button>
         </div>
+      ) : null}
+      {orgWide ? (
+        <p className="small" data-filter-scope="organization">
+          <Icon name="info" />{" "}
+          {t("dashboards.filter.scope", { organization: localName(me.organization, locale) ?? me.organization.code })}
+        </p>
       ) : null}
       {applied ? (
         <p className="small" data-window-start={applied.windowStart ?? ""} data-asof={applied.asOf} role="note">
