@@ -10,6 +10,7 @@
 //  - S-6/S-11: every ADR-0033 §10 code is translated in both languages. S-7: AUD read-only; no DG0-DG7 label.
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { assessmentFormVersion, assessmentRecord } from "@mth/shared/schemas";
 import { createI18n } from "../../i18n/index.ts";
 import { TR_ID, mockApi, problem, renderApp, route } from "../../test/fixtures.tsx";
 import { decision } from "../../test/p2fixtures.ts";
@@ -300,6 +301,139 @@ describe.each(["en", "ar"] as const)("adoption screens (%s)", (locale) => {
       answers: { uses_queue: true },
     });
     expect(body).not.toHaveProperty("proficiencyResult");
+  });
+
+  it("record page: answers are labelled from the version answered (getAssessmentFormVersion), a key the version lacks shows 'Unknown question'", async () => {
+    const RECORD_ID = "01920000-0000-7000-b000-0000000000a1";
+    // The form moved on to version 2 (relabelled); the record was answered on version 1.
+    const v2 = form({
+      currentVersion: {
+        ...form().currentVersion,
+        versionNo: 2,
+        schema: {
+          questions: [
+            { ...form().currentVersion.schema.questions[0]!, label_en: "Relabelled v2", label_ar: "تسمية ٢" },
+          ],
+        },
+      },
+    });
+    const record = {
+      id: RECORD_ID,
+      transformationId: TR_ID,
+      formId: FORM_ID,
+      formVersionNo: 1,
+      invitationId: null,
+      stakeholderGroupId: GROUP_ID,
+      kind: "proficiency_observation",
+      respondentUserId: form().createdBy,
+      subjectUserId: null,
+      subjectLabel: "Synthetic agent 7",
+      observedOn: "2026-10-01",
+      answers: { uses_queue: true, dropped_key: "Synthetic text" },
+      proficiencyResult: "proficient",
+      status: "submitted",
+      reviewedAt: null,
+      reviewedBy: null,
+      reviewNote: null,
+      withdrawnAt: null,
+      withdrawnBy: null,
+      withdrawReason: null,
+      version: 1,
+      createdAt: form().createdAt,
+      createdBy: null,
+      updatedAt: form().createdAt,
+      updatedBy: null,
+    };
+    expect(assessmentRecord.safeParse(record).success).toBe(true);
+    expect(assessmentFormVersion.safeParse(form().currentVersion).success).toBe(true);
+    const { requests } = mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [
+          route("GET", new RegExp(`${esc(TRP)}/assessment-records/${RECORD_ID}$`), () => json(record)),
+          route("GET", new RegExp(`${esc(TRP)}/assessment-forms/${FORM_ID}$`), () => json(v2)),
+          route("GET", new RegExp(`${esc(TRP)}/assessment-forms/${FORM_ID}/versions/1$`), () =>
+            json(form().currentVersion),
+          ),
+          route("GET", new RegExp(`${esc(TRP)}/stakeholder-groups\\?`), () => page([group()])),
+        ],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/assessment-records/${RECORD_ID}`, { i18n: createI18n(locale) });
+    const answers = await waitFor(() => {
+      const el = document.querySelector("[data-answers][data-answers-version='1']");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(answers.querySelector("[data-question='uses_queue']")!.textContent).toBe(
+      locale === "en" ? "Uses the queue screen unaided" : "يستخدم شاشة الطابور دون مساعدة",
+    );
+    expect(answers.textContent).not.toContain(locale === "en" ? "Relabelled v2" : "تسمية ٢");
+    const dropped = answers.querySelector("[data-question='dropped_key']")!;
+    expect(dropped.textContent).toContain("dropped_key");
+    expect(dropped.querySelector("[data-unknown-question='dropped_key']")!.textContent).toContain(
+      t("adoptionP4.records.unknownQuestion"),
+    );
+    expect(answers.querySelector("[data-answer-value='dropped_key']")!.textContent).toBe("Synthetic text");
+    expect(requests.some((r) => r.url.endsWith(`/assessment-forms/${FORM_ID}/versions/1`))).toBe(true);
+  });
+
+  it("record page: a version that cannot be read says so; every answer keeps its key and 'Unknown question', never a blank", async () => {
+    const RECORD_ID = "01920000-0000-7000-b000-0000000000a2";
+    const record = {
+      id: RECORD_ID,
+      transformationId: TR_ID,
+      formId: FORM_ID,
+      formVersionNo: 7,
+      invitationId: null,
+      stakeholderGroupId: GROUP_ID,
+      kind: "feedback",
+      respondentUserId: form().createdBy,
+      subjectUserId: null,
+      subjectLabel: null,
+      observedOn: "2026-10-01",
+      answers: { uses_queue: true },
+      proficiencyResult: null,
+      status: "submitted",
+      reviewedAt: null,
+      reviewedBy: null,
+      reviewNote: null,
+      withdrawnAt: null,
+      withdrawnBy: null,
+      withdrawReason: null,
+      version: 1,
+      createdAt: form().createdAt,
+      createdBy: null,
+      updatedAt: form().createdAt,
+      updatedBy: null,
+    };
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [
+          route("GET", new RegExp(`${esc(TRP)}/assessment-records/${RECORD_ID}$`), () => json(record)),
+          route("GET", new RegExp(`${esc(TRP)}/assessment-forms/${FORM_ID}$`), () => json(form())),
+          route("GET", new RegExp(`${esc(TRP)}/assessment-forms/${FORM_ID}/versions/7$`), () =>
+            problem(404, "not_found"),
+          ),
+          route("GET", new RegExp(`${esc(TRP)}/stakeholder-groups\\?`), () => page([group()])),
+        ],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/assessment-records/${RECORD_ID}`, { i18n: createI18n(locale) });
+    const note = await waitFor(() => {
+      const el = document.querySelector("[data-state='form-version-error']");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(note.textContent).toContain(t("adoptionP4.records.versionUnreadable", { n: 7 }));
+    const q = document.querySelector("[data-question='uses_queue']")!;
+    expect(q.textContent).toContain("uses_queue");
+    expect(q.textContent).toContain(t("adoptionP4.records.unknownQuestion"));
+    // the current version (1) is never used to label an answer of version 7
+    expect(q.textContent).not.toContain(locale === "en" ? "Uses the queue screen unaided" : "يستخدم شاشة الطابور");
   });
 
   it("AUD sees the plan read-only (no write control)", async () => {

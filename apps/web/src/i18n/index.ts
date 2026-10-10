@@ -5,6 +5,7 @@
 import i18next, { type i18n as I18n } from "i18next";
 import { initReactI18next } from "react-i18next";
 import { DEFAULTS, LOCALES, type Locale } from "@mth/shared";
+import { formatBusinessDate } from "../lib/format.ts";
 import arAdmin from "./ar/admin.json" with { type: "json" };
 import arDecisions from "./ar/decisions.json" with { type: "json" };
 import arDefine from "./ar/define.json" with { type: "json" };
@@ -240,6 +241,13 @@ export function createI18n(locale: Locale = initialLocale()): I18n {
     interpolation: { escapeValue: false }, // React escapes
     returnNull: false,
     initAsync: false,
+  });
+  // ADR-0038 Q1 (T-DG4-FE-R3): "{{date, businessDate}}" formats a "YYYY-MM-DD" business date for the text's own
+  // language, as every other business date is shown (lib/format.ts; never shifted by a time-zone offset). A value that
+  // is not a business date is shown as it was sent.
+  instance.services.formatter?.add("businessDate", (value: unknown, lng: string | undefined) => {
+    const raw = typeof value === "string" ? value : String(value ?? "");
+    return formatBusinessDate(raw, isLocale(lng) ? lng : DEFAULTS.locale) ?? raw;
   });
   instance.on("languageChanged", (lng) => {
     if (isLocale(lng) && typeof document !== "undefined") applyDocumentLocale(lng);

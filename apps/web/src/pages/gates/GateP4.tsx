@@ -17,7 +17,7 @@ import { Link } from "react-router";
 import { GATE_CRITERION_RECOMMENDATIONS, gateScaleScope } from "@mth/shared/schemas";
 import { api, ApiError } from "../../api/client.ts";
 import { useP4Refresh } from "../../api/p4.ts";
-import { useP2Refresh, useBusinessUnits } from "../../api/queries.ts";
+import { useP2Refresh } from "../../api/queries.ts";
 import { useInitiatives } from "../../api/portfolio.ts";
 import type { GateView } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
@@ -30,6 +30,7 @@ import { Section, TextCell } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
+import { errorMessage } from "../../lib/problem.ts";
 import { pick } from "../../lib/methodology.ts";
 import { FormAlert, P4FormDialog, textOf, type P4FieldSpec } from "../my-work/p4ui.tsx";
 import {
@@ -37,10 +38,13 @@ import {
   modularLinksOf,
   snapshotExceptionsOf,
   useGateExceptions,
+  selectableUnits,
   useScaleScope,
+  useScaleScopeUnits,
   useSubmissionCriteria,
   type GateCriterionRow,
   type GateException,
+  type ScaleScopeBusinessUnit,
 } from "./p4api.ts";
 
 /** The page namespace (its `problem.*` texts are read before `problems.*`). */
@@ -820,26 +824,59 @@ export function SubmissionFrozenLines({ snapshot }: { snapshot: Record<string, u
 
 // ------------------------------------------------------------------------------------------------ G5 scale scope
 
+/** "CODE Name" of a scale-scope unit, the name in the locale (a `<select>` option is plain text). */
+export const scaleUnitLabel = (u: ScaleScopeBusinessUnit, locale: "en" | "ar") =>
+  `${u.code} ${pick(locale, u.nameEn, u.nameAr)}`;
+
+/** The state of a listScaleScopeBusinessUnits read, as ScaleUnitName needs it (a react-query result fits). */
+export interface ScaleUnitsRead {
+  readonly data: readonly ScaleScopeBusinessUnit[] | undefined;
+  readonly isPending: boolean;
+  readonly isError: boolean;
+}
+
+/**
+ * A unit named by a scope item or a transition (T-DG4-FE-R3): its code (LTR) and its name in the locale, and
+ * "Inactive" (label, not colour) when the unit is no longer active. Pending: "Loading"; a failed read: Unknown; a unit
+ * the read does not list: "not visible". Never a blank.
+ */
+export function ScaleUnitName({ id, units }: { id: string; units: ScaleUnitsRead }) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  // While the read is pending the name is "Loading", and a failed read is Unknown: neither claims the unit is hidden.
+  if (units.isPending) return <span data-scale-unit="loading">{t("common.state.loading")}</span>;
+  if (units.isError) return <span data-scale-unit="unknown">{t("common.value.unknown")}</span>;
+  const u = (units.data ?? []).find((x) => x.id === id);
+  if (!u) return <span data-scale-unit="not-visible">{t("gates.scale.unitNotVisible")}</span>;
+  return (
+    <span data-scale-unit={u.code} data-scale-unit-status={u.status}>
+      <bdi dir="ltr" className="code">
+        {u.code}
+      </bdi>{" "}
+      <bdi>{pick(locale, u.nameEn, u.nameAr)}</bdi>
+      {u.status === "active" ? null : (
+        <span className="small muted" data-scale-unit-inactive>
+          {" "}
+          ({t("gates.scale.unitInactive")})
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** The approved G5 scale scope: every item names one initiative and one business unit (never unrestricted). */
 export function ScaleScopeSection() {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const scope = useScaleScope(ws.tid);
   const initiatives = useInitiatives(ws.tid);
-  const units = useBusinessUnits(ws.tr.organizationId);
+  const units = useScaleScopeUnits(ws.tid);
   const { byId } = usePeople(ws.tid);
   const locale = useLocale();
   const iniName = (id: string) => {
     const i = (initiatives.data ?? []).find((x) => x.id === id);
     return i ? `${i.code} ${i.name}` : t("gates.scale.initiativeNotVisible");
   };
-  const unitName = (id: string) =>
-    ((u) =>
-      u
-        ? pick(locale, u.nameEn, u.nameAr)
-        : id === ws.tr.businessUnitId
-          ? t("gates.scale.ownUnit")
-          : t("gates.scale.unitNotVisible"))((units.data ?? []).find((u) => u.id === id));
   return (
     <Section id="scale-scope" title={t("gates.scale.title")} intro={t("gates.scale.intro")}>
       <QueryState query={scope}>
@@ -853,7 +890,8 @@ export function ScaleScopeSection() {
               <ul className="plain-list" data-scale-scope={s.items.length}>
                 {s.items.map((i) => (
                   <li key={i.id} data-scope-item={`${i.initiativeId}:${i.businessUnitId}`}>
-                    <Icon name="check" /> <bdi>{iniName(i.initiativeId)}</bdi> · {unitName(i.businessUnitId)}
+                    <Icon name="check" /> <bdi>{iniName(i.initiativeId)}</bdi> ·{" "}
+                    <ScaleUnitName id={i.businessUnitId} units={units} />
                     {i.note ? <span className="block small muted">{i.note}</span> : null}
                   </li>
                 ))}
@@ -934,16 +972,12 @@ export function ScaleScopeEditor({
   const { t } = useTranslation();
   const ws = useWorkspace();
   const initiatives = useInitiatives(ws.tid);
-  const units = useBusinessUnits(ws.tr.organizationId);
+  const units = useScaleScopeUnits(ws.tid);
   const { people } = usePeople(ws.tid);
   const locale = useLocale();
-  // The organization's units where the caller may read them; the transformation's own unit is always offered (an
-  // approver without business_unit.read still sees it), named when readable.
-  const own = ws.tr.businessUnitId;
-  const unitOptions = [
-    ...(units.data ?? []).map((u) => ({ id: u.id, label: pick(locale, u.nameEn, u.nameAr) })),
-    ...((units.data ?? []).some((u) => u.id === own) ? [] : [{ id: own, label: t("gates.scale.ownUnit") }]),
-  ];
+  // listScaleScopeBusinessUnits (ADR-0035 amendment R1): exactly the units the server accepts in a scope (active ones,
+  // `selectable: true`), read with transformation.read, so an approver without business_unit.read sees every one.
+  const unitOptions = selectableUnits(units.data).map((u) => ({ id: u.id, label: scaleUnitLabel(u, locale) }));
   const setItem = (n: number, k: keyof ScaleScopeDraft["items"][number], v: string) =>
     onChange({ ...draft, items: draft.items.map((i, j) => (j === n ? { ...i, [k]: v } : i)) });
   const setCond = (n: number, k: keyof ScaleScopeDraft["conditions"][number], v: string) =>
@@ -960,6 +994,12 @@ export function ScaleScopeEditor({
       <p id="scale-scope-hint" className="field__hint">
         {t("gates.scale.editorHint")}
       </p>
+      {units.isError ? (
+        // The unit list could not be read: say so (never an unexplained empty list) and why, translated.
+        <p className="banner banner--warning" role="note" data-scale-units-error="true">
+          <Icon name="alert" /> {t("gates.scale.unitsUnreadable")} {errorMessage(t, units.error)}
+        </p>
+      ) : null}
       {draft.items.map((item, n) => (
         <div key={`item-${n}`} className="scope-row" data-scope-row={n}>
           <label className="field">

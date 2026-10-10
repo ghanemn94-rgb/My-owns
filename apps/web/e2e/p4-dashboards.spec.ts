@@ -201,6 +201,64 @@ test("4. Finance and adoption dashboards: non-financial is n/a, never 0; the Peo
   await to.close();
 });
 
+// T-DG4-FE-R3 (ADR-0037 K1; KBE-R4): every Finance class line drills by its state's metric and `valueClass`; a net line
+// is "gross − implementation cost" with its two inputs, never a drillable total. The lines are the real organization's
+// (every earlier spec's SYNTHETIC benefits); when the database has none the step says so in an annotation.
+test("4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs", async ({
+  browser,
+}, info) => {
+  const lang = langOf(info);
+  const to = await asUser(browser, lang, "dev.office");
+  const page = to.page;
+  // The very response the screen renders (getFinanceDashboard, organization-wide).
+  const read = page.waitForResponse(
+    (r) => r.request().method() === "GET" && /\/api\/v1\/dashboards\/finance\?/.test(r.url()),
+  );
+  await go(page, "/dashboards/finance");
+  const res = await read;
+  expect(res.status()).toBe(200);
+  const fd = (await res.json()) as {
+    lines: { valueClass: string; state: string; currency: string; drilldownHref: string | null }[];
+  };
+  const classLines = fd.lines.filter((l) => l.valueClass !== "gross" && l.valueClass !== "net");
+  const netLines = fd.lines.filter((l) => l.valueClass === "net");
+  info.annotations.push({
+    type: "finance-lines",
+    description: `${classLines.length} class, ${fd.lines.length - classLines.length - netLines.length} gross, ${netLines.length} net`,
+  });
+  // The contract (KBE-R4): every class line has a drill-down with its value class; a net line has none.
+  for (const l of classLines) expect(l.drilldownHref, JSON.stringify(l)).toContain(`valueClass=${l.valueClass}`);
+  for (const l of netLines) expect(l.drilldownHref).toBeNull();
+  if (classLines.length === 0) {
+    await expect(page.locator("#finance-lines")).toContainText(tr(lang, "dashboards.finance.noLines"));
+  } else {
+    for (const l of classLines)
+      await expect(page.locator(`[data-drill-line='${l.valueClass}-${l.state}-${l.currency}']`)).toHaveCount(1);
+    const first = classLines[0]!;
+    const drillRead = page.waitForResponse(
+      (r) => r.request().method() === "GET" && r.url().includes("/api/v1/dashboard-drilldown?"),
+    );
+    await page.locator(`[data-drill-line='${first.valueClass}-${first.state}-${first.currency}']`).click();
+    const drillRes = await drillRead;
+    expect(drillRes.status()).toBe(200);
+    expect(new URL(drillRes.url()).searchParams.get("valueClass")).toBe(first.valueClass);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.locator("[data-drill-value]")).toBeVisible();
+    // The value-state rule (rows 187-193) is translated, never "Rule not listed in this release."
+    const rule = dialog.locator("[data-calculation]");
+    await expect(rule).toHaveAttribute("data-calculation", `dashboard.value.sum_${first.state}`);
+    await expect(rule).not.toContainText(tr(lang, "dashboards.rule.other"));
+    await shot(page, lang, "p4dash-07b-finance-class-drilldown");
+    await expectAccessible(page, lang, "p4dash-finance-class-drilldown");
+    await page.keyboard.press("Escape");
+  }
+  for (const l of netLines) {
+    const cell = page.locator(`[data-net-inputs='${l.state}-${l.currency}']`);
+    await expect(cell).toContainText(tr(lang, "dashboards.finance.netFormula"));
+  }
+  await to.close();
+});
+
 test("5. My Work: the six sections with totals and the upcoming deadlines; the personal dashboard", async ({
   browser,
 }, info) => {

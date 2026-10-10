@@ -19,7 +19,7 @@ import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { BLANK_CODE, Dialog, Field, REQUIRED_CODE, useFocusFirstInvalid } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
-import { errorMessage, fieldErrorMessage, pointerToField, problemKey } from "../../lib/problem.ts";
+import { apiProblemText, errorMessage, fieldErrorMessage, pointerToField } from "../../lib/problem.ts";
 
 // ------------------------------------------------------------------------------------------------ problems
 
@@ -34,7 +34,8 @@ export function p4ProblemMessage(t: TFunction, error: unknown, namespaces: reado
         const own = t(`${ns}.problem.${codeKey(code)}`, { defaultValue: "" });
         if (own) return own;
       }
-    if (t(problemKey(error.code), { defaultValue: "" })) return t(problemKey(error.code));
+    const shared = apiProblemText(t, error);
+    if (shared) return shared;
   }
   return errorMessage(t, error);
 }

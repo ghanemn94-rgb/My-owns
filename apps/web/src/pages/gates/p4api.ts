@@ -5,7 +5,13 @@
 // SYNTHETIC data only in tests and demos. Every gate decision is a business approval inside the product (G1-G6), never
 // an engineering delivery gate (DG0-DG7).
 import { useQuery } from "@tanstack/react-query";
-import type { GateCriterionReview, GateCriterionRowList, GateException, ScaleScope } from "@mth/shared/schemas";
+import type {
+  GateCriterionReview,
+  GateCriterionRowList,
+  GateException,
+  ScaleScope,
+  ScaleScopeBusinessUnit,
+} from "@mth/shared/schemas";
 import { api } from "../../api/client.ts";
 import { p4Keys } from "../../api/p4.ts";
 import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
@@ -16,6 +22,7 @@ export type {
   GateCriterionRowList,
   GateException,
   ScaleScope,
+  ScaleScopeBusinessUnit,
 } from "@mth/shared/schemas";
 
 const tBase = (tid: string) => `/api/v1/transformations/${tid}`;
@@ -31,6 +38,7 @@ export const gateP4Paths = {
   exceptionWithdraw: (tid: string, id: string) => `${tBase(tid)}/gate-exceptions/${id}/withdraw`, // withdrawGateException
   exceptionRevoke: (tid: string, id: string) => `${tBase(tid)}/gate-exceptions/${id}/revoke`, // revokeGateException
   scaleScope: (tid: string) => `${tBase(tid)}/scale-scope`, // getScaleScope
+  scaleScopeUnits: (tid: string) => `${tBase(tid)}/scale-scope/business-units`, // listScaleScopeBusinessUnits
 } as const;
 
 const opts = { retry: shouldRetry, staleTime: 10_000 } as const;
@@ -74,6 +82,25 @@ export function useScaleScope(tid: string, enabled = true) {
     ...opts,
   });
 }
+
+/**
+ * The business units a G5 scale scope of this transformation may name (listScaleScopeBusinessUnits; ARCH-R3, ADR-0035
+ * amendment R1; T-DG4-FE-R3): every active unit of its organization (`selectable: true`), plus any unit an approved
+ * scope item or a scale transition names, whatever its status. Read with `transformation.read`, so a Sponsor without
+ * `business_unit.read` sees the same units the server accepts. Ordered by code then id by the server.
+ */
+export function useScaleScopeUnits(tid: string, enabled = true) {
+  return useQuery({
+    queryKey: p4Keys.area("gate-exceptions", tid, "scale-scope-units"),
+    queryFn: () => fetchAllPages<ScaleScopeBusinessUnit>(gateP4Paths.scaleScopeUnits(tid)),
+    enabled: Boolean(tid && enabled),
+    ...opts,
+  });
+}
+
+/** The units a NEW scope item or transition may name: `selectable: true` only (an inactive unit is never offered). */
+export const selectableUnits = (units: readonly ScaleScopeBusinessUnit[] | undefined) =>
+  (units ?? []).filter((u) => u.selectable);
 
 /** The G3 snapshot member that records the Modular-links waiver a submission relied on (ADR-0038 amendment B1). */
 export interface ModularLinksSnapshot {

@@ -10,6 +10,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   initiativeExecution,
+  initiativeSchedule,
   scheduleNetwork,
   type BudgetLine,
   type ExecutionAmount,
@@ -19,7 +20,7 @@ import {
   type ScheduleNetwork,
   type WorkingDaySlip,
 } from "@mth/shared/schemas";
-import { api } from "../../api/client.ts";
+import { ApiError, api, apiRequest } from "../../api/client.ts";
 import { p4Keys } from "../../api/p4.ts";
 import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
 
@@ -45,7 +46,7 @@ export const executionPaths = {
   budgetLineArchive: (id: string) => `${v1}/budget-lines/${id}/archive`, // archiveBudgetLine
   execution: (initiativeId: string) => `${v1}/initiatives/${initiativeId}/execution`, // getInitiativeExecution
   scheduleNetwork: (tid: string) => `${v1}/transformations/${tid}/schedule-network`, // getScheduleNetwork
-  schedule: (initiativeId: string) => `${v1}/initiatives/${initiativeId}/schedule`, // createInitiativeSchedule / updateInitiativeSchedule
+  schedule: (initiativeId: string) => `${v1}/initiatives/${initiativeId}/schedule`, // getInitiativeSchedule / createInitiativeSchedule / updateInitiativeSchedule
 } as const;
 
 const opts = { retry: shouldRetry, staleTime: 15_000 } as const;
@@ -85,6 +86,29 @@ export function useScheduleNetwork(tid: string) {
     enabled: Boolean(tid),
     ...opts,
   });
+}
+
+/** The initiative's recorded schedule row and the version to send as `If-Match` (its `ETag`). */
+export interface ScheduleRecord {
+  readonly schedule: InitiativeSchedule;
+  readonly version: number;
+}
+
+/**
+ * getInitiativeSchedule (ARCH-R3; ADR-0031 amendment S1): 200 → the row and its `ETag` version (the `If-Match` of
+ * updateInitiativeSchedule); 404 → null, "no planned duration recorded", so the panel offers createInitiativeSchedule.
+ * Any other failure is thrown. A 200 whose `durationWorkingDays` is null is a recorded row (never "none").
+ */
+export async function readInitiativeSchedule(initiativeId: string): Promise<ScheduleRecord | null> {
+  try {
+    const res = await apiRequest<unknown>(executionPaths.schedule(initiativeId));
+    const schedule = initiativeSchedule.parse(res.data);
+    const tag = /^(?:W\/)?"(\d+)"$/.exec(res.etag ?? "");
+    return { schedule, version: tag ? Number(tag[1]) : schedule.version };
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
 }
 
 /** A request amount as the API accepts it: ≥ 0, at most 16 integer and 4 fraction digits (ADR-0031 §7). */

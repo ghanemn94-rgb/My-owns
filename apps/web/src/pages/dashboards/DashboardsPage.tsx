@@ -10,7 +10,12 @@
 // Every figure is computed by the server on each request; this page never adds states or currencies together.
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useLocation, useParams } from "react-router";
-import { T10_AREA_CODES, type FinanceValueLine, type AdoptionIndicatorRow } from "@mth/shared/schemas";
+import {
+  T10_AREA_CODES,
+  type AdoptionIndicatorRow,
+  type DashboardHeadline,
+  type FinanceValueLine,
+} from "@mth/shared/schemas";
 import { useTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { Icon } from "../../components/Icon.tsx";
@@ -185,7 +190,11 @@ export function FinanceDashboardPage() {
   const query = useFinanceDashboard(org.query, !org.loading && org.blocked === null);
   const [drill, openDrill, closeDrill] = useDrill();
 
-  const lineColumns = (derived: boolean): RegisterColumn<FinanceValueLine>[] => [
+  const className = (c: string) => t(`dashboards.valueClass.${c}`, { defaultValue: c.replace(/_/g, " ") });
+  const lineColumns = (
+    derived: boolean,
+    ctx: { lines: readonly FinanceValueLine[]; investment: readonly DashboardHeadline[] },
+  ): RegisterColumn<FinanceValueLine>[] => [
     {
       id: "class",
       header: derived ? t("dashboards.finance.measure") : t("dashboards.finance.valueClass"),
@@ -218,28 +227,75 @@ export function FinanceDashboardPage() {
       id: "drill",
       header: t("dashboards.drill.column"),
       hideable: false,
-      cell: (l) =>
-        l.drilldownHref ? (
+      cell: (l) => {
+        const what = `${className(l.valueClass)} · ${t(`dashboards.lineState.${l.state}`)} · ${l.currency}`;
+        // ADR-0037 amendment K1 item 5: a net line is a derived difference, never a drillable total. It shows
+        // "gross − implementation cost" with the drill-downs of its two inputs: the gross line of the same state and
+        // currency, and the value.investment drill-down (the implementation-cost headline of the same currency).
+        if (l.valueClass === "net") {
+          const gross = ctx.lines.find(
+            (g) => g.valueClass === "gross" && g.state === l.state && g.currency === l.currency && g.drilldownHref,
+          );
+          const cost = ctx.investment.find((h) => h.value.currency === l.currency && h.drilldownHref);
+          return (
+            <span className="small" data-net-inputs={`${l.state}-${l.currency}`}>
+              {t("dashboards.finance.netFormula")}{" "}
+              {gross ? (
+                <button
+                  type="button"
+                  className="button button--link button--small"
+                  data-net-input="gross"
+                  onClick={() =>
+                    openDrill(
+                      { drilldownHref: gross.drilldownHref! },
+                      `${className("gross")} · ${t(`dashboards.lineState.${l.state}`)} · ${l.currency}`,
+                    )
+                  }
+                >
+                  {t("dashboards.finance.netGross")}
+                  <span className="visually-hidden">: {what}</span>
+                </button>
+              ) : (
+                <span className="muted" data-net-input-missing="gross">
+                  {t("dashboards.finance.netGross")} ({t("dashboards.finance.noDrill")})
+                </span>
+              )}
+              {" · "}
+              {cost ? (
+                <button
+                  type="button"
+                  className="button button--link button--small"
+                  data-net-input="investment"
+                  onClick={() => openDrill(cost, `${t("dashboards.finance.implementationCost")} · ${l.currency}`)}
+                >
+                  {t("dashboards.finance.implementationCost")}
+                  <span className="visually-hidden">: {what}</span>
+                </button>
+              ) : (
+                <span className="muted" data-net-input-missing="investment">
+                  {t("dashboards.finance.implementationCost")} ({t("dashboards.finance.noDrill")})
+                </span>
+              )}
+            </span>
+          );
+        }
+        // Every class line and every gross line drills (K1 item 5): its state's metric, with `valueClass` for a class.
+        return l.drilldownHref ? (
           <button
             type="button"
             className="button button--link button--small"
             data-drill-line={`${l.valueClass}-${l.state}-${l.currency}`}
-            onClick={() =>
-              openDrill(
-                { drilldownHref: l.drilldownHref! },
-                `${t(`dashboards.valueClass.${l.valueClass}`, { defaultValue: l.valueClass })} · ${t(`dashboards.lineState.${l.state}`)} · ${l.currency}`,
-              )
-            }
+            onClick={() => openDrill({ drilldownHref: l.drilldownHref! }, what)}
           >
             {t("dashboards.drill.open")}
             <span className="visually-hidden">
-              : {t(`dashboards.valueClass.${l.valueClass}`, { defaultValue: l.valueClass })}{" "}
-              {t(`dashboards.lineState.${l.state}`)} {l.currency}
+              : {className(l.valueClass)} {t(`dashboards.lineState.${l.state}`)} {l.currency}
             </span>
           </button>
         ) : (
           <span className="small muted">{t("dashboards.finance.noDrill")}</span>
-        ),
+        );
+      },
     },
   ];
 
@@ -315,7 +371,7 @@ export function FinanceDashboardPage() {
                     id="dashboard-finance-lines"
                     caption={t("dashboards.finance.perClass")}
                     rows={perClass}
-                    columns={lineColumns(false)}
+                    columns={lineColumns(false, { lines: d.lines, investment })}
                     getRowId={(l) => `${l.valueClass}-${l.state}-${l.currency}`}
                     emptyTitle={t("dashboards.finance.noLines")}
                     emptyBody={t("dashboards.finance.noLinesBody")}
@@ -342,7 +398,7 @@ export function FinanceDashboardPage() {
                     id="dashboard-finance-net"
                     caption={t("dashboards.finance.grossNet")}
                     rows={derived}
-                    columns={lineColumns(true)}
+                    columns={lineColumns(true, { lines: d.lines, investment })}
                     getRowId={(l) => `${l.valueClass}-${l.state}-${l.currency}`}
                     emptyTitle={t("dashboards.finance.noNet")}
                     emptyBody={t("dashboards.finance.noNetBody")}
