@@ -7,12 +7,14 @@
 //    an item outside the organization -> 422 at /scaleScope/items/0; nothing written;
 //  - G6 without an accepted BAU handover -> 422 listing "Ownership transfer"; with every fact present G6 is submitted
 //    with a `g6` snapshot member that does not change when a record is edited afterwards; its approval changes no phase,
-//    closes nothing, and writes no file under docs/delivery/ (directory listing and hashes before/after);
+//    closes nothing, and writes none of the engineering delivery records a G6 approval could be confused with
+//    (docs/delivery/gates/**, stages.json, findings.json, reviews/**, decisions.md, requirements.csv; directory listing
+//    and hashes before/after; T-DG4-BE-R3 narrowed it from all of docs/delivery/, see DELIVERY_RECORDS);
 //  - G1-G4 keep the DG2 key form of the 422 detail; AUD 403 on every write; an ADM-only caller 403 on the decision.
 // G1-G4 (and G5 for G6) are staged approved with audited fixtures. All data is SYNTHETIC; every decision here is a demo
 // business decision by a test person that approves nothing real, and nothing touches the engineering gates DG0-DG7.
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -290,17 +292,33 @@ describe("G1-G4 refusals keep the DG2 key form (ADR-0035 §2: the label form is 
 // ------------------------------------------------------------------------------------------------ G6
 
 const DELIVERY = fileURLToPath(new URL("../../../../../docs/delivery", import.meta.url));
-/** Every file under docs/delivery/ with its SHA-256 (the engineering delivery records). */
+/**
+ * T-DG4-BE-R3 (ARCH-R2 handback): the engineering delivery records a product G6 approval could be confused with - the
+ * DG gate records, the stage state, the findings, the reviews, the decisions and the requirement register. The
+ * assertion's intent is unchanged (product G6 never implies DG7, M0412). `runs/**` (live agent transcripts that the
+ * agent runner appends to while concurrent agents work), handbacks, assignments, test evidence and progress notes are
+ * excluded: they are not gate state, and a concurrent agent's transcript made the whole-tree check fail by interference.
+ */
+const DELIVERY_RECORDS = [
+  "gates",
+  "stages.json",
+  "findings.json",
+  "reviews",
+  "decisions.md",
+  "requirements.csv",
+] as const;
+/** Every file of DELIVERY_RECORDS with its SHA-256 (a missing path is listed as missing, never skipped). */
 function deliveryTree(): string[] {
   const out: string[] = [];
-  const walk = (dir: string) => {
-    for (const name of readdirSync(dir).sort()) {
-      const p = join(dir, name);
-      if (statSync(p).isDirectory()) walk(p);
-      else out.push(`${relative(DELIVERY, p)} ${createHash("sha256").update(readFileSync(p)).digest("hex")}`);
-    }
+  const add = (p: string) => {
+    if (statSync(p).isDirectory()) for (const name of readdirSync(p).sort()) add(join(p, name));
+    else out.push(`${relative(DELIVERY, p)} ${createHash("sha256").update(readFileSync(p)).digest("hex")}`);
   };
-  walk(DELIVERY);
+  for (const entry of DELIVERY_RECORDS) {
+    const p = join(DELIVERY, entry);
+    if (existsSync(p)) add(p);
+    else out.push(`${entry} missing`);
+  }
   return out;
 }
 
@@ -316,7 +334,7 @@ describe("G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002)", () => {
     expect(await submissionsOf(g, "G6")).toBe(0);
   });
 
-  it("with every fact: 201 with a frozen g6 snapshot; an edit afterwards leaves it unchanged; the SP approval changes no phase, closes nothing and writes nothing under docs/delivery/", async () => {
+  it("with every fact: 201 with a frozen g6 snapshot; an edit afterwards leaves it unchanged; the SP approval changes no phase, closes nothing and writes no DG delivery record", async () => {
     const g = await seedGateWorld(api, w);
     await stageGates(api, g, ["G1", "G2", "G3", "G4", "G5"], "realize");
     const { area, handover } = await areaInBau(api, g.s);
@@ -376,6 +394,13 @@ describe("G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002)", () => {
       .where("id", "=", g.b.transformationId)
       .executeTakeFirstOrThrow();
     const treeBefore = deliveryTree();
+    // The covered set is real: the stage state, the findings and the DG3 gate record are among the hashed files.
+    for (const required of ["stages.json ", "findings.json ", "gates/DG3.json ", "decisions.md ", "requirements.csv "])
+      expect(
+        treeBefore.some((l) => l.startsWith(required)),
+        required,
+      ).toBe(true);
+    expect(treeBefore.some((l) => l.startsWith("runs/"))).toBe(false);
     const decided = await send("POST", `${g.gates}/G6/decision`, {
       session: g.sp.session,
       body: { submissionNo: submitted.body.submissionNo, outcome: "approved", rationale: RATIONALE },
@@ -395,7 +420,7 @@ describe("G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002)", () => {
         .where("transformation_id", "=", g.b.transformationId)
         .execute(),
     ).toEqual([]);
-    // Product G6 approval changes no engineering DG record (M0412): docs/delivery/ is byte-identical.
+    // Product G6 approval changes no engineering DG record (M0412): the delivery records are byte-identical.
     expect(deliveryTree()).toEqual(treeBefore);
     const event = await api.db
       .selectFrom("outbox_event")

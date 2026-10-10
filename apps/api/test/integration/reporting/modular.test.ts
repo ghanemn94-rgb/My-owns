@@ -385,15 +385,37 @@ describe("S-4: authorization, If-Match and audit on every write", () => {
       expect(res.status).toBe(403);
     }
     expect((await inheritedRows(mw))[0]).toMatchObject({ status: "active", version: 1 });
-    // Another organization's TO cannot reach it: the commit-time read gate refuses (403, the atCommit pattern of
-    // access/request.ts commitTimeDenial), and nothing is written.
+    expect((await inheritedRows(mw))[0]).toMatchObject({ status: "active", version: 1 });
+  });
+
+  it("T-DG4-BE-R3 (JK.10 item 3): another organization's TO gets 404 on create and withdraw, as on reads; nothing written", async () => {
+    const mw = await seedModularWorld(api, w);
+    const evidenceId = await addEvidence(send, mw, false);
+    const R = `${mw.base}/inherited-records`;
+    const ok = await send("POST", R, {
+      session: mw.s.tl,
+      body: { kind: "evidence", evidenceId: await addEvidence(send, mw, false), sourceDescription: "Synthetic" },
+    });
+    expect(ok.status).toBe(201);
+    const auditBefore = await auditOf(api.db, ok.body.id);
+    // The outsider never could read the transformation: 404, never a 403 that discloses it (the workstream rule).
+    const create = await send("POST", R, {
+      session: mw.s.outsider,
+      body: { kind: "evidence", evidenceId, sourceDescription: "Synthetic: outsider" },
+    });
+    expect([create.status, create.body.code]).toEqual([404, "not_found"]);
     const out = await send("POST", `${R}/${ok.body.id}/withdraw`, {
       session: mw.s.outsider,
       headers: ifm(1),
       body: { reason: "Synthetic" },
     });
-    expect(out.status).toBe(403);
-    expect((await inheritedRows(mw))[0]).toMatchObject({ status: "active", version: 1 });
+    expect([out.status, out.body.code]).toEqual([404, "not_found"]);
+    // The same caller's read answers are 404 too, so writes and reads disclose nothing differently.
+    expect((await send("GET", `${R}/${ok.body.id}`, { session: mw.s.outsider })).status).toBe(404);
+    expect((await send("GET", R, { session: mw.s.outsider })).status).toBe(404);
+    const rows = await inheritedRows(mw);
+    expect(rows.map((r) => [r.id, r.status, r.version])).toEqual([[ok.body.id, "active", 1]]);
+    expect(await auditOf(api.db, ok.body.id)).toEqual(auditBefore);
   });
 
   it("withdraw: 428 without If-Match, 409 stale, 404 unknown id, 422 when already withdrawn", async () => {
@@ -452,6 +474,46 @@ describe("S-4: authorization, If-Match and audit on every write", () => {
       ["inherited_record.create", null, 1, null],
       ["inherited_record.withdraw", 1, 2, "Synthetic: withdrawn"],
     ]);
+  });
+
+  it("T-DG4-BE-R3 (D-107): the real server built by the harness registers getInheritedRecord with no hand wiring", () => {
+    const route = api.routes.find(
+      (r) =>
+        r.method === "GET" &&
+        r.url === "/api/v1/transformations/:transformationId/inherited-records/:inheritedRecordId",
+    );
+    expect(route?.access).toEqual({ permission: "transformation.read" });
+  });
+
+  it("T-DG4-BE-R3 getInheritedRecord: 200 + ETag active or withdrawn; 404 for a prior_approval id, unknown id, outsider", async () => {
+    const mw = await seedModularWorld(api, w);
+    const R = `${mw.base}/inherited-records`;
+    const dispensationId = await addInheritedApproval(send, mw, await addEvidence(send, mw));
+    const created = await send("POST", R, {
+      session: mw.s.tl,
+      body: { kind: "baseline", baselineId: await addBaseline(send, mw), sourceDescription: "Synthetic" },
+    });
+    expect(created.status).toBe(201);
+    const location = String(created.headers["location"]);
+    expect(location).toBe(`${R}/${created.body.id}`);
+    for (const session of [mw.s.auditor, mw.s.tl, mw.s.bo]) {
+      const one = await send("GET", location, { session });
+      expect([one.status, one.headers["etag"], one.body]).toEqual([200, '"1"', created.body]);
+    }
+    const wd = await send("POST", `${location}/withdraw`, {
+      session: mw.s.tl,
+      headers: ifm(1),
+      body: { reason: "Synthetic: superseded" },
+    });
+    expect(wd.status).toBe(200);
+    const after = await send("GET", location, { session: mw.s.auditor });
+    expect([after.status, after.headers["etag"], after.body]).toEqual([200, '"2"', wd.body]);
+    // A prior_approval entry is a gate_dispensation, read through listGateDispensations: 404 here.
+    expect((await send("GET", `${R}/${dispensationId}`, { session: mw.s.tl })).status).toBe(404);
+    expect((await send("GET", `${R}/${mw.outcomeId}`, { session: mw.s.tl })).status).toBe(404);
+    expect((await send("GET", `${R}/not-a-uuid`, { session: mw.s.tl })).status).toBe(400);
+    expect((await send("GET", location, { session: mw.s.outsider })).status).toBe(404);
+    expect((await send("GET", location, {})).status).toBe(401);
   });
 
   it("commit-time: a grant revoked while the create waited is 403; nothing written", async () => {

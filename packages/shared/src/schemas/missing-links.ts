@@ -70,6 +70,15 @@ export function modularBlockingError(code: string): { pointer: string; code: str
 /** ADR-0038 §12 (D-106 (e)): the exact English detail of the Modular G3 precondition refusal. */
 export const MODULAR_LINKS_MISSING_DETAIL =
   "Modular entry: supply the missing baseline and outcome links, or record an authorized waiver, before submitting this gate.";
+/**
+ * ADR-0038 amendment B1/B4 (T-DG4-BE-R3): the exact English details of the approval-time refusals of a G3 submission
+ * whose snapshot records the Modular-links waiver it relied on. `date` is a business date `YYYY-MM-DD`.
+ */
+export const modularWaiverRevokedDetail = (date: string) =>
+  `The waiver of the missing baseline and outcome links was revoked on ${date}; supply them or record a new waiver, then resubmit G3.`;
+export const modularWaiverExpiredDetail = (date: string) =>
+  `The waiver of the missing baseline and outcome links expired on ${date}; supply them or record a new waiver, then resubmit G3.`;
+
 /** D-106 (e): the precondition applies to this gate of a Modular transformation only. */
 export const MODULAR_PRECONDITION_GATE = "G3";
 

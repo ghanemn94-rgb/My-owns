@@ -55,7 +55,10 @@ export const taskRefusals = {
     }),
   closed: () => problems.businessRule("work_item.closed", "This task is already closed."),
   systemManaged: () =>
-    problems.businessRule("work_item.system_managed", "This task closes automatically when its approval is decided."),
+    problems.businessRule(
+      "work_item.system_managed",
+      "This task closes automatically when the record it belongs to is decided or closed.",
+    ),
   alreadyRead: () => problems.businessRule("inbox.already_read", "This reminder is already marked as read."),
 } as const;
 

@@ -765,6 +765,25 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     );
   });
 
+  it("T-DG4-BE-R3 (ADR-0032 amendment G1): governance may import raid; raid may never import governance (a cycle)", () => {
+    expect(API_MODULES.governance.dependsOn as readonly string[]).toContain("raid");
+    expect(API_MODULES.raid.dependsOn as readonly string[]).not.toContain("governance");
+    expect(
+      planted("governance", `import { insertActionItem } from "../raid/index.ts";\nexport const f = insertActionItem;`),
+    ).toEqual([]);
+    expect(planted("raid", `import { MEETING_ACTION_TASK_KIND } from "../governance/index.ts";`).join("\n")).toMatch(
+      /module raid may not import module governance/,
+    );
+    // Declaring the reverse edge would close a cycle (governance -> raid -> governance).
+    const graph = new Map<string, readonly string[]>(
+      Object.entries(API_MODULES).map(([m, v]) => [m, v.dependsOn as readonly string[]]),
+    );
+    graph.set("raid", [...graph.get("raid")!, "governance"]);
+    const reaches = (from: string, to: string, seen = new Set<string>()): boolean =>
+      from === to || (!seen.has(from) && (seen.add(from), (graph.get(from) ?? []).some((d) => reaches(d, to, seen))));
+    expect(reaches("raid", "governance") && reaches("governance", "raid")).toBe(true);
+  });
+
   it("a scaffold may not reach a business module it does not declare (reporting -> workflows)", () => {
     expect(planted("reporting", `import { PRODUCT_GATES } from "../workflows/index.ts";`).join("\n")).toMatch(
       /module reporting may not import module workflows/,

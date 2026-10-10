@@ -1,0 +1,48 @@
+port-policy: PostgreSQL listening on port 25300 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1u7zbw_73303630 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > waivers (End-to-End launch sequencing) > create: 201 pending, version 1, audited; reason/expiry required, G1 never waived, no past expiry, AUD 403 708ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > waivers (End-to-End launch sequencing) > decide: 428/409, AUD 403, not the recorder (403), only the gate's approver (403); accepted unblocks launch 436ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > waivers (End-to-End launch sequencing) > separation of duties: the recorder can never accept their own dispensation (403), even holding gate.decide 384ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > waivers (End-to-End launch sequencing) > revoke: only accepted ones, by the approver with a reason; If-Match; AUD 403; the blocker returns 561ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > inherited approvals (Modular entry) > need body, date and evidence; count only when the evidence is VERIFIED and another person accepted them 465ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > the gate list and gate view inheritedApproval annotation (ADR-0021 §5; F-DG3-120) > pending_verification → accepted (counts) → revoked; G1 stays draft and no gate decision is ever written 1002ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts > the gate list and gate view inheritedApproval annotation (ADR-0021 §5; F-DG3-120) > an End-to-End transformation's gates carry inheritedApproval null (the DG2 shape otherwise unchanged) 257ms
+ ↓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts > D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > 422 gate.modular_links_missing listing both items; nothing written; 201 once both are supplied
+ ↓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts > D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > an accepted, unexpired G3 waiver lets it through; an expired or a pending one does not
+ ↓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts > D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > the DG2 order is kept: G3 criteria not met → gate_criteria_incomplete first, exactly as before
+ ↓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts > D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > only G3 carries the precondition: a Modular G4 out of sequence keeps the DG2 refusal
+ ✓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts > End-to-End G1-G4: unaffected by the Modular precondition (byte comparison in the handback) > the full chain with no baseline and no outcome link: every refusal and success as in DG2/DG3 2445ms
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0021 W1: the one changed condition of createGateDispensation > a Modular G3 waiver with no initiative: 201 pending, version 1, audited gate_dispensation.create
+ ✓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0021 W1: the one changed condition of createGateDispensation > every other Modular waiver keeps the DG3 refusal: G1, G2, and G3 with an initiative (recorded for A/B) 457ms
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0021 W2: who decides a Modular-links waiver > G3's approver (SP) accepts it (200); the recorder (403) and a non-approver (403 gate.not_approver) cannot
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 submission > only the outcome link missing: missing lists it alone
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 submission > links supplied: no modularLinks member even with a waiver in force (the snapshot is the DG3 one)
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 submission > which waiver: the latest expiry, ties broken by the greatest id
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 submission > pending, rejected, revoked or expired (injected exception clock) waivers → 422 gate.modular_links_missing; nothing written
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 approval > the waiver in force: approval 201, G3 approved; the decision is the SP's
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 approval > revoked after submission → 422 gate.modular_waiver_revoked with the revoke date; a later waiver does not rescue it; reject stays allowed
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 approval > expired by approval time (injected clock) → 422 gate.modular_waiver_expired with the expiry date; nothing written
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 approval > revoked and expired: the revoke is reported
+ ↓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 approval > a Modular G3 submitted with its links (no modularLinks) is decided exactly as before
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > ADR-0032 G1: governance writes the meeting action through raid's insertActionItem > the action_item row and its action_item.create event are BE-F2's, field for field; one task, its own
+ ✓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > ADR-0032 G1: governance writes the meeting action through raid's insertActionItem > A/B transcript: the row and the create event of a fixed input (normalized), when enabled 551ms
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: an owner change cancels the previous owner's item and opens the new owner's (A -> B -> A: #2)
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: a due-date change moves the open item's due date (work_item.reschedule)
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: done closes the item as done; cancelled closes it as cancelled; a title edit changes nothing
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: an owner change cancels the previous owner's item and opens the new owner's (A -> B -> A: #2)
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: a due-date change moves the open item's due date (work_item.reschedule)
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: done closes the item as done; cancelled closes it as cancelled; a title edit changes nothing
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > an action that is not a meeting action gets no meeting item from these edits (DG2 action, both paths)
+ ↓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > a refused edit (stale If-Match, AUD) moves nothing
+
+ Test Files  4 passed (4)
+      Tests  10 passed | 25 skipped (35)
+   Start at  03:31:29
+   Duration  31.01s (transform 5.86s, setup 0ms, collect 18.54s, tests 9.24s, environment 0ms, prepare 121ms)
+
+EXIT=0

@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   auditOf,
   auditOfRequest,
-  call,
+  call as harnessCall,
   createUser,
   grant,
   seedWorld,
@@ -22,7 +22,13 @@ import {
   type World,
 } from "../../support/harness.ts";
 import { ifm, setupP2World, type P2World } from "../../support/p2-fixtures.ts";
+import { responseTranscript } from "../../support/response-transcript.ts";
 import { setGateStatus, setupModularWorld } from "./fixtures.ts";
+
+// T-DG4-BE-R3 (ADR-0021 amendment W7 item 3): with MTH_BE_R3_DISPENSATION_TRANSCRIPT set, every response of this file
+// is recorded (normalized) for the A/B byte comparison against the base commit's dispensations.ts and gates.ts.
+const transcript = responseTranscript(harnessCall, "MTH_BE_R3_DISPENSATION_TRANSCRIPT");
+const call = transcript.call;
 
 let api: TestApi;
 let w: World;
@@ -30,7 +36,10 @@ beforeAll(async () => {
   api = await startApi();
   w = await seedWorld(api.db);
 });
-afterAll(() => api.close());
+afterAll(async () => {
+  transcript.flush();
+  await api.close();
+});
 
 const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 const base = (p: P2World) => `/api/v1/transformations/${p.transformationId}/gate-dispensations`;
@@ -241,7 +250,13 @@ describe("inherited approvals (Modular entry)", () => {
     const incomplete = await create(p, { kind: "inherited_approval", gateCode: "G1" });
     expect([incomplete.status, incomplete.body.code]).toEqual([422, "dispensation.inherited_incomplete"]);
     expect(incomplete.body.errors.map((e) => e.pointer)).toEqual(["/approvingBody", "/approvedOn", "/evidenceId"]);
-    expect((await create(p, waiver())).body.code).toBe("dispensation.waiver_requires_end_to_end");
+    // T-DG4-BE-R3 (ADR-0021 amendment W1, D-110 option a): a Modular G3 waiver with NO initiative is now the
+    // Modular-links waiver (201; modular-waiver.test.ts). Every other Modular waiver keeps this DG3 refusal: G1, G2, and
+    // G3 with an initiative. This line asserted the refusal on the G3 no-initiative case, the one case W1 changes.
+    expect((await create(p, waiver("G2"))).body.code).toBe("dispensation.waiver_requires_end_to_end");
+    expect((await create(p, waiver("G3", { initiativeId: "01890000-0000-7000-8000-000000000001" }))).body.code).toBe(
+      "dispensation.waiver_requires_end_to_end",
+    );
 
     const evidence = await call(api.app, "POST", `${T}/evidence`, {
       session: p.lead.session,

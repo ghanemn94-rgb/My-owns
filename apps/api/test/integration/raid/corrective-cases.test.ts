@@ -323,7 +323,7 @@ describe("updateCorrectiveCase and closeCorrectiveCase (ADR-0031 §5.5, §5.6)",
     expect([res.status, res.body.code, res.body.detail]).toEqual([
       422,
       "work_item.system_managed",
-      "This task closes automatically when its approval is decided.",
+      "This task closes automatically when the record it belongs to is decided or closed.",
     ]);
     expect((await tasksOf(c.id)).map((t) => t.status)).toEqual(["open"]);
     expect((await auditOf(api.db, item.id)).map((a) => a.action)).toEqual(["work_item.create"]);

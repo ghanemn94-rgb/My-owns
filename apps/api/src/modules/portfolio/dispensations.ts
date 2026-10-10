@@ -277,7 +277,8 @@ async function createDispensation(tx: Tx, request: FastifyRequest, transformatio
       throw rule("dispensation.approved_on_future", "The approval date cannot be in the future.", "/approvedOn");
     await assertSameTransformation(tx, "evidence", transformationId, body.evidenceId, "/evidenceId");
   } else {
-    if (t.mode !== "end_to_end")
+    // ADR-0021 amendment W1: a Modular G3 waiver with no initiative waives the missing-links precondition.
+    if (t.mode !== "end_to_end" && !(body.gateCode === "G3" && body.initiativeId === undefined))
       throw rule(
         "dispensation.waiver_requires_end_to_end",
         "A waiver applies to the End-to-End launch sequencing; a Modular transformation is not held to it.",
