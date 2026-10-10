@@ -683,6 +683,20 @@ export async function exerciseP4KbeGOperations(ctx: P4ExerciseContext): Promise<
     },
   );
   expect([bad.status, bad.body.code]).toEqual([422, "dashboard.metric_subject_mismatch"]);
+  // T-DG4-KBE-R4 (ADR-0037 amendment K1): a value-state metric added by K1, narrowed by `valueClass`, and the K2
+  // refusal of a value class with any other metric, both through the validating client.
+  const byClass = await m(
+    "GET",
+    `/api/v1/dashboard-drilldown?metric=value.sustained&organizationId=${w.orgA.id}&valueClass=margin_uplift`,
+    { session: k.s.auditor },
+  );
+  expect([byClass.status, byClass.body.metric, byClass.body.items]).toEqual([200, "value.sustained", []]);
+  const notApplicable = await m(
+    "GET",
+    `/api/v1/dashboard-drilldown?metric=decisions.open&organizationId=${w.orgA.id}&valueClass=revenue_uplift`,
+    { session: k.s.auditor },
+  );
+  expect([notApplicable.status, notApplicable.body.code]).toEqual([422, "dashboard.value_class_not_applicable"]);
 
   // KBE-G2 (appended after KBE-G, p4-work-split JK.0/JK.5): the 4 operations of p4-pending-kbe-g2.ts.
   await exerciseP4KbeG2Operations(ctx, k);

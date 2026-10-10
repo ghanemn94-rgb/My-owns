@@ -1,0 +1,75 @@
+--- /var/tmp/mth-run.kifGDu/claude-0/bq-base.ts	2026-10-10 13:07:11.144152931 +0000
++++ /var/tmp/mth-run.kifGDu/claude-0/repro/apps/worker/test/integration/benefits-queue.test.ts	2026-10-10 12:47:13.709149972 +0000
+@@ -104,9 +104,62 @@
+       180_000,
+       0,
+     );
++    // --- KBE-R4 DIAGNOSTIC (scratch copy only; never committed) ---
++    let t0 = Date.now();
++    const diagFile = process.env.KBE_R4_DIAG ?? "/dev/null";
++    const fs = await import("node:fs");
++    const snap = async (label: string) => {
++      const q = await api.owner.query(
++        "SELECT name, state, count(*)::int AS n FROM pgboss.job WHERE name LIKE 'benefits.%' GROUP BY 1,2 ORDER BY 1,2",
++      );
++      const allQ = await api.owner.query("SELECT state, count(*)::int AS n FROM pgboss.job GROUP BY 1 ORDER BY 1");
++      const ob = await api.owner.query(
++        "SELECT count(*) FILTER (WHERE published_at IS NULL)::int AS unpublished, count(*)::int AS total FROM outbox_event",
++      );
++      const evs = await api.owner.query(
++        "SELECT count(*)::int AS n FROM outbox_event WHERE event_type = 'benefit.evidence_submitted'",
++      );
++      fs.appendFileSync(
++        diagFile,
++        JSON.stringify({ label, at: new Date().toISOString(), benefitsJobs: q.rows, allJobsByState: allQ.rows, outbox: ob.rows[0], evidenceSubmittedEvents: evs.rows[0].n }) + "\n",
++      );
++    };
++    const ourJob = async () =>
++      (
++        await api.owner.query(
++          `SELECT j.id, j.state, j.created_on, j.started_on, j.completed_on, j.retry_count,
++             (SELECT count(*)::int FROM pgboss.job o WHERE o.name = j.name AND o.state IN ('created','retry')
++                AND o.created_on < j.created_on) AS pending_ahead,
++             (SELECT count(*)::int FROM pgboss.job o WHERE o.name = j.name AND o.state = 'completed'
++                AND o.completed_on >= $2) AS completed_since_worker_start
++           FROM pgboss.job j JOIN outbox_event e ON e.id::text = j.data->>'outboxEventId'
++           WHERE j.name = 'benefits.finance_queue' AND e.aggregate_id = $1 AND e.event_type = 'benefit.evidence_submitted'`,
++          [m.body.id, new Date(t0)],
++        )
++      ).rows;
++    await snap("before-worker-start");
++    fs.appendFileSync(diagFile, JSON.stringify({ label: "our-job-before-start", job: await ourJob() }) + "\n");
++    // --- end diagnostic ---
++    t0 = Date.now();
+     let running: RunningWorker = await worker();
+     try {
+-      const item = await waitFor(async () => (await queueItemOf(api, m.body.id)) ?? null);
++      let item;
++      try {
++        item = await waitFor(async () => (await queueItemOf(api, m.body.id)) ?? null);
++        fs.appendFileSync(diagFile, JSON.stringify({ label: "queue-item-found", ms: Date.now() - t0, job: await ourJob() }) + "\n");
++      } catch (e) {
++        await snap("timeout-at-15s");
++        fs.appendFileSync(diagFile, JSON.stringify({ label: "timeout-our-job", ms: Date.now() - t0, job: await ourJob() }) + "\n");
++        // diagnostic only: keep watching to learn WHEN it would have completed, then fail as before
++        try {
++          await waitFor(async () => (await queueItemOf(api, m.body.id)) ?? null, 600_000, 500);
++          fs.appendFileSync(diagFile, JSON.stringify({ label: "eventually-found", ms: Date.now() - t0, job: await ourJob() }) + "\n");
++        } catch {
++          fs.appendFileSync(diagFile, JSON.stringify({ label: "never-found-600s", ms: Date.now() - t0 }) + "\n");
++        }
++        await snap("after-extended-wait");
++        throw e;
++      }
+       expect([item.status, item.kind]).toEqual(["queued", "validation"]);
+       const envelope = (await envelopeOf(api, m.body.id, "benefit.evidence_submitted"))!;
+       await boss.send(FINANCE_QUEUE, envelope);
+@@ -139,7 +192,7 @@
+     } finally {
+       await running.stop();
+     }
+-  });
++  }, 900_000);
+ });
+ 
+ /** A BenefitWorld view of a KPI world (the slice A fixtures' users hold TL, BO, FIN in the same transformation). */

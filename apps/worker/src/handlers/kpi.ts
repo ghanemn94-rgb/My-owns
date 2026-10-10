@@ -445,6 +445,33 @@ function enteredValue(
   return { result: applyFreshness(cum.result, f), accepted: acc, window: cum.window };
 }
 
+/** One element of `windowValues` (ADR-0027 amendment C5): the accepted actual version a cumulative window used. */
+interface WindowValue {
+  readonly reportingPeriodId: string;
+  readonly kpiActualId: string;
+  readonly valueNo: number;
+}
+
+/**
+ * ADR-0027 amendment C5: the accepted actual version behind each period of a scope's cumulative window, in window order
+ * (the current period last), or null when the cumulative value is not known. A known cumulative value has an accepted
+ * entry for every window period (`cumulativeValue` answers kpi.cumulative_incomplete otherwise); should one be absent
+ * all the same, null is returned, so a partial list is never recorded as the whole window.
+ */
+function windowValuesOf(
+  r: { result: KpiResult; window?: readonly string[] },
+  byPeriod: ReadonlyMap<string, Accepted> | undefined,
+): WindowValue[] | null {
+  if (r.result.value === null || r.window === undefined) return null;
+  const out: WindowValue[] = [];
+  for (const reportingPeriodId of r.window) {
+    const a = byPeriod?.get(reportingPeriodId);
+    if (a === undefined) return null;
+    out.push({ reportingPeriodId, kpiActualId: a.actualId, valueNo: a.valueNo });
+  }
+  return out;
+}
+
 function evaluateSlot(
   ctx: Context,
   kpi: Kpi,
@@ -523,10 +550,15 @@ function evaluateSlot(
       };
     const scopes = [...values.keys()];
     const acceptedOf = new Map<string, Accepted>();
+    const windowOf = new Map<string, WindowValue[]>();
     const scopeInputs = scopes.map((s) => {
       const r = enteredValue(ctx, kpi, s, period, basis, values);
       const acc = r.accepted;
       if (acc !== null) acceptedOf.set(s, acc);
+      if (basis === "cumulative") {
+        const wv = windowValuesOf(r, values.get(s));
+        if (wv !== null) windowOf.set(s, wv);
+      }
       let entry: PeriodEntry | null = null;
       if (basis === "period") entry = acc?.entry ?? null;
       else if (r.result.value !== null) entry = { kind: "value", value: r.result.value };
@@ -598,7 +630,11 @@ function evaluateSlot(
     const entries = [...acceptedOf.entries()]
       .filter(([s]) => !missing.has(s))
       .sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0))
-      .map(([scopeId, acc]) => ({ scopeId, kpiActualId: acc.actualId, valueNo: acc.valueNo }));
+      .map(([scopeId, acc]) => {
+        // ADR-0027 amendment C5: on the cumulative basis the entry names its whole window's actual versions.
+        const wv = windowOf.get(scopeId);
+        return { scopeId, kpiActualId: acc.actualId, valueNo: acc.valueNo, ...(wv ? { windowValues: wv } : {}) };
+      });
     return {
       ...base,
       result: applyFreshness(outcome.result, f),
@@ -611,6 +647,8 @@ function evaluateSlot(
   // An entered value at the entry scope.
   const r = enteredValue(ctx, kpi, scopeId, period, basis, values);
   const acc = r.accepted;
+  // ADR-0027 amendment C5: a known cumulative value names every window period's actual version (absent otherwise).
+  const windowValues = basis === "cumulative" ? windowValuesOf(r, values.get(scopeId)) : null;
   if (basis === "period") {
     if (acc === null)
       ctx.findings.push({
@@ -674,7 +712,12 @@ function evaluateSlot(
     inputs:
       acc === null
         ? {}
-        : { kpiActualId: acc.actualId, valueNo: acc.valueNo, ...(r.window ? { window: [...r.window] } : {}) },
+        : {
+            kpiActualId: acc.actualId,
+            valueNo: acc.valueNo,
+            ...(r.window ? { window: [...r.window] } : {}),
+            ...(windowValues ? { windowValues } : {}),
+          },
     dataAsOf: acc?.dataAsOf ?? null,
     milestone:
       v.valueNature === "milestone" && acc !== null && acc.achieved !== null

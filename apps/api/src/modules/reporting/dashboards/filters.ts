@@ -149,11 +149,14 @@ export function clockOf(f: ResolvedFilters, calendar: DashboardClock["calendar"]
   return { businessDate: f.businessDate, asOf: f.asOf, windowStart: f.windowStart, windowEnd: f.windowEnd, calendar };
 }
 
-/** The drill-down query string carrying the same filters (headline `drilldownHref`). */
+/**
+ * The drill-down query string carrying the same filters (headline `drilldownHref`). `valueClass` (ADR-0037 amendment
+ * K1) is appended last, and only when given, so every href without it is unchanged.
+ */
 export function drilldownHref(
   metric: string,
   f: ResolvedFilters,
-  extra: { transformationIds?: readonly string[]; subjectId?: string } = {},
+  extra: { transformationIds?: readonly string[]; subjectId?: string; valueClass?: string } = {},
 ): string {
   const q = new URLSearchParams();
   q.set("metric", metric);
@@ -164,5 +167,6 @@ export function drilldownHref(
   if (f.phase) q.set("phase", f.phase);
   if (f.status) q.set("status", f.status);
   if (extra.subjectId) q.set("subjectId", extra.subjectId);
+  if (extra.valueClass) q.set("valueClass", extra.valueClass);
   return `/api/v1/dashboard-drilldown?${q.toString()}`;
 }
