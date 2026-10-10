@@ -122,7 +122,8 @@ function WorkstreamsBody() {
           <Code>{w.code}</Code>
         </Link>
       ),
-      sortValue: (w) => w.id,
+      // WS-nn in number order (WS-09 before WS-10), not by record id.
+      sortValue: (w) => Number(/[0-9]+$/.exec(w.code)?.[0] ?? 0),
       filterText: (w) => w.code,
     },
     { id: "name", header: t("traceability.structure.name"), cell: (w) => w.name, sortValue: (w) => w.name },

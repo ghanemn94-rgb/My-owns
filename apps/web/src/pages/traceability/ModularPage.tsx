@@ -146,7 +146,8 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
                       <StatusTag tone="ok">{t("traceability.gateLabel.approved")}</StatusTag>
                     ) : g.label === "inherited" ? (
                       <StatusTag tone="info" wrap>
-                        {t("traceability.gateLabel.inherited")} — {t("traceability.inheritedLabel")}
+                        {/* The canonical label text once (it already starts with "Inherited"). */}
+                        {t("traceability.inheritedLabel")}
                       </StatusTag>
                     ) : g.label === "inherited_pending_verification" ? (
                       <StatusTag tone="warn" wrap>
