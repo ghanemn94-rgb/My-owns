@@ -155,14 +155,15 @@ describe("TOM change after G3: preview, T11 routing, a returned request with one
     const list = await send("GET", `${I}/impact-assessments`, { session: c.auditor.session });
     expect(list.body.items.map((x: { changeRequestVersion: number }) => x.changeRequestVersion)).toEqual([2, 5]);
     expect(list.body.items[0]).toEqual(firstIa);
-    // The approval engine's resubmission on the request's new version (ADR-0036 §4), then BO approves.
+    // The submit resubmitted the same approval on the request's new version, in its own transaction (ADR-0026
+    // amendment A4; T-DG4-BE-R2): round 2, pending, bound to version 5. Then BO approves.
     const appr = (await send("GET", `/api/v1/approvals/${first.body.approvalId}`, { session: c.lead.session })).body;
-    const resubmitted = await send("POST", `/api/v1/approvals/${first.body.approvalId}/resubmit`, {
-      session: c.lead.session,
-      headers: ifm(appr.version),
-      body: { subjectVersion: 5 },
-    });
-    expect(resubmitted.status, JSON.stringify(resubmitted.body)).toBe(200);
+    expect([second.body.approvalId, appr.status, appr.roundNo, appr.subjectVersion]).toEqual([
+      first.body.approvalId,
+      "pending",
+      2,
+      5,
+    ]);
     const ok = await decide(send, first.body.approvalId, c.bo.session);
     expect(ok.status, JSON.stringify(ok.body)).toBe(200);
     const after = await api.db

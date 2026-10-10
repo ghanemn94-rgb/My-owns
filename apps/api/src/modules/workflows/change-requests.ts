@@ -8,7 +8,8 @@
 //   PATCH /transformations/{t}/change-requests/{id}             edit a draft / returned request (If-Match)
 //   POST /transformations/{t}/change-requests/{id}/submit       materiality, frozen impact assessment, the business
 //                                                               approval routed per T11 (If-Match)
-//   POST /transformations/{t}/change-requests/{id}/withdraw     withdraw a request not yet in approval (If-Match)
+//   POST /transformations/{t}/change-requests/{id}/withdraw     withdraw a request; one in approval withdraws its
+//                                                               approval first, in the same transaction (If-Match)
 //
 // A change request is decided by a PERSON through the canonical approval (`POST /approvals/{id}/decisions`; approval
 // type `change_request`, SoD requester_excluded; ADR-0026 §4). This file registers the subject provider whose onOutcome
@@ -17,6 +18,13 @@
 // gate_submission_criterion or gate_decision (the original approval and snapshot stay unchanged and viewable), and
 // nothing here touches the engineering gates DG0-DG7. No job or timer approves anything: the 0052 trigger refuses an
 // outcome without a person's decision row.
+//
+// Resubmit and withdraw (ADR-0026 amendment A4, ADR-0036 amendment A2; T-DG4-BE-R2): submitting a request returned
+// with changes freezes the new assessment, returns it to `submitted` (version + 1) and resubmits its approval on that
+// version through `resubmitApprovalInTx`, in one transaction; `POST /approvals/{id}/resubmit` refuses this type (422
+// approval.resubmit_through_record). Withdrawing a request in approval withdraws its approval through
+// `withdrawApprovalInTx` (the approval's requester only: 403 approval.not_requester otherwise) and then the request,
+// in one transaction. `change_request.withdraw_via_approval` is retired: it is no longer produced.
 //
 // Every mutation: the write gate re-checked at commit time (AUD 403; outside scope 404), validation (S-1 free text,
 // strict UTF-8), If-Match (428/409; creates are version 1), one audit event in the same transaction, no remote I/O.
@@ -83,6 +91,8 @@ import {
   defaultDecisionRightRouter,
   registerApprovalSubject,
   requestApprovalInTx,
+  resubmitApprovalInTx,
+  withdrawApprovalInTx,
   type ApprovalOutcomeEvent,
   type DueDate,
 } from "./approvals.ts";
@@ -162,19 +172,8 @@ export const changeRequestRefusals = {
       detail: text("change_request.not_requester"),
     }),
   thresholdInvalid: (pointer: string) => ruleAt("change_control.threshold_invalid", pointer),
-  /**
-   * NOT in ADR-0036 §10 (for architect acceptance; see the BE-L handback): withdrawing a request whose approval is open
-   * goes through the approval engine's withdrawal (POST /approvals/{id}/withdraw), whose outcome withdraws the request
-   * in the same transaction, because workflows/approvals.ts exposes no in-transaction withdrawal (S-14).
-   */
-  withdrawViaApproval: () =>
-    new HttpProblem({
-      status: 422,
-      type: PROBLEM_TYPES.invalidTransition,
-      code: "change_request.withdraw_via_approval",
-      title: "Invalid transition",
-      detail: "This change request is in approval; withdraw its approval instead.",
-    }),
+  // `change_request.withdraw_via_approval` is retired (ADR-0036 amendment A2): a request in approval is withdrawn
+  // through withdrawApprovalInTx in withdrawRequest below.
 } as const;
 
 // ------------------------------------------------------------------------------------------------ helpers
@@ -1000,8 +999,9 @@ interface SubmitActor {
  * Submits a request (ADR-0036 §3-§5): materiality, the impact assessment frozen for exactly the submitted version
  * (append-only, content SHA-256), and, from draft, one business approval requested through `requestApprovalInTx`,
  * routed per §4 (an unmapped party is 422 routing.role_unmapped and nothing is written). After changes requested the
- * request's approval is resubmitted by the requester through the approval engine (POST /approvals/{id}/resubmit with
- * the request's new version).
+ * request's own approval is resubmitted on the request's new version through `resubmitApprovalInTx`, in this
+ * transaction (ADR-0026 amendment A4): round + 1, pending, bound to the new version; 403 approval.not_requester when
+ * the submitter is not the approval's requester, and nothing is written.
  */
 async function submitInTx(tx: Tx, actor: SubmitActor, cr: ChangeRequestRow, checkMoved: boolean) {
   if (cr.status !== "draft" && cr.status !== "changes_requested") throw changeRequestRefusals.notSubmittable();
@@ -1101,7 +1101,19 @@ async function submitInTx(tx: Tx, actor: SubmitActor, cr: ChangeRequestRow, chec
     .returningAll()
     .executeTakeFirstOrThrow();
   await audit(tx, actor.audit, "change_request.submit", cr, submitted);
-  if (cr.status === "draft")
+  const returned =
+    cr.status === "changes_requested"
+      ? await tx
+          .selectFrom("approval")
+          .select("id")
+          .where("approval_type", "=", CHANGE_REQUEST_APPROVAL_TYPE)
+          .where("subject_id", "=", cr.id)
+          .where("status", "=", "changes_requested")
+          .executeTakeFirst()
+      : undefined;
+  if (returned)
+    await resubmitApprovalInTx(tx, actor.audit, { approvalId: returned.id, subjectVersion: submitted.version });
+  else
     await requestApprovalInTx(tx, actor.audit, {
       organizationId: actor.organizationId,
       transformationId: cr.transformation_id,
@@ -1155,7 +1167,12 @@ async function withdrawRequest(tx: Tx, request: FastifyRequest, transformationId
     .where("subject_id", "=", cr.id)
     .where("status", "in", ["pending", "changes_requested", "deferred"])
     .executeTakeFirst();
-  if (open) throw changeRequestRefusals.withdrawViaApproval();
+  // ADR-0026 amendment A4: the open approval is withdrawn first (final; no onOutcome), then the request.
+  if (open)
+    await withdrawApprovalInTx(tx, ctx.audit, {
+      approvalId: open.id,
+      reason: `Change request ${cr.code} withdrawn.`,
+    });
   return setWithdrawn(tx, ctx.audit, cr, ctx.userId);
 }
 
@@ -1468,7 +1485,7 @@ export async function applyChangeRequestOutcome(tx: Tx, event: ApprovalOutcomeEv
       if ((OPEN as readonly string[]).includes(cr.status)) await setWithdrawn(tx, auditCtx, cr, event.actorUserId);
       return;
     default:
-      // deferred: still in approval; resubmitted: the request was already resubmitted at this version (submit).
+      // deferred: still in approval; resubmitted: never emitted for this type (resubmitThroughSubject; submit resubmits).
       return;
   }
 }
@@ -1667,7 +1684,10 @@ async function previewSaved(db: DbOrTx, cr: ChangeRequestRow) {
 }
 
 export function registerChangeRequestRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
-  registerApprovalSubject(CHANGE_REQUEST_APPROVAL_TYPE, { onOutcome: applyChangeRequestOutcome });
+  registerApprovalSubject(CHANGE_REQUEST_APPROVAL_TYPE, {
+    onOutcome: applyChangeRequestOutcome,
+    resubmitThroughSubject: true,
+  });
   setImpactPreviewPort({ previewDraft, previewSaved });
   const read = { access: { permission: "transformation.read" as const } };
   const raiseCfg = { access: { permission: RAISE }, consumes: JSON_BODY };

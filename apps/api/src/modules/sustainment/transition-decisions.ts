@@ -26,9 +26,17 @@
 // The provider applies the outcome in the deciding transaction, after the guard has passed: approved -> the row moves
 // draft -> submitted -> approved (decided stamps, next_monitoring_date = first_monitoring_date, and the monitoring
 // reviews already inside the 7-day horizon); rejected -> draft -> submitted -> rejected; changes requested and a
-// withdrawn approval leave it a draft (editable again; a changes-requested approval is resubmitted through POST
-// /approvals/{id}/resubmit with the decision's current version). A timer never decides: the escalation job only
-// escalates. The stored-status detail is reported to the orchestrator (handback, "schema need").
+// withdrawn approval leave it a draft. A timer never decides: the escalation job only escalates. The stored-status
+// detail is accepted as built (ADR-0034 amendment A2).
+//
+// Resubmit and withdraw (ADR-0026 amendment A4; T-DG4-BE-R2): after changes are requested the draft is editable again
+// (each edit steps its version), and submitting it again resubmits the SAME approval on the decision's current version
+// through workflows' `resubmitApprovalInTx`, in the submit's transaction. `POST /approvals/{id}/resubmit` refuses this
+// type (422 approval.resubmit_through_record; the provider sets `resubmitThroughSubject`). Withdrawing a decision
+// whose approval is open (pending, deferred or changes requested) first withdraws that approval through
+// `withdrawApprovalInTx` (its requester only: 403 approval.not_requester otherwise), then moves the row draft ->
+// withdrawn, in one transaction, so no approval is left that can never be decided. Both services reach this module
+// through `bindServices` at subject registration, so the composition root's one wiring line is unchanged.
 //
 // Forecast stays forecast: nothing here writes a benefit value, a measurement, a lifecycle step or a `sustained` series
 // row; the benefit's value status becomes `transition` (status-model.ts), never validated or sustained. Monitoring:
@@ -91,6 +99,8 @@ export const MONITORING_HORIZON_DAYS = 7;
 const MAX_STEPS_PER_DECISION = 520;
 /** While its approval is pending or deferred a draft (resubmitted after changes requested) is frozen. */
 const FREEZING_APPROVAL_STATUSES = ["pending", "deferred"] as const;
+/** The approval statuses a withdrawal of the decision withdraws first (ADR-0026 amendment A3, A4). */
+const OPEN_APPROVAL_STATUSES = ["pending", "deferred", "changes_requested"] as const;
 
 // ------------------------------------------------------------------------------------------------ problems (§12, S-11)
 
@@ -144,9 +154,25 @@ export interface TransitionDecisionApprovalEvent {
   readonly audit: AuditContext;
 }
 
-/** The subject provider shape of ADR-0026 §4 (structurally workflows' ApprovalSubjectProvider). */
+/** workflows' in-transaction resubmit and withdraw (ADR-0026 amendment A2, A3), structurally. */
+export interface TransitionDecisionApprovalServices {
+  readonly resubmit: (
+    tx: Tx,
+    audit: AuditContext,
+    input: { readonly approvalId: string; readonly subjectVersion: number },
+  ) => Promise<ApprovalRow>;
+  readonly withdraw: (
+    tx: Tx,
+    audit: AuditContext,
+    input: { readonly approvalId: string; readonly reason: string },
+  ) => Promise<ApprovalRow>;
+}
+
+/** The subject provider shape of ADR-0026 §4 and amendment A4 (structurally workflows' ApprovalSubjectProvider). */
 export interface TransitionDecisionSubjectProvider {
   readonly onOutcome: (tx: Tx, event: TransitionDecisionApprovalEvent) => Promise<void>;
+  readonly resubmitThroughSubject: true;
+  readonly bindServices: (services: TransitionDecisionApprovalServices) => void;
 }
 
 /** The approval service as this module sees it: workflows' `requestApprovalInTx` and `registerApprovalSubject`. */
@@ -160,14 +186,22 @@ export interface TransitionDecisionApprovalPort {
 }
 
 let approvalPort: TransitionDecisionApprovalPort | null = null;
+let approvalServices: TransitionDecisionApprovalServices | null = null;
 
 /**
  * Wires workflows' approval service (called by the composition root, server.ts, beside registerSustainmentModule):
- * stores the port and registers the benefit_transition_decision subject provider. Idempotent.
+ * stores the port and registers the benefit_transition_decision subject provider, which receives the in-transaction
+ * resubmit and withdraw through `bindServices`. Idempotent.
  */
 export function wireTransitionDecisionApprovals(port: TransitionDecisionApprovalPort): void {
   approvalPort = port;
-  port.registerSubject(TRANSITION_DECISION_APPROVAL_TYPE, { onOutcome: applyTransitionDecisionOutcome });
+  port.registerSubject(TRANSITION_DECISION_APPROVAL_TYPE, {
+    onOutcome: applyTransitionDecisionOutcome,
+    resubmitThroughSubject: true,
+    bindServices: (services) => {
+      approvalServices = services;
+    },
+  });
 }
 
 /** Submit without a wired approval service fails closed (the KPI-version precedent): 500, nothing written. */
@@ -288,6 +322,17 @@ async function freezingApproval(db: DbOrTx, decisionId: string) {
     .executeTakeFirst();
 }
 
+/** The decision's approval in `statuses` (at most one is open per subject: approval_one_open_per_subject). */
+async function approvalIn(db: DbOrTx, decisionId: string, statuses: readonly string[]) {
+  return db
+    .selectFrom("approval")
+    .select(["id", "status"])
+    .where("approval_type", "=", TRANSITION_DECISION_APPROVAL_TYPE)
+    .where("subject_id", "=", decisionId)
+    .where("status", "in", [...statuses])
+    .executeTakeFirst();
+}
+
 /** The latest approval of each decision (any status), newest first per subject. */
 async function latestApprovals(
   db: DbOrTx,
@@ -404,6 +449,17 @@ async function updateDecision(tx: Tx, request: FastifyRequest, transformationId:
   const end = body.expectedRealizationEnd ?? dateOrNull(current.expected_realization_end)!;
   const first = body.firstMonitoringDate ?? dateOrNull(current.first_monitoring_date)!;
   if (first > end) throw MONITORING_AFTER_END();
+  if (withdrawing) {
+    // ADR-0026 amendment A4: an open approval is withdrawn first (final), then the row; one transaction.
+    const open = await approvalIn(tx, current.id, OPEN_APPROVAL_STATUSES);
+    if (open !== undefined) {
+      if (approvalServices === null) throw unwiredApprovals();
+      await approvalServices.withdraw(tx, ctx.audit, {
+        approvalId: open.id,
+        reason: `Transition decision ${current.code} withdrawn.`,
+      });
+    }
+  }
   const updated = (await tx
     .updateTable("transition_decision")
     .set({
@@ -438,8 +494,10 @@ async function updateDecision(tx: Tx, request: FastifyRequest, transformationId:
  * submitTransitionDecision: requests the canonical approval of type benefit_transition_decision on the draft's current
  * version, routed to the party SP (an unmapped Sponsor is 422 routing.role_unmapped and nothing is written). The row
  * itself is not updated (see the file header); the decision is presented as `submitted` from now on. A decision that
- * is not a draft, or already in approval, is 422 transition_decision.final; a draft whose approval has changes
- * requested is resubmitted through that approval (409 approval.already_open here, from the approval service).
+ * is not a draft, or already in approval, is 422 transition_decision.final. A draft whose approval has changes
+ * requested is resubmitted: the same approval, round + 1, on the draft's current version (`resubmitApprovalInTx`;
+ * 422 approval.resubmit_needs_new_version when the draft was not edited since, 403 approval.not_requester for anyone
+ * but the approval's requester), in this transaction.
  */
 async function submitDecision(tx: Tx, request: FastifyRequest, transformationId: string, id: string): Promise<void> {
   const ctx = await openSustainmentWrite(tx, request, transformationId, TRANSITION_DECISION_PROPOSE);
@@ -450,6 +508,12 @@ async function submitDecision(tx: Tx, request: FastifyRequest, transformationId:
   if ((await freezingApproval(tx, current.id)) !== undefined) throw FINAL("submitted");
   if (await benefitHasValidatedValue(tx, current.benefit_id)) throw BENEFIT_VALIDATED();
   if (approvalPort === null) throw unwiredApprovals();
+  const returned = await approvalIn(tx, current.id, ["changes_requested"]);
+  if (returned !== undefined) {
+    if (approvalServices === null) throw unwiredApprovals();
+    await approvalServices.resubmit(tx, ctx.audit, { approvalId: returned.id, subjectVersion: current.version });
+    return;
+  }
   const benefit = await tx
     .selectFrom("benefit")
     .select("code")

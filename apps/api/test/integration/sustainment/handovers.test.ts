@@ -372,6 +372,63 @@ describe("acceptance transfers routine ownership and creates the first review ex
   });
 });
 
+describe("the benefit's control cadence follows a weekly handover cadence (ADR-0034 amendment A1; T-DG4-BE-R2)", () => {
+  it("a weekly handover sets a linked benefit's control_cadence to weekly, version + 1, audited", async () => {
+    const area = await createArea(send, s);
+    const A = `${s.areas}/${area.id}`;
+    const benefit = await send("POST", `${s.b.base}/benefits`, { session: s.b.s.bo, body: financialBody(s.b) });
+    expect(benefit.status, JSON.stringify(benefit.body)).toBe(201);
+    expect(
+      (
+        await send("POST", `${A}/links`, {
+          session: s.b.s.bo,
+          body: { linkKind: "benefit", benefitId: benefit.body.id },
+        })
+      ).status,
+    ).toBe(201);
+    const before = await api.db
+      .selectFrom("benefit")
+      .select(["bau_owner_user_id", "control_cadence", "version"])
+      .where("id", "=", benefit.body.id)
+      .executeTakeFirstOrThrow();
+    expect([before.bau_owner_user_id, before.control_cadence]).toEqual([null, null]);
+    await insertControl(api.db, s.b, area.id, null);
+    const evidenceId = await createNoteEvidence(send, s.b, s.wl.session, s.wl.id);
+    const ho = await send("POST", s.handovers, {
+      session: s.wl.session,
+      body: {
+        performanceAreaId: area.id,
+        receivingOwnerUserId: s.b.users.bo.id,
+        ...fullContent(s.b.users.bo.id),
+        benefitMonitoringCadence: "weekly",
+      },
+    });
+    expect(ho.status, JSON.stringify(ho.body)).toBe(201);
+    const H = `${s.handovers}/${ho.body.id}`;
+    const ev = await send("POST", `${H}/evidence`, { session: s.wl.session, headers: ifm(1), body: { evidenceId } });
+    const sub = await send("POST", `${H}/submit`, { session: s.wl.session, headers: ifm(ev.body.version) });
+    expect(sub.status, JSON.stringify(sub.body)).toBe(200);
+    const acc = await send("POST", `${H}/accept`, { session: s.b.s.bo, headers: ifm(sub.body.version), body: {} });
+    expect([acc.status, acc.body.status], JSON.stringify(acc.body)).toEqual([200, "accepted"]);
+    const after = await api.db
+      .selectFrom("benefit")
+      .select(["bau_owner_user_id", "control_cadence", "version"])
+      .where("id", "=", benefit.body.id)
+      .executeTakeFirstOrThrow();
+    expect(after).toEqual({
+      bau_owner_user_id: s.b.users.bo.id,
+      control_cadence: "weekly",
+      version: before.version + 1,
+    });
+    const last = (await auditOf(api.db, benefit.body.id)).at(-1)!;
+    expect([last.prior_version, last.new_version]).toEqual([before.version, before.version + 1]);
+    expect(last.changes).toMatchObject({ control_cadence: { from: null, to: "weekly" } });
+    // The API shows it, too (the contract enum admits weekly since 0060).
+    const shown = await send("GET", `${s.b.base}/benefits/${benefit.body.id}`, { session: s.b.s.auditor });
+    expect([shown.status, shown.body.controlCadence]).toEqual([200, "weekly"]);
+  });
+});
+
 describe("preparation rules, gates and concurrency", () => {
   it("one handover in progress per cycle (409); only an establishing or reopened area (422); AUD 403; ADM 404", async () => {
     const d = await draftHandover();
