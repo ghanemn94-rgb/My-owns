@@ -1,5 +1,5 @@
 // P4 contract exercises of BE-E (T-DG4-BE-E; p4-work-split §E.3, §1 S-10): the 9 slice E operations of budget lines,
-// the execution view and the schedule network. Every call goes through `ctx.mirrored` (OpenAPI status/body/headers +
+// the execution view and the schedule network, plus getInitiativeSchedule (ADR-0031 amendment S1, T-DG4-BE-R4). Every call goes through `ctx.mirrored` (OpenAPI status/body/headers +
 // problem mirror) and every success body is parsed with the zod mirror in P4_MIRRORS_BE_E. All data is synthetic;
 // nothing here grants a business or Finance approval or touches the engineering gates DG0-DG7.
 import {
@@ -31,6 +31,7 @@ export const P4_MIRRORS_BE_E: Readonly<Record<string, z.ZodType>> = {
   getScheduleNetwork: scheduleNetwork,
   createInitiativeSchedule: initiativeSchedule,
   updateInitiativeSchedule: initiativeSchedule,
+  getInitiativeSchedule: initiativeSchedule,
 };
 
 export async function exerciseP4BeEOperations(ctx: P4ExerciseContext): Promise<void> {
@@ -114,6 +115,17 @@ export async function exerciseP4BeEOperations(ctx: P4ExerciseContext): Promise<v
       .status,
   ).toBe(201);
   const S = `/api/v1/initiatives/${a}/schedule`;
+  // getInitiativeSchedule (ADR-0031 amendment S1): the created row with the create's version as ETag; the same 404
+  // outside scope (ADM-only); 404 for a readable initiative with no row (below, after the network is computed).
+  const read1 = await m("GET", S, { session: x.s.auditor });
+  expect([read1.status, read1.headers.etag, read1.body.version, read1.body.durationWorkingDays]).toEqual([
+    200,
+    sa.headers.etag,
+    1,
+    5,
+  ]);
+  expect(read1.body).toEqual(sa.body);
+  expect((await m("GET", S, { session: x.s.admin })).status).toBe(404);
   expect((await m("PATCH", S, { session: x.s.tl, body: { durationWorkingDays: 4 } })).status).toBe(428);
   expect((await m("PATCH", S, { session: x.s.tl, headers: ifm(5), body: { durationWorkingDays: 4 } })).status).toBe(
     409,
@@ -123,6 +135,8 @@ export async function exerciseP4BeEOperations(ctx: P4ExerciseContext): Promise<v
   ).toBe(403);
   const changed = await m("PATCH", S, { session: x.s.wl, headers: ifm(1), body: { durationWorkingDays: 4 } });
   expect([changed.status, changed.body.durationWorkingDays, changed.body.version]).toEqual([200, 4, 2]);
+  const read2 = await m("GET", S, { session: x.s.tl });
+  expect([read2.status, read2.headers.etag, read2.body]).toEqual([200, '"2"', changed.body]);
 
   const after = await m("GET", N, { session: x.s.tl });
   expect([after.body.status, after.body.projectDurationWorkingDays, after.body.criticalPaths]).toEqual([
@@ -130,4 +144,9 @@ export async function exerciseP4BeEOperations(ctx: P4ExerciseContext): Promise<v
     14,
     [[a, b]],
   ]);
+
+  // getInitiativeSchedule: a readable initiative with no schedule row answers 404 (the client offers the create).
+  const c = await insertInitiative(ctx.api.db, x, "INI-03");
+  const none = await m("GET", `/api/v1/initiatives/${c}/schedule`, { session: x.s.tl });
+  expect([none.status, none.body.code]).toEqual([404, "not_found"]);
 }

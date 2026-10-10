@@ -10,16 +10,22 @@
 //  - B1 at approval: the recorded waiver revoked → 422 gate.modular_waiver_revoked (revoke date); expired → 422
 //    gate.modular_waiver_expired (expiry date); another waiver accepted later does not rescue the frozen submission;
 //    rejecting stays allowed; with the waiver in force the approval is 201. Nothing is written by a refusal.
+//  - Q1 (T-DG4-BE-R4, ADR-0038 amendment Q1): both approval refusals carry `params.date`, equal to the date in
+//    `detail`, and the body validates against the contract's Problem and its zod mirror.
 // When MTH_BE_R3_MODULAR_REFUSAL_TRANSCRIPT is set, the Modular refusals (G1, G2, G3 with an initiative) are recorded
-// for the A/B byte comparison against the base commit's dispensations.ts and gates.ts (handback).
+// for the A/B byte comparison against the base commit's dispensations.ts and gates.ts (handback). When
+// MTH_BE_R4_WAIVER_REFUSAL_TRANSCRIPT is set, the two approval refusals (revoked, expired) and the submission refusal
+// are recorded for T-DG4-BE-R4's A/B comparison (the only expected difference: the `params` member, ADR-0038 Q1).
 // Every waiver, exception and gate decision here is SYNTHETIC demo data by test persons and approves nothing real;
 // nothing touches the engineering delivery gates DG0-DG7 (product G6 never implies DG7).
 import { sql } from "@mth/db";
+import { problem } from "@mth/shared/schemas";
 import { businessDateOf } from "@mth/shared/time";
 import { v7 as uuidv7 } from "uuid";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setGateExceptionClock } from "../../../src/modules/workflows/gate-exceptions.ts";
 import { auditOf, call, seedWorld, startApi, type Session, type TestApi, type World } from "../../support/harness.ts";
+import { matchesComponent } from "../../support/contract.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
 import { responseTranscript } from "../../support/response-transcript.ts";
 import { addBaseline, addOutcomeKpi, seedModularWorld, type ModularWorld } from "../contract/p4-exercises-be-m.ts";
@@ -485,5 +491,86 @@ describe("ADR-0038 B1 at G3 approval", () => {
     await revokeWaiver(mw, waiver);
     const d = await decideG3(mw, s.body.submissionNo, "approved");
     expect(d.status, JSON.stringify(d.body)).toBe(201);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ Q1 (params.date)
+
+describe("ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4)", () => {
+  /** The body as sent, its contract and zod validity, and exactly the members the ADR names. */
+  function expectRefusal(body: Record<string, unknown>, code: string, detail: string, date: string) {
+    expect(Object.keys(body)).toEqual(["type", "title", "status", "detail", "code", "requestId", "params"]);
+    expect(body).toEqual({
+      type: "urn:mth:problem:validation",
+      title: "Business rule violated",
+      status: 422,
+      detail,
+      code,
+      requestId: expect.any(String),
+      params: { date },
+    });
+    expect(String(body["detail"])).toContain(` ${date};`);
+    expect(matchesComponent("Problem", body)).toEqual({ ok: true, errors: "" });
+    expect(problem.parse(body)).toEqual(body);
+  }
+
+  it("revoked: params = { date: the revoke's business date }, the date in detail", async () => {
+    const mw = await readyWorld();
+    const waiver = await acceptedWaiver(mw);
+    const s = await submitG3(mw);
+    expect(s.status).toBe(201);
+    await revokeWaiver(mw, waiver);
+    const revokedOn = (
+      await sql<{ d: string }>`SELECT p4_business_date(g.revoked_at, t.timezone)::text AS d
+        FROM gate_dispensation g JOIN transformation t ON t.id = g.transformation_id
+        WHERE g.id = ${waiver.id}::uuid`.execute(api.db)
+    ).rows[0]!.d;
+    const refused = await decideG3(mw, s.body.submissionNo, "approved");
+    expect(refused.status).toBe(422);
+    expectRefusal(refused.body, "gate.modular_waiver_revoked", revokedDetail(revokedOn), revokedOn);
+  });
+
+  it("expired: params = { date: expires_on }, the date in detail", async () => {
+    const mw = await readyWorld();
+    await acceptedWaiver(mw, inDays(5));
+    const s = await submitG3(mw);
+    expect(s.status).toBe(201);
+    setGateExceptionClock(() => new Date(Date.now() + 6 * DAY));
+    const refused = await decideG3(mw, s.body.submissionNo, "approved");
+    expect(refused.status).toBe(422);
+    expectRefusal(refused.body, "gate.modular_waiver_expired", expiredDetail(inDays(5)), inDays(5));
+  });
+
+  it("A/B transcript (T-DG4-BE-R4): the revoked and expired approval refusals and the submission refusal", async () => {
+    const t = responseTranscript(call, "MTH_BE_R4_WAIVER_REFUSAL_TRANSCRIPT");
+    const mw = await readyWorld();
+    t.note("POST submission without a waiver", await submitG3(mw));
+    const waiver = await acceptedWaiver(mw);
+    const s = await submitG3(mw);
+    expect(s.status).toBe(201);
+    await revokeWaiver(mw, waiver);
+    const revoked = await decideG3(mw, s.body.submissionNo, "approved");
+    t.note("POST decision, waiver revoked", revoked);
+    const mw2 = await readyWorld();
+    await acceptedWaiver(mw2, inDays(5));
+    const s2 = await submitG3(mw2);
+    expect(s2.status).toBe(201);
+    setGateExceptionClock(() => new Date(Date.now() + 6 * DAY));
+    const expired = await decideG3(mw2, s2.body.submissionNo, "approved");
+    t.note("POST decision, waiver expired", expired);
+    t.flush();
+    expect([revoked.status, revoked.body.code, expired.status, expired.body.code]).toEqual([
+      422,
+      "gate.modular_waiver_revoked",
+      422,
+      "gate.modular_waiver_expired",
+    ]);
+  });
+
+  it("no other problem gains the member: the G3 submission refusal without a waiver has no params", async () => {
+    const mw = await readyWorld();
+    const refused = await submitG3(mw);
+    expect([refused.status, refused.body.code]).toEqual([422, "gate.modular_links_missing"]);
+    expect(refused.body).not.toHaveProperty("params");
   });
 });

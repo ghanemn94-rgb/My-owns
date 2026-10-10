@@ -1,6 +1,9 @@
 // The initiative schedule network and the critical path (P4 slice E; ADR-0031 §8-§11; T-DG4-BE-E; REQ-S09-009):
 //   GET   /transformations/{t}/schedule-network   the network on the canonical dependencies, durations in working days,
 //                                                 the critical path by `cpm-fs/1` (transformation.read)
+//   GET   /initiatives/{i}/schedule               the recorded planned duration with its version and ETag; 404 when
+//                                                 the initiative is not readable or none is recorded (transformation.read;
+//                                                 ADR-0031 amendment S1, T-DG4-BE-R4)
 //   POST  /initiatives/{i}/schedule               record the initiative's planned duration (roadmap.edit; TL, WL, TO);
 //                                                 409 initiative_schedule.exists
 //   PATCH /initiatives/{i}/schedule               change it (roadmap.edit; If-Match); 404 when none is recorded
@@ -155,6 +158,31 @@ export async function openInitiativeWrite(
   return openWrite(tx, request, ini.transformation_id, rules, null, { atCommit: true });
 }
 
+/**
+ * getInitiativeSchedule (ADR-0031 amendment S1): the initiative (404 when unknown), the read gate (404 outside scope),
+ * then the recorded row (404 when none is recorded; a null duration is a recorded row and answers 200).
+ */
+export async function getInitiativeSchedule(
+  db: DbOrTx,
+  request: FastifyRequest,
+  initiativeId: string,
+): Promise<InitiativeSchedule> {
+  const ini = await db
+    .selectFrom("initiative")
+    .select(["id", "transformation_id"])
+    .where("id", "=", initiativeId)
+    .executeTakeFirst();
+  if (!ini) throw problems.notFound();
+  await requireTransformationRead(db, principalOf(request), ini.transformation_id);
+  const row = await db
+    .selectFrom("initiative_schedule")
+    .selectAll()
+    .where("initiative_id", "=", initiativeId)
+    .executeTakeFirst();
+  if (!row) throw problems.notFound();
+  return toInitiativeSchedule(row);
+}
+
 async function createSchedule(tx: Tx, request: FastifyRequest): Promise<InitiativeScheduleRow> {
   const { initiativeId } = parse(initiativeParams, request.params, "params");
   const ctx = await openInitiativeWrite(tx, request, initiativeId, ROADMAP_EDIT);
@@ -245,6 +273,11 @@ export function registerScheduleNetworkRoutes(app: FastifyInstance, { db }: Modu
     return loadScheduleNetwork(db, transformationId);
   });
 
+  app.get(INITIATIVE_SCHEDULE, { config: read }, async (request, reply) => {
+    const { initiativeId } = parse(initiativeParams, request.params, "params");
+    return sendVersioned(reply, 200, await getInitiativeSchedule(db, request, initiativeId));
+  });
+
   app.post(INITIATIVE_SCHEDULE, { config: write }, async (request, reply) => {
     const row = await db.transaction().execute((tx) => createSchedule(tx, request));
     return sendVersioned(reply, 201, toInitiativeSchedule(row), `/api/v1/initiatives/${row.initiative_id}/schedule`);
@@ -255,5 +288,10 @@ export function registerScheduleNetworkRoutes(app: FastifyInstance, { db }: Modu
     return sendVersioned(reply, 200, toInitiativeSchedule(row));
   });
 
-  return [`GET ${SCHEDULE_NETWORK}`, `POST ${INITIATIVE_SCHEDULE}`, `PATCH ${INITIATIVE_SCHEDULE}`];
+  return [
+    `GET ${SCHEDULE_NETWORK}`,
+    `GET ${INITIATIVE_SCHEDULE}`,
+    `POST ${INITIATIVE_SCHEDULE}`,
+    `PATCH ${INITIATIVE_SCHEDULE}`,
+  ];
 }

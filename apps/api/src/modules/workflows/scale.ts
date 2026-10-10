@@ -1,6 +1,10 @@
 // The G5 approved scale scope, scale transitions and risk dispositions (T-DG4-BE-K; ADR-0035 §5, §6, §8, §11;
 // REQ-S03-004, REQ-S04-007, REQ-PB-020, REQ-S12-010; p4-work-split §H H.1):
 //   GET  /transformations/{id}/scale-scope                        the latest approved G5 decision's items and conditions
+//   GET  /transformations/{id}/scale-scope/business-units         the units a G5 scope may name: every active unit of
+//                                                                 the organization, plus any unit a scope item or a
+//                                                                 transition of this transformation names (ADR-0035
+//                                                                 amendment R1, T-DG4-BE-R4)
 //   GET  /transformations/{id}/scale-transitions                  scale transitions of the transformation
 //   POST /transformations/{id}/scale-transitions                  scale one initiative into one business unit (TL)
 //   GET  /transformations/{id}/risk-dispositions[?raidEntryId=]   proposed dispositions with their approval status
@@ -13,13 +17,14 @@
 // approval is a canonical approval of type risk_disposition (requestApprovalInTx, ADR-0026 §4), decided through
 // POST /approvals/{id}/decision by a person other than the proposer. Nothing here approves anything, and nothing reads
 // or writes the engineering delivery gates DG0-DG7.
-import type { ApprovalRow, DbOrTx, Tx } from "@mth/db";
+import { sql, type ApprovalRow, type DbOrTx, type Tx } from "@mth/db";
 import { PROBLEM_TYPES } from "@mth/shared";
 import {
   riskDispositionCreate,
   scaleTransitionCreate,
   type RiskDisposition,
   type ScaleScope,
+  type ScaleScopeBusinessUnit,
   type ScaleTransition,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -47,6 +52,7 @@ import { registerApprovalSubject, requestApprovalInTx } from "./approvals.ts";
 
 const T_BASE = "/api/v1/transformations/:transformationId";
 export const SCALE_SCOPE = `${T_BASE}/scale-scope`;
+export const SCALE_SCOPE_BUSINESS_UNITS = `${SCALE_SCOPE}/business-units`;
 export const SCALE_TRANSITIONS = `${T_BASE}/scale-transitions`;
 export const RISK_DISPOSITIONS = `${T_BASE}/risk-dispositions`;
 export const RISK_DISPOSITION = `${RISK_DISPOSITIONS}/:riskDispositionId`;
@@ -143,6 +149,65 @@ export async function getScaleScope(db: DbOrTx, transformationId: string): Promi
       ownerUserId: c.owner_user_id,
       dueDate: dateText(c.due_date),
     })),
+  };
+}
+
+/**
+ * listScaleScopeBusinessUnits (ADR-0035 amendment R1), one page: from the transformation's organization only, every
+ * `active` unit (the set `assertScaleScopeValid` accepts) plus every unit, whatever its status, that a
+ * `gate_decision_scale_scope` row or a `scale_transition` row of this transformation names. Ordered by `code`, then
+ * `id`, with the `listBusinessUnits` cursor. The caller has passed the transformation read gate.
+ */
+export async function listScaleScopeBusinessUnits(
+  db: DbOrTx,
+  transformationId: string,
+  query: { cursor?: string | undefined; limit: number },
+): Promise<{ items: ScaleScopeBusinessUnit[]; nextCursor: string | null }> {
+  const hash = filterHash({ table: "scale_scope_business_unit", transformationId });
+  const after = decodeCursor(query.cursor, hash, 2);
+  let q = db
+    .selectFrom("business_unit as b")
+    .innerJoin("transformation as t", "t.organization_id", "b.organization_id")
+    .select(["b.id", "b.code", "b.name_en", "b.name_ar", "b.status"])
+    .where("t.id", "=", transformationId)
+    .where((eb) =>
+      eb.or([
+        eb("b.status", "=", "active"),
+        eb(
+          "b.id",
+          "in",
+          eb
+            .selectFrom("gate_decision_scale_scope as s")
+            .select("s.business_unit_id")
+            .where("s.transformation_id", "=", transformationId),
+        ),
+        eb(
+          "b.id",
+          "in",
+          eb
+            .selectFrom("scale_transition as x")
+            .select("x.business_unit_id")
+            .where("x.transformation_id", "=", transformationId),
+        ),
+      ]),
+    );
+  if (after) q = q.where(sql<boolean>`(b.code, b.id) > (${String(after[0])}, ${String(after[1])}::uuid)`);
+  const rows = await q
+    .orderBy("b.code")
+    .orderBy("b.id")
+    .limit(query.limit + 1)
+    .execute();
+  const page = paginate(rows, query.limit, (r) => [r.code, r.id], hash);
+  return {
+    items: page.items.map((r) => ({
+      id: r.id,
+      code: r.code,
+      nameEn: r.name_en,
+      nameAr: r.name_ar,
+      status: r.status as ScaleScopeBusinessUnit["status"],
+      selectable: r.status === "active",
+    })),
+    nextCursor: page.nextCursor,
   };
 }
 
@@ -421,6 +486,13 @@ export function registerScaleRoutes(app: FastifyInstance, { db }: ModuleDeps): s
     return getScaleScope(db, transformationId);
   });
 
+  app.get(SCALE_SCOPE_BUSINESS_UNITS, { config: read }, async (request) => {
+    const { transformationId } = parse(tParams, request.params, "params");
+    const query = parseQuery(pageQuery, request.query);
+    await requireTransformationRead(db, principalOf(request), transformationId);
+    return listScaleScopeBusinessUnits(db, transformationId, query);
+  });
+
   app.get(SCALE_TRANSITIONS, { config: read }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
     const query = parseQuery(pageQuery, request.query);
@@ -494,6 +566,7 @@ export function registerScaleRoutes(app: FastifyInstance, { db }: ModuleDeps): s
 
   return [
     `GET ${SCALE_SCOPE}`,
+    `GET ${SCALE_SCOPE_BUSINESS_UNITS}`,
     `GET ${SCALE_TRANSITIONS}`,
     `POST ${SCALE_TRANSITIONS}`,
     `GET ${RISK_DISPOSITIONS}`,
