@@ -66,6 +66,8 @@ export const WORKSPACE_TABS = [
   { id: "bau", path: "/bau", labelKey: "sustainP4.tab.bau" },
   { id: "improvement", path: "/improvement", labelKey: "sustainP4.tab.improvement" },
   { id: "lessons", path: "/lessons", labelKey: "sustainP4.tab.lessons" },
+  // P4 slice J (T-DG4-FE-G): the transformation's Template 10 dashboard (and its workstream dashboards).
+  { id: "dashboard", path: "/dashboard", labelKey: "dashboards.tab" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 

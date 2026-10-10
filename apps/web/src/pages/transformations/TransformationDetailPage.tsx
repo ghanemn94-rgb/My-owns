@@ -1,38 +1,31 @@
 // Transformation workspace (REQ-S03-011): the header shows the eight elements named in §3 — phase, gate readiness,
-// North Star, owners, outcome health, benefits, key decisions, next required action. Since P2 the header composes gate
-// readiness, the North Star and the open design decisions from the P2 resources (no dedicated header endpoint);
-// elements whose records arrive in later stages show Unknown (never 0 or green). Archive needs a reason and If-Match.
+// North Star, owners, outcome health, benefits, key decisions, next required action. Since P4 (T-DG4-FE-G) the header
+// is components/WorkspaceHeader.tsx, read from getWorkspaceHeader (ADR-0037 §9), each element Unknown where the data
+// is missing (never 0 or green), with the contextual links (RAID, dashboard, KPIs …). Archive needs a reason and If-Match.
 // The workspace tabs lead to the P2 screens (Diagnose, Charter, Define, Design, Decisions, Gates, Evidence).
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useParams } from "react-router";
 import { ApiError, api } from "../../api/client.ts";
-import {
-  keys,
-  useDecisions,
-  useGates,
-  useNorthStar,
-  useTransformation,
-  useTransformationAudit,
-} from "../../api/queries.ts";
+import { keys, useTransformation, useTransformationAudit } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { localName, useForwardArrow, useLocale } from "../../app/locale.ts";
 import { canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
 import { useSessionBoundAction } from "../../auth/sessionBound.ts";
-import { HealthChip, LifecycleChip, Unknown } from "../../components/Badges.tsx";
+import { LifecycleChip, Unknown } from "../../components/Badges.tsx";
 import { Pager, useCursorPager } from "../../components/DataTable.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { ReasonDialog } from "../../components/ReasonDialog.tsx";
-import { GateStatusChip } from "../../components/P2Badges.tsx";
 import { WorkspaceTabs } from "../../components/Workspace.tsx";
+import { WorkspaceHeader } from "../../components/WorkspaceHeader.tsx";
 import { EmptyState, NoPermissionState, QueryState } from "../../components/States.tsx";
 import { describeAuditAction, describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { isNoPermission } from "../../lib/problem.ts";
-import { BusinessUnitName, PhaseStepper, UserName, useBusinessUnitIndex, useTransformationTarget } from "./common.tsx";
+import { BusinessUnitName, UserName, useBusinessUnitIndex, useTransformationTarget } from "./common.tsx";
 
 /**
  * Router state the create page passes to the detail page. It carries the code and name the API returned to the
@@ -225,65 +218,8 @@ function Workspace({ tr }: { tr: Transformation }) {
         </div>
       ) : null}
 
-      <section className="workspace-header card" aria-labelledby="ws-title">
-        <h2 id="ws-title" className="visually-hidden">
-          {t("transformations.workspace.title")}
-        </h2>
-        <div className="workspace-header__phase">
-          <h3 className="workspace-header__label">{t("transformations.workspace.phase")}</h3>
-          <PhaseStepper current={tr.currentPhase} entry={tr.entryPhase} />
-        </div>
-        <dl className="workspace-header__grid">
-          <div>
-            <dt>{t("transformations.workspace.gateReadiness")}</dt>
-            <dd>
-              <HeaderGate tr={tr} />
-            </dd>
-          </div>
-          <div>
-            <dt>{t("transformations.workspace.northStar")}</dt>
-            <dd>
-              <HeaderNorthStar tid={tr.id} />
-            </dd>
-          </div>
-          <div>
-            <dt>{t("transformations.workspace.owners")}</dt>
-            <dd>
-              <span className="block">
-                {t("transformations.field.sponsor")}: <UserName id={tr.sponsorUserId} />
-              </span>
-              <span className="block">
-                {t("transformations.field.lead")}: <UserName id={tr.leadUserId} />
-              </span>
-            </dd>
-          </div>
-          <div>
-            <dt>{t("transformations.workspace.outcomeHealth")}</dt>
-            <dd>
-              <HealthChip health="unknown" />
-            </dd>
-          </div>
-          <div>
-            <dt>{t("transformations.workspace.benefits")}</dt>
-            <dd>
-              <Unknown hint={t("transformations.workspace.laterStage")} />
-            </dd>
-          </div>
-          <div>
-            <dt>{t("transformations.workspace.keyDecisions")}</dt>
-            <dd>
-              <HeaderDecisions tid={tr.id} />
-            </dd>
-          </div>
-          <div>
-            <dt>{t("transformations.workspace.nextAction")}</dt>
-            <dd>
-              <Unknown hint={t("transformations.workspace.laterStage")} />
-            </dd>
-          </div>
-        </dl>
-        <p className="muted small">{t("transformations.workspace.unknownNote")}</p>
-      </section>
+      {/* REQ-S03-011 (T-DG4-FE-G): the eight elements from getWorkspaceHeader, and the contextual links. */}
+      <WorkspaceHeader tid={tr.id} currentPhase={tr.currentPhase} entryPhase={tr.entryPhase} />
 
       <section className="card" aria-labelledby="details-title">
         <h2 id="details-title" className="card__title">
@@ -367,59 +303,6 @@ function Workspace({ tr }: { tr: Transformation }) {
         />
       ) : null}
     </>
-  );
-}
-
-/** The product gate that closes the current phase (G1 Diagnose … G6 Realize), with its live readiness. */
-const PHASE_GATE: Record<string, string> = {
-  diagnose: "G1",
-  define: "G2",
-  design: "G3",
-  mobilize: "G4",
-  transform: "G5",
-  realize: "G6",
-};
-
-function HeaderGate({ tr }: { tr: Transformation }) {
-  const { t } = useTranslation();
-  const gates = useGates(tr.id);
-  const code = PHASE_GATE[tr.currentPhase] ?? "G1";
-  const view = gates.data?.items.find((g) => g.definition.code === code);
-  if (gates.isPending) return <span className="muted">{t("common.state.loading")}</span>;
-  if (!view) return <Unknown hint={t("transformations.workspace.notVisible")} />;
-  const mandatory = view.criteria.filter((c) => c.mandatory);
-  const complete = mandatory.filter((c) => c.completeness === "complete").length;
-  return (
-    <span className="block">
-      <Link className="link" to={`/transformations/${tr.id}/gates/${code}`}>
-        {code}
-      </Link>{" "}
-      <GateStatusChip status={view.gate.status} />
-      <span className="block small">
-        {view.submissionEnabled ? t("gates.readiness", { complete, total: mandatory.length }) : t("gates.notEnabled")}
-      </span>
-    </span>
-  );
-}
-
-function HeaderNorthStar({ tid }: { tid: string }) {
-  const { t } = useTranslation();
-  const ns = useNorthStar(tid);
-  if (ns.isPending) return <span className="muted">{t("common.state.loading")}</span>;
-  if (ns.isError) return <Unknown hint={t("transformations.workspace.notVisible")} />;
-  return ns.data ? <q>{ns.data.statement}</q> : <Unknown hint={t("define.northStar.notSet")} />;
-}
-
-function HeaderDecisions({ tid }: { tid: string }) {
-  const { t } = useTranslation();
-  const decisions = useDecisions(tid, "design");
-  if (decisions.isPending) return <span className="muted">{t("common.state.loading")}</span>;
-  if (decisions.isError) return <Unknown hint={t("transformations.workspace.notVisible")} />;
-  const open = decisions.data.filter((d) => d.status === "open").length;
-  return (
-    <Link className="link" to={`/transformations/${tid}/decisions`}>
-      {t("transformations.workspace.openDecisions", { n: open, total: decisions.data.length })}
-    </Link>
   );
 }
 

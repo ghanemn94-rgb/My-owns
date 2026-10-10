@@ -1,0 +1,392 @@
+{
+  "tab": "لوحة المؤشرات (T10)",
+  "rag": {
+    "green": "أخضر",
+    "amber": "كهرماني",
+    "red": "أحمر",
+    "unknown": "غير معروف",
+    "stale": "قديم",
+    "not_applicable": "لا ينطبق"
+  },
+  "state": {
+    "zero": "صفر معروف",
+    "unknown": "غير معروف",
+    "stale": "قديم",
+    "not_applicable": "لا ينطبق",
+    "lastKnown": "آخر قيمة معروفة"
+  },
+  "policySource": {
+    "default": "حدود افتراضية",
+    "configured": "حدود مُعدّة"
+  },
+  "rule": {
+    "dashboard__rag__outcomes__trajectory": "النتائج: أسوأ حالة لمؤشر أداء النتيجة مقابل مساره المستهدف.",
+    "dashboard__rag__outcomes__none": "غير معروف: لا توجد نتيجة نشطة لها مؤشر أداء ضمن النطاق.",
+    "dashboard__rag__value__validated_gap": "القيمة: القيمة المعتمدة مقابل القيمة المخططة حتى تاريخه.",
+    "dashboard__rag__value__nothing_due": "لا ينطبق: لا توجد منفعة مالية محتسبة لها مبلغ مخطط مستحق.",
+    "dashboard__rag__portfolio__milestone_outcome": "المحفظة: أسوأ انزلاق في المعالم الرئيسية لأهم المبادرات.",
+    "dashboard__rag__portfolio__none": "لا ينطبق: لا توجد مبادرة مختارة أو مموّلة أو مُطلقة أو مكتملة.",
+    "dashboard__rag__dependencies__needed_by_critical_path": "الاعتماديات: اعتماديات مفتوحة مطلوبة قريبًا أو على المسار الحرج.",
+    "dashboard__rag__dependencies__none_open": "أخضر: لا توجد اعتمادية مفتوحة.",
+    "dashboard__rag__decisions__overdue": "القرارات: قرار مفتوح واحد على الأقل تجاوز تاريخ القرار.",
+    "dashboard__rag__decisions__due": "القرارات: قرارات مفتوحة مستحقة قريبًا.",
+    "dashboard__rag__decisions__none_open": "أخضر: لا يوجد قرار تنفيذي مفتوح.",
+    "dashboard__rag__adoption__curve": "الأفراد والتبنّي: أسوأ مؤشر تبنٍّ مقابل منحناه.",
+    "dashboard__rag__adoption__no_indicators": "غير معروف: لا يوجد مؤشر تبنٍّ مرتبط.",
+    "dashboard__rag__workstream_not_applicable": "لا ينطبق: يُعرض هذا المجال على مستوى التحوّل، لا لكل مسار عمل.",
+    "dashboard__value__gap_ratio": "فجوة القيمة = (المخطط المستحق حتى تاريخه - المعتمد) / المخطط المستحق حتى تاريخه.",
+    "dashboard__value__sum_investment": "الاستثمار = مجموع بنود الميزانية المعتمدة.",
+    "dashboard__finance__pending_validation": "قيم بانتظار اعتماد الإدارة المالية.",
+    "other": "قاعدة غير مدرجة في هذا الإصدار."
+  },
+  "reason": {
+    "dashboard__value__nothing_planned": "لا ينطبق: لا يوجد شيء مخطط حتى تاريخه.",
+    "dashboard__value__no_financial_benefit": "لا ينطبق: لا توجد منفعة مالية.",
+    "dashboard__value__multiple_currencies": "لا ينطبق: القيم بأكثر من عملة ولا تُحوَّل أبدًا.",
+    "dashboard__portfolio__no_allocated_value": "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة.",
+    "dashboard__portfolio__no_approved_milestone": "غير معروف: ليس للمبادرة تاريخ معلم معتمد.",
+    "dashboard__portfolio__milestone_overdue": "أحمر: معلم تجاوز تاريخه المعتمد ولم يتحقق.",
+    "dashboard__portfolio__milestone_slip": "انزلق معلم عن تاريخه المعتمد.",
+    "dashboard__kpi__no_period_in_window": "غير معروف: لا تقع أي فترة تقارير ضمن النطاق الزمني المحدد.",
+    "benefit__value_amount_missing": "غير معروف: مبلغ قيمة مفقود.",
+    "benefit__cost_amount_missing": "غير معروف: مبلغ تكلفة مفقود.",
+    "benefit__overlap_open": "غير معروف: تداخل مع منفعة أخرى ما زال مفتوحًا، لذا تُحجب القيمة.",
+    "benefit__non_financial": "لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية.",
+    "benefit__not_counted": "غير محتسبة: تُحتسب هذه المنفعة من خلال سجل آخر.",
+    "kpi__no_accepted_actual": "غير معروف: لا توجد قيمة فعلية مقبولة لهذه الفترة.",
+    "kpi__no_active_version": "غير معروف: ليس لمؤشر الأداء إصدار نشط.",
+    "kpi__no_approved_trajectory": "غير معروف: ليس لمؤشر الأداء مسار معتمد.",
+    "kpi__before_trajectory": "غير معروف: الفترة تسبق بداية المسار.",
+    "kpi__calculation_pending": "غير معروف: الحساب قيد الانتظار.",
+    "kpi__stale": "قديم: آخر قيمة فعلية أقدم مما يسمح به تواتر المؤشر.",
+    "kpi__rag__no_actual": "غير معروف: لا توجد قيمة فعلية للمقارنة بالمسار.",
+    "kpi__rag__before_trajectory": "غير معروف: الفترة تسبق بداية المسار.",
+    "kpi__rag__not_computable": "غير قابل للحساب: لا يمكن حساب الحالة من البيانات.",
+    "other": "سبب غير مدرج في هذا الإصدار."
+  },
+  "headline": {
+    "dashboard__headline__value_planned": "القيمة المخططة",
+    "dashboard__headline__value_forecast": "القيمة المتوقعة",
+    "dashboard__headline__value_submitted": "القيمة المقدَّمة",
+    "dashboard__headline__value_validated": "القيمة المعتمدة",
+    "dashboard__headline__value_gap": "فجوة القيمة",
+    "dashboard__headline__value_investment": "الاستثمار",
+    "dashboard__headline__outcome_kpis": "مؤشرات أداء النتائج",
+    "dashboard__headline__top_initiatives": "أهم المبادرات",
+    "dashboard__headline__open_dependencies": "الاعتماديات المفتوحة",
+    "dashboard__headline__open_decisions": "القرارات المفتوحة",
+    "dashboard__headline__overdue_decisions": "القرارات المتأخرة",
+    "dashboard__headline__adoption_indicators": "مؤشرات التبنّي",
+    "dashboard__finance__pending_validation": "قيم بانتظار اعتماد الإدارة المالية",
+    "other": "رقم"
+  },
+  "flag": {
+    "overdue": "متأخر",
+    "due_soon": "مستحق قريبًا",
+    "no_due_date": "لا يوجد تاريخ استحقاق (غير معروف)",
+    "calendar_not_configured": "لم يُعدّ تقويم أعمال",
+    "at_risk": "معرّض للخطر",
+    "critical_path": "على المسار الحرج",
+    "critical_path_not_computable": "المسار الحرج غير قابل للحساب",
+    "decision_overdue": "القرار المرتبط متأخر",
+    "needed_by_passed": "تجاوز تاريخ الحاجة",
+    "non_financial": "غير مالية (لا ينطبق)",
+    "not_counted": "غير محتسبة",
+    "overlap_open": "تداخل مفتوح",
+    "override_in_force": "تجاوز ساري",
+    "no_kpi": "لا يوجد مؤشر أداء (غير معروف)",
+    "other": "ملاحظة: {{flag}}",
+    "prefix": {
+      "calculated": "المحسوب: {{status}}",
+      "milestone": "المعلم: {{status}}",
+      "outcome": "النتيجة: {{status}}",
+      "target": "الهدف: {{kind}}"
+    }
+  },
+  "targetKind": {
+    "transformation": "التحوّل",
+    "outcome": "النتيجة",
+    "initiative": "مبادرة",
+    "stakeholder_group": "مجموعة أصحاب المصلحة"
+  },
+  "recordType": {
+    "benefit": "منفعة",
+    "outcome": "النتيجة",
+    "outcome_kpi": "مؤشر أداء النتيجة",
+    "kpi_definition": "مؤشر الأداء الرئيسي",
+    "kpi_actual": "قيمة فعلية لمؤشر الأداء",
+    "kpi_version": "إصدار مؤشر الأداء",
+    "initiative": "مبادرة",
+    "dependency": "اعتمادية",
+    "executive_decision": "قرار تنفيذي",
+    "benefit_measurement": "قياس المنفعة",
+    "benefit_plan_value": "القيمة المخططة",
+    "business_case_line": "بند دراسة الجدوى",
+    "business_case": "دراسة الجدوى",
+    "action_item": "إجراء",
+    "agenda_item": "بند جدول الأعمال",
+    "assessment_form": "نموذج التقييم",
+    "bau_handover": "التسليم إلى العمليات الاعتيادية",
+    "change_request": "طلب تغيير",
+    "diagnostic_finding": "نتيجة التشخيص",
+    "journey": "رحلة",
+    "lesson": "درس مستفاد",
+    "meeting_minutes": "محضر الاجتماع",
+    "target_trajectory": "المسار المستهدف",
+    "tom_canvas_cell": "خانة لوحة نموذج التشغيل المستهدف",
+    "transition_decision": "قرار الانتقال",
+    "work_item": "مهمة",
+    "adoption_metric_link": "مؤشر التبنّي"
+  },
+  "valueClass": {
+    "revenue_uplift": "زيادة الإيرادات",
+    "margin_uplift": "زيادة الهامش",
+    "cash_saving": "وفر نقدي",
+    "avoided_cost": "تكلفة متجنَّبة",
+    "working_capital_release": "تحرير رأس المال العامل",
+    "non_financial": "غير مالية",
+    "non_financial_valued": "غير مالية (مقيَّمة)",
+    "gross": "الإجمالي",
+    "net": "الصافي (الإجمالي - تكلفة التنفيذ)"
+  },
+  "lineState": {
+    "planned": "مخطط",
+    "forecast": "متوقع (غير محقق)",
+    "measured": "مقاس",
+    "submitted": "مقدَّم (بانتظار الإدارة المالية)",
+    "validated": "معتمد من الإدارة المالية",
+    "rejected": "مرفوض",
+    "sustained": "مستدام"
+  },
+  "frequency": {
+    "daily": "يومي",
+    "weekly": "أسبوعي",
+    "monthly": "شهري",
+    "quarterly": "ربع سنوي",
+    "annual": "سنوي",
+    "ad_hoc": "حسب الحاجة"
+  },
+  "evidenceStatus": {
+    "verified": "موثَّق",
+    "unverified": "غير موثَّق",
+    "rejected": "مرفوض"
+  },
+  "window": {
+    "range": "النطاق من {{start}} إلى {{end}}",
+    "asOf": "حتى تاريخ {{date}}",
+    "open": "مفتوح",
+    "toDate": "النطاق: حتى تاريخه"
+  },
+  "generatedAt": "محسوبة من السجلات في {{when}}؛ لا يُخزَّن أي رقم.",
+  "refresh": "تحديث",
+  "link": {
+    "notOpened": "تعذّر فتح هذا السجل."
+  },
+  "area": {
+    "ragLogic": "منطق الحالة",
+    "arProvisional": "التسميات العربية مؤقتة. المصدر:",
+    "noHeadline": "لا يوجد رقم رئيسي لهذا المجال.",
+    "noItems": "لا توجد سجلات في هذا المجال.",
+    "itemsCaption": "السجلات في هذا المجال",
+    "showAll": "عرض جميع السجلات ({{n}})",
+    "showFewer": "عرض أقل"
+  },
+  "item": {
+    "record": "السجل",
+    "status": "الحالة",
+    "value": "القيمة",
+    "due": "الاستحقاق"
+  },
+  "rows": {
+    "title": "حسب التحوّل",
+    "intro": "كل تحوّل ضمن النطاق مع حالات مجالاته الستة.",
+    "caption": "حالة المجال لكل تحوّل",
+    "transformation": "التحوّل",
+    "empty": "لا يوجد تحوّل ضمن النطاق.",
+    "sortBy": "الترتيب حسب",
+    "code": "الرمز",
+    "name": "الاسم"
+  },
+  "drill": {
+    "open": "التفاصيل",
+    "column": "التفاصيل",
+    "title": "التفاصيل: {{title}}",
+    "value": "القيمة الرئيسية",
+    "period": "الفترة",
+    "calculation": "الحساب",
+    "rounded": "مقرّبة للعرض؛ تقارن الحالة القيمة الدقيقة.",
+    "inputs": "المدخلات",
+    "records": "السجلات المساهمة",
+    "noRecords": "لا يوجد سجل مساهم.",
+    "evidence": "الأدلة",
+    "noEvidence": "لا توجد أدلة مرتبطة.",
+    "page": "الصفحة {{n}}",
+    "close": "إغلاق"
+  },
+  "filter": {
+    "title": "مرشحات لوحة المؤشرات",
+    "period": "الفترة",
+    "allTime": "كل الفترات (حتى تاريخه)",
+    "businessUnit": "وحدة العمل",
+    "owner": "المالك",
+    "ownerOther": "مستخدم آخر",
+    "phase": "المرحلة",
+    "status": "الحالة",
+    "clear": "مسح المرشحات",
+    "periodsUnavailable": "فترات التقارير غير مرئية لك، لذا مرشح الفترة غير متاح.",
+    "unitsUnavailable": "وحدات العمل غير مرئية لك، لذا مرشح الوحدة غير متاح.",
+    "blocked": {
+      "none": "لا يمكنك قراءة أي تحوّل في وحدة العمل هذه، لذا لا يوجد ما يُعرض. اختر وحدة أخرى أو امسح المرشح.",
+      "too_many": "لوحدة العمل هذه أكثر من 50 تحوّلًا يمكنك قراءتها؛ تقبل لوحة المؤشرات 50 كحد أقصى. ضيّق المرشح حسب المرحلة أو الحالة، أو افتح لوحات التحوّلات نفسها."
+    }
+  },
+  "hub": {
+    "title": "لوحات المؤشرات",
+    "intro": "ست لوحات مؤشرات تُحسب من السجلات عند كل طلب. يتيح كل رقم رئيسي الاطلاع على سجلاته وفترته وحسابه وأدلته؛ ويُعرض الصفر وغير المعروف وما لا ينطبق بشكل مختلف."
+  },
+  "kind": {
+    "executive": {
+      "title": "نظرة عامة تنفيذية",
+      "summary": "مجالات النموذج 10 الستة لكل تحوّل يمكنك قراءته."
+    },
+    "transformation": {
+      "title": "لوحة مؤشرات التحوّل",
+      "summary": "لوحة النموذج 10 لتحوّل واحد."
+    },
+    "workstream": {
+      "title": "لوحة مؤشرات مسار العمل",
+      "summary": "النتائج والقيمة والمحفظة والاعتماديات لمبادرات مسار عمل واحد."
+    },
+    "finance": {
+      "title": "لوحة المؤشرات المالية",
+      "summary": "القيمة حسب الفئة والحالة والعملة؛ الإجمالي وتكلفة التنفيذ والصافي؛ قائمة الإدارة المالية."
+    },
+    "adoption": {
+      "title": "لوحة مؤشرات التبنّي",
+      "summary": "الأفراد والتبنّي: كل مؤشر مرتبط مع حالته، والتدخلات المفتوحة."
+    },
+    "personal": {
+      "title": "لوحة عملي",
+      "summary": "إجراءاتك ومسوداتك ومراجعاتك وموافقاتك وتحديثاتك الناقصة ومواعيدك القادمة."
+    }
+  },
+  "chooser": {
+    "transformation": "اختر تحوّلًا لفتح لوحة مؤشراته.",
+    "workstream": "اختر تحوّلًا؛ تعرض لوحة مؤشراته مسارات العمل الخاصة به.",
+    "empty": "لا يوجد تحوّل يمكنك قراءته."
+  },
+  "overview": {
+    "intro": "النتائج والقيمة والمبادرات الحرجة والتبنّي والعوائق والقرارات للتحوّلات التي يمكنك قراءتها.",
+    "allDashboards": "جميع لوحات المؤشرات",
+    "count": "التحوّلات ضمن النطاق: {{count}}",
+    "emptyScope": "لا يطابق أي تحوّل المرشحات، أو لا يوجد تحوّل مرئي لك. تعرض المجالات أدناه غير معروف أو لا ينطبق، وليس الأخضر أبدًا."
+  },
+  "transformation": {
+    "intro": "مجالات النموذج 10 الستة، لكل منها منطق حالة خاص. اختر رقمًا رئيسيًا لعرض سجلاته وفترته وحسابه وأدلته."
+  },
+  "workstream": {
+    "intro": "المجالات لمبادرات مسار العمل هذا النشطة. تُعرض القرارات والأفراد والتبنّي على مستوى التحوّل.",
+    "pick": "افتح لوحة مؤشرات مسار عمل واحد.",
+    "none": "لا يوجد لهذا التحوّل مسار عمل نشط.",
+    "back": "العودة إلى لوحة مؤشرات التحوّل"
+  },
+  "finance": {
+    "headlines": "الأرقام الرئيسية",
+    "pendingCount": "القياسات بانتظار اعتماد الإدارة المالية: {{count}}",
+    "openQueue": "فتح قائمة الاعتماد المالي",
+    "nonFinancial": "المنافع غير المالية: {{count}}. قيمتها النقدية",
+    "perClass": "القيمة حسب الفئة والحالة والعملة",
+    "perClassIntro": "لكل حالة سطرها الخاص ولا تُجمع مع حالة أخرى؛ ولا تُحوَّل العملات أبدًا. لا يُحتسب المتوقع كمحقق أبدًا.",
+    "grossNet": "الإجمالي وتكلفة التنفيذ والصافي",
+    "grossNetIntro": "الصافي = الإجمالي - تكلفة التنفيذ، لكل عملة. أي مبلغ مفقود يجعله غير معروف، وليس 0 أبدًا.",
+    "implementationCost": "تكلفة التنفيذ",
+    "valueClass": "فئة القيمة",
+    "measure": "المقياس",
+    "state": "الحالة",
+    "currency": "العملة",
+    "total": "المجموع",
+    "noDrill": "لا تفاصيل لهذا السطر",
+    "noLines": "لا يوجد سطر قيمة مالية",
+    "noLinesBody": "لا توجد منفعة مالية محتسبة ضمن النطاق.",
+    "noNet": "لا يوجد سطر إجمالي أو صافٍ",
+    "noNetBody": "يتطلب الإجمالي والصافي منفعة مالية؛ ومع مرشح المالك لا يُعرض سطر صافٍ لأن بنود التكلفة ليس لها مالك.",
+    "valueStatus": "القيمة"
+  },
+  "adoption": {
+    "indicator": "المؤشر",
+    "indicators": "مؤشرات التبنّي المرتبطة",
+    "target": "مرتبط بـ",
+    "interventions": "التدخلات المفتوحة: {{count}}",
+    "noIndicators": "لا يوجد مؤشر تبنٍّ مرتبط",
+    "noIndicatorsBody": "يبقى مجال الأفراد والتبنّي غير معروف حتى يُربط مؤشر بمؤشر أداء."
+  },
+  "personal": {
+    "openMyWork": "فتح عملي (المهام والتذكيرات)"
+  },
+  "myWork": {
+    "unavailable": "تعذّر تحميل أقسام عملك.",
+    "sectionsNav": "أقسام عملي",
+    "deadlines": "المواعيد القادمة",
+    "deadlinesIntro": "العناصر المفتوحة المستحقة خلال {{n}} أيام عمل من {{date}}؛ ويُشار إلى المتأخرة.",
+    "noDeadlines": "لا توجد مواعيد قادمة.",
+    "overdue": "متأخر",
+    "item": "العنصر",
+    "source": "المصدر",
+    "due": "الاستحقاق",
+    "total": "العناصر: {{count}} (المعروض: {{shown}})",
+    "sectionEmpty": "لا يوجد شيء هنا",
+    "loadMore": "تحميل المزيد",
+    "draftLabel": "مسودة – غير مقدَّمة",
+    "draftText": "مسودة {{type}} {{code}}",
+    "sourceValue": {
+      "work_item": "مهمة",
+      "action_item": "إجراء",
+      "draft": "مسودتك"
+    },
+    "section": {
+      "assigned_actions": "الإجراءات المسندة",
+      "drafts": "المسودات",
+      "reviews": "المراجعات",
+      "approvals": "الموافقات",
+      "missing_updates": "التحديثات الناقصة",
+      "other": "أخرى"
+    },
+    "sectionIntro": {
+      "assigned_actions": "الإجراءات والمهام المسندة إليك.",
+      "drafts": "السجلات التي بدأتها ولم تقدّمها.",
+      "reviews": "سجلات بانتظار مراجعتك.",
+      "approvals": "الموافقات والقرارات التجارية بانتظارك.",
+      "missing_updates": "التحديثات المطلوبة منك: القيم الفعلية لمؤشرات الأداء ومتابعة المنافع والمراجعات وفحوص الضوابط.",
+      "other": "إشعارات ومهام أخرى."
+    }
+  },
+  "header": {
+    "linksLabel": "فتح سجلات هذا التحوّل",
+    "link": {
+      "raid": "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)",
+      "dashboard": "لوحة المؤشرات (T10)",
+      "kpis": "مؤشرات الأداء الرئيسية",
+      "benefits": "سجل المنافع",
+      "decisions": "القرارات التنفيذية (T16)",
+      "gates": "البوابات"
+    },
+    "gateUnknown": "جاهزية البوابة الحالية غير متاحة",
+    "gateReady": "جميع المعايير الإلزامية مكتملة أو مغطاة.",
+    "gateMissing": "المعايير الإلزامية الناقصة: {{count}}",
+    "gateCriteria": "معايير البوابة",
+    "noOwner": "غير محدد",
+    "outcomeCount": "{{status}}: العدد {{count}}",
+    "noBenefit": "لا توجد منفعة نشطة",
+    "planned": "المخطط حتى تاريخه",
+    "validated": "المعتمد حتى تاريخه",
+    "benefitCount": "المنافع: {{count}}",
+    "nonFinancial": "غير مالية (القيمة لا تنطبق): {{count}}",
+    "noOpenDecisions": "لا يوجد قرار تنفيذي مفتوح.",
+    "overdueDecisions": "القرارات المتأخرة: {{count}}",
+    "noOverdueDecisions": "لا يوجد قرار متأخر.",
+    "noNextAction": "لا توجد مهمة مفتوحة لك في هذا التحوّل.",
+    "unavailable": "تعذّرت قراءة ملخص مساحة العمل؛ يُعرض كل عنصر على أنه غير معروف.",
+    "unknownNote": "غير معروف يعني أن البيانات مفقودة أو غير مرئية لك؛ ولا يُعرض أبدًا على أنه 0 أو أخضر.",
+    "designDecisions": "قرارات التصميم"
+  }
+}

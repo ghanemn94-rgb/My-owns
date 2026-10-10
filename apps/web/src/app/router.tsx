@@ -36,6 +36,12 @@ import {
   TransformationFinanceQueuePage,
 } from "../pages/finance-validation/FinanceValidationPages.tsx";
 import { MyWorkPage } from "../pages/my-work/MyWorkPage.tsx";
+import { DashboardPage, DashboardsHubPage } from "../pages/dashboards/DashboardsPage.tsx";
+import {
+  TransformationDashboardPage,
+  WorkstreamDashboardPage,
+} from "../pages/dashboards/TransformationDashboardPage.tsx";
+import { ExecutiveOverviewPage } from "../pages/executive-overview/ExecutiveOverviewPage.tsx";
 import { ActionItemPage, ActionsPage } from "../pages/actions/ActionsPage.tsx";
 import {
   EscalationsPage,
@@ -122,8 +128,8 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   { path: "transformations/:id/change-requests", feature: "changeRequests", owner: "FE-F" },
   { path: "transformations/:id/change-requests/:changeRequestId", feature: "changeRequest", owner: "FE-F" },
   { path: "transformations/:id/closure", feature: "closure", owner: "FE-F" },
-  // FE-G (slices J and K: dashboards, traceability; Executive Overview is the planned area page until then)
-  { path: "dashboards/:kind", feature: "dashboards", owner: "FE-G" },
+  // FE-G (slices J and K): the six dashboards and the Executive Overview are built by T-DG4-FE-G, see the routes below;
+  // traceability is FE-G2's.
   { path: "transformations/:id/traceability", feature: "traceability", owner: "FE-G" },
 ];
 
@@ -213,6 +219,13 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/improvement", element: <ImprovementPage /> },
       { path: "transformations/:id/lessons", element: <LessonsPage /> },
       { path: "lessons", element: <LessonSearchPage /> },
+      // P4 slice J: the six dashboards, the Executive Overview and the workstream dashboard (T-DG4-FE-G; p4-work-split
+      // §J+K JK.7). The transformation dashboard is a workspace tab; /dashboards/executive opens the Executive Overview.
+      { path: "executive-overview", element: <ExecutiveOverviewPage /> },
+      { path: "dashboards", element: <DashboardsHubPage /> },
+      { path: "dashboards/:kind", element: <DashboardPage /> },
+      { path: "transformations/:id/dashboard", element: <TransformationDashboardPage /> },
+      { path: "transformations/:id/workstreams/:workstreamId/dashboard", element: <WorkstreamDashboardPage /> },
       { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },
       {
         path: "transformations/:id/finance-validations/:financeValidationId",
