@@ -16,6 +16,7 @@ import type {
   AdoptionMetricLink,
   AdoptionPlan,
   AssessmentForm,
+  AssessmentFormVersion,
   AssessmentInvitation,
   AssessmentRecord,
   ChampionConstraint,
@@ -35,6 +36,7 @@ export type {
   AdoptionMetricLink,
   AdoptionPlan,
   AssessmentForm,
+  AssessmentFormVersion,
   AssessmentInvitation,
   AssessmentRecord,
   ChampionConstraint,
@@ -68,6 +70,8 @@ export const adoptionPaths = {
   indicators: (tid: string) => `${tBase(tid)}/adoption-indicators`, // getAdoptionIndicators
   forms: (tid: string) => `${tBase(tid)}/assessment-forms`, // listAssessmentForms / createAssessmentForm
   form: (tid: string, id: string) => `${tBase(tid)}/assessment-forms/${id}`, // getAssessmentForm / updateAssessmentForm
+  formVersion: (tid: string, id: string, versionNo: number) =>
+    `${tBase(tid)}/assessment-forms/${id}/versions/${versionNo}`, // getAssessmentFormVersion
   formPublish: (tid: string, id: string) => `${tBase(tid)}/assessment-forms/${id}/publish`, // publishAssessmentForm
   formRetire: (tid: string, id: string) => `${tBase(tid)}/assessment-forms/${id}/retire`, // retireAssessmentForm
   invitations: (tid: string, formId: string) => `${tBase(tid)}/assessment-forms/${formId}/invitations`, // listAssessmentInvitations / createAssessmentInvitations
@@ -190,6 +194,21 @@ export function useAssessmentForm(tid: string, id: string) {
     queryFn: () => api.get<AssessmentForm>(adoptionPaths.form(tid, id)),
     enabled: Boolean(tid && id),
     ...opts,
+  });
+}
+
+/**
+ * One append-only question version of a form (getAssessmentFormVersion; ARCH-R3, ADR-0033 amendment V1; T-DG4-FE-R3):
+ * the version an assessment record was answered on, whatever the form's current version is now. A version row never
+ * changes, so it is cached without a refresh interval.
+ */
+export function useAssessmentFormVersion(tid: string, formId: string, versionNo: number) {
+  return useQuery({
+    queryKey: p4Keys.area("adoption", tid, "form-version", formId, versionNo),
+    queryFn: () => api.get<AssessmentFormVersion>(adoptionPaths.formVersion(tid, formId, versionNo)),
+    enabled: Boolean(tid && formId && versionNo > 0),
+    ...opts,
+    staleTime: Infinity,
   });
 }
 
