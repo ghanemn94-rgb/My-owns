@@ -22,7 +22,16 @@ export type AreaWorkspaceTab =
   | "decision-rights"
   | "raci"
   | "role-mappings"
-  | "transform-readiness";
+  | "transform-readiness"
+  // P4 slices A, B, E and D (T-DG4-FE-D; D-109 carry-forward: KPI and benefit screens reachable from the areas).
+  | "kpis"
+  | "benefits"
+  | "raid"
+  | "actions"
+  | "corrective-actions"
+  | "forums"
+  | "meetings"
+  | "executive-decisions";
 
 export type AreaId =
   | "myWork"
@@ -58,7 +67,13 @@ export const NAV_AREAS: readonly NavArea[] = [
   { id: "executive", path: "/executive-overview", availability: "planned" },
   { id: "transformations", path: "/transformations", availability: "available" },
   { id: "playbook", path: "/playbook", availability: "planned" },
-  { id: "strategy", path: "/strategy-kpis", availability: "partial", workspaceTab: "define" },
+  {
+    id: "strategy",
+    path: "/strategy-kpis",
+    availability: "partial",
+    workspaceTab: "define",
+    moreWorkspaceTabs: ["kpis"],
+  },
   { id: "tom", path: "/target-operating-model", availability: "partial", workspaceTab: "design" },
   { id: "initiatives", path: "/initiatives-roadmaps", availability: "partial", workspaceTab: "portfolio" },
   {
@@ -66,10 +81,24 @@ export const NAV_AREAS: readonly NavArea[] = [
     path: "/governance",
     availability: "partial",
     workspaceTab: "gates",
-    moreWorkspaceTabs: ["decision-rights", "raci", "role-mappings", "transform-readiness"],
+    moreWorkspaceTabs: [
+      "decision-rights",
+      "raci",
+      "role-mappings",
+      "transform-readiness",
+      "forums",
+      "meetings",
+      "executive-decisions",
+    ],
   },
   { id: "risks", path: "/risks-actions", availability: "planned" },
-  { id: "benefits", path: "/benefits-finance", availability: "partial", workspaceTab: "business-cases" },
+  {
+    id: "benefits",
+    path: "/benefits-finance",
+    availability: "partial",
+    workspaceTab: "business-cases",
+    moreWorkspaceTabs: ["benefits"],
+  },
   { id: "change", path: "/change-adoption", availability: "planned" },
   { id: "evidence", path: "/evidence-reports", availability: "partial", workspaceTab: "evidence" },
   { id: "bau", path: "/bau-improvement", availability: "planned" },
@@ -81,7 +110,24 @@ export const NAV_AREAS: readonly NavArea[] = [
  * area's own label, so "My Work" still names exactly one link. `requiresAny` is a UI hint only: the server decides.
  */
 export interface NavSubPage {
-  readonly id: "myWorkItems" | "approvals" | "delegations" | "calendar" | "jobs" | "groups";
+  readonly id:
+    | "myWorkItems"
+    | "approvals"
+    | "delegations"
+    | "calendar"
+    | "jobs"
+    | "groups"
+    // T-DG4-FE-D: area entry pages that list the transformations and open the matching workspace tab.
+    | "kpis"
+    | "benefitsRegister"
+    | "raid"
+    | "actions"
+    | "correctiveActions"
+    | "forums"
+    | "meetings"
+    | "executiveDecisions";
+  /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
+  readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
   readonly path: string;
   readonly requiresAny?: readonly Permission[];
@@ -94,4 +140,23 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "calendar", area: "admin", path: "/admin/calendar", requiresAny: ["organization.read"] },
   { id: "jobs", area: "admin", path: "/admin/jobs", requiresAny: ["job.read"] },
   { id: "groups", area: "governance", path: "/governance/groups", requiresAny: ["organization.read"] },
+  // T-DG4-FE-D (D-109 carry-forward): the KPI, benefit, RAID and governance screens of each transformation.
+  { id: "kpis", area: "strategy", path: "/strategy-kpis/kpis", workspaceTab: "kpis" },
+  { id: "benefitsRegister", area: "benefits", path: "/benefits-finance/benefits", workspaceTab: "benefits" },
+  { id: "raid", area: "risks", path: "/risks-actions/raid", workspaceTab: "raid" },
+  { id: "actions", area: "risks", path: "/risks-actions/actions", workspaceTab: "actions" },
+  {
+    id: "correctiveActions",
+    area: "risks",
+    path: "/risks-actions/corrective-actions",
+    workspaceTab: "corrective-actions",
+  },
+  { id: "forums", area: "governance", path: "/governance/forums", workspaceTab: "forums" },
+  { id: "meetings", area: "governance", path: "/governance/meetings", workspaceTab: "meetings" },
+  {
+    id: "executiveDecisions",
+    area: "governance",
+    path: "/governance/executive-decisions",
+    workspaceTab: "executive-decisions",
+  },
 ];
