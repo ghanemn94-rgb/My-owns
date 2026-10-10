@@ -49,6 +49,17 @@ import { CorrectiveActionsPage, CorrectiveCasePage, CorrectiveRulesPage } from "
 import { RaidDecisionLogPage } from "../pages/raid/DecisionLogPage.tsx";
 import { RaidPage } from "../pages/raid/RaidPage.tsx";
 import { RaciPage } from "../pages/raci/RaciPage.tsx";
+import { AdoptionPage } from "../pages/adoption/AdoptionPage.tsx";
+import { FormPage, FormsPage } from "../pages/adoption/FormsPage.tsx";
+import { IndicatorsPage } from "../pages/adoption/IndicatorsPage.tsx";
+import { InterventionPage, InterventionsPage } from "../pages/adoption/InterventionsPage.tsx";
+import { RecordPage } from "../pages/adoption/RecordPage.tsx";
+import { TrainingPage } from "../pages/adoption/TrainingPage.tsx";
+import { AreaPage, BauPage } from "../pages/bau/BauPage.tsx";
+import { ControlsPage, ReviewsPage } from "../pages/bau/ControlsPage.tsx";
+import { HandoverPage, HandoversPage } from "../pages/bau/HandoverPage.tsx";
+import { ImprovementPage } from "../pages/improvement/ImprovementPage.tsx";
+import { LessonSearchPage, LessonsPage } from "../pages/lessons/LessonsPage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
 import { BenefitFormulaPage } from "../pages/benefit-formulas/BenefitFormulaPage.tsx";
 import { BenefitFormulasPage } from "../pages/benefit-formulas/BenefitFormulasPage.tsx";
@@ -106,11 +117,7 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   // FE-B (slice A: KPI engine): built by T-DG4-FE-B, see the KPI routes below.
   // FE-C (slice B: benefits and Finance validation): built by T-DG4-FE-C, see the benefit routes below.
   // FE-D (slices E and D: RAID, actions, forums, meetings, T16): built by T-DG4-FE-D, see the routes below.
-  // FE-E (slices F and G: adoption, BAU, improvement, lessons)
-  { path: "transformations/:id/adoption", feature: "adoption", owner: "FE-E" },
-  { path: "transformations/:id/bau", feature: "bau", owner: "FE-E" },
-  { path: "transformations/:id/improvement", feature: "improvement", owner: "FE-E" },
-  { path: "lessons", feature: "lessons", owner: "FE-E" },
+  // FE-E (slices F and G: adoption, BAU, improvement, lessons): built by T-DG4-FE-E, see the routes below.
   // FE-F (slice H: G5/G6 views live in pages/gates; change control and closure)
   { path: "transformations/:id/change-requests", feature: "changeRequests", owner: "FE-F" },
   { path: "transformations/:id/change-requests/:changeRequestId", feature: "changeRequest", owner: "FE-F" },
@@ -185,6 +192,27 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/executive-decisions", element: <ExecutiveDecisionsPage /> },
       { path: "transformations/:id/executive-decisions/:decisionId", element: <ExecutiveDecisionPage /> },
       { path: "transformations/:id/escalations", element: <EscalationsPage /> },
+      // P4 slices F and G: adoption, BAU and performance areas, improvement, lessons (T-DG4-FE-E; p4-work-split §F+G
+      // FG.8). The intervention, form, record, area and handover detail paths are the backend's work-item links
+      // (adoption_intervention_due, assessment_invitation, assessment_to_review, performance_review_due,
+      // control_check_due, bau_handover_to_accept), so a reminder never leads to "page not found".
+      { path: "transformations/:id/adoption", element: <AdoptionPage /> },
+      { path: "transformations/:id/adoption-interventions", element: <InterventionsPage /> },
+      { path: "transformations/:id/adoption-interventions/:interventionId", element: <InterventionPage /> },
+      { path: "transformations/:id/adoption-indicators", element: <IndicatorsPage /> },
+      { path: "transformations/:id/adoption-training", element: <TrainingPage /> },
+      { path: "transformations/:id/assessment-forms", element: <FormsPage /> },
+      { path: "transformations/:id/assessment-forms/:formId", element: <FormPage /> },
+      { path: "transformations/:id/assessment-records/:recordId", element: <RecordPage /> },
+      { path: "transformations/:id/bau", element: <BauPage /> },
+      { path: "transformations/:id/performance-areas/:areaId", element: <AreaPage /> },
+      { path: "transformations/:id/bau-handovers", element: <HandoversPage /> },
+      { path: "transformations/:id/bau-handovers/:handoverId", element: <HandoverPage /> },
+      { path: "transformations/:id/bau-controls", element: <ControlsPage /> },
+      { path: "transformations/:id/bau-reviews", element: <ReviewsPage /> },
+      { path: "transformations/:id/improvement", element: <ImprovementPage /> },
+      { path: "transformations/:id/lessons", element: <LessonsPage /> },
+      { path: "lessons", element: <LessonSearchPage /> },
       { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },
       {
         path: "transformations/:id/finance-validations/:financeValidationId",

@@ -19,6 +19,8 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { tomDimensionLabel, tomDimensionOptions } from "../../lib/methodology.ts";
+// T-DG4-FE-E (REQ-PB-073): champion constraints are visible on the T04 decision page.
+import { ChampionConstraintsSection } from "../adoption/ChampionConstraints.tsx";
 
 export function DecisionsPage() {
   const { t } = useTranslation();
@@ -30,6 +32,7 @@ export function DecisionsPage() {
       writePermissions={["decision.edit", "decision.decide"]}
     >
       <DecisionLog />
+      <ChampionConstraintsSection />
       <GateDecisionLog />
     </WorkspaceFrame>
   );
