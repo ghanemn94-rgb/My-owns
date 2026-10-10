@@ -1,0 +1,50 @@
+port-policy: PostgreSQL listening on port 25652 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-qa-a
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1zn88z_f56cff8b (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests | 1 failed) 4356ms
+   × A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG 418ms
+     → expected 'red' to be 'green' // Object.is equality
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: lower-is-better 80 against 90 is favourable (green); higher-is-better 80 against 90 is adverse (not green)  307ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: an acceptable band 5-10 with actual 12 is outside the band (not green) 116ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a KPI with no actual for the period renders Unknown (labelled), never 0 or green 125ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a roll-up with a scope that reported before but is missing now is Unknown, not a sum with 0 264ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-005: a zero denominator is 'Not computable' (no division error, not 0) 137ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: a percentage KPI moving 0.10 -> 0.12 is labelled in percentage points (pp), rates stored as fractions 129ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: the cumulative (YTD) value of a flow KPI equals the sum of its period flows 136ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages 284ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: summing SAR with USD without conversion is rejected 65ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-011: KPI A = B + 1 and B = A * 2 is rejected as circular; adding SAR to a count is rejected 86ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-004: a function outside the whitelist or a JavaScript payload is rejected at parse time 31ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  659ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference 299ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-007: budget/actual/forecast use decimal SAR; forecast slip vs approved date is shown in working days 197ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-009: the fixture network's critical path is the expected chain; with a missing duration no path is claimed 234ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S15-008: an actual for period 2026-10 keeps observation period, a Riyadh business date and a UTC event timestamp 99ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG
+AssertionError: expected 'red' to be 'green' // Object.is equality
+
+Expected: "green"
+Received: "red"
+
+ ❯ tests/qa/integration/a05-calculation-correctness.test.ts:103:29
+    101|     expect((await runsOf(t.body.id)).map((r) => r.trigger_kind)).toEqu…
+    102|     s = await status(kpi.id, `?reportingPeriodId=${jan.id}`);
+    103|     expect(s.calculatedRag).toBe("green");
+       |                             ^
+    104|   });
+    105| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  06:03:18
+   Duration  14.81s (transform 3.86s, setup 0ms, collect 7.70s, tests 4.36s, environment 0ms, prepare 72ms)
+
