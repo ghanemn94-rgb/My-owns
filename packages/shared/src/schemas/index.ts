@@ -87,6 +87,9 @@ export * from "./governance-meetings.ts";
 // P4 slice D mirrors of BE-G (backend-workflow-engineer, T-DG4-BE-G; p4-work-split §D.2): the T16 Executive Decision
 // Log, decision-SLA escalations, blocker RAG by cycle, the escalation rules and the blocker_status.recorded payload.
 export * from "./executive-decisions.ts";
+// P4 slice D mirrors of BE-F2 (backend-workflow-engineer, T-DG4-BE-F2; p4-work-split §D.3): agenda items and executive-
+// ask briefs, attendance, minutes, meeting outputs and meeting actions.
+export * from "./governance-workflow.ts";
 // P4 slice F mirrors of KBE-F (kpi-benefits-engineer, T-DG4-KBE-F; p4-work-split §F+G FG.3): adoption indicator
 // templates, metric links and the indicator report.
 export * from "./adoption-indicators.ts";
