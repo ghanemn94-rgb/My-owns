@@ -748,5 +748,44 @@ describe.each(["en", "ar"] as const)("G5 scale transitions and risk dispositions
     expect(row.getAttribute("data-risk-dispositioned")).toBe("false");
     expect(row.textContent).toContain(t("gates.riskDisposition.approval.pending"));
     expect(document.body.textContent).not.toMatch(/\bDG[0-7]\b/);
+    cleanup();
+    renderScale(locale, [
+      route("GET", new RegExp(`${esc(TR)}/raid\\?`), () => page([OPEN_RISK])),
+      route("GET", new RegExp(`${esc(TR)}/risk-dispositions`), () => page([disp("pending"), disp("approved")])),
+    ]);
+    const done = await waitFor(() => {
+      const r = document.querySelector("[data-risk='R-01'][data-risk-dispositioned='true']");
+      expect(r).not.toBeNull();
+      return r!;
+    });
+    expect(done.textContent).toContain(t("gates.riskDisposition.approval.approved"));
+    // An approved disposition completes the row: nothing more to propose.
+    expect(done.querySelector("[data-action='propose-disposition']")).toBeNull();
+  });
+
+  it("scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal", async () => {
+    const INI = initiative({ id: id(), code: "INI-01", name: "Synthetic onboarding", status: "launched" });
+    renderScale(locale, [
+      route("GET", /\/api\/v1\/initiatives\?/, () => page([INI])),
+      route("POST", new RegExp(`${esc(TR)}/scale-transitions$`), () =>
+        problemBody(
+          422,
+          "urn:mth:problem:business-rule",
+          "scale.outside_approved_scope",
+          "This initiative and business unit are outside the scale scope approved at G5.",
+        ),
+      ),
+    ]);
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.scaleTransition.create")) }));
+    const dialog = await screen.findByRole("dialog");
+    const selects = within(dialog).getAllByRole("combobox");
+    await waitFor(() => expect(within(selects[0]!).getAllByRole("option").length).toBeGreaterThan(1));
+    fireEvent.change(selects[0]!, { target: { value: INI.id } });
+    fireEvent.change(selects[1]!, { target: { value: BU_ID } });
+    fireEvent.click(within(dialog).getByRole("button", { name: t("gates.scaleTransition.submit") }));
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.getAttribute("data-problem")).toBe("scale.outside_approved_scope");
+    expect(alert.textContent).toContain(t("problems.scale__outside_approved_scope"));
+    if (locale === "ar") expect(alert.textContent).not.toContain("outside the scale scope");
   });
 });

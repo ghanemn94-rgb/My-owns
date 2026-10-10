@@ -14,6 +14,10 @@
 //     the milestone's approved date becomes the requested one; the G4 approval still reads approved.
 //  5. G5 (REQ-S03-004, REQ-PB-020): scaling before G5 is refused with the translated invalid-transition naming G5; the
 //     Lead proposes a disposition for the open High-impact risk and it reads pending.
+//  5b. The Sponsor approves the disposition (synthetic) and the risk row reads dispositioned; G5 is approved with the
+//     scale scope (initiative, Retail) through the API (its screens are p4-gates-closure.spec.ts's); scaling inside the
+//     scope succeeds in the UI, and scaling an initiative the scope does not name is refused with the translated
+//     scale.outside_approved_scope.
 //  6. Read-only auditor; 390 px wide and 200 % text without page-level horizontal scroll.
 // Every step: a full-page screenshot per language and axe with 0 serious or critical issues.
 import { expect, test, type Locator, type Page } from "@playwright/test";
@@ -88,7 +92,13 @@ async function cover(base: string, gateCode: string, keys: string[], requester: 
 }
 
 /** API setup of G1-G4 (their screens are covered by the P2/P3 specs): mandatory gaps covered, then approved. */
-async function passGate(base: string, code: string, submitter: ApiSession, approver: ApiSession) {
+async function passGate(
+  base: string,
+  code: string,
+  submitter: ApiSession,
+  approver: ApiSession,
+  extraDecision: Record<string, unknown> = {},
+) {
   const view = await submitter.call<GateViewLite>("GET", `${base}/gates/${code}`);
   const missing = view.criteria.filter((c) => c.mandatory && c.completeness !== "complete").map((c) => c.key);
   await cover(base, code, missing, submitter, approver);
@@ -108,6 +118,7 @@ async function passGate(base: string, code: string, submitter: ApiSession, appro
       outcome: "approved",
       rationale: `Synthetic demo approval of ${code} (approves nothing real).`,
       ...(code === "G1" ? { agreements: { problem: true, baseline: true, materialValuePools: true } } : {}),
+      ...extraDecision,
     },
     { ifMatch: pending.gate.version },
   );
@@ -211,10 +222,16 @@ test("1. phases: six phases in order; a version-0 step is assigned and started; 
   await expectAccessible(page, lang, "p4-phases-01-catalogue-workspace");
   const stepKey = (await first.getAttribute("data-step"))!;
 
-  // Assign the owner: the first save of a step with no record sends If-Match "0" (D-109).
+  // Assign the owner: the step is read first (getPhaseStep answers ETag "0" while it has no record), and the first
+  // save sends If-Match "0", which creates it (D-109).
+  const read = page.waitForResponse(
+    (r) => r.request().method() === "GET" && r.url().endsWith(`/phase-steps/${stepKey}`),
+  );
   const patch = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(`/phase-steps/${stepKey}`));
   await first.locator("[data-action='step-owner']").click();
+  expect((await read).headers()["etag"]).toBe('"0"');
   let dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText(tr(lang, "phasesP4.step.versionNote", { n: 0 }));
   await field(dialog, "ownerUserId").selectOption(lead.userId);
   await submitOf(dialog).click();
   expect((await patch).headers()["if-match"]).toBe('"0"');
@@ -411,6 +428,79 @@ test("5. G5: scaling before approval is refused naming G5; a disposition is prop
   await expect(risk).toHaveAttribute("data-risk-dispositioned", "false");
   await shot(page, lang, "p4-risk-01-disposition-pending");
   await expectAccessible(page, lang, "p4-risk-01-disposition-pending");
+  await ui.close();
+});
+
+// ------------------------------------------------------------------------------------------------ 5b. after G5
+
+test("5b. an approved disposition completes the row; after G5, scaling inside the scope succeeds and outside is refused", async ({
+  browser,
+}, info) => {
+  const lang = langOf(info);
+  // The Sponsor decides the disposition's business approval (a synthetic demo decision that approves nothing real).
+  const ds = await lead.call<{ items: { approvalId: string | null; disposition: string }[] }>(
+    "GET",
+    `${T}/risk-dispositions`,
+  );
+  const approvalId = ds.items.find((d) => d.disposition === "carry_into_bau")!.approvalId!;
+  const approval = await spApi.call<{ version: number; subjectVersion: number }>(
+    "GET",
+    `/api/v1/approvals/${approvalId}`,
+  );
+  await spApi.call(
+    "POST",
+    `/api/v1/approvals/${approvalId}/decisions`,
+    {
+      outcome: "approve",
+      rationale: "Synthetic demo approval of the disposition (approves nothing real).",
+      subjectVersion: approval.subjectVersion,
+    },
+    { ifMatch: approval.version },
+  );
+  // A second initiative that the approved scope does not name. (The Lead reads only the transformation's own business
+  // unit, FE-F handback §5 item 1, so "outside the scope" is shown with an initiative the scope does not list.)
+  const otherIni = (
+    await lead.call<{ id: string }>("POST", "/api/v1/initiatives", {
+      transformationId: tid,
+      name: `Synthetic not-in-scope initiative ${lang} ${stamp}`,
+    })
+  ).id;
+  // G5 with its scale scope, through the API: the remaining gaps are covered by exceptions (setup only).
+  await passGate(T, "G5", lead, spApi, {
+    scaleScope: { items: [{ initiativeId: iniId, businessUnitId: SYN_RETAIL }] },
+  });
+
+  const ui = await asUser(browser, lang, "dev.lead");
+  const page = ui.page;
+  const foreign = trackRequests(page);
+  await go(page, `/transformations/${tid}/gates/G5`);
+  await expect(page.locator("[data-risk][data-risk-dispositioned='true']").first()).toBeVisible();
+  await expect(page.locator(`[data-scope-item='${iniId}:${SYN_RETAIL}']`)).toBeVisible();
+
+  // Outside the approved scope: refused, translated (REQ-S04-007).
+  await page.locator("[data-action='scale-initiative']").click();
+  let dialog = page.getByRole("dialog");
+  await field(dialog, "initiativeId").selectOption(otherIni);
+  await field(dialog, "businessUnitId").selectOption(SYN_RETAIL);
+  await submitOf(dialog).click();
+  const alert = dialog.getByRole("alert");
+  await expect(alert).toHaveAttribute("data-problem", "scale.outside_approved_scope");
+  await expect(alert).toContainText(tr(lang, "problems.scale__outside_approved_scope"));
+  await shot(page, lang, "p4-scale-02-outside-scope-refused");
+  await expectAccessible(page, lang, "p4-scale-02-outside-scope-refused");
+  await dialog.getByRole("button", { name: tr(lang, "common.action.cancel") }).click();
+
+  // Inside the approved scope: the transition is recorded (REQ-S03-004 "after approval it succeeds").
+  await page.locator("[data-action='scale-initiative']").click();
+  dialog = page.getByRole("dialog");
+  await field(dialog, "initiativeId").selectOption(iniId);
+  await field(dialog, "businessUnitId").selectOption(SYN_RETAIL);
+  await submitOf(dialog).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator(`[data-scale-transition='${iniId}:${SYN_RETAIL}']`)).toBeVisible();
+  await shot(page, lang, "p4-scale-03-inside-scope-recorded");
+  await expectAccessible(page, lang, "p4-scale-03-inside-scope-recorded");
+  expect(foreign).toEqual([]);
   await ui.close();
 });
 

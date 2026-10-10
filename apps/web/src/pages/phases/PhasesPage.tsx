@@ -31,6 +31,7 @@ import {
   completionMetOf,
   phasePaths,
   usePhaseCatalogue,
+  usePhaseStep,
   usePhaseWorkspace,
   useReviewQueue,
   useStepEvidence,
@@ -358,51 +359,12 @@ function StepDialogs({
 }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
-  const { people } = usePeople(ws.tid);
   if (!dialog) return null;
   const s = dialog.step;
   switch (dialog.kind) {
     case "owner":
-      return (
-        <P4FormDialog
-          title={t("phasesP4.step.assignTitle")}
-          description={t("phasesP4.step.versionNote", { n: s.version })}
-          fields={[
-            {
-              name: "ownerUserId",
-              label: t("phasesP4.step.owner"),
-              kind: "select",
-              required: true,
-              options: people.map((p) => ({ value: p.id, label: p.label })),
-            },
-          ]}
-          initial={s.ownerUserId ? { ownerUserId: s.ownerUserId } : {}}
-          submitLabel={t("phasesP4.save")}
-          method="PATCH"
-          url={phasePaths.step(ws.tid, s.stepKey)}
-          version={s.version}
-          namespaces={PHASE_NS}
-          toBody={(v) => ({ ownerUserId: v["ownerUserId"] })}
-          onDone={refresh}
-          onClose={onClose}
-        />
-      );
     case "start":
-      return (
-        <P4FormDialog
-          title={t("phasesP4.step.startTitle")}
-          description={t("phasesP4.step.versionNote", { n: s.version })}
-          fields={[]}
-          submitLabel={t("phasesP4.step.start")}
-          method="PATCH"
-          url={phasePaths.step(ws.tid, s.stepKey)}
-          version={s.version}
-          namespaces={PHASE_NS}
-          toBody={() => ({ start: true })}
-          onDone={refresh}
-          onClose={onClose}
-        />
-      );
+      return <StepEditDialog kind={dialog.kind} step={s} onClose={onClose} refresh={refresh} />;
     case "request":
       return (
         <ConfirmActionDialog
@@ -457,6 +419,77 @@ function StepDialogs({
     case "evidence":
       return <EvidenceDialog step={s} onClose={onClose} refresh={refresh} />;
   }
+}
+
+/**
+ * Assign the owner or start the step (updatePhaseStep). The step is read first through getPhaseStep and its ETag is
+ * the If-Match: `"0"` for a step with no record yet, which the first save creates (D-109).
+ */
+function StepEditDialog({
+  kind,
+  step,
+  onClose,
+  refresh,
+}: {
+  kind: "owner" | "start";
+  step: PhaseStep;
+  onClose: () => void;
+  refresh: () => Promise<boolean>;
+}) {
+  const { t } = useTranslation();
+  const ws = useWorkspace();
+  const { people } = usePeople(ws.tid);
+  const read = usePhaseStep(ws.tid, step.stepKey);
+  if (!read.data)
+    return (
+      <Dialog
+        title={kind === "owner" ? t("phasesP4.step.assignTitle") : t("phasesP4.step.startTitle")}
+        onClose={onClose}
+        footer={
+          <button type="button" className="button button--secondary" onClick={onClose}>
+            {t("common.action.cancel")}
+          </button>
+        }
+      >
+        <QueryState query={read}>{() => null}</QueryState>
+      </Dialog>
+    );
+  const { step: current, etagVersion } = read.data;
+  const common = {
+    description: t("phasesP4.step.versionNote", { n: etagVersion }),
+    method: "PATCH" as const,
+    url: phasePaths.step(ws.tid, step.stepKey),
+    version: etagVersion,
+    namespaces: PHASE_NS,
+    onDone: refresh,
+    onClose,
+  };
+  return kind === "owner" ? (
+    <P4FormDialog
+      {...common}
+      title={t("phasesP4.step.assignTitle")}
+      fields={[
+        {
+          name: "ownerUserId",
+          label: t("phasesP4.step.owner"),
+          kind: "select",
+          required: true,
+          options: people.map((p) => ({ value: p.id, label: p.label })),
+        },
+      ]}
+      initial={current.ownerUserId ? { ownerUserId: current.ownerUserId } : {}}
+      submitLabel={t("phasesP4.save")}
+      toBody={(v) => ({ ownerUserId: v["ownerUserId"] })}
+    />
+  ) : (
+    <P4FormDialog
+      {...common}
+      title={t("phasesP4.step.startTitle")}
+      fields={[]}
+      submitLabel={t("phasesP4.step.start")}
+      toBody={() => ({ start: true })}
+    />
+  );
 }
 
 function EvidenceDialog({
