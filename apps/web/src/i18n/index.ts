@@ -82,6 +82,11 @@ import enExecutionP4 from "./en/executionP4.json" with { type: "json" };
 // P4 slice G closure namespace (T-DG4-FE-F): status model, closure and transition decisions (pages/closure).
 import arClosureP4 from "./ar/closureP4.json" with { type: "json" };
 import enClosureP4 from "./en/closureP4.json" with { type: "json" };
+// P4 slice H change control and phase workspace namespaces (T-DG4-FE-F2): pages/change-requests, pages/phases.
+import arChangeRequestsP4 from "./ar/changeRequestsP4.json" with { type: "json" };
+import enChangeRequestsP4 from "./en/changeRequestsP4.json" with { type: "json" };
+import arPhasesP4 from "./ar/phasesP4.json" with { type: "json" };
+import enPhasesP4 from "./en/phasesP4.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -132,6 +137,8 @@ export const catalogues = {
     dashboards: arDashboards,
     executionP4: arExecutionP4,
     closureP4: arClosureP4,
+    changeRequestsP4: arChangeRequestsP4,
+    phasesP4: arPhasesP4,
   },
   en: {
     common: enCommon,
@@ -173,6 +180,8 @@ export const catalogues = {
     dashboards: enDashboards,
     executionP4: enExecutionP4,
     closureP4: enClosureP4,
+    changeRequestsP4: enChangeRequestsP4,
+    phasesP4: enPhasesP4,
   },
 } as const;
 

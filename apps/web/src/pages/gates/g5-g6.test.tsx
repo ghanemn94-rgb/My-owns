@@ -615,3 +615,138 @@ describe.each(["en", "ar"] as const)("Modular G3 waiver on the gate page (%s)", 
     if (locale === "ar") expect(alert.textContent).not.toContain("No active baseline");
   });
 });
+
+// ------------------------------------------------------------------------------------------------ T-DG4-FE-F2
+// Scale transitions and risk dispositions on the G5 page (ADR-0035 §5, §6, §11; REQ-S03-004, REQ-S04-007, REQ-PB-020),
+// with STUBBED responses. The live journey is e2e/p4-change-phases.spec.ts. SYNTHETIC data only.
+const SCALE_PERMS: Permission[] = [...PERMS, "scale.transition", "risk_disposition.propose"] as Permission[];
+
+function renderScale(locale: "en" | "ar", extra: Handler[] = []) {
+  const view = g5View();
+  const api = mockApi(
+    route("GET", /\/api\/v1\/me$/, () => ({
+      status: 200,
+      body: makeMe(leadGrants(SCALE_PERMS), { preferredLocale: locale }),
+    })),
+    ...handlers(locale, [
+      ...extra,
+      route("GET", new RegExp(`${esc(TR)}/gates/G5$`), () => ({ status: 200, body: view })),
+    ]).slice(1),
+  );
+  renderApp(`/transformations/${TR_ID}/gates/G5`, { i18n: createI18n(locale) });
+  return api;
+}
+
+const OPEN_RISK = {
+  id: RISK_ID,
+  transformationId: TR_ID,
+  type: "risk",
+  code: "R-01",
+  description: "Synthetic: the billing migration may slip.",
+  impact: "high",
+  probability: "medium",
+  ownerUserId: USER_ID,
+  dueDate: null,
+  mitigation: null,
+  status: "open",
+  recordStatus: "active",
+  recordTable: "raid_entry",
+  initiativeId: null,
+  closedAt: null,
+};
+
+describe.each(["en", "ar"] as const)("G5 scale transitions and risk dispositions (%s)", (locale) => {
+  const t = createI18n(locale).t;
+
+  it("scaling before G5 is approved shows the translated invalid-transition that names G5", async () => {
+    const INI = initiative({ id: id(), code: "INI-01", name: "Synthetic onboarding", status: "launched" });
+    const { requests } = renderScale(locale, [
+      route("GET", /\/api\/v1\/initiatives\?/, () => page([INI])),
+      route("POST", new RegExp(`${esc(TR)}/scale-transitions$`), () =>
+        problemBody(
+          422,
+          "urn:mth:problem:invalid-transition",
+          "gate.g5_not_approved",
+          "Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.",
+        ),
+      ),
+    ]);
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.scaleTransition.create")) }));
+    const dialog = await screen.findByRole("dialog");
+    const selects = within(dialog).getAllByRole("combobox");
+    await waitFor(() => expect(within(selects[0]!).getAllByRole("option").length).toBeGreaterThan(1));
+    fireEvent.change(selects[0]!, { target: { value: INI.id } });
+    fireEvent.change(selects[1]!, { target: { value: BU_ID } });
+    fireEvent.click(within(dialog).getByRole("button", { name: t("gates.scaleTransition.submit") }));
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain(t("problems.gate__g5_not_approved"));
+    expect(alert.textContent).toContain("G5");
+    if (locale === "ar") expect(alert.textContent).not.toContain("Scaling requires");
+    const post = requests.find((r) => r.method === "POST" && r.url.endsWith("/scale-transitions"))!;
+    expect(post.body).toEqual({ initiativeId: INI.id, businessUnitId: BU_ID });
+  });
+
+  it("an open High-impact risk without a disposition is flagged; proposing one sends the four fields", async () => {
+    const { requests } = renderScale(locale, [
+      route("GET", new RegExp(`${esc(TR)}/raid\\?`), () => page([OPEN_RISK])),
+      route("GET", new RegExp(`${esc(TR)}/risk-dispositions`), () => page([])),
+      route("POST", new RegExp(`${esc(TR)}/risk-dispositions$`), () => ({ status: 201, body: {} })),
+    ]);
+    const row = await waitFor(() => {
+      const r = document.querySelector("[data-risk='R-01']");
+      expect(r).not.toBeNull();
+      return r!;
+    });
+    expect(row.getAttribute("data-risk-dispositioned")).toBe("false");
+    expect(row.textContent).toContain(t("gates.riskDisposition.material"));
+    expect(row.querySelector("[data-disposition='none']")!.textContent).toContain(t("gates.riskDisposition.none"));
+    fireEvent.click(row.querySelector("[data-action='propose-disposition']")!);
+    const dialog = await screen.findByRole("dialog");
+    const [kind, owner] = within(dialog).getAllByRole("combobox");
+    fireEvent.change(kind!, { target: { value: "carry_into_bau" } });
+    await waitFor(() => expect(within(owner!).getAllByRole("option").length).toBeGreaterThan(1));
+    fireEvent.change(owner!, { target: { value: USER_ID } });
+    fireEvent.change(within(dialog).getByRole("textbox"), {
+      target: { value: "Synthetic: BAU owns the residual risk." },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: t("gates.riskDisposition.submit") }));
+    await waitFor(() =>
+      expect(requests.some((r) => r.method === "POST" && r.url.endsWith("/risk-dispositions"))).toBe(true),
+    );
+    const post = requests.find((r) => r.method === "POST" && r.url.endsWith("/risk-dispositions"))!;
+    expect(post.body).toEqual({
+      raidEntryId: RISK_ID,
+      disposition: "carry_into_bau",
+      residualOwnerUserId: USER_ID,
+      rationale: "Synthetic: BAU owns the residual risk.",
+    });
+  });
+
+  it("a pending disposition is shown as pending, not as closed; an approved one completes the row", async () => {
+    const disp = (status: string) => ({
+      id: id(),
+      transformationId: TR_ID,
+      raidEntryId: RISK_ID,
+      disposition: "accept",
+      rationale: "Synthetic rationale",
+      residualOwnerUserId: USER_ID,
+      approvalId: id(),
+      approvalStatus: status,
+      version: 1,
+      createdAt: T,
+      createdBy: OTHER_USER,
+    });
+    renderScale(locale, [
+      route("GET", new RegExp(`${esc(TR)}/raid\\?`), () => page([OPEN_RISK])),
+      route("GET", new RegExp(`${esc(TR)}/risk-dispositions`), () => page([disp("pending")])),
+    ]);
+    const row = await waitFor(() => {
+      const r = document.querySelector("[data-risk='R-01'] [data-approval-status='pending']");
+      expect(r).not.toBeNull();
+      return r!.closest("tr")!;
+    });
+    expect(row.getAttribute("data-risk-dispositioned")).toBe("false");
+    expect(row.textContent).toContain(t("gates.riskDisposition.approval.pending"));
+    expect(document.body.textContent).not.toMatch(/\bDG[0-7]\b/);
+  });
+});
