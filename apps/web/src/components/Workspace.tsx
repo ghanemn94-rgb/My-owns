@@ -73,6 +73,10 @@ export const WORKSPACE_TABS = [
   // P4 slice H (T-DG4-FE-F2): the phase workspace and change control.
   { id: "phases", path: "/phases", labelKey: "phasesP4.tab" },
   { id: "change-requests", path: "/change-requests", labelKey: "changeRequestsP4.tab" },
+  // P4 slice K (T-DG4-FE-G2; p4-work-split §J+K JK.7): traceability, Modular entry, workstreams.
+  { id: "traceability", path: "/traceability", labelKey: "traceability.tab" },
+  { id: "modular-entry", path: "/modular-entry", labelKey: "traceability.modular.tab" },
+  { id: "workstreams", path: "/workstreams", labelKey: "traceability.workstreams.tab" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 

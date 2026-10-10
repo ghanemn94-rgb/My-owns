@@ -404,14 +404,9 @@ describe("P4 seams", () => {
     expect(isP4KeyOf(TR_ID, p4Keys.workItems())).toBe(false);
   });
 
-  it.each(["en", "ar"] as const)("a planned P4 route shows the honest 'being built' state (%s)", async (locale) => {
-    const t = createI18n(locale).t;
-    mockApi(...p4Handlers(locale, []));
-    // T-DG4-FE-F2 built change requests; the test takes whichever P4 route is still planned (none: nothing to show).
-    const planned = P4_PLANNED_ROUTES[0];
-    if (!planned) return;
-    renderApp(`/${planned.path.replace(":id", TR_ID)}`, { i18n: createI18n(locale) });
-    expect(await screen.findByRole("heading", { level: 1, name: t(`nav.p4.${planned.feature}.title`) })).toBeTruthy();
-    expect(document.querySelector("[data-state='being-built']")?.textContent).toContain(t("nav.p4.beingBuiltTitle"));
+  it("leaves no P4 route as a 'being built' placeholder once every FE task is merged (D-114)", () => {
+    // Every planned P4 route of FE-B…FE-G2 is built, so no route renders the placeholder state any more. A route added to
+    // P4_PLANNED_ROUTES later must come with a test that renders its 'being built' state in both languages.
+    expect(P4_PLANNED_ROUTES).toEqual([]);
   });
 });

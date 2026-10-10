@@ -145,7 +145,10 @@ export interface NavSubPage {
     | "dashboards"
     // T-DG4-FE-F2: the phase workspace (Playbook and Phases) and change requests (Governance).
     | "phaseWorkspace"
-    | "changeRequests";
+    | "changeRequests"
+    // T-DG4-FE-G2: the organization's portfolios (ADR-0038 §9) and the dashboard RAG policy (ADR-0037 §3).
+    | "portfolios"
+    | "ragPolicy";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -191,4 +194,7 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   // T-DG4-FE-F2: the guided phase steps of each transformation, and its change requests.
   { id: "phaseWorkspace", area: "playbook", path: "/playbook/phases", workspaceTab: "phases" },
   { id: "changeRequests", area: "governance", path: "/governance/change-requests", workspaceTab: "change-requests" },
+  // T-DG4-FE-G2: portfolios (read: organization.read) and the RAG policy (read: organization.read; edit: dashboard.configure).
+  { id: "portfolios", area: "initiatives", path: "/portfolios", requiresAny: ["organization.read"] },
+  { id: "ragPolicy", area: "executive", path: "/dashboards/rag-policy", requiresAny: ["organization.read"] },
 ];

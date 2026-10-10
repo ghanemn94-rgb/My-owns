@@ -87,6 +87,9 @@ import arChangeRequestsP4 from "./ar/changeRequestsP4.json" with { type: "json" 
 import enChangeRequestsP4 from "./en/changeRequestsP4.json" with { type: "json" };
 import arPhasesP4 from "./ar/phasesP4.json" with { type: "json" };
 import enPhasesP4 from "./en/phasesP4.json" with { type: "json" };
+// P4 slice K and the RAG policy (T-DG4-FE-G2).
+import arTraceability from "./ar/traceability.json" with { type: "json" };
+import enTraceability from "./en/traceability.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -139,6 +142,7 @@ export const catalogues = {
     closureP4: arClosureP4,
     changeRequestsP4: arChangeRequestsP4,
     phasesP4: arPhasesP4,
+    traceability: arTraceability,
   },
   en: {
     common: enCommon,
@@ -182,6 +186,7 @@ export const catalogues = {
     closureP4: enClosureP4,
     changeRequestsP4: enChangeRequestsP4,
     phasesP4: enPhasesP4,
+    traceability: enTraceability,
   },
 } as const;
 
