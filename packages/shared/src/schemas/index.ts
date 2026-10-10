@@ -108,3 +108,6 @@ export * from "./traceability.ts";
 // P4 slice H mirrors of BE-L2 (backend-workflow-engineer, T-DG4-BE-L2; p4-work-split §H H.4): the phase catalogue, the
 // phase workspace, guided phase steps, step evidence and the review queue (ADR-0035 §1).
 export * from "./phases.ts";
+// P4 slice K mirrors of BE-M2 (backend-workflow-engineer, T-DG4-BE-M2; p4-work-split §J+K JK.2): Modular entry, the
+// labelled inherited records, the gate labels and the pure missing-link rule (ADR-0038 §7).
+export * from "./missing-links.ts";
