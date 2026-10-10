@@ -121,7 +121,7 @@ async function minutesTask(tx: Tx, actor: CommitteeActor, audit: AuditContext, m
   if (meeting.chair_user_id === null) return;
   const forum = await tx
     .selectFrom("forum")
-    .select("name_en")
+    .select(["name_en", "name_ar"])
     .where("id", "=", meeting.forum_id)
     .executeTakeFirstOrThrow();
   await reassignWorkItemOfSubject(tx, userActor(actor.userId, audit), {
@@ -133,7 +133,12 @@ async function minutesTask(tx: Tx, actor: CommitteeActor, audit: AuditContext, m
     subjectId: minutesId,
     linkPath: `/transformations/${meeting.transformation_id}/meetings/${meeting.id}`,
     messageKey: MINUTES_TASK_MESSAGE,
-    messageParams: { forum: forum.name_en, meetingDate: String(meeting.scheduled_date).slice(0, 10) },
+    // ADR-0025 amendment L1, ADR-0032 amendment G3: the English name under `forum` (unchanged), the Arabic beside it.
+    messageParams: {
+      forum: forum.name_en,
+      forumAr: forum.name_ar,
+      meetingDate: String(meeting.scheduled_date).slice(0, 10),
+    },
     dueDate: null,
     dedupeKey: `meeting.minutes:${minutesId}:${meeting.chair_user_id}`,
   });

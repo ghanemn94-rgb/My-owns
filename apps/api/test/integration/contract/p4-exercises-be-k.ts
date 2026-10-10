@@ -1,5 +1,5 @@
 // P4 contract exercises of BE-K (T-DG4-BE-K; p4-work-split §H H.1, §1 S-10): the six slice H operations of the G5 scale
-// scope, scale transitions and risk dispositions. Every call goes through `ctx.mirrored` (OpenAPI status/body/headers +
+// scope, scale transitions and risk dispositions, plus listScaleScopeBusinessUnits (ADR-0035 amendment R1, T-DG4-BE-R4). Every call goes through `ctx.mirrored` (OpenAPI status/body/headers +
 // problem mirror) and every success body is parsed with the zod mirror in P4_MIRRORS_BE_K. BE-K2 appends its gate-review
 // and gate-exception exercises to this file after BE-K (no new seam file). The fixtures below are shared with
 // test/integration/workflows/{g5-g6,scale,risk-dispositions,gate-events}.test.ts and the worker's gates test.
@@ -15,6 +15,7 @@ import {
   riskDisposition,
   riskDispositionPage,
   scaleScope,
+  scaleScopeBusinessUnitPage,
   scaleTransition,
   scaleTransitionPage,
 } from "@mth/shared/schemas";
@@ -38,6 +39,7 @@ import { seedSustainmentWorld, type SustainmentWorld } from "./p4-exercises-be-i
 
 export const P4_MIRRORS_BE_K: Readonly<Record<string, z.ZodType>> = {
   getScaleScope: scaleScope,
+  listScaleScopeBusinessUnits: scaleScopeBusinessUnitPage,
   listScaleTransitions: scaleTransitionPage,
   createScaleTransition: scaleTransition,
   listRiskDispositions: riskDispositionPage,
@@ -247,6 +249,26 @@ export async function exerciseP4BeKOperations(ctx: P4ExerciseContext): Promise<v
   expect([outside.status, outside.body.code]).toEqual([422, "scale.outside_approved_scope"]);
   const list = await m("GET", TRANS, { session: b.s.auditor });
   expect([list.status, list.body.items.length]).toEqual([200, 1]);
+
+  // listScaleScopeBusinessUnits (ADR-0035 amendment R1): the Sponsor, with a transformation grant only, reads the
+  // organization's active units (never org B's); cursor-paged by code, then id; 404 outside scope (ADM-only).
+  const BUS = `${b.base}/scale-scope/business-units`;
+  const units = await m("GET", BUS, { session: g.sp.session });
+  expect(units.status, JSON.stringify(units.body)).toBe(200);
+  const unitIds = units.body.items.map((u: { id: string }) => u.id);
+  expect(unitIds).toEqual(expect.arrayContaining([ctx.world.a1, ctx.world.a1x, ctx.world.a2]));
+  expect(unitIds).not.toContain(ctx.world.b1);
+  expect(units.body.items.find((u: { id: string }) => u.id === g.businessUnitId)).toMatchObject({
+    status: "active",
+    selectable: true,
+  });
+  const first = await m("GET", `${BUS}?limit=1`, { session: g.sp.session });
+  expect([first.status, first.body.items.length, typeof first.body.nextCursor]).toEqual([200, 1, "string"]);
+  const next = await m("GET", `${BUS}?limit=1&cursor=${encodeURIComponent(first.body.nextCursor)}`, {
+    session: g.sp.session,
+  });
+  expect([next.status, next.body.items[0].id]).toEqual([200, unitIds[1]]);
+  expect((await m("GET", BUS, { session: b.s.admin })).status).toBe(404);
 
   // T-DG4-BE-K2 (p4-work-split §H H.2): the gate-review and gate-exception operations, appended here (no new seam).
   await exerciseP4BeK2Operations(ctx);
