@@ -1,0 +1,70 @@
+port-policy: PostgreSQL listening on port 25650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-qa-d
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2q82h6_3e81fd88 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a08-gate-controls.test.ts (31 tests) 12373ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  622ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  562ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  521ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  407ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  849ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  768ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  736ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  476ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007: an approved disposition resolves the risk and G5 can be submitted  383ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  343ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/  1302ms
+ ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests) 4556ms
+   ✓ A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-PB-066: a Business scope change approval gets a due date 5 working days after it is raised on the default calendar (weekend and configured holiday skipped)  486ms
+   ✓ A09 approval timers escalate but never approve (REQ-S10-019) > after the due date plus retries the approval is escalated exactly once and remains undecided  419ms
+   ✓ A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none  500ms
+   ✓ A09 committee workflow: quorum, immutable minutes, actions in My Work (REQ-S10-011) > no decision below quorum; published minutes are immutable; actions appear in the owners' My Work  729ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: a KPI actual for period 2026-10 keeps observation period 2026-10, the Asia/Riyadh business date of its entry and a UTC event timestamp  365ms
+ ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests) 4279ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: two initiative records of one shared benefit in a shared-benefit group count once  423ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  408ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-001: a forecast amount never appears in the validated total; a rejected measurement is kept and shown rejected  335ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves  560ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  315ms
+ ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests) 3601ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG  362ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  580ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference  319ms
+ ✓ |integration| tests/qa/integration/a11-bau-sustain.test.ts (17 tests) 5212ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: a performance area with a linked KPI and an ownerless control, created through the API  350ms
+ ✓ |integration| tests/qa/integration/a11-adoption.test.ts (12 tests) 1737ms
+ ✓ |integration| tests/qa/integration/a11-value-closure.test.ts (11 tests) 2937ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: at Measure, Sustain without a BAU owner and control cadence is 422; with both it succeeds  400ms
+   ✓ A11 REQ-PB-085: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it > REQ-PB-085: two below-plan validated values and a redelivery leave exactly one open case for the benefit  470ms
+   ✓ A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated  492ms
+ ✓ |integration| tests/qa/integration/a04-kpi-propagation.test.ts (8 tests) 11664ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-013, REQ-S12-006: the worker makes exactly one calculation run and one pending benefit value with one queue item  3513ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-012: with review configured, a submitted actual is not used until accepted; after acceptance one run  1195ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-001: a user scoped to transformation X sees nothing of Y on any of the six dashboards  386ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values  3251ms
+ ✓ |integration| tests/qa/integration/a03-modular-entry.test.ts (12 tests) 4663ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a pending waiver does not count; an accepted one lets G3 through while both links stay flagged  485ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver revoked after submission refuses the G3 approval (422 gate.modular_waiver_revoked); nothing is written  493ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver expired by approval time refuses the G3 approval (422 gate.modular_waiver_expired); in force it is approved  466ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > an expired waiver at submission time does not let G3 through  426ms
+   ✓ A03: an End-to-End G3 is unaffected by the Modular precondition > End-to-End, G1-G2 approved, G3 criteria covered, no baseline and no outcome link: G3 submission is 201  1465ms
+ ✓ |integration| tests/qa/integration/a04-a05-a10-partials.test.ts (4 tests) 2905ms
+   ✓ QA-A partial: REQ-S07-007 'with all tasks complete' > REQ-S07-007: with every Diagnose phase task and every action complete, an actual below the red threshold is Red  1268ms
+   ✓ QA-A partial: REQ-S13-003 'the validated benefit total drills to its benefit records' > REQ-S13-003: the Value area's validated headline drills to exactly the validated benefit records, whose decimal sum equals the headline  837ms
+   ✓ QA-A partial: REQ-PB-075 'T14 persists all 10 columns' > REQ-PB-075: the T14 register row carries ID, Benefit, Type, Baseline, Target, Value (SAR), Realized, Owner, Evidence and Status  341ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 907ms
+ ✓ |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (1 test) 3013ms
+   ✓ REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201  2834ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 5024ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2707ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 709ms
+ ✓ |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts (2 tests) 800ms
+
+ Test Files  15 passed (15)
+      Tests  172 passed (172)
+   Start at  18:27:21
+   Duration  99.34s (transform 4.91s, setup 0ms, collect 32.32s, tests 64.38s, environment 0ms, prepare 78ms)
+
+EXIT=0

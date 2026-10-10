@@ -1,0 +1,37 @@
+port-policy: PostgreSQL listening on port 25650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.UyD3q9/claude-0/review-qa-d-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2q65wl_a5575181 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (1 test | 1 failed) 3077ms
+   × REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201 2741ms
+     → {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.","code":"gate.g5_not_approved","requestId":"01a12710-a44b-779c-9b81-b86b793a2cf2"}: expected 422 to be 201 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts > REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201
+AssertionError: {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.","code":"gate.g5_not_approved","requestId":"01a12710-a44b-779c-9b81-b86b793a2cf2"}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts:220:54
+    218|       body: { initiativeId, businessUnitId: w.a1, note: "Synthetic QA-…
+    219|     });
+    220|     expect(after.status, JSON.stringify(after.body)).toBe(201);
+       |                                                      ^
+    221|     expect([after.body.initiativeId, after.body.businessUnitId]).toEqu…
+    222|     expect(await scaleRows(g)).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:25:52
+   Duration  12.15s (transform 3.44s, setup 0ms, collect 6.75s, tests 3.08s, environment 0ms, prepare 94ms)
+
