@@ -45,6 +45,16 @@ export function DispensationsPage() {
   );
 }
 
+/**
+ * T-DG4-FE-F (D-110; ADR-0021 amendment W1-W2): on a Modular transformation the only waiver the server accepts is a
+ * G3 waiver for the whole transformation, and it covers only the missing baseline and outcome links. It is labelled
+ * as such, never as a launch waiver or an approval. Every other Modular waiver still reaches the server and shows its
+ * DG3 refusal (`dispensation.waiver_requires_end_to_end`, translated).
+ */
+export function isModularLinksWaiver(mode: string, d: Pick<GateDispensation, "kind" | "gateCode" | "initiativeId">) {
+  return mode === "modular" && d.kind === "waiver" && d.gateCode === "G3" && !d.initiativeId;
+}
+
 function verificationKey(d: GateDispensation): string {
   if (d.kind !== "inherited_approval") return "notApplicable";
   return d.evidenceVerified === true ? "verified" : "unverified";
@@ -71,7 +81,14 @@ function DispensationRegister() {
     {
       id: "kind",
       header: t("dispensations.field.kind"),
-      cell: (d) => <span data-kind={d.kind}>{t(`dispensations.kind.${d.kind}`)}</span>,
+      cell: (d) =>
+        isModularLinksWaiver(ws.tr.mode, d) ? (
+          <span data-kind={d.kind} data-modular-links-waiver="true">
+            {t("gates.modularWaiver.label")}
+          </span>
+        ) : (
+          <span data-kind={d.kind}>{t(`dispensations.kind.${d.kind}`)}</span>
+        ),
       sortValue: (d) => d.kind,
       hideable: false,
       rowHeader: true,
@@ -293,7 +310,11 @@ function DecideDialog({
       title={t("dispensations.decide.title", { kind: t(`dispensations.kind.${d.kind}`), gate: d.gateCode })}
       description={
         <>
-          <p>{t(`dispensations.decide.description.${d.kind}`)}</p>
+          <p>
+            {isModularLinksWaiver(ws.tr.mode, d)
+              ? t("gates.modularWaiver.decideDescription")
+              : t(`dispensations.decide.description.${d.kind}`)}
+          </p>
           {d.kind === "inherited_approval" && d.evidenceVerified !== true ? (
             <p className="banner banner--warning" role="note" data-state="unverified-evidence">
               <Icon name="alert" /> {t("dispensations.decide.unverifiedEvidence")}
@@ -474,7 +495,11 @@ function RecordDialog({ onDone, onClose }: { onDone: () => Promise<boolean>; onC
             {t(`dispensations.kind.${k}`)}
           </label>
         ))}
-        <p className="field__hint">{t(`dispensations.record.kindHint.${ws.tr.mode}`)}</p>
+        <p className="field__hint" data-kind-hint={ws.tr.mode}>
+          {ws.tr.mode === "modular"
+            ? t("gates.modularWaiver.kindHint")
+            : t(`dispensations.record.kindHint.${ws.tr.mode}`)}
+        </p>
       </fieldset>
       <Field label={t("dispensations.field.gate")} required error={err("gateCode")}>
         {(control) => (

@@ -16,7 +16,6 @@ import {
   useGate,
   useGateSubmission,
   useGateSubmissions,
-  useP2Refresh,
   useP3Refresh,
   useRegister,
 } from "../../api/queries.ts";
@@ -44,6 +43,20 @@ import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, gateLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
 import { BusinessApprovalNote, InheritedApprovalBadge, inheritedApprovalSource, readiness } from "./GatesPage.tsx";
+import {
+  CriteriaReviewTable,
+  EMPTY_SCOPE,
+  GateExceptionsSection,
+  P4RefusedCriterion,
+  p4ItemSubject,
+  p4RefusedCriterion,
+  ScaleScopeEditor,
+  ScaleScopeSection,
+  scaleScopeBody,
+  SubmissionFrozenLines,
+  type ScaleScopeDraft,
+  useGateP4Refresh,
+} from "./GateP4.tsx";
 
 export function GateDetailPage() {
   const { t } = useTranslation();
@@ -71,7 +84,8 @@ function GateContent({ view }: { view: GateView }) {
   const locale = useLocale();
   const ws = useWorkspace();
   const { people, byId } = usePeople(ws.tid);
-  const refresh = useP2Refresh(ws.tid);
+  // T-DG4-FE-F: the live view (P2 keys) and the slice H reads (scale scope, exceptions, review table; P4 keys).
+  const refresh = useGateP4Refresh(ws.tid);
   const [submitting, setSubmitting] = useState(false);
   const [deciding, setDeciding] = useState(false);
   const [configuring, setConfiguring] = useState(false);
@@ -221,7 +235,11 @@ function GateContent({ view }: { view: GateView }) {
         <CriteriaTable criteria={view.criteria} />
       </Section>
 
-      <SubmissionHistory code={def.code} />
+      {/* T-DG4-FE-F (ADR-0035 §4, §5): exceptions per mandatory criterion; the approved G5 scale scope. */}
+      <GateExceptionsSection view={view} />
+      {def.code === "G5" ? <ScaleScopeSection /> : null}
+
+      <SubmissionHistory view={view} />
 
       {submitting ? (
         <SubmitDialog
@@ -294,7 +312,7 @@ function CriteriaTable({ criteria }: { criteria: readonly GateCriterionEvaluatio
   const evidence = useRegister<Evidence>(ws.tid, "evidence");
   const resolve = useSubjectResolver(criteria.some((c) => c.key.startsWith("g4.")));
   return (
-    <div className="table-wrap">
+    <div className="table-wrap" tabIndex={0} role="region" aria-label={t("gates.tableRegion.readiness")}>
       <table className="table criteria-table">
         <caption className="visually-hidden">{t("gates.readinessTitle")}</caption>
         <thead>
@@ -326,7 +344,8 @@ function CriteriaTable({ criteria }: { criteria: readonly GateCriterionEvaluatio
                   ) : (
                     <ul className="plain-list missing-list">
                       {c.missing.map((m, i) => {
-                        const subject = resolve(m.pointer, m);
+                        const p4 = p4ItemSubject(m);
+                        const subject = p4 ? { label: p4 } : resolve(m.pointer, m);
                         return (
                           <li key={`${m.code}-${i}`} data-missing={m.code}>
                             <Icon name="cross" />{" "}
@@ -685,6 +704,11 @@ export function needsG1Agreements(gateCode: string, outcome: string): boolean {
   return gateCode === "G1" && outcome === "approved";
 }
 
+/** Whether a decision needs (and sends) the approved scale scope: only approving G5 (ADR-0035 §5). */
+export function needsScaleScope(gateCode: string, outcome: string): boolean {
+  return gateCode === "G5" && outcome === "approved";
+}
+
 /**
  * The approver's decision: one of four outcomes with a mandatory rationale; the submission number is the current one.
  * Approving G1 also needs the three leadership agreement confirmations (B0032); they are sent only then.
@@ -709,6 +733,10 @@ function DecideDialog({
   const [comments, setComments] = useState("");
   const [agreements, setAgreements] = useState<Record<AgreementKey, boolean>>(NO_AGREEMENTS);
   const needsAgreements = needsG1Agreements(view.definition.code, outcome);
+  // T-DG4-FE-F (ADR-0035 §5): a G5 approval records the approved scale scope; no other gate or outcome sends one.
+  const needsScope = needsScaleScope(view.definition.code, outcome);
+  const [scope, setScope] = useState<ScaleScopeDraft>(EMPTY_SCOPE);
+  const [scopeError, setScopeError] = useState<string | null>(null);
   const allAgreed = G1_AGREEMENT_KEYS.every((k) => agreements[k]);
   const approvalBlocked = needsAgreements && !allAgreed;
   /** Set by a submit attempt with a confirmation missing; the inline error shows while one is still unticked. */
@@ -736,15 +764,22 @@ function DecideDialog({
     if (comments !== "") body["comments"] = comments;
     // ADR-0021 §8: `agreements` only with a G1 approval (all three true); any other gate or outcome sends none.
     if (needsAgreements) body["agreements"] = { problem: true, baseline: true, materialValuePools: true };
+    let scopeInvalid = false;
+    if (needsScope) {
+      const built = scaleScopeBody(scope);
+      if (built.ok) body["scaleScope"] = built.value;
+      else scopeInvalid = true;
+      setScopeError(built.ok ? null : built.code);
+    } else setScopeError(null);
     const parsed = gateDecisionCreate.safeParse(body);
     if (!parsed.success) {
       for (const issue of parsed.error.issues) next[String(issue.path[0])] ??= issueCode(issue);
     }
     // REQ-PB-022: approving G1 is impossible until the three confirmations are ticked; nothing is sent before.
     setAgreementsTried(approvalBlocked);
-    if (Object.keys(next).length > 0 || approvalBlocked) {
+    if (Object.keys(next).length > 0 || approvalBlocked || scopeInvalid) {
       showErrors(next);
-      if (approvalBlocked) focusInvalid();
+      if (approvalBlocked || scopeInvalid) focusInvalid();
       return;
     }
     setErrors({});
@@ -848,6 +883,7 @@ function DecideDialog({
           ) : null}
         </fieldset>
       ) : null}
+      {needsScope ? <ScaleScopeEditor draft={scope} onChange={setScope} errorCode={scopeError} /> : null}
       <Field
         label={t("gates.decision.rationale")}
         hint={t("gates.decision.rationaleHint")}
@@ -925,6 +961,9 @@ export function GateProblem({ error }: { error: unknown }) {
       {incomplete && error instanceof ApiError && !g4Refused ? (
         <ul className="plain-list">
           {error.fieldErrors.map((fe, i) => {
+            // T-DG4-FE-F (ADR-0035 §2): a G5/G6 refusal names each incomplete criterion by its translated label.
+            const p4Key = p4RefusedCriterion(fe.pointer);
+            if (p4Key) return <P4RefusedCriterion key={`${fe.pointer}-${i}`} criterionKey={p4Key} t={t} />;
             const subject = g4Subject(fe);
             return (
               <li key={`${fe.pointer}-${i}`} data-missing={fe.code}>
@@ -942,12 +981,24 @@ export function GateProblem({ error }: { error: unknown }) {
           })}
         </ul>
       ) : null}
+      {/* T-DG4-FE-F (ADR-0038 B1, B4): the Modular G3 missing-links items, each translated from its code. */}
+      {code === "gate.modular_links_missing" && error instanceof ApiError && error.fieldErrors.length > 0 ? (
+        <ul className="plain-list" data-modular-links-missing="true">
+          {error.fieldErrors.map((fe, i) => (
+            <li key={`${fe.code}-${i}`} data-missing-link={fe.code}>
+              <Icon name="cross" />{" "}
+              {t(`problems.${fe.code.replace(/\./g, "__")}`, { defaultValue: t("problems.validation__invalid") })}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {conflict ? <p className="small">{t("gates.reloaded")}</p> : null}
     </div>
   );
 }
 
-function SubmissionHistory({ code }: { code: string }) {
+function SubmissionHistory({ view }: { view: GateView }) {
+  const code = view.definition.code;
   const { t } = useTranslation();
   const locale = useLocale();
   const ws = useWorkspace();
@@ -1011,7 +1062,7 @@ function SubmissionHistory({ code }: { code: string }) {
                 </tbody>
               </table>
             </div>
-            {selected !== null ? <SubmissionDetail code={code} no={selected} /> : null}
+            {selected !== null ? <SubmissionDetail view={view} code={code} no={selected} /> : null}
           </>
         )}
       </QueryState>
@@ -1019,7 +1070,7 @@ function SubmissionHistory({ code }: { code: string }) {
   );
 }
 
-function SubmissionDetail({ code, no }: { code: string; no: number }) {
+function SubmissionDetail({ view, code, no }: { view: GateView; code: string; no: number }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const ws = useWorkspace();
@@ -1054,6 +1105,15 @@ function SubmissionDetail({ code, no }: { code: string; no: number }) {
                   );
                 })}
             </ul>
+            {/* T-DG4-FE-F: the exception lines and Modular-links waiver frozen into the snapshot; the review table. */}
+            <SubmissionFrozenLines snapshot={v.submission.snapshot} />
+            <CriteriaReviewTable
+              view={view}
+              code={code}
+              no={no}
+              submittedBy={v.submission.submittedBy}
+              pending={v.submission.status === "pending"}
+            />
             <h4 className="small-heading">{t("gates.history.decision")}</h4>
             {v.decision ? (
               <dl className="details" data-gate-decision={v.decision.outcome}>
