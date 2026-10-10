@@ -248,3 +248,25 @@ The REQ-S16-020 integration test ("creates and reads each one through the API wi
 | `adoption.no_reporting_period` | reason key | accepted | Unknown: the organization has no reporting period. |
 | `invalid_transition (existing code)` | 422 detail | accepted detail texts | This champion is already removed. / A withdrawal record cannot itself be withdrawn. / This metric link is already removed. |
 | `validation.required (existing code)` | 400 field | accepted use | at /reportingPeriodId when the organization has no open or closed period (getAdoptionIndicators) |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R3): the question version of an assessment form
+
+Source: FE-E handback §5 item 3. Nothing above is removed. Where this amendment and §3 or §8 differ, this amendment wins.
+
+### V1. `getAssessmentFormVersion` (decided: a version read)
+
+**The gap.** An `AssessmentRecord` names the `formVersionNo` it was answered on, and its `answers` are keyed by question `key`. `getAssessmentForm` returns only `currentVersion`. So a record answered on an older version shows answer keys instead of question labels, and a key the current version dropped has no label at all.
+
+**Decided:** `getAssessmentFormVersion`, `GET /api/v1/transformations/{transformationId}/assessment-forms/{assessmentFormId}/versions/{versionNo}` (the existing `VersionNo` path parameter):
+
+- **Authorization:** `transformation.read` (the same as `getAssessmentForm`).
+- **200** `AssessmentFormVersion` (`versionNo`, `schema`, `createdAt`, `createdBy`): the `assessment_form_version` row with that `version_no`. Any version can be read, including one that was never published and the versions of a retired form.
+- **No `ETag`.** The row is append-only (probe FM06), so it has no record version and there is nothing to send `If-Match` for.
+- **404** when the form is not readable, or the form has no version with that number. 400 (for example `versionNo` 0), 401, 429.
+- **The record page** reads the version its `formVersionNo` names and labels each answer from it. A form's versions are immutable, so the client may cache a version for the page's life.
+
+**Rejected:**
+- **The questions embedded in the record.** It would change the existing `AssessmentRecord` response and copy each version into every record.
+- **A stated limitation.** The version rows exist and are append-only, so the read is cheap and exact.
+
+No schema, migration, audit or code change. The operation is pending in `apps/api/test/support/p4-pending-arch-r3.ts` until a backend task routes it in `apps/api/src/modules/adoption/assessments.ts`.

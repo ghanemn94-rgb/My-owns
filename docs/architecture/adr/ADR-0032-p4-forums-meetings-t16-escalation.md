@@ -465,3 +465,13 @@ The two message keys are sent without text (S-6). Their English is the text BE-F
   - `meeting_minutes_required_output` → `meeting_minutes.required_output_missing`, "A forum meeting cannot be published without at least one of: {kinds}.";
   - `meeting_output_record_type` → `meeting_output.record_required`, "This output links a record of type its kind requires.";
   - `agenda_item_published_ask_linked` → `agenda_item.executive_ask_incomplete`, listing "decision required".
+
+## Amendment (2026-10-10, T-DG4-ARCH-R3): the forum's Arabic name in the minutes task
+
+Source: FE-R1 handback §5 item 5. Where this amendment and G2 differ, this amendment wins.
+
+### G3. `governance.task.minutes_to_approve` params
+
+The params become `forum` (`forum.name_en`, unchanged), `forumAr` (`forum.name_ar`, new) and `meetingDate` (unchanged), by the rule of ADR-0025 amendment L1. The English text of G2 row `governance.task.minutes_to_approve` is unchanged. The Arabic text takes `{forum}` from `forumAr`. A work item written before the change has no `forumAr` and renders with the English name, as it does today.
+
+**Implementer (backend):** in `apps/api/src/modules/governance/minutes.ts` (`minutesTask`), select `name_ar` with `name_en`, and pass `forumAr: forum.name_ar`. `reassignWorkItemOfSubject` keeps an open item of the same assignee as it is (it does not rewrite its params), so such an item keeps the params it was created with; an item created after the change (new minutes, or a new chair) carries both names. The test asserts both names on a new item.

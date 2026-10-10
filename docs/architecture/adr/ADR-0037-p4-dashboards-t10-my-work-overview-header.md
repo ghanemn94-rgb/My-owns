@@ -257,3 +257,65 @@ These keys are rendered by the web client; the server sends only the key (and `r
 | `dashboard.headline.open_decisions` | label key | accepted | Open decisions |
 | `dashboard.headline.overdue_decisions` | label key | accepted | Overdue decisions |
 | `dashboard.headline.adoption_indicators` | label key | accepted | Adoption indicators |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R3): Finance class lines drill down; the value-state sum keys
+
+Source: KBE-G2 handback §5 item 5 (D-111). Nothing above is removed. Where this amendment and §5 differ, this amendment wins.
+
+### K1. A value-class drill-down and three more value-state metrics (decided: add them)
+
+**The gap.** The Finance dashboard shows a line per value class × state × currency (`FinanceValueLine`, ADR-0030 §7). `getDashboardDrilldown` had no value-class parameter, and no metric for the states `measured`, `rejected` and `sustained`. So, as built by KBE-G2, a class line carried a `drilldownHref` only when it was the whole state's figure in its currency (the only financial class there). Every other class line, and every `measured`, `rejected` and `sustained` line, carried `null`.
+
+**Decided: add them, as the §5 drill-down invariant asks.** M0244 says every headline number must drill into its contributing records. A class line is a figure the Finance dashboard shows on its own, and a stated limitation would leave most class lines of a real organization (several classes per currency) without a drill-down. The change is additive: one optional query parameter, three enum values, one new code and three new rule keys.
+
+1. **Parameter `valueClass`** (`FinanceValueClass`: `revenue_uplift`, `margin_uplift`, `cash_saving`, `avoided_cost`, `working_capital_release`, `non_financial_valued`), optional.
+   - It applies only to the seven value-state metrics: `value.planned`, `value.forecast`, `value.submitted`, `value.validated`, `value.measured`, `value.rejected`, `value.sustained`.
+   - With any other metric it is refused: 422 `dashboard.value_class_not_applicable` at `/valueClass`, through `dashboardRefusal`, with the K2 text.
+   - A value outside the enum is a 400 `validation` (the query schema).
+2. **New metrics `value.measured`, `value.rejected`, `value.sustained`.**
+   - Items are one per benefit, the benefit's lines of that state summed, as the four existing value metrics do.
+   - `subjectId` (a benefit) is accepted as for those four.
+   - `calculation.ruleKey` is `dashboard.value.sum_<state>`, and `inputs` is one `total_<currency>` per currency, as built for the four.
+   - No headline uses them, so `DashboardHeadline.metric` never takes these values.
+3. **Which lines a value-state drill-down sums.** The rule is the Finance class line's own, so the invariant holds by construction:
+   - **The benefit:** `financeClassOf(b)` is not null, i.e. counted once and monetised. Without `valueClass`, its class must be one of the five financial classes, which is the existing rule of the four value metrics. With `valueClass`, `financeClassOf(b)` must equal it, so `non_financial_valued` selects valued non-financial benefits.
+   - **The line:** the state matches, and `lineInWindow(line, state, clock)` holds.
+   - **The overlap hold:** `entersLine`, i.e. validated and sustained lines of a benefit with an open overlap warning are held back.
+   - The measured, rejected and sustained lines come from the same `benefit_value_line` rows the Finance dashboard reads (`loadExtraStateLines`).
+4. **Invariant (tested by the kpi-benefits task).** Take every class line (class *c*, state *s*, currency *k*) of a Finance dashboard response. The drill-down with metric `value.<s>`, `valueClass` *c* and the same filters has items whose decimal sum in currency *k* equals the line's `total`, or both are `unknown`. The fixture has at least two financial classes in one currency, two currencies, a benefit held back by an open overlap, and a valued non-financial benefit.
+5. **The Finance dashboard's hrefs.**
+   - **Every class line** carries `drilldownHref` = the drill-down of its state's metric with `valueClass` = its class and the response's filters. The "whole state's figure" condition is removed.
+   - **The `gross` lines** keep their hrefs (`value.planned`, `value.validated`, no `valueClass`).
+   - **The `net` lines keep `null`.** This is a stated limitation, and the reason is that a net line is a derived difference (gross − implementation cost), not a sum of records. Its two inputs each drill: the `gross` line of the same state and currency, and the `value.investment` drill-down with the same filters. The screen shows a net line as "gross − implementation cost" with links to those two, and never as a drillable total.
+6. **Unchanged:** every existing metric's response without `valueClass` (the four value metrics keep their financial-class rule), the headlines, the filters, scope enforcement (§6) and the other dashboards.
+
+### K2. Codes and keys (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `dashboard.value_class_not_applicable` (at `/valueClass`) | 422 | **new** (K1) | A value class narrows only a drill-down of benefit values by state. |
+| `dashboard.value.sum_planned` | rule key | accepted (KBE-G, as built; not in an ADR table before) | Planned value = the sum of the planned values in the period. |
+| `dashboard.value.sum_forecast` | rule key | accepted (KBE-G, as built; not in an ADR table before) | Forecast value = the sum of the forecast values in the period. |
+| `dashboard.value.sum_submitted` | rule key | accepted (KBE-G, as built; not in an ADR table before) | Submitted value = the sum of the values submitted for Finance validation in the period. |
+| `dashboard.value.sum_validated` | rule key | accepted (KBE-G, as built; not in an ADR table before) | Validated value = the sum of the Finance-validated values in the period. |
+| `dashboard.value.sum_measured` | rule key | **new** (K1) | Measured value = the sum of the measured values in the period. |
+| `dashboard.value.sum_rejected` | rule key | **new** (K1) | Rejected value = the sum of the values Finance rejected in the period. |
+| `dashboard.value.sum_sustained` | rule key | **new** (K1) | Sustained value = the sum of the sustained values in the period. |
+| `dashboard.portfolio.slip_approved_date_missing` | reason key | accepted (KBE-G, as built; template-built, not in an ADR table before) | Unknown: a milestone has no approved date, so its slip cannot be counted. |
+| `dashboard.portfolio.slip_forecast_date_missing` | reason key | accepted (as the row above) | Unknown: a milestone has no forecast date, so its slip cannot be counted. |
+| `dashboard.portfolio.slip_calendar_not_configured` | reason key | accepted (as the row above) | Unknown: no business calendar is configured, so working-day slip cannot be counted. |
+| `dashboard.portfolio.slip_range_too_long` | reason key | accepted (as the row above) | Unknown: the slip spans more working days than can be counted. |
+| `dashboard.kpi.green` | rule key | accepted (KBE-G, as built; template-built, not in an ADR table before) | KPI status: the KPI's displayed status is green. |
+| `dashboard.kpi.amber` | rule key | accepted (as the row above) | KPI status: the KPI's displayed status is amber. |
+| `dashboard.kpi.red` | rule key | accepted (as the row above) | KPI status: the KPI's displayed status is red. |
+| `dashboard.kpi.unknown` | rule key | accepted (as the row above) | KPI status: Unknown. |
+| `dashboard.kpi.stale` | rule key | accepted (as the row above) | KPI status: Stale. |
+| `dashboard.kpi.not_computable` | rule key | accepted (as the row above) | KPI status: not computable. |
+
+The four "as built" keys are produced from a template (`` `dashboard.value.sum_${state}` `` in `reporting/dashboards/drilldown.ts`), which is why no earlier literal scan found them. They were found while specifying K1. The fifth key of that template family, `dashboard.value.sum_investment`, was already in the A2 table.
+
+The ten `dashboard.portfolio.slip_<reason>` and `dashboard.kpi.<rag>` rows were found by the T-DG4-ARCH-R3B whole-tree scan of template-built keys (`template-keys-whole-tree.txt` in the handback evidence). They are produced as built:
+- `` `dashboard.portfolio.slip_${slip.reason}` `` in `reporting/dashboards/areas.ts` (a milestone's Unknown slip; `reason` is `SlipUnknownReason` of `packages/shared/src/schedule/working-day-slip.ts`, exactly the four values above);
+- `` `dashboard.kpi.${s.displayedRag}` `` in `reporting/dashboards/drilldown.ts` (the `outcomes.kpi_status` drill-down of one KPI; `displayedRag` takes the `KpiRag` values, exactly the six above).
+
+No code or behaviour changes; the rows record the keys and their English texts for the web.
