@@ -1,0 +1,139 @@
+port-policy: PostgreSQL listening on port 25650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-qa-a
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1zgyra_8b80e56b (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests | 5 failed) 4320ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a benefit with two owners is rejected  317ms
+   × A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the totals 302ms
+     → expected [ '0' ] to deeply equal [ '10000000' ]
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: two initiative records of one shared benefit in a shared-benefit group count once 181ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated 156ms
+   × A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted 145ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The linked record does not exist in this transformation.","code":"trace_link.record_not_found","requestId":"01a12464-543d-741e-a621-16e5496980f6","errors":[{"pointer":"/fromId","code":"trace_link.record_not_found","message":"The linked record does not exist in this transformation."}]}: expected 422 to be 201 // Object.is equality
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  443ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-001: a forecast amount never appears in the validated total; a rejected measurement is kept and shown rejected 240ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-018: upside scenario values never appear in the realized (measured) or validated totals 274ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-076: a CX benefit with Value n/a is excluded from SAR totals and not counted as zero 143ms
+   × A10: unvalidated or forecast value never appears as validated actual > REQ-S08-010: a SAR value on a CX benefit without an approved valuation method is rejected 120ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12464-5908-72af-9e12-d3183f00af34","errors":[{"pointer":"/valueClass","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue_uplift\"|\"margin_uplift\"|\"cash_saving\"|\"avoided_cost\"|\"working_capital_release\"|\"non_financial\""}]}: expected 400 to be 201 // Object.is equality
+   × A10: unvalidated or forecast value never appears as validated actual > REQ-S08-009: revenue uplift and margin are separate Finance-dashboard lines; avoided cost is not cash saving 151ms
+     → expected [ [ '0' ], [ '0' ] ] to deeply equal [ [ '300' ], [ '70' ] ]
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-011: a 1 million SAR initiative cost reduces transformation net value by exactly 1 million 189ms
+   × A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves 434ms
+     → expected '0' to be '300000' // Object.is equality
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-015, REQ-PB-013: a validation lacking a measurement period is rejected; non-Finance 403; the audit records the validator 300ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  364ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S12-014: submitting benefit evidence creates exactly one Finance queue item; replaying the event creates none 239ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the totals
+AssertionError: expected [ '0' ] to deeply equal [ '10000000' ]
+
+- Expected
++ Received
+
+  [
+-   "10000000",
++   "0",
+  ]
+
+ ❯ tests/qa/integration/a10-benefit-integrity.test.ts:195:54
+    193|       (l) => l.valueClass === "revenue_uplift" && l.state === "planned…
+    194|     );
+    195|     expect(planned.map((l) => canon(l.total.value))).toEqual(["1000000…
+       |                                                      ^
+    196|   });
+    197| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The linked record does not exist in this transformation.","code":"trace_link.record_not_found","requestId":"01a12464-543d-741e-a621-16e5496980f6","errors":[{"pointer":"/fromId","code":"trace_link.record_not_found","message":"The linked record does not exist in this transformation."}]}: expected 422 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 422
+
+ ❯ tests/qa/integration/a10-benefit-integrity.test.ts:272:54
+    270|       });
+    271|     const first = await link(k1, "0.6");
+    272|     expect(first.status, JSON.stringify(first.body)).toBe(201);
+       |                                                      ^
+    273|     expectCode(await link(k2, "0.5"), 422, "trace_link.allocation_exce…
+    274|     const set = await get200(api, b.s.auditor, `${b.base}/allocation-s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: unvalidated or forecast value never appears as validated actual > REQ-S08-010: a SAR value on a CX benefit without an approved valuation method is rejected
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12464-5908-72af-9e12-d3183f00af34","errors":[{"pointer":"/valueClass","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue_uplift\"|\"margin_uplift\"|\"cash_saving\"|\"avoided_cost\"|\"working_capital_release\"|\"non_financial\""}]}: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ tests/qa/integration/a10-benefit-integrity.test.ts:404:48
+    402|       body: cxBody(b, { plannedValue: "50000", valuationMethodId: prop…
+    403|     });
+    404|     expect(ok.status, JSON.stringify(ok.body)).toBe(201);
+       |                                                ^
+    405|   });
+    406| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: unvalidated or forecast value never appears as validated actual > REQ-S08-009: revenue uplift and margin are separate Finance-dashboard lines; avoided cost is not cash saving
+AssertionError: expected [ [ '0' ], [ '0' ] ] to deeply equal [ [ '300' ], [ '70' ] ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "300",
++     "0",
+    ],
+    [
+-     "70",
++     "0",
+    ],
+  ]
+
+ ❯ tests/qa/integration/a10-benefit-integrity.test.ts:433:67
+    431|         .filter((l) => l.valueClass === cls && l.state === "planned" &…
+    432|         .map((l) => canon(l.total.value));
+    433|     expect([planned("revenue_uplift"), planned("margin_uplift")]).toEq…
+       |                                                                   ^
+    434|     expect(planned("cash_saving").filter((v) => v !== "0" && v !== nul…
+    435|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves
+AssertionError: expected '0' to be '300000' // Object.is equality
+
+Expected: "300000"
+Received: "0"
+
+ ❯ tests/qa/integration/a10-benefit-integrity.test.ts:482:35
+    480|     await approve(b, await queued(b, one.id, "100000"), "100000");
+    481|     await approve(b, await queued(b, two.id, "200000"), "200000");
+    482|     expect(await validatedSar(b)).toBe("300000");
+       |                                   ^
+    483|     // The warning (raised by the system, or by the owner through the …
+    484|     let overlaps = await get200(api, b.s.auditor, `${b.base}/benefit-o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 11 passed (16)
+   Start at  05:58:26
+   Duration  13.70s (transform 3.57s, setup 0ms, collect 7.19s, tests 4.32s, environment 0ms, prepare 81ms)
+

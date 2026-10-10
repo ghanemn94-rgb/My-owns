@@ -1,0 +1,76 @@
+MUTATION BASE-A04 file package.json exit 0
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a04-kpi-propagation.test.ts -t REQ-S07-017|REQ-S07-014|REQ-S13-002
+   ✓ |integration| tests/qa/integration/a04-kpi-propagation.test.ts (8 tests | 5 skipped) 11136ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-014: the linked benefit shows a pending amount and the validated total is unchanged  2710ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values  3549ms
+   Tests  3 passed | 5 skipped (8)
+--- runner exit 0
+MUTATION BASE-A05 file package.json exit 0
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a05-calculation-correctness.test.ts -t REQ-S07-010: two business|REQ-S16-025
+   ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests | 15 skipped) 2363ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages  721ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  699ms
+   Tests  2 passed | 15 skipped (17)
+--- runner exit 0
+MUTATION BASE-A10 file package.json exit 0
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a10-benefit-integrity.test.ts -t REQ-S08-013|REQ-PB-075
+   ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests | 13 skipped) 1724ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated  456ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted  450ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  441ms
+   Tests  3 passed | 13 skipped (16)
+--- runner exit 0
+MUTATION MUT-A04-1 financeReview never pending file apps/api/src/modules/benefits/downstream.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a04-kpi-propagation.test.ts -t REQ-S07-017
+   × A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-017, REQ-S07-013: the direct-accept submission lists the downstream views and 'Finance review pending'; one audit event 69ms
+   Tests  1 failed | 7 skipped (8)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a04-kpi-propagation.test.ts > A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-017, REQ-S07-013: the direct-accept submission lists the downstream views and 'Finance review pending'; one audit event
+   AssertionError: expected [ 'accepted', false, 'not_applicable' ] to deeply equal [ 'accepted', false, 'pending' ]
+--- runner exit 0
+MUTATION MUT-A04-2 submitted counted as validated in totals file apps/api/src/modules/benefits/totals.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a04-kpi-propagation.test.ts -t REQ-S07-017|REQ-S07-014
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-017, REQ-S07-013: the direct-accept submission lists the downstream views and 'Finance review pending'; one audit event 29ms
+   × A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-014: the linked benefit shows a pending amount and the validated total is unchanged 2640ms
+   Tests  1 failed | 1 passed | 6 skipped (8)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a04-kpi-propagation.test.ts > A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-014: the linked benefit shows a pending amount and the validated total is unchanged
+   AssertionError: expected '100000' to be '0' // Object.is equality
+--- runner exit 0
+MUTATION MUT-A04-3 period filter window ignored file apps/api/src/modules/reporting/dashboards/filters.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a04-kpi-propagation.test.ts -t REQ-S13-002
+   × A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values 4745ms
+   Tests  1 failed | 7 skipped (8)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a04-kpi-propagation.test.ts > A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values
+   AssertionError: expected { …(10) } to match object { …(4) }
+--- runner exit 0
+MUTATION MUT-A05-1 weighted ratio replaced by mean of ratios file packages/shared/src/kpi/aggregate.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a05-calculation-correctness.test.ts -t REQ-S07-010: two business
+   × A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages 1035ms
+   Tests  1 failed | 16 skipped (17)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a05-calculation-correctness.test.ts > A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages
+   AssertionError: expected '0.494444' to be '0.81' // Object.is equality
+--- runner exit 0
+MUTATION MUT-A05-2 decimal plus replaced by float addition file packages/shared/src/formula/evaluate.ts exit 0
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a05-calculation-correctness.test.ts -t REQ-S16-025
+   ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests | 16 skipped) 3010ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  1497ms
+   Tests  1 passed | 16 skipped (17)
+--- runner exit 0
+MUTATION MUT-A10-1 over-100 % allocation accepted file apps/api/src/modules/benefits/allocations.ts exit 0
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a10-benefit-integrity.test.ts -t REQ-S08-013
+   ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests | 14 skipped) 1672ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated  653ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted  598ms
+   Tests  2 passed | 14 skipped (16)
+--- runner exit 0
+MUTATION MUT-A10-2 submitted counted as validated in totals file apps/api/src/modules/benefits/totals.ts exit 1
+CMD tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a10-benefit-integrity.test.ts -t REQ-PB-075
+   × A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount 701ms
+   Tests  1 failed | 15 skipped (16)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a10-benefit-integrity.test.ts > A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount
+   AssertionError: expected '250000.1' to be '0' // Object.is equality
+--- runner exit 0
