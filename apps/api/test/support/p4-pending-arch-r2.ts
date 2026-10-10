@@ -2,6 +2,5 @@
 // 2026-10-10) that have no route yet. Remove an entry in the same change that registers its route and exercises it in
 // the contract test. Must be empty when the DG4 candidate freezes.
 // - getInheritedRecord: BE-R3 (reporting/modular.ts; the target of createInheritedRecord's Location).
-// - getBenefitPlanValue: a kpi-benefits-engineer task (benefits/values.ts; the target of createBenefitPlanValue's
-//   Location and the source of updateBenefitPlanValue's If-Match).
-export const P4_PENDING_ARCH_R2: readonly string[] = ["getInheritedRecord", "getBenefitPlanValue"];
+// getBenefitPlanValue is routed by T-DG4-KBE-R3 (benefits/values.ts) and exercised in p4-exercises-kbe-e.ts.
+export const P4_PENDING_ARCH_R2: readonly string[] = ["getInheritedRecord"];
