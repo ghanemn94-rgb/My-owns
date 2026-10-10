@@ -1,0 +1,60 @@
+# mutation M2-PB009-label: apps/api/src/modules/sustainment/status-model.ts
+# perl -0pi -e 's/return isValuePending\(value\) \? "Delivered — value validation pending" : "Delivered — value validated";/return "Delivered — value validated";/'
+# diff vs candidate:
+--- /home/user/wt/dg4-qa-c/apps/api/src/modules/sustainment/status-model.ts	2026-10-10 12:38:35.970185735 +0000
++++ apps/api/src/modules/sustainment/status-model.ts	2026-10-10 13:10:48.697967261 +0000
+@@ -276,7 +276,7 @@
+ function initiativeLabel(delivery: string, value: SubjectValueStatus, closed: boolean): InitiativeStatusLabel {
+   if (closed) return "Closed";
+   if (delivery === "completed")
+-    return isValuePending(value) ? "Delivered — value validation pending" : "Delivered — value validated";
++    return "Delivered — value validated";
+   return "In delivery";
+ }
+ 
+# test: tests/qa/integration/a11-value-closure.test.ts 
+port-policy: PostgreSQL listening on port 25840 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.sUZ6wv/claude-0/qa-c-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2ex1ee_61144c6c (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a11-value-closure.test.ts (11 tests | 1 failed) 4457ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: delivery Complete leaves adoption, value and closure exactly as they were 50ms
+   × A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009: the label is exactly 'Delivered — value validation pending', never 'successful' 19ms
+     → expected 'Delivered — value validated' to be 'Delivered — value validation pending' // Object.is equality
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009, REQ-S03-003: closing while validated value is pending is 422 invalid-transition; nothing is written 44ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: with an approved transition decision for the pending benefit the closure is accepted 220ms
+   ✓ A11 REQ-S11-006: all initiatives complete with value pending: 'Delivery complete - value validation pending' > REQ-S11-006: the transformation shows delivery complete and value pending as separate states, never successful  431ms
+   ✓ A11 REQ-S08-002: completing the enabling deliverable marks the benefit 'enabled - not yet measured' > REQ-S08-002: realization state enabled_not_yet_measured; validated value stays zero (nothing validated)  459ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: without the Plan outputs a benefit cannot move towards Measure (422); nothing changes 109ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: at Measure, Sustain without a BAU owner and control cadence is 422; with both it succeeds  403ms
+   ✓ A11 REQ-S11-007: after the transition decision the forecast stays forecast; monitoring goes to the residual owner > REQ-S11-007: forecast unchanged and not sustained/validated; the residual owner gets the monitoring task  346ms
+   ✓ A11 REQ-PB-085: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it > REQ-PB-085: two below-plan validated values and a redelivery leave exactly one open case for the benefit  504ms
+   ✓ A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated  720ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a11-value-closure.test.ts > A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-PB-009: the label is exactly 'Delivered — value validation pending', never 'successful'
+AssertionError: expected 'Delivered — value validated' to be 'Delivered — value validation pending' // Object.is equality
+
+Expected: [32m"Delivered — value validat[7mion pending[27m"[39m
+Received: [31m"Delivered — value validat[7med[27m"[39m
+
+ ❯ tests/qa/integration/a11-value-closure.test.ts:111:21
+    109|   it("REQ-PB-009: the label is exactly 'Delivered — value validation p…
+    110|     const m = await model();
+    111|     expect(m.label).toBe("Delivered — value validation pending");
+       |                     ^
+    112|     expect(JSON.stringify(m)).not.toMatch(/success/i);
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  13:10:50
+   Duration  16.93s (transform 4.90s, setup 0ms, collect 9.64s, tests 4.46s, environment 0ms, prepare 90ms)
+
+EXIT=1

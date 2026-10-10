@@ -1,0 +1,139 @@
+# mutation M4b-S11005-receiving-owner-api-and-db: apps/api/src/modules/sustainment/handovers.ts
+# perl -0pi -e 's/if \(ctx\.userId !== current\.receiving_owner_user_id\) throw NOT_RECEIVING_OWNER\(\);/if (false) throw NOT_RECEIVING_OWNER();/g'
+# diff vs candidate:
+--- /home/user/wt/dg4-qa-c/apps/api/src/modules/sustainment/handovers.ts	2026-10-10 12:38:35.970185735 +0000
++++ apps/api/src/modules/sustainment/handovers.ts	2026-10-10 13:14:15.545751213 +0000
+@@ -687,7 +687,7 @@
+   const expected = requireIfMatch(request);
+   const current = await lockHandover(tx, transformationId, bauHandoverId);
+   // Only the receiving owner (never a delegate, D-099; never another holder of bau_handover.accept).
+-  if (ctx.userId !== current.receiving_owner_user_id) throw NOT_RECEIVING_OWNER();
++  if (false) throw NOT_RECEIVING_OWNER();
+   if (current.version !== expected) throw problems.versionConflict(current.version);
+   if (current.status === "accepted") throw HANDOVER_ACCEPTED_FINAL();
+   if (current.status !== "submitted") throw HANDOVER_TRANSITION(current.status, "accepted");
+@@ -742,7 +742,7 @@
+   const reason = parseReason(request.body, RETURN_REASON_REQUIRED);
+   const expected = requireIfMatch(request);
+   const current = await lockHandover(tx, transformationId, bauHandoverId);
+-  if (ctx.userId !== current.receiving_owner_user_id) throw NOT_RECEIVING_OWNER();
++  if (false) throw NOT_RECEIVING_OWNER();
+   if (current.version !== expected) throw problems.versionConflict(current.version);
+   if (current.status === "accepted") throw HANDOVER_ACCEPTED_FINAL();
+   if (current.status !== "submitted") throw HANDOVER_TRANSITION(current.status, "returned");
+# test: tests/qa/integration/a11-bau-sustain.test.ts 
+port-policy: PostgreSQL listening on port 25840 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.sUZ6wv/claude-0/qa-c-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2f1hl2_b632425d (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a11-bau-sustain.test.ts (17 tests | 4 failed) 7294ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-020: G1-G5 were passed natively; the transformation is in Realize and G6 is still Draft 237ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: a performance area with a linked KPI and an ownerless control, created through the API 202ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-005: a handover missing data access is refused (422 naming data access); nothing changes  406ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer' 197ms
+   × A11 BAU and sustainment on a natively governed transformation > REQ-S11-005: acceptance by anyone other than the receiving owner is 403; nothing is accepted 92ms
+     → 01a125f3-74c1-7628-beab-108a6b0de212: {"id":"01a125f3-82b0-7335-bd5d-c924fd8da87f","transformationId":"01a125f3-72e8-72f7-8339-df45f4c7d4cf","performanceAreaId":"01a125f3-81e6-72aa-894a-fd8f74721cc4","cycleNo":1,"code":"HO-01","receivingOwnerUserId":"01a125f3-73e9-735f-ad76-555a91d6233d","kpiOwnerUserId":"01a125f3-749d-7610-bcf3-a2144d3caf01","operatingProcedures":"Synthetic SOP: month-end churn reconciliation","capabilityReadiness":"Synthetic: team trained, tooling live","unresolvedAcceptedRisks":"Synthetic: vendor data delay accepted (R-01)","benefitMonitoringCadence":"monthly","dataAccess":"Synthetic QA: read access to the churn mart granted","improvementBacklogSummary":"Synthetic: automate the reconciliation extract","controlIds":["01a125f3-8299-75a9-a5ae-af13f7d70187"],"evidenceIds":["01a125f3-82fb-73c1-85b0-86f36442b454"],"openImprovementItemIds":[],"missingItems":[],"status":"accepted","submittedAt":"2026-10-10T13:14:38.495Z","submittedBy":"01a125f3-740e-75e9-8a5b-48a189738ea9","acceptedAt":"2026-10-10T13:14:38.730Z","acceptedBy":"01a125f3-74c1-7628-beab-108a6b0de212","acceptanceNote":null,"returnedAt":null,"returnedBy":null,"returnReason":null,"version":5,"createdAt":"2026-10-10T13:14:38.122Z","createdBy":"01a125f3-740e-75e9-8a5b-48a189738ea9","updatedAt":"2026-10-10T13:14:38.730Z","updatedBy":"01a125f3-74c1-7628-beab-108a6b0de212"}: expected 200 to be 403 // Object.is equality
+   × A11 BAU and sustainment on a natively governed transformation > REQ-PB-083: the receiving owner's acceptance creates the BAU review task for the BAU owner exactly once 28ms
+     → {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a125f3-8562-7589-b541-89d4786d32d1","currentVersion":5}: expected 409 to be 200 // Object.is equality
+   × A11 BAU and sustainment on a natively governed transformation > REQ-PB-083 'recurring': the scan at the review's window schedules the following review, once 2ms
+     → Invalid time value
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084: G6 lists the continuous-improvement backlog; an item makes the criterion complete 296ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: benefits evidence through an approved transition decision (BO proposes, the Sponsor decides)  438ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084, REQ-S04-008: the G6 submission snapshot lists the backlog item; G6 is approved; no DG record is named 186ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: the transformation is closed through the governed closure (TL) 45ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084: after closure the CI backlog item is still listed and readable 31ms
+   × A11 BAU and sustainment on a natively governed transformation > REQ-S11-004, REQ-S03-002: after closure the next scheduled review task is created on time for the BAU owner 1ms
+     → Invalid time value
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S03-002: after closure the area's KPI still accepts an actual 175ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-008, REQ-S12-016: a failed control check creates exactly one owned recovery action with a follow-up date 186ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-008: a lesson published here is searchable by a user of another transformation  344ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-009: after reopening, the original handover acceptance and the closure date are unchanged 156ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a11-bau-sustain.test.ts > A11 BAU and sustainment on a natively governed transformation > REQ-S11-005: acceptance by anyone other than the receiving owner is 403; nothing is accepted
+AssertionError: 01a125f3-74c1-7628-beab-108a6b0de212: {"id":"01a125f3-82b0-7335-bd5d-c924fd8da87f","transformationId":"01a125f3-72e8-72f7-8339-df45f4c7d4cf","performanceAreaId":"01a125f3-81e6-72aa-894a-fd8f74721cc4","cycleNo":1,"code":"HO-01","receivingOwnerUserId":"01a125f3-73e9-735f-ad76-555a91d6233d","kpiOwnerUserId":"01a125f3-749d-7610-bcf3-a2144d3caf01","operatingProcedures":"Synthetic SOP: month-end churn reconciliation","capabilityReadiness":"Synthetic: team trained, tooling live","unresolvedAcceptedRisks":"Synthetic: vendor data delay accepted (R-01)","benefitMonitoringCadence":"monthly","dataAccess":"Synthetic QA: read access to the churn mart granted","improvementBacklogSummary":"Synthetic: automate the reconciliation extract","controlIds":["01a125f3-8299-75a9-a5ae-af13f7d70187"],"evidenceIds":["01a125f3-82fb-73c1-85b0-86f36442b454"],"openImprovementItemIds":[],"missingItems":[],"status":"accepted","submittedAt":"2026-10-10T13:14:38.495Z","submittedBy":"01a125f3-740e-75e9-8a5b-48a189738ea9","acceptedAt":"2026-10-10T13:14:38.730Z","acceptedBy":"01a125f3-74c1-7628-beab-108a6b0de212","acceptanceNote":null,"returnedAt":null,"returnedBy":null,"returnReason":null,"version":5,"createdAt":"2026-10-10T13:14:38.122Z","createdBy":"01a125f3-740e-75e9-8a5b-48a189738ea9","updatedAt":"2026-10-10T13:14:38.730Z","updatedBy":"01a125f3-74c1-7628-beab-108a6b0de212"}: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ tests/qa/integration/a11-bau-sustain.test.ts:253:62
+    251|         body: {},
+    252|       });
+    253|       expect(r.status, `${p.id}: ${JSON.stringify(r.body)}`).toBe(403);
+       |                                                              ^
+    254|     }
+    255|     // Another holder of the acceptance permission (a second Business …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-bau-sustain.test.ts > A11 BAU and sustainment on a natively governed transformation > REQ-PB-083: the receiving owner's acceptance creates the BAU review task for the BAU owner exactly once
+AssertionError: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a125f3-8562-7589-b541-89d4786d32d1","currentVersion":5}: expected 409 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 409[39m
+
+ ❯ tests/qa/integration/a11-bau-sustain.test.ts:274:50
+    272|       body: { note: "Synthetic QA: accepted into BAU" },
+    273|     });
+    274|     expect(acc.status, JSON.stringify(acc.body)).toBe(200);
+       |                                                  ^
+    275|     handover = acc.body;
+    276|     expect([handover.status, handover.acceptedBy]).toEqual(["accepted"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-bau-sustain.test.ts > A11 BAU and sustainment on a natively governed transformation > REQ-PB-083 'recurring': the scan at the review's window schedules the following review, once
+RangeError: Invalid time value
+ ❯ plusDays tests/qa/support/gates-native.ts:223:62
+    221| /** A business date `n` calendar days after `date`. */
+    222| export const plusDays = (date: string, n: number): string =>
+    223|   new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOStri…
+       |                                                              ^
+    224| 
+    225| /** The relay's message for one outbox row, found by its idempotency k…
+ ❯ tests/qa/integration/a11-bau-sustain.test.ts:303:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-bau-sustain.test.ts > A11 BAU and sustainment on a natively governed transformation > REQ-S11-004, REQ-S03-002: after closure the next scheduled review task is created on time for the BAU owner
+RangeError: Invalid time value
+ ❯ plusDays tests/qa/support/gates-native.ts:223:62
+    221| /** A business date `n` calendar days after `date`. */
+    222| export const plusDays = (date: string, n: number): string =>
+    223|   new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOStri…
+       |                                                              ^
+    224| 
+    225| /** The relay's message for one outbox row, found by its idempotency k…
+ ❯ tests/qa/integration/a11-bau-sustain.test.ts:419:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 13 passed (17)
+   Start at  13:14:18
+   Duration  22.36s (transform 5.38s, setup 0ms, collect 11.06s, tests 7.29s, environment 0ms, prepare 90ms)
+
+EXIT=1
+# additional mutation applied for M4b (database CHECK):
+--- packages/db/migrations/0048_p4_sustainment.sql	2026-10-10 12:38:43.158867844 +0000
++++ /var/tmp/mth-run.sUZ6wv/claude-0/qa-c-mut/packages/db/migrations/0048_p4_sustainment.sql	2026-10-10 13:14:15.513279052 +0000
+@@ -346,8 +346,7 @@
+   CONSTRAINT bau_handover_area_fkey FOREIGN KEY (transformation_id, performance_area_id) REFERENCES performance_area (transformation_id, id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+   CONSTRAINT bau_handover_submitted_stamps CHECK ((submitted_at IS NULL) = (submitted_by IS NULL) AND (status = 'draft') = (submitted_at IS NULL)),
+   CONSTRAINT bau_handover_accepted_complete CHECK ((status = 'accepted') = (accepted_at IS NOT NULL)
+-                                                  AND (accepted_at IS NULL) = (accepted_by IS NULL)
+-                                                  AND (accepted_by IS NULL OR accepted_by = receiving_owner_user_id)),
++                                                  AND (accepted_at IS NULL) = (accepted_by IS NULL)),
+   CONSTRAINT bau_handover_returned_stamps CHECK ((returned_at IS NULL) = (returned_by IS NULL) AND (returned_at IS NULL) = (return_reason IS NULL)
+                                                 AND (status <> 'returned' OR returned_at IS NOT NULL)
+                                                 AND (returned_by IS NULL OR returned_by = receiving_owner_user_id)),

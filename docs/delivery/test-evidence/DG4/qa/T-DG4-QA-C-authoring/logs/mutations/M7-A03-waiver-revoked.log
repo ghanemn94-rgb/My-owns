@@ -1,0 +1,64 @@
+# mutation M7-A03-waiver-revoked: apps/api/src/modules/workflows/gates.ts
+# perl -0pi -e 's/  if \(row\.status === "revoked"\) throw gateModularWaiverRevoked\(row\.revoked_on!\);\n//'
+# diff vs candidate:
+--- /home/user/wt/dg4-qa-c/apps/api/src/modules/workflows/gates.ts	2026-10-10 12:38:35.974867417 +0000
++++ apps/api/src/modules/workflows/gates.ts	2026-10-10 13:12:42.628412302 +0000
+@@ -1485,7 +1485,6 @@
+     .where("g.transformation_id", "=", transformationId)
+     .executeTakeFirstOrThrow();
+   // gate_dispensation_revoked_complete: a revoked row always has revoked_at.
+-  if (row.status === "revoked") throw gateModularWaiverRevoked(row.revoked_on!);
+   const today = await exceptionBusinessDate(tx, transformationId);
+   if (row.expires_on < today) throw gateModularWaiverExpired(row.expires_on);
+ }
+# test: tests/qa/integration/a03-modular-entry.test.ts 
+port-policy: PostgreSQL listening on port 25840 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.sUZ6wv/claude-0/qa-c-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2ezhr7_eed31fff (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a03-modular-entry.test.ts (12 tests | 1 failed) 8839ms
+   ✓ A03 REQ-S03-005: entering at Design with an inherited G2 approval > REQ-S03-005: the transformation is Modular at Design 65ms
+   ✓ A03 REQ-S03-005: entering at Design with an inherited G2 approval > REQ-S03-005: G2 is labelled 'inherited', never Approved; no gate decision exists  330ms
+   ✓ A03 REQ-S03-005: entering at Design with an inherited G2 approval > REQ-S03-005: the inherited approval is listed as a labelled inherited record; a prior approval cannot be fabricated 133ms
+   ✓ A03 REQ-PB-005, REQ-S03-005, REQ-S20-003: missing baseline and outcome links are flagged and block G3 > REQ-PB-005: with no baseline and no outcome link both are flagged as blocking 12ms
+   ✓ A03 REQ-PB-005, REQ-S03-005, REQ-S20-003: missing baseline and outcome links are flagged and block G3 > REQ-PB-005: G3 submission is 422 gate.modular_links_missing listing both links; nothing is written 136ms
+   ✓ A03 REQ-PB-005, REQ-S03-005, REQ-S20-003: missing baseline and outcome links are flagged and block G3 > REQ-PB-005: with only the baseline supplied the refusal lists the outcome link alone 209ms
+   ✓ A03 REQ-PB-005, REQ-S03-005, REQ-S20-003: missing baseline and outcome links are flagged and block G3 > REQ-PB-005: once both links are supplied the G3 submission is accepted 245ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a pending waiver does not count; an accepted one lets G3 through while both links stay flagged  683ms
+   × A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver revoked after submission refuses the G3 approval (422 gate.modular_waiver_revoked); nothing is written 823ms
+     → {"id":"01a125f2-1777-70dc-a7a8-203f380dbed8","organizationId":"01a125f2-05a4-77fa-ae2e-1bcdf8b2555c","transformationId":"01a125f2-14b7-74d5-8452-87100eccbb4b","gateSubmissionId":"01a125f2-1725-70ee-af68-f8b909355c0c","decisionId":"01a125f2-1771-7646-bab9-6a39b36d9670","decisionKind":"gate","gateCode":"G3","submissionNo":1,"outcome":"approved","rationale":"Synthetic QA decision; approves nothing real.","comments":null,"decidedBy":"01a125f2-153d-729b-b94d-9b88345589df","onBehalfOfUserId":null,"decidedAt":"2026-10-10T13:13:05.115Z","approverBasis":"default_role","approverRoleCode":"SP","agreements":[]}: expected 201 to be 422 // Object.is equality
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver expired by approval time refuses the G3 approval (422 gate.modular_waiver_expired); in force it is approved  666ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > an expired waiver at submission time does not let G3 through  751ms
+   ✓ A03: an End-to-End G3 is unaffected by the Modular precondition > End-to-End, G1-G2 approved, G3 criteria covered, no baseline and no outcome link: G3 submission is 201  2101ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a03-modular-entry.test.ts > A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver revoked after submission refuses the G3 approval (422 gate.modular_waiver_revoked); nothing is written
+AssertionError: {"id":"01a125f2-1777-70dc-a7a8-203f380dbed8","organizationId":"01a125f2-05a4-77fa-ae2e-1bcdf8b2555c","transformationId":"01a125f2-14b7-74d5-8452-87100eccbb4b","gateSubmissionId":"01a125f2-1725-70ee-af68-f8b909355c0c","decisionId":"01a125f2-1771-7646-bab9-6a39b36d9670","decisionKind":"gate","gateCode":"G3","submissionNo":1,"outcome":"approved","rationale":"Synthetic QA decision; approves nothing real.","comments":null,"decidedBy":"01a125f2-153d-729b-b94d-9b88345589df","onBehalfOfUserId":null,"decidedAt":"2026-10-10T13:13:05.115Z","approverBasis":"default_role","approverRoleCode":"SP","agreements":[]}: expected 201 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 201[39m
+
+ ❯ expectCode tests/qa/support/p4.ts:94:48
+     92| /** Problem-details assertion: status and machine code. */
+     93| export function expectCode(res: Res<Body>, status: number, code: strin…
+     94|   expect(res.status, JSON.stringify(res.body)).toBe(status);
+       |                                                ^
+     95|   expect(String(res.headers["content-type"])).toContain("application/p…
+     96|   expect(res.body.code, JSON.stringify(res.body)).toBe(code);
+ ❯ tests/qa/integration/a03-modular-entry.test.ts:279:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  13:12:45
+   Duration  23.40s (transform 5.53s, setup 0ms, collect 11.93s, tests 8.84s, environment 0ms, prepare 71ms)
+
+EXIT=1

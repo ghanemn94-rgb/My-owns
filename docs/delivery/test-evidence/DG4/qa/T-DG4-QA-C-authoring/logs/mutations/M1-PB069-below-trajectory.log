@@ -1,0 +1,135 @@
+# mutation M1-PB069-below-trajectory: apps/worker/src/handlers/adoption.ts
+# perl -0pi -e 's/if \(!isBelowTrajectory\(evaluation\.calculated_rag, evaluation\.deviation\)\)/if (true)/'
+# diff vs candidate:
+--- /home/user/wt/dg4-qa-c/apps/worker/src/handlers/adoption.ts	2026-10-10 12:38:36.056138926 +0000
++++ apps/worker/src/handlers/adoption.ts	2026-10-10 13:10:31.771867840 +0000
+@@ -378,7 +378,7 @@
+     )
+       throw new Error(`kpi.deviation_evaluated ${envelope.outboxEventId} does not match evaluation ${p.evaluationId}`);
+     // Step 2: green, unknown, stale and not_computable never create an intervention.
+-    if (!isBelowTrajectory(evaluation.calculated_rag, evaluation.deviation))
++    if (true)
+       return { outcome: "not_below_trajectory" as const, interventions: [] };
+     const links = await tx
+       .selectFrom("adoption_metric_link")
+# test: tests/qa/integration/a11-adoption.test.ts 
+port-policy: PostgreSQL listening on port 25840 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.sUZ6wv/claude-0/qa-c-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2ewoc5_886fe050 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a11-adoption.test.ts (12 tests | 5 failed) 2718ms
+   ✓ A11 REQ-PB-071: the seven leading adoption indicators are available by name > REQ-PB-071: GET /adoption-indicator-templates lists exactly the seven playbook indicators by name, in order 283ms
+   × A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069: the below-trajectory actual is evaluated red/adverse; the worker creates exactly one owned intervention 47ms
+     → expected [] to have a length of 1 but got +0
+   × A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069 'exactly one': a redelivered event and a second evaluation of the same period create no second intervention 13ms
+     → expected [] to have a length of 1 but got +0
+   × A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-071: an on-trajectory actual creates no intervention 8ms
+     → expected [] to have a length of 1 but got +0
+   × A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069: the initiative with delivery Complete and adoption below trajectory shows adoption at risk 20ms
+     → expected 'not_assessed' to be 'at_risk' // Object.is equality
+   × A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069: the intervention's owner sees it in My Work 14ms
+     → Cannot read properties of undefined (reading 'ownerUserId')
+   ✓ A11 REQ-PB-072, REQ-S11-002: training completion and observed proficiency are separate > REQ-PB-072: 100% training completion with no proficiency observation: proficiency Unknown (not 0), not adopted 26ms
+   ✓ A11 REQ-PB-072, REQ-S11-002: training completion and observed proficiency are separate > REQ-S11-002: an observation submitted through the published form links to the group and counts in the proficiency indicator 61ms
+   ✓ A11 REQ-PB-073, REQ-S11-001, REQ-S16-020: champions, stakeholder groups, interventions in My Work > REQ-S11-001: a group records influence and impact separately (L and H kept apart, readable back) 49ms
+   ✓ A11 REQ-PB-073, REQ-S11-001, REQ-S16-020: champions, stakeholder groups, interventions in My Work > REQ-S11-001: an intervention with owner and due date appears in the owner's My Work with that due date 78ms
+   ✓ A11 REQ-PB-073, REQ-S11-001, REQ-S16-020: champions, stakeholder groups, interventions in My Work > REQ-PB-073: a champion's constraint links to a T04 decision and is visible on that decision 141ms
+   ✓ A11 REQ-PB-073, REQ-S11-001, REQ-S16-020: champions, stakeholder groups, interventions in My Work > REQ-S16-020: every entity of the people and adoption group is created and read through the API with authorization  322ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a11-adoption.test.ts > A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069: the below-trajectory actual is evaluated red/adverse; the worker creates exactly one owned intervention
+AssertionError: expected [] to have a length of 1 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ tests/qa/integration/a11-adoption.test.ts:198:18
+    196|     await handleIndicatorEvaluated(api.db, envelope!, "qa-a11-deviatio…
+    197|     const list = await interventions("below_trajectory");
+    198|     expect(list).toHaveLength(1);
+       |                  ^
+    199|     expect(list[0]).toMatchObject({ origin: "below_trajectory", metric…
+    200|     // "with owner": a named owner; a due date, or an explicit Unknown…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-adoption.test.ts > A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069 'exactly one': a redelivered event and a second evaluation of the same period create no second intervention
+AssertionError: expected [] to have a length of 1 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ tests/qa/integration/a11-adoption.test.ts:214:53
+    212|       "qa-a11-deviation-second-run",
+    213|     );
+    214|     expect(await interventions("below_trajectory")).toHaveLength(1);
+       |                                                     ^
+    215|   });
+    216| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-adoption.test.ts > A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-071: an on-trajectory actual creates no intervention
+AssertionError: expected [] to have a length of 1 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ tests/qa/integration/a11-adoption.test.ts:223:17
+    221|     await handleIndicatorEvaluated(api.db, envelope!, "qa-a11-green");
+    222|     const all = await interventions();
+    223|     expect(all).toHaveLength(1);
+       |                 ^
+    224|     expect(all[0].metricLinkId).toBe(link.id);
+    225|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-adoption.test.ts > A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069: the initiative with delivery Complete and adoption below trajectory shows adoption at risk
+AssertionError: expected 'not_assessed' to be 'at_risk' // Object.is equality
+
+Expected: [32m"at_risk"[39m
+Received: [31m"not_assessed"[39m
+
+ ❯ tests/qa/integration/a11-adoption.test.ts:230:24
+    228|     const m = await get200(api, k.s.auditor, `/api/v1/initiatives/${in…
+    229|     expect(m.delivery).toBe("completed");
+    230|     expect(m.adoption).toBe("at_risk");
+       |                        ^
+    231|     // Delivery completion did not close value realization.
+    232|     expect(m.closure).toBe("open");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| tests/qa/integration/a11-adoption.test.ts > A11 REQ-PB-069, REQ-PB-071, REQ-S20-011: an adoption actual below trajectory creates exactly one intervention > REQ-PB-069: the intervention's owner sees it in My Work
+TypeError: Cannot read properties of undefined (reading 'ownerUserId')
+ ❯ tests/qa/integration/a11-adoption.test.ts:238:81
+    236|   it("REQ-PB-069: the intervention's owner sees it in My Work", async …
+    237|     const [iv] = await interventions("below_trajectory");
+    238|     const owner = [k.users.bo, k.users.tl, k.users.kds].find((u) => u.…
+       |                                                                                 ^
+    239|     expect(owner, `owner ${iv.ownerUserId} is one of the world's peopl…
+    240|     const mine = await get200(api, await signIn(api.app, owner!.subjec…
+ ❯ tests/qa/integration/a11-adoption.test.ts:238:57
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 7 passed (12)
+   Start at  13:10:33
+   Duration  13.99s (transform 3.96s, setup 0ms, collect 8.33s, tests 2.72s, environment 0ms, prepare 119ms)
+
+EXIT=1
