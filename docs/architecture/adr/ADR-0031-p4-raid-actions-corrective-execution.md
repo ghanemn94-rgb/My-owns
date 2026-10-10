@@ -288,3 +288,20 @@ Source: BE-R1 handback §6 items 1–3 (D-109). Nothing above is removed. Where 
   - The task follows the case: a new owner moves it through `reassignWorkItemOfSubject`, and a new follow-up date moves it through `rescheduleWorkItemsOfSubject` (ADR-0025 amendment D2).
   - The same applies to a RAID action's `raid_action_due` task (§4).
 - **F3. Dedupe keys after a reassignment.** The §4 key `raid.action:<actionItemId>:<ownerUserId>` and the §5.6 key `corrective.follow_up:<caseId>:<ownerUserId>` also exist as `<key>#n` (n ≥ 2), after an owner leaves and comes back (ADR-0025 amendment D2).
+
+## Amendment (2026-10-10, T-DG4-ARCH-R3): `getInitiativeSchedule`
+
+Source: FE-D2 handback §5 item 1 ("Contract gap"). Nothing above is removed. Where this amendment and §8 or §10 differ, this amendment wins.
+
+### S1. The initiative schedule read (decided: a read, not a version on `ScheduleNode`)
+
+**The gap.** `/api/v1/initiatives/{initiativeId}/schedule` had `createInitiativeSchedule` (POST) and `updateInitiativeSchedule` (PATCH) but no GET. `ScheduleNode` (in `getScheduleNetwork`) carries no record version. So the schedule panel could not take an `If-Match` from a read: it sent version 1, or the version learned from its own last answer or from a 409's `currentVersion`. Also, `createInitiativeSchedule` answers `Location: /api/v1/initiatives/{initiativeId}/schedule`, which no GET served.
+
+**Decided:** `getInitiativeSchedule`, `GET /api/v1/initiatives/{initiativeId}/schedule`, on the existing path, following the `getAdoptionMetricLink` (ADR-0033 A2), `getInheritedRecord` (ADR-0038 B3) and `getBenefitPlanValue` (ADR-0030 P1) precedents:
+
+- **Authorization:** `transformation.read` on the initiative's transformation (the read gate of `schedule-network.ts`; 404 outside scope, the same as the POST and PATCH).
+- **200** `InitiativeSchedule` (the POST/PATCH response schema, with `version`) and `ETag: "<version>"`. A row whose `durationWorkingDays` is null answers 200 with the null; it is a recorded row.
+- **What a missing row answers: 404** `urn:mth:problem:not-found`. That covers two cases: the initiative is not readable by the caller, and the initiative is readable but has no `initiative_schedule` row. The panel reaches this read only from an initiative it already shows, so for the panel a 404 means "no planned duration recorded", and it offers `createInitiativeSchedule`. This is the PATCH's existing "404 when none is recorded" rule; no version-0 read (ADR-0035 A2, ADR-0037 A1) is used, because a schedule has no default row to read before the first save.
+- 400, 401 and 429 as every read.
+- **Rejected: a version on `ScheduleNode`.** It would change an existing P4 response (`getScheduleNetwork`), and the node has no `note` for the edit form. The ARCH-R2 `getBenefitPlanValue` reasoning applies unchanged.
+- No schema, migration, audit or code change. The operation is pending in `apps/api/test/support/p4-pending-arch-r3.ts` until a backend task routes it in `apps/api/src/modules/portfolio/schedule-network.ts`.

@@ -339,3 +339,50 @@ Step 4 reads, as built:
 | `kpi.recalculate_failed` | `calculation_run.error_code` (stored; no HTTP response) | accepted (KBE-R1) | The calculation failed after its last retry; the last calculated status is still shown. |
 
 The text is authored here for the screens that show a failed run (`getCalculationRun`, `listCalculationRuns`): the server stores only the code.
+
+## Amendment (2026-10-10, T-DG4-ARCH-R3): lineage member order, and cumulative roll-up entries
+
+Source: KBE-R3 handback §5 ("Two spec questions"; D-112). Nothing above is removed. Where this amendment and C1 differ, this amendment wins.
+
+### C4. Object members carry no order: look `sources` up by variable name
+
+**The gap.** C1 says `sources` is "keyed by variable name, in `kpi_formula_input` order". That cannot hold once stored:
+- `kpi_formula_input` has no ordinal column, so the worker reads the inputs `ORDER BY id`;
+- PostgreSQL `jsonb` stores an object's keys in its own canonical order (shorter keys first, then byte order), not in insertion order, so a stored and re-read `sources` does not keep the writer's order.
+
+**Decided.** The words "in `kpi_formula_input` order" in C1 are struck.
+- `sources` and `values` are JSON objects, and **their member order is not part of the stored shape or of the contract**.
+- A consumer looks a source up by its variable name (`sources[variable]`) and never by position.
+- A screen that lists the sources sorts them by variable name in code-point order, so the same evaluation always lists them in the same order.
+- **Arrays keep their order in `jsonb`.** `entries` (ordered by `scopeId`, C1), `window` (the entered shape's period ids) and `windowValues` (C5) are ordered as stated.
+
+No code or schema change. The `KpiEvaluation.inputs` description in the contract now says that the members carry no order.
+
+### C5. A cumulative roll-up: which scopes are recorded, and the window behind each entry
+
+**What is recorded for a scope with earlier accepted values but no accepted actual for the current period.** As built (`apps/worker/src/handlers/kpi.ts`, `cumulativeValue` and `ytdWindow` in `packages/shared/src/kpi/periods.ts`, `rollUp` in `packages/shared/src/kpi/aggregate.ts`):
+1. **The scope's cumulative value is Unknown.** `ytdWindow` always includes the current period, and `cumulativeValue` answers Unknown (`kpi.cumulative_incomplete`) when any period of the window has no accepted entry, or has one marked not available.
+2. **The scope enters the roll-up with no value** (`entry: null`).
+3. **The scope is expected.** `previouslyReportingScopes` holds every scope with an accepted value in a period that ends on or before the current period's end.
+4. **So the scope is in `missingScopes`** (and in `expectedScopes`), and the roll-up result is Unknown with `kpi.scope_missing`. A missing scope never counts as zero.
+5. **It gets no `entries` element.** `entries` lists only scopes outside `missingScopes`, as C1 says.
+6. On the cumulative basis no `scope_missing` finding is recorded; the period basis records it.
+
+So such a scope never contributes "through its window" to a known roll-up value: the case the KBE-R3 handback describes does not occur as built. **Decided: this is the rule**, and the KPI task adds a test that pins it (the scope in `missingScopes`, no entry, the result Unknown with `kpi.scope_missing`).
+
+**Decided: on the cumulative basis, each entry names the actual versions of its whole window.** A scope that does enter a cumulative roll-up contributes its window's value (the flow sum, the stock's last value, or the ratio's summed numerators and denominators), not only the current period's value. Today its entry names only the current period's accepted actual. Each cumulative-basis entry therefore gains `windowValues: [{ reportingPeriodId, kpiActualId, valueNo }]`:
+- one element per period of the scope's window, in window order;
+- every element is the accepted value the window used (a known cumulative value requires one for every period);
+- the current period is the last element, the same `kpiActualId` and `valueNo` as the entry's own.
+
+Period-basis entries are unchanged (no `windowValues`). An evaluation stored before this amendment has no `windowValues`; a consumer shows its cumulative lineage as "not recorded", never as empty.
+
+**The same member on the entered cumulative shape.** The entered cumulative shape `{ kpiActualId, valueNo, window }` names the window's period ids, but not the actual versions of the earlier periods. It gains the same `windowValues`, built by the same rule, so a formula source on the cumulative basis (whose `inputs` is this shape, C1) also reaches every actual version. `window` stays as built. `windowValues` is written only when the cumulative value is known; with an Unknown value it is absent, and `window` still lists the periods. The addition is a new member only: no existing member changes.
+
+**Implementer (kpi-benefits task), `apps/worker/src/handlers/kpi.ts`:**
+1. When `basis === "cumulative"` and the value is known, build `windowValues` from `enteredValue(...).window` and `values.get(scopeId).get(periodId)` (`actualId`, `valueNo`): on each roll-up entry, and on the entered cumulative `inputs`.
+2. **Tests:**
+   - a two-scope flow KPI over two periods, where the cumulative roll-up's entries list both periods' `kpiActualId` and `valueNo` per scope;
+   - the entered cumulative evaluation of the same KPI lists the same two versions for its scope;
+   - the C5 missing-scope case above;
+   - the period-basis shapes are unchanged.

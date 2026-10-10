@@ -392,4 +392,8 @@ export const P4_OPERATION_IDS: ReadonlySet<string> = new Set([
   // T-DG4-ARCH-R2: repair operations (2; ADR-0038 amendment B3 and ADR-0030 amendment P1 of 2026-10-10).
   "getInheritedRecord",
   "getBenefitPlanValue",
+  // T-DG4-ARCH-R3: repair operations (3; ADR-0031 amendment S1, ADR-0035 amendment R1, ADR-0033 amendment V1 of 2026-10-10).
+  "getInitiativeSchedule",
+  "listScaleScopeBusinessUnits",
+  "getAssessmentFormVersion",
 ]);

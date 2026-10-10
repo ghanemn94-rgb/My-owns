@@ -276,3 +276,31 @@ The `g5.*` and `g6.*` keys are the per-item keys of the "missing" list a G5/G6 e
 | `g6.controls_no_handover` | missing-item key | accepted | Controls: no performance area has an accepted BAU handover. |
 | `g6.control_missing` | missing-item key | accepted | Controls: {code} {name} has no active control. |
 | `g6.improvement_backlog_empty` | missing-item key | accepted | Continuous improvement backlog: the improvement backlog is empty. |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R3): the business units a G5 scale scope may name
+
+Source: FE-F handback §5 item 1. Nothing above is removed. Where this amendment and §5 differ, this amendment wins.
+
+### R1. `listScaleScopeBusinessUnits` (decided: a scoped read)
+
+**The gap.** §5 lets a G5 scope item name any active business unit of the transformation's organization (`assertScaleScopeValid`; 422 `gate.scale_scope_invalid`). `listBusinessUnits` (DG1) returns only the units that the caller's `business_unit.read` grants reach (`scopeFilter` at level `business_unit`, `organization/routes.ts`). FE-F observed that the default G5 approver, a Sponsor with a transformation-scoped grant, could not list the organization's units. The scale-scope editor could offer only the transformation's own unit. The `ScaleScope` and `ScaleTransition` responses name units by id only, so the same caller could not label an approved scope either.
+
+**Options considered:**
+1. **A scoped read (decided).**
+2. **A permission default** (give the Sponsor an organization-level `business_unit.read`). Rejected: it changes the DG2-approved role catalogue (ADR-0020) and its scope rule for every Sponsor, and it reveals every unit's full record (parent, version, timestamps) where only names are needed.
+3. **A stated limitation** (only an approver with an organization-level grant can scope other units). Rejected: §5 lets a scope item name any active unit of the organization, and the Sponsor is G5's default approver. Under the limitation, the default approver could name no unit other than the transformation's own.
+
+**Decided:** `listScaleScopeBusinessUnits`, `GET /api/v1/transformations/{transformationId}/scale-scope/business-units`:
+
+- **Authorization:** `transformation.read` on the transformation (the `getScaleScope` gate; 404 outside scope).
+- **Rows**, from the transformation's organization only:
+  - every business unit with `status = 'active'`, which is exactly the set `assertScaleScopeValid` accepts;
+  - plus every business unit, whatever its status, named by a `gate_decision_scale_scope` row or a `scale_transition` row of this transformation, so an approved scope and its transitions can always be labelled.
+- **Members:** `ScaleScopeBusinessUnit` = `id`, `code`, `nameEn`, `nameAr`, `status`, and `selectable` (`true` iff `status = 'active'`). No parent, version or timestamps.
+- **Order and paging:** `code`, then `id`. Cursor and `limit` as ADR-0007 §4 (`ScaleScopeBusinessUnitPage`, `{items, nextCursor}`).
+- **No write and no `ETag`.** No change to `listBusinessUnits`, to the role catalogue, to `GateDecisionCreate.scaleScope` or to its refusals.
+- **The editor** offers the `selectable` units. The scope view and the transition list label units from the same read.
+
+**What it reveals.** A transformation reader learns the codes and names of the organization's active business units. That is the set a G5 scope of that transformation may name. Nothing else about a unit is returned, and no record or figure of another unit's transformations is reachable through it.
+
+No schema, migration, audit or code change. The operation is pending in `apps/api/test/support/p4-pending-arch-r3.ts` until a backend task routes it in `apps/api/src/modules/workflows/scale.ts`.
