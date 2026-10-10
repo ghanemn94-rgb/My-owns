@@ -65,6 +65,8 @@ export const P4_MIRRORS_BE_M: Readonly<Record<string, z.ZodType>> = {
   getMissingLinks: missingLinks,
   listInheritedRecords: inheritedRecordPage,
   createInheritedRecord: inheritedRecord,
+  // T-DG4-BE-R3 (ADR-0038 amendment B3): the target of createInheritedRecord's Location.
+  getInheritedRecord: inheritedRecord,
   withdrawInheritedRecord: inheritedRecord,
   // T-DG4-BE-M3 (ADR-0038 §9): portfolios and workstreams.
   listPortfolios: portfolioPage,
@@ -655,6 +657,18 @@ export async function exerciseP4BeM2Operations(ctx: P4ExerciseContext): Promise<
   expect([withdrawn.status, withdrawn.body.status, withdrawn.body.version]).toEqual([200, "withdrawn", 2]);
   const again = await m("POST", W, { session: s.tl, headers: ifm(2), body: { reason: "Synthetic: again" } });
   expect([again.status, again.body.code]).toEqual([422, "inherited_record.not_active"]);
+
+  // getInheritedRecord (T-DG4-BE-R3; ADR-0038 amendment B3): createInheritedRecord's Location resolves, for an active
+  // and a withdrawn record, with ETag = version; a prior_approval entry's id, an unknown id and an outsider are 404.
+  expect(String(bl.headers["location"])).toBe(`${R}/${bl.body.id}`);
+  const one = await m("GET", String(bl.headers["location"]), { session: s.auditor });
+  expect([one.status, one.headers["etag"], one.body]).toEqual([200, '"1"', bl.body]);
+  const gone = await m("GET", `${R}/${ev.body.id}`, { session: s.tl });
+  expect([gone.status, gone.headers["etag"], gone.body]).toEqual([200, '"2"', withdrawn.body]);
+  const priorEntry = list.body.items.find((i: { kind: string }) => i.kind === "prior_approval");
+  expect((await m("GET", `${R}/${priorEntry.id}`, { session: s.tl })).status).toBe(404);
+  expect((await m("GET", `${R}/${mw.outcomeId}`, { session: s.tl })).status).toBe(404);
+  expect((await m("GET", `${R}/${bl.body.id}`, { session: s.outsider })).status).toBe(404);
 }
 
 // ------------------------------------------------------------------------------------------------ BE-M3: structure

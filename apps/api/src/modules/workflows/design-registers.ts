@@ -17,6 +17,7 @@ import {
 import type { Selectable } from "kysely";
 import type { z } from "zod";
 import { iso, isoOrNull } from "../platform/index.ts";
+import { followMeetingActionWorkItem } from "../tasks/index.ts";
 import {
   assertActiveUsers,
   assertCatalogueCode,
@@ -187,6 +188,16 @@ export const actionItemRegister: RegisterSpec<ActionRow, ActionItem> = {
   auditFields: ACTION_COLS.map(([, c]) => c),
   archive: false,
   ops: { archive: false },
+  // T-DG4-BE-R3 (BE-F2 handback §8 item 1): a meeting action's My Work item follows an owner, due-date or closing edit
+  // made through this DG2 path, in the update's transaction. The response is unchanged; other actions read one row.
+  afterUpdate: async (before, after, ctx) => {
+    await followMeetingActionWorkItem(
+      ctx.tx,
+      { actorType: "user", actorUserId: ctx.userId, requestId: ctx.audit.requestId, source: "api" },
+      before,
+      after,
+    );
+  },
 };
 
 // ------------------------------------------------------------------------------------------------ workshops

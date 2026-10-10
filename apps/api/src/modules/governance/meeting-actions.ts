@@ -7,9 +7,10 @@
 // createMeetingAction creates the canonical `action_item` (person-authored by the caller, DG2 statuses, no RAID source;
 // ADR-0031 §4) and the append-only `assigned` link in one transaction, and the owner's My Work item through
 // createWorkItemOnce (kind meeting_action_due, subject action_item, due date = the action's due date, dedupe key
-// `meeting.action:<actionItemId>:<ownerUserId>`). The governance module does not depend on raid (apps/api/src/modules.ts)
-// and workflows exports no action service, so the insert follows BE-D's createLinkedAction field for field (same audit
-// action and audited fields) without a source link; the action is then edited through the action register.
+// `meeting.action:<actionItemId>:<ownerUserId>`). T-DG4-BE-R3 (ADR-0032 amendment G1): the action and its
+// `action_item.create` event are written by raid's insertActionItem, the one insert BE-D's createLinkedAction also uses
+// (governance depends on raid; raid never imports governance). The action is then edited through the action register
+// or the DG2 /actions path, and its meeting_action_due item follows those edits (tasks' followMeetingActionWorkItem).
 // `overdue`: a due date before today's business date while open or in progress. Nothing here approves anything.
 import type { ActionItemTable, DbOrTx, MeetingActionLinkRow, Tx } from "@mth/db";
 import { sql } from "@mth/db";
@@ -32,7 +33,8 @@ import {
   parseQuery,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { createWorkItemOnce } from "../tasks/index.ts";
+import { insertActionItem } from "../raid/index.ts";
+import { createWorkItemOnce, MEETING_ACTION_TASK } from "../tasks/index.ts";
 import {
   assertMeetingEditable,
   lockMeeting,
@@ -42,7 +44,7 @@ import {
   requireCommitteeAction,
   sendCreated,
 } from "./agenda.ts";
-import { diffFields, isActiveUserOf, unknownTarget } from "./forums.ts";
+import { isActiveUserOf, unknownTarget } from "./forums.ts";
 import { checkAgendaItemOf } from "./meeting-outputs.ts";
 
 type ActionRow = Selectable<ActionItemTable>;
@@ -51,9 +53,9 @@ const JSON_BODY = ["application/json"] as const;
 const listQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 const OPEN_STATUSES: readonly string[] = ["open", "in_progress"];
 
-export const MEETING_ACTION_TASK_KIND = "meeting_action_due";
+export const MEETING_ACTION_TASK_KIND = MEETING_ACTION_TASK.kind;
 /** New message key (this task; handback §6): "Meeting action assigned to you: {title} (meeting of {meetingDate})." */
-export const MEETING_ACTION_TASK_MESSAGE = "governance.task.meeting_action_due";
+export const MEETING_ACTION_TASK_MESSAGE = MEETING_ACTION_TASK.messageKey;
 
 /** Today's business date in the organization's default calendar timezone, else its default timezone (ADR-0025 §2). */
 async function todayOf(db: DbOrTx, organizationId: string): Promise<string> {
@@ -117,20 +119,6 @@ export const toMeetingAction = (l: MeetingActionLinkRow, a: ActionRow, today: st
   createdBy: l.created_by,
 });
 
-/** BE-D's ACTION_AUDIT_FIELDS (raid/actions.ts), so an action's create event is the same whichever path made it. */
-const actionFields = (r: ActionRow): ReadonlyMap<string, unknown> =>
-  new Map<string, unknown>([
-    ["title", r.title],
-    ["description", r.description],
-    ["owner_user_id", r.owner_user_id],
-    ["due_date", dateOrNull(r.due_date)],
-    ["follow_up_date", dateOrNull(r.follow_up_date)],
-    ["status", r.status],
-    ["raid_entry_id", r.raid_entry_id],
-    ["dependency_id", r.dependency_id],
-    ["corrective_case_id", r.corrective_case_id],
-  ]);
-
 export function registerMeetingActionRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   const ACTIONS = "/api/v1/transformations/:transformationId/meetings/:meetingId/actions";
   const read = { access: { permission: "transformation.read" as const } };
@@ -172,35 +160,13 @@ export function registerMeetingActionRoutes(app: FastifyInstance, { db }: Module
         throw unknownTarget("/ownerUserId", "user");
       await checkAgendaItemOf(tx, meetingId, body.agendaItemId);
       const audit = auditContextOf(request);
-      const actionId = uuidv7();
-      const action = await tx
-        .insertInto("action_item")
-        .values({
-          id: actionId,
-          organization_id: meeting.organization_id,
-          transformation_id: transformationId,
-          title: body.title,
-          description: body.description ?? null,
-          owner_user_id: body.ownerUserId,
-          due_date: body.dueDate ?? null,
-          follow_up_date: null,
-          raid_entry_id: null,
-          dependency_id: null,
-          corrective_case_id: null,
-          created_by: userId,
-          updated_by: userId,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      await record(tx, audit, {
-        action: "action_item.create",
-        recordType: "action_item",
-        recordId: actionId,
-        organizationId: meeting.organization_id,
-        transformationId,
-        newVersion: action.version,
-        changes: diffFields(new Map(), actionFields(action)),
-      });
+      // ADR-0032 amendment G1: the one action insert (and its action_item.create event), with no source link.
+      const action = await insertActionItem(
+        { tx, userId, audit, organizationId: meeting.organization_id, transformationId },
+        null,
+        { title: body.title, description: body.description, ownerUserId: body.ownerUserId, dueDate: body.dueDate },
+      );
+      const actionId = action.id;
       const linkId = uuidv7();
       const link = await tx
         .insertInto("meeting_action_link")
@@ -245,7 +211,7 @@ export function registerMeetingActionRoutes(app: FastifyInstance, { db }: Module
           messageKey: MEETING_ACTION_TASK_MESSAGE,
           messageParams: { title: body.title, meetingDate: String(meeting.scheduled_date).slice(0, 10) },
           dueDate: body.dueDate ?? null,
-          dedupeKey: `meeting.action:${actionId}:${body.ownerUserId}`,
+          dedupeKey: MEETING_ACTION_TASK.dedupeKey(actionId, body.ownerUserId),
         },
       );
       return toMeetingAction(link, action, await todayOf(tx, target.organizationId));

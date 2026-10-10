@@ -131,6 +131,11 @@ export interface RegisterSpecBase<Row extends RegisterRow> {
   readonly ops?: Partial<Record<"list" | "create" | "get" | "update" | "archive", boolean>>;
   /** Ownership a create counts as (for `own` rules), from the raw body. Default: the caller creates it. */
   readonly createOwnership?: (rawBody: unknown, userId: string) => Ownership;
+  /**
+   * Follow-up writes of an update in its transaction, after the row's update and audit event (T-DG4-BE-R3: a meeting
+   * action's work item follows the DG2 `/actions` PATCH). Absent: nothing more is written.
+   */
+  readonly afterUpdate?: (before: Row, after: Row, ctx: WriteContext) => Promise<void>;
 }
 
 const listQuery = z.strictObject({
@@ -523,6 +528,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
           newVersion: updated.version,
           changes: diffFields(current as unknown as LooseRow, updated as unknown as LooseRow, spec.auditFields),
         });
+        if (spec.afterUpdate) await spec.afterUpdate(current, updated, ctx);
         return renderOne(tx, updated);
       });
       return sendVersioned(reply, 200, row);

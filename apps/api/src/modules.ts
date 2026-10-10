@@ -112,7 +112,9 @@ export const API_MODULES = {
     responsibility:
       "Decision rights (T11), RACI (T12), governance matrices, forums, meetings, T16 executive decisions, escalations (P4)",
     // p4-plan §2: governance is the only new module that imports workflows (decision rows, the approval service).
-    dependsOn: ["platform", "audit", "access", "organization", "transformations", "workflows", "tasks"],
+    // T-DG4-BE-R3 (ADR-0032 amendment G1): raid, for the one action insert (insertActionItem). raid never imports
+    // governance (that edge would close a cycle through reporting and sustainment).
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "workflows", "tasks", "raid"],
   },
   raid: {
     responsibility: "RAID (T15) on canonical records, actions and corrective-action cases (P4, ADR-0031)",

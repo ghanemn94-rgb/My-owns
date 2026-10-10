@@ -16,7 +16,10 @@
 // owner change cancels the previous owner's open item and opens the new owner's (reassignWorkItemOfSubject; A -> B -> A
 // leaves one open item, for A), a due-date change moves its due date (rescheduleWorkItemsOfSubject); done / cancelled
 // closes it. `createLinkedAction` is reused by BE-D2 for
-// corrective-case actions. Nothing here is a business approval or touches DG0-DG7.
+// corrective-case actions. T-DG4-BE-R3 (ADR-0032 amendment G1): `insertActionItem` is the one insert of an action and
+// its `action_item.create` event, used by createLinkedAction and by governance's meeting actions; a meeting action's
+// `meeting_action_due` item follows its edits here too (tasks' followMeetingActionWorkItem; BE-F2 handback §8).
+// Nothing here is a business approval or touches DG0-DG7.
 import { diffFields, sql, type ActionItemTable, type DbOrTx, type Tx } from "@mth/db";
 import { raidActionCreate, raidActionUpdate, type RaidAction, type RaidActionCreate } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -44,6 +47,7 @@ import {
 import {
   closeWorkItemsOfSubject,
   createWorkItemOnce,
+  followMeetingActionWorkItem,
   reassignWorkItemOfSubject,
   rescheduleWorkItemsOfSubject,
   type WorkItemInput,
@@ -246,17 +250,29 @@ export async function openActionCreate(
   return openWrite(tx, request, transformationId, ACTION_RULES, { ownerUserId: owner }, { atCommit: true });
 }
 
+/** The fields of a new action (ADR-0032 amendment G1 item 2). */
+export interface ActionItemInsert {
+  readonly title: string;
+  readonly description?: string | null | undefined;
+  readonly ownerUserId: string;
+  readonly dueDate?: string | null | undefined;
+  readonly followUpDate?: string | null | undefined;
+}
+
+/** What insertActionItem needs of a write context (governance builds it from its committee gate). */
+export type ActionInsertContext = Pick<WriteContext, "tx" | "userId" | "audit" | "organizationId" | "transformationId">;
+
 /**
- * Creates an owned action linked to `link` inside `ctx`'s transaction: the insert, its audit event and the owner's
- * work item. The caller has authorised the write (openActionCreate), parsed the body and locked the source (and refused
- * a closed one). Reused by BE-D2 (`createCorrectiveCaseAction`).
+ * T-DG4-BE-R3 (ADR-0032 amendment G1 item 2): the one insert of an `action_item` and its `action_item.create` audit
+ * event, in `ctx`'s transaction. `link = null` writes no source (a meeting action). It creates no work item and checks no
+ * owner: each caller checks its owner and creates its own task (createLinkedAction: raid_action_due; governance:
+ * meeting_action_due), so an action gets exactly one task.
  */
-export async function createLinkedAction(
-  ctx: WriteContext,
-  link: ActionLink,
-  body: RaidActionCreate,
+export async function insertActionItem(
+  ctx: ActionInsertContext,
+  link: ActionLink | null,
+  body: ActionItemInsert,
 ): Promise<ActionRow> {
-  await assertActiveUsers(ctx.tx, ctx.organizationId, [{ id: body.ownerUserId, pointer: "/ownerUserId" }]);
   const id = uuidv7();
   const row = await ctx.tx
     .insertInto("action_item")
@@ -269,9 +285,9 @@ export async function createLinkedAction(
       owner_user_id: body.ownerUserId,
       due_date: body.dueDate ?? null,
       follow_up_date: body.followUpDate ?? null,
-      raid_entry_id: "raidEntryId" in link ? link.raidEntryId : null,
-      dependency_id: "dependencyId" in link ? link.dependencyId : null,
-      corrective_case_id: "correctiveCaseId" in link ? link.correctiveCaseId : null,
+      raid_entry_id: link !== null && "raidEntryId" in link ? link.raidEntryId : null,
+      dependency_id: link !== null && "dependencyId" in link ? link.dependencyId : null,
+      corrective_case_id: link !== null && "correctiveCaseId" in link ? link.correctiveCaseId : null,
       created_by: ctx.userId,
       updated_by: ctx.userId,
     })
@@ -286,6 +302,21 @@ export async function createLinkedAction(
     newVersion: row.version,
     changes: diffFields({} as ActionRow, row, [...ACTION_AUDIT_FIELDS]),
   });
+  return row;
+}
+
+/**
+ * Creates an owned action linked to `link` inside `ctx`'s transaction: the insert, its audit event and the owner's
+ * work item. The caller has authorised the write (openActionCreate), parsed the body and locked the source (and refused
+ * a closed one). Reused by BE-D2 (`createCorrectiveCaseAction`).
+ */
+export async function createLinkedAction(
+  ctx: WriteContext,
+  link: ActionLink,
+  body: RaidActionCreate,
+): Promise<ActionRow> {
+  await assertActiveUsers(ctx.tx, ctx.organizationId, [{ id: body.ownerUserId, pointer: "/ownerUserId" }]);
+  const row = await insertActionItem(ctx, link, body);
   await assignActionTask(ctx, row, link.code);
   return row;
 }
@@ -387,6 +418,8 @@ async function updateAction(tx: Tx, request: FastifyRequest): Promise<ActionRow>
       if (updated.status !== current.status) await closeActionTasks(ctx, updated.id, updated.status);
     } else await followActionTask(ctx, current, updated);
   }
+  // T-DG4-BE-R3 (BE-F2 handback §8 item 1): a meeting action's meeting_action_due item follows the same edit.
+  await followMeetingActionWorkItem(tx, userActor(ctx), current, updated);
   return updated;
 }
 

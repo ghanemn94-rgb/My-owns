@@ -1,0 +1,110 @@
+port-policy: PostgreSQL listening on port 25300 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1u1g4l_b04c4e5c (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/modular.test.ts (13 tests) 4915ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied  966ms
+   ✓ REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate  471ms
+   ✓ S-4: authorization, If-Match and audit on every write > withdraw: 428 without If-Match, 409 stale, 404 unknown id, 422 when already withdrawn  343ms
+   ✓ S-4: authorization, If-Match and audit on every write > T-DG4-BE-R3 getInheritedRecord: 200 + ETag active or withdrawn; 404 for a prior_approval id, unknown id, outsider  335ms
+   ✓ S-4: authorization, If-Match and audit on every write > commit-time: a grant revoked while the create waited is 403; nothing written  333ms
+ ❯ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts (13 tests | 1 failed) 7410ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > a Modular G3 waiver with no initiative: 201 pending, version 1, audited gate_dispensation.create  401ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > every other Modular waiver keeps the DG3 refusal: G1, G2, and G3 with an initiative (recorded for A/B) 244ms
+   ✓ ADR-0021 W2: who decides a Modular-links waiver > G3's approver (SP) accepts it (200); the recorder (403) and a non-approver (403 gate.not_approver) cannot 234ms
+   × ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged 617ms
+     → expected 8 to be 6 // Object.is equality
+   ✓ ADR-0038 B1 at G3 submission > only the outcome link missing: missing lists it alone  514ms
+   ✓ ADR-0038 B1 at G3 submission > links supplied: no modularLinks member even with a waiver in force (the snapshot is the DG3 one)  371ms
+   ✓ ADR-0038 B1 at G3 submission > which waiver: the latest expiry, ties broken by the greatest id  767ms
+   ✓ ADR-0038 B1 at G3 submission > pending, rejected, revoked or expired (injected exception clock) waivers → 422 gate.modular_links_missing; nothing written  1972ms
+   ✓ ADR-0038 B1 at G3 approval > the waiver in force: approval 201, G3 approved; the decision is the SP's  401ms
+   ✓ ADR-0038 B1 at G3 approval > revoked after submission → 422 gate.modular_waiver_revoked with the revoke date; a later waiver does not rescue it; reject stays allowed  438ms
+   ✓ ADR-0038 B1 at G3 approval > expired by approval time (injected clock) → 422 gate.modular_waiver_expired with the expiry date; nothing written  364ms
+   ✓ ADR-0038 B1 at G3 approval > revoked and expired: the revoke is reported  325ms
+   ✓ ADR-0038 B1 at G3 approval > a Modular G3 submitted with its links (no modularLinks) is decided exactly as before  395ms
+ ❯ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts (10 tests | 3 failed) 1698ms
+   × ADR-0032 G1: governance writes the meeting action through raid's insertActionItem > the action_item row and its action_item.create event are BE-F2's, field for field; one task, its own 89ms
+     → expected '{"title":{"to":"Synthetic: confirm th…' to be '{"title":{"from":null,"to":"Synthetic…' // Object.is equality
+   ✓ ADR-0032 G1: governance writes the meeting action through raid's insertActionItem > A/B transcript: the row and the create event of a fixed input (normalized), when enabled 97ms
+   × BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: an owner change cancels the previous owner's item and opens the new owner's (A -> B -> A: #2) 101ms
+     → expected [ …(3) ] to not include '01a123d9-70c5-72d8-b1e3-c15dec736301'
+   ✓ BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: a due-date change moves the open item's due date (work_item.reschedule) 88ms
+   ✓ BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: done closes the item as done; cancelled closes it as cancelled; a title edit changes nothing 266ms
+   × BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: an owner change cancels the previous owner's item and opens the new owner's (A -> B -> A: #2) 72ms
+     → expected [ …(7) ] to not include '01a123d9-7295-756b-b16a-d0f644b22cbd'
+   ✓ BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: a due-date change moves the open item's due date (work_item.reschedule) 96ms
+   ✓ BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: done closes the item as done; cancelled closes it as cancelled; a title edit changes nothing 141ms
+   ✓ BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > an action that is not a meeting action gets no meeting item from these edits (DG2 action, both paths) 50ms
+   ✓ BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > a refused edit (stale If-Match, AUD) moves nothing 73ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > ADR-0032 G1: governance writes the meeting action through raid's insertActionItem > the action_item row and its action_item.create event are BE-F2's, field for field; one task, its own
+AssertionError: expected '{"title":{"to":"Synthetic: confirm th…' to be '{"title":{"from":null,"to":"Synthetic…' // Object.is equality
+
+Expected: [32m"{"title":{"[7mfrom":null,"[27mto":"Synthetic: confirm the cut-over plan"[7m}[27m,"[7mowner_user_id":{[27m"from":null,"to":"01a123d9-6e4d-7158-ae59-591cd6c31391"[7m}[27m,"[7mdue_date":{"from":null,"to":"2026-10-19"},"status":{"from":null,"to":"open"[27m}}"[39m
+Received: [31m"{"title":{"to":"Synthetic: confirm the cut-over plan","[7mfrom":null},"status":{"to":"open","from":null},"due_date":{"to":"2026-10-19",[27m"from":null[7m}[27m,"[7mowner_user_id":{"[27mto":"01a123d9-6e4d-7158-ae59-591cd6c31391","[7mfrom":null[27m}}"[39m
+
+ ❯ apps/api/test/integration/governance/meeting-action-follow.test.ts:135:48
+    133|     ]);
+    134|     // BE-F2's diff: null-to-null fields omitted, in ACTION_AUDIT_FIEL…
+    135|     expect(JSON.stringify(events[0]!.changes)).toBe(
+       |                                                ^
+    136|       JSON.stringify({
+    137|         title: { from: null, to: TITLE },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > raid: an owner change cancels the previous owner's item and opens the new owner's (A -> B -> A: #2)
+AssertionError: expected [ …(3) ] to not include '01a123d9-70c5-72d8-b1e3-c15dec736301'
+ ❯ apps/api/test/integration/governance/meeting-action-follow.test.ts:220:67
+    218|         session: x.contributor.session,
+    219|       });
+    220|       expect(theirs.body.items.map((i: Body) => i.subjectId)).not.toCo…
+       |                                                                   ^
+    221| 
+    222|       await patch(path, actionId, { ownerUserId: x.contributor.id });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts > BE-F2 §8: a meeting action's My Work item follows edits through raid and the DG2 /actions path > dg2: an owner change cancels the previous owner's item and opens the new owner's (A -> B -> A: #2)
+AssertionError: expected [ …(7) ] to not include '01a123d9-7295-756b-b16a-d0f644b22cbd'
+ ❯ apps/api/test/integration/governance/meeting-action-follow.test.ts:220:67
+    218|         session: x.contributor.session,
+    219|       });
+    220|       expect(theirs.body.items.map((i: Body) => i.subjectId)).not.toCo…
+       |                                                                   ^
+    221| 
+    222|       await patch(path, actionId, { ownerUserId: x.contributor.id });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/modular-waiver.test.ts > ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged
+AssertionError: expected 8 to be 6 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 6[39m
+[31m+ 8[39m
+
+ ❯ apps/api/test/integration/workflows/modular-waiver.test.ts:323:42
+    321|     // Member order: after evidence, before note (ADR-0038 B1).
+    322|     const keys = Object.keys(snapshot);
+    323|     expect(keys.indexOf("modularLinks")).toBe(keys.indexOf("evidence")…
+       |                                          ^
+    324|     expect(keys.indexOf("note")).toBe(keys.indexOf("modularLinks") + 1…
+    325|     expect(res.body.snapshot).toEqual(snapshot);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 32 passed (36)
+   Start at  03:26:24
+   Duration  31.50s (transform 4.46s, setup 0ms, collect 14.57s, tests 14.02s, environment 0ms, prepare 317ms)
+
+EXIT=1
