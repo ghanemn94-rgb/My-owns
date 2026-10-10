@@ -13,10 +13,12 @@ import { PersonName, usePeople } from "../../components/People.tsx";
 import { Section, TextCell } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+import { errorMessage } from "../../lib/problem.ts";
 import { DueDate, P4FormDialog, textOf } from "../my-work/p4ui.tsx";
 import {
   adoptionPaths,
   useAssessmentForm,
+  useAssessmentFormVersion,
   useAssessmentRecord,
   useStakeholderGroups,
   type AssessmentRecord,
@@ -59,10 +61,10 @@ function RecordBody({ record: r }: { record: AssessmentRecord }) {
   const { byId } = usePeople(ws.tid);
   const [dialog, setDialog] = useState<"review" | "withdraw" | null>(null);
   const group = (groups.data ?? []).find((g) => g.id === r.stakeholderGroupId);
-  const questions =
-    form.data && form.data.currentVersion.versionNo === r.formVersionNo
-      ? form.data.currentVersion.schema.questions
-      : null;
+  // getAssessmentFormVersion (ADR-0033 amendment V1; T-DG4-FE-R3): the answers are labelled from the question version
+  // the record was answered on, never from the form's current version (which may have changed since).
+  const version = useAssessmentFormVersion(ws.tid, r.formId, r.formVersionNo);
+  const questions = version.data?.schema.questions ?? null;
   const canReview = ws.can("assessment.review") && r.status === "submitted";
   const canWithdraw = r.status !== "withdrawn" && (ws.can("assessment.review") || r.respondentUserId === ws.meId);
   return (
@@ -142,7 +144,19 @@ function RecordBody({ record: r }: { record: AssessmentRecord }) {
         ) : null}
       </dl>
       <h3>{t("adoptionP4.records.answers")}</h3>
-      <dl className="details" data-answers>
+      {version.isPending ? (
+        <p role="status" className="small muted" data-state="form-version-loading">
+          {t("common.state.loading")}
+        </p>
+      ) : version.isError ? (
+        <div className="banner banner--warning" role="note" data-state="form-version-error">
+          <p>
+            <Icon name="alert" /> {t("adoptionP4.records.versionUnreadable", { n: r.formVersionNo })}
+          </p>
+          <p className="small">{errorMessage(t, version.error)}</p>
+        </div>
+      ) : null}
+      <dl className="details" data-answers data-answers-version={version.data?.versionNo ?? ""}>
         {Object.entries(r.answers).map(([key, value]) => {
           const q = questions?.find((x) => x.key === key);
           const shown =
@@ -154,7 +168,25 @@ function RecordBody({ record: r }: { record: AssessmentRecord }) {
                 : String(value);
           return (
             <div key={key}>
-              <dt>{q ? questionLabel(q, locale) : <bdi dir="ltr">{key}</bdi>}</dt>
+              <dt data-question={key}>
+                {q ? (
+                  questionLabel(q, locale)
+                ) : (
+                  // A key the version lacks (or a version that could not be read): the key and "Unknown question",
+                  // never a blank label. While the version is still loading only the key is shown.
+                  <>
+                    <bdi dir="ltr" className="code">
+                      {key}
+                    </bdi>
+                    {version.isPending ? null : (
+                      <span className="small muted" data-unknown-question={key}>
+                        {" "}
+                        ({t("adoptionP4.records.unknownQuestion")})
+                      </span>
+                    )}
+                  </>
+                )}
+              </dt>
               <dd data-answer-value={key}>{shown}</dd>
             </div>
           );

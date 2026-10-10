@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
 import type { GateView } from "../../api/types.ts";
 import { createI18n } from "../../i18n/index.ts";
+import { formatBusinessDate } from "../../lib/format.ts";
 import { BU_ID, TR_ID, USER_ID, makeMe, makeTransformation, mockApi, renderApp, route } from "../../test/fixtures.tsx";
 import type { Handler } from "../../test/fixtures.tsx";
 import { METHODOLOGY, OTHER_USER, gateViews, id, leadGrants } from "../../test/p2fixtures.ts";
@@ -58,6 +59,13 @@ const CATALOGUE = {
   ),
 };
 
+/** SYNTHETIC units as listScaleScopeBusinessUnits returns them (code order). */
+const OLD_BU = id();
+const SCOPE_UNITS = [
+  { id: BU_ID, code: "SYN-RET", nameEn: "Synthetic Retail", nameAr: "التجزئة (اصطناعي)", status: "active", selectable: true },
+  { id: OLD_BU, code: "SYN-OLD", nameEn: "Synthetic Legacy", nameAr: "القديمة (اصطناعي)", status: "inactive", selectable: false },
+];
+
 const PERMS: Permission[] = [
   ...P3_LEAD,
   "gate_exception.request",
@@ -72,22 +80,10 @@ function handlers(locale: "en" | "ar", extra: Handler[], mode: "end_to_end" | "m
       body: makeMe(leadGrants(PERMS), { preferredLocale: locale }),
     })),
     ...extra,
-    route("GET", /\/business-units/, () =>
-      page([
-        {
-          id: BU_ID,
-          organizationId: makeTransformation().organizationId,
-          parentBusinessUnitId: null,
-          code: "SYN-RET",
-          nameEn: "Synthetic Retail",
-          nameAr: "التجزئة (اصطناعي)",
-          status: "active",
-          version: 1,
-          createdAt: T,
-          updatedAt: T,
-        },
-      ]),
-    ),
+    // listScaleScopeBusinessUnits (ADR-0035 amendment R1): an active unit and one set inactive after a scope named it.
+    route("GET", new RegExp(`${esc(TR)}/scale-scope/business-units(\\?.*)?$`), () => page(SCOPE_UNITS)),
+    // The organization's listBusinessUnits answers 403: the scale screens must not need it (T-DG4-FE-R3).
+    route("GET", /\/organizations\/[^/]+\/business-units/, () => problemBody(403, "urn:mth:problem:forbidden", "forbidden", "x")),
     route("GET", new RegExp(`${esc(TR)}$`), () => ({ status: 200, body: makeTransformation({ mode }) })),
     route("GET", new RegExp(`${esc(TR)}/methodology$`), () => ({ status: 200, body: CATALOGUE })),
     (req) => (req.method === "GET" && req.url.startsWith("/api/v1/") ? page([]) : undefined),
@@ -406,6 +402,13 @@ describe.each(["en", "ar"] as const)("G5 view (%s)", (locale) => {
     await waitFor(() =>
       expect(dialog.querySelector(`[data-scope-initiative='0'] option[value='${INI.id}']`)).not.toBeNull(),
     );
+    // listScaleScopeBusinessUnits: only the selectable (active) unit is offered, labelled by code and the locale name.
+    await waitFor(() => expect(dialog.querySelector(`[data-scope-unit='0'] option[value='${BU_ID}']`)).not.toBeNull());
+    expect(dialog.querySelector(`[data-scope-unit='0'] option[value='${BU_ID}']`)!.textContent).toBe(
+      `SYN-RET ${locale === "en" ? "Synthetic Retail" : "التجزئة (اصطناعي)"}`,
+    );
+    expect(dialog.querySelector(`[data-scope-unit='0'] option[value='${OLD_BU}']`)).toBeNull();
+    expect(dialog.querySelectorAll("[data-scope-unit='0'] option")).toHaveLength(2); // "Choose" + SYN-RET
     fireEvent.change(dialog.querySelector("[data-scope-initiative='0']")!, { target: { value: INI.id } });
     fireEvent.change(dialog.querySelector("[data-scope-unit='0']")!, { target: { value: BU_ID } });
     fireEvent.click(within(dialog).getByRole("button", { name: t("gates.decision.confirm") }));
@@ -414,6 +417,9 @@ describe.each(["en", "ar"] as const)("G5 view (%s)", (locale) => {
       outcome: "approved",
       scaleScope: { items: [{ initiativeId: INI.id, businessUnitId: BU_ID }] },
     });
+    // The organization's listBusinessUnits answers 403 in this fixture (the workspace header still asks for it), so
+    // the options above came from listScaleScopeBusinessUnits only.
+    expect(requests.some((r) => r.url.includes(`${TR}/scale-scope/business-units`))).toBe(true);
   });
 
   it("a frozen submission shows its exception lines and the nine-field review table, Under review", async () => {
@@ -540,7 +546,10 @@ describe.each(["en", "ar"] as const)("Modular G3 waiver on the gate page (%s)", 
     } as GateView;
   }
 
-  it("the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated", async () => {
+  it.each([
+    ["without params (an older server): the text shown before, no placeholder", null],
+    ["with params.date (ADR-0038 Q1): the date localized", { date: "2026-10-09" }],
+  ] as const)("the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated %s", async (_, params) => {
     const view = g3View();
     render(
       locale,
@@ -551,14 +560,15 @@ describe.each(["en", "ar"] as const)("Modular G3 waiver on the gate page (%s)", 
           status: 200,
           body: { submission: view.currentSubmission, criteria: [], decision: null },
         })),
-        route("POST", new RegExp(`${esc(TR)}/gates/G3/decision$`), () =>
-          problemBody(
+        route("POST", new RegExp(`${esc(TR)}/gates/G3/decision$`), () => {
+          const refused = problemBody(
             422,
             "urn:mth:problem:validation",
             "gate.modular_waiver_revoked",
             "The waiver of the missing baseline and outcome links was revoked on 2026-10-09; …",
-          ),
-        ),
+          );
+          return params ? { ...refused, body: { ...refused.body, params } } : refused;
+        }),
       ],
       "modular",
     );
@@ -584,8 +594,14 @@ describe.each(["en", "ar"] as const)("Modular G3 waiver on the gate page (%s)", 
     });
     fireEvent.click(within(dialog).getByRole("button", { name: t("gates.decision.confirm") }));
     const alert = await within(dialog).findByRole("alert");
-    expect(alert.textContent).toContain(t("problems.gate__modular_waiver_revoked"));
     expect(alert.textContent).not.toContain("2026-10-09; …");
+    expect(alert.textContent).not.toMatch(/[{}]/);
+    if (params) {
+      expect(alert.textContent).toContain(t("problems.gate__modular_waiver_revoked", params));
+      expect(alert.textContent).toContain(formatBusinessDate(params.date, locale)!);
+    } else {
+      expect(alert.textContent).toContain(t("problems.gate__modular_waiver_revoked_noParams"));
+    }
   });
 
   it("a G3 submission refused for missing links lists each item translated", async () => {
@@ -761,6 +777,61 @@ describe.each(["en", "ar"] as const)("G5 scale transitions and risk dispositions
     expect(done.textContent).toContain(t("gates.riskDisposition.approval.approved"));
     // An approved disposition completes the row: nothing more to propose.
     expect(done.querySelector("[data-action='propose-disposition']")).toBeNull();
+  });
+
+  it("the approved scope and the transitions name units by code and locale name, an inactive unit labelled; a new transition offers only selectable units", async () => {
+    const INI = initiative({ id: id(), code: "INI-01", name: "Synthetic onboarding", status: "launched" });
+    const scope = {
+      approved: true,
+      gateDecisionId: id(),
+      decidedAt: T,
+      items: [
+        { id: id(), initiativeId: INI.id, businessUnitId: BU_ID, note: null },
+        { id: id(), initiativeId: INI.id, businessUnitId: OLD_BU, note: null },
+      ],
+      conditions: [],
+    };
+    const transition = {
+      id: id(),
+      transformationId: TR_ID,
+      initiativeId: INI.id,
+      businessUnitId: OLD_BU,
+      gateDecisionId: scope.gateDecisionId,
+      note: null,
+      transitionedAt: T,
+      transitionedBy: USER_ID,
+    };
+    const { requests } = renderScale(locale, [
+      route("GET", /\/api\/v1\/initiatives\?/, () => page([INI])),
+      route("GET", new RegExp(`${esc(TR)}/scale-scope$`), () => ({ status: 200, body: scope })),
+      route("GET", new RegExp(`${esc(TR)}/scale-transitions(\\?.*)?$`), () => page([transition])),
+    ]);
+    const name = (en: string, ar: string) => (locale === "en" ? en : ar);
+    const items = await waitFor(() => {
+      const el = document.querySelectorAll("[data-scope-item] [data-scale-unit]");
+      expect(el).toHaveLength(2);
+      return [...el];
+    });
+    expect(items[0]!.getAttribute("data-scale-unit")).toBe("SYN-RET");
+    expect(items[0]!.textContent).toBe(`SYN-RET ${name("Synthetic Retail", "التجزئة (اصطناعي)")}`);
+    expect(items[1]!.getAttribute("data-scale-unit-status")).toBe("inactive");
+    expect(items[1]!.textContent).toContain(`SYN-OLD ${name("Synthetic Legacy", "القديمة (اصطناعي)")}`);
+    expect(items[1]!.querySelector("[data-scale-unit-inactive]")!.textContent).toContain(t("gates.scale.unitInactive"));
+    const recorded = await waitFor(() => {
+      const el = document.querySelector("[data-scale-transition] [data-scale-unit='SYN-OLD']");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(recorded.textContent).toContain(name("Synthetic Legacy", "القديمة (اصطناعي)"));
+    expect(document.body.textContent).not.toContain(t("gates.scale.unitNotVisible"));
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.scaleTransition.create")) }));
+    const dialog = await screen.findByRole("dialog");
+    const selects = within(dialog).getAllByRole("combobox");
+    await waitFor(() => expect(within(selects[1]!).getAllByRole("option").length).toBe(2));
+    expect(within(selects[1]!).getByRole("option", { name: `SYN-RET ${name("Synthetic Retail", "التجزئة (اصطناعي)")}` })).toBeTruthy();
+    expect(within(selects[1]!).queryByRole("option", { name: /SYN-OLD/ })).toBeNull();
+    // Every label above came from listScaleScopeBusinessUnits: the organization's read answers 403 in this fixture.
+    expect(requests.some((r) => r.url.includes(`${TR}/scale-scope/business-units`))).toBe(true);
   });
 
   it("scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal", async () => {

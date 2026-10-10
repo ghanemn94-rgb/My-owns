@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { RISK_DISPOSITIONS, type RiskDisposition, type ScaleTransition } from "@mth/shared/schemas";
 import { p4Keys, useP4Refresh } from "../../api/p4.ts";
 import { useInitiatives } from "../../api/portfolio.ts";
-import { fetchAllPages, shouldRetry, useBusinessUnits } from "../../api/queries.ts";
+import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { Icon } from "../../components/Icon.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
@@ -24,10 +24,10 @@ import { Section, TextCell } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import { formatDateTime } from "../../lib/format.ts";
-import { pick } from "../../lib/methodology.ts";
 import { BusinessApprovalNote, P4FormDialog, textOf } from "../my-work/p4ui.tsx";
 import type { RaidEntry } from "../raid/api.ts";
-import { GATE_NS } from "./GateP4.tsx";
+import { GATE_NS, ScaleUnitName, scaleUnitLabel } from "./GateP4.tsx";
+import { selectableUnits, useScaleScopeUnits } from "./p4api.ts";
 
 const tBase = (tid: string) => `/api/v1/transformations/${tid}`;
 export const scaleRiskPaths = {
@@ -69,19 +69,17 @@ export function useOpenRisks(tid: string) {
   });
 }
 
-/** The units offered: the organization's (where readable) plus the transformation's own unit. */
+/**
+ * The units of listScaleScopeBusinessUnits (ADR-0035 amendment R1; T-DG4-FE-R3): a new transition offers only the
+ * `selectable` (active) ones; a recorded transition is labelled from the whole list, which includes every unit a
+ * transition names whatever its status.
+ */
 function useUnitOptions() {
-  const { t } = useTranslation();
   const ws = useWorkspace();
   const locale = useLocale();
-  const units = useBusinessUnits(ws.tr.organizationId);
-  const own = ws.tr.businessUnitId;
-  const list = [
-    ...(units.data ?? []).map((u) => ({ value: u.id, label: pick(locale, u.nameEn, u.nameAr) })),
-    ...((units.data ?? []).some((u) => u.id === own) ? [] : [{ value: own, label: t("gates.scale.ownUnit") }]),
-  ];
-  const name = (id: string) => list.find((u) => u.value === id)?.label ?? t("gates.scale.unitNotVisible");
-  return { list, name };
+  const units = useScaleScopeUnits(ws.tid);
+  const list = selectableUnits(units.data).map((u) => ({ value: u.id, label: scaleUnitLabel(u, locale) }));
+  return { list, all: units.data };
 }
 
 export function ScaleTransitionsSection() {
@@ -126,7 +124,8 @@ export function ScaleTransitionsSection() {
           <ul className="plain-list" data-scale-transitions={rows.length}>
             {rows.map((r) => (
               <li key={r.id} data-scale-transition={`${r.initiativeId}:${r.businessUnitId}`}>
-                <Icon name="check" /> <bdi>{iniName(r.initiativeId)}</bdi> · {units.name(r.businessUnitId)}
+                <Icon name="check" /> <bdi>{iniName(r.initiativeId)}</bdi> ·{" "}
+                <ScaleUnitName id={r.businessUnitId} units={units.all} />
                 <span className="block small muted">
                   {formatDateTime(r.transitionedAt, locale, ws.tr.timezone)} ·{" "}
                   <PersonName id={r.transitionedBy} people={byId} />

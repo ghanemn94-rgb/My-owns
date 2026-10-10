@@ -10,7 +10,7 @@ import { ApiError } from "../../api/client.ts";
 import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Icon } from "../../components/Icon.tsx";
-import { errorMessage, fieldErrorMessage, problemKey } from "../../lib/problem.ts";
+import { errorMessage, fieldErrorMessage, problemKey, problemText } from "../../lib/problem.ts";
 
 /** "prioritization.weights_total" -> "prioritization__weights_total" (the key form used in FE-B's `problem` maps). */
 export const codeKey = (code: string) => code.replace(/\./g, "__");
@@ -27,7 +27,7 @@ export function codeText(t: TFunction, code: string, vars: Record<string, unknow
     const v = t(`${ns}.problem.${codeKey(code)}`, { defaultValue: "", ...vars });
     if (v) return v;
   }
-  const shared = t(problemKey(code), { defaultValue: "" });
+  const shared = problemText(t, code);
   return shared || null;
 }
 

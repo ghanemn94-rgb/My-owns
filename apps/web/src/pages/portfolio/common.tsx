@@ -15,7 +15,7 @@ import type { Locale } from "@mth/shared";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { BLANK_CODE, Dialog, Field, isBlankText, REQUIRED_CODE, useFocusFirstInvalid } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
-import { errorMessage, fieldErrorMessage, problemKey } from "../../lib/problem.ts";
+import { apiProblemText, errorMessage, fieldErrorMessage, problemKey } from "../../lib/problem.ts";
 
 /** i18n key part of a problem or warning code inside an FE-A namespace: dots become "__" (as `problemKey`). */
 export const codeKey = (code: string) => code.replace(/\./g, "__");
@@ -32,7 +32,8 @@ export function p3ProblemMessage(t: TFunction, error: unknown, namespaces: reado
         const own = t(`${ns}.problem.${codeKey(code)}`, { defaultValue: "" });
         if (own) return own;
       }
-    if (t(problemKey(error.code), { defaultValue: "" })) return t(problemKey(error.code));
+    const shared = apiProblemText(t, error);
+    if (shared) return shared;
   }
   return errorMessage(t, error);
 }
