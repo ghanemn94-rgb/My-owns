@@ -57,6 +57,7 @@ import {
   type ScaleScopeDraft,
   useGateP4Refresh,
 } from "./GateP4.tsx";
+import { G5ScaleAndRisk } from "./ScaleRisk.tsx";
 
 export function GateDetailPage() {
   const { t } = useTranslation();
@@ -238,6 +239,8 @@ function GateContent({ view }: { view: GateView }) {
       {/* T-DG4-FE-F (ADR-0035 §4, §5): exceptions per mandatory criterion; the approved G5 scale scope. */}
       <GateExceptionsSection view={view} />
       {def.code === "G5" ? <ScaleScopeSection /> : null}
+      {/* T-DG4-FE-F2 (ADR-0035 §5, §6): risk dispositions for open risks, and scale transitions. */}
+      {def.code === "G5" ? <G5ScaleAndRisk /> : null}
 
       <SubmissionHistory view={view} />
 

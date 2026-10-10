@@ -407,9 +407,11 @@ describe("P4 seams", () => {
   it.each(["en", "ar"] as const)("a planned P4 route shows the honest 'being built' state (%s)", async (locale) => {
     const t = createI18n(locale).t;
     mockApi(...p4Handlers(locale, []));
-    // T-DG4-FE-F built the closure route; change requests (FE-F2, next wave) is still a planned route.
-    renderApp(`/transformations/${TR_ID}/change-requests`, { i18n: createI18n(locale) });
-    expect(await screen.findByRole("heading", { level: 1, name: t("nav.p4.changeRequests.title") })).toBeTruthy();
+    // T-DG4-FE-F2 built change requests; the test takes whichever P4 route is still planned (none: nothing to show).
+    const planned = P4_PLANNED_ROUTES[0];
+    if (!planned) return;
+    renderApp(`/${planned.path.replace(":id", TR_ID)}`, { i18n: createI18n(locale) });
+    expect(await screen.findByRole("heading", { level: 1, name: t(`nav.p4.${planned.feature}.title`) })).toBeTruthy();
     expect(document.querySelector("[data-state='being-built']")?.textContent).toContain(t("nav.p4.beingBuiltTitle"));
   });
 });

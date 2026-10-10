@@ -369,10 +369,11 @@ test("administration: calendar and jobs; governance: groups and Transform readin
   await expect(office.locator("[data-check]")).toHaveCount(4);
   await shot(office, lang, "p4-21-transform-readiness");
   await expectAccessible(office, lang, "p4-transform-readiness");
-  // T-DG4-FE-F built the closure route; change requests (FE-F2, next wave) is still a planned route.
+  // T-DG4-FE-F built the closure route and T-DG4-FE-F2 change requests: no "being built" placeholder is left there.
   await go(office, `/transformations/${tid}/change-requests`);
-  await expect(office.locator("[data-state='being-built']")).toBeVisible();
-  await shot(office, lang, "p4-22-planned-route");
-  await expectAccessible(office, lang, "p4-planned-route");
+  await expect(office.locator("section#change-requests")).toBeVisible();
+  await expect(office.locator("[data-state='being-built']")).toHaveCount(0);
+  await shot(office, lang, "p4-22-change-requests-built");
+  await expectAccessible(office, lang, "p4-change-requests-built");
   await context.close();
 });
