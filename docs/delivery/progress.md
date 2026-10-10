@@ -25,18 +25,19 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-112.
-  - **Done and integrated through W15 (`4e6636d`):**
+- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-113.
+  - **Done and integrated through W16 (`c441586`):**
     - every architecture task (ARCH-01 to ARCH-08, ARCH-R1, ARCH-R2);
     - every backend and KPI/benefits implementer task, including the repair rounds R1–R3;
-    - FE-A to FE-E and FE-R1.
-  - **Merged-tree verification of `4e6636d`:** every check exits 0 (D-112): unit 2547 + 259/2 in both locale settings, integration 1739/1739, e2e 260/260 with no agent running.
-  - **In flight:** W16, FE-D2, FE-F, FE-G and QA-A, started 05:51Z in their own worktrees.
+    - FE-A to FE-G, FE-D2 and FE-R1;
+    - QA-A (acceptance suites A04, A05, A10).
+  - **Merged-tree verification of `c441586`:** every check exits 0 (D-113): unit 2659 + 259/2 in both locale settings, integration 1780/1780, e2e 298/298 with no agent running.
+  - **In flight:** W17, ARCH-R3, FE-F2, FE-G2 and QA-B, started 08:43Z in their own worktrees.
   - **Remaining builds:**
-    - W17: FE-F2, FE-G2, QA-B, QA-C;
-    - W18: an FE repair adding route-level code splitting (D-111), and AN-P4 (the register update before the freeze).
+    - W18: BE-R4 (implements ARCH-R3), QA-C, and FE-R2 (route-level code splitting, D-111);
+    - W19: FE-R3 (adopts ARCH-R3's reads) and AN-P4 (the register update before the freeze).
   - **Then:** the freeze, the three reviews and the audit.
-- **Next action:** integrate each W16 run as it finishes (commit the branch in its worktree, commit the run directory, merge, check the shared files). Verify the merged tree, with e2e run between waves and no agent running (D-112). Then create the W17 worktrees before any W17 run starts (D-100).
+- **Next action:** integrate each W17 run as it finishes. Verify the merged tree, with e2e run between waves and no agent running (D-112). Then create the W18 worktrees before any W18 run starts (D-100).
 
 ## DG2 scope (P2 — diagnose, define and design)
 
