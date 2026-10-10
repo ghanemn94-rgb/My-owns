@@ -51,6 +51,16 @@ export const WORKSPACE_TABS = [
   { id: "raci", path: "/raci", labelKey: "raci.tab" },
   { id: "transform-readiness", path: "/transform-readiness", labelKey: "decisionRights.readiness.tab" },
   { id: "approval-decisions", path: "/approval-decisions", labelKey: "approvals.records.tab" },
+  // P4 slices A and B (FE-B, FE-C screens; workspace entries added by T-DG4-FE-D, D-109 carry-forward).
+  { id: "kpis", path: "/kpis", labelKey: "nav.p4.kpis.title" },
+  { id: "benefits", path: "/benefits", labelKey: "nav.p4.benefits.title" },
+  // P4 slices E and D (T-DG4-FE-D; labels from each page's own namespace).
+  { id: "raid", path: "/raid", labelKey: "raidP4.tab.raid" },
+  { id: "actions", path: "/actions", labelKey: "raidP4.tab.actions" },
+  { id: "corrective-actions", path: "/corrective-actions", labelKey: "raidP4.tab.corrective" },
+  { id: "forums", path: "/forums", labelKey: "governanceP4.tab.forums" },
+  { id: "meetings", path: "/meetings", labelKey: "governanceP4.tab.meetings" },
+  { id: "executive-decisions", path: "/executive-decisions", labelKey: "governanceP4.tab.decisions" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 
