@@ -1,0 +1,70 @@
+== baseline-a01 (tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts): exit 0
+ ✓ |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts (2 tests) 1022ms
+      Tests  2 passed (2)
+== baseline-a02 (tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts): exit 0
+ ✓ |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (1 test) 3058ms
+   ✓ REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201  2708ms
+      Tests  1 passed (1)
+applied PB010-scorecard-stale-copy: apps/api/src/modules/portfolio/dashboard-facts.ts
+applied PB010-scorecard-stale-copy: apps/api/src/modules/portfolio/dashboard-facts.ts
+== PB010-scorecard-stale-copy (tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts): exit 1
+   ✓ REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > before the rename, the scorecard and the traceability view show the original name (the baseline) 100ms
+   × REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row 150ms
+     → expected [ [ 'initiative', 'INI-7001', …(2) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(2) ] ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ [ 'initiative', 'INI-7001', …(2) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(2) ] ]
+      Tests  1 failed | 1 passed (2)
+applied PB010-traceability-stale-copy: apps/api/src/modules/reporting/traceability.ts
+applied PB010-traceability-stale-copy: apps/api/src/modules/reporting/traceability.ts
+== PB010-traceability-stale-copy (tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts): exit 1
+   ✓ REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > before the rename, the scorecard and the traceability view show the original name (the baseline) 180ms
+   × REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row 178ms
+     → traceability: expected [ [ 'initiative', 'INI-7001', …(1) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(1) ] ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: traceability: expected [ [ 'initiative', 'INI-7001', …(1) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(1) ] ]
+      Tests  1 failed | 1 passed (2)
+applied PB010-scorecard-label-code: apps/api/src/modules/reporting/dashboards/engine.ts
+== PB010-scorecard-label-code (tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts): exit 1
+   × REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > before the rename, the scorecard and the traceability view show the original name (the baseline) 73ms
+     → expected [ [ 'initiative', 'INI-7001', …(1) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(1) ] ]
+   × REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row 129ms
+     → expected [ [ 'initiative', 'INI-7001', …(2) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(2) ] ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ [ 'initiative', 'INI-7001', …(1) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(1) ] ]
+AssertionError: expected [ [ 'initiative', 'INI-7001', …(2) ] ] to deeply equal [ [ 'initiative', 'INI-7001', …(2) ] ]
+      Tests  2 failed (2)
+applied S03004-design-draft-blocked-before-g2: apps/api/src/modules/transformations/register-kit.ts
+== S03004-design-draft-blocked-before-g2 (tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts): exit 1
+   × REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201 754ms
+     → {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"Design drafts need G2.","code":"gate.g2_not_approved","requestId":"01a1270f-fed6-75d8-86cc-17b6c85a7c19"}: expected 422 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"Design drafts need G2.","code":"gate.g2_not_approved","requestId":"01a1270f-fed6-75d8-86cc-17b6c85a7c19"}: expected 422 to be 201 // Object.is equality
+      Tests  1 failed (1)
+applied S03004-pre-g5-wrong-code: apps/api/src/modules/workflows/scale.ts
+== S03004-pre-g5-wrong-code (tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts): exit 1
+   × REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201 2449ms
+     → expected [ …(2) ] to deeply equal [ …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+      Tests  1 failed (1)
+applied S03004-pre-g5-detail-without-g5: apps/api/src/modules/workflows/scale.ts
+== S03004-pre-g5-detail-without-g5 (tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts): exit 1
+   × REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201 2371ms
+     → expected 'Scaling requires the Scale business a…' to match /\bG5\b/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Scaling requires the Scale business a…' to match /\bG5\b/
+      Tests  1 failed (1)
+applied S03004-g5-approval-ignored: apps/api/src/modules/workflows/scale.ts
+== S03004-g5-approval-ignored (tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts): exit 1
+   × REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201 2741ms
+     → {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.","code":"gate.g5_not_approved","requestId":"01a12710-a44b-779c-9b81-b86b793a2cf2"}: expected 422 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"type":"urn:mth:problem:invalid-transition","title":"Invalid transition","status":422,"detail":"Scaling requires the G5 (Scale) business approval, which is not approved for this transformation.","code":"gate.g5_not_approved","requestId":"01a12710-a44b-779c-9b81-b86b793a2cf2"}: expected 422 to be 201 // Object.is equality
+      Tests  1 failed (1)
+== restored-a01 (tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts): exit 0
+ ✓ |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts (2 tests) 979ms
+      Tests  2 passed (2)
+== restored-a02 (tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts): exit 0
+ ✓ |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (1 test) 2829ms
+   ✓ REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201  2505ms
+      Tests  1 passed (1)

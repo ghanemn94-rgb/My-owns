@@ -1,0 +1,40 @@
+port-policy: PostgreSQL listening on port 25650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.UyD3q9/claude-0/review-qa-d-mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2q5kn4_53b230fc (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (1 test | 1 failed) 2764ms
+   × REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201 2449ms
+     → expected [ …(2) ] to deeply equal [ …(2) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts > REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "urn:mth:problem:invalid-transition",[22m
+[32m-   "gate.g5_not_approved",[39m
+[31m+   "scale.outside_approved_scope",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts:195:50
+    193|     expect(before.status, JSON.stringify(before.body)).toBe(422);
+    194|     expect(String(before.headers["content-type"])).toContain("applicat…
+    195|     expect([before.body.type, before.body.code]).toEqual(["urn:mth:pro…
+       |                                                  ^
+    196|     expect(String(before.body.detail)).toMatch(/\bG5\b/);
+    197|     expect(await scaleRows(g)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:25:24
+   Duration  11.24s (transform 3.12s, setup 0ms, collect 6.18s, tests 2.76s, environment 0ms, prepare 80ms)
+
