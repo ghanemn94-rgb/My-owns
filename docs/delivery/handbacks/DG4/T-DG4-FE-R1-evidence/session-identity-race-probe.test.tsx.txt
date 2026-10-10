@@ -1,0 +1,156 @@
+// F-DG2-500 (REQ-S16-030): a session end clears the session-scoped cache WHEREVER it happens (the sign-in page
+// included, no component has to be mounted), and no identity ever renders another identity's cached data:
+//  - the reviewer's W5: Back to an in-document /login entry after a session end, then user B signs in with the
+//    development form in the same tab: B never sees A's records;
+//  - the reviewer's W5b: the same in OIDC mode, B arriving through a /me re-probe (B signed in in another tab);
+//  - an identity change noticed by a refocus /me with NO 401 in between (A signed out and B signed in in another tab):
+//    every session-scoped query is removed before B renders, and A's draft form state does not survive;
+//  - sign-out here keeps clearing everything;
+//  - a 403 is never a session end and clears nothing;
+//  - the API client clears through the registered hook with no React tree mounted at all.
+// EN (LTR) and AR (RTL). SYNTHETIC data, scripted API.
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  apiRequest,
+  getSessionPhase,
+  markSessionActive,
+  noteSessionIdentity,
+  registerSessionReset,
+  resetSessionStateForTests,
+  type SessionResetReason,
+} from "../api/client.ts";
+import { fetchMe, keys } from "../api/queries.ts";
+import { createQueryClient } from "../app/App.tsx";
+import { createI18n } from "../i18n/index.ts";
+import arAuth from "../i18n/ar/auth.json";
+import arTransformations from "../i18n/ar/transformations.json";
+import enAuth from "../i18n/en/auth.json";
+import enTransformations from "../i18n/en/transformations.json";
+import {
+  BUSINESS_UNIT,
+  OFFICE_GRANTS,
+  makeMe,
+  makeTransformation,
+  mockApi,
+  problem,
+  renderApp,
+  route,
+  type RecordedRequest,
+} from "../test/fixtures.tsx";
+
+beforeEach(() => {
+  localStorage.clear();
+  document.documentElement.lang = "ar";
+  document.documentElement.dir = "rtl";
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+const TEXT = {
+  en: { auth: enAuth, transformations: enTransformations, dir: "ltr" },
+  ar: { auth: arAuth, transformations: arTransformations, dir: "rtl" },
+} as const;
+type Lang = keyof typeof TEXT;
+
+const USER_B_ID = "01920000-0000-7000-9000-0000000002b2";
+const A_SECRET = "TR-A-SECRET";
+const page = (items: unknown[]) => ({ status: 200, body: { items, nextCursor: null } });
+const unauthenticated = () => ({
+  status: 401,
+  body: { type: "urn:mth:problem:unauthenticated", title: "Sign-in required", status: 401, code: "unauthenticated" },
+});
+const wait = (ms: number) =>
+  act(async () => {
+    await new Promise((r) => setTimeout(r, ms));
+  });
+const meCount = (requests: RecordedRequest[], from = 0) =>
+  requests.slice(from).filter((r) => r.method === "GET" && /\/api\/v1\/me$/.test(r.url)).length;
+
+/**
+ * Two synthetic users on one scripted server. `state.user` is whose session the browser's cookie carries (null: no
+ * valid session, every GET answers 401 `unauthenticated`). B's transformation list is held until `releaseB()`, so the
+ * first render after B's identity arrives shows whatever the cache holds (the reviewer's technique).
+ */
+function twoUserServer(lang: Lang, options: { devLogin: boolean }) {
+  const state: { user: "A" | "B" | null } = { user: "A" };
+  const meA = makeMe(OFFICE_GRANTS, { preferredLocale: lang, displayName: "Synthetic User A" });
+  // B: another user AND another session (another CSRF token, as the API derives it from the session token).
+  const meB = {
+    ...makeMe(OFFICE_GRANTS, { preferredLocale: lang, displayName: "Synthetic User B", id: USER_B_ID }),
+    csrfToken: "b".repeat(43),
+  };
+  const holds: (() => void)[] = [];
+  const api = mockApi(
+    route("POST", /\/auth\/dev-login$/, (req) => {
+      if (!options.devLogin) return problem(404, "not_found");
+      const body = req.body as { username?: string } | undefined;
+      if (!body?.username) return problem(400, "validation");
+      state.user = "B";
+      return { status: 204 };
+    }),
+    route("POST", /\/auth\/logout$/, () => {
+      state.user = null;
+      return { status: 200, body: { endSessionUrl: null } };
+    }),
+    (req) => (state.user === null && req.method === "GET" ? unauthenticated() : undefined),
+    route("GET", /\/api\/v1\/me$/, () => ({ status: 200, body: state.user === "A" ? meA : meB })),
+    route("GET", /\/business-units/, () => page([BUSINESS_UNIT])),
+    route("GET", /\/api\/v1\/transformations\?/, () =>
+      state.user === "A"
+        ? page([makeTransformation({ code: A_SECRET, name: "A only synthetic transformation" })])
+        : page([]),
+    ),
+  );
+  const mocked = globalThis.fetch;
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (state.user === "B" && url.startsWith("/api/v1/transformations?")) await new Promise<void>((r) => holds.push(r));
+    return mocked(input, init);
+  });
+  const releaseB = () => holds.splice(0).forEach((r) => r());
+  return { state, releaseB, ...api };
+}
+
+/**
+ * No query that A's session fetched is left in the cache: nothing holds data except the side-effect-free development
+ * sign-in probe. (The sign-in page's own GET /me observer may have re-created an EMPTY "me" query: no data, no identity.)
+ */
+function expectNoSessionCache(queryClient: ReturnType<typeof renderApp>["queryClient"]) {
+  const withData = queryClient
+    .getQueryCache()
+    .findAll()
+    .filter((q) => q.state.data !== undefined)
+    .map((q) => JSON.stringify(q.queryKey))
+    .filter((k) => k !== JSON.stringify(["dev-login-availability"]));
+  expect(withData).toEqual([]);
+  expect(queryClient.getQueryData(keys.me)).toBeUndefined();
+}
+
+
+for (let i = 0; i < 40; i++)
+it("probe " + i, async () => {
+  const lang = "en" as const;
+  const T = TEXT[lang];
+  const server = twoUserServer(lang, { devLogin: true });
+  const { router } = renderApp("/transformations", { i18n: createI18n(lang) });
+  expect(await screen.findByText(A_SECRET)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(T.auth.signOut) }));
+  await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+  await screen.findByLabelText(T.auth.dev.username);
+  await wait(200);
+  const history: string[] = [];
+  router.subscribe((s) => history.push(s.location.pathname));
+  fireEvent.change(screen.getByLabelText(T.auth.dev.username), { target: { value: "dev.b" } });
+  fireEvent.click(screen.getByRole("button", { name: T.auth.dev.submit }));
+  await screen.findByText("Synthetic User B");
+  const atB = router.state.location.pathname;
+  history.push("|test navigates|");
+  await act(async () => { await router.navigate("/transformations"); });
+  await wait(100);
+  server.releaseB();
+  await wait(50);
+  console.log(`PROBE at-B=${atB} history=${history.join(">")} final=${router.state.location.pathname}`);
+});

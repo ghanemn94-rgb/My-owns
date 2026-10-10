@@ -1263,7 +1263,7 @@ function Overrides({ entry }: { entry: KpiDictionaryEntry }) {
   const overrides = useRagOverrides(ws.tid, kpiId);
   const canOverride = ws.can("rag.override");
   const frequency = entry.definition.frequency;
-  const periods = usePeriodChoices(ws.tid, ws.tr.organizationId, kpiId, frequency, false);
+  const periods = usePeriodChoices(ws.tid, frequency, false);
   const evidence = useEvidenceOptions(ws.tid, canOverride);
   const refresh = useP4Refresh(ws.tid);
   const [creating, setCreating] = useState(false);
