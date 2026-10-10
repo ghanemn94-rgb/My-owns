@@ -14,6 +14,12 @@
 // service (workflows, BE-B); this module never writes approval rows (S-14). Its subject provider applies each outcome to
 // the header in the deciding transaction: approve -> approved (approved_version = the requested version); reject,
 // request changes, withdraw -> draft; defer -> still in approval. Nothing here touches DG0-DG7.
+//
+// Round 2 and later (ADR-0026 amendment A4; T-DG4-BE-R2): after changes are requested the header is a draft again and
+// its rows are editable. Submitting it again sets the header in_approval (version + 1, audited) and then resubmits the
+// SAME approval on that new version through `resubmitApprovalInTx`, in one transaction, so the rows are frozen again
+// for every round. The type sets `resubmitThroughSubject`, so `POST /approvals/{id}/resubmit` refuses it (422
+// approval.resubmit_through_record) and the header can never be pending while it is still a draft.
 import { sql, type GovernanceMatrixRow, type DbOrTx, type Tx } from "@mth/db";
 import { governanceMatrixKind, governanceMatrixSubmit, uuid, type GovernanceMatrix } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -42,6 +48,7 @@ import {
 import {
   registerApprovalSubject,
   requestApprovalInTx,
+  resubmitApprovalInTx,
   toApprovals,
   type ApprovalOutcomeEvent,
 } from "../workflows/index.ts";
@@ -217,7 +224,7 @@ export async function applyMatrixOutcome(tx: Tx, event: ApprovalOutcomeEvent): P
       ? "approved"
       : event.outcome === "rejected" || event.outcome === "changes_requested" || event.outcome === "withdrawn"
         ? "draft"
-        : null; // deferred: still in approval. resubmitted: see the handback (the header is left as it is).
+        : null; // deferred: still in approval. resubmitted: never emitted for this type (resubmitThroughSubject).
   if (next === null) return;
   const m = await tx
     .selectFrom("governance_matrix")
@@ -268,7 +275,7 @@ export async function applyMatrixOutcome(tx: Tx, event: ApprovalOutcomeEvent): P
 export function registerGovernanceMatrixRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   const LIST = "/api/v1/transformations/:transformationId/governance-matrices";
   const SUBMIT = `${LIST}/:matrixKind/submit`;
-  registerApprovalSubject(MATRIX_APPROVAL_TYPE, { onOutcome: applyMatrixOutcome });
+  registerApprovalSubject(MATRIX_APPROVAL_TYPE, { onOutcome: applyMatrixOutcome, resubmitThroughSubject: true });
 
   app.get(LIST, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(transformationParams, request.params, "params");
@@ -310,6 +317,14 @@ export function registerGovernanceMatrixRoutes(app: FastifyInstance, { db }: Mod
         .executeTakeFirstOrThrow();
       if (m.version !== expected) throw problems.versionConflict(m.version);
       if (m.status !== "draft") throw governanceMatrixRefusals.notDraft();
+      // A draft whose approval had changes requested (round >= 2) is resubmitted through that approval below.
+      const returned = await tx
+        .selectFrom("approval")
+        .select("id")
+        .where("approval_type", "=", MATRIX_APPROVAL_TYPE)
+        .where("subject_id", "=", id)
+        .where("status", "=", "changes_requested")
+        .executeTakeFirst();
       const inApproval = await tx
         .updateTable("governance_matrix")
         .set({
@@ -332,6 +347,15 @@ export function registerGovernanceMatrixRoutes(app: FastifyInstance, { db }: Mod
         newVersion: inApproval.version,
         changes: { status: { from: "draft", to: "in_approval" } },
       });
+      // Round >= 2: the same approval, on the version now frozen (403 approval.not_requester for anyone but its
+      // requester; 409 approval.stale_version cannot occur: the header was stepped just above, under the
+      // approvalSubject advisory lock).
+      if (returned)
+        return resubmitApprovalInTx(tx, audit, {
+          approvalId: returned.id,
+          subjectVersion: inApproval.version,
+          ...(body.requestNote !== undefined ? { requestNote: body.requestNote } : {}),
+        });
       // The approval is requested on the version now frozen (the header's current version), routed to the party SP
       // through role mapping: an unmapped Sponsor is 422 routing.role_unmapped and the whole submit writes nothing.
       return requestApprovalInTx(tx, audit, {

@@ -3,6 +3,7 @@
 import type { Db } from "@mth/db";
 import type PgBoss from "pg-boss";
 import { DOMAIN_HANDLERS, handleTransformationCreated, purgeExpired, type JobHandler } from "./handlers/index.ts";
+import type { JobAttempt } from "./handlers/spec.ts";
 import { ensureQueues, OUTBOX_RELAY, QUEUES, schedulePurge, type QueuePolicyOverrides } from "./queues/index.ts";
 import { relayOnce } from "./relay.ts";
 import { handleJobScheduleUpdated, syncSchedules } from "./schedules.ts";
@@ -53,11 +54,14 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
   });
   // P4 (ADR-0025 §3; T-DG4-BE-A): one pg-boss worker per domain handler, then the job_schedule rows are registered with
   // pg-boss, and re-registered whenever the API emits job_schedule.updated.
+  // T-DG4-BE-R2: the job's metadata gives each handler the attempt it is on (retryCount of retryLimit), so a handler
+  // that records a final failure (kpi.recalculate) needs no read of pg-boss's own tables.
   const handlers = options.handlers ?? DOMAIN_HANDLERS;
   for (const h of handlers) {
-    await boss.work(h.queue, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
-      const outcome = await h.handle(db, job!.data, job!.id);
-      log.info({ queue: h.queue, jobId: job!.id, outcome }, "job handled");
+    await boss.work(h.queue, { batchSize: 1, pollingIntervalSeconds, includeMetadata: true }, async ([job]) => {
+      const attempt: JobAttempt = { retryCount: job!.retryCount, retryLimit: job!.retryLimit };
+      const outcome = await h.handle(db, job!.data, job!.id, attempt);
+      log.info({ queue: h.queue, jobId: job!.id, attempt, outcome }, "job handled");
       return { outcome };
     });
   }

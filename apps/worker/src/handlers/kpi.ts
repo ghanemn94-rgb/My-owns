@@ -59,7 +59,7 @@ import {
 import { outboxEnvelope, outboxPayloadSchema } from "@mth/shared/schemas";
 import { z } from "zod";
 import { createWorkItemOnce, jobActor, runOnce } from "../kit.ts";
-import type { JobHandler } from "./spec.ts";
+import type { JobAttempt, JobHandler } from "./spec.ts";
 
 export const RECALCULATE_QUEUE = "kpi.recalculate";
 export const RECALCULATE_CONSUMER = "kpi.recalculate.v1";
@@ -623,14 +623,8 @@ export interface RecalculateResult {
   readonly evaluationCount: number;
 }
 
-/**
- * The attempt a pg-boss job is on: `retryCount` retries already made (0 on the first attempt) of `retryLimit`. pg-boss
- * retries a failed job while retry_count < retry_limit, so the attempt with retryCount >= retryLimit is the last one.
- */
-export interface JobAttempt {
-  readonly retryCount: number;
-  readonly retryLimit: number;
-}
+// The attempt a pg-boss job is on (retryCount of retryLimit) is spec.ts's JobAttempt, passed by worker.ts (T-DG4-BE-R2).
+export type { JobAttempt } from "./spec.ts";
 
 export const isFinalAttempt = (a: JobAttempt): boolean => a.retryCount >= a.retryLimit;
 
@@ -638,26 +632,11 @@ export const isFinalAttempt = (a: JobAttempt): boolean => a.retryCount >= a.retr
 export const RECALCULATE_FAILED_CODE = "kpi.recalculate_failed";
 
 /**
- * The attempt of job `jobId` of the kpi.recalculate queue, read from pg-boss's own job row (pg-boss 11, schema pgboss;
- * the worker connects as mth_app, which runs pg-boss's DML), or null when there is no such job (a direct call). The
- * JobHandler interface (spec.ts) passes only the data and the id, so the handler reads the count itself.
- */
-export async function recalculateAttemptOf(db: Db, jobId: string): Promise<JobAttempt | null> {
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId)) return null;
-  const r = await sql<{ retry_count: number; retry_limit: number }>`
-    SELECT retry_count, retry_limit FROM pgboss.job WHERE name = ${RECALCULATE_QUEUE} AND id = ${jobId}::uuid`.execute(
-    db,
-  );
-  const row = r.rows[0];
-  return row ? { retryCount: row.retry_count, retryLimit: row.retry_limit } : null;
-}
-
-/**
  * One calculation run for one trigger (ADR-0027 §8 step 2). Exported for the tests (REQ-S16-014).
  *
  * Failure (ADR-0027 §8 step 4; T-DG4-KBE-R1 item 3): when the calculation throws, the run's transaction rolls back and
- * the error is rethrown, so pg-boss retries (ADR-0008 §4). On the LAST attempt (`attempt`, else the job's own retry
- * count; isFinalAttempt) the handler first writes one `failed` calculation_run with error_code
+ * the error is rethrown, so pg-boss retries (ADR-0008 §4). On the LAST attempt (`attempt`, which worker.ts passes from
+ * the job's metadata, T-DG4-BE-R2; isFinalAttempt) the handler first writes one `failed` calculation_run with error_code
  * `kpi.recalculate_failed`, zero evaluations and zero findings, in a separate transaction, and then rethrows, so the job
  * still lands in ops.failed. The run is append-only and unique per trigger and per idempotency key, so the failed run is
  * the trigger's one run: a replay of the dead-lettered job finds it and writes nothing (already_run). The accepted slot
@@ -686,9 +665,8 @@ export async function recalculate(
     });
     return res.outcome === "duplicate" ? { outcome: "duplicate", runId: null, evaluationCount: 0 } : res.result;
   } catch (err) {
-    // A failed lookup counts as "not known to be the last attempt": the original error is what pg-boss records.
-    const current = attempt ?? (await recalculateAttemptOf(db, jobId).catch(() => null));
-    if (current !== null && isFinalAttempt(current)) {
+    // No attempt (a direct call) counts as "not known to be the last attempt": the original error is what is recorded.
+    if (attempt !== undefined && isFinalAttempt(attempt)) {
       try {
         await recordFailedRun(db, envelope.organizationId, trigger, startedAt, envelope.idempotencyKey);
       } catch (recordErr) {

@@ -7,8 +7,8 @@
 //  - submit: the canonical approval of type benefit_transition_decision routed to SP; the decision shows `submitted`
 //    and its content is frozen (422 transition_decision.frozen); the requester cannot decide it (SoD); the SP approves:
 //    `approved`, decided stamps, nextMonitoringDate = firstMonitoringDate; changes requested -> editable draft, resubmit
-//    through the approval, then approve; reject -> `rejected`, final; a decision withdrawn while its approval is
-//    pending makes the approval stale (409) and nothing is approved;
+//    through the decision's own submit (T-DG4-BE-R2), then approve; reject -> `rejected`, final; a decision withdrawn
+//    while its approval is pending withdraws that approval in the same transaction (T-DG4-BE-R2);
 //  - REQ-S11-007 A11: after the transition decision the benefit's forecast is still reported as forecast (the value
 //    series, the benefit row, its lifecycle step and its measurements are unchanged; nothing is validated or sustained;
 //    the value status is `transition`), and monitoring tasks appear for the residual owner (a `sustainment_review` of
@@ -376,17 +376,15 @@ describe("decision through the canonical approval (ADR-0034 §3; ADR-0026 §4)",
       body: { rationale: "Synthetic: realization curve documented as requested" },
     });
     expect(edited.status).toBe(200);
-    const resubmitAgain = await send("POST", `${D}/submit`, { session: c.b.s.bo, headers: ifm(edited.body.version) });
-    expect([resubmitAgain.status, resubmitAgain.body.code]).toEqual([409, "approval.already_open"]);
+    // T-DG4-BE-R2 (ADR-0026 amendment A4): submitting the edited draft resubmits the same approval on its version.
+    const re = await send("POST", `${D}/submit`, { session: c.b.s.bo, headers: ifm(edited.body.version) });
+    expect([re.status, re.body.status, re.body.approvalId], JSON.stringify(re.body)).toEqual([
+      200,
+      "submitted",
+      approvalId,
+    ]);
     const a = await send("GET", `/api/v1/approvals/${approvalId}`, { session: c.b.s.bo });
-    const re = await send("POST", `/api/v1/approvals/${approvalId}/resubmit`, {
-      session: c.b.s.bo,
-      headers: ifm(a.body.version),
-      body: { subjectVersion: edited.body.version },
-    });
-    expect(re.status, JSON.stringify(re.body)).toBe(200);
-    const pending = await send("GET", D, { session: c.b.s.bo });
-    expect(pending.body.status).toBe("submitted");
+    expect([a.body.status, a.body.roundNo, a.body.subjectVersion]).toEqual(["pending", 2, edited.body.version]);
     const frozen = await send("PATCH", D, {
       session: c.b.s.bo,
       headers: ifm(edited.body.version),
@@ -403,7 +401,7 @@ describe("decision through the canonical approval (ADR-0034 §3; ADR-0026 §4)",
     expect((await send("GET", D, { session: c.b.s.auditor })).body.status).toBe("approved");
   });
 
-  it("reject: rejected and final; a decision withdrawn while its approval is pending cannot be approved (stale)", async () => {
+  it("reject: rejected and final; withdrawing a decision in approval withdraws its approval (nothing left undecidable)", async () => {
     const ben = await freshBenefit();
     const td = await draftDecision(send, c, ben.id);
     await decideDecision(send, c, td, "reject");
@@ -416,13 +414,15 @@ describe("decision through the canonical approval (ADR-0034 §3; ADR-0026 §4)",
     const sub = await send("POST", `${D2}/submit`, { session: c.b.s.bo, headers: ifm(1) });
     const wd = await send("PATCH", D2, { session: c.b.s.bo, headers: ifm(1), body: { status: "withdrawn" } });
     expect([wd.status, wd.body.status]).toEqual([200, "withdrawn"]);
+    // T-DG4-BE-R2 (ADR-0026 amendment A4): the approval was withdrawn first, in the same transaction; it is final.
     const a = await send("GET", `/api/v1/approvals/${sub.body.approvalId}`, { session: c.sp.session });
-    const stale = await send("POST", `/api/v1/approvals/${sub.body.approvalId}/decisions`, {
+    expect(a.body.status).toBe("withdrawn");
+    const closed = await send("POST", `/api/v1/approvals/${sub.body.approvalId}/decisions`, {
       session: c.sp.session,
       headers: ifm(a.body.version),
       body: { outcome: "approve", rationale: "Synthetic", subjectVersion: 1 },
     });
-    expect([stale.status, stale.body.code]).toEqual([409, "approval.stale_version"]);
+    expect([closed.status, closed.body.code]).toEqual([422, "approval.not_open"]);
     expect((await decisionRow(td2.id)).status).toBe("withdrawn");
   });
 });

@@ -82,8 +82,12 @@ export const BAU_HANDOVER_PREPARE = "bau_handover.prepare" as const;
 export const BAU_HANDOVER_ACCEPT = "bau_handover.accept" as const;
 export const HANDOVER_TASK_KIND = "bau_handover_to_accept";
 
-/** The benefit `control_cadence` vocabulary (0037) for a handover cadence; weekly has none (left unchanged). */
+/**
+ * The benefit `control_cadence` vocabulary (0037, `weekly` added by 0060) for a handover cadence, one to one (ADR-0034
+ * amendment A1; T-DG4-BE-R2). The two spellings of semi-annual meet only here.
+ */
 const BENEFIT_CADENCE: ReadonlyMap<string, string> = new Map([
+  ["weekly", "weekly"],
   ["monthly", "monthly"],
   ["quarterly", "quarterly"],
   ["semi_annual", "semiannual"],
