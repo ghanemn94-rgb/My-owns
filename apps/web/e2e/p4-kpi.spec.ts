@@ -7,6 +7,7 @@
 //  3. Before any actual, the RAG panel shows Unknown, grey and labelled with its reason, never 0 or green.
 //  4. The KPI owner completes the four-step update with the KEYBOARD ONLY; the confirmation lists the downstream views,
 //     "review pending" and the Finance review state.
+//  4b. The KPI owner may choose an earlier open period too: the transformation's periods (T-DG4-FE-R1, KBE-R2).
 //  5. The reviewer (Business Owner) accepts it from the review queue; the owner is never offered a decision.
 //  6. The RAG panel: the seven elements, the explanation names threshold version 1. The e2e stack runs no worker, so
 //     the calculation stays pending and the status stays Unknown (honest; the worker is proven by KBE-C's tests).
@@ -38,6 +39,8 @@ let orgId = "";
 let kpiId = "";
 let periodId = "";
 let periodLabel = "";
+let earlierPeriodId = "";
+let earlierPeriodLabel = "";
 let owner: SyntheticUser;
 let reviewer: SyntheticUser;
 let sponsor: SyntheticUser;
@@ -117,6 +120,33 @@ test.beforeAll(async ({ playwright }, info) => {
     }
   }
   expect(periodId, "an open monthly period").not.toBe("");
+  // T-DG4-FE-R1: a second open monthly period, EARLIER than the first (so the KPI's current period stays the first):
+  // the update form must offer it too (listTransformationReportingPeriods), not only the current period.
+  for (let i = 0; i < 48 && !earlierPeriodId; i++) {
+    const y = 2027 + Math.floor(((lang === "en" ? 0 : 24) + i) / 12);
+    const m = (((lang === "en" ? 0 : 24) + i) % 12) + 1;
+    const mm = String(m).padStart(2, "0");
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    try {
+      const p = await office.call<{ id: string; version: number; periodLabel: string }>(
+        "POST",
+        P,
+        {
+          frequency: "monthly",
+          periodLabel: `${y}-${mm}`,
+          periodStart: `${y}-${mm}-01`,
+          periodEnd: `${y}-${mm}-${last}`,
+        },
+        { expect: 201 },
+      );
+      await office.call("POST", `${P}/${p.id}/open`, undefined, { ifMatch: p.version });
+      earlierPeriodId = p.id;
+      earlierPeriodLabel = p.periodLabel;
+    } catch {
+      // that month exists already: try the next one
+    }
+  }
+  expect(earlierPeriodId, "an earlier open monthly period").not.toBe("");
   // Synthetic evidence the owner attaches.
   await lead.call("POST", `${T}/evidence`, {
     kind: "note",
@@ -236,7 +266,8 @@ test("4. the KPI owner completes the four-step update with the keyboard only", a
   await shot(page, lang, "p4kpi-05-update-form");
   await expectAccessible(page, lang, "p4kpi-05-update-form");
   // Keyboard only from here: Tab moves between controls, ArrowDown chooses the period, typing enters the value,
-  // Space ticks the evidence, Enter submits.
+  // Space ticks the evidence, Enter submits. The list holds every open monthly period of the organization (latest
+  // first, T-DG4-FE-R1), so ArrowDown is pressed until this KPI's period is chosen.
   const tabTo = async (target: Locator, max = 200) => {
     for (let i = 0; i < max; i++) {
       if (await target.evaluate((el) => el === document.activeElement)) return;
@@ -247,7 +278,9 @@ test("4. the KPI owner completes the four-step update with the keyboard only", a
   await page.locator("main#main h1").focus();
   const periodSelect = form.getByLabel(fieldLabel(lang, "kpiP4.field.period"));
   await tabTo(periodSelect); // step 2
-  await page.keyboard.press("ArrowDown");
+  const optionCount = await periodSelect.locator("option").count();
+  for (let i = 0; i < optionCount && (await periodSelect.inputValue()) !== periodId; i++)
+    await page.keyboard.press("ArrowDown");
   await expect(periodSelect).toHaveValue(periodId);
   const value = form.getByLabel(new RegExp(`^${escape(tr(lang, "kpiP4.field.actual"))}`));
   await tabTo(value); // step 3
@@ -275,6 +308,32 @@ test("4. the KPI owner completes the four-step update with the keyboard only", a
   await expect(confirmation).toContainText(tr(lang, "kpiP4.actualStatus.submitted"));
   await shot(page, lang, "p4kpi-06-update-confirmation");
   await expectAccessible(page, lang, "p4kpi-06-update-confirmation");
+});
+
+test("4b. the KPI owner may choose any open period of the KPI's frequency, not only the current one", async ({
+  page,
+}, info) => {
+  // T-DG4-FE-R1 (KBE-R2; REQ-S07-017 "select period"): the periods come from listTransformationReportingPeriods
+  // (transformation.read); the organization list, which answers 404 to a transformation-scoped role, is never asked.
+  const lang = langOf(info);
+  const periodRequests: string[] = [];
+  page.on("request", (req) => {
+    const path = new URL(req.url()).pathname;
+    if (/\/reporting-periods$/.test(path)) periodRequests.push(path);
+  });
+  await signIn(page, lang, owner.username);
+  await go(page, `/transformations/${tid}/kpis/${kpiId}/actuals`);
+  const form = page.locator("form").filter({ has: page.locator("fieldset[data-step='1']") });
+  const periodSelect = form.getByLabel(fieldLabel(lang, "kpiP4.field.period"));
+  await expect(periodSelect.locator(`option[value='${periodId}']`)).toHaveCount(1);
+  await expect(periodSelect.locator(`option[value='${earlierPeriodId}']`)).toHaveCount(1);
+  await expect(periodSelect.locator(`option[value='${earlierPeriodId}']`)).toContainText(earlierPeriodLabel);
+  await periodSelect.selectOption(earlierPeriodId);
+  await expect(periodSelect).toHaveValue(earlierPeriodId);
+  expect(periodRequests.length).toBeGreaterThan(0);
+  expect(periodRequests.every((p) => p === `/api/v1/transformations/${tid}/reporting-periods`)).toBe(true);
+  await shot(page, lang, "p4kpi-06b-update-earlier-period");
+  await expectAccessible(page, lang, "p4kpi-06b-update-earlier-period");
 });
 
 test("5. the reviewer accepts from the review queue; the owner is never offered a decision", async ({ page }, info) => {

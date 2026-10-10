@@ -155,7 +155,7 @@ function UpdateForm({ entry }: { entry: KpiDictionaryEntry }) {
   const version = entry.activeVersion;
   const kpiId = entry.definition.id;
   const canSubmit = ws.can("kpi_actual.submit");
-  const periodChoices = usePeriodChoices(ws.tid, ws.tr.organizationId, kpiId, version?.frequency, true);
+  const periodChoices = usePeriodChoices(ws.tid, version?.frequency, true);
   const actuals = useKpiActuals(ws.tid, kpiId);
   const evidence = useEvidenceOptions(ws.tid, canSubmit);
   const initiatives = useInitiatives(version?.entryScopeKind === "initiative" ? ws.tid : "");
@@ -365,11 +365,6 @@ function UpdateForm({ entry }: { entry: KpiDictionaryEntry }) {
             <ErrorState error={periodChoices.error} />
           ) : (
             <>
-              {!periodChoices.orgListed ? (
-                <p className="small muted" data-state="periods-org-only">
-                  {t("kpiP4.update.currentPeriodOnly")}
-                </p>
-              ) : null}
               {openPeriods.length === 0 ? (
                 <p className="banner banner--warning" role="note" data-state="no-open-period">
                   <Icon name="alert" />{" "}

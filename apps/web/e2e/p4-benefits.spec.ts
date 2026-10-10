@@ -8,8 +8,8 @@
 //  3. The register: a CX benefit shows Value (SAR) n/a (never 0), a financial benefit its value; initiatives shown.
 //  4. Finance validates the baseline (the comparison basis) in the UI.
 //  5. The Business Owner records and submits a measurement with evidence: pending, labelled, validated total unchanged.
-//  6. The worker (started for this step only; with-stack.sh starts none) puts exactly one item in the Finance queue;
-//     Finance decides the six items and approves; the validated total rises by exactly the approved amount. An
+//  6. The worker (started for this step only; with-stack.sh starts none) puts exactly one item in the Finance queue
+//     and a My Work task whose text names the benefit (T-DG4-FE-R1); Finance decides the six items and approves; the validated total rises by exactly the approved amount. An
 //     amendment corrects it without editing the validated value.
 //  7. A scenario value is labelled with its kind and stays out of every total.
 //  8. The auditor's read-only views; 390 px and 200 % text checks of the register and the benefit page.
@@ -321,6 +321,9 @@ test("6. One Finance queue item; Finance decides the six items and approves; an 
 }, info) => {
   test.setTimeout(180_000);
   const lang = langOf(info);
+  // T-DG4-FE-R1: the worker gives the Finance task to the benefit's validator, else to the person mapped to the FIN
+  // party (worker handlers/benefits.ts); map FIN to the synthetic Finance user so the task has a recipient.
+  await lead.call("POST", `${T}/role-mappings`, { partyCode: "FIN", targetKind: "user", userId: finance.id });
   // The e2e stack runs no worker: start the real one for this step, against the same database, then stop it.
   const worker: ChildProcess = spawn(process.execPath, ["apps/worker/dist/main.js"], {
     cwd: ROOT,
@@ -351,6 +354,20 @@ test("6. One Finance queue item; Finance decides the six items and approves; an 
   fvId = all.items[0]!.id;
 
   const f = await asUser(browser, lang, finance.username);
+  // T-DG4-FE-R1 (FE-C decision 4): the worker's Finance task renders its own text in My Work (the benefit's code and
+  // period), never the neutral "open the record" fallback.
+  const benefitCode = (await lead.call<{ code: string }>("GET", `${T}/benefits/${benefitId}`)).code;
+  await go(f.page, "/my-work");
+  const fallback = tr(lang, "myWork.message.fallback", { kind: tr(lang, "myWork.kind.finance_validation_review") });
+  const task = f.page
+    .locator("tr")
+    .filter({ hasText: tr(lang, "myWork.kind.finance_validation_review") })
+    .filter({ hasText: benefitCode });
+  await expect(task).toHaveCount(1);
+  await expect(task.locator("[data-work-item]")).not.toHaveText(fallback);
+  await expect(task.locator("[data-work-item]")).toContainText(benefitCode);
+  await shot(f.page, lang, "p4ben-10b-finance-my-work-task");
+  await expectAccessible(f.page, lang, "p4ben-10b-finance-my-work-task");
   await go(f.page, "/finance-validation");
   await expect(f.page.locator("[data-state='finance-validation']")).toContainText(tr(lang, "benefitsP4.finance.label"));
   await expect(f.page.locator(`[data-finance-validation='${fvId}']`)).toBeVisible();

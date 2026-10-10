@@ -1,0 +1,17 @@
+Probe: apps/web/src/auth/zz-race-probe.test.tsx (kept as session-identity-race-probe.test.tsx.txt; the probe file was removed from the tree).
+It repeats the steps of "signing out here clears everything; B signing in afterwards never sees A's records" (en) 40 times
+and records the router's location history from B's sign-in submit onwards, with the pathname at the moment the
+test sees "Synthetic User B".
+
+Run 1, no extra load (vitest, 4 CPUs):
+     40 PROBE at-B=/my-work history=/>/>/my-work>|test navigates|>/transformations final=/transformations
+
+Run 2, 8 CPU-burner processes (node burn.mjs) on 4 CPUs:
+      2 PROBE at-B=/ history=/>/>|test navigates|>/transformations>/my-work final=/my-work
+     38 PROBE at-B=/my-work history=/>/>/my-work>|test navigates|>/transformations final=/transformations
+
+Reading: B's header renders at "/" (the shell), before the index route's <Navigate to="/my-work" replace /> effect
+commits. Under load the test's findByText("Synthetic User B") resolves in that gap; the test's
+router.navigate("/transformations") then runs first, and the pending index redirect lands last: final=/my-work, so
+"No transformations yet." never renders and findByText times out. This is exactly the DOM of every recorded failure
+(BE-H2 unit-c-utf8-run1-flaky.log: the My Work nav link aria-current="page", user B in the header, no A data).

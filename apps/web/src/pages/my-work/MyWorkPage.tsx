@@ -56,8 +56,19 @@ const CODE_PARAMS: Record<string, string> = {
   recipientRole: "myWork.param.recipientRole",
   routingError: "myWork.param.routingError",
 };
-/** Message parameters that are business dates (null = Unknown). */
-const DATE_PARAMS = new Set(["dueDate", "overdueAsOf"]);
+/**
+ * Message parameters that are business dates (null = Unknown), formatted in the reader's locale. T-DG4-FE-R1 adds the
+ * dates the ARCH-R1/R2 code-table keys carry (finance validation period, SLA date, exception expiry, meeting date).
+ */
+const DATE_PARAMS = new Set([
+  "dueDate",
+  "overdueAsOf",
+  "periodStart",
+  "periodEnd",
+  "slaDueDate",
+  "expiresOn",
+  "meetingDate",
+]);
 
 /** The translated text of a work item or reminder (S-6: rendered from messageKey + messageParams at render time). */
 export function renderMessage(
@@ -77,7 +88,9 @@ export function renderMessage(
     else values[k] = String(v);
   }
   const key = `myWork.message.${messageKey.replace(/\./g, "__")}`;
-  const text = t(key, { ...values, defaultValue: "" });
+  // A key sent with no parameters may have a "_bare" text (e.g. raid.task.action_due without a source code, ADR-0031).
+  const bare = Object.keys(params).length === 0 ? t(`${key}_bare`, { defaultValue: "" }) : "";
+  const text = bare || t(key, { ...values, defaultValue: "" });
   if (text) return text;
   return t("myWork.message.fallback", { kind: t(`myWork.kind.${kind ?? "other"}`, { defaultValue: kind ?? "" }) });
 }
