@@ -37,4 +37,10 @@ export interface ProblemDetails {
   readonly errors?: readonly FieldError[];
   /** Present on 409 version-conflict: the version the server currently holds. */
   readonly currentVersion?: number;
+  /**
+   * Values of the placeholders in the translated text of `code` (the shape of `WorkItem.messageParams`). Sent only with
+   * the codes whose ADR names it (ADR-0038 amendment Q1: `gate.modular_waiver_revoked` and
+   * `gate.modular_waiver_expired`, `params.date` as `YYYY-MM-DD`); absent from every other problem.
+   */
+  readonly params?: Readonly<Record<string, string | number | boolean | null>>;
 }

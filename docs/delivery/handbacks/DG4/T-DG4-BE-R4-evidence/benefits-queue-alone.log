@@ -1,0 +1,16 @@
+port-policy: PostgreSQL listening on port 25950 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2ghs08_c20b2e49 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/benefits-queue.test.ts (2 tests) 4483ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  2095ms
+   ✓ benefits.recalculate_pending (REQ-S07-014, REQ-S12-006) > an accepted KPI actual gives one pending value per benefit and run; replay none; a newer value supersedes  1700ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  13:54:58
+   Duration  25.50s (transform 6.59s, setup 0ms, collect 15.74s, tests 4.48s, environment 0ms, prepare 203ms)
+
+EXIT=0

@@ -10,6 +10,7 @@ import {
   adoptionPlan,
   assessmentForm,
   assessmentFormPage,
+  assessmentFormVersion,
   assessmentInvitation,
   assessmentInvitationList,
   assessmentInvitationPage,
@@ -56,6 +57,8 @@ export const P4_MIRRORS_BE_H: Readonly<Record<string, z.ZodType>> = {
   listAssessmentForms: assessmentFormPage,
   createAssessmentForm: assessmentForm,
   getAssessmentForm: assessmentForm,
+  // T-DG4-BE-R4 (ADR-0033 amendment V1): one question version of a form.
+  getAssessmentFormVersion: assessmentFormVersion,
   updateAssessmentForm: assessmentForm,
   publishAssessmentForm: assessmentForm,
   retireAssessmentForm: assessmentForm,
@@ -324,6 +327,13 @@ async function exerciseP4BeH2Operations(
   expect([renamed.status, renamed.body.version]).toEqual([200, 3]);
   const published = await m("POST", `${F}/publish`, { session: s.bo, headers: ifm(3) });
   expect([published.status, published.body.status, published.body.publishedVersionNo]).toEqual([200, "published", 1]);
+  // getAssessmentFormVersion (ADR-0033 amendment V1): the append-only version row, no ETag; 404 for a version the form
+  // does not have, and outside scope (ADM-only).
+  const v1 = await m("GET", `${F}/versions/1`, { session: s.auditor });
+  expect([v1.status, v1.headers.etag, v1.body]).toEqual([200, undefined, form.body.currentVersion]);
+  const v9 = await m("GET", `${F}/versions/99`, { session: s.auditor });
+  expect([v9.status, v9.body.code]).toEqual([404, "not_found"]);
+  expect((await m("GET", `${F}/versions/1`, { session: s.admin })).status).toBe(404);
 
   // ------------------------------------------------------------------ invitations
   const inv = await m("POST", `${F}/invitations`, {

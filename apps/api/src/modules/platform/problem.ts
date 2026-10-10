@@ -19,6 +19,8 @@ export class HttpProblem extends Error {
   readonly detail: string | undefined;
   readonly errors: readonly FieldError[] | undefined;
   readonly currentVersion: number | undefined;
+  /** ADR-0038 amendment Q1: placeholder values of the translated `code` text; only the codes whose ADR names it. */
+  readonly params: ProblemDetails["params"];
   denial: DenialInfo | undefined;
 
   constructor(init: {
@@ -29,6 +31,7 @@ export class HttpProblem extends Error {
     detail?: string;
     errors?: readonly FieldError[];
     currentVersion?: number;
+    params?: ProblemDetails["params"];
   }) {
     super(init.detail ?? init.title);
     this.name = "HttpProblem";
@@ -39,6 +42,7 @@ export class HttpProblem extends Error {
     this.detail = init.detail;
     this.errors = init.errors;
     this.currentVersion = init.currentVersion;
+    this.params = init.params;
   }
 
   withDenial(denial: DenialInfo): this {
@@ -57,6 +61,7 @@ export class HttpProblem extends Error {
       requestId,
       ...(this.errors !== undefined ? { errors: this.errors } : {}),
       ...(this.currentVersion !== undefined ? { currentVersion: this.currentVersion } : {}),
+      ...(this.params !== undefined ? { params: this.params } : {}),
     };
   }
 }
