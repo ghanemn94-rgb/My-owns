@@ -1,0 +1,18 @@
+# A/B recorded-response comparison (T-DG4-BE-R3; ADR-0021 W7 item 3; BE-M2 method). Run from the worktree root.
+T=$TMPDIR/be-r3
+PAT='waivers \(End-to-End|inherited approvals \(Modular|the gate list and gate view|End-to-End G1-G4: unaffected|every other Modular waiver keeps|A/B transcript: the row'
+FILES="apps/api/src/modules/portfolio/dispensations.ts apps/api/src/modules/workflows/gates.ts apps/api/src/modules/governance/meeting-actions.ts"
+TESTS="apps/api/test/integration/portfolio/dispensations.test.ts apps/api/test/integration/workflows/modular-precondition.test.ts apps/api/test/integration/workflows/modular-waiver.test.ts apps/api/test/integration/governance/meeting-action-follow.test.ts"
+run() { side=$1; (MTH_BE_R3_DISPENSATION_TRANSCRIPT=$T/$side-dispensations.jsonl MTH_BE_R3_MODULAR_REFUSAL_TRANSCRIPT=$T/$side-modular-refusals.jsonl MTH_BE_R3_MEETING_ACTION_TRANSCRIPT=$T/$side-meeting-action.jsonl MTH_BE_M2_TRANSCRIPT=$T/$side-e2e-gates.jsonl QA_PG_PORT=25300 MTH_PORT_POOL=25301-25349 tests/qa/support/with-pg.sh pnpm vitest run --reporter=verbose --project integration $TESTS -t "$PAT" > $T/ab-run-$side.log 2>&1; echo EXIT=$? >> $T/ab-run-$side.log); }
+# my files saved to $T/mine/ and their sha256 to $T/mine.sha256 beforehand
+run A
+for f in $FILES; do git show HEAD:$f > $f; done; run B; for f in $FILES; do cp $T/mine/$(basename $f) $f; done; sha256sum -c $T/mine.sha256
+for k in dispensations modular-refusals meeting-action e2e-gates; do cmp $T/A-$k.jsonl $T/B-$k.jsonl && echo "$k BYTE-IDENTICAL"; done
+# Output of the comparison (03:32 UTC):
+# apps/api/src/modules/portfolio/dispensations.ts: OK
+# apps/api/src/modules/workflows/gates.ts: OK
+# apps/api/src/modules/governance/meeting-actions.ts: OK
+# dispensations BYTE-IDENTICAL 58 lines sha256 d48aa63d67cce9201484aaaa0039ddab734038a9df4acd0b9e33046b75baecec
+# modular-refusals BYTE-IDENTICAL 6 lines sha256 59d0fdb4f7445ec41a755b8365355ccd8e7932f7560165ab5d6b8b07ed4ca563
+# meeting-action BYTE-IDENTICAL 8 lines sha256 c0998f6aee074e31ce819bf8c39a37b64d2578b21a3505ba2a04c0ecfb9e3e49
+# e2e-gates BYTE-IDENTICAL 21 lines sha256 be4f2daad11ae8acfecab410afd9c96db3a29982be2493e8914e2d21c0d28768

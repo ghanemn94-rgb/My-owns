@@ -1,0 +1,28 @@
+port-policy: PostgreSQL listening on port 25300 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1u2ot2_35d56bbb (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts (13 tests) 9042ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > a Modular G3 waiver with no initiative: 201 pending, version 1, audited gate_dispensation.create  481ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > every other Modular waiver keeps the DG3 refusal: G1, G2, and G3 with an initiative (recorded for A/B)  402ms
+   ✓ ADR-0021 W2: who decides a Modular-links waiver > G3's approver (SP) accepts it (200); the recorder (403) and a non-approver (403 gate.not_approver) cannot  326ms
+   ✓ ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged  561ms
+   ✓ ADR-0038 B1 at G3 submission > only the outcome link missing: missing lists it alone  535ms
+   ✓ ADR-0038 B1 at G3 submission > links supplied: no modularLinks member even with a waiver in force (the snapshot is the DG3 one)  365ms
+   ✓ ADR-0038 B1 at G3 submission > which waiver: the latest expiry, ties broken by the greatest id  1080ms
+   ✓ ADR-0038 B1 at G3 submission > pending, rejected, revoked or expired (injected exception clock) waivers → 422 gate.modular_links_missing; nothing written  2448ms
+   ✓ ADR-0038 B1 at G3 approval > the waiver in force: approval 201, G3 approved; the decision is the SP's  414ms
+   ✓ ADR-0038 B1 at G3 approval > revoked after submission → 422 gate.modular_waiver_revoked with the revoke date; a later waiver does not rescue it; reject stays allowed  384ms
+   ✓ ADR-0038 B1 at G3 approval > expired by approval time (injected clock) → 422 gate.modular_waiver_expired with the expiry date; nothing written  538ms
+   ✓ ADR-0038 B1 at G3 approval > revoked and expired: the revoke is reported  458ms
+   ✓ ADR-0038 B1 at G3 approval > a Modular G3 submitted with its links (no modularLinks) is decided exactly as before  465ms
+ ✓ |integration| apps/api/test/integration/governance/meeting-action-follow.test.ts (10 tests) 2115ms
+
+ Test Files  2 passed (2)
+      Tests  23 passed (23)
+   Start at  03:27:22
+   Duration  27.01s (transform 4.70s, setup 0ms, collect 12.33s, tests 11.16s, environment 0ms, prepare 142ms)
+
+EXIT=0

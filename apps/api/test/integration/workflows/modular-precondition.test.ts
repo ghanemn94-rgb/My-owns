@@ -99,8 +99,8 @@ async function submit(mw: ModularWorld, gateCode: string, req = send) {
   });
 }
 
-/** A G3 waiver dispensation written directly with its audit event: the DG3 route refuses waivers for a Modular
- *  transformation (`dispensation.waiver_requires_end_to_end`), so this is the only way to hold one (handback §gaps). */
+/** A G3 waiver dispensation written directly with its audit event (BE-M2 wrote it before the route accepted one; since
+ *  T-DG4-BE-R3, ADR-0021 amendment W1, the route records it too: modular-waiver.test.ts covers that path). */
 function waiverRow(mw: ModularWorld, status: "accepted" | "pending", expiresOn: string): Promise<string> {
   return insertModularFixture(api.db, mw, "gate_dispensation", {
     kind: "waiver",

@@ -7,7 +7,9 @@
 //  - createWorkItemOnce / closeWorkItemsOfSubject: the creation and system-close services (ADR-0025 §4);
 //  - rescheduleWorkItemsOfSubject / reassignWorkItemOfSubject: an item follows its source's due date and owner
 //    (T-DG4-BE-R1; D-102, D-105);
-//  - SYSTEM_MANAGED_KINDS, toWorkItem, toInboxNotification.
+//  - SYSTEM_MANAGED_KINDS, toWorkItem, toInboxNotification;
+//  - followMeetingActionWorkItem / MEETING_ACTION_TASK: a meeting action's item follows edits of its action made
+//    through raid's action register or the DG2 /actions path (T-DG4-BE-R3).
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerTaskRoutes } from "./routes.ts";
@@ -24,6 +26,8 @@ export {
   type WorkItemSourceRef,
 } from "./service.ts";
 export { SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
+// T-DG4-BE-R3 (BE-F2 handback §8 item 1; ADR-0032 amendment G1 item 5).
+export { followMeetingActionWorkItem, MEETING_ACTION_TASK, type FollowedAction } from "./meeting-action-follow.ts";
 // T-DG4-KBE-G2 (ADR-0037 §1 item 2, §7, §9): the open work items of one user, read-only (My Work, the header).
 export { loadOpenWorkItems, type OpenWorkItemFact } from "./dashboard-facts.ts";
 
