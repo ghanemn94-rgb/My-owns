@@ -727,7 +727,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // (9 JSON bodies; publishAgendaItem, withdrawAgendaItem, approveMeetingMinutes and publishMeetingMinutes are bodiless).
     // T-DG4-BE-M2: + createInheritedRecord, withdrawInheritedRecord (2 JSON bodies; getMissingLinks and
     // listInheritedRecords are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([315, 314, 1]);
+    // T-DG4-BE-M3: + createPortfolio, updatePortfolio, addPortfolioTransformation, removePortfolioTransformation,
+    // createWorkstream, updateWorkstream, addWorkstreamInitiative, removeWorkstreamInitiative (8 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([323, 322, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

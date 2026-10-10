@@ -2392,6 +2392,38 @@ export function mapP4ModularEntryError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P4 slice K, BE-M3 lines (T-DG4-BE-M3; ADR-0038 §12): the 0055 portfolio and workstream guards. The API refuses each
+ * case first with the same code and text (portfolio/structure.ts); these are the last line when a concurrent write
+ * slips past a check, so it never surfaces as a 500. Null when the error is not one of them. (Slices J/K block, after
+ * BE-M2.)
+ */
+export function mapP4StructureError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "portfolio_org_code_key":
+      return problems.duplicate("portfolio.code_taken", "Another portfolio of this organization uses this code.");
+    case "portfolio_transformation_one_active_key":
+      return problems.businessRule(
+        "portfolio.transformation_already_placed",
+        "This transformation already sits in a portfolio.",
+      );
+    case "workstream_initiative_one_active_key":
+      return problems.businessRule(
+        "workstream.initiative_already_assigned",
+        "This initiative already belongs to a workstream.",
+      );
+    case "workstream_code_key":
+    case "portfolio_archive_complete":
+    case "portfolio_transformation_removal_complete":
+    case "workstream_archive_complete":
+    case "workstream_initiative_removal_complete":
+      // The API assigns codes from the counter and writes these shapes itself: reaching one is a programming error.
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * P4 slice J, KBE-G lines (ADR-0037 §13; T-DG4-KBE-G): the 0056 dashboard RAG policy constraints. The API checks the
  * order first with the exact ADR text (dashboards/rag-policy.ts); these are the last line. Null when the error is not
  * one of them. (Slices J/K block: appended after BE-M's lines at merge, p4-work-split §J+K JK.4.)
@@ -2547,6 +2579,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4Traceability !== null) return p4Traceability;
   const p4ModularEntry = mapP4ModularEntryError(error); // BE-M2 (slices J/K block)
   if (p4ModularEntry !== null) return p4ModularEntry;
+  const p4Structure = mapP4StructureError(error); // BE-M3 (slices J/K block)
+  if (p4Structure !== null) return p4Structure;
   const p4Dashboard = mapP4DashboardError(error); // KBE-G (slices J/K block)
   if (p4Dashboard !== null) return p4Dashboard;
   const p4PhaseStep = mapP4PhaseStepError(error); // BE-L2 (slice H block)

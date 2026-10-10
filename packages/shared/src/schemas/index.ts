@@ -111,3 +111,6 @@ export * from "./phases.ts";
 // P4 slice K mirrors of BE-M2 (backend-workflow-engineer, T-DG4-BE-M2; p4-work-split §J+K JK.2): Modular entry, the
 // labelled inherited records, the gate labels and the pure missing-link rule (ADR-0038 §7).
 export * from "./missing-links.ts";
+// P4 slice K mirrors of BE-M3 (backend-workflow-engineer, T-DG4-BE-M3; p4-work-split §J+K JK.3): portfolios and their
+// transformations, workstreams (WS-nn) and their initiatives (ADR-0038 §9).
+export * from "./structure.ts";
