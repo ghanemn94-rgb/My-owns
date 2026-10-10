@@ -1,6 +1,6 @@
 // P4 contract exercises of KBE-C (T-DG4-KBE-C; p4-work-split §A.3, §1 S-10): every operation it routes, through
 // `ctx.mirrored` (OpenAPI status/body/headers + problem mirror), each success body parsed with its zod mirror below.
-// First item (D-095): requestKpiVersionApproval, carried from KBE-B (its pending list is now empty). All data is
+// T-DG4-KBE-R2 adds listTransformationReportingPeriods (ADR-0027 amendment A1). First item (D-095): requestKpiVersionApproval, carried from KBE-B (its pending list is now empty). All data is
 // SYNTHETIC; the approval requested here is a synthetic in-product business approval that nobody decides, and nothing
 // touches the engineering gates DG0-DG7.
 import {
@@ -35,6 +35,7 @@ import {
 export const P4_MIRRORS_KBE_C: Readonly<Record<string, z.ZodType>> = {
   requestKpiVersionApproval: approval,
   listReportingPeriods: reportingPeriodPage,
+  listTransformationReportingPeriods: reportingPeriodPage,
   createReportingPeriod: reportingPeriod,
   getReportingPeriod: reportingPeriod,
   openReportingPeriod: reportingPeriod,
@@ -124,6 +125,21 @@ export async function exerciseP4KbeCOperations(ctx: P4ExerciseContext): Promise<
   expect((await m("POST", `${RPI}/open`, { session: to, headers: ifMatch(9) })).status).toBe(409);
   expect((await m("POST", `${RPI}/open`, { session: to, headers: ifMatch(1) })).status).toBe(200);
   expect((await m("POST", `${RPI}/close`, { session: to, headers: ifMatch(2) })).status).toBe(200);
+
+  // ------------------------------------------------------------------ listTransformationReportingPeriods (ADR-0027
+  // amendment A1; T-DG4-KBE-R2): the Lead and the KPI owner (KDS) hold only transformation.read; same page as the
+  // organization list; AUD reads; outsiders 404.
+  const TRP = `${b}/reporting-periods`;
+  expect((await m("GET", RP, { session: k.s.tl })).status).toBe(404);
+  const orgPage = await m("GET", `${RP}?frequency=quarterly&status=closed`, { session: to });
+  for (const session of [k.s.tl, k.s.kds, k.s.auditor]) {
+    const tPage = await m("GET", `${TRP}?frequency=quarterly&status=closed`, { session });
+    expect(tPage.status, JSON.stringify(tPage.body)).toBe(200);
+    expect(tPage.body).toEqual(orgPage.body);
+    expect(tPage.body.items.map((p: { id: string }) => p.id)).toContain(created.body.id);
+  }
+  expect((await m("GET", TRP, { session: k.s.outsider })).status).toBe(404);
+  expect((await m("GET", `${TRP}?frequency=hourly`, { session: k.s.tl })).status).toBe(400);
 
   // ------------------------------------------------------------------ actuals (ADR-0027 §6)
   const period = await monthlyPeriod(ctx.api, ctx.world);
