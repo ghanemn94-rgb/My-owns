@@ -139,7 +139,10 @@ export interface NavSubPage {
     | "lessons"
     | "lessonSearch"
     // T-DG4-FE-G: the six dashboards (M0244) under the Executive Overview.
-    | "dashboards";
+    | "dashboards"
+    // T-DG4-FE-G2: the organization's portfolios (ADR-0038 §9) and the dashboard RAG policy (ADR-0037 §3).
+    | "portfolios"
+    | "ragPolicy";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -182,4 +185,7 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "lessonSearch", area: "bau", path: "/lessons", requiresAny: ["lesson.search"] },
   // T-DG4-FE-G: the dashboards hub (executive, transformation, workstream, Finance, adoption, personal).
   { id: "dashboards", area: "executive", path: "/dashboards" },
+  // T-DG4-FE-G2: portfolios (read: organization.read) and the RAG policy (read: organization.read; edit: dashboard.configure).
+  { id: "portfolios", area: "initiatives", path: "/portfolios", requiresAny: ["organization.read"] },
+  { id: "ragPolicy", area: "executive", path: "/dashboards/rag-policy", requiresAny: ["organization.read"] },
 ];

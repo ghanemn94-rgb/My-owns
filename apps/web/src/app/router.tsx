@@ -42,6 +42,15 @@ import {
   WorkstreamDashboardPage,
 } from "../pages/dashboards/TransformationDashboardPage.tsx";
 import { ExecutiveOverviewPage } from "../pages/executive-overview/ExecutiveOverviewPage.tsx";
+import { RagPolicyPage } from "../pages/dashboards/RagPolicyPage.tsx";
+import { TraceabilityPage } from "../pages/traceability/TraceabilityPage.tsx";
+import { ModularEntryPage } from "../pages/traceability/ModularPage.tsx";
+import {
+  PortfolioDetailPage,
+  PortfoliosPage,
+  WorkstreamPage,
+  WorkstreamsPage,
+} from "../pages/traceability/StructurePages.tsx";
 import { ActionItemPage, ActionsPage } from "../pages/actions/ActionsPage.tsx";
 import {
   EscalationsPage,
@@ -130,8 +139,7 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   { path: "transformations/:id/change-requests/:changeRequestId", feature: "changeRequest", owner: "FE-F" },
   // closure: built by T-DG4-FE-F (pages/closure), see the routes below.
   // FE-G (slices J and K): the six dashboards and the Executive Overview are built by T-DG4-FE-G, see the routes below;
-  // traceability is FE-G2's.
-  { path: "transformations/:id/traceability", feature: "traceability", owner: "FE-G" },
+  // traceability, Modular entry, portfolios and workstreams are built by T-DG4-FE-G2, see the routes below.
 ];
 
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
@@ -227,6 +235,14 @@ export const routes: RouteObject[] = [
       { path: "dashboards/:kind", element: <DashboardPage /> },
       { path: "transformations/:id/dashboard", element: <TransformationDashboardPage /> },
       { path: "transformations/:id/workstreams/:workstreamId/dashboard", element: <WorkstreamDashboardPage /> },
+      // P4 slice K and the RAG policy (T-DG4-FE-G2; p4-work-split §J+K JK.7; ADR-0038, ADR-0037 §3/§10).
+      { path: "transformations/:id/traceability", element: <TraceabilityPage /> },
+      { path: "transformations/:id/modular-entry", element: <ModularEntryPage /> },
+      { path: "transformations/:id/workstreams", element: <WorkstreamsPage /> },
+      { path: "transformations/:id/workstreams/:workstreamId", element: <WorkstreamPage /> },
+      { path: "portfolios", element: <PortfoliosPage /> },
+      { path: "portfolios/:portfolioId", element: <PortfolioDetailPage /> },
+      { path: "dashboards/rag-policy", element: <RagPolicyPage /> },
       // P4 slice G closure and transition decisions (T-DG4-FE-F; p4-work-split §F+G FG.8; ADR-0034 §1-§3, §7).
       { path: "transformations/:id/closure", element: <ClosurePage /> },
       { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },

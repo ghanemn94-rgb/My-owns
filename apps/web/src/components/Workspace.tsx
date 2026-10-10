@@ -70,6 +70,10 @@ export const WORKSPACE_TABS = [
   { id: "dashboard", path: "/dashboard", labelKey: "dashboards.tab" },
   // P4 slice G closure and transition decisions (T-DG4-FE-F; p4-work-split §F+G FG.8).
   { id: "closure", path: "/closure", labelKey: "closureP4.tab" },
+  // P4 slice K (T-DG4-FE-G2; p4-work-split §J+K JK.7): traceability, Modular entry, workstreams.
+  { id: "traceability", path: "/traceability", labelKey: "traceability.tab" },
+  { id: "modular-entry", path: "/modular-entry", labelKey: "traceability.modular.tab" },
+  { id: "workstreams", path: "/workstreams", labelKey: "traceability.workstreams.tab" },
 ] as const satisfies readonly { id: string; path: string; labelKey?: string }[];
 export type WorkspaceTabId = (typeof WORKSPACE_TABS)[number]["id"];
 

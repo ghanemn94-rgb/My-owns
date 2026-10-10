@@ -76,6 +76,13 @@ export function DashboardsHubPage() {
           </section>
         ))}
       </div>
+      {/* T-DG4-FE-G2: the thresholds behind every area's RAG (ADR-0037 §3). */}
+      <p className="small" data-rag-policy-link>
+        <Link className="link" to="/dashboards/rag-policy">
+          {t("dashboards.ragPolicy.title")}
+        </Link>{" "}
+        · {t("dashboards.ragPolicy.hubSummary")}
+      </p>
     </div>
   );
 }
