@@ -1,0 +1,180 @@
+port-policy: PostgreSQL listening on port 25551 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applying 0028_p4_calendar_jobs_work_items.sql
+mth-db migrate: applying 0029_p4_groups_role_mapping_delegation.sql
+mth-db migrate: applying 0030_p4_decision_rights_raci.sql
+mth-db migrate: applying 0031_p4_approvals_permissions.sql
+mth-db migrate: applying 0032_p4_slice_i_c_reserved.sql
+mth-db migrate: applying 0033_p4_kpi_dictionary_versions.sql
+mth-db migrate: applying 0034_p4_kpi_trajectories_actuals.sql
+mth-db migrate: applying 0035_p4_kpi_calculation_runs_quality.sql
+mth-db migrate: applying 0036_p4_kpi_permissions_backfill.sql
+mth-db migrate: applying 0037_p4_benefit_register.sql
+mth-db migrate: applying 0038_p4_benefit_measurement_validation.sql
+mth-db migrate: applying 0039_p4_benefit_value_views.sql
+mth-db migrate: applying 0040_p4_benefit_permissions.sql
+mth-db migrate: applying 0041_p4_raid_actions_corrective.sql
+mth-db migrate: applying 0042_p4_budget_schedule.sql
+mth-db migrate: applying 0043_p4_raid_permissions.sql
+mth-db migrate: applying 0044_p4_forums_meetings.sql
+mth-db migrate: applying 0045_p4_t16_escalation.sql
+mth-db migrate: applying 0046_p4_governance_permissions.sql
+mth-db migrate: applying 0047_p4_adoption.sql
+mth-db migrate: applying 0048_p4_sustainment.sql
+mth-db migrate: applying 0049_p4_adoption_sustainment_permissions.sql
+mth-db migrate: applying 0050_p4_sustainment_schedules.sql
+mth-db migrate: applying 0051_p4_phases_gates_g5_g6_exceptions.sql
+mth-db migrate: applying 0052_p4_change_control.sql
+mth-db migrate: applying 0053_p4_gates_change_permissions.sql
+mth-db migrate: applying 0054_p4_gate_exception_expiry_schedule.sql
+mth-db migrate: applying 0055_p4_traceability_modular_structure.sql
+mth-db migrate: applying 0056_p4_dashboards_t10.sql
+mth-db migrate: applying 0057_p4_dashboards_traceability_permissions.sql
+mth-db migrate: applying 0058_p4_approval_reminder_kinds.sql
+mth-db migrate: applying 0059_p4_enable_g5_g6.sql
+mth-db migrate: applying 0060_p4_governance_schedules_weekly_cadence.sql
+mth-db migrate: applied 60 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 25552 (attempt 1)
+API: http://localhost:25552 (APP_BASE_URL=http://localhost:25552, PORT=25552)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 18 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:150:1 › 1. G5: missing items listed; the Lead requests an exception; the Sponsor accepts it and it covers (12.8s)
+  ✘   2 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:202:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines (6.2s)
+  -   3 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:236:1 › 3. the Sponsor records a criterion review: the gate is Under review; unreviewed rows read 'Not reviewed'
+  -   4 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:268:1 › 4. G5 approval needs the scale scope; approved with one item; the Sponsor revokes an exception
+  -   5 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:314:1 › 5. G6 lists 'Ownership transfer' as missing and cannot be submitted
+  -   6 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:332:1 › 6. Modular G3: a G2 waiver is refused (DG3); a G3 links waiver is recorded, used at submission, and its revoke refuses approval
+  -   7 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:430:1 › 7. closure: four statuses side by side and the label; closing is refused with a translated reason
+  -   8 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:458:1 › 8. transition decision: submitted, returned, round 2 after an edit; a non-requester's withdrawal is refused
+  -   9 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:545:1 › 9. the auditor sees read-only views; 390 px wide and 200 % text without page-level horizontal scroll
+  ✓  10 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:150:1 › 1. G5: missing items listed; the Lead requests an exception; the Sponsor accepts it and it covers (10.5s)
+  ✘  11 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:202:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines (4.6s)
+  -  12 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:236:1 › 3. the Sponsor records a criterion review: the gate is Under review; unreviewed rows read 'Not reviewed'
+  -  13 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:268:1 › 4. G5 approval needs the scale scope; approved with one item; the Sponsor revokes an exception
+  -  14 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:314:1 › 5. G6 lists 'Ownership transfer' as missing and cannot be submitted
+  -  15 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:332:1 › 6. Modular G3: a G2 waiver is refused (DG3); a G3 links waiver is recorded, used at submission, and its revoke refuses approval
+  -  16 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:430:1 › 7. closure: four statuses side by side and the label; closing is refused with a translated reason
+  -  17 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:458:1 › 8. transition decision: submitted, returned, round 2 after an edit; a non-requester's withdrawal is refused
+  -  18 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:545:1 › 9. the auditor sees read-only views; 390 px wide and 200 % text without page-level horizontal scroll
+
+
+  1) [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:202:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "scrollable-region-focusable: section[aria-labelledby=\"review-table-1\"] > .table-wrap",[39m
+    [31m+ ][39m
+
+       at apps/web/e2e/support/ui.ts:101
+
+       99 |   };
+      100 |   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    > 101 |   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+          |                                                                                               ^
+      102 | }
+      103 |
+      104 | /** Every request stays on the application origin (no CDN, no remote fonts), and nothing hits the CSP. */
+        at expectAccessible (/home/user/wt/dg4-fe-f/apps/web/e2e/support/ui.ts:101:95)
+        at /home/user/wt/dg4-fe-f/apps/web/e2e/p4-gates-closure.spec.ts:249:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:202:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "scrollable-region-focusable: section[aria-labelledby=\"review-table-1\"] > .table-wrap",[39m
+    [31m+ ][39m
+
+       at apps/web/e2e/support/ui.ts:101
+
+       99 |   };
+      100 |   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    > 101 |   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+          |                                                                                               ^
+      102 | }
+      103 |
+      104 | /** Every request stays on the application origin (no CDN, no remote fonts), and nothing hits the CSP. */
+        at expectAccessible (/home/user/wt/dg4-fe-f/apps/web/e2e/support/ui.ts:101:95)
+        at /home/user/wt/dg4-fe-f/apps/web/e2e/p4-gates-closure.spec.ts:249:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p4-gates-clos-261cc-records-the-exception-lines-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:202:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines 
+    [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:202:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines 
+  14 did not run
+  2 passed (46.7s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- api.log (tail)

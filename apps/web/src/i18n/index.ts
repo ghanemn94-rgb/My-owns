@@ -79,6 +79,9 @@ import enDashboards from "./en/dashboards.json" with { type: "json" };
 // P4 slice E execution panels on the initiative page (T-DG4-FE-D2): budget lines, execution, schedule network.
 import arExecutionP4 from "./ar/executionP4.json" with { type: "json" };
 import enExecutionP4 from "./en/executionP4.json" with { type: "json" };
+// P4 slice G closure namespace (T-DG4-FE-F): status model, closure and transition decisions (pages/closure).
+import arClosureP4 from "./ar/closureP4.json" with { type: "json" };
+import enClosureP4 from "./en/closureP4.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -128,6 +131,7 @@ export const catalogues = {
     sustainP4: arSustainP4,
     dashboards: arDashboards,
     executionP4: arExecutionP4,
+    closureP4: arClosureP4,
   },
   en: {
     common: enCommon,
@@ -168,6 +172,7 @@ export const catalogues = {
     sustainP4: enSustainP4,
     dashboards: enDashboards,
     executionP4: enExecutionP4,
+    closureP4: enClosureP4,
   },
 } as const;
 
