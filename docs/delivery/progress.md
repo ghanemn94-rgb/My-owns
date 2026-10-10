@@ -25,20 +25,15 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-114.
-  - **Done and integrated through W17 (`0a3da46`):**
-    - every architecture task (ARCH-01 to ARCH-08, ARCH-R1 to ARCH-R3);
-    - every backend and KPI/benefits task, including the repair rounds R1–R3;
-    - every planned P4 screen (FE-A to FE-G, FE-D2, FE-F2, FE-G2, FE-R1);
-    - QA-A and QA-B (A04, A05, A08, A09, A10).
-  - **Merged-tree verification of `0a3da46` (D-114):**
-    - e2e 324/324 and unit 2719 + 259/2 in both locale settings;
-    - **integration 1831/1832:** `benefits-queue.test.ts` times out in the full suite with no load. It is assigned to KBE-R4, and the tree is not green until it is fixed.
-  - **Remaining builds:**
-    - W18: BE-R4 and KBE-R4 (implement ARCH-R3; KBE-R4 also root-causes the queue test), QA-C (A11, A03, the REQ-DLV-036 run), FE-R2 (code splitting);
-    - W19: FE-R3 (adopts ARCH-R3) and AN-P4 (the register update before the freeze).
+- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-115.
+  - **Done and integrated through W18 (`dca6b64`):**
+    - every architecture, backend, KPI/benefits and frontend task, including the repair rounds R1–R4 and route-level code splitting;
+    - acceptance suites A03, A04, A05, A08, A09, A10 and A11 (QA-A, QA-B, QA-C);
+    - every P4 pending list is empty.
+  - **Merged-tree verification of `dca6b64` (D-115):** every check exits 0. Unit 2734 + 259/2 in both locale settings, integration 1919/1919, e2e 328/328 with no agent running.
+  - **In flight:** W19, FE-R3 (adopts ARCH-R3 in the web app) and AN-P4A/AN-P4B (the register update before the freeze, 71 and 66 rows).
   - **Then:** the freeze, the three reviews and the audit.
-- **Next action:** integrate each W18 run as it finishes, then verify. W19 starts only after BE-R4 and KBE-R4 are merged, because FE-R3 depends on both.
+- **Next action:** integrate the W19 runs, merging the two register halves row by row, and run `validate.mjs --register DG4`. Verify the merged tree, then freeze the DG4 candidate.
 
 ## DG2 scope (P2 — diagnose, define and design)
 
