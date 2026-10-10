@@ -24,6 +24,8 @@ export {
   type WorkItemSourceRef,
 } from "./service.ts";
 export { SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
+// T-DG4-KBE-G2 (ADR-0037 §1 item 2, §7, §9): the open work items of one user, read-only (My Work, the header).
+export { loadOpenWorkItems, type OpenWorkItemFact } from "./dashboard-facts.ts";
 
 /** Wiring hook called by the composition root (server.ts). */
 export function registerTasksModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {

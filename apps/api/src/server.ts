@@ -68,7 +68,9 @@ import {
   type SecurityHeaders,
 } from "./modules/platform/index.ts";
 import { registerReportingModule } from "./modules/reporting/index.ts";
-import { registerTransformationRoutes, registerWorkspaceHeaderRoutes } from "./modules/transformations/index.ts";
+// T-DG4-KBE-G2 (ADR-0037 §1 item 3): the workspace header's gate-readiness port (the raidDependencyPort precedent).
+import { setWorkflowsReadPort } from "./modules/reporting/ports.ts";
+import { registerTransformationRoutes } from "./modules/transformations/index.ts";
 // T-DG4-KBE-C / T-DG4-BE-R1: the approval service for the kpi and sustainment ports, through workflows' public
 // interface (workflows/index.ts exports it since BE-C).
 import {
@@ -80,6 +82,9 @@ import {
 } from "./modules/workflows/index.ts";
 // T-DG4-BE-D (ADR-0031 §2): the RAID Dependency-entry port, implemented by the T08 service (the KBE-C import precedent).
 import { raidDependencyPort } from "./modules/workflows/t08-dependencies.ts";
+// T-DG4-KBE-G2 (ADR-0037 §1 item 3, §9): the read-only gate readiness behind reporting's WorkflowsReadPort (the same
+// precedent; workflows/index.ts's export list is pinned by workflows.test.ts, which this task does not own).
+import { gateReadinessReader } from "./modules/workflows/gate-readiness-read.ts";
 // P4 (T-DG4-BE-K; ADR-0035 §2): the G5/G6 GateFactsProvider members (read-only loaders in their owning modules).
 import { loadAdoptionGateFacts } from "./modules/adoption/gate-facts.ts";
 import { loadBenefitsGateFacts } from "./modules/benefits/gate-facts.ts";
@@ -307,12 +312,11 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerAdminRoutes(app, deps);
   registerAccessP2Routes(app, deps);
   registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
-  // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs), the BE-B access route
-  // files (groups, role mappings, delegations) and the workspace-header stub (KBE-G; p4-plan §5.1).
+  // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs) and the BE-B access
+  // route files (groups, role mappings, delegations). The workspace header is served by reporting (ADR-0037 §11).
   registerCalendarRoutes(app, deps);
   registerJobScheduleRoutes(app, db);
   registerAccessP4Routes(app, deps);
-  registerWorkspaceHeaderRoutes(app, deps);
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
   // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
   const gateFacts: GateFactsProvider = {
@@ -333,6 +337,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   // T-DG4-BE-J (D-107): sustainment requests transition-decision approvals through workflows' approval service, passed
   // in as a port (sustainment cannot import workflows).
   wireTransitionDecisionApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
+  // T-DG4-KBE-G2 (ADR-0037 §1 item 3, §9): the workspace header's live gate readiness, through reporting's port.
+  setWorkflowsReadPort({ gateReadiness: gateReadinessReader(gateFacts) });
   setMaterialChangePort(materialChangePortImpl);
   setKpiVersionActivator(activateKpiVersionByChangeRequest);
   const modules: ModuleRegistration[] = [

@@ -13,6 +13,7 @@ import { Decimal } from "decimal.js";
 import { z } from "zod";
 import { PHASES, TRANSFORMATION_STATUSES } from "../constants.ts";
 import { freeText, timestamp, uuid } from "./common.ts";
+import { gateInheritedApproval } from "./gate.ts";
 import { businessDate, decimal } from "./kpi.ts";
 
 const nullableUuid = uuid.nullable();
@@ -338,3 +339,185 @@ export const DASHBOARD_REFUSALS = {
   "dashboard_rag_policy.threshold_order": "The amber threshold cannot be beyond the red threshold.",
 } as const;
 export type DashboardRefusalCode = keyof typeof DASHBOARD_REFUSALS;
+
+// ------------------------------------------------------------------------------------------------ KBE-G2 shapes
+
+// P4 slice J mirrors of KBE-G2 (kpi-benefits-engineer, T-DG4-KBE-G2; ADR-0037 §2, §7, §9; p4-work-split §J+K JK.5;
+// OpenAPI 1.3.0-p4 FinanceValueLine, FinanceDashboard, AdoptionIndicatorRow, AdoptionDashboard, MyWorkSection,
+// MyWorkItem, MyWorkSectionPage, MyWork, UserRef, CurrencyValue, WorkspaceHeader). REQ-S03-008, REQ-S03-011,
+// REQ-S13-001 (Finance, adoption and personal work dashboards). Read models only: nothing here is stored.
+
+/** The value states of a Finance line (ADR-0030 §6): a total is always for ONE state, never states added together. */
+export const FINANCE_LINE_STATES = [
+  "planned",
+  "forecast",
+  "measured",
+  "submitted",
+  "validated",
+  "rejected",
+  "sustained",
+] as const;
+export type FinanceLineState = (typeof FINANCE_LINE_STATES)[number];
+
+const currencyCode = z.string().regex(/^[A-Z]{3}$/);
+
+/** OpenAPI `FinanceValueLine`. */
+export const financeValueLine = z.strictObject({
+  valueClass: z.string(),
+  state: z.enum(FINANCE_LINE_STATES),
+  currency: currencyCode,
+  total: dashboardValue,
+  drilldownHref: z.string().nullable(),
+});
+export type FinanceValueLine = z.infer<typeof financeValueLine>;
+
+/** OpenAPI `FinanceDashboard`. */
+export const financeDashboard = z.strictObject({
+  organizationId: uuid,
+  generatedAt: timestamp,
+  businessDate,
+  appliedFilters: dashboardFilters,
+  lines: z.array(financeValueLine),
+  headlines: z.array(dashboardHeadline),
+  pendingValidationCount: z.number().int().min(0),
+  nonFinancialCount: z.number().int().min(0),
+  transformations: z.array(dashboardTransformationRow),
+});
+export type FinanceDashboard = z.infer<typeof financeDashboard>;
+
+/** OpenAPI `AdoptionIndicatorRow`. */
+export const adoptionIndicatorRow = z.strictObject({
+  kpiDefinitionId: uuid,
+  templateKey: z.string(),
+  targetKind: z.string(),
+  targetId: nullableUuid,
+  rag: ragStatus,
+  value: dashboardValue,
+  drilldownHref: z.string(),
+});
+export type AdoptionIndicatorRow = z.infer<typeof adoptionIndicatorRow>;
+
+/** OpenAPI `AdoptionDashboard`. */
+export const adoptionDashboard = z.strictObject({
+  organizationId: uuid,
+  generatedAt: timestamp,
+  businessDate,
+  appliedFilters: dashboardFilters,
+  area: t10Area,
+  indicators: z.array(adoptionIndicatorRow),
+  openInterventionCount: z.number().int().min(0),
+  transformations: z.array(dashboardTransformationRow),
+});
+export type AdoptionDashboard = z.infer<typeof adoptionDashboard>;
+
+/** OpenAPI `MyWorkSection` (M0100; ADR-0037 §7), in display order. */
+export const MY_WORK_SECTIONS = [
+  "assigned_actions",
+  "drafts",
+  "reviews",
+  "approvals",
+  "missing_updates",
+  "other",
+] as const;
+export type MyWorkSection = (typeof MY_WORK_SECTIONS)[number];
+export const myWorkSection = z.enum(MY_WORK_SECTIONS);
+
+/** OpenAPI `MyWorkItem`. */
+export const myWorkItem = z.strictObject({
+  section: myWorkSection,
+  source: z.enum(["work_item", "action_item", "draft"]),
+  recordType: z.string(),
+  recordId: uuid,
+  kind: z.string().nullable(),
+  code: z.string().nullable(),
+  label: z.string().nullable(),
+  messageKey: z.string().nullable(),
+  messageParams: z.record(z.string(), z.unknown()).nullable(),
+  transformationId: nullableUuid,
+  href: z.string(),
+  dueDate: nullableDate,
+  overdue: z.boolean(),
+});
+export type MyWorkItem = z.infer<typeof myWorkItem>;
+
+/** OpenAPI `MyWorkSectionPage`. */
+export const myWorkSectionPage = z.strictObject({
+  section: myWorkSection,
+  total: z.number().int().min(0),
+  items: z.array(myWorkItem),
+  nextCursor: z.string().nullable(),
+});
+export type MyWorkSectionPage = z.infer<typeof myWorkSectionPage>;
+
+/** OpenAPI `MyWork` (the caller's own items only). */
+export const myWork = z.strictObject({
+  userId: uuid,
+  generatedAt: timestamp,
+  businessDate,
+  horizonWorkingDays: z.number().int().min(1),
+  sections: z.array(myWorkSectionPage),
+  upcomingDeadlines: z.array(myWorkItem),
+});
+export type MyWork = z.infer<typeof myWork>;
+
+/** OpenAPI `UserRef`. */
+export const userRef = z.strictObject({ userId: uuid, displayName: z.string() });
+export type UserRef = z.infer<typeof userRef>;
+
+/** OpenAPI `CurrencyValue`. */
+export const currencyValue = z.strictObject({ currency: currencyCode, value: dashboardValue });
+export type CurrencyValue = z.infer<typeof currencyValue>;
+
+/** The live gate readiness `WorkflowsReadPort.gateReadiness` returns (ADR-0037 §1 item 3, §9). */
+export interface WorkspaceGateReadiness {
+  readonly gateCode: string;
+  readonly status: string;
+  readonly inheritedApproval: z.infer<typeof gateInheritedApproval> | null;
+  readonly missingMandatoryCount: number;
+  readonly ready: boolean;
+}
+
+const knownOrUnknown = z.enum(["known", "unknown"]);
+
+/** OpenAPI `WorkspaceHeader`: the eight elements of M0114, each with an explicit Unknown (REQ-S03-011). */
+export const workspaceHeader = z.strictObject({
+  transformationId: uuid,
+  code: z.string(),
+  name: z.string(),
+  phase: z.strictObject({
+    currentPhase: z.enum(PHASES),
+    mode: z.enum(["end_to_end", "modular"]),
+    entryPhase: z.enum(PHASES).nullable(),
+  }),
+  gateReadiness: z.strictObject({
+    state: knownOrUnknown,
+    gateCode: z.string().nullable(),
+    status: z.string().nullable(),
+    inheritedApproval: gateInheritedApproval.nullable(),
+    missingMandatoryCount: z.number().int().min(0).nullable(),
+    ready: z.boolean().nullable(),
+  }),
+  northStar: z.strictObject({
+    state: knownOrUnknown,
+    statement: z.string().nullable(),
+    status: z.string().nullable(),
+  }),
+  owners: z.strictObject({ sponsor: userRef.nullable(), lead: userRef.nullable() }),
+  outcomeHealth: z.strictObject({
+    rag: dashboardRag,
+    counts: z.array(z.strictObject({ status: ragStatus, count: z.number().int().min(0) })),
+  }),
+  benefits: z.strictObject({
+    state: knownOrUnknown,
+    planned: z.array(currencyValue),
+    validated: z.array(currencyValue),
+    benefitCount: z.number().int().min(0),
+    nonFinancialCount: z.number().int().min(0),
+  }),
+  keyDecisions: z.strictObject({ items: z.array(dashboardItem).max(5), overdueCount: z.number().int().min(0) }),
+  nextActions: z.strictObject({
+    items: z.array(myWorkItem).max(5),
+    missingMandatoryCount: z.number().int().min(0).nullable(),
+  }),
+});
+export type WorkspaceHeader = z.infer<typeof workspaceHeader>;
