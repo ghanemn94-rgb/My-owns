@@ -66,6 +66,7 @@ import { ControlsPage, ReviewsPage } from "../pages/bau/ControlsPage.tsx";
 import { HandoverPage, HandoversPage } from "../pages/bau/HandoverPage.tsx";
 import { ImprovementPage } from "../pages/improvement/ImprovementPage.tsx";
 import { LessonSearchPage, LessonsPage } from "../pages/lessons/LessonsPage.tsx";
+import { ClosurePage } from "../pages/closure/ClosurePage.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
 import { BenefitFormulaPage } from "../pages/benefit-formulas/BenefitFormulaPage.tsx";
 import { BenefitFormulasPage } from "../pages/benefit-formulas/BenefitFormulasPage.tsx";
@@ -127,7 +128,7 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   // FE-F (slice H: G5/G6 views live in pages/gates; change control and closure)
   { path: "transformations/:id/change-requests", feature: "changeRequests", owner: "FE-F" },
   { path: "transformations/:id/change-requests/:changeRequestId", feature: "changeRequest", owner: "FE-F" },
-  { path: "transformations/:id/closure", feature: "closure", owner: "FE-F" },
+  // closure: built by T-DG4-FE-F (pages/closure), see the routes below.
   // FE-G (slices J and K): the six dashboards and the Executive Overview are built by T-DG4-FE-G, see the routes below;
   // traceability is FE-G2's.
   { path: "transformations/:id/traceability", feature: "traceability", owner: "FE-G" },
@@ -226,6 +227,8 @@ export const routes: RouteObject[] = [
       { path: "dashboards/:kind", element: <DashboardPage /> },
       { path: "transformations/:id/dashboard", element: <TransformationDashboardPage /> },
       { path: "transformations/:id/workstreams/:workstreamId/dashboard", element: <WorkstreamDashboardPage /> },
+      // P4 slice G closure and transition decisions (T-DG4-FE-F; p4-work-split §F+G FG.8; ADR-0034 §1-§3, §7).
+      { path: "transformations/:id/closure", element: <ClosurePage /> },
       { path: "transformations/:id/finance-validations", element: <TransformationFinanceQueuePage /> },
       {
         path: "transformations/:id/finance-validations/:financeValidationId",
