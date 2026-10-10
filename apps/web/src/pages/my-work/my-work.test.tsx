@@ -407,8 +407,8 @@ describe("P4 seams", () => {
   it.each(["en", "ar"] as const)("a planned P4 route shows the honest 'being built' state (%s)", async (locale) => {
     const t = createI18n(locale).t;
     mockApi(...p4Handlers(locale, []));
-    renderApp(`/transformations/${TR_ID}/adoption`, { i18n: createI18n(locale) });
-    expect(await screen.findByRole("heading", { level: 1, name: t("nav.p4.adoption.title") })).toBeTruthy();
+    renderApp(`/transformations/${TR_ID}/closure`, { i18n: createI18n(locale) });
+    expect(await screen.findByRole("heading", { level: 1, name: t("nav.p4.closure.title") })).toBeTruthy();
     expect(document.querySelector("[data-state='being-built']")?.textContent).toContain(t("nav.p4.beingBuiltTitle"));
   });
 });
