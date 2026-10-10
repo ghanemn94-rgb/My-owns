@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-100",
+      "stage_id": "DG4",
+      "requirement": "REQ-S10-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Slice B benefit and Finance mutations refuse a caller who lacks the permission (AUD, ADM-only, a Business Owner on a Finance decision) with 403 but write no authorization.denied audit event (ADR-0004 coverage rule)",
+      "reproduction": "Code: apps/api/src/modules/benefits/register.ts:129-131 `requirePermissionSomewhere` throws `problems.forbidden()` with NO `.withDenial(...)`; openBenefitWrite (register.ts:140) and openFinanceWrite (finance-validation.ts:216-219, used by decideFinanceValidation, decideBenefitBaseline, amendFinanceValidation, reverseFinanceValidation) call it first. The failed-mutation audit hook apps/api/src/modules/access/denials.ts:13 writes `authorization.denied` only for a problem that carries `denial`, so nothing is written. Run: probe S revision 3 (probes/sec-dg4-r1-sweep.test.ts, a generated sweep over all 203 P4 mutations on a disposable PostgreSQL 16, Node 22, LANG unset, and Node 24, LANG=C.UTF-8). Steps: (1) populate org A with the 27 P3/P4 contract exercise seams; (2) call every P4 mutation as the org-wide auditor AUD, as the ADM-only user (ADM_ACCESS + ADM_TECH) and as an org-B outsider; (3) read the request's audit rows by x-request-id. The [probe-S NO-DENIAL] lines in probe-S-rev3-node22-lang-unset.log list the operations that answer 403 with no authorization.denied row: 26 slice B operations (createBenefit, updateBenefit, archiveBenefit, advanceBenefitLifecycle, decideBenefitBaseline, the enabler, plan-value, allocation, group, overlap, scenario, valuation-method and measurement writes, decideFinanceValidation, amendFinanceValidation, reverseFinanceValidation) and completeWorkItem (403 work_item.not_assignee, apps/api/src/modules/tasks/routes.ts:52). Example lines: `[probe-S AUD] decideFinanceValidation POST /api/v1/transformations/<t>/finance-validations/<id>/decision body=plausible -> 403 forbidden audit=[]` and `[probe-S ADM] decideFinanceValidation ... -> 403 forbidden audit=[]`. The other 176 P4 mutations write exactly one authorization.denied for AUD (probe S AUD cases).",
+      "expected": "ADR-0004 §3 coverage rule: every failed authorization of a mutation writes exactly one audit event. The rest of P4 does this (e.g. decideApproval, decideGate, the gate-exception decision). The REQ-S10-003 register note says the ADM-only user's denial is written on 'every gate and Finance approval endpoint'. So an AUD, ADM-only or Business Owner attempt on the P4 Finance decision should write exactly one authorization.denied naming finance.validate.",
+      "actual": "403 forbidden with no audit row for 26 slice B mutations, including the P4 Finance validation decision and the Finance corrections, and for completeWorkItem. A Business Owner, auditor or technical admin trying to validate Finance value leaves no trace. The access decision itself is correct: 403, and nothing is written to any table (probe S checksum of 201 tables unchanged). adm-not-approver.test.ts covers only the DG2/DG3 Finance endpoints (validateBaseline, validateValuePool, validateBusinessCaseBaseline, validateBenefitFormulaVersion), not decideFinanceValidation or decideBenefitBaseline, so no test catches this.",
+      "evidence": [
+        "apps/api/src/modules/benefits/register.ts",
+        "apps/api/src/modules/benefits/finance-validation.ts",
+        "apps/api/src/modules/access/denials.ts",
+        "apps/api/src/modules/tasks/routes.ts",
+        "docs/architecture/adr/ADR-0004-audit.md",
+        "apps/api/test/integration/approvals/adm-not-approver.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-sweep.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node24-lang-c-utf8.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). The access control is correct (403, nothing written); the missing piece is the ADR-0004 denial audit. Suggested repair: attach `denialOf(permission, target)` in requirePermissionSomewhere, as requireAction does elsewhere, or resolve the target first. Add the P4 Finance decision and baseline decision to the ADM-only denial-audit test. Also decide whether completeWorkItem's record-level 403 is a failed authorization to audit."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-101",
+      "stage_id": "DG4",
+      "requirement": "REQ-S08-017",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Finance amendments and reversals check If-Match against the original validation's version, which no correction ever changes: a correction sent with a stale ETag is accepted and silently overrides another Finance user's correction (lost update on a validated value)",
+      "reproduction": "Code: apps/api/src/modules/benefits/corrections.ts:75-92 openTarget compares If-Match with the ORIGINAL finance_validation row's version (line 81). createCorrection (lines 94-189) only INSERTs a new benefit_measurement and a new finance_validation row; nothing bumps the original's version or any other row the client can hold an ETag for. Run: probe F, case F2 (probes/sec-dg4-r1-finance.test.ts; disposable PostgreSQL 16, Node 22, LANG unset), using the implementers' benefit fixtures. (1) BO submits 1000 SAR; FIN approves 1000, and the original validation is at version 2 (ETag \"2\"). (2) FIN-B amends to correctedAmount 900 with If-Match \"2\": 201, delta -100, validated total 900.0000. (3) FIN-A, still holding ETag \"2\" from before FIN-B's change, amends to 1100 with If-Match \"2\": 201, delta +200, validated total 1100.0000. The original's ETag is still \"2\". Log line in probe-F-node22-lang-unset.log: `F2 original validation version after approval 2; FIN-B amend (If-Match 2) -> 201 -100.0000; total 900.0000; FIN-A amend with the SAME If-Match 2 -> 201 200.0000; total 1100.0000; original validation ETag now \"2\"`. corrections.test.ts itself sends the same `decided.version` for the amendment, the unchanged amendment and the reversal (lines 46-81), so no test can catch a stale correction.",
+      "expected": "Every P4 mutation of an existing record has working optimistic concurrency (CLAUDE.md engineering conventions; ADR-0030 'Every mutation of an existing record needs If-Match'; assignment: 'If-Match (409/428)'). A correction made from a view that predates another correction of the same validated value must be refused with 409 and the current version. Either the original validation's version steps on each correction, or the If-Match names the latest state of the correction chain.",
+      "actual": "The stale correction is accepted (201). FIN-B's correction (900, a found double count) is silently superseded by FIN-A's figure (1100), which was entered against a stale screen. Both rows stay visible and audited, but neither user is told about the conflict, and the validated total of a Finance-validated benefit ends on the stale figure. The 428 for a missing If-Match works. Only the 409 never fires after the first approval. Other cases in the same probe pass: F1 (two concurrent Finance decisions: one 200, one 422 not_queued, total counted once), F3 (concurrent amend and reverse: serialised by lock 730233, the reversal nets to 0.0000 and the amendment is refused already_reversed), F4 (in-place edit of a validated value: 409 validated_immutable) and F5 (decimal 900719925474099.1234 then -0.0001 = ...099.1233 exactly).",
+      "evidence": [
+        "apps/api/src/modules/benefits/corrections.ts",
+        "apps/api/test/integration/benefits/corrections.test.ts",
+        "docs/architecture/adr/ADR-0030-p4-benefit-values-finance-validation-totals.md",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-finance.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-F-node22-lang-unset.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). Mandatory because it is a data-integrity and optimistic-concurrency defect on Finance-validated values. Suggested repair: step the original finance_validation version (with its audit event) inside the correction transaction under lock 730233, so the next correction needs the new ETag. Return the new ETag to the client, and add a test in which a second correction with the pre-correction ETag gets 409."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-102",
+      "stage_id": "DG4",
+      "requirement": "REQ-S03-008",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two web import cycles introduced in P4: MyWorkPage.tsx <-> MyWorkSections.tsx and TraceabilityPage.tsx <-> TracePanels.tsx",
+      "reproduction": "Run `node docs/delivery/test-evidence/DG4/code-security/round-1/probes/web-cycles.mjs $TMPDIR/rev` (a file-level graph of static value imports of apps/web/src, excluding tests, `import type` and dynamic import()), with output in web-cycles.log. It finds three strongly connected components. Two are P4: apps/web/src/pages/dashboards/MyWorkSections.tsx:16 imports renderMessage from ../my-work/MyWorkPage.tsx, and MyWorkPage.tsx:34 imports MyWorkSections; apps/web/src/pages/traceability/TracePanels.tsx:44 imports useTraceSelection from ./TraceabilityPage.tsx, and TraceabilityPage.tsx:24 imports the three panels. The third, pages/admin/UsersPage.tsx <-> AssignmentsPage.tsx, dates from DG2 (T-DG2-FE15) and is not raised here.",
+      "expected": "Assignment, 'The web': no import cycle. The shared helpers (renderMessage, useTraceSelection) should live in a module that both pages import.",
+      "actual": "Two P4 cycles. No behavioural effect was observed: the cyclic bindings are used only at render time; pnpm -r build reports no circular-chunk warning; unit-web passes on Node 22 and 24. With the route-level React.lazy splitting of D-115, a cycle between page modules is fragile (evaluation order across chunks), so this is a maintainability defect only.",
+      "evidence": [
+        "apps/web/src/pages/my-work/MyWorkPage.tsx",
+        "apps/web/src/pages/dashboards/MyWorkSections.tsx",
+        "apps/web/src/pages/traceability/TraceabilityPage.tsx",
+        "apps/web/src/pages/traceability/TracePanels.tsx",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/web-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/web-cycles.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). Low and non-mandatory; it could be accepted as an observation if the owner prefers to defer it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-103",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-015",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The product gate operations that P4 extends (decideGate, submitGate, updateGate) authorize on the request-start grants and do not re-check them at commit time",
+      "reproduction": "Static reading, confirmed by the call-graph scan probes/commit-scan6.py (output commit-time-scan-rev6.log; manual resolution of every residual route in commit-time-residuals.txt). (a) apps/api/src/modules/workflows/gates.ts:872-905 decideGate uses `principalOf(request)`: requireTransformationRead and isApprover -> authorize (gates.ts:262-283) evaluate the grants loaded when the request started, and gates.ts contains no refreshPrincipal call. (b) submitGate (gates.ts:647) and updateGate (gates.ts:468, which configures the gate approver) call openWrite(...) WITHOUT `{ atCommit: true }`, so register-kit.ts:275 uses principalOf(request), not refreshPrincipal. By contrast, every write route of a P4 operation (P4_OPERATION_IDS) reaches refreshPrincipal on reloaded grants inside its transaction, for example decideApproval at approvals.ts:713. Failure scenario: an approver whose SP/BO grant is revoked after the request is authenticated, but before the decide transaction commits, still records the G5/G6 decision. No probe reproduces the race: a JSON body is parsed before the handler, so the window is only the body-parse time.",
+      "expected": "Assignment: every P4 mutation re-checks server-side authorization at commit time (the DG3 lesson 4 pattern: refreshPrincipal on reloaded grants, then commitTimeDenial). The P4 G5/G6 business approvals (REQ-PB-015 at DG4) go through decideGate.",
+      "actual": "These three DG2 operations, which DG2/DG3 approved and P4 extends (gates.ts +463 lines: G5 scale scope, exception and Modular-waiver checks), still authorize on the request-start grants. The behavioural effect is limited to a revocation that races the request by milliseconds. Nothing else is wrong in the gate decision path: the non-approver gets 403 gate.not_approver with a denial, the submitter gets 403, and a stale submission gets 409 (integration suites green in both runs).",
+      "evidence": [
+        "apps/api/src/modules/workflows/gates.ts",
+        "apps/api/src/modules/transformations/register-kit.ts",
+        "apps/api/src/modules/workflows/approvals.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/commit-scan6.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-scan-rev6.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-residuals.txt"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). Low and non-mandatory: a hardening gap in DG2 code that P4 extends. Suggested repair: refreshPrincipal inside the decide transaction and pass the fresh principal to isApprover, plus `atCommit: true` for submitGate and updateGate."
+        }
+      ]
+    }
+  ]
+}

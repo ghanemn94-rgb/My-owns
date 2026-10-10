@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 1,
+  "candidate_id": "sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e",
+  "source_commit": "a91d82cf6fb6f5bffe68e623d469307421ad121b",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R1-code-security-reviewer-20261010T212628Z-22fefe29",
+    "session_id": "22fefe29-6c6c-4fed-a6b0-8681b99a95b5"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 22fefe29 (task T-DG4-REV-SEC-R1). I authored no implementation in the DG4 scope.\n\nAuthorship of the reviewed scope:\n- P4 product code: solution-architect (ARCH-00..08, R1..R3), backend-workflow-engineer (BE-A..M3, R1..R4), kpi-benefits-engineer (KBE-A..G2, R1..R4) and frontend-ux-engineer (FE-A..G2, R1..R3).\n- Register rows: transformation-analyst (AN-P4A, AN-P4B).\n- Acceptance tests in tests/qa and e2e, authored before the freeze: qa-verifier (QA-A..D authoring).\n- Merges: delivery-orchestrator.\n\nI formed this verdict before reading any other reviewer's DG4 round-1 record. A commit by the domain reviewer's run (abd46f1) landed during my run; I did not open its records.\n\nEvery probe ran in disposable clones under $TMPDIR, which I removed at the end. My probe files are evidence only, under docs/delivery/test-evidence/DG4/code-security/round-1/probes/, never in source paths.\n\nThe G1-G6 approvals exercised by the probes are synthetic product records. They are not real business or Finance approvals and have no relation to DG0-DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-1/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R1-00-candidate",
+      "procedure": "Verify the assignment hash, the starting revision and the candidate ID.\n- sha256 of the assignment.\n- git rev-parse HEAD, and whether the repository is shallow.\n- Recompute the candidate ID in a complete clone, at the freeze commit and at the source commit.\n- Recompute it in the repository at the end of the run.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-1/code-security-reviewer.md; git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG4",
+      "environment": "Node 24.21.0. Repository HEAD a613f6f at the start (the freeze commit) and abd46f1 at the end. Complete clone $TMPDIR/rev.",
+      "expected": "sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e with 1449 files, everywhere.",
+      "actual": "The assignment sha256 c1597293…7eae7968 matches. The repository is not shallow.\n\nHEAD at the start was a613f6f, the freeze commit. Its parent is source a91d82c, and it differs from it only in delivery metadata (diff-scan.log D0): three assignments, the manifest, progress.md and stages.json.\n\ncandidate.mjs gives sha256:19656b1f…ae86e with 1449 files:\n- in the clone at a613f6f and at a91d82c (candidate-id.log, exit 0 twice);\n- in the repository at the start;\n- in the repository at the end, at abd46f1 (candidate-id-repo-final.log, exit 0).\n\nHEAD moved during my run. abd46f1 adds only the domain reviewer's run evidence under docs/delivery/runs/.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/candidate-id-repo-final.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-01-build",
+      "procedure": "Install offline from a private copy of the local pnpm store with the frozen lockfile, then build every workspace package. Reinstall afterwards to link the built mth-db bin.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, pnpm 10.33.0, clone $TMPDIR/rev at a613f6f, no network.",
+      "expected": "Exit 0.",
+      "actual": "install1 exit 0, build exit 0, install2 exit 0.\n\nDisclosed log lines:\n- install1.log has two pnpm WARN lines, 'Failed to create bin … mth-db … dist/cli.js'. packages/db is not built yet at the first install. install2 links the bin after the build.\n- build.log has the Vite advisory 'Some chunks are larger than 500 kB': the web index chunk is 1,145.85 kB. D-115 discloses this: route-level splitting brought the main chunk from 2.44 MB to 1.14 MB, and the rest is about 79 % translations. It is a warning, not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R1-02-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, clone at a613f6f.",
+      "expected": "Exit 0.",
+      "actual": "Exit 0, with every package Done. No error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-03-lint",
+      "procedure": "Run ESLint over the repository with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, clone at a613f6f.",
+      "expected": "Exit 0, with no warnings.",
+      "actual": "Exit 0. ESLint printed nothing.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-04-openapi-lint",
+      "procedure": "Lint the OpenAPI contract and count its operations.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2, clone at a613f6f.",
+      "expected": "PASS with 652 operations.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0. diff-scan.log D11 counts 652 operations independently.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-05-no-cdn-and-secrets",
+      "procedure": "Run the no-CDN check, then my own scan of the P4 diff d3e6fe6..a91d82c (apps, packages). The scan looks for:\n- secret-like assignments (D4);\n- remote URLs (D5);\n- dynamic code (D6);\n- sql.raw and sql.lit (D7, D12);\n- innerHTML (D8);\n- float arithmetic on money (D9).",
+      "command": "pnpm check:no-cdn; bash diff-scan.sh",
+      "environment": "Node 22.22.2, clone at a613f6f.",
+      "expected": "no-cdn PASS. No secret, CDN, eval or raw SQL in P4 product code.",
+      "actual": "no-cdn: 'PASS no-cdn: scanned apps, packages', exit 0.\n\nThe diff scan finds nothing in product code:\n- D4: no secret-like string.\n- D5: the only URLs are https://example.invalid, idp.example.invalid, evil.example and http://x, all in test files (architecture.test/testkit, tasks.test, server.test, integration tests, harness).\n- D6: the only hits are test files (an eval payload in a test; node:child_process in test harnesses).\n- D7: no sql.raw or sql.lit added in P4. D12: the only sql.raw in the whole tree is the literal '<'/'>' operator in transformations/routes.ts:131, P1 code.\n- D8: innerHTML appears only in test assertions.\n- D9: no float arithmetic on money.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/no-cdn.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-06-format",
+      "procedure": "Check formatting with Prettier.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, clone at a613f6f.",
+      "expected": "Exit 0.",
+      "actual": "'All matched files use Prettier code style!', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-07-unit-node22",
+      "procedure": "Run pnpm test on Node 22. It is two Vitest invocations: unit-node with unit-web, then unit-formula-nocodegen.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 22.22.2, clone at a613f6f. LC_CTYPE=C.UTF-8 inherited; LANG and LC_ALL unset. The clone's node_modules is writable, so Vitest's default config loader works. The --configLoader runner flag is needed only with the read-only node_modules of the confined repository tree, which I did not use.",
+      "expected": "Both invocations exit 0, with no failure.",
+      "actual": "Exit 0.\n- Invocation 1: 145 files, 2771/2771 passed.\n- Invocation 2: 3 files, 259 passed and 2 skipped.\n\nThe 2 skips are by design: fuzz.test.ts lines 600 and 833 use `it.skipIf(NOCODEGEN)` for the two ESLint engine-source tests, and both pass in the unit-node project of the same run (unit-node22.log). No failure, timeout or error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-08-unit-node24",
+      "procedure": "Run pnpm test on Node 24. After the load timeout in the first run, re-run the timed-out spec alone, then run the second invocation, which `&&` had skipped.",
+      "command": "pnpm test --reporter=verbose; pnpm exec vitest run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose; pnpm exec vitest run --project unit-formula-nocodegen --reporter=verbose",
+      "environment": "Node 24.21.0, clone at a613f6f. LC_CTYPE=C.UTF-8 inherited. High machine load from three concurrent reviews; loadavg 15.55 at the re-run.",
+      "expected": "Every test passes. A timeout is reported, re-run alone, and both runs are disclosed.",
+      "actual": "Run 1 (unit-node24.log) exited 1, with 1 failed and 2770 passed out of 2771. The failure is the one test 'API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages' in apps/api/src/architecture.test.ts: 'Test timed out in 30000ms' after 31798 ms. It is a whole-tree import scan run under three concurrent reviews and my own parallel probe databases. Because the first invocation failed, `&&` did not start unit-formula-nocodegen.\n\nRe-run of the spec alone (unit-node24-rerun-architecture.log): 138/138 passed, exit 0. The same test passed in 14870 ms. It also passed on Node 22 in the full run, where the whole file took 31108 ms.\n\nSecond invocation run separately (unit-node24-nocodegen.log): 259 passed and 2 skipped (the same skipIf(NOCODEGEN) pair as on Node 22), exit 0.\n\nThe timeout is not counted as a pass. The pass comes from the isolated re-run. The record keeps exit status 1 for the full pnpm test run.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24-rerun-architecture.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24-nocodegen.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-09-integration-lang-unset",
+      "procedure": "Run the full integration project, contract.test.ts and migrations 0001→0060 included, on a disposable PostgreSQL 16 cluster. with-pg.sh passes no locale to initdb, so the cluster follows the caller's locale. Port 26321; the cluster is deleted afterwards.",
+      "command": "(unset LANG LC_ALL LC_CTYPE; bash with-pg.sh 26321 pnpm test:integration --reporter=verbose)",
+      "environment": "Node 22.22.2, PG 16.13 on 127.0.0.1:26321. The cluster is SQL_ASCII with collate C; the test databases are UTF8. Clone at a613f6f.",
+      "expected": "Every file and test passes, and 60 migrations apply to a fresh database.",
+      "actual": "202 files, 1922/1922 passed, exit 0, duration 1308.69 s.\n- 'applied 60 migrations to a fresh database'.\n- contract.test.ts: 45 tests passed. They cover route coverage both ways, access on every route, every operation against the contract and the zod mirrors, and the 429 sweep.\n- media-types.test.ts passed.\n- packages/db catalogue.test.ts (schema.ts against the migrated database, the 0029-0031 guards) passed.\n\nThe log has no stderr block, no ×, no ↓ and no timeout line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R1-10-integration-lang-c-utf8",
+      "procedure": "The same integration suite with LANG=C.UTF-8 on Node 24, on port 26322; the cluster is deleted afterwards.",
+      "command": "(unset LC_ALL LC_CTYPE; export LANG=C.UTF-8; bash with-pg.sh 26322 pnpm test:integration --reporter=verbose)",
+      "environment": "Node 24.21.0, PG 16.13 on 127.0.0.1:26322 (UTF8, C.UTF-8), clone at a613f6f.",
+      "expected": "Every file and test passes.",
+      "actual": "202 files, 1922/1922 passed, exit 0, duration 1071.54 s. 60 migrations applied, and the contract and media-type suites passed. The log has no stderr block, no ×, no ↓ and no timeout line. 'git status --porcelain' in the clone after the checks is empty (summary.txt).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R1-11-validate-historical",
+      "procedure": "Run the gate validator against the approved DG3, DG2 and DG1 gates.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3; … --stage DG2; … --stage DG1",
+      "environment": "Node 22.22.2, repository (read-only use) at abd46f1.",
+      "expected": "PASS for each, exit 0.",
+      "actual": "'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)' and 'PASS gate DG1 (historical)', each exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-12-p4-authorization-sweep",
+      "procedure": "Probe S, revision 3: a sweep generated from the contract over all 382 P4 operations (203 mutating, 179 reads), on a database populated by the 27 P3/P4 contract exercise seams. Path parameters come from existing rows.\n- AUD: every P4 mutation, with an empty and a plausible body.\n- ADM-only (ADM_ACCESS + ADM_TECH) and an org-B outsider: every mutation and every read.\n- An SP scoped to ONE transformation T1: every read, with paths taken from T1's rows.\n- A checksum of 201 tables before and after the sweep.\n\nRevision 1 assumed that authorization precedes body validation. 76 cases then got 400 validation with nothing written, so revision 2 accepts a 400 only when nothing is written. Revision 2 then showed 27 operations answering 403 without a denial audit row; revision 3 lists them (NO_DENIAL_OBSERVED) and adds the T1-scoped read step.",
+      "command": "bash with-pg.sh 26331..26334 pnpm exec vitest run --project integration apps/api/test/integration/zz-sec-dg4 (probe copied into a second disposable clone $TMPDIR/probe and removed afterwards)",
+      "environment": "Node 22.22.2 with LANG unset, and Node 24.21.0 with LANG=C.UTF-8. Disposable PG 16. Clone $TMPDIR/probe at a613f6f (git status '' after cleanup, summary-extra.txt).",
+      "expected": "AUD gets 403 on every P4 write and nothing is written. ADM-only and outsider writes are refused. No read discloses a transformation-scoped record of org A to ADM-only or the outsider, or another transformation's record to the T1-scoped user. No table changes.",
+      "actual": "Revision 3: 766/766 passed on Node 22 (LANG unset) and on Node 24 (C.UTF-8), exit 0 both.\n\nAUD: every P4 mutation answers 403, or a 400 validation that precedes authorization with nothing written. 252 of the 403s write exactly authorization.denied. No 2xx. markInboxNotificationRead answers 404, because the notification is not the caller's.\n\nADM-only and outsider: no 2xx on any mutation, and nothing written except denials. The 179 reads as ADM-only, as the outsider and as the T1-scoped SP disclose none of the 5412 protected ids (5356 for T1).\n- ADM-only gets 200 only on org-level configuration (calendars, holidays, job schedules, groups, delegations, reporting periods, the RAG policy, portfolios) and on its own work, inbox and approvals. getPortfolioBenefitTotals answers with transformationIds [] and no lines.\n- The T1-scoped SP gets 97 reads at 200 with no leak.\n\nThe checksum of 201 tables is unchanged. Two path parameters stayed unresolved: recordId of /records/{recordType}/{recordId}/impact and allocationTargetId; those calls hit a nonexistent id, which answers 404.\n\nRevisions 1 and 2 (probe-S-rev1/rev2 logs) are earlier probe states and are explained above. Revision 1: 76 failed and 511 passed, all 76 being 400s before authorization. Revision 2: 27 failed and 560 passed, all 27 being 403s without a denial row, now F-DG4-100.\n\nThe known outsider differences (dispensation 403, reporting and modular 404; D-111, D-112) stay within the accepted refusal statuses.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-sweep.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev1-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node24-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/summary-extra.txt"
+      ]
+    },
+    {
+      "id": "SEC-R1-13-denial-audit-coverage",
+      "procedure": "From probe S (revisions 2 and 3): does every refused P4 mutation write the ADR-0004 authorization.denied event? Read register.ts requirePermissionSomewhere, finance-validation.ts openFinanceWrite and access/denials.ts.",
+      "command": "grep -a 'NO-DENIAL' probe-S-rev3-node22-lang-unset.log",
+      "environment": "The probe S runs above, and source reading at a613f6f.",
+      "expected": "Exactly one authorization.denied for each refused P4 mutation (ADR-0004 §3 coverage rule).",
+      "actual": "26 slice B mutations and completeWorkItem answer 403 with NO audit row. The slice B ones include decideFinanceValidation, decideBenefitBaseline and amend/reverseFinanceValidation. The cause is requirePermissionSomewhere (register.ts:129-131), which throws problems.forbidden() without withDenial. This is F-DG4-100, Medium, not mandatory.\n\nThe access decision itself is correct: 403 and nothing written. The other 176 P4 mutations write their denial.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node22-lang-unset.log",
+        "docs/delivery/reviews/DG4/round-1/code-security-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "SEC-R1-14-cross-transformation-idor-paths",
+      "procedure": "Probe I. User W holds every business role (SP TL BO WL FIN TO KDS TD CM SEC), but only at transformation scope T0.\n- Revision 1: T0 is the transformation of the newest benefit.\n- Revision 2: T0 is a NEW, EMPTY transformation of org A.\n\nEvery P4 mutation whose path names a record id is called with T0 in {transformationId} and every other id taken from OTHER transformations, with If-Match \"1\"..\"3\" and two bodies. Then a checksum of every row of every other transformation.",
+      "command": "bash with-pg.sh 26335/26336 pnpm exec vitest run --project integration apps/api/test/integration/zz-sec-dg4",
+      "environment": "Node 22.22.2, LANG unset, disposable PG 16, clone $TMPDIR/probe at a613f6f.",
+      "expected": "Never a 2xx, and no foreign row changes.",
+      "actual": "Revision 2: 204/204 passed, exit 0.\n- 136 id-bearing mutations were exercised, 816 calls in all: 486 got 400 validation, 318 got 404, 6 got 403 forbidden and 6 got 403 work_item.not_assignee. None succeeded.\n- The foreign-row checksum is unchanged.\n- 67 operations have no foreign id parameter: org-level configuration and top-level creates. Probe B covers the creates.\n\nRevision 1: 204/204 passed, with 73 operations not applicable because their records were all in T0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-idor.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-idor-rev1.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-I-rev1-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-I-rev2-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-15-cross-transformation-idor-bodies",
+      "procedure": "Probe B. Through a capturing client, record every SUCCESSFUL P4 write on /transformations/{T}/<collection> made by the 27 contract seams. Replay each one whose body names a record of another transformation as W, scoped to a new empty T0, with {T} replaced by T0 and the body unchanged.",
+      "command": "bash with-pg.sh 26339 pnpm exec vitest run --project integration apps/api/test/integration/zz-sec-dg4",
+      "environment": "Node 22.22.2, LANG unset, disposable PG 16, clone $TMPDIR/probe at a613f6f.",
+      "expected": "No replay succeeds, and no foreign row changes.",
+      "actual": "91 writes were captured across 42 operations. 35 of them, across 23 operations, have foreign ids in the body; examples are createTraceLink, createInheritedRecord, createBauHandover, createBenefitOverlap, createChangeRequest, requestApproval and previewChangeImpact.\n\nAll 35 replays were refused:\n- 15 × 422 validation.reference;\n- 4 × 422 trace_link.record_not_found;\n- 5 × 400;\n- 3 × 404;\n- 2 × 422 inherited_record.not_modular;\n- 2 × 422 approval.decision_right_unknown;\n- one each of 403 champion_constraint.not_champion, 422 gate.*, risk_disposition.not_open_risk and stakeholder_group.kpi_invalid.\n\nThe foreign checksum is unchanged; 2/2 passed, exit 0. inherited_record also has the 0055 composite FKs to the same transformation (ADR-0038 §7.1).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-body-idor.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-B-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-16-approvals-sod-delegation-races",
+      "procedure": "Probe A, on the implementers' approval-world fixture, read-only. Cases:\n- A1: SoD through a group that contains the requester.\n- A2: SoD through a delegation from the assignee to the later requester, then a decision onBehalfOf.\n- A3: two concurrent approvals at If-Match 1.\n- A4: an approval and the requester's withdrawal at the same time.\n- A5: a three-person delegation loop, and a concurrent A↔B pair.\n- A6: a stale subject version.\n\nAlso read approvals.ts: decide order, commit-time reload, requester-only resubmit and withdraw, and the generic request limited to decision_request.",
+      "command": "bash with-pg.sh 26337 pnpm exec vitest run --project integration apps/api/test/integration/zz-sec-dg4 --reporter=verbose",
+      "environment": "Node 22.22.2, LANG unset, disposable PG 16, clone $TMPDIR/probe at a613f6f.",
+      "expected": "No self-approval by any path, exactly one winner in each race, and a 409 for a stale version.",
+      "actual": "6/6 passed, exit 0.\n- A1: the requester in the group gets 403 approval.sod_requester with an authorization.denied row; the other member gets 200 approved.\n- A2: the requester deciding on behalf of the assignee gets 403 approval.sod_requester; deciding directly gets 403; no decision row.\n- A3: [200 approved, 409 version_conflict], one decision row.\n- A4: decide 409, withdraw 200, final state withdrawn at v2 with 0 decisions.\n- A5: C→A gets 422 delegation.loop; of the concurrent X→Y and Y→X, one is 201 and one is 422 delegation.loop, with one row.\n- A6: 409 approval.stale_version (requested 1, current 2).\n\nSource:\n- decideApproval re-reads grants (approvals.ts:713) and locks the approval FOR UPDATE.\n- Resubmit and withdraw are requester-only: 403 approval.not_requester (approvals.ts:904, 1033).\n- POST /approvals accepts only approvalType decision_request (schemas/approvals.ts:90).\n- The escalation worker never sets approved, and the 0031 trigger refuses approved/rejected without a decision row.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-approvals.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-A-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-17-finance-integrity",
+      "procedure": "Probe F, on the implementers' benefit fixtures, read-only. Cases:\n- F1: two FIN users decide one queued value at the same time.\n- F2: a correction sent with a stale ETag after another FIN user's correction.\n- F3: a concurrent amendment and reversal.\n- F4: an in-place edit of a validated value.\n- F5: decimal precision end to end.\n\nAlso read finance-validation.ts and corrections.ts.",
+      "command": "bash with-pg.sh 26338 pnpm exec vitest run --project integration apps/api/test/integration/zz-sec-dg4 --reporter=verbose",
+      "environment": "Node 22.22.2, LANG unset, disposable PG 16, clone $TMPDIR/probe at a613f6f.",
+      "expected": "Only Finance validates, a validated value is never edited in place, decimals are exact, and every correction has working optimistic concurrency (a stale If-Match gets 409).",
+      "actual": "5/5 passed, exit 0. F2 is written to record the observed behaviour, so its pass shows the defect.\n- F1: [200 approved, 422 finance_validation.not_queued], total 1000.0000 counted once.\n- F3: the reversal gets 201 and the amendment 422 already_reversed; total 0.0000.\n- F4: 409 benefit_measurement.validated_immutable.\n- F5: 900719925474099.1234, then -0.0001, gives exactly 900719925474099.1233.\n- F2 DEFECT: the original validation's ETag stays \"2\" after FIN-B's amendment to 900. FIN-A's amendment with the same stale If-Match \"2\" is accepted (201) and moves the validated total to 1100.0000, silently overriding FIN-B. This is F-DG4-101, Medium and MANDATORY (data integrity and optimistic concurrency).\n\nBy design and disclosed in ADR-0030 §4: a correction is Finance-authored with no second reviewer, so it is not raised.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-finance.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-F-node22-lang-unset.log",
+        "docs/delivery/reviews/DG4/round-1/code-security-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "SEC-R1-18-commit-time-recheck-and-no-io",
+      "procedure": "Static call-graph scan of the 232 write routes in P4-touched API files.\n- Does each route reach refreshPrincipal, or openWrite with `atCommit: true`?\n- Revisions 2-5 of the scanner were discarded for false coverage. Revision 6 strips comments, ends regions at generic functions and closing braces, and counts openWrite only with atCommit.\n- Every residual route is resolved by reading.\n\nAlso grep the P4 server code for fetch, http and file I/O.",
+      "command": "python3 probes/commit-scan6.py p4-source-files.txt; manual reading in commit-time-residuals.txt; xargs grep -n 'fetch(|http.request|undici|axios|child_process|writeFile|readFile' < p4 server files",
+      "environment": "python3 and grep on clone $TMPDIR/rev at a613f6f.",
+      "expected": "Every P4 mutation re-checks authorization at commit time, and there is no client or remote I/O in a transaction.",
+      "actual": "36 residual routes, all resolved:\n- local openWrite atCommit closures in kpi actuals, versions and trajectories;\n- lockForWrite or openSustainmentWrite chains in budget, milestones and handovers;\n- the gate-exception and portfolio-link factories;\n- one read sent as POST (previewChangeImpact);\n- P1 organization and transformation routes, and the P2 register kit.\n\nEvery write route of a P4 operation reaches a commit-time re-check. Three DG2 product-gate operations that P4 extends (decideGate, submitGate, updateGate) authorize on the request-start grants: F-DG4-103, Low, not mandatory.\n\nThe I/O grep finds nothing in P4 server code.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/commit-scan6.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-scan-rev6.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-residuals.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/p4-source-files.txt"
+      ]
+    },
+    {
+      "id": "SEC-R1-19-module-graph-worker-wiring",
+      "procedure": "Build the API module graph independently from static value imports, and check it for cycles. Check that raid never imports governance. Check the architecture test's worker and boundary assertions. Read the advisory-lock registry 730219-730249 against the triggers and worker lock calls.",
+      "command": "node probes/module-cycles.mjs $TMPDIR/rev; grep raid→governance; architecture.test.ts (in unit runs)",
+      "environment": "Node 24.21.0, clone at a613f6f.",
+      "expected": "An acyclic graph; governance→raid only; the worker imports no API code; lock classes distinct and matched.",
+      "actual": "The independent graph has 0 cycles among value imports. governance → access, audit, organization, platform, raid, tasks, workflows, and raid imports no governance file. portfolio → workflows predates P4 (DG3).\n\nThe architecture test passed in both unit runs (Node 24 on its re-run):\n- 'the declared module graph is acyclic';\n- 'governance may import raid; ra…' (self-check);\n- 'apps/worker imports no API code'.\n\nLock registry: P4 classes 730224-730249 are distinct, reserved slots are unused, and the 0029/0030/0031/0055 triggers use the same classes as the API. Worker lock calls take the same classes, with hashtext keys.\n\nProduction wiring through server.ts (D-107) holds: contract route coverage passed on the real server built by the harness.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/module-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24-rerun-architecture.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-20-web",
+      "procedure": "Scan apps/web/src for:\n- XSS sinks and token storage;\n- how work-item linkPath values are rendered (and their DB CHECK);\n- route-level lazy loading (D-115);\n- file-level import cycles (Tarjan SCC over static value imports).",
+      "command": "grep dangerouslySetInnerHTML|innerHTML|localStorage …; node probes/web-cycles.mjs $TMPDIR/rev",
+      "environment": "Node 24.21.0, clone at a613f6f.",
+      "expected": "No XSS sink, session-bound actions, lazy routes and no import cycle.",
+      "actual": "Clean:\n- No dangerouslySetInnerHTML or innerHTML in P4 web code.\n- localStorage holds only the locale choice.\n- linkPath must be relative: the 0028 CHECK requires a leading '/', no '//' or '/\\', and at most 500 characters.\n- Writes use useSessionBoundAction / beginSessionGuard.\n- router.tsx declares the pages with lazyPage (React.lazy).\n\nImport cycles: 3 SCCs, 2 of them P4 (MyWorkPage↔MyWorkSections, TraceabilityPage↔TracePanels). This is F-DG4-102, Low, not mandatory; no behavioural effect was seen. The third cycle (admin Users↔Assignments) is DG2 code and is not raised.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/web-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/web-cycles.log",
+        "docs/delivery/reviews/DG4/round-1/code-security-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "SEC-R1-21-contract-seams-problem-params",
+      "procedure": "Check the contract seams:\n- every p4-pending-*.ts list is empty;\n- the operation count;\n- config.consumes and the media-type pin, through the contract and media-types suites in both integration runs;\n- the D-114 Problem.params addition, by reading problem.ts and every construction site.",
+      "command": "bash diff-scan.sh (D10, D11); grep 'params:' apps/api/src; integration logs",
+      "environment": "Clone at a613f6f, and both integration runs.",
+      "expected": "All pending lists empty and 652 operations. Media types pinned. params purely additive and sent only by the named codes.",
+      "actual": "All 40 p4-pending lists are empty; the arch-NN files compose empty lists. 652 operations.\n\ncontract.test.ts passed 45/45 in both runs: route↔operation coverage both ways, access on every route, every operation validated with its zod mirror, platform statuses and the 429 sweep. media-types.test.ts passed.\n\nHttpProblem.params is optional and added to toBody only when defined (problem.ts). The only construction with params is gates.ts:1468 (gate.modular_waiver_revoked/expired, params.date). The contract's Problem.params is optional, not in `required`. Every other problem response is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-22-decimals-formula-lineage",
+      "procedure": "Scan P4 sources for float use on money, rates, shares and allocations (parseFloat, Number(...), Math.round). Scan for eval and Function in P4 and the formula engine. Read the lineage `sources` construction (worker kpi.ts) and the variable-name constraint.",
+      "command": "xargs grep -n 'parseFloat|Math.round|Number(…amount|value|share|rate…)' < p4-source-files.txt; grep eval(|new Function|Function(; read apps/worker/src/handlers/kpi.ts:520-530",
+      "environment": "Repository and clone at a613f6f.",
+      "expected": "Decimal end to end, no dynamic code, and lineage keyed by variable name (ADR-0027 C1, C4-C5).",
+      "actual": "Money arithmetic uses decimal.js (FORMULA_DECIMAL) in totals, corrections, values, the dashboards and the worker benefits handler. The only Math.round calls are day differences between ISO dates (reporting-periods.ts:118, milestones.ts:69). Web Number() is used only for durations, years and depth.\n\nNo eval or Function in product code.\n\n`sources[i.variable]` is an object keyed by name. Names must match ^[a-z][a-z0-9_]{0,47}$ (0033 CHECK and the zod schema), so '__proto__' cannot occur.\n\nProbe F5 confirms exact decimals through the API and database. The REQ-S16-025 suites passed in both integration runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/p4-source-files.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-F-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/requirement-acceptance.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-23-migrations",
+      "procedure": "Check migrations 0028-0060:\n- added only, and contiguous;\n- every P4 table has p2_attach_guards (row guard and deferred audit-required) or its own triggers;\n- append-only history tables;\n- grants (no DELETE);\n- no SECURITY DEFINER.",
+      "command": "git diff --name-status d3e6fe6..a91d82c -- packages/db/migrations; python3 guard scan; grep GRANT…DELETE; grep 'SECURITY DEFINER'",
+      "environment": "Repository and clone at a613f6f.",
+      "expected": "Forward-only, contiguous, guarded and append-only, with least-privilege grants.",
+      "actual": "33 migrations added and none modified or deleted. 0001-0060 is contiguous.\n\nEvery P4 table is guarded, except 11 seeded catalogues: work_item_kind, governance_party, decision_right_template, the raci_template_* tables, approval_type, benefit_lifecycle_step_definition, forum_template, adoption_indicator_template and phase_(step_)definition. These are GRANT SELECT only to mth_app, so they are read-only to the app.\n\n31 history tables are append-only, among them approval_decision, approval_escalation, calculation_run, kpi_actual_value, closure_record, impact_assessment and risk_disposition.\n\nNo GRANT DELETE and no SECURITY DEFINER in P4 migrations. The catalogue.test integration suite (schema against the migrated DB, the P4 guards) passed in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-24-exactly-once",
+      "procedure": "Exactly-once for calculation runs, Finance queue items, corrective cases, escalations, interventions, reviews, checks and closures. Check the suites that run the worker, its restart and replays in both integration runs, and read the unique backstops named in the lock registry.",
+      "command": "grep the integration logs for restart.test.ts, kpi-period-open-restart.test.ts, a13-job-idempotency.test.ts, benefits-queue.test.ts, raid-corrective.test.ts, decision-sla-escalation.test.ts, blocker-escalation.test.ts, approvals/escalation.test.ts, sustainment-scans.test.ts and adoption-below-trajectory.test.ts",
+      "environment": "Both integration runs (Node 22 with LANG unset, Node 24 with C.UTF-8).",
+      "expected": "Every exactly-once suite passes in both runs.",
+      "actual": "Passing tests per run (run 1 / run 2):\n- restart 1/1\n- kpi-period-open-restart 1/1\n- a13-job-idempotency 5/5\n- benefits-queue 2/2\n- raid-corrective 10/10\n- decision-sla-escalation 5/5\n- blocker-escalation 4/4\n- approval escalation 4/4\n- sustainment-scans 5/5\n- adoption-below-trajectory 14/14\n\n15 parity tests (D-102, 'same rows') passed in run 1. The unique backstops are corrective_case_one_open_key, decision_one_open_blocker_ask, decision_escalation_once, adoption_intervention_trigger_key, sustainment_review_due_key, closure_record_*_key and finance_validation_one_per_measurement / idempotency_key.\n\nProbe F1 adds a concurrent Finance decision counted once. Probe A3 and A4 add one decision per approval under a race.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run2-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-25-requirement-acceptance",
+      "procedure": "For each of the 52 assigned requirements, look up every vitest file named in its register evidence in this round's unit and integration logs, and count passed, failed and skipped tests per log. Read each acceptance text and its notes, including the partial disclosures. Compare with my probes.",
+      "command": "python3 req-acceptance.py unit-node22.log unit-node24.log unit-node24-rerun-architecture.log integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "This round's logs, and the register at a613f6f.",
+      "expected": "Every evidence test file ran and passed. The acceptance clauses are verified, and every partial disclosure is acceptable.",
+      "actual": "Every evidence vitest file of the 52 requirements is found, with 0 failures and 0 skips in both integration runs and the unit runs. 20 Playwright specs are named; this reviewer does not run them (they belong to QA's e2e run), and the requirements do not depend on them alone.\n\nPartial disclosures judged acceptable:\n- REQ-S04-014 and REQ-S07-015: API integration tests plus stubbed web tests, not on the real-stack e2e (D-114).\n- REQ-S08-006: rates are formula variables; there is no FX entity.\n- REQ-S12-005: a fixture with one KPI owner.\n- REQ-S16-011/014/017: catalogue entities are read, or created by handlers, not through the API.\n\nTwo acceptance texts are verified by the API but expose findings:\n- REQ-S08-017: a validated value cannot be edited in place (409, probe F4), but its correction chain has no working If-Match (F-DG4-101, mandatory).\n- REQ-S10-003: the ADM-only user gets 403 on the P4 Finance decision (probe S), but the denial is not audited, contrary to the register note (F-DG4-100).\n\nREQ-S13-001 and REQ-S03-001 are re-proven by probe S's scoped reads, and REQ-S10-010/016/017 by probe A.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/req-acceptance.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/requirement-acceptance.log"
+      ]
+    },
+    {
+      "id": "SEC-R1-26-environment-residuals",
+      "procedure": "Check the environmental residuals on their offline and config surfaces: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "command": "bash env-residuals.sh",
+      "environment": "Node 22.22.2, clone at a613f6f, no network.",
+      "expected": "Each offline surface passes. The live residual is noted, not BLOCKED (assignment).",
+      "actual": "Registry: the offline frozen install exited 0. P4 changes no dependency, only the packages/shared export map './time'. deps:verify needs `npm view` against the live registry and was not run; that is the D-057 residual.\n\nCI: check-ci-needs.mjs is OK (5 jobs, delivery-gates first), its node --test suite passed 46/46, and ci.yml runs pnpm test and pnpm test:integration. The live CI run is the D-058 residual.\n\nKeycloak: 37 oidc tests pass in each integration run against the fake IdP. A live Keycloak is the D-049 residual.\n\nFirst attempt: env-residuals.sh initially called `pnpm deps:verify`, which waits on the network. I stopped it (exit 143) and replaced the call with the residual note above. The log is from the corrected script.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-1/env-residuals.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/env-residuals.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG4-100",
+    "F-DG4-101",
+    "F-DG4-102",
+    "F-DG4-103"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG4/round-1/code-security-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/summary-extra.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/with-pg.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/candidate-id-repo-final.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/diff-scan.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24-rerun-architecture.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/unit-node24-nocodegen.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node24-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/probe-I-rev2-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/probe-B-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/probe-A-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/probe-F-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-residuals.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/web-cycles.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/requirement-acceptance.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-1/env-residuals.log"
+  ],
+  "reviewed_at": "2026-10-10T22:40:20Z",
+  "summary": "FAIL. Four new findings, one of them mandatory.\n\n- F-DG4-101 (Medium, MANDATORY, kpi-benefits-engineer): Finance amendments and reversals check If-Match against the original validation's version, which corrections never step. A correction sent with a stale ETag is accepted and silently overrides another Finance user's correction (probe F2: 900 overridden by 1100, both at If-Match \"2\"). Optimistic concurrency fails on Finance-validated values.\n- F-DG4-100 (Medium, kpi-benefits-engineer): 26 slice B benefit and Finance mutations, and completeWorkItem, answer 403 without the ADR-0004 authorization.denied audit event. The 403 itself and the zero writes are correct.\n- F-DG4-102 (Low, frontend-ux-engineer): two P4 web import cycles.\n- F-DG4-103 (Low, backend-workflow-engineer): decideGate, submitGate and updateGate, DG2 operations that P4 extends, authorize on the request-start grants.\n\nEverything else holds:\n- Build, typecheck, lint, format, no-cdn and openapi:lint (652 operations) pass. Unit tests pass on Node 22 and 24; one Node 24 load timeout was re-run alone and passed, and is disclosed. Integration passes 1922/1922 twice (LANG unset and C.UTF-8). The historical DG3, DG2 and DG1 validations pass.\n- A generated sweep over all 382 P4 operations: AUD gets 403 on every write; ADM-only and outsider are refused; no read discloses another scope's records to ADM-only, the outsider or a single-transformation SP; 201 tables are unchanged.\n- Path and body IDOR probes find no cross-transformation write.\n- Approval SoD holds through groups and delegation. Approval, withdrawal and delegation-loop races have exactly one winner, and a stale version gets 409.\n- Concurrent Finance decisions count once, validated values are immutable in place, and decimals are exact.\n- Every P4 operation re-checks authorization at commit time.\n- The module graph is acyclic (raid never imports governance), the worker imports no API code, migrations are forward-only and guarded, D-114 Problem.params is additive, and every p4-pending list is empty.\n\nThe 52 requirements are verifiable with evidence. Every non-zero exit and every failure in the cited logs is explained in its check."
+}
