@@ -1,5 +1,5 @@
 // P4 contract exercises of KBE-F (T-DG4-KBE-F; p4-work-split §F+G FG.3, §1 S-10): the 5 slice F operations of the
-// adoption indicator templates, metric links and the indicator report. Every call goes through `ctx.mirrored` (OpenAPI
+// adoption indicator templates, metric links and the indicator report; T-DG4-KBE-R2 adds getAdoptionMetricLink. Every call goes through `ctx.mirrored` (OpenAPI
 // status/body/headers + problem mirror) and every success body is parsed with the zod mirror in P4_MIRRORS_KBE_F. All
 // data is synthetic; nothing here grants a business or Finance approval or touches the engineering gates DG0-DG7.
 import {
@@ -19,6 +19,7 @@ export const P4_MIRRORS_KBE_F: Readonly<Record<string, z.ZodType>> = {
   listAdoptionIndicatorTemplates: adoptionIndicatorTemplateList,
   listAdoptionMetricLinks: adoptionMetricLinkPage,
   createAdoptionMetricLink: adoptionMetricLink,
+  getAdoptionMetricLink: adoptionMetricLink,
   removeAdoptionMetricLink: adoptionMetricLink,
   getAdoptionIndicators: adoptionIndicatorReport,
 };
@@ -98,4 +99,14 @@ export async function exerciseP4KbeFOperations(ctx: P4ExerciseContext): Promise<
   expect((await m("POST", REMOVE, { session: s.tl })).status).toBe(428);
   const removed = await m("POST", REMOVE, { session: s.tl, headers: ifm(training.body.version) });
   expect([removed.status, removed.body.status]).toEqual([200, "removed"]);
+
+  // ------------------------------------------------------------------ getAdoptionMetricLink (ADR-0033 amendment A2;
+  // T-DG4-KBE-R2): the create's Location resolves to 200 with its ETag; a removed link stays readable; 404 / 400.
+  const viaLocation = await m("GET", usage.headers.location as string, { session: s.auditor });
+  expect([viaLocation.status, viaLocation.headers.etag, viaLocation.body.id]).toEqual([200, '"1"', usage.body.id]);
+  const removedRead = await m("GET", `${LINKS}/${training.body.id}`, { session: s.bo });
+  expect([removedRead.status, removedRead.body.status, removedRead.headers.etag]).toEqual([200, "removed", '"2"']);
+  expect((await m("GET", `${LINKS}/${training.body.id}`, { session: s.admin })).status).toBe(404);
+  expect((await m("GET", `${LINKS}/${training.body.id}`, { session: s.outsider })).status).toBe(404);
+  expect((await m("GET", `${LINKS}/not-a-uuid`, { session: s.tl })).status).toBe(400);
 }
