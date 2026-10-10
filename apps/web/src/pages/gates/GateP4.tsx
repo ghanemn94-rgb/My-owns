@@ -30,6 +30,7 @@ import { Section, TextCell } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
+import { errorMessage } from "../../lib/problem.ts";
 import { pick } from "../../lib/methodology.ts";
 import { FormAlert, P4FormDialog, textOf, type P4FieldSpec } from "../my-work/p4ui.tsx";
 import {
@@ -827,15 +828,25 @@ export function SubmissionFrozenLines({ snapshot }: { snapshot: Record<string, u
 export const scaleUnitLabel = (u: ScaleScopeBusinessUnit, locale: "en" | "ar") =>
   `${u.code} ${pick(locale, u.nameEn, u.nameAr)}`;
 
+/** The state of a listScaleScopeBusinessUnits read, as ScaleUnitName needs it (a react-query result fits). */
+export interface ScaleUnitsRead {
+  readonly data: readonly ScaleScopeBusinessUnit[] | undefined;
+  readonly isPending: boolean;
+  readonly isError: boolean;
+}
+
 /**
  * A unit named by a scope item or a transition (T-DG4-FE-R3): its code (LTR) and its name in the locale, and
- * "Inactive" (label, not colour) when the unit is no longer active. A unit the read does not list (not loaded yet, or
- * not visible) says so; never a blank.
+ * "Inactive" (label, not colour) when the unit is no longer active. Pending: "Loading"; a failed read: Unknown; a unit
+ * the read does not list: "not visible". Never a blank.
  */
-export function ScaleUnitName({ id, units }: { id: string; units: readonly ScaleScopeBusinessUnit[] | undefined }) {
+export function ScaleUnitName({ id, units }: { id: string; units: ScaleUnitsRead }) {
   const { t } = useTranslation();
   const locale = useLocale();
-  const u = (units ?? []).find((x) => x.id === id);
+  // While the read is pending the name is "Loading", and a failed read is Unknown: neither claims the unit is hidden.
+  if (units.isPending) return <span data-scale-unit="loading">{t("common.state.loading")}</span>;
+  if (units.isError) return <span data-scale-unit="unknown">{t("common.value.unknown")}</span>;
+  const u = (units.data ?? []).find((x) => x.id === id);
   if (!u) return <span data-scale-unit="not-visible">{t("gates.scale.unitNotVisible")}</span>;
   return (
     <span data-scale-unit={u.code} data-scale-unit-status={u.status}>
@@ -880,7 +891,7 @@ export function ScaleScopeSection() {
                 {s.items.map((i) => (
                   <li key={i.id} data-scope-item={`${i.initiativeId}:${i.businessUnitId}`}>
                     <Icon name="check" /> <bdi>{iniName(i.initiativeId)}</bdi> ·{" "}
-                    <ScaleUnitName id={i.businessUnitId} units={units.data} />
+                    <ScaleUnitName id={i.businessUnitId} units={units} />
                     {i.note ? <span className="block small muted">{i.note}</span> : null}
                   </li>
                 ))}
@@ -983,6 +994,12 @@ export function ScaleScopeEditor({
       <p id="scale-scope-hint" className="field__hint">
         {t("gates.scale.editorHint")}
       </p>
+      {units.isError ? (
+        // The unit list could not be read: say so (never an unexplained empty list) and why, translated.
+        <p className="banner banner--warning" role="note" data-scale-units-error="true">
+          <Icon name="alert" /> {t("gates.scale.unitsUnreadable")} {errorMessage(t, units.error)}
+        </p>
+      ) : null}
       {draft.items.map((item, n) => (
         <div key={`item-${n}`} className="scope-row" data-scope-row={n}>
           <label className="field">

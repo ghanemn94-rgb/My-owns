@@ -79,7 +79,7 @@ function useUnitOptions() {
   const locale = useLocale();
   const units = useScaleScopeUnits(ws.tid);
   const list = selectableUnits(units.data).map((u) => ({ value: u.id, label: scaleUnitLabel(u, locale) }));
-  return { list, all: units.data };
+  return { list, all: units };
 }
 
 export function ScaleTransitionsSection() {

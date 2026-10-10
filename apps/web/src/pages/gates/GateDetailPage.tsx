@@ -675,8 +675,19 @@ function SubmitDialog({ view, onClose, onDone }: { view: GateView; onClose: () =
       }
     >
       <p>{t("gates.submit.description")}</p>
-      {!r.ready ? (
-        <p className="banner banner--warning" role="status">
+      {/* QA-C O-1 (T-DG4-FE-R3): the warning follows the gate view itself. Its criteria say which mandatory outputs are
+          incomplete; its `canSubmit` is the server's own answer, which counts an incomplete mandatory output as covered
+          when an accepted exception covers it today (ADR-0035 §4). So incomplete outputs with `canSubmit` true are
+          covered and the dialog never predicts a refusal; the refusal warning stays for a live view that says the
+          gate cannot be submitted (e.g. re-read after a refusal while the dialog is open). Nothing is decided here. */}
+      {!r.ready && view.canSubmit ? (
+        <p className="banner banner--info" role="status" data-submit-coverage="covered">
+          <Icon name="lock" />{" "}
+          {t("gates.submit.coveredNote", { complete: r.complete, total: r.total, covered: r.total - r.complete })}
+        </p>
+      ) : null}
+      {!r.ready && !view.canSubmit ? (
+        <p className="banner banner--warning" role="status" data-submit-coverage="refused">
           <Icon name="alert" /> {t("gates.submit.incompleteWarning", { complete: r.complete, total: r.total })}
         </p>
       ) : null}
