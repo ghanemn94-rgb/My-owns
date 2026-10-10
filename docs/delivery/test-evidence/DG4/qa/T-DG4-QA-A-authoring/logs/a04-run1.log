@@ -1,0 +1,39 @@
+port-policy: PostgreSQL listening on port 25654 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-qa-a
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1zsd4c_aef5cc62 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a04-kpi-propagation.test.ts (8 tests | 1 failed) 41567ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-017, REQ-S07-013: the direct-accept submission lists the downstream views and 'Finance review pending'; one audit event 36ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-013, REQ-S12-006: the worker makes exactly one calculation run and one pending benefit value with one queue item  3689ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S03-009, REQ-S13-003: the overview's Outcomes area shows the new actual once and its drill-down lists the source record 161ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-014: the linked benefit shows a pending amount and the validated total is unchanged 62ms
+   × A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-012: with review configured, a submitted actual is not used until accepted; after acceptance one run 30009ms
+     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S13-003, REQ-S07-006: a KPI with no actual shows Unknown on the dashboards, not 0 82ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-001: a user scoped to transformation X sees nothing of Y on any of the six dashboards  507ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values  3293ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a04-kpi-propagation.test.ts > A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-012: with review configured, a submitted actual is not used until accepted; after acceptance one run
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/qa/integration/a04-kpi-propagation.test.ts:289:3
+    287|   });
+    288| 
+    289|   it("REQ-S07-012: with review configured, a submitted actual is not u…
+       |   ^
+    290|     const reviewed = await ownedKpi(api, x, REVIEW_FLOW);
+    291|     const res = await submitActual(api, x, reviewed.id, {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  06:07:18
+   Duration  51.77s (transform 3.77s, setup 0ms, collect 7.71s, tests 41.57s, environment 0ms, prepare 79ms)
+
