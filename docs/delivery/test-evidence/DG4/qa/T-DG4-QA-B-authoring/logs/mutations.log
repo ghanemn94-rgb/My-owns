@@ -1,0 +1,209 @@
+Sat Oct 10 09:47:45 UTC 2026
+====================================================================================================
+MUTATION M0-baseline-a08 | vitest exit 1 | verdict BASELINE
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t REQ-PB-015, REQ-S20-008: a submission with missing|non-approver is 403|REQ-S10-017
+   × A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission 186ms
+   × A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written 101ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-017: approving version 3 after the record moved to version 4 is 409; no decision is stored 207ms
+   Test Files  1 failed (1)
+   Tests  2 failed | 1 passed | 28 skipped (31)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written
+   AssertionError: expected 'draft' to be 'submitted' // Object.is equality
+   Expected: "submitted"
+   Received: "draft"
+====================================================================================================
+MUTATION M0-baseline-a09 | vitest exit 0 | verdict BASELINE
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t non-working day|N = 2|day before a configured holiday|escalated once to SP
+   ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests | 13 skipped) 1767ms
+   ✓ A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none  517ms
+   Test Files  1 passed (1)
+   Tests  4 passed | 13 skipped (17)
+====================================================================================================
+MUTATION M1-A08-missing-evidence-check-removed | vitest exit 1 | verdict KILLED
+  file: apps/api/src/modules/workflows/gates.ts
+  old :   if (incomplete.length > 0)
+    throw new HttpProblem({
+  new :   if (false as boolean)
+    throw new HttpProblem({
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t REQ-PB-015, REQ-S20-008: a submission with missing
+   × A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission 183ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 30 skipped (31)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission
+====================================================================================================
+MUTATION M2-A08-approver-check-removed | vitest exit 1 | verdict KILLED
+  file: apps/api/src/modules/workflows/gates.ts
+  old :   if (!(await isApprover(tx, principal, approver, target, onBehalfOf)))
+  new :   if (false && !(await isApprover(tx, principal, approver, target, onBehalfOf)))
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t non-approver is 403
+   × A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written 87ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 30 skipped (31)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written
+   AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+   - Expected
+   + Received
+====================================================================================================
+MUTATION M3-A08-stale-approval-check-removed | vitest exit 1 | verdict KILLED
+  file: apps/api/src/modules/workflows/approvals.ts
+  old :   if (current === null || current !== a.subject_version)
+    throw approvalRefusals.stale
+  new :   if (current === null)
+    throw approvalRefusals.stale
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t REQ-S10-017
+   × A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-017: approving version 3 after the record moved to version 4 is 409; no decision is stored 184ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 30 skipped (31)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-017: approving version 3 after the record moved to version 4 is 409; no decision is stored
+   AssertionError: expected { …(6) } to match object { …(4) }
+   - Expected
+   + Received
+====================================================================================================
+MUTATION M4-A09-sla-scan-ignores-working-day | vitest exit 1 | verdict KILLED
+  file: apps/worker/src/handlers/escalations.ts
+  old : if (cal === null || !isWorkingDay(today, cal.calendar)) {
+  new : if (cal === null) {
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t non-working day
+   × A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009) > REQ-S12-011: nothing is escalated on a non-working day; the first working-day scan escalates once 124ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 16 skipped (17)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a09-decision-escalation.test.ts > A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009) > REQ-S12-011: nothing is escalated on a non-working day; the first working-day scan escalates once
+   AssertionError: expected [ { …(12) } ] to deeply equal []
+   - Expected
+   + Received
+====================================================================================================
+MUTATION M5-A09-blocker-n-cycles-forced-to-1 | vitest exit 1 | verdict KILLED
+  file: apps/worker/src/handlers/escalations.ts
+  old :   const n = stored?.red_cycles ?? defaults.redCycles;
+  new :   const n = 1;
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t N = 2
+   × A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none 686ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 16 skipped (17)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a09-decision-escalation.test.ts > A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none
+   AssertionError: expected [ { …(34) } ] to deeply equal []
+   - Expected
+   + Received
+====================================================================================================
+MUTATION M6-A09-holidays-ignored | vitest exit 1 | verdict KILLED
+  file: packages/shared/src/time/working-days.ts
+  old :   const holiday = cal.holidays.find((h) => h.from <= day && day <= h.to);
+  new :   const holiday = cal.holidays.find(() => false);
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t day before a configured holiday
+   × A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-S10-006, REQ-PB-066: 5 working days from the day before a configured holiday skip the holiday and the weekend days 49ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 16 skipped (17)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a09-decision-escalation.test.ts > A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-S10-006, REQ-PB-066: 5 working days from the day before a configured holiday skip the holiday and the weekend days
+   AssertionError: expected '2026-10-25' to be '2026-10-26' // Object.is equality
+   Expected: "2026-10-26"
+   Received: "2026-10-25"
+====================================================================================================
+MUTATION M7-A09-escalation-dedupe-removed | vitest exit 0 | verdict SURVIVED
+  file: apps/worker/src/handlers/escalations.ts
+  old :               .whereRef("e.sla_due_date", "=", "decision.sla_due_date"),
+  new :               .whereRef("e.sla_due_date", "=", "decision.sla_due_date").where(sql<boolean>`false`),
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t escalated once to SP
+   ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests | 16 skipped) 1095ms
+   Test Files  1 passed (1)
+   Tests  1 passed | 16 skipped (17)
+Sat Oct 10 09:49:39 UTC 2026
+Sat Oct 10 09:50:03 UTC 2026
+====================================================================================================
+MUTATION M0b-baseline-a08-describes | vitest exit 0 | verdict BASELINE
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t A08 missing evidence blocks submission|A08 unauthorized and stale approval|REQ-S10-017
+   ✓ |integration| tests/qa/integration/a08-gate-controls.test.ts (31 tests | 15 skipped) 5239ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  657ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception  332ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  412ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  423ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  356ms
+   Test Files  1 passed (1)
+   Tests  16 passed | 15 skipped (31)
+====================================================================================================
+MUTATION M1-A08-missing-evidence-check-removed (rerun, whole describe) | vitest exit 1 | verdict KILLED
+  file: apps/api/src/modules/workflows/gates.ts
+  old :   if (incomplete.length > 0)
+    throw new HttpProblem({
+  new :   if (false as boolean)
+    throw new HttpProblem({
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t A08 missing evidence blocks submission
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: the gate page lists the missing mandatory items; canSubmit is false 184ms
+   × A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission 201ms
+   × A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item 614ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-013: a waiver without an expiry or without a compensating action is refused; nothing is written 107ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception 225ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015: a submission with a stale gate version (If-Match) is refused with 409; nothing is written 11ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S12-009: each required approver receives exactly one task referencing the snapshot; a redelivery adds none 70ms
+   Test Files  1 failed (1)
+   Tests  2 failed | 5 passed | 24 skipped (31)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission
+   AssertionError: expected [ '' ] to include '/criteria/g1.diagnostic'
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item
+   AssertionError: expected [ '' ] to deeply equal [ '/criteria/g1.initial_charter' ]
+   - Expected
+   + Received
+====================================================================================================
+MUTATION M2-A08-approver-check-removed (rerun, whole describe) | vitest exit 1 | verdict KILLED
+  file: apps/api/src/modules/workflows/gates.ts
+  old :   if (!(await isApprover(tx, principal, approver, target, onBehalfOf)))
+  new :   if (false && !(await isApprover(tx, principal, approver, target, onBehalfOf)))
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a08-gate-controls.test.ts -t A08 unauthorized and stale approval
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: the seven statuses exist in the database; a direct Draft -> Approved is refused 100ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: submit moves Draft -> Submitted with an audit event 133ms
+   × A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written 73ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-009: a criterion review persists all nine fields; the first review moves the gate to Under Review 114ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-009, REQ-S10-014: a gate decision without rationale is refused (missing or blank: 400 at /rationale); nothing is written 91ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  569ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  342ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403) 288ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 7 passed | 23 skipped (31)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a08-gate-controls.test.ts > A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written
+   AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+   - Expected
+   + Received
+====================================================================================================
+MUTATION M7b-A09-escalation-once-removed (query dedupe AND unique constraint) | vitest exit 0 | verdict SURVIVED
+  file: apps/worker/src/handlers/escalations.ts
+  old :               .whereRef("e.sla_due_date", "=", "decision.sla_due_date"),
+  new :               .whereRef("e.sla_due_date", "=", "decision.sla_due_date").where(sql<boolean>`false`),
+  file: packages/db/migrations/0045_p4_t16_escalation.sql
+  old :   CONSTRAINT decision_escalation_once UNIQUE (decision_id, sla_due_date),
+  new : 
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t escalated once to SP
+   ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests | 16 skipped) 1837ms
+   ✓ A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009) > REQ-S12-011, REQ-S20-009: an ask whose SLA expired on a working day is escalated once to SP, linked to the ask, with the delay-impact text; re-running creates nothing  311ms
+   Test Files  1 passed (1)
+   Tests  1 passed | 16 skipped (17)
+Sat Oct 10 09:51:18 UTC 2026
+====================================================================================================
+MUTATION M7c-A09-escalation-once-removed (query dedupe, unique constraint AND runOnce key per job) | vitest exit 1 | verdict KILLED
+  file: apps/worker/src/handlers/escalations.ts
+  old :               .whereRef("e.sla_due_date", "=", "decision.sla_due_date"),
+  new :               .whereRef("e.sla_due_date", "=", "decision.sla_due_date").where(sql<boolean>`false`),
+  file: apps/worker/src/handlers/escalations.ts
+  old : `decision.escalate:${a.id}:${slaDueDate}`
+  new : `decision.escalate:${a.id}:${slaDueDate}:${jobId}`
+  file: packages/db/migrations/0045_p4_t16_escalation.sql
+  old :   CONSTRAINT decision_escalation_once UNIQUE (decision_id, sla_due_date),
+  new : 
+CMD (cwd = disposable copy): QA_PG_PORT=25780 MTH_PORT_POOL=25781-25799 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a09-decision-escalation.test.ts -t escalated once to SP
+   × A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009) > REQ-S12-011, REQ-S20-009: an ask whose SLA expired on a working day is escalated once to SP, linked to the ask, with the delay-impact text; re-running creates nothing 185ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 16 skipped (17)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   FAIL  |integration| tests/qa/integration/a09-decision-escalation.test.ts > A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009) > REQ-S12-011, REQ-S20-009: an ask whose SLA expired on a working day is escalated once to SP, linked to the ask, with the delay-impact text; re-running creates nothing
+   AssertionError: expected [ { …(12) }, { …(12) }, …(2) ] to have a length of 1 but got 4
+   - Expected
+   + Received
+Sat Oct 10 09:51:51 UTC 2026

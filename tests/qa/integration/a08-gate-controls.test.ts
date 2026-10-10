@@ -138,19 +138,26 @@ async function leadAndSponsor(g: NativeGateWorld): Promise<Person> {
   return { id: u.id, session: await signIn(api.app, u.subject) };
 }
 
-/** Recursive listing + SHA-256 of every file under docs/delivery/ of this tree (REQ-S04-008). */
+/**
+ * Recursive listing + SHA-256 of every engineering delivery record under docs/delivery/ of this tree (REQ-S04-008):
+ * the DG gate records, reviews, stage state, findings, register, candidates, decisions. Two directories are excluded
+ * because the delivery tooling (not the product) may append to them while this suite runs, e.g. a log tee'd by the
+ * person running it or an agent runner recording its own invocation: test-evidence/ and runs/. They hold no DG decision.
+ */
 const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
+const LIVE_EVIDENCE = new Set(["test-evidence", "runs"]);
 function deliveryFingerprint(): Record<string, string> {
   const out: Record<string, string> = {};
   const walk = (dir: string) => {
     for (const name of readdirSync(dir).sort()) {
       const p = join(dir, name);
+      if (dir === DELIVERY.replace(/\/$/, "") && LIVE_EVIDENCE.has(name)) continue;
       const st = statSync(p);
       if (st.isDirectory()) walk(p);
       else out[relative(DELIVERY, p)] = createHash("sha256").update(readFileSync(p)).digest("hex");
     }
   };
-  walk(DELIVERY);
+  walk(DELIVERY.replace(/\/$/, ""));
   return out;
 }
 
@@ -309,9 +316,22 @@ describe("A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-
       rationale: RATIONALE,
       agreements: { problem: true, baseline: true, materialValuePools: true },
     });
-    expect([409, 422]).toContain(direct.status);
+    // No submission exists, so there is nothing to decide: a version conflict (409, the contract's "not the current
+    // pending submission") or an invalid transition (422, ADR-0007) - never a 2xx.
     expect(String(direct.headers["content-type"])).toContain("application/problem+json");
+    expect([direct.status, direct.body.type]).toEqual(
+      direct.status === 409 ? [409, "urn:mth:problem:version-conflict"] : [422, "urn:mth:problem:invalid-transition"],
+    );
+    // The gate's only write route (the approver configuration) cannot set a status either: the contract has no such
+    // property (additionalProperties: false), so the request is refused as invalid input.
+    const viaPatch = await send("PATCH", `${g.gates}/G1`, {
+      session: g.to.session,
+      headers: ifm((await instanceRow(g, "G1")).version),
+      body: { approverRoleCode: "SP", status: "approved" },
+    });
+    expect(viaPatch.status, JSON.stringify(viaPatch.body)).toBe(400);
     expect((await instanceRow(g, "G1")).status).toBe("draft");
+    expect((await gateView(api, g, "G1")).gate.status).toBe("draft");
     expect(await decisionsOf(g, "G1")).toBe(0);
   });
 
@@ -427,15 +447,19 @@ describe("A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-
     await expectTransition("under_review");
   });
 
-  it("REQ-S04-009, REQ-S10-014: a gate decision without rationale is refused (missing 400, blank 4xx); nothing is written", async () => {
+  it("REQ-S04-009, REQ-S10-014: a gate decision without rationale is refused (missing or blank: 400 at /rationale); nothing is written", async () => {
     const no = await pendingNo();
     const missing = await decideGate(api, g, "G1", g.sp.session, { submissionNo: no, outcome: "changes_requested" });
     expect(missing.status).toBe(400);
+    expect(JSON.stringify(missing.body.errors)).toContain("rationale");
     const blank = await call<Body>(api.app, "POST", `${g.gates}/G1/decision`, {
       session: g.sp.session,
       body: { submissionNo: no, outcome: "changes_requested", rationale: "    " },
     });
-    expect([400, 422]).toContain(blank.status);
+    // A blank rationale is no rationale: the uniform 400 body pointing at /rationale.
+    expect(blank.status, JSON.stringify(blank.body)).toBe(400);
+    expect(blank.body.type).toBe("urn:mth:problem:validation");
+    expect((blank.body.errors as Body[]).map((e) => e.pointer)).toContain("/rationale");
     expect(await decisionsOf(g, "G1")).toBe(0);
     expect((await instanceRow(g, "G1")).status).toBe("under_review");
   });
@@ -792,14 +816,18 @@ describe("A08 G5 Scale and G6 Sustain on a transformation taken there natively (
     const sub = await submitGate(api, g, "G6");
     expect(sub.status, JSON.stringify(sub.body)).toBe(201);
     const before = deliveryFingerprint();
-    expect(Object.keys(before).length).toBeGreaterThan(0);
+    // The fingerprint really covers the engineering gate records (so the equality below is not vacuous).
+    expect(Object.keys(before)).toEqual(expect.arrayContaining(["stages.json", "findings.json", "requirements.csv"]));
+    expect(Object.keys(before).some((f) => /^gates\/DG\d\.json$/.test(f))).toBe(true);
     const d = await decideGate(api, g, "G6", g.sp.session, {
       submissionNo: sub.body.submissionNo,
       outcome: "approved",
-      rationale: "Synthetic QA G6 approval (a product business approval; never DG7).",
+      rationale: "Synthetic QA G6 approval (a product business approval of test data only).",
     });
     expect(d.status, JSON.stringify(d.body)).toBe(201);
     expect((await instanceRow(g, "G6")).status).toBe("approved");
+    // The product records a product gate decision only; it never names or grants an engineering gate.
+    expect(JSON.stringify(d.body)).not.toMatch(/\bDG[0-7]\b/);
     const decidedEvents = await api.db
       .selectFrom("outbox_event")
       .select("idempotency_key")
