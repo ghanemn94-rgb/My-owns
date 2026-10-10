@@ -404,3 +404,64 @@ The minutes follow the existing rows (00:05, 00:20, 00:25, 00:30). `job.configur
 | `governance.notice.blocker_ask_calendar_not_configured` | notice key | accepted | A blocker has been red for {redCycles} cycles, but no executive ask was raised: the organization has no business calendar to set its SLA date. |
 | `governance.notice.blocker_ask_owner_unassigned` | notice key | accepted | The executive ask {code} ({title}) has no owner: {partyCode} has no mapped person ({routingError}). |
 | `governance.notice.series_calendar_not_configured` | notice key | accepted | No meetings were generated for this series: the organization has no business calendar for working days. |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): governance may call `raid` for the action insert, and the codes added by BE-F2
+
+Sources: BE-F2 handback §6 and its carried-forward note (D-110). Nothing above is removed. Where this amendment and §5.4 or §11 differ, this amendment wins.
+
+### G1. Governance → RAID dependency (decided: add the dependency, retire the copy)
+
+**The situation.**
+- `governance/meeting-actions.ts` (BE-F2) inserts the canonical `action_item` and writes its `action_item.create` audit event itself. It copies BE-D's `createLinkedAction` field for field (`raid/actions.ts`), because `governance` may not import `raid` (`apps/api/src/modules.ts`).
+- Two writers of one canonical record can drift. The ADR-0031 §4 audit fields, a new column, or a new rule in one copy would not reach the other.
+
+**Decided: add `raid` to `governance.dependsOn` and use one insert.**
+
+- **The graph stays acyclic.**
+  - `raid` depends on `platform`, `audit`, `access`, `organization`, `transformations`, `kpi` and `tasks`. None of these, nor anything they reach, depends on `governance`.
+  - The only module that depends on `governance` is `reporting`, and `reporting` already depends on `raid`.
+  - So `governance → raid` closes no cycle. The proof is mechanical: `docs/delivery/handbacks/DG4/T-DG4-ARCH-R2-evidence/module-graph.mjs` loads `API_MODULES`, adds the edge, and finds a topological order with no cycle and every dependency before its dependant (`module-graph-output.txt`). It also confirms that the graph without the edge is acyclic, and that `raid` does not reach `governance` today. Once the edge exists, adding the reverse edge `raid → governance` would close a cycle (the script checks it), so `raid` must never import `governance`.
+- **Why not keep the copy with a parity test.** A parity test detects drift only after it happens, on the fields it compares. One insert cannot drift. ADR-0002 rule 1 allows a cross-module call through the other module's `index.ts` once the dependency is declared. The rule that forbids it, the worker importing API code, does not apply here.
+
+**Implementer change (BE-R3), behaviour-preserving:**
+
+1. **`apps/api/src/modules.ts`:** `governance.dependsOn` gains `"raid"`, with a comment citing this amendment.
+2. **`raid/actions.ts`:** extract the insert and its audit event from `createLinkedAction` into an exported `insertActionItem(ctx: WriteContext, link: ActionLink | null, body)`.
+   - `link = null` writes `raid_entry_id`, `dependency_id` and `corrective_case_id` as null.
+   - `body` has `title`, `description?`, `ownerUserId`, `dueDate?` and `followUpDate?`.
+   - `createLinkedAction` becomes `assertActiveUsers` + `insertActionItem` + `assignActionTask`, with the same order, rows and events as today.
+   - `raid/index.ts` exports `insertActionItem`.
+3. **`governance/meeting-actions.ts`:** the copied `insertInto("action_item")` and its `record(… "action_item.create" …)` are replaced by `insertActionItem(ctx, null, { title, description, ownerUserId, dueDate })`.
+   - Governance keeps its own owner check, and its refusal is unchanged: `isActiveUserOf` → 400 `validation.user_unknown` at `/ownerUserId`.
+   - It also keeps its own `meeting_action_link` row and its own `meeting_action_due` task (kind and dedupe key `meeting.action:<actionItemId>:<ownerUserId>`, as §5.4 says).
+   - `insertActionItem` does not create the RAID task, so a meeting action gets exactly one task, as today.
+4. **Proof (BE-R3):**
+   - BE-F2's meeting-action integration tests pass unchanged.
+   - A new comparison: for the same input, the `action_item` row and the `action_item.create` audit event's `changes` are byte-identical before and after (ids and instants normalized). The BE-M2 A/B method may be used.
+   - The architecture boundary test passes with the new edge and fails if `raid` imports `governance`.
+5. **Not decided here: a meeting action's task following later edits.** That is BE-F2's carried-forward item for BE-R3. It is the separate question of whether `raid/actions.ts`'s `followActionTask` also moves `meeting_action_due` items (add that kind to its reschedule `kinds`, and reassign it under its own dedupe key).
+   - Either way it needs no `raid → governance` import. The kind code is a string, and `raid` already writes `action_item` for every source.
+
+### G2. Codes and keys added by BE-F2 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `agenda_item.not_published` | 422 | accepted | Only a published agenda item can take an outcome. |
+| `agenda_item.outcome_not_ask` | 422 | accepted | Only an executive ask records a decision; record this item as noted or deferred. |
+| `agenda_item.ordinal_taken` | 409 (`urn:mth:problem:duplicate`) | accepted | Another agenda item of this meeting has this position. |
+| `validation.agenda_ask_shape` (at `/decisionId` or `/brief`) | 400 field | accepted | Only an executive ask links a decision or carries a brief, and never both. |
+| `validation.evidence_unknown` (at `/materialsEvidenceIds`) | 400 field | accepted | Choose evidence of this transformation. |
+| `validation.attendance_proxy` (at `/onBehalfOfUserId`) | 400 field | accepted | A representative is recorded only for a present person, and never for themselves. |
+| `validation.record_pair` (at `/recordType` or `/recordId`) | 400 field | accepted | A linked record names both its record type and its record. |
+| `validation.agenda_item_unknown` (at `/agendaItemId`) | 400 field | accepted | Choose an agenda item of this meeting. |
+| `governance.task.meeting_action_due` (params `title`, `meetingDate`) | work-item message key | accepted, text authored | Meeting action assigned to you: {title} (meeting of {meetingDate}). |
+| `governance.task.minutes_to_approve` (params `forum`, `meetingDate`) | work-item message key | accepted, text authored | Approve the minutes of the {forum} meeting of {meetingDate}. |
+
+The two message keys are sent without text (S-6). Their English is the text BE-F2 proposed, now accepted. FE renders it, and the Arabic is provisional until it is linguistically reviewed.
+
+**Also as built, accepted:**
+- The 422 `agenda_item.executive_ask_incomplete` `errors[]` messages are "{Element} is required." (for example "Impact of delay is required."). The top-level `detail` is the exact §11 sentence.
+- Three `db-errors.ts` last-line texts are generic, because the guard messages do not carry every placeholder. API callers get the exact §11 texts before any write:
+  - `meeting_minutes_required_output` → `meeting_minutes.required_output_missing`, "A forum meeting cannot be published without at least one of: {kinds}.";
+  - `meeting_output_record_type` → `meeting_output.record_required`, "This output links a record of type its kind requires.";
+  - `agenda_item_published_ask_linked` → `agenda_item.executive_ask_incomplete`, listing "decision required".

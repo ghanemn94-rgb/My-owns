@@ -1,0 +1,64 @@
+diff --git a/docs/api/openapi.yaml b/docs/api/openapi.yaml
+index 836605d..e9459c4 100644
+--- a/docs/api/openapi.yaml
++++ b/docs/api/openapi.yaml
+@@ -111,0 +112,6 @@ info:
++
++    **P4 repairs (T-DG4-ARCH-R2, 2026-10-10).** Two new reads (`getInheritedRecord`, `getBenefitPlanValue`), so the
++    `Location` of `createInheritedRecord` and of `createBenefitPlanValue` resolves and a plan value's ETag can be read
++    before `updateBenefitPlanValue`. Description text only: the gate dispensations name the Modular G3 waiver of the
++    missing-links precondition (D-110; ADR-0021 and ADR-0038 amendments of 2026-10-10), and `KpiEvaluation.inputs`
++    names its lineage shapes (ADR-0027 amendment C1). No schema, status or other operation changes.
+@@ -5412 +5418 @@ paths:
+-      summary: "Modular inherited approvals and End-to-End waivers (ADR-0021 §5). They never create a gate decision."
++      summary: "Modular inherited approvals, End-to-End waivers and Modular G3 waivers of the missing-links precondition (ADR-0021 §5 and amendment W1). They never create a gate decision."
+@@ -5429 +5435 @@ paths:
+-      summary: "Record an inherited approval (verified evidence required to count) or request a waiver (gate.submit). Pending until another person holding gate.decide accepts it."
++      summary: "Record an inherited approval (verified evidence required to count) or request a waiver (gate.submit). Pending until another person holding gate.decide accepts it. A Modular transformation takes a waiver only for G3 with no initiative, and it waives only the missing-links precondition (422 gate.modular_links_missing), never a G3 criterion; any other Modular waiver is 422 dispensation.waiver_requires_end_to_end (ADR-0021 amendment W1)."
+@@ -9977,0 +9984,16 @@ paths:
++    get:
++      tags: [benefits]
++      operationId: getBenefitPlanValue
++      summary: "Read one planned or forecast value with its version; the target of createBenefitPlanValue's Location and the source of updateBenefitPlanValue's If-Match (ARCH-R2; ADR-0030 amendment P1) (transformation.read)."
++      responses:
++        "200":
++          description: "OK."
++          headers:
++            ETag: { $ref: "#/components/headers/ETag" }
++          content:
++            application/json:
++              schema: { $ref: "#/components/schemas/BenefitPlanValue" }
++        "400": { $ref: "#/components/responses/ValidationError" }
++        "401": { $ref: "#/components/responses/Unauthenticated" }
++        "404": { $ref: "#/components/responses/NotFound" }
++        "429": { $ref: "#/components/responses/RateLimited" }
+@@ -16626,0 +16649,20 @@ paths:
++  /api/v1/transformations/{transformationId}/inherited-records/{inheritedRecordId}:
++    parameters:
++      - $ref: "#/components/parameters/TransformationId"
++      - $ref: "#/components/parameters/InheritedRecordId"
++    get:
++      tags: [modular-entry]
++      operationId: getInheritedRecord
++      summary: "Read one inherited evidence item or baseline, active or withdrawn; the target of createInheritedRecord's Location (ARCH-R2; ADR-0038 amendment B3). A prior_approval entry is a gate dispensation and is not read here (404) (transformation.read)."
++      responses:
++        "200":
++          description: "OK."
++          headers:
++            ETag: { $ref: "#/components/headers/ETag" }
++          content:
++            application/json:
++              schema: { $ref: "#/components/schemas/InheritedRecord" }
++        "400": { $ref: "#/components/responses/ValidationError" }
++        "401": { $ref: "#/components/responses/Unauthenticated" }
++        "404": { $ref: "#/components/responses/NotFound" }
++        "429": { $ref: "#/components/responses/RateLimited" }
+@@ -21524 +21566 @@ components:
+-      description: "Modular inherited approval (evidence, never a gate decision) or End-to-End waiver (ADR-0021 §5)."
++      description: "Modular inherited approval (evidence, never a gate decision), End-to-End waiver, or Modular G3 waiver of the missing-links precondition (ADR-0021 §5 and amendment W1)."
+@@ -21541 +21583 @@ components:
+-        counts: { type: boolean, description: "Whether it currently satisfies the sequencing rule (accepted, not expired, and for inherited approvals verified evidence)." }
++        counts: { type: boolean, description: "Whether it currently counts (accepted, not expired, and for inherited approvals verified evidence): for the sequencing rule, or for a Modular G3 waiver the missing-links precondition (ADR-0021 amendment W3)." }
+@@ -23827 +23869 @@ components:
+-        inputs: { type: object }
++        inputs: { type: object, description: "Lineage of the value, by valueSource (ADR-0027 amendment C1): entered {kpiActualId, valueNo, window?}; rolled_up {} or {expectedScopes, missingScopes, entries[]}; formula {formula, values?, sources} with each source's own inputs; none {}." }

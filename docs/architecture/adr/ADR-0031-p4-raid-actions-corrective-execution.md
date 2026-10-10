@@ -275,3 +275,16 @@ The A09 acceptance clause "an integration test creates and reads each one throug
 | `validation.not_applicable` | 400 field | accepted | This field does not apply here. |
 | `raid.task.action_due` | message key | accepted | Your action is due. With {sourceCode}: Your action on {sourceCode} is due. |
 | `raid.task.corrective_follow_up` | message key | accepted | Follow up corrective case {caseCode}. |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): §11 database mapping of the duplicate open case, and the follow-up task as built (BE-R1)
+
+Source: BE-R1 handback §6 items 1–3 (D-109). Nothing above is removed. Where this amendment and §5.6 or §11 differ, this amendment wins.
+
+- **F1. `corrective_case_one_open_key` maps to 500, not 409.** In the §11 list of database last-line mappings, the entry "`corrective_case_one_open_key` → 409 `corrective_case.already_open`" is replaced: the constraint now belongs to the "→ 500 (a programming error)" group.
+  - **Why it maps to 500.** `createCorrectiveCase` decides the rule itself: `INSERT … ON CONFLICT DO NOTHING` under the `correctiveCase` advisory lock. When the insert is skipped, it answers 409 `corrective_case.already_open` (`urn:mth:problem:duplicate`) with the open case's real code: "An open corrective action already exists for this finding: {code}." (the §11 text, unchanged).
+  - No other API write can reach the index: a case's source fields are immutable, and a `PATCH` never reopens a case. If the mapper does see it, that is a programming error. Before BE-R1 the mapper answered 409 with the code shown as "(unknown)"; that text no longer exists anywhere.
+  - **What the client sees is unchanged:** 409 with the code and the §11 text, from the service path.
+- **F2. The follow-up task closes with its case.** `corrective_case_follow_up` is one of the three kinds that refuse manual completion with 422 `work_item.system_managed`. The text of that code is now subject-neutral (ADR-0025 amendment D3).
+  - The task follows the case: a new owner moves it through `reassignWorkItemOfSubject`, and a new follow-up date moves it through `rescheduleWorkItemsOfSubject` (ADR-0025 amendment D2).
+  - The same applies to a RAID action's `raid_action_due` task (§4).
+- **F3. Dedupe keys after a reassignment.** The §4 key `raid.action:<actionItemId>:<ownerUserId>` and the §5.6 key `corrective.follow_up:<caseId>:<ownerUserId>` also exist as `<key>#n` (n ≥ 2), after an owner leaves and comes back (ADR-0025 amendment D2).

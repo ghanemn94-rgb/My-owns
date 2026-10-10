@@ -218,3 +218,67 @@ Accepted, with their exact English texts. `validation.decimal_measure_scale` is 
 | `validation.decimal_measure_scale` | 400 field | accepted | Enter a decimal with at most 6 decimal places. |
 | `validation.root_pair` | 400 field | accepted | Give rootType and rootId together. |
 | `trace_link.record_not_found (existing ADR-0038 §12 code)` | 422 | accepted reuse | on a getTraceability root that is not a record of that type in the transformation (the §12 text) |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): §7.4 as decided and as built, the Modular G3 waiver, `getInheritedRecord`, and the codes added since ARCH-R1
+
+Sources: D-106 (e) (the precondition accepted), D-110 (option a, the waiver; BE-M2 handback §0.2–§0.5 and §5.2). Nothing above is removed. Where this amendment and §7.3, §7.4 or §12 differ, this amendment wins.
+
+### B0. §7.4 is no longer a candidate
+
+The orchestrator accepted the §7.4 precondition in D-106 (e), and BE-M2 built it. The heading's "reopen candidate (orchestrator decision needed)", the "(§7.4; only if accepted)" in the §12 row and the "if §7.4 is accepted" clauses in Consequences and Verification are superseded by B1 and B2.
+
+### B1. The gate side of the Modular G3 waiver (D-110 option a; ADR-0021 amendment W1–W7)
+
+**At G3 submission** (`submitGate`, `assertModularLinks`, after the criteria check; B2):
+
+- For a Modular transformation whose §7.3 rule has a blocking item, the submission proceeds only when a *Modular-links waiver* is in force: a `gate_dispensation` with `kind = 'waiver'`, `gate_code = 'G3'`, `initiative_id IS NULL`, `status = 'accepted'` and `expires_on >= exceptionBusinessDate(tx, transformationId)` (BE-K2's database business-date clock; inclusive expiry; ADR-0021 W3). Otherwise 422 `gate.modular_links_missing` (B4). This is what BE-M2 built; BE-R3 changes only what follows.
+- **Which waiver.** When more than one is in force, the one with the latest `expires_on` is used, ties broken by the greatest `id` (UUIDv7, so the newest). As built the query has no order (`executeTakeFirst`); BE-R3 adds `ORDER BY expires_on DESC, id DESC`.
+- **The snapshot records it.** Only when the submission proceeds *because of* a waiver (a blocking item exists and a waiver is in force), the G3 snapshot gains one member, after `evidence` and before `note`:
+
+  ```json
+  "modularLinks": {
+    "missing": ["baseline_missing", "outcome_link_missing"],
+    "waiver": { "dispensationId": "<uuid>", "expiresOn": "YYYY-MM-DD", "reason": "<the waiver's reason>", "decidedBy": "<uuid>" }
+  }
+  ```
+
+  `missing` lists the blocking codes at submission time, in §7.3 order. A G3 snapshot without this member is exactly today's snapshot: every End-to-End snapshot, and every Modular one whose links are supplied. The contract's `GateSubmission.snapshot` is `{ type: object }`, so the contract does not change. No database CHECK or trigger reads the snapshot's members (`0017` has `CHECK (jsonb_typeof(snapshot) = 'object')` and the immutability trigger `gate_submission_freeze`; no later migration reads `snapshot`), so no migration is needed.
+
+**At G3 approval** (`decideGate`, outcome `approved` only):
+
+- Placed after `assertRecordedExceptionsUnexpired` (step 5a), so every existing refusal keeps its order. When the pending submission's snapshot has `modularLinks.waiver`, the recorded dispensation is read:
+  1. **revoked** (`status = 'revoked'`) → 422 `gate.modular_waiver_revoked`, `{date}` = the revoke's business date in the transformation's timezone (`p4_business_date(revoked_at, timezone)`, the ADR-0035 A1 rule);
+  2. else **expired** (`expires_on < exceptionBusinessDate`) → 422 `gate.modular_waiver_expired`, `{date}` = `expires_on`.
+- The recorded waiver decides, as for gate exceptions (ADR-0035 A1): another waiver accepted later, or links supplied after the submission, do not rescue the frozen submission. The submitter resubmits (a new snapshot, under whatever is then true).
+- Rejecting, requesting changes and deferring stay allowed. The frozen submission and its snapshot are never changed. A snapshot without `modularLinks` reads nothing more, so every End-to-End decision, and every Modular one without a waiver, is byte-identical.
+
+### B2. §7.4 corrected to what was decided and built
+
+The three bullets of §7.4 are replaced by these (BE-M2 handback §0.3–§0.4; D-106 (e)):
+
+- **Scope: G3 only.** For a transformation with `mode = 'modular'`, `submitGate` **for G3** is refused with 422 `gate.modular_links_missing` while §7.3 has a `blocking` item, unless a Modular-links waiver is in force (B1). `errors[]` lists each blocking item. The wider "gate that closes its entry phase or any later gate" wording is not built: a Modular transformation that enters at Mobilize or later never submits G3, and its G4 keeps the DG2 refusals (BE-M2 test: Modular G4 → `gate.out_of_sequence`). The waiver covers G3 only (ADR-0021 W1). For G1 and G2 a Modular waiver is still refused.
+- **Order: after the criteria check.** The precondition runs after the DG2 sequence check **and after the criteria check** (including the gate-exception coverage of ADR-0035 §4), immediately before the snapshot is built. The reason: the DG2-approved test `apps/api/test/integration/dg2-repairs.test.ts:461` ("Modular entry stays valid…") requires a Modular-at-Design G3 submission with no links and missing criteria to answer `gate_criteria_incomplete`. Running the precondition first would change that DG2 response. So a G3 submission without the links is always refused, by the criteria error while criteria are missing, else by `gate.modular_links_missing`.
+- **End-to-End:** every End-to-End G1–G4 response is byte-identical. BE-M2 proved this for 21 responses (D-110), and BE-R3 must repeat the proof with B1 in place.
+- **Where the rule lives** (replaces the file named at the end of §7.3): the pure rule (`deriveMissingLinks`, `blockingMissingLinks`), the §7.2 labels and the refusal texts are in **`packages/shared/src/schemas/missing-links.ts`**, as the work split named it. `packages/shared/src/traceability/missing-links.ts` does not exist. The facts are loaded by `apps/api/src/modules/transformations/missing-links-facts.ts` (exported by `transformations/index.ts`), as §7.3 says.
+
+### B3. `getInheritedRecord` (BE-M2 handback §5.2; the `getAdoptionMetricLink` precedent, ADR-0033 amendment of 2026-10-09)
+
+`createInheritedRecord` sends `Location: …/inherited-records/{id}`, which had no read operation. Defined:
+
+- `GET /api/v1/transformations/{transformationId}/inherited-records/{inheritedRecordId}`, operation `getInheritedRecord`, tag `modular-entry`, permission `transformation.read` (as `listInheritedRecords`).
+- 200 `InheritedRecord` with `ETag` = the row's version, for an `inherited_record` row of that transformation, **active or withdrawn** (a `Location` must keep resolving after a withdrawal). The representation is the one the list and the create return (`label: "inherited"`, kind `evidence` or `baseline`).
+- 404 when the id is not an `inherited_record` row of the transformation. That includes the id of a `prior_approval` entry of the list: those entries are `gate_dispensation` rows and are read through `listGateDispensations`. 400 for a malformed id; 401; 429.
+- No write, no audit event (a read). Pending in `apps/api/test/support/p4-pending-arch-r2.ts` until BE-R3 routes it in `reporting/modular.ts` and exercises it in the contract test.
+
+### B4. Codes and keys added since ARCH-R1 (accepted, with their exact English texts)
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `inherited_record.record_not_found` (at `/evidenceId` or `/baselineId`) | 422 | accepted (BE-M2) | The evidence item or baseline does not exist in this transformation or is archived. |
+| `baseline_missing` (an `errors[]` item code of `gate.modular_links_missing`, at `/baseline`) | 422 error item | accepted (BE-M2) | No active baseline with a value is recorded. |
+| `outcome_link_missing` (an `errors[]` item code of `gate.modular_links_missing`, at `/outcomes`) | 422 error item | accepted (BE-M2) | No active outcome has an active KPI. |
+| `gate.modular_links_missing` | 422 | accepted, now decided (§12 row; B0) | Modular entry: supply the missing baseline and outcome links, or record an authorized waiver, before submitting this gate. |
+| `gate.modular_waiver_revoked` | 422 | **new** (B1; BE-R3) | The waiver of the missing baseline and outcome links was revoked on {date}; supply them or record a new waiver, then resubmit G3. |
+| `gate.modular_waiver_expired` | 422 | **new** (B1; BE-R3) | The waiver of the missing baseline and outcome links expired on {date}; supply them or record a new waiver, then resubmit G3. |
+
+`{date}` is a business date `YYYY-MM-DD`, interpolated by the server. The two new codes use `problems.businessRule` (type `urn:mth:problem:validation`, title "Business rule violated"), like `gate.exception_revoked`.

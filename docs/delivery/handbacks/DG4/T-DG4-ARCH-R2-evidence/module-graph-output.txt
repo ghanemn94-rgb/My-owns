@@ -1,0 +1,12 @@
+governance.dependsOn (as is): platform, audit, access, organization, transformations, workflows, tasks
+raid.dependsOn (as is): platform, audit, access, organization, transformations, kpi, tasks
+modules that depend on governance (as is): reporting
+raid reaches governance (as is): false
+as is: acyclic=true every-dependency-first=true
+  order: platform < audit < access < jobs < methodology < organization < tasks < identity < transformations < admin < evidence < kpi < adoption < benefits < raid < workflows < governance < portfolio < sustainment < reporting
+with governance -> raid: acyclic=true every-dependency-first=true
+  order: platform < audit < access < jobs < methodology < organization < tasks < identity < transformations < admin < evidence < kpi < adoption < benefits < raid < workflows < governance < portfolio < sustainment < reporting
+with governance -> raid AND raid -> governance (must NOT be acyclic): acyclic=false
+  modules on or behind a cycle: governance, raid, reporting, sustainment
+RESULT: PASS (governance -> raid keeps the graph acyclic; with it, raid -> governance would close a cycle)
+exit=0

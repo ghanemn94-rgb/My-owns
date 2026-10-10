@@ -293,3 +293,61 @@ These are the rule, and reviewers test against this text. Capacity and funding d
 - **Migration probe** (`docs/delivery/handbacks/DG3/T-DG3-ARCH-01-evidence/`): fresh apply 0001→0024, apply over a P2-populated database, guards fire on the new tables (audit at COMMIT, version step, append-only, cycle-closing dependency).
 - **Required integration tests (backend):** each §3 transition, success and every listed 422 with its exact text; End-to-End launch 422 then 200 after G2+G3; Modular inherited approval counts only when verified and accepted by another person; the G1 approve without agreements → 422 and with them → 200 plus three agreement rows; readiness lists `economics … technology` for a fresh transformation; G4 submit 422 naming 'Owners', 'Finance validation' and the initiative; G4 decide 403/403/409; a read-only auditor gets 403 on every P3 write; every S16-016 entity created and read through the API.
 - **Required e2e (qa-verifier):** G4 happy path end to end with distinct synthetic users (TL submits, SP approves; FIN validates and funds).
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): the Modular G3 waiver of the missing-links precondition (D-110, option a)
+
+**Decided by the orchestrator in D-110 (option a), specified here.** This is a narrow reopen of the DG3 dispensation route (§5), following the D-089 Q2 and D-106 (e) pattern. Nothing above is removed. Where this amendment and §5 differ, this amendment wins. ADR-0038 amendment B1 states the gate side. A later backend task (BE-R3) implements both and proves the byte identity.
+
+### W1. The exact condition
+
+`createGateDispensation` accepts a `waiver` on a **Modular** transformation in exactly one case: `kind = 'waiver'`, `gateCode = 'G3'`, and **no `initiativeId`** in the body. Call this a *Modular-links waiver*.
+
+- **Check order in the waiver branch (as built, plus one condition).** The first check, today `if (t.mode !== 'end_to_end') → 422 dispensation.waiver_requires_end_to_end`, becomes: refuse when `t.mode !== 'end_to_end'` **and not** (`body.gateCode === 'G3'` and `body.initiativeId === undefined`). Every later check runs unchanged and in the same order: `dispensation.waiver_gate` (never reached for G3), `dispensation.waiver_incomplete` (reason and expiry date required), `dispensation.waiver_shape` (no approving body, approval date or evidence), the initiative check (skipped, no initiative), `dispensation.expired` (expiry before today), and `dispensation.gate_approved` (G3 already approved).
+- **Every other Modular case is unchanged**, byte for byte: a Modular waiver for G1 or G2, and a Modular G3 waiver that names an initiative, still answer 422 `dispensation.waiver_requires_end_to_end` at `/kind` with the DG3 text. An initiative-scoped waiver is a launch-sequencing waiver (§4), and a Modular transformation is not held to the launch sequencing, so that text stays exactly true for them.
+- **Every End-to-End response is unchanged**, because the changed condition is false for every End-to-End transformation. Every other dispensation response is unchanged too: inherited approvals, decide, revoke, list, and the `GateDispensation` representation (no field is added).
+- **No schema change.** `gate_dispensation` has no mode column or mode check (`0020`: `gate_dispensation_waiver_shape` requires a reason and forbids evidence, approving body and approval date; it does not require an initiative or a mode). A Modular-links waiver is an ordinary `waiver` row: `gate_code = 'G3'`, `initiative_id IS NULL`. No migration `0061`.
+
+### W2. What the waiver covers
+
+- **Only** the ADR-0038 §7.4 precondition `gate.modular_links_missing`: the two blocking items `baseline_missing` and `outcome_link_missing` of the ADR-0038 §7.3 rule.
+- **Never a G3 criterion.** The criteria check (TOM, gap matrix, capability gaps, future journeys, design decisions) reads only `gate_exception` rows (ADR-0035 §4; D-089 Q2) and never reads `gate_dispensation`. A missing criterion still answers the DG2 422 `gate_criteria_incomplete`, which runs before the precondition.
+- **Never a gate approval.** It writes no `gate_decision`, does not change `gate_instance.status`, and supplies nothing: the missing-link report (ADR-0038 §7.3) still lists both items while the waiver is in force.
+- **No launch-sequencing effect.** `sequencingState` returns OK for every Modular transformation before it reads dispensations (`portfolio/sequencing.ts`), so a Modular-links waiver changes no initiative transition and no readiness blocker. It is listed, like every dispensation, in `listGateDispensations` and under G3's `dispensations` in the readiness view (§9); the web labels it as a waiver of the missing baseline and outcome links (FE task), never as a launch waiver or an approval.
+- **Who decides it:** unchanged from §5. Recording needs `gate.submit`. Accepting, rejecting and revoking need `gate.decide` held by **G3's configured approver** (`isGateApprover`). The recorder never decides it (`dispensation.decider_is_recorder`; DB CHECK `gate_dispensation_decider_not_recorder`). A delegated decision is refused (`dispensation.on_behalf_not_supported`). It is a business approval inside the product; no job, seed or migration accepts one.
+
+### W3. Expiry semantics
+
+- **At creation and acceptance:** unchanged §5 rules on `todayIn(transformation.timezone)`: an expiry date before today is 422 `dispensation.expired` ("The expiry date cannot be in the past." on create, "The dispensation expired before it was accepted." on accept).
+- **At G3 submission** (ADR-0038 amendment B1): the waiver counts when `status = 'accepted'` and `expires_on >= today`, where `today` is **BE-K2's business-date clock** `exceptionBusinessDate(tx, transformationId)`. That is `p4_business_date(now(), timezone)` from the database clock, the same clock the gate exceptions use (ADR-0035 §4). The expiry date is therefore inclusive: a waiver expiring on 2026-10-31 counts for a submission made on 2026-10-31 in the transformation's timezone and not on 2026-11-01.
+- **At G3 approval** (ADR-0038 amendment B1): the waiver recorded in the submission snapshot is checked again, revoked first and then expired, on the same clock.
+- **The two clocks.** `GateDispensation.counts` on the list is computed with `todayIn(timezone)` from the API host clock (§5, as built), while the submission and approval checks use the database clock. Both give the calendar date in the same timezone. They can differ only for the seconds in which the two clocks straddle midnight. This is stated, not changed, because changing `counts` would change DG3 responses.
+
+### W4. Audit trail
+
+- **Recording, deciding, revoking:** the existing events, unchanged in shape: `gate_dispensation.create` (changes `kind`, `gateCode`, `initiativeId: null`, `approvingBody: null`, `approvedOn: null`, `evidenceId: null`, `expiresOn`, `status: pending`; the waiver reason is the event's `reason`), `gate_dispensation.decide` (status, `decidedBy`; the note as `reason`) and `gate_dispensation.revoke` (status; the revoke reason).
+- **Use at submission:** the G3 submission snapshot records the waiver it relied on (ADR-0038 amendment B1, member `modularLinks`). The snapshot's SHA-256 is in `gate_submission.snapshot_sha256` and in the `gate_submission.create` audit event (`changes.snapshotSha256`), so the audit trail binds the waiver to the submission. No new audit action.
+
+### W5. Refusal codes and texts (exact)
+
+No new code on the dispensation route. The codes a Modular-links waiver can meet, with their as-built texts:
+
+| Status | Code | When | English text (exact) |
+|---|---|---|---|
+| 422 | `dispensation.waiver_requires_end_to_end` (at `/kind`) | a Modular waiver that is not a Modular-links waiver (G1, G2, or G3 with an initiative) | "A waiver applies to the End-to-End launch sequencing; a Modular transformation is not held to it." |
+| 422 | `dispensation.waiver_incomplete` (at `/reason`, `/expiresOn`) | reason or expiry missing | detail "A waiver needs a reason and an expiry date."; each error "{field} is required for a waiver." |
+| 422 | `dispensation.waiver_shape` (at the field) | approving body, approval date or evidence given | "A waiver carries no approving body, approval date or evidence." |
+| 422 | `dispensation.expired` (at `/expiresOn`) | expiry before today, on create | "The expiry date cannot be in the past." |
+| 422 | `dispensation.gate_approved` (at `/gateCode`) | G3 already approved | "G3 is already approved; nothing to dispense." |
+
+`dispensation.waiver_requires_end_to_end` is a DG3 code that no ADR listed until now; its row above records it with its as-built text. The gate-side codes (`gate.modular_links_missing`, `gate.modular_waiver_revoked`, `gate.modular_waiver_expired`) are in ADR-0038 amendment B1.
+
+### W6. Contract
+
+Description text only; no schema, status or operation changes (every changed line is listed in the T-DG4-ARCH-R2 handback): the `listGateDispensations` and `createGateDispensation` summaries, and the `GateDispensation` description and its `counts` description, now name the Modular-links waiver.
+
+### W7. What the implementer (BE-R3) changes, and must prove
+
+1. `portfolio/dispensations.ts` `createDispensation`: the one condition of W1. Nothing else in the file.
+2. The gate side, ADR-0038 amendment B1.
+3. **Byte identity:** the BE-M2 A/B method (record the responses with the base commit's `dispensations.ts` and `gates.ts` and with the new ones, normalize only ids, instants and hashes, then `cmp`), over: every End-to-End dispensation create, decide, revoke and list response of the existing DG3 tests; the Modular refusals for G1, G2 and G3-with-initiative; and the 21 End-to-End G1–G4 gate responses of BE-M2.
+4. **New tests:** a Modular-links waiver is created (201, pending), accepted by G3's approver (200), and a G3 submission with criteria met and links missing is then 201, with `modularLinks` in the snapshot; the same submission with the waiver pending, rejected, revoked, or expired by the injected exception clock is 422 `gate.modular_links_missing`; the recorder cannot accept it (403); a non-approver cannot accept it (403 `gate.not_approver`); a Modular G3 waiver with an initiative is 422 `dispensation.waiver_requires_end_to_end`; the approval-time refusals of ADR-0038 B1; the missing-link report still lists both items after a waived submission.

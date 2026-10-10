@@ -109,6 +109,12 @@ info:
     `getAdoptionMetricLink`); the defaulted-record ETag rule (`ETagOrZero` and `IfMatchOrZero`, used only by the phase
     step, change-control policy and dashboard RAG policy reads and writes, where `"0"` means no row yet); `weekly` in the
     benefit `controlCadence`; and the createAssessmentForm 201 description (record version 2). Nothing else changes.
+
+    **P4 repairs (T-DG4-ARCH-R2, 2026-10-10).** Two new reads (`getInheritedRecord`, `getBenefitPlanValue`), so the
+    `Location` of `createInheritedRecord` and of `createBenefitPlanValue` resolves and a plan value's ETag can be read
+    before `updateBenefitPlanValue`. Description text only: the gate dispensations name the Modular G3 waiver of the
+    missing-links precondition (D-110; ADR-0021 and ADR-0038 amendments of 2026-10-10), and `KpiEvaluation.inputs`
+    names its lineage shapes (ADR-0027 amendment C1). No schema, status or other operation changes.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -5409,7 +5415,7 @@ paths:
     get:
       tags: [portfolio]
       operationId: listGateDispensations
-      summary: "Modular inherited approvals and End-to-End waivers (ADR-0021 §5). They never create a gate decision."
+      summary: "Modular inherited approvals, End-to-End waivers and Modular G3 waivers of the missing-links precondition (ADR-0021 §5 and amendment W1). They never create a gate decision."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -5426,7 +5432,7 @@ paths:
     post:
       tags: [portfolio]
       operationId: createGateDispensation
-      summary: "Record an inherited approval (verified evidence required to count) or request a waiver (gate.submit). Pending until another person holding gate.decide accepts it."
+      summary: "Record an inherited approval (verified evidence required to count) or request a waiver (gate.submit). Pending until another person holding gate.decide accepts it. A Modular transformation takes a waiver only for G3 with no initiative, and it waives only the missing-links precondition (422 gate.modular_links_missing), never a G3 criterion; any other Modular waiver is 422 dispensation.waiver_requires_end_to_end (ADR-0021 amendment W1)."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -9975,6 +9981,22 @@ paths:
     parameters:
       - $ref: "#/components/parameters/TransformationId"
       - $ref: "#/components/parameters/BenefitPlanValueId"
+    get:
+      tags: [benefits]
+      operationId: getBenefitPlanValue
+      summary: "Read one planned or forecast value with its version; the target of createBenefitPlanValue's Location and the source of updateBenefitPlanValue's If-Match (ARCH-R2; ADR-0030 amendment P1) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BenefitPlanValue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
     patch:
       tags: [benefits]
       operationId: updateBenefitPlanValue
@@ -16624,6 +16646,26 @@ paths:
         "409": { $ref: "#/components/responses/Duplicate" }
         "422": { $ref: "#/components/responses/BusinessRule" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/inherited-records/{inheritedRecordId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/InheritedRecordId"
+    get:
+      tags: [modular-entry]
+      operationId: getInheritedRecord
+      summary: "Read one inherited evidence item or baseline, active or withdrawn; the target of createInheritedRecord's Location (ARCH-R2; ADR-0038 amendment B3). A prior_approval entry is a gate dispensation and is not read here (404) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InheritedRecord" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /api/v1/transformations/{transformationId}/inherited-records/{inheritedRecordId}/withdraw:
     parameters:
       - $ref: "#/components/parameters/TransformationId"
@@ -21521,7 +21563,7 @@ components:
               contributions: { type: array, description: "Contributions linked to the outcome without a KPI.", items: { $ref: "#/components/schemas/InitiativeOutcomeContribution" } }
     GateDispensation:
       type: object
-      description: "Modular inherited approval (evidence, never a gate decision) or End-to-End waiver (ADR-0021 §5)."
+      description: "Modular inherited approval (evidence, never a gate decision), End-to-End waiver, or Modular G3 waiver of the missing-links precondition (ADR-0021 §5 and amendment W1)."
       required: [id, organizationId, transformationId, kind, gateCode, initiativeId, reason, approvingBody, approvedOn, evidenceId, evidenceVerified, expiresOn, status, counts, recordedBy, decidedBy, decidedAt, decisionNote, revokedBy, revokedAt, revokeReason, version, createdAt, createdBy, updatedAt, updatedBy]
       additionalProperties: false
       properties:
@@ -21538,7 +21580,7 @@ components:
         evidenceVerified: { type: [boolean, "null"], description: "Inherited approvals: whether the evidence is verified now (ADR-0018). Null for waivers." }
         expiresOn: { $ref: "#/components/schemas/NullableBusinessDate" }
         status: { type: string, enum: [pending, accepted, rejected, revoked] }
-        counts: { type: boolean, description: "Whether it currently satisfies the sequencing rule (accepted, not expired, and for inherited approvals verified evidence)." }
+        counts: { type: boolean, description: "Whether it currently counts (accepted, not expired, and for inherited approvals verified evidence): for the sequencing rule, or for a Modular G3 waiver the missing-links precondition (ADR-0021 amendment W3)." }
         recordedBy: { $ref: "#/components/schemas/Uuid" }
         decidedBy: { $ref: "#/components/schemas/NullableUuid" }
         decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
@@ -23824,7 +23866,7 @@ components:
         valueReason: { oneOf: [{ $ref: "#/components/schemas/KpiReasonCode" }, { type: "null" }] }
         valueSource: { type: string, enum: [entered, rolled_up, formula, none] }
         currency: { oneOf: [{ $ref: "#/components/schemas/Currency" }, { type: "null" }] }
-        inputs: { type: object }
+        inputs: { type: object, description: "Lineage of the value, by valueSource (ADR-0027 amendment C1): entered {kpiActualId, valueNo, window?}; rolled_up {} or {expectedScopes, missingScopes, entries[]}; formula {formula, values?, sources} with each source's own inputs; none {}." }
         rounding: { type: [object, "null"] }
         expectedValue: { $ref: "#/components/schemas/NullableDecimal" }
         finalTarget: { $ref: "#/components/schemas/NullableDecimal" }

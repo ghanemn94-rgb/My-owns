@@ -379,3 +379,25 @@ The `0031` trigger `approval_guard` checks `subject_version` against the subject
 | `approvals.task.overdue` | message key | accepted | {title} (round {roundNo}) is overdue since {dueDate} and was escalated to {escalatedToParty} (level {level}). |
 | `approvals.task.overdue_routing_error` | message key | accepted | {title} (round {roundNo}) is overdue since {dueDate}, but it could not be escalated: {routingParty} has no mapped person ({routingError}). |
 | `charter.decision_rights` | missing-item key | accepted | Charter decision rights |
+
+## Amendment (2026-10-10, T-DG4-ARCH-R2): amendment A2–A4 as built (BE-R2)
+
+Source: BE-R2 handback §0 and §5 (D-110). Nothing above is removed. Where this amendment and A2–A4 differ, this amendment wins. Each item is accepted as built; none needs an implementer change.
+
+- **E1. Step 6 of A2 also answers `approval.subject_unknown`.** Under the subject lock, when the subject no longer exists (its current version reads as null), `resubmitApprovalInTx` answers 422 `approval.subject_unknown`, "The record to approve does not exist in this transformation.", before the stale check. The error pointer is `/subjectId`, the same refusal object as the request path. The old route answered the same. Otherwise step 6 answers 409 `approval.stale_version` as A2 says.
+- **E2. The 403 `approval.not_requester`** from both services, "Only the requester can resubmit or withdraw this approval.", carries the authorization-denial audit, like the route's.
+- **E3. Requester only, on the subject's own actions too.** On the three adopting subjects (governance matrices, transition decisions, change requests), only the approval's requester (`requested_by`) can do a round-2 submit or a withdrawal of a record in approval. A Lead, or another holder of the subject's permission, who may otherwise act on the subject ("requester or lead", ADR-0036 §7) gets 403 `approval.not_requester`, and nothing is written. Outside an open approval, the subject's own rules are unchanged.
+- **E4. The `bindServices` provider hook (A4 did not describe it).** An `ApprovalSubjectProvider` may declare `bindServices(services)`, where `services` is `{ resubmit: resubmitApprovalInTx, withdraw: withdrawApprovalInTx }` (`ApprovalInTxServices`).
+  - `registerApprovalSubject` calls it once, at registration.
+  - Sustainment's transition-decision provider uses it, because `sustainment` does not depend on `workflows` (`apps/api/src/modules.ts`). It reaches approvals only through the port that `server.ts` wires with `wireTransitionDecisionApprovals({ requestApproval, registerSubject })`.
+  - So `server.ts` needs no further line. The real-server test `transition-decisions-server-wiring.test.ts` builds the server with nothing wired by hand. A provider that needs the services but is never bound fails closed with 500.
+- **E5. The withdraw reason on a subject-side withdrawal is server-written.** A3 requires a reason, but neither subject action takes one: `withdrawChangeRequest` has no body, and the transition-decision `PATCH` with `status: withdrawn` has no `reason`. The server writes these exact `approval.withdraw` reasons:
+  - "Change request {code} withdrawn." (`CR-nn`);
+  - "Transition decision {code} withdrawn." (`TD-nn`).
+
+  **Decided: kept.** A user-entered reason would need a new request body on two P4 operations. The subject's own audit event already records who withdrew it and when. `POST /api/v1/approvals/{id}/withdraw` still takes the user's reason, for every type.
+- **E6. Governance matrices, round 2.**
+  - `submitGovernanceMatrix` on a draft whose approval is `changes_requested` answers **201**, the only success status the contract declares for it. Its `Location` is the **existing** approval (`/api/v1/approvals/{approvalId}`), now at round 2.
+  - The request body's `title` is **not applied** on round 2: the approval keeps its round-1 title. `requestNote`, when given, replaces the note (A2).
+  - The contract is unchanged. The FE should not offer a title field on a round-2 submit.
+  - A matrix has no withdraw action of its own. Its approval is withdrawn through `POST /api/v1/approvals/{id}/withdraw`.
