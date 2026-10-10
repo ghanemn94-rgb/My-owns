@@ -58,6 +58,8 @@ import {
 } from "./common.tsx";
 import { FundingSection } from "./funding.tsx";
 import { DeliverablesSection, MilestonesSection } from "./roadmapParts.tsx";
+// T-DG4-FE-D2 (p4-work-split §E.5): the slice E slot (budget lines, execution, schedule network).
+import { InitiativeExecutionSlot } from "../actions/ExecutionPanel.tsx";
 
 const READ_ONLY_STATUSES: ReadonlySet<string> = new Set(["cancelled", "completed"]);
 
@@ -155,6 +157,9 @@ function InitiativeCard({ initiative: i }: { initiative: Initiative }) {
           { id: "deliverables", title: t("portfolio.deliverable.title") },
           { id: "milestones", title: t("portfolio.milestone.title") },
           { id: "selections", title: t("portfolio.selectionHistory.title") },
+          { id: "budget-lines", title: t("executionP4.budget.title") },
+          { id: "execution", title: t("executionP4.execution.title") },
+          { id: "schedule-network", title: t("executionP4.network.title") },
         ]}
       />
       <T05Card initiative={i} readOnly={readOnly} />
@@ -165,6 +170,7 @@ function InitiativeCard({ initiative: i }: { initiative: Initiative }) {
       <DeliverablesSection initiative={i} readOnly={readOnly} />
       <MilestonesSection initiative={i} readOnly={readOnly} />
       <SelectionHistory initiative={i} />
+      <InitiativeExecutionSlot initiativeId={i.id} />
     </div>
   );
 }
