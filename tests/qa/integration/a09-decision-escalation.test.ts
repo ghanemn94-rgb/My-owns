@@ -38,7 +38,16 @@ import {
   type NativeGateWorld,
   type Person,
 } from "../support/gates-native.ts";
-import { seedWorld, type World } from "../support/p4.ts";
+import {
+  dashboardWorld,
+  DIRECT_FLOW,
+  openPeriod,
+  ownedKpi,
+  runRecalculation,
+  seedWorld,
+  submitActual,
+  type World,
+} from "../support/p4.ts";
 
 let api: TestApi;
 let w: World;
@@ -297,7 +306,7 @@ describe("A09 working-day SLAs on a configured business calendar (REQ-PB-066, RE
 
 // ================================================================================================ SLA escalation
 
-describe("A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009, REQ-S15-008)", () => {
+describe("A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009)", () => {
   let g: GovWorld;
   beforeAll(async () => {
     g = await govWorld("A09 SLA");
@@ -343,7 +352,7 @@ describe("A09 decision-SLA expiry escalates once to the next authority (REQ-S12-
     expect((await getAsk(g, fresh.id)).escalationLevel).toBe(0);
   });
 
-  it("REQ-S15-008: the escalation keeps the SLA date, the Asia/Riyadh business date of the scan and a UTC event timestamp", async () => {
+  it("REQ-S12-011, REQ-S15-008 (escalation event): the escalation keeps the SLA date, the Asia/Riyadh business date of the scan and a UTC event timestamp", async () => {
     const ask = await raiseAsk(g);
     const yesterday = plusDays(today, -1);
     await moveAskDates(api.db, ask.id, yesterday, yesterday);
@@ -822,7 +831,12 @@ describe("A09 committee workflow: quorum, immutable minutes, actions in My Work 
 
 // ================================================================================================ entity groups
 
-describe("A09 entity groups in the schema (REQ-S16-018, REQ-S16-019)", () => {
+// The row's "an integration test creates and reads each one through the API with authorization enforced" is covered by
+// the backend's own entity-group tests (apps/api/test/integration/raid/entity-group.test.ts, BE-D2, and
+// apps/api/test/integration/governance/entity-group.test.ts, BE-F2), which this task checked exist, cover every listed
+// entity and pass (see the handback). They leave the row's "ERD and migrations contain every entity listed with primary
+// keys, owner and status where applicable" unchecked; only that clause is checked here.
+describe("A09 entity groups: ERD and migrations (REQ-S16-018, REQ-S16-019)", () => {
   it("every listed entity is in the ERD and has a table with a primary key, and owner and status columns where applicable", async () => {
     // Entity -> [table, owner column or null, status column or null]. Risk, Assumption and Issue share raid_entry.
     const entities: Record<string, [string, string | null, string | null]> = {
@@ -856,6 +870,80 @@ describe("A09 entity groups in the schema (REQ-S16-018, REQ-S16-019)", () => {
       expect(pk.rows[0]!.n, `${entity}: primary key on ${table}`).toBe(1);
       if (owner) expect(names, `${entity}: owner column`).toContain(owner);
       if (status) expect(names, `${entity}: status column`).toContain(status);
+    }
+  });
+});
+
+// ================================================================================================ time and currency
+
+describe("A09 time semantics and default currency (REQ-S15-008)", () => {
+  /** Independent oracle: the Asia/Riyadh calendar date of an instant (Intl, not the product's business-date code). */
+  const riyadhDate = (instant: string | Date) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date(instant));
+
+  it("REQ-S15-008: a KPI actual for period 2026-10 keeps observation period 2026-10, the Asia/Riyadh business date of its entry and a UTC event timestamp", async () => {
+    const k = await dashboardWorld(api, w);
+    const oct = await openPeriod(api, w, "monthly", "2026-10", "2026-10-01", "2026-10-31");
+    const kpi = await ownedKpi(api, k, DIRECT_FLOW);
+    const r = await submitActual(api, k, kpi.id, { reportingPeriodId: oct.id, value: "3", dataAsOf: "2026-10-31" });
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+    await runRecalculation(api, r.body.actual.id);
+    const a = r.body.actual;
+    // Observation period: the period the value is FOR, whatever the day it was entered.
+    expect([a.periodLabel, a.periodStart, a.periodEnd]).toEqual(["2026-10", "2026-10-01", "2026-10-31"]);
+    const v = a.values[0];
+    // UTC event timestamp, and the business date is that instant's Asia/Riyadh calendar date.
+    expect(v.enteredAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|\+00:00)$/);
+    expect(v.businessDate).toBe(riyadhDate(v.enteredAt));
+    // The row's example: entered 2026-11-02 23:30 Asia/Riyadh (= 20:30 UTC) is business date 2026-11-02; one hour
+    // later (00:30 Riyadh, still 2026-11-02 in UTC) it is 2026-11-03. The database's business-date function agrees
+    // with the oracle (the API cannot be given a past entry instant, so the example is checked at this boundary).
+    expect([riyadhDate("2026-11-02T20:30:00Z"), riyadhDate("2026-11-02T21:30:00Z")]).toEqual([
+      "2026-11-02",
+      "2026-11-03",
+    ]);
+    const db = await sql<{ d: string; n: string }>`
+      SELECT p4_business_date('2026-11-02T20:30:00Z'::timestamptz, 'Asia/Riyadh')::text AS d,
+             p4_business_date('2026-11-02T21:30:00Z'::timestamptz, 'Asia/Riyadh')::text AS n`.execute(api.db);
+    expect([db.rows[0]!.d, db.rows[0]!.n]).toEqual(["2026-11-02", "2026-11-03"]);
+  });
+
+  it("REQ-S15-008: changing the organization's default currency affects only new records (an existing transformation keeps SAR)", async () => {
+    const org = `/api/v1/organizations/${w.orgA.id}`;
+    const tl = await signIn(api.app, w.leadA1.subject);
+    const create = async (label: string) => {
+      const r = await send("POST", "/api/v1/transformations", {
+        session: tl,
+        body: { businessUnitId: w.a1, name: `Synthetic QA currency ${label}`, mode: "end_to_end" },
+      });
+      expect(r.status, JSON.stringify(r.body)).toBe(201);
+      return r.body;
+    };
+    const o0 = await send("GET", org, { session: admin });
+    expect(o0.status, JSON.stringify(o0.body)).toBe(200);
+    expect(o0.body.defaultCurrency).toBe("SAR");
+    const before = await create("before the change");
+    expect(before.currency).toBe("SAR");
+    const changed = await send("PATCH", org, {
+      session: admin,
+      headers: ifm(o0.body.version),
+      body: { defaultCurrency: "USD" },
+    });
+    expect(changed.status, JSON.stringify(changed.body)).toBe(200);
+    try {
+      expect(changed.body.defaultCurrency).toBe("USD");
+      const after = await create("after the change");
+      expect(after.currency).toBe("USD");
+      // The existing record is unchanged, through the API and in its version.
+      const old = await send("GET", `/api/v1/transformations/${before.id}`, { session: tl });
+      expect([old.body.currency, old.body.version]).toEqual(["SAR", before.version]);
+    } finally {
+      const restored = await send("PATCH", org, {
+        session: admin,
+        headers: ifm(changed.body.version),
+        body: { defaultCurrency: "SAR" },
+      });
+      expect(restored.status, JSON.stringify(restored.body)).toBe(200);
     }
   });
 });
