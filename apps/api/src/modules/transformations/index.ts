@@ -48,3 +48,6 @@ export {
   type GoodOutcomeEvaluation,
   type GoodOutcomeInputs,
 } from "./good-outcome.ts";
+// P4 (T-DG4-BE-M2; ADR-0038 §7.3): the read-only facts of the Modular-entry missing-link rule, read by reporting's
+// missing-link report and by workflows' Modular G3 precondition (neither imports the other).
+export { loadMissingLinkFacts, loadModularEntryFacts, type ModularEntryFacts } from "./missing-links-facts.ts";

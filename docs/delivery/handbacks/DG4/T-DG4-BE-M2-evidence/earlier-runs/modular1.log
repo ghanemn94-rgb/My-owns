@@ -1,0 +1,176 @@
+port-policy: PostgreSQL listening on port 25100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-m2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1m8354_74e8b990 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/modular.test.ts (11 tests | 7 failed) 2953ms
+   × REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied 764ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d6c0-746c-860f-9aa930abbcce","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > a pending inherited approval is inherited_pending_verification and an inherited_approval_unverified warning 233ms
+   × REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > a gate approved by the platform is the only `approved` label 28ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d7e3-759b-a1fa-8ebd9c861c9d","errors":[{"pointer":"/mode","code":"validation.invalid_value","message":"Invalid option: expected one of \"end_to_end\"|\"modular\""}]}: expected 400 to be 201 // Object.is equality
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > scope: another organization's TO gets 404; a malformed id is 400 246ms
+   × REQ-S03-005: labelled inherited records > inherited evidence and baseline are listed with provenance and the inherited label, beside the prior approval 206ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d9aa-712a-aa40-fb4efb9cf411","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+   × REQ-S03-005: labelled inherited records > End-to-End → 422 inherited_record.not_modular; prior_approval → 422 use_dispensation; nothing written 15ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d9bb-7109-9072-b729444f3f82","errors":[{"pointer":"/mode","code":"validation.invalid_value","message":"Invalid option: expected one of \"end_to_end\"|\"modular\""}]}: expected 400 to be 201 // Object.is equality
+   × REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate 312ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-daf0-75e8-87e8-208f31b021e7","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+   × S-4: authorization, If-Match and audit on every write > AUD and BO get 403 on create and withdraw; nothing written 204ms
+     → expected 403 to be 404 // Object.is equality
+   × S-4: authorization, If-Match and audit on every write > withdraw: 428 without If-Match, 409 stale, 404 unknown id, 422 when already withdrawn 136ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-dc40-708a-bab9-97f54d260101","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+   ✓ S-4: authorization, If-Match and audit on every write > one audit event per mutation, in the write's transaction 235ms
+   ✓ S-4: authorization, If-Match and audit on every write > commit-time: a grant revoked while the create waited is 403; nothing written 161ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d6c0-746c-860f-9aa930abbcce","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ addBaseline apps/api/test/integration/contract/p4-exercises-be-m.ts:496:48
+    494|     },
+    495|   });
+    496|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    497|   return (res.body as { id: string }).id;
+    498| }
+ ❯ apps/api/test/integration/reporting/modular.test.ts:126:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > a gate approved by the platform is the only `approved` label
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d7e3-759b-a1fa-8ebd9c861c9d","errors":[{"pointer":"/mode","code":"validation.invalid_value","message":"Invalid option: expected one of \"end_to_end\"|\"modular\""}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ seedModularWorld apps/api/test/integration/contract/p4-exercises-be-m.ts:413:44
+    411|         : { businessUnitId: w.a1, name: "Synthetic End-to-End transfor…
+    412|   });
+    413|   expect(t.status, JSON.stringify(t.body)).toBe(201);
+       |                                            ^
+    414|   const transformationId = (t.body as { id: string }).id;
+    415|   const scope = { type: "transformation" as const, id: transformationI…
+ ❯ apps/api/test/integration/reporting/modular.test.ts:157:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > REQ-S03-005: labelled inherited records > inherited evidence and baseline are listed with provenance and the inherited label, beside the prior approval
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d9aa-712a-aa40-fb4efb9cf411","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ addBaseline apps/api/test/integration/contract/p4-exercises-be-m.ts:496:48
+    494|     },
+    495|   });
+    496|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    497|   return (res.body as { id: string }).id;
+    498| }
+ ❯ apps/api/test/integration/reporting/modular.test.ts:180:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > REQ-S03-005: labelled inherited records > End-to-End → 422 inherited_record.not_modular; prior_approval → 422 use_dispensation; nothing written
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-d9bb-7109-9072-b729444f3f82","errors":[{"pointer":"/mode","code":"validation.invalid_value","message":"Invalid option: expected one of \"end_to_end\"|\"modular\""}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ seedModularWorld apps/api/test/integration/contract/p4-exercises-be-m.ts:413:44
+    411|         : { businessUnitId: w.a1, name: "Synthetic End-to-End transfor…
+    412|   });
+    413|   expect(t.status, JSON.stringify(t.body)).toBe(201);
+       |                                            ^
+    414|   const transformationId = (t.body as { id: string }).id;
+    415|   const scope = { type: "transformation" as const, id: transformationI…
+ ❯ apps/api/test/integration/reporting/modular.test.ts:287:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-daf0-75e8-87e8-208f31b021e7","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ addBaseline apps/api/test/integration/contract/p4-exercises-be-m.ts:496:48
+    494|     },
+    495|   });
+    496|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    497|   return (res.body as { id: string }).id;
+    498| }
+ ❯ apps/api/test/integration/reporting/modular.test.ts:351:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > S-4: authorization, If-Match and audit on every write > AUD and BO get 403 on create and withdraw; nothing written
+AssertionError: expected 403 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 403[39m
+
+ ❯ apps/api/test/integration/reporting/modular.test.ts:396:24
+    394|       body: { reason: "Synthetic" },
+    395|     });
+    396|     expect(out.status).toBe(404);
+       |                        ^
+    397|   });
+    398| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > S-4: authorization, If-Match and audit on every write > withdraw: 428 without If-Match, 409 stale, 404 unknown id, 422 when already withdrawn
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12310-dc40-708a-bab9-97f54d260101","errors":[{"pointer":"/scope","code":"validation.invalid_value","message":"Invalid option: expected one of \"revenue\"|\"cost\"|\"customer\"|\"operational\"|\"capability\""}]}: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ addBaseline apps/api/test/integration/contract/p4-exercises-be-m.ts:496:48
+    494|     },
+    495|   });
+    496|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    497|   return (res.body as { id: string }).id;
+    498| }
+ ❯ apps/api/test/integration/reporting/modular.test.ts:404:45
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 4 passed (11)
+   Start at  23:47:37
+   Duration  12.95s (transform 3.73s, setup 0ms, collect 7.42s, tests 2.95s, environment 0ms, prepare 95ms)
+

@@ -1,0 +1,44 @@
+port-policy: PostgreSQL listening on port 25100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-m2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv1mb9di_ad0564bb (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts (5 tests | 1 failed) 2776ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > 422 gate.modular_links_missing listing both items; nothing written; 201 once both are supplied  791ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > an accepted, unexpired G3 waiver lets it through; an expired or a pending one does not  930ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > the DG2 order is kept: G3 criteria not met → gate_criteria_incomplete first, exactly as before 153ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > only G3 carries the precondition: a Modular G4 out of sequence keeps the DG2 refusal 112ms
+   × End-to-End G1-G4: unaffected by the Modular precondition (byte comparison in the handback) > the full chain with no baseline and no outcome link: every refusal and success as in DG2/DG3 483ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)","code":"gate.g1_agreements_required","requestId":"01a12313-1c87-71dc-8106-2a6e779dec6c","errors":[{"pointer":"/agreements/problem","code":"gate.g1_agreements_required","message":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)"},{"pointer":"/agreements/baseline","code":"gate.g1_agreements_required","message":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)"},{"pointer":"/agreements/materialValuePools","code":"gate.g1_agreements_required","message":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)"}]}: expected 422 to be 201 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/modular-precondition.test.ts > End-to-End G1-G4: unaffected by the Modular precondition (byte comparison in the handback) > the full chain with no baseline and no outcome link: every refusal and success as in DG2/DG3
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)","code":"gate.g1_agreements_required","requestId":"01a12313-1c87-71dc-8106-2a6e779dec6c","errors":[{"pointer":"/agreements/problem","code":"gate.g1_agreements_required","message":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)"},{"pointer":"/agreements/baseline","code":"gate.g1_agreements_required","message":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)"},{"pointer":"/agreements/materialValuePools","code":"gate.g1_agreements_required","message":"G1 approval requires leadership agreement on the problem, the baseline and the material value pools (B0032)"}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/workflows/modular-precondition.test.ts:277:48
+    275|       await rec(`${code} view after submit`, "GET", G(code), { session…
+    276|       const d = await decide(code, s.body.submissionNo as number);
+    277|       expect(d.status, JSON.stringify(d.body)).toBe(201);
+       |                                                ^
+    278|       expect((await sub(code, `${code} resubmit after approval`)).body…
+    279|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  23:50:05
+   Duration  12.08s (transform 3.39s, setup 0ms, collect 6.51s, tests 2.78s, environment 0ms, prepare 86ms)
+

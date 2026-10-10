@@ -25,6 +25,7 @@ import {
 } from "@mth/db";
 import { PHASES, type Phase, type Permission } from "@mth/shared";
 import {
+  blockingMissingLinks,
   GATE_AGREEMENT_CODES,
   gateApproverConfig,
   gateDecisionCreate,
@@ -38,6 +39,9 @@ import {
   type GateInstance,
   type GateScaleScope,
   type GateSubmission,
+  MODULAR_LINKS_MISSING_DETAIL,
+  MODULAR_PRECONDITION_GATE,
+  modularBlockingError,
   truncateText,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -80,6 +84,8 @@ import {
   advancePhaseOnGateApproval,
   assertActiveUsers,
   bumpStamps,
+  loadMissingLinkFacts,
+  loadModularEntryFacts,
   openWrite,
   ruleProblem,
   writableTransformation,
@@ -678,6 +684,9 @@ async function submitGate(
         message: c.missing.map((m) => m.message).join(" "),
       })),
     });
+  // T-DG4-BE-M2 (ADR-0038 §7.4; D-106 (e)): the Modular-entry G3 precondition. After the sequence and criteria checks,
+  // so every existing refusal keeps its order and body (dg2-repairs "Modular entry stays valid" included).
+  if (gateCode === MODULAR_PRECONDITION_GATE) await assertModularLinks(tx, transformationId);
 
   const transformation = await tx
     .selectFrom("transformation")
@@ -1380,3 +1389,39 @@ async function assertRecordedExceptionsUnexpired(tx: Tx, submissionId: string, t
 
 /** Permissions a gate route declares (for the generated AUD write-deny sweep and documentation). */
 export const GATE_WRITE_PERMISSIONS: readonly Permission[] = ["gate.configure", "gate.submit", "gate.decide"];
+
+/**
+ * T-DG4-BE-M2 (ADR-0038 §7.4, §12; D-106 (e); REQ-PB-005, REQ-S03-005): for a MODULAR transformation only, G3 is refused
+ * with 422 `gate.modular_links_missing` while the ADR-0038 §7.3 rule (the shared `blockingMissingLinks` over the facts of
+ * transformations/missing-links-facts.ts, the same rule as the missing-link report) has a blocking item, unless an
+ * accepted, unexpired G3 waiver exists: a `gate_dispensation` of kind `waiver` for G3 with no initiative, accepted, whose
+ * expiry date is today or later in the transformation's timezone (the BE-K2 business clock). `errors[]` lists each
+ * blocking item (`/baseline`, `/outcomes`). An End-to-End transformation reads one row and gets the DG2/DG3 response
+ * byte for byte. Nothing here approves anything or writes a gate decision.
+ */
+async function assertModularLinks(tx: Tx, transformationId: string): Promise<void> {
+  const entry = await loadModularEntryFacts(tx, transformationId);
+  if (entry?.mode !== "modular") return;
+  const blocking = blockingMissingLinks(await loadMissingLinkFacts(tx, transformationId));
+  if (blocking.length === 0) return;
+  const today = await exceptionBusinessDate(tx, transformationId);
+  const waiver = await tx
+    .selectFrom("gate_dispensation")
+    .select("id")
+    .where("transformation_id", "=", transformationId)
+    .where("kind", "=", "waiver")
+    .where("gate_code", "=", MODULAR_PRECONDITION_GATE)
+    .where("initiative_id", "is", null)
+    .where("status", "=", "accepted")
+    .where("expires_on", ">=", today)
+    .executeTakeFirst();
+  if (waiver) return;
+  throw new HttpProblem({
+    status: 422,
+    type: "urn:mth:problem:validation",
+    code: "gate.modular_links_missing",
+    title: "Business rule violated",
+    detail: MODULAR_LINKS_MISSING_DETAIL,
+    errors: blocking.map((i) => modularBlockingError(i.code)),
+  });
+}
