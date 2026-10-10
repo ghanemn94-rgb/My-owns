@@ -46,7 +46,7 @@ describe("tasks module (P4)", () => {
     expect(pick(taskRefusals.systemManaged())).toEqual([
       422,
       "work_item.system_managed",
-      "This task closes automatically when its approval is decided.",
+      "This task closes automatically when the record it belongs to is decided or closed.",
     ]);
     expect(pick(taskRefusals.alreadyRead())).toEqual([
       422,

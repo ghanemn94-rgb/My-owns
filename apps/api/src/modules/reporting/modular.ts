@@ -2,6 +2,7 @@
 //   GET  /transformations/{t}/missing-links                                   (transformation.read)
 //   GET  /transformations/{t}/inherited-records[?cursor&limit&includeRemoved] (transformation.read)
 //   POST /transformations/{t}/inherited-records                               (inherited_record.record; TL, TO)
+//   GET  /transformations/{t}/inherited-records/{inheritedRecordId}           (transformation.read; T-DG4-BE-R3)
 //   POST /transformations/{t}/inherited-records/{inheritedRecordId}/withdraw  (inherited_record.record; If-Match)
 //
 // - The missing-link report is computed in one read-only transaction and stored nowhere (JK.10 item 2). Its rule is the
@@ -18,6 +19,9 @@
 // - Every write re-authorises at commit, validates, takes If-Match on the withdrawal (creates are version 1), writes one
 //   audit event in its transaction and does no remote I/O inside it (S-4). Nothing here grants a business approval,
 //   and nothing reads or writes the engineering delivery gates DG0-DG7.
+// - T-DG4-BE-R3 (p4-work-split JK.10 item 3; ADR-0038 §10 "404 outside scope"): a caller who never could read the
+//   transformation gets 404 on every write too, as on the workstream writes of portfolio/structure.ts; a right revoked
+//   while the request waited is still the commit-time 403.
 import type { InheritedRecordRow, Tx } from "@mth/db";
 import {
   deriveMissingLinks,
@@ -71,7 +75,8 @@ import { hrefOf, readOnly } from "./traceability.ts";
 const T_BASE = "/api/v1/transformations/:transformationId";
 const MISSING = `${T_BASE}/missing-links`;
 const RECORDS = `${T_BASE}/inherited-records`;
-const RECORD_WITHDRAW = `${RECORDS}/:inheritedRecordId/withdraw`;
+const RECORD = `${RECORDS}/:inheritedRecordId`;
+const RECORD_WITHDRAW = `${RECORD}/withdraw`;
 const JSON_BODY = ["application/json"] as const;
 export const INHERITED_RECORD_PERMISSION = "inherited_record.record" as const;
 const WRITE_RULES = [{ permission: INHERITED_RECORD_PERMISSION }];
@@ -230,6 +235,17 @@ export async function buildMissingLinks(tx: Tx, transformationId: string): Promi
 
 // ------------------------------------------------------------------------------------------------ writes
 
+/**
+ * T-DG4-BE-R3 (JK.10 item 3): the write gate. The transformation read gate on the request-start grants first, so a
+ * caller who never could read the transformation (another organization) gets 404, never a 403 that discloses it; then
+ * openWrite's commit-time re-authorisation on grants reloaded inside `tx` (a right revoked meanwhile is 403, audited).
+ * The same order as portfolio/structure.ts `openWorkstreamWrite`.
+ */
+async function openModularWrite(tx: Tx, request: FastifyRequest, transformationId: string): Promise<WriteContext> {
+  await requireTransformationRead(tx, principalOf(request), transformationId);
+  return openWrite(tx, request, transformationId, WRITE_RULES, null, { atCommit: true });
+}
+
 async function audit(
   ctx: WriteContext,
   action: string,
@@ -319,7 +335,7 @@ async function withdrawInheritedRecord(
   transformationId: string,
   inheritedRecordId: string,
 ): Promise<InheritedRecord> {
-  const ctx = await openWrite(tx, request, transformationId, WRITE_RULES, null, { atCommit: true });
+  const ctx = await openModularWrite(tx, request, transformationId);
   const body = parseBody(reasonRequest, request.body);
   const expected = requireIfMatch(request);
   const current = await tx
@@ -399,10 +415,28 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
     return { items: page.items, nextCursor: page.nextCursor };
   });
 
+  // T-DG4-BE-R3 (ADR-0038 amendment B3): one inherited record, active or withdrawn, so createInheritedRecord's
+  // Location keeps resolving after a withdrawal. Any other id (a `prior_approval` entry's dispensation id included)
+  // is 404: those are read through listGateDispensations.
+  app.get(RECORD, { config: read }, async (request, reply) => {
+    const { transformationId, inheritedRecordId } = parse(wParams, request.params, "params");
+    await requireTransformationRead(db, principalOf(request), transformationId);
+    const row = await readOnly(db, (tx) =>
+      tx
+        .selectFrom("inherited_record")
+        .selectAll()
+        .where("transformation_id", "=", transformationId)
+        .where("id", "=", inheritedRecordId)
+        .executeTakeFirst(),
+    );
+    if (!row) throw problems.notFound();
+    return sendVersioned(reply, 200, toInheritedRecord(row));
+  });
+
   app.post(RECORDS, { config: write }, async (request, reply) => {
     const { transformationId } = parse(tParams, request.params, "params");
     const result = await db.transaction().execute(async (tx) => {
-      const ctx = await openWrite(tx, request, transformationId, WRITE_RULES, null, { atCommit: true });
+      const ctx = await openModularWrite(tx, request, transformationId);
       const body = parseBody(inheritedRecordCreate, request.body);
       return maybeIdempotent(tx, request, ctx.userId, body, async () => ({
         status: 201,
@@ -420,5 +454,5 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
     return sendVersioned(reply, 200, body);
   });
 
-  return [`GET ${MISSING}`, `GET ${RECORDS}`, `POST ${RECORDS}`, `POST ${RECORD_WITHDRAW}`];
+  return [`GET ${MISSING}`, `GET ${RECORDS}`, `GET ${RECORD}`, `POST ${RECORDS}`, `POST ${RECORD_WITHDRAW}`];
 }

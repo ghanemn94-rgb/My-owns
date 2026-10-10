@@ -42,6 +42,8 @@ import {
   MODULAR_LINKS_MISSING_DETAIL,
   MODULAR_PRECONDITION_GATE,
   modularBlockingError,
+  modularWaiverExpiredDetail,
+  modularWaiverRevokedDetail,
   truncateText,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -686,7 +688,9 @@ async function submitGate(
     });
   // T-DG4-BE-M2 (ADR-0038 §7.4; D-106 (e)): the Modular-entry G3 precondition. After the sequence and criteria checks,
   // so every existing refusal keeps its order and body (dg2-repairs "Modular entry stays valid" included).
-  if (gateCode === MODULAR_PRECONDITION_GATE) await assertModularLinks(tx, transformationId);
+  // T-DG4-BE-R3 (ADR-0038 amendment B1): when a Modular-links waiver let the submission through, it is returned here and
+  // recorded in the snapshot (`modularLinks`); otherwise null and the snapshot is unchanged.
+  const modularLinks = gateCode === MODULAR_PRECONDITION_GATE ? await assertModularLinks(tx, transformationId) : null;
 
   const transformation = await tx
     .selectFrom("transformation")
@@ -735,6 +739,7 @@ async function submitGate(
     ...(g4 !== null ? { g4 } : {}),
     ...(g5 !== null ? { g5 } : {}),
     ...(g6 !== null ? { g6 } : {}),
+    ...(modularLinks !== null ? { modularLinks } : {}),
     note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
   };
   const snapshotJson = canonicalJson(snapshot);
@@ -924,6 +929,10 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
   //     expired by today's business date is refused; rejecting, requesting changes or deferring stays allowed.
   //     T-DG4-BE-R2 (ADR-0035 amendment A1): one that has been revoked is refused first (gate.exception_revoked).
   if (body.outcome === "approved") await assertRecordedExceptionsUnexpired(tx, pending.id, transformationId);
+  // 5b. T-DG4-BE-R3 (ADR-0038 amendment B1): approving a G3 submission whose snapshot records the Modular-links waiver
+  //     it relied on is refused when that waiver was revoked, else when it has expired. A snapshot without
+  //     `modularLinks` reads nothing more.
+  if (body.outcome === "approved") await assertRecordedModularWaiverInForce(tx, pending.snapshot, transformationId);
   const t = await writableTransformation(tx, transformationId);
   if (scope !== null) await assertScaleScopeValid(tx, t.organization_id, transformationId, scope);
   const audit: AuditContext = { ...auditContextOf(request), ...(onBehalfOf ? { onBehalfOfUserId: onBehalfOf } : {}) };
@@ -1399,23 +1408,36 @@ export const GATE_WRITE_PERMISSIONS: readonly Permission[] = ["gate.configure", 
  * blocking item (`/baseline`, `/outcomes`). An End-to-End transformation reads one row and gets the DG2/DG3 response
  * byte for byte. Nothing here approves anything or writes a gate decision.
  */
-async function assertModularLinks(tx: Tx, transformationId: string): Promise<void> {
+async function assertModularLinks(tx: Tx, transformationId: string): Promise<ModularLinksSnapshot | null> {
   const entry = await loadModularEntryFacts(tx, transformationId);
-  if (entry?.mode !== "modular") return;
+  if (entry?.mode !== "modular") return null;
   const blocking = blockingMissingLinks(await loadMissingLinkFacts(tx, transformationId));
-  if (blocking.length === 0) return;
+  if (blocking.length === 0) return null;
   const today = await exceptionBusinessDate(tx, transformationId);
+  // T-DG4-BE-R3 (ADR-0038 amendment B1): when several are in force, the latest expiry wins, ties to the greatest id.
   const waiver = await tx
     .selectFrom("gate_dispensation")
-    .select("id")
+    .select(["id", "expires_on", "reason", "decided_by"])
     .where("transformation_id", "=", transformationId)
     .where("kind", "=", "waiver")
     .where("gate_code", "=", MODULAR_PRECONDITION_GATE)
     .where("initiative_id", "is", null)
     .where("status", "=", "accepted")
     .where("expires_on", ">=", today)
+    .orderBy("expires_on", "desc")
+    .orderBy("id", "desc")
     .executeTakeFirst();
-  if (waiver) return;
+  // gate_dispensation_waiver_shape: a waiver always has a reason and an expiry; an accepted row has decided_by.
+  if (waiver)
+    return {
+      missing: blocking.map((i) => i.code),
+      waiver: {
+        dispensationId: waiver.id,
+        expiresOn: waiver.expires_on!,
+        reason: waiver.reason!,
+        decidedBy: waiver.decided_by!,
+      },
+    };
   throw new HttpProblem({
     status: 422,
     type: "urn:mth:problem:validation",
@@ -1424,4 +1446,46 @@ async function assertModularLinks(tx: Tx, transformationId: string): Promise<voi
     detail: MODULAR_LINKS_MISSING_DETAIL,
     errors: blocking.map((i) => modularBlockingError(i.code)),
   });
+}
+
+/** ADR-0038 amendment B1: the G3 snapshot member recording the Modular-links waiver a submission relied on. */
+type ModularLinksSnapshot = {
+  missing: string[];
+  waiver: { dispensationId: string; expiresOn: string; reason: string; decidedBy: string };
+};
+
+/** T-DG4-BE-R3 (ADR-0038 amendment B1, B4): 422 when the recorded Modular-links waiver was revoked on {date}. */
+export const gateModularWaiverRevoked = (date: string) =>
+  problems.businessRule("gate.modular_waiver_revoked", modularWaiverRevokedDetail(date));
+/** T-DG4-BE-R3 (ADR-0038 amendment B1, B4): 422 when the recorded Modular-links waiver expired on {date}. */
+export const gateModularWaiverExpired = (date: string) =>
+  problems.businessRule("gate.modular_waiver_expired", modularWaiverExpiredDetail(date));
+
+/**
+ * T-DG4-BE-R3 (ADR-0038 amendment B1): at G3 approval, the waiver recorded in the pending submission's snapshot
+ * (`modularLinks.waiver.dispensationId`) is read again. Revoked first (`{date}` = the revoke's business date in the
+ * transformation's timezone, the ADR-0035 A1 rule), else expired by BE-K2's business-date clock (`{date}` =
+ * `expires_on`). The recorded waiver decides: another waiver accepted later, or links supplied since, do not rescue the
+ * frozen submission. A snapshot without the member reads nothing. Nothing is written.
+ */
+async function assertRecordedModularWaiverInForce(tx: Tx, snapshot: unknown, transformationId: string) {
+  const member = (snapshot as { modularLinks?: { waiver?: { dispensationId?: unknown } } } | null)?.modularLinks;
+  const dispensationId = member?.waiver?.dispensationId;
+  if (typeof dispensationId !== "string") return;
+  const row = await tx
+    .selectFrom("gate_dispensation as g")
+    .innerJoin("transformation as t", "t.id", "g.transformation_id")
+    .select([
+      "g.status",
+      sql<string>`g.expires_on::text`.as("expires_on"),
+      sql<string | null>`CASE WHEN g.revoked_at IS NULL THEN NULL
+        ELSE p4_business_date(g.revoked_at, t.timezone)::text END`.as("revoked_on"),
+    ])
+    .where("g.id", "=", dispensationId)
+    .where("g.transformation_id", "=", transformationId)
+    .executeTakeFirstOrThrow();
+  // gate_dispensation_revoked_complete: a revoked row always has revoked_at.
+  if (row.status === "revoked") throw gateModularWaiverRevoked(row.revoked_on!);
+  const today = await exceptionBusinessDate(tx, transformationId);
+  if (row.expires_on < today) throw gateModularWaiverExpired(row.expires_on);
 }
