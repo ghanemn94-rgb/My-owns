@@ -1,0 +1,392 @@
+{
+  "tab": "Dashboard (T10)",
+  "rag": {
+    "green": "Green",
+    "amber": "Amber",
+    "red": "Red",
+    "unknown": "Unknown",
+    "stale": "Stale",
+    "not_applicable": "Not applicable"
+  },
+  "state": {
+    "zero": "Known zero",
+    "unknown": "Unknown",
+    "stale": "Stale",
+    "not_applicable": "Not applicable (n/a)",
+    "lastKnown": "last known value"
+  },
+  "policySource": {
+    "default": "Default thresholds",
+    "configured": "Configured thresholds"
+  },
+  "rule": {
+    "dashboard__rag__outcomes__trajectory": "Outcomes: the worst outcome-KPI status against its trajectory.",
+    "dashboard__rag__outcomes__none": "Unknown: no active outcome with a KPI in scope.",
+    "dashboard__rag__value__validated_gap": "Value: validated value against the value planned to date.",
+    "dashboard__rag__value__nothing_due": "Not applicable: no counted financial benefit has a planned amount due.",
+    "dashboard__rag__portfolio__milestone_outcome": "Portfolio: the worst milestone slip of the top initiatives.",
+    "dashboard__rag__portfolio__none": "Not applicable: no selected, funded, launched or completed initiative.",
+    "dashboard__rag__dependencies__needed_by_critical_path": "Dependencies: open dependencies needed soon or on the critical path.",
+    "dashboard__rag__dependencies__none_open": "Green: no open dependency.",
+    "dashboard__rag__decisions__overdue": "Decisions: at least one open decision is past its decision date.",
+    "dashboard__rag__decisions__due": "Decisions: open decisions are due soon.",
+    "dashboard__rag__decisions__none_open": "Green: no open executive decision.",
+    "dashboard__rag__adoption__curve": "People and adoption: the worst adoption indicator against its curve.",
+    "dashboard__rag__adoption__no_indicators": "Unknown: no adoption indicator is linked.",
+    "dashboard__rag__workstream_not_applicable": "Not applicable: this area is shown at transformation level, not per workstream.",
+    "dashboard__value__gap_ratio": "Value gap = (planned due to date - validated) / planned due to date.",
+    "dashboard__value__sum_investment": "Investment = the sum of the approved budget lines.",
+    "dashboard__finance__pending_validation": "Values waiting for Finance validation.",
+    "other": "Rule not listed in this release."
+  },
+  "reason": {
+    "dashboard__value__nothing_planned": "Not applicable: nothing is planned to date.",
+    "dashboard__value__no_financial_benefit": "Not applicable: there is no financial benefit.",
+    "dashboard__value__multiple_currencies": "Not applicable: the values are in more than one currency and are never converted.",
+    "dashboard__portfolio__no_allocated_value": "Unknown: no benefit value is allocated to this initiative.",
+    "dashboard__portfolio__no_approved_milestone": "Unknown: the initiative has no approved milestone date.",
+    "dashboard__portfolio__milestone_overdue": "Red: a milestone is past its approved date and not achieved.",
+    "dashboard__portfolio__milestone_slip": "A milestone has slipped past its approved date.",
+    "dashboard__kpi__no_period_in_window": "Unknown: no reporting period falls in the selected window.",
+    "benefit__value_amount_missing": "Unknown: a value amount is missing.",
+    "benefit__cost_amount_missing": "Unknown: a cost amount is missing.",
+    "benefit__overlap_open": "Unknown: an overlap with another benefit is still open, so the value is held back.",
+    "benefit__non_financial": "Not applicable: a non-financial benefit has no money value.",
+    "benefit__not_counted": "Not counted: this benefit is counted through another record.",
+    "kpi__no_accepted_actual": "Unknown: no accepted actual for this period.",
+    "kpi__no_active_version": "Unknown: the KPI has no active version.",
+    "kpi__no_approved_trajectory": "Unknown: the KPI has no approved trajectory.",
+    "kpi__before_trajectory": "Unknown: the period is before the trajectory starts.",
+    "kpi__calculation_pending": "Unknown: the calculation is pending.",
+    "kpi__stale": "Stale: the latest actual is older than the KPI's frequency allows.",
+    "kpi__rag__no_actual": "Unknown: no actual to compare with the trajectory.",
+    "kpi__rag__before_trajectory": "Unknown: the period is before the trajectory starts.",
+    "kpi__rag__not_computable": "Not computable: the status cannot be calculated from the data.",
+    "other": "Reason not listed in this release."
+  },
+  "headline": {
+    "dashboard__headline__value_planned": "Planned value",
+    "dashboard__headline__value_forecast": "Forecast value",
+    "dashboard__headline__value_submitted": "Submitted value",
+    "dashboard__headline__value_validated": "Validated value",
+    "dashboard__headline__value_gap": "Value gap",
+    "dashboard__headline__value_investment": "Investment",
+    "dashboard__headline__outcome_kpis": "Outcome KPIs",
+    "dashboard__headline__top_initiatives": "Top initiatives",
+    "dashboard__headline__open_dependencies": "Open dependencies",
+    "dashboard__headline__open_decisions": "Open decisions",
+    "dashboard__headline__overdue_decisions": "Overdue decisions",
+    "dashboard__headline__adoption_indicators": "Adoption indicators",
+    "dashboard__finance__pending_validation": "Values waiting for Finance validation",
+    "other": "Figure"
+  },
+  "flag": {
+    "overdue": "Overdue",
+    "due_soon": "Due soon",
+    "no_due_date": "No due date (Unknown)",
+    "calendar_not_configured": "No business calendar configured",
+    "at_risk": "At risk",
+    "critical_path": "On the critical path",
+    "critical_path_not_computable": "Critical path not computable",
+    "decision_overdue": "Linked decision overdue",
+    "needed_by_passed": "Needed-by date passed",
+    "non_financial": "Non-financial (n/a)",
+    "not_counted": "Not counted",
+    "overlap_open": "Overlap open",
+    "override_in_force": "Override in force",
+    "no_kpi": "No KPI (Unknown)",
+    "other": "Note: {{flag}}",
+    "prefix": {
+      "calculated": "Calculated: {{status}}",
+      "milestone": "Milestone: {{status}}",
+      "outcome": "Outcome: {{status}}",
+      "target": "Target: {{kind}}"
+    }
+  },
+  "targetKind": {
+    "transformation": "Transformation",
+    "outcome": "Outcome",
+    "initiative": "Initiative",
+    "stakeholder_group": "Stakeholder group"
+  },
+  "recordType": {
+    "benefit": "Benefit",
+    "outcome": "Outcome",
+    "outcome_kpi": "Outcome KPI",
+    "kpi_definition": "KPI",
+    "kpi_actual": "KPI actual",
+    "kpi_version": "KPI version",
+    "initiative": "Initiative",
+    "dependency": "Dependency",
+    "executive_decision": "Executive decision",
+    "benefit_measurement": "Benefit measurement",
+    "benefit_plan_value": "Planned value",
+    "business_case_line": "Business case line",
+    "business_case": "Business case",
+    "action_item": "Action",
+    "agenda_item": "Agenda item",
+    "assessment_form": "Assessment form",
+    "bau_handover": "BAU handover",
+    "change_request": "Change request",
+    "diagnostic_finding": "Diagnostic finding",
+    "journey": "Journey",
+    "lesson": "Lesson",
+    "meeting_minutes": "Meeting minutes",
+    "target_trajectory": "Target trajectory",
+    "tom_canvas_cell": "TOM canvas cell",
+    "transition_decision": "Transition decision",
+    "work_item": "Task",
+    "adoption_metric_link": "Adoption indicator"
+  },
+  "valueClass": {
+    "revenue_uplift": "Revenue uplift",
+    "margin_uplift": "Margin uplift",
+    "cash_saving": "Cash saving",
+    "avoided_cost": "Avoided cost",
+    "working_capital_release": "Working capital release",
+    "non_financial": "Non-financial",
+    "non_financial_valued": "Non-financial (valued)",
+    "gross": "Gross",
+    "net": "Net (gross - implementation cost)"
+  },
+  "lineState": {
+    "planned": "Planned",
+    "forecast": "Forecast (not realized)",
+    "measured": "Measured",
+    "submitted": "Submitted (awaiting Finance)",
+    "validated": "Validated by Finance",
+    "rejected": "Rejected",
+    "sustained": "Sustained"
+  },
+  "frequency": {
+    "daily": "daily",
+    "weekly": "weekly",
+    "monthly": "monthly",
+    "quarterly": "quarterly",
+    "annual": "annual",
+    "ad_hoc": "ad hoc"
+  },
+  "evidenceStatus": {
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "rejected": "Rejected"
+  },
+  "window": {
+    "range": "Window {{start}} to {{end}}",
+    "asOf": "as of {{date}}",
+    "open": "open",
+    "toDate": "Window: to date"
+  },
+  "generatedAt": "Computed from the records at {{when}}; nothing is stored.",
+  "refresh": "Refresh",
+  "link": {
+    "notOpened": "This record could not be opened."
+  },
+  "area": {
+    "ragLogic": "Status logic",
+    "arProvisional": "Arabic labels are provisional. Source:",
+    "noHeadline": "No headline figure for this area.",
+    "noItems": "No records in this area.",
+    "itemsCaption": "Records in this area",
+    "showAll": "Show all {{n}} records",
+    "showFewer": "Show fewer"
+  },
+  "item": {
+    "record": "Record",
+    "status": "Status",
+    "value": "Value",
+    "due": "Due"
+  },
+  "rows": {
+    "title": "Per transformation",
+    "intro": "Each transformation in scope with its six area statuses.",
+    "caption": "Area status per transformation",
+    "transformation": "Transformation",
+    "empty": "No transformation in scope.",
+    "sortBy": "Sort by",
+    "code": "Code",
+    "name": "Name"
+  },
+  "drill": {
+    "open": "Drill down",
+    "column": "Drill-down",
+    "title": "Drill-down: {{title}}",
+    "value": "Headline value",
+    "period": "Period",
+    "calculation": "Calculation",
+    "rounded": "Rounded for display; the status compares the exact value.",
+    "inputs": "Inputs",
+    "records": "Contributing records",
+    "noRecords": "No contributing record.",
+    "evidence": "Evidence",
+    "noEvidence": "No evidence is linked.",
+    "page": "Page {{n}}",
+    "close": "Close"
+  },
+  "filter": {
+    "title": "Dashboard filters",
+    "period": "Period",
+    "allTime": "All periods (to date)",
+    "businessUnit": "Business unit",
+    "owner": "Owner",
+    "ownerOther": "another user",
+    "phase": "Phase",
+    "status": "Status",
+    "clear": "Clear filters",
+    "periodsUnavailable": "Reporting periods are not visible to you, so the period filter is not available.",
+    "unitsUnavailable": "Business units are not visible to you, so the unit filter is not available.",
+    "blocked": {
+      "none": "You cannot read any transformation in this business unit, so there is nothing to show. Choose another unit or clear the filter.",
+      "too_many": "This business unit has more than 50 transformations you can read; a dashboard takes at most 50. Narrow the filter by phase or status, or open the transformations' own dashboards."
+    }
+  },
+  "hub": {
+    "title": "Dashboards",
+    "intro": "Six dashboards computed from the records on every request. Each headline drills into its records, period, calculation and evidence; zero, Unknown and not applicable are shown differently."
+  },
+  "kind": {
+    "executive": {
+      "title": "Executive Overview",
+      "summary": "The six Template 10 areas over every transformation you can read."
+    },
+    "transformation": {
+      "title": "Transformation dashboard",
+      "summary": "The Template 10 dashboard of one transformation."
+    },
+    "workstream": {
+      "title": "Workstream dashboard",
+      "summary": "Outcomes, value, portfolio and dependencies of one workstream's initiatives."
+    },
+    "finance": {
+      "title": "Finance dashboard",
+      "summary": "Value per class, state and currency; gross, implementation cost and net; the Finance queue."
+    },
+    "adoption": {
+      "title": "Adoption dashboard",
+      "summary": "People and adoption: each linked indicator with its status, and open interventions."
+    },
+    "personal": {
+      "title": "My work dashboard",
+      "summary": "Your own actions, drafts, reviews, approvals, missing updates and upcoming deadlines."
+    }
+  },
+  "chooser": {
+    "transformation": "Choose a transformation to open its dashboard.",
+    "workstream": "Choose a transformation; its dashboard lists its workstreams.",
+    "empty": "No transformation you can read."
+  },
+  "overview": {
+    "intro": "Outcomes, value, critical initiatives, adoption, blockers and decisions over the transformations you can read.",
+    "allDashboards": "All dashboards",
+    "count": "Transformations in scope: {{count}}",
+    "emptyScope": "No transformation matches the filters, or none is visible to you. The areas below show Unknown or not applicable, never green."
+  },
+  "transformation": {
+    "intro": "The six Template 10 areas, each with its own status logic. Select a headline to see its records, period, calculation and evidence."
+  },
+  "workstream": {
+    "intro": "The areas over this workstream's active initiatives. Decisions and people and adoption are shown at transformation level.",
+    "pick": "Open the dashboard of one workstream.",
+    "none": "This transformation has no active workstream.",
+    "back": "Back to the transformation's dashboard"
+  },
+  "finance": {
+    "headlines": "Headline figures",
+    "pendingCount": "Measurements awaiting Finance validation: {{count}}",
+    "openQueue": "Open the Finance validation queue",
+    "nonFinancial": "Non-financial benefits: {{count}}. Their money value is",
+    "perClass": "Value per class, state and currency",
+    "perClassIntro": "Each state is its own line, never added to another state; currencies are never converted. Forecast is never counted as realized.",
+    "grossNet": "Gross, implementation cost and net",
+    "grossNetIntro": "Net = gross - implementation cost, per currency. A missing amount makes it Unknown, never 0.",
+    "implementationCost": "Implementation cost",
+    "valueClass": "Value class",
+    "measure": "Measure",
+    "state": "State",
+    "currency": "Currency",
+    "total": "Total",
+    "noDrill": "No drill-down for this line",
+    "noLines": "No financial value line",
+    "noLinesBody": "There is no counted financial benefit in scope.",
+    "noNet": "No gross or net line",
+    "noNetBody": "Gross and net need a financial benefit; with an owner filter no net line is shown, because cost lines have no owner.",
+    "valueStatus": "Value"
+  },
+  "adoption": {
+    "indicator": "Indicator",
+    "indicators": "Linked adoption indicators",
+    "target": "Linked to",
+    "interventions": "Open interventions: {{count}}",
+    "noIndicators": "No adoption indicator is linked",
+    "noIndicatorsBody": "The People and adoption area stays Unknown until an indicator is linked to a KPI."
+  },
+  "personal": {
+    "openMyWork": "Open My Work (tasks and reminders)"
+  },
+  "myWork": {
+    "unavailable": "Your work sections could not be loaded.",
+    "sectionsNav": "My Work sections",
+    "deadlines": "Upcoming deadlines",
+    "deadlinesIntro": "Open items due within {{n}} working days of {{date}}; overdue ones are flagged.",
+    "noDeadlines": "No upcoming deadline.",
+    "overdue": "Overdue",
+    "item": "Item",
+    "source": "Source",
+    "due": "Due",
+    "total": "Items: {{count}} (shown: {{shown}})",
+    "sectionEmpty": "Nothing here",
+    "loadMore": "Load more",
+    "draftLabel": "Draft – not submitted",
+    "draftText": "Draft {{type}} {{code}}",
+    "sourceValue": {
+      "work_item": "Task",
+      "action_item": "Action",
+      "draft": "Your draft"
+    },
+    "section": {
+      "assigned_actions": "Assigned actions",
+      "drafts": "Drafts",
+      "reviews": "Reviews",
+      "approvals": "Approvals",
+      "missing_updates": "Missing updates",
+      "other": "Other"
+    },
+    "sectionIntro": {
+      "assigned_actions": "Actions and tasks assigned to you.",
+      "drafts": "Records you started and have not submitted.",
+      "reviews": "Records waiting for your review.",
+      "approvals": "Business approvals and decisions waiting for you.",
+      "missing_updates": "Updates you owe: KPI actuals, benefit monitoring, reviews and control checks.",
+      "other": "Other notices and tasks."
+    }
+  },
+  "header": {
+    "linksLabel": "Open this transformation's records",
+    "link": {
+      "raid": "RAID (T15)",
+      "dashboard": "Dashboard (T10)",
+      "kpis": "KPIs",
+      "benefits": "Benefits register",
+      "decisions": "Executive decisions (T16)",
+      "gates": "Gates"
+    },
+    "gateUnknown": "the live gate readiness is not available",
+    "gateReady": "All mandatory criteria complete or covered.",
+    "gateMissing": "Mandatory criteria missing: {{count}}",
+    "gateCriteria": "Gate criteria",
+    "noOwner": "not assigned",
+    "outcomeCount": "{{status}}: {{count}}",
+    "noBenefit": "no active benefit",
+    "planned": "Planned to date",
+    "validated": "Validated to date",
+    "benefitCount": "Benefits: {{count}}",
+    "nonFinancial": "non-financial (value n/a): {{count}}",
+    "noOpenDecisions": "No open executive decision.",
+    "overdueDecisions": "Overdue decisions: {{count}}",
+    "noOverdueDecisions": "No overdue decision.",
+    "noNextAction": "No open task of yours on this transformation.",
+    "unavailable": "The workspace summary could not be read; every element is shown as Unknown.",
+    "unknownNote": "Unknown means the data is missing or not visible to you; it is never shown as 0 or green.",
+    "designDecisions": "Design decisions"
+  }
+}

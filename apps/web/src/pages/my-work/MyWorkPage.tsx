@@ -31,6 +31,7 @@ import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { DueDate, FormAlert } from "./p4ui.tsx";
+import { MyWorkSections } from "../dashboards/MyWorkSections.tsx";
 
 /**
  * The pending state of the My Work sections: a plain busy note, not the shared role="status" LoadingState. My Work is
@@ -120,6 +121,8 @@ export function MyWorkPage() {
         ) : null}
       </nav>
       {!canReadTransformations ? <p className="muted">{t("common.myWork.noBusinessAccess")}</p> : null}
+      {/* T-DG4-FE-G (REQ-S03-008): the sections of getMyWork and the upcoming deadlines. */}
+      <MyWorkSections />
       <WorkItemsSection />
       <InboxSection />
     </div>

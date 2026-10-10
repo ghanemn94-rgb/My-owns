@@ -69,7 +69,8 @@ export interface NavArea {
 
 export const NAV_AREAS: readonly NavArea[] = [
   { id: "myWork", path: "/my-work", availability: "available" },
-  { id: "executive", path: "/executive-overview", availability: "planned" },
+  // T-DG4-FE-G: the Executive Overview (the executive dashboard, ADR-0037 §8) is a working screen.
+  { id: "executive", path: "/executive-overview", availability: "available" },
   { id: "transformations", path: "/transformations", availability: "available" },
   { id: "playbook", path: "/playbook", availability: "planned" },
   {
@@ -136,7 +137,9 @@ export interface NavSubPage {
     | "performanceAreas"
     | "improvementBacklog"
     | "lessons"
-    | "lessonSearch";
+    | "lessonSearch"
+    // T-DG4-FE-G: the six dashboards (M0244) under the Executive Overview.
+    | "dashboards";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -177,4 +180,6 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "improvementBacklog", area: "bau", path: "/bau-improvement/improvement", workspaceTab: "improvement" },
   { id: "lessons", area: "bau", path: "/bau-improvement/lessons", workspaceTab: "lessons" },
   { id: "lessonSearch", area: "bau", path: "/lessons", requiresAny: ["lesson.search"] },
+  // T-DG4-FE-G: the dashboards hub (executive, transformation, workstream, Finance, adoption, personal).
+  { id: "dashboards", area: "executive", path: "/dashboards" },
 ];
