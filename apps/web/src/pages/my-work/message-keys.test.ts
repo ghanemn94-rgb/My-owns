@@ -90,7 +90,11 @@ const PRODUCED: Record<string, Params> = {
   },
   // code table (ARCH-R2 rows 182-183)
   "governance.task.meeting_action_due": { title: "Synthetic action", meetingDate: "2026-10-12" },
-  "governance.task.minutes_to_approve": { forum: "Synthetic SteerCo", meetingDate: "2026-10-12" },
+  "governance.task.minutes_to_approve": {
+    forum: "Synthetic SteerCo",
+    forumAr: "اللجنة التوجيهية (اصطناعي)",
+    meetingDate: "2026-10-12",
+  }, // api governance/minutes.ts (ADR-0032 amendment G3: forumAr beside forum)
   // notice keys (ARCH-R1) shown in the inbox
   "governance.notice.executive_decision_escalated": {
     code: "ED-01",
@@ -173,6 +177,44 @@ describe.each(["en", "ar"] as const)("My Work message keys (%s)", (locale) => {
     const bare = renderMessage(t, locale, "raid.task.action_due", {});
     expect(bare).toBe(t("myWork.message.raid__task__action_due_bare"));
     expect(renderMessage(t, locale, "raid.task.action_due", { sourceCode: "R-01" })).toContain("R-01");
+  });
+
+  it("governance.task.minutes_to_approve: Arabic takes forumAr, English forum; without forumAr both show forum (ADR-0025 L1, ADR-0032 G3)", () => {
+    const key = "governance.task.minutes_to_approve";
+    const withAr = renderMessage(t, locale, key, {
+      forum: "Synthetic SteerCo",
+      forumAr: "اللجنة التوجيهية (اصطناعي)",
+      meetingDate: "2026-10-12",
+    });
+    const date = formatBusinessDate("2026-10-12", locale)!;
+    expect(withAr).toContain(date);
+    if (locale === "ar") {
+      expect(withAr).toContain("اللجنة التوجيهية (اصطناعي)");
+      expect(withAr).not.toContain("Synthetic SteerCo");
+    } else {
+      expect(withAr).toContain("Synthetic SteerCo");
+      expect(withAr).not.toContain("اللجنة التوجيهية");
+    }
+    // A row written before forumAr existed (or an empty forumAr) renders as before, with the English name.
+    for (const params of [
+      { forum: "Synthetic SteerCo", meetingDate: "2026-10-12" },
+      { forum: "Synthetic SteerCo", forumAr: "", meetingDate: "2026-10-12" },
+      { forum: "Synthetic SteerCo", forumAr: null, meetingDate: "2026-10-12" },
+    ]) {
+      const text = renderMessage(t, locale, key, params);
+      expect(text).toContain("Synthetic SteerCo");
+      expect(text).toContain(date);
+      expect(text).not.toContain("{{");
+    }
+    // A `…Ar` member is never a placeholder of its own: the template keeps exactly {{forum}} and {{meetingDate}}.
+    const raw = t("myWork.message.governance__task__minutes_to_approve");
+    expect([...raw.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort()).toEqual(["forum", "meetingDate"]);
+  });
+
+  it("a blank `…Ar` member falls back to the base value, in both languages", () => {
+    // `raid.task.action_due` has a `sourceCode` placeholder; a whitespace-only `sourceCodeAr` replaces nothing.
+    const text = renderMessage(t, locale, "raid.task.action_due", { sourceCode: "R-01", sourceCodeAr: "  " });
+    expect(text).toContain("R-01");
   });
 
   it("a date parameter that is null is Unknown, never blank", () => {

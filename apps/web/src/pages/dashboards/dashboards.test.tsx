@@ -23,7 +23,7 @@ import {
   unknownHeader,
 } from "./dashboardFixtures.ts";
 import { withPage } from "./api.ts";
-import { formatValue, webPathOf } from "./ui.tsx";
+import { formatValue, keyText, webPathOf } from "./ui.tsx";
 
 beforeEach(() => localStorage.clear());
 afterEach(() => {
@@ -210,6 +210,90 @@ describe.each(["en", "ar"] as const)("Dashboards (%s)", (locale) => {
     expect(unknownNet.textContent).toContain(t("dashboards.state.unknown"));
     expect(unknownNet.textContent).not.toMatch(/\d/);
     expect(within(net as HTMLElement).getByText(t("dashboards.valueClass.net"))).toBeTruthy();
+  });
+
+  it("Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total", async () => {
+    const rec = recorder();
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [
+          rec.handler,
+          route("GET", /\/api\/v1\/dashboards\/finance\?/, () => json(financeDashboard())),
+          route("GET", /\/api\/v1\/dashboard-drilldown\?/, () => json(drilldown())),
+        ],
+      ),
+    );
+    renderApp("/dashboards/finance", { i18n: createI18n(locale) });
+    await screen.findByText(t("dashboards.finance.pendingCount", { count: 1 }));
+    const perClass = document.querySelector("#finance-lines")!;
+    // every class line, of every state (rejected included), carries its drill-down; none says "no drill-down"
+    for (const st of ["planned", "validated", "rejected"])
+      expect(perClass.querySelector(`[data-drill-line='revenue_uplift-${st}-SAR']`), st).not.toBeNull();
+    expect(perClass.textContent).not.toContain(t("dashboards.finance.noDrill"));
+    const net = document.querySelector("#finance-net")!;
+    expect(net.querySelector("[data-drill-line='gross-planned-SAR']")).not.toBeNull();
+    expect(net.querySelector("[data-drill-line='gross-validated-SAR']")).not.toBeNull();
+    // the net line: the formula and two input links, never its own drill-down
+    expect(net.querySelector("[data-drill-line^='net-']")).toBeNull();
+    const inputs = net.querySelector("[data-net-inputs='validated-SAR']")!;
+    expect(inputs.textContent).toContain(t("dashboards.finance.netFormula"));
+    expect(inputs.querySelector("[data-net-input='gross']")!.textContent).toContain(t("dashboards.finance.netGross"));
+    expect(inputs.querySelector("[data-net-input='investment']")!.textContent).toContain(
+      t("dashboards.finance.implementationCost"),
+    );
+    const drillUrl = async (button: Element) => {
+      const before = rec.urls.length;
+      fireEvent.click(button);
+      const dialog = await screen.findByRole("dialog");
+      let url = "";
+      await waitFor(() => {
+        url = rec.urls.slice(before).find((u) => u.startsWith("/api/v1/dashboard-drilldown?")) ?? "";
+        expect(url).not.toBe("");
+      });
+      fireEvent.click(within(dialog).getByRole("button", { name: t("dashboards.drill.close") }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      return new URLSearchParams(url.split("?")[1]);
+    };
+    const rejected = await drillUrl(perClass.querySelector("[data-drill-line='revenue_uplift-rejected-SAR']")!);
+    expect([rejected.get("metric"), rejected.get("valueClass")]).toEqual(["value.rejected", "revenue_uplift"]);
+    const gross = await drillUrl(inputs.querySelector("[data-net-input='gross']")!);
+    expect([gross.get("metric"), gross.get("valueClass")]).toEqual(["value.validated", null]);
+    const cost = await drillUrl(inputs.querySelector("[data-net-input='investment']")!);
+    expect([cost.get("metric"), cost.get("valueClass")]).toEqual(["value.investment", null]);
+  });
+
+  it("the value-state rule keys (rows 187-193), the slip reasons (197-200) and the KPI-status rules (201-206) are translated", () => {
+    const rules = [
+      ...["planned", "forecast", "submitted", "validated", "measured", "rejected", "sustained", "investment"].map(
+        (s) => `dashboard.value.sum_${s}`,
+      ),
+      ...["green", "amber", "red", "unknown", "stale", "not_computable"].map((s) => `dashboard.kpi.${s}`),
+    ];
+    const reasons = ["approved_date_missing", "forecast_date_missing", "calendar_not_configured", "range_too_long"].map(
+      (r) => `dashboard.portfolio.slip_${r}`,
+    );
+    const other = { rule: t("dashboards.rule.other"), reason: t("dashboards.reason.other") };
+    for (const [group, keys] of [
+      ["rule", rules],
+      ["reason", reasons],
+    ] as const)
+      for (const k of keys) {
+        const text = keyText(t, group, k);
+        expect(text, k).not.toBe(other[group]);
+        expect(text, k).not.toBe("");
+        if (locale === "ar") expect(text, k).toMatch(/[؀-ۿ]/);
+      }
+    if (locale === "en") {
+      expect(keyText(t, "rule", "dashboard.value.sum_rejected")).toBe(
+        "Rejected value = the sum of the values Finance rejected in the period.",
+      );
+      expect(keyText(t, "reason", "dashboard.portfolio.slip_range_too_long")).toBe(
+        "Unknown: the slip spans more working days than can be counted.",
+      );
+      expect(keyText(t, "rule", "dashboard.kpi.not_computable")).toBe("KPI status: not computable.");
+    }
   });
 
   it("workspace header: every element Unknown where data is missing; one click opens the RAID register", async () => {

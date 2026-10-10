@@ -71,6 +71,10 @@ const DATE_PARAMS = new Set([
   "meetingDate",
 ]);
 
+/** `k` is `<param>Ar` and `<param>` is also sent: the Arabic member of a bilingual name (ADR-0025 amendment L1). */
+const isArabicNameOf = (k: string, params: Readonly<Record<string, unknown>>) =>
+  k.length > 2 && k.endsWith("Ar") && Object.hasOwn(params, k.slice(0, -2));
+
 /** The translated text of a work item or reminder (S-6: rendered from messageKey + messageParams at render time). */
 export function renderMessage(
   t: TFunction,
@@ -81,7 +85,14 @@ export function renderMessage(
 ): string {
   const values: Record<string, string> = {};
   for (const [k, v] of Object.entries(params)) {
-    if (DATE_PARAMS.has(k))
+    // ADR-0025 amendment L1: a `<param>Ar` member beside `<param>` is the Arabic name of a bilingual record, never a
+    // placeholder of its own.
+    if (isArabicNameOf(k, params)) continue;
+    // In Arabic, `{{<param>}}` takes `<param>Ar` when it is a non-empty string; otherwise (and always in English) the
+    // `<param>` value as before, so a row written before `…Ar` existed renders as today.
+    const ar = params[`${k}Ar`];
+    if (locale === "ar" && typeof ar === "string" && ar.trim() !== "") values[k] = ar;
+    else if (DATE_PARAMS.has(k))
       values[k] = formatBusinessDate(typeof v === "string" ? v : null, locale) ?? t("common.value.unknown");
     else if (CODE_PARAMS[k] && typeof v === "string")
       values[k] = t(`${CODE_PARAMS[k]}.${v}`, { defaultValue: v.replace(/_/g, " ") });

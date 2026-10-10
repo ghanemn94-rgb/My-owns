@@ -7,17 +7,17 @@
 //    duration. NOTHING is styled or labelled critical then: no critical column, no offsets, no path (E.8 item 8: "the
 //    UI must not highlight anything then").
 //  - The initiative's own planned duration (working days): recorded with createInitiativeSchedule and changed with
-//    updateInitiativeSchedule (`roadmap.edit`; TL, WL, TO). The network read carries no record version, so the panel
-//    sends the version it learned from its own create/update answers, from a 409's `currentVersion`, or the create
-//    version 1. A stale version answers 409: nothing is saved, the network is re-read and the dialog shows the current
-//    value before the user saves again (never a silent retry). Contract need: a version on `ScheduleNode` or a GET of
-//    the schedule (handback §5).
+//    updateInitiativeSchedule (`roadmap.edit`; TL, WL, TO). The dialog reads getInitiativeSchedule when it opens
+//    (T-DG4-FE-R3; ADR-0031 amendment S1): 200 → a change, sent with `If-Match` = the read's `ETag`; 404 → a create
+//    (no If-Match). A 409 (stale version, or a row recorded meanwhile) saves nothing: the row and the network are
+//    re-read and the dialog shows the current value; the user's input is kept and nothing is sent until the user
+//    saves again (never a silent retry, never an overwrite).
 //  - The AUD user (no `roadmap.edit`) sees the panel read-only.
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { initiativeScheduleCreate } from "@mth/shared/schemas";
-import { ApiError, api } from "../../api/client.ts";
+import { ApiError, api, isSessionChangedError } from "../../api/client.ts";
 import { useP4Refresh } from "../../api/p4.ts";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Unknown } from "../../components/Badges.tsx";
@@ -32,9 +32,11 @@ import { FormAlert, textOf } from "../my-work/p4ui.tsx";
 import {
   EXECUTION_NS,
   executionPaths,
+  readInitiativeSchedule,
   useScheduleNetwork,
   type InitiativeSchedule,
   type ScheduleNetwork,
+  type ScheduleRecord,
 } from "./executionApi.ts";
 
 type Node = ScheduleNetwork["nodes"][number];
@@ -294,11 +296,8 @@ function OwnDuration({ network: n, initiativeId }: { network: ScheduleNetwork; i
   const { t } = useTranslation();
   const ws = useWorkspace();
   const node = n.nodes.find((x) => x.initiativeId === initiativeId) ?? null;
-  // What this panel knows about the schedule row: whether one exists and the version to send as If-Match.
-  const [known, setKnown] = useState<{ exists: boolean; version: number | null }>({ exists: false, version: null });
   const [open, setOpen] = useState(false);
   const duration = node?.durationWorkingDays ?? null;
-  const exists = known.exists || duration !== null;
   const canEdit = ws.can("roadmap.edit");
   return (
     <div className="own-duration" data-own-duration={duration ?? "none"}>
@@ -315,10 +314,10 @@ function OwnDuration({ network: n, initiativeId }: { network: ScheduleNetwork; i
           <button
             type="button"
             className="button button--secondary button--small"
-            data-action={exists ? "change-duration" : "set-duration"}
+            data-action={duration !== null ? "change-duration" : "set-duration"}
             onClick={() => setOpen(true)}
           >
-            {exists ? t("executionP4.network.duration.change") : t("executionP4.network.duration.set")}
+            {duration !== null ? t("executionP4.network.duration.change") : t("executionP4.network.duration.set")}
           </button>
         ) : null}
       </p>
@@ -327,55 +326,71 @@ function OwnDuration({ network: n, initiativeId }: { network: ScheduleNetwork; i
           <Icon name="lock" /> {t("executionP4.readOnly")}
         </p>
       )}
-      {open ? (
-        <DurationDialog
-          initiativeId={initiativeId}
-          current={duration}
-          exists={exists}
-          version={known.version ?? 1}
-          versionKnown={known.version !== null}
-          onLearned={(next) =>
-            setKnown((k) => ({ exists: next.exists ?? k.exists, version: next.version ?? k.version }))
-          }
-          onClose={() => setOpen(false)}
-        />
-      ) : null}
+      {open ? <DurationDialog initiativeId={initiativeId} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 }
 
 const DURATION_INPUT = /^\d{1,4}$/;
 
-function DurationDialog({
-  initiativeId,
-  current,
-  exists,
-  version,
-  versionKnown,
-  onLearned,
-  onClose,
-}: {
-  initiativeId: string;
-  /** The duration of the latest network read (updates after a 409 re-read). */
-  current: number | null;
-  exists: boolean;
-  version: number;
-  versionKnown: boolean;
-  onLearned: (next: { exists?: boolean; version?: number }) => void;
-  onClose: () => void;
-}) {
+/** What the dialog knows from getInitiativeSchedule: still reading, the row (or null: none recorded), or a failure. */
+type ScheduleRead =
+  | { readonly state: "loading" }
+  | { readonly state: "ready"; readonly record: ScheduleRecord | null }
+  | { readonly state: "error"; readonly error: unknown };
+
+function DurationDialog({ initiativeId, onClose }: { initiativeId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
-  const [value, setValue] = useState(current === null ? "" : String(current));
+  const [read, setRead] = useState<ScheduleRead>({ state: "loading" });
+  const [value, setValue] = useState("");
   const [note, setNote] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const focusInvalid = useFocusFirstInvalid(dialogRef);
+  const mounted = useRef(true);
+
+  /**
+   * Reads the row (ADR-0031 amendment S1). `fill`: the first read fills the form with the recorded values; a re-read
+   * after a 409 only updates "current" and the version, and keeps what the user typed (the user saves again).
+   */
+  const load = useCallback(
+    async (fill: boolean) => {
+      setRead({ state: "loading" });
+      try {
+        const record = await readInitiativeSchedule(initiativeId);
+        if (!mounted.current) return;
+        setRead({ state: "ready", record });
+        if (fill && record) {
+          const d = record.schedule.durationWorkingDays;
+          setValue(d === null ? "" : String(d));
+          setNote(record.schedule.note ?? "");
+        }
+      } catch (e) {
+        if (!mounted.current || isSessionChangedError(e)) return;
+        setRead({ state: "error", error: e });
+      }
+    },
+    [initiativeId],
+  );
+
+  useEffect(() => {
+    mounted.current = true;
+    void load(true);
+    return () => {
+      mounted.current = false;
+    };
+  }, [load]);
+
+  const record = read.state === "ready" ? read.record : null;
+  const exists = record !== null;
+  const current = record?.schedule.durationWorkingDays ?? null;
 
   const submit = async () => {
+    if (read.state !== "ready") return;
     setServerError(null);
     const s = value.trim();
     if (s !== "" && (!DURATION_INPUT.test(s) || Number(s) > 2600)) {
@@ -390,8 +405,11 @@ function DurationDialog({
     }
     const durationWorkingDays = s === "" ? null : Number(s);
     const body: Record<string, unknown> = { durationWorkingDays };
-    if (textOf(note)) body["note"] = note;
-    if (!exists && !initiativeScheduleCreate.safeParse(body).success) {
+    const typedNote = textOf(note) ? note : null;
+    // A create sends a note only when one is typed; a change sends it only when it differs from the recorded one
+    // (an emptied note is sent as null, so it is cleared rather than silently kept).
+    if (record ? typedNote !== record.schedule.note : typedNote !== null) body["note"] = typedNote;
+    if (!record && !initiativeScheduleCreate.safeParse(body).success) {
       setFieldError("validation.duration_working_days");
       focusInvalid();
       return;
@@ -400,23 +418,21 @@ function DurationDialog({
     const action = beginSessionGuard();
     setBusy(true);
     try {
-      const saved = await api.send<InitiativeSchedule>(executionPaths.schedule(initiativeId), {
-        method: exists ? "PATCH" : "POST",
+      await api.send<InitiativeSchedule>(executionPaths.schedule(initiativeId), {
+        method: record ? "PATCH" : "POST",
         body,
-        ...(exists ? { ifMatch: version } : {}),
+        ...(record ? { ifMatch: record.version } : {}),
       });
       if (action.stale()) return;
-      onLearned({ exists: true, version: saved.version });
       if (!(await refresh())) return;
       onClose();
     } catch (e) {
       if (action.stale(e)) return;
       setServerError(e);
       if (e instanceof ApiError && e.status === 409) {
-        // Nothing was saved. A stale version tells the current one; an existing row switches the dialog to a change.
-        if (e.code === "initiative_schedule.exists") onLearned({ exists: true });
-        else if (e.currentVersion !== null) onLearned({ exists: true, version: e.currentVersion });
-        await refresh();
+        // Nothing was saved: a stale version or a row recorded meanwhile. Re-read the row (its current value and
+        // version) and the network; the user's input stays, and nothing is sent until the user saves again.
+        await Promise.all([load(false), refresh()]);
       }
     } finally {
       setBusy(false);
@@ -444,23 +460,35 @@ function DurationDialog({
             className="button button--primary"
             data-action="submit"
             onClick={() => void submit()}
-            disabled={busy}
+            disabled={busy || read.state !== "ready"}
           >
             {busy ? t("common.state.saving") : t("common.action.save")}
           </button>
         </>
       }
     >
-      <p data-current-duration={current ?? "none"}>
-        {current === null
-          ? t("executionP4.network.duration.none")
-          : t("executionP4.network.duration.current", { n: current })}
-      </p>
-      {exists && !versionKnown ? (
-        <p className="small muted" data-version-baseline={version}>
-          {t("executionP4.network.duration.versionUnknown", { version })}
+      {read.state === "loading" ? (
+        <p role="status" data-state="schedule-loading">
+          {t("common.state.loading")}
         </p>
-      ) : null}
+      ) : read.state === "error" ? (
+        <div data-state="schedule-read-error">
+          <FormAlert error={read.error} namespaces={EXECUTION_NS} />
+          <button type="button" className="button button--secondary" onClick={() => void load(true)}>
+            {t("common.action.retry")}
+          </button>
+        </div>
+      ) : (
+        <p
+          data-current-duration={current ?? "none"}
+          data-schedule-version={record ? record.version : "none"}
+          data-schedule-exists={exists ? "true" : "false"}
+        >
+          {current === null
+            ? t("executionP4.network.duration.none")
+            : t("executionP4.network.duration.current", { n: current })}
+        </p>
+      )}
       <FormAlert error={serverError} namespaces={EXECUTION_NS} />
       <Field
         label={t("executionP4.network.duration.field")}

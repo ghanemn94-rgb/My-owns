@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
 import type { GateView } from "../../api/types.ts";
 import { createI18n } from "../../i18n/index.ts";
+import { formatBusinessDate } from "../../lib/format.ts";
 import { BU_ID, TR_ID, USER_ID, makeMe, makeTransformation, mockApi, renderApp, route } from "../../test/fixtures.tsx";
 import type { Handler } from "../../test/fixtures.tsx";
 import { METHODOLOGY, OTHER_USER, gateViews, id, leadGrants } from "../../test/p2fixtures.ts";
@@ -58,6 +59,27 @@ const CATALOGUE = {
   ),
 };
 
+/** SYNTHETIC units as listScaleScopeBusinessUnits returns them (code order). */
+const OLD_BU = id();
+const SCOPE_UNITS = [
+  {
+    id: BU_ID,
+    code: "SYN-RET",
+    nameEn: "Synthetic Retail",
+    nameAr: "التجزئة (اصطناعي)",
+    status: "active",
+    selectable: true,
+  },
+  {
+    id: OLD_BU,
+    code: "SYN-OLD",
+    nameEn: "Synthetic Legacy",
+    nameAr: "القديمة (اصطناعي)",
+    status: "inactive",
+    selectable: false,
+  },
+];
+
 const PERMS: Permission[] = [
   ...P3_LEAD,
   "gate_exception.request",
@@ -72,21 +94,11 @@ function handlers(locale: "en" | "ar", extra: Handler[], mode: "end_to_end" | "m
       body: makeMe(leadGrants(PERMS), { preferredLocale: locale }),
     })),
     ...extra,
-    route("GET", /\/business-units/, () =>
-      page([
-        {
-          id: BU_ID,
-          organizationId: makeTransformation().organizationId,
-          parentBusinessUnitId: null,
-          code: "SYN-RET",
-          nameEn: "Synthetic Retail",
-          nameAr: "التجزئة (اصطناعي)",
-          status: "active",
-          version: 1,
-          createdAt: T,
-          updatedAt: T,
-        },
-      ]),
+    // listScaleScopeBusinessUnits (ADR-0035 amendment R1): an active unit and one set inactive after a scope named it.
+    route("GET", new RegExp(`${esc(TR)}/scale-scope/business-units(\\?.*)?$`), () => page(SCOPE_UNITS)),
+    // The organization's listBusinessUnits answers 403: the scale screens must not need it (T-DG4-FE-R3).
+    route("GET", /\/organizations\/[^/]+\/business-units/, () =>
+      problemBody(403, "urn:mth:problem:forbidden", "forbidden", "x"),
     ),
     route("GET", new RegExp(`${esc(TR)}$`), () => ({ status: 200, body: makeTransformation({ mode }) })),
     route("GET", new RegExp(`${esc(TR)}/methodology$`), () => ({ status: 200, body: CATALOGUE })),
@@ -406,6 +418,13 @@ describe.each(["en", "ar"] as const)("G5 view (%s)", (locale) => {
     await waitFor(() =>
       expect(dialog.querySelector(`[data-scope-initiative='0'] option[value='${INI.id}']`)).not.toBeNull(),
     );
+    // listScaleScopeBusinessUnits: only the selectable (active) unit is offered, labelled by code and the locale name.
+    await waitFor(() => expect(dialog.querySelector(`[data-scope-unit='0'] option[value='${BU_ID}']`)).not.toBeNull());
+    expect(dialog.querySelector(`[data-scope-unit='0'] option[value='${BU_ID}']`)!.textContent).toBe(
+      `SYN-RET ${locale === "en" ? "Synthetic Retail" : "التجزئة (اصطناعي)"}`,
+    );
+    expect(dialog.querySelector(`[data-scope-unit='0'] option[value='${OLD_BU}']`)).toBeNull();
+    expect(dialog.querySelectorAll("[data-scope-unit='0'] option")).toHaveLength(2); // "Choose" + SYN-RET
     fireEvent.change(dialog.querySelector("[data-scope-initiative='0']")!, { target: { value: INI.id } });
     fireEvent.change(dialog.querySelector("[data-scope-unit='0']")!, { target: { value: BU_ID } });
     fireEvent.click(within(dialog).getByRole("button", { name: t("gates.decision.confirm") }));
@@ -414,6 +433,9 @@ describe.each(["en", "ar"] as const)("G5 view (%s)", (locale) => {
       outcome: "approved",
       scaleScope: { items: [{ initiativeId: INI.id, businessUnitId: BU_ID }] },
     });
+    // The organization's listBusinessUnits answers 403 in this fixture (the workspace header still asks for it), so
+    // the options above came from listScaleScopeBusinessUnits only.
+    expect(requests.some((r) => r.url.includes(`${TR}/scale-scope/business-units`))).toBe(true);
   });
 
   it("a frozen submission shows its exception lines and the nine-field review table, Under review", async () => {
@@ -540,53 +562,66 @@ describe.each(["en", "ar"] as const)("Modular G3 waiver on the gate page (%s)", 
     } as GateView;
   }
 
-  it("the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated", async () => {
-    const view = g3View();
-    render(
-      locale,
-      view,
-      [
-        route("GET", new RegExp(`${esc(TR)}/gates/G3/submissions(\\?.*)?$`), () => page([view.currentSubmission])),
-        route("GET", new RegExp(`${esc(TR)}/gates/G3/submissions/1$`), () => ({
-          status: 200,
-          body: { submission: view.currentSubmission, criteria: [], decision: null },
-        })),
-        route("POST", new RegExp(`${esc(TR)}/gates/G3/decision$`), () =>
-          problemBody(
-            422,
-            "urn:mth:problem:validation",
-            "gate.modular_waiver_revoked",
-            "The waiver of the missing baseline and outcome links was revoked on 2026-10-09; …",
-          ),
-        ),
-      ],
-      "modular",
-    );
-    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.history.view")) }));
-    const block = await waitFor(() => {
-      const el = document.querySelector("[data-modular-links]");
-      expect(el).not.toBeNull();
-      return el!;
-    });
-    expect(block.querySelector("[data-missing-link='baseline_missing']")!.textContent).toContain(
-      t("problems.baseline_missing"),
-    );
-    expect(block.querySelector("[data-missing-link='outcome_link_missing']")!.textContent).toContain(
-      t("problems.outcome_link_missing"),
-    );
-    expect(block.querySelector("[data-modular-waiver]")!.textContent).toContain("Synthetic waiver reason");
-    fireEvent.click(screen.getByRole("button", { name: t("gates.decision.action") }));
-    const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("radio", { name: t("gates.outcome.approved") }));
-    expect(dialog.querySelector("[data-scale-scope-editor]")).toBeNull();
-    fireEvent.change(within(dialog).getByLabelText(new RegExp(`^${t("gates.decision.rationale")}`)), {
-      target: { value: "Synthetic rationale" },
-    });
-    fireEvent.click(within(dialog).getByRole("button", { name: t("gates.decision.confirm") }));
-    const alert = await within(dialog).findByRole("alert");
-    expect(alert.textContent).toContain(t("problems.gate__modular_waiver_revoked"));
-    expect(alert.textContent).not.toContain("2026-10-09; …");
-  });
+  it.each([
+    ["without params (an older server): the text shown before, no placeholder", null],
+    ["with params.date (ADR-0038 Q1): the date localized", { date: "2026-10-09" }],
+  ] as const)(
+    "the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated %s",
+    async (_, params) => {
+      const view = g3View();
+      render(
+        locale,
+        view,
+        [
+          route("GET", new RegExp(`${esc(TR)}/gates/G3/submissions(\\?.*)?$`), () => page([view.currentSubmission])),
+          route("GET", new RegExp(`${esc(TR)}/gates/G3/submissions/1$`), () => ({
+            status: 200,
+            body: { submission: view.currentSubmission, criteria: [], decision: null },
+          })),
+          route("POST", new RegExp(`${esc(TR)}/gates/G3/decision$`), () => {
+            const refused = problemBody(
+              422,
+              "urn:mth:problem:validation",
+              "gate.modular_waiver_revoked",
+              "The waiver of the missing baseline and outcome links was revoked on 2026-10-09; …",
+            );
+            return params ? { ...refused, body: { ...refused.body, params } } : refused;
+          }),
+        ],
+        "modular",
+      );
+      fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.history.view")) }));
+      const block = await waitFor(() => {
+        const el = document.querySelector("[data-modular-links]");
+        expect(el).not.toBeNull();
+        return el!;
+      });
+      expect(block.querySelector("[data-missing-link='baseline_missing']")!.textContent).toContain(
+        t("problems.baseline_missing"),
+      );
+      expect(block.querySelector("[data-missing-link='outcome_link_missing']")!.textContent).toContain(
+        t("problems.outcome_link_missing"),
+      );
+      expect(block.querySelector("[data-modular-waiver]")!.textContent).toContain("Synthetic waiver reason");
+      fireEvent.click(screen.getByRole("button", { name: t("gates.decision.action") }));
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.click(within(dialog).getByRole("radio", { name: t("gates.outcome.approved") }));
+      expect(dialog.querySelector("[data-scale-scope-editor]")).toBeNull();
+      fireEvent.change(within(dialog).getByLabelText(new RegExp(`^${t("gates.decision.rationale")}`)), {
+        target: { value: "Synthetic rationale" },
+      });
+      fireEvent.click(within(dialog).getByRole("button", { name: t("gates.decision.confirm") }));
+      const alert = await within(dialog).findByRole("alert");
+      expect(alert.textContent).not.toContain("2026-10-09; …");
+      expect(alert.textContent).not.toMatch(/[{}]/);
+      if (params) {
+        expect(alert.textContent).toContain(t("problems.gate__modular_waiver_revoked", params));
+        expect(alert.textContent).toContain(formatBusinessDate(params.date, locale)!);
+      } else {
+        expect(alert.textContent).toContain(t("problems.gate__modular_waiver_revoked_noParams"));
+      }
+    },
+  );
 
   it("a G3 submission refused for missing links lists each item translated", async () => {
     const views = gateViews();
@@ -613,6 +648,83 @@ describe.each(["en", "ar"] as const)("Modular G3 waiver on the gate page (%s)", 
       t("problems.baseline_missing"),
     );
     if (locale === "ar") expect(alert.textContent).not.toContain("No active baseline");
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ T-DG4-FE-R3
+// QA-C O-1: the G3 submit dialog's warning follows the gate view's own data (criteria + the server's `canSubmit`, which
+// counts an incomplete mandatory output covered by an accepted exception as not blocking). SYNTHETIC data only.
+describe.each(["en", "ar"] as const)("G3 submit dialog coverage warning (%s)", (locale) => {
+  const t = createI18n(locale).t;
+
+  /** G3 with its first `incomplete` mandatory criteria; `canSubmit` as the server would answer. */
+  function g3(incomplete: number, canSubmit: boolean): GateView {
+    const base = gateViews()[2]!;
+    // Five mandatory outputs (the A03 screen's "1 of 5"); the last `incomplete` are incomplete.
+    const criteria = Array.from({ length: MANDATORY }, (_, i) => {
+      const miss = i >= MANDATORY - incomplete;
+      return {
+        ...base.criteria[0]!,
+        key: `g3.synthetic_${i + 1}`,
+        ordinal: i + 1,
+        labelEn: `Synthetic output ${i + 1}`,
+        labelAr: `مخرج اصطناعي ${i + 1}`,
+        mandatory: true,
+        completeness: miss ? ("incomplete" as const) : ("complete" as const),
+        missing: miss ? [{ code: "gate.criterion_incomplete", message: "x", pointer: "" }] : [],
+      };
+    });
+    return { ...base, criteria, submissionEnabled: true, canSubmit } as GateView;
+  }
+  const MANDATORY = 5;
+  const mandatory = MANDATORY;
+
+  it.each(["end_to_end", "modular"] as const)(
+    "%s: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is",
+    async (mode) => {
+      let view = g3(mandatory - 1, true); // e.g. "1 of 5", the rest covered (the A03 screen)
+      const { requests } = mockApi(
+        ...handlers(
+          locale,
+          [
+            route("GET", new RegExp(`${esc(TR)}/gates/G3$`), () => ({ status: 200, body: view })),
+            route("POST", new RegExp(`${esc(TR)}/gates/G3/submissions$`), () => {
+              // An exception was revoked meanwhile: the server refuses and the re-read view can no longer be submitted.
+              view = g3(mandatory - 1, false);
+              return problemBody(422, "urn:mth:problem:validation", "gate.exception_revoked", "English detail");
+            }),
+          ],
+          mode,
+        ),
+      );
+      renderApp(`/transformations/${TR_ID}/gates/G3`, { i18n: createI18n(locale) });
+      fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.submit.action")) }));
+      const dialog = await screen.findByRole("dialog");
+      const covered = dialog.querySelector("[data-submit-coverage='covered']")!;
+      expect(covered.textContent).toContain(
+        t("gates.submit.coveredNote", { complete: 1, total: mandatory, covered: mandatory - 1 }),
+      );
+      expect(dialog.querySelector("[data-submit-coverage='refused']")).toBeNull();
+      expect(dialog.textContent).not.toContain(t("gates.submit.incompleteWarning", { complete: 1, total: mandatory }));
+      // The client decides nothing: the submission is sent, and the server's answer is shown.
+      fireEvent.click(within(dialog).getByRole("button", { name: t("gates.submit.confirm") }));
+      const alert = await within(dialog).findByRole("alert");
+      expect(alert.textContent).toContain(t("problems.gate__exception_revoked"));
+      expect(requests.filter((r) => r.method === "POST" && r.url.endsWith("/gates/G3/submissions"))).toHaveLength(1);
+      // After the refusal the live view says it cannot be submitted: now the refusal warning is right.
+      await waitFor(() => expect(dialog.querySelector("[data-submit-coverage='refused']")).not.toBeNull());
+      expect(dialog.querySelector("[data-submit-coverage='refused']")!.textContent).toContain(
+        t("gates.submit.incompleteWarning", { complete: 1, total: mandatory }),
+      );
+      expect(dialog.querySelector("[data-submit-coverage='covered']")).toBeNull();
+    },
+  );
+
+  it("every mandatory output complete: neither note", async () => {
+    render(locale, g3(0, true), [], "modular");
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.submit.action")) }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.querySelector("[data-submit-coverage]")).toBeNull();
   });
 });
 
@@ -761,6 +873,63 @@ describe.each(["en", "ar"] as const)("G5 scale transitions and risk dispositions
     expect(done.textContent).toContain(t("gates.riskDisposition.approval.approved"));
     // An approved disposition completes the row: nothing more to propose.
     expect(done.querySelector("[data-action='propose-disposition']")).toBeNull();
+  });
+
+  it("the approved scope and the transitions name units by code and locale name, an inactive unit labelled; a new transition offers only selectable units", async () => {
+    const INI = initiative({ id: id(), code: "INI-01", name: "Synthetic onboarding", status: "launched" });
+    const scope = {
+      approved: true,
+      gateDecisionId: id(),
+      decidedAt: T,
+      items: [
+        { id: id(), initiativeId: INI.id, businessUnitId: BU_ID, note: null },
+        { id: id(), initiativeId: INI.id, businessUnitId: OLD_BU, note: null },
+      ],
+      conditions: [],
+    };
+    const transition = {
+      id: id(),
+      transformationId: TR_ID,
+      initiativeId: INI.id,
+      businessUnitId: OLD_BU,
+      gateDecisionId: scope.gateDecisionId,
+      note: null,
+      transitionedAt: T,
+      transitionedBy: USER_ID,
+    };
+    const { requests } = renderScale(locale, [
+      route("GET", /\/api\/v1\/initiatives\?/, () => page([INI])),
+      route("GET", new RegExp(`${esc(TR)}/scale-scope$`), () => ({ status: 200, body: scope })),
+      route("GET", new RegExp(`${esc(TR)}/scale-transitions(\\?.*)?$`), () => page([transition])),
+    ]);
+    const name = (en: string, ar: string) => (locale === "en" ? en : ar);
+    const items = await waitFor(() => {
+      const el = document.querySelectorAll("[data-scope-item] [data-scale-unit]");
+      expect(el).toHaveLength(2);
+      return [...el];
+    });
+    expect(items[0]!.getAttribute("data-scale-unit")).toBe("SYN-RET");
+    expect(items[0]!.textContent).toBe(`SYN-RET ${name("Synthetic Retail", "التجزئة (اصطناعي)")}`);
+    expect(items[1]!.getAttribute("data-scale-unit-status")).toBe("inactive");
+    expect(items[1]!.textContent).toContain(`SYN-OLD ${name("Synthetic Legacy", "القديمة (اصطناعي)")}`);
+    expect(items[1]!.querySelector("[data-scale-unit-inactive]")!.textContent).toContain(t("gates.scale.unitInactive"));
+    const recorded = await waitFor(() => {
+      const el = document.querySelector("[data-scale-transition] [data-scale-unit='SYN-OLD']");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(recorded.textContent).toContain(name("Synthetic Legacy", "القديمة (اصطناعي)"));
+    expect(document.body.textContent).not.toContain(t("gates.scale.unitNotVisible"));
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("gates.scaleTransition.create")) }));
+    const dialog = await screen.findByRole("dialog");
+    const selects = within(dialog).getAllByRole("combobox");
+    await waitFor(() => expect(within(selects[1]!).getAllByRole("option").length).toBe(2));
+    expect(
+      within(selects[1]!).getByRole("option", { name: `SYN-RET ${name("Synthetic Retail", "التجزئة (اصطناعي)")}` }),
+    ).toBeTruthy();
+    expect(within(selects[1]!).queryByRole("option", { name: /SYN-OLD/ })).toBeNull();
+    // Every label above came from listScaleScopeBusinessUnits: the organization's read answers 403 in this fixture.
+    expect(requests.some((r) => r.url.includes(`${TR}/scale-scope/business-units`))).toBe(true);
   });
 
   it("scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal", async () => {

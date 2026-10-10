@@ -62,7 +62,8 @@ export const filters = (over: Partial<ExecutiveOverview["appliedFilters"]> = {})
   ...over,
 });
 
-const drill = (metric: string) => `/api/v1/dashboard-drilldown?metric=${metric}&organizationId=${ORG_ID}`;
+const drill = (metric: string, valueClass?: string) =>
+  `/api/v1/dashboard-drilldown?metric=${metric}&organizationId=${ORG_ID}${valueClass ? `&valueClass=${valueClass}` : ""}`;
 
 function area(code: T10Area["code"], ordinal: number, over: Partial<T10Area>): T10Area {
   return {
@@ -269,28 +270,43 @@ export function financeDashboard(): FinanceDashboard {
     generatedAt: T0,
     businessDate: "2026-10-10",
     appliedFilters: filters(),
+    // ADR-0037 amendment K1 item 5 (KBE-R4): every class line drills by its state's metric and `valueClass`; a gross
+    // line by its state's metric; a net line keeps null (a derived difference, drilled through its two inputs).
     lines: [
       {
         valueClass: "revenue_uplift",
         state: "planned",
         currency: "SAR",
         total: v("1500"),
-        drilldownHref: drill("value.planned"),
+        drilldownHref: drill("value.planned", "revenue_uplift"),
       },
       {
         valueClass: "revenue_uplift",
         state: "validated",
         currency: "SAR",
         total: v("900"),
-        drilldownHref: drill("value.validated"),
+        drilldownHref: drill("value.validated", "revenue_uplift"),
       },
-      { valueClass: "revenue_uplift", state: "rejected", currency: "SAR", total: v("0"), drilldownHref: null },
+      {
+        valueClass: "revenue_uplift",
+        state: "rejected",
+        currency: "SAR",
+        total: v("0"),
+        drilldownHref: drill("value.rejected", "revenue_uplift"),
+      },
       {
         valueClass: "gross",
         state: "planned",
         currency: "SAR",
         total: v("1500"),
         drilldownHref: drill("value.planned"),
+      },
+      {
+        valueClass: "gross",
+        state: "validated",
+        currency: "SAR",
+        total: v("900"),
+        drilldownHref: drill("value.validated"),
       },
       {
         valueClass: "net",
@@ -307,6 +323,13 @@ export function financeDashboard(): FinanceDashboard {
         value: v("1", null, "measurement"),
         period: null,
         drilldownHref: drill("finance.pending_validation"),
+      },
+      {
+        metric: "value.investment",
+        labelKey: "dashboard.value.investment",
+        value: v("400"),
+        period: null,
+        drilldownHref: drill("value.investment"),
       },
     ],
     pendingValidationCount: 1,
