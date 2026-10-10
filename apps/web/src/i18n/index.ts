@@ -73,6 +73,9 @@ import arAdoptionP4 from "./ar/adoptionP4.json" with { type: "json" };
 import enAdoptionP4 from "./en/adoptionP4.json" with { type: "json" };
 import arSustainP4 from "./ar/sustainP4.json" with { type: "json" };
 import enSustainP4 from "./en/sustainP4.json" with { type: "json" };
+// P4 slice E execution panels on the initiative page (T-DG4-FE-D2): budget lines, execution, schedule network.
+import arExecutionP4 from "./ar/executionP4.json" with { type: "json" };
+import enExecutionP4 from "./en/executionP4.json" with { type: "json" };
 import enDispensations from "./en/dispensations.json" with { type: "json" };
 import enPrioritization from "./en/prioritization.json" with { type: "json" };
 import enRoadmap from "./en/roadmap.json" with { type: "json" };
@@ -120,6 +123,7 @@ export const catalogues = {
     governanceP4: arGovernanceP4,
     adoptionP4: arAdoptionP4,
     sustainP4: arSustainP4,
+    executionP4: arExecutionP4,
   },
   en: {
     common: enCommon,
@@ -158,6 +162,7 @@ export const catalogues = {
     governanceP4: enGovernanceP4,
     adoptionP4: enAdoptionP4,
     sustainP4: enSustainP4,
+    executionP4: enExecutionP4,
   },
 } as const;
 
