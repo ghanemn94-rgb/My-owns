@@ -161,8 +161,13 @@ describe.each(["en", "ar"] as const)("phase workspace (%s)", (locale) => {
     expect(document.body.textContent).not.toMatch(/\bDG[0-7]\b/);
   });
 
-  it('starting a step with no record sends If-Match "0"', async () => {
+  it('a step with no record is read with ETag "0" and its first save sends If-Match "0"', async () => {
     const { requests } = render(locale, [
+      route("GET", new RegExp(`${esc(TR)}/phase-steps/diagnose.capture_baseline$`), () => ({
+        status: 200,
+        body: step({}),
+        headers: { ETag: '"0"' },
+      })),
       route("PATCH", new RegExp(`${esc(TR)}/phase-steps/diagnose.capture_baseline$`), () => ({
         status: 200,
         body: step({ id: "7c1a3f2e-0000-4000-8000-000000000009", status: "in_progress", version: 1 }),
@@ -174,8 +179,14 @@ describe.each(["en", "ar"] as const)("phase workspace (%s)", (locale) => {
       return el!;
     });
     fireEvent.click(btn);
-    const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: t("phasesP4.step.start") }));
+    // getPhaseStep is read first (D-109); then the form dialog shows the version of its ETag.
+    const startButton = await screen.findByRole("button", { name: t("phasesP4.step.start") });
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(startButton);
+    expect(requests.some((r) => r.method === "GET" && r.url.endsWith("/phase-steps/diagnose.capture_baseline"))).toBe(
+      true,
+    );
+    expect(dialog.textContent).toContain(t("phasesP4.step.versionNote", { n: 0 }));
     await waitFor(() => expect(requests.some((r) => r.method === "PATCH")).toBe(true));
     const patch = requests.find((r) => r.method === "PATCH")!;
     expect(patch.headers["if-match"]).toBe('"0"');

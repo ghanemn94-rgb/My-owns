@@ -8,12 +8,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { CHANGE_SUBJECT_TYPES, type ChangeKind, type ChangeSubjectType, type ImpactPreview } from "@mth/shared/schemas";
-import { api } from "../../api/client.ts";
+import { api, ApiError } from "../../api/client.ts";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { useInitiatives } from "../../api/portfolio.ts";
 import { Icon } from "../../components/Icon.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
-import { FormAlert, P4FormDialog, textOf, type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
+import { p4ProblemMessage, P4FormDialog, textOf, type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
 import { changePaths } from "./api.ts";
 import { ImpactItemsTable, MaterialityText } from "./Impact.tsx";
 import {
@@ -35,6 +35,8 @@ export function buildChangeRequestBody(
   v: P4Values,
   subject: SubjectOption | undefined,
   kpiDiff: Record<string, { from: unknown; to: unknown }> | null,
+  /** The transformation's currency: the `currency` of a cost change on a subject that stores none (an initiative). */
+  defaultCurrency = "SAR",
 ): Record<string, unknown> | { fieldErrors: Record<string, string> } {
   const subjectType = v["subjectType"] as ChangeSubjectType;
   const kind = v["changeKind"] as ChangeKind;
@@ -70,9 +72,8 @@ export function buildChangeRequestBody(
       const first = editableFields(kind, subjectType)[0];
       return { fieldErrors: { [first ? `to_${first.field}` : "changeKind"]: "validation.empty_patch" } };
     }
-    if ((kind === "cost" || kind === "budget_rebaseline") && subject.values["currency"])
-      change["currency"] = subject.values["currency"];
-    if ((kind === "cost" || kind === "budget_rebaseline") && !subject.values["currency"]) change["currency"] = "SAR";
+    if (kind === "cost" || kind === "budget_rebaseline")
+      change["currency"] = subject.values["currency"] || defaultCurrency;
   }
   const effectiveFrom = textOf(v["effectiveFrom"]);
   if (effectiveFrom) change["effectiveFrom"] = effectiveFrom;
@@ -218,7 +219,7 @@ export function CreateChangeRequestDialog({
           })}
         </p>
       ) : null}
-      <PreviewPanel build={() => buildChangeRequestBody(values, subject, kpiDiff)} />
+      <PreviewPanel build={() => buildChangeRequestBody(values, subject, kpiDiff, ws.tr.currency)} />
     </>
   );
 
@@ -233,7 +234,7 @@ export function CreateChangeRequestDialog({
       namespaces={CR_NS}
       note={note}
       onValuesChange={setValues}
-      toBody={(v) => buildChangeRequestBody(v, subject, kpiDiff)}
+      toBody={(v) => buildChangeRequestBody(v, subject, kpiDiff, ws.tr.currency)}
       onDone={onDone}
       onClose={onClose}
     />
@@ -328,7 +329,16 @@ function PreviewPanel({ build }: { build: () => Record<string, unknown> | { fiel
         <Icon name="refresh" /> {busy ? t("common.state.loading") : t("changeRequestsP4.preview.run")}
       </button>
       {hint ? <p className="small muted">{t("changeRequestsP4.preview.completeFirst")}</p> : null}
-      <FormAlert error={error} namespaces={CR_NS} />
+      {/* Not a second role="alert": the form keeps its one form-level alert (S-7); the preview refusal is a status. */}
+      {error ? (
+        <p
+          className="banner banner--warning"
+          role="status"
+          data-preview-error={error instanceof ApiError ? (error.code ?? "") : ""}
+        >
+          <Icon name="alert" /> {p4ProblemMessage(t, error, CR_NS)}
+        </p>
+      ) : null}
       {preview ? (
         <div data-impact-preview="draft">
           <p>

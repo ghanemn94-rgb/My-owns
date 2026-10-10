@@ -11,7 +11,7 @@ import type {
   PhaseWorkspace,
   PhaseWorkspacePhase,
 } from "@mth/shared/schemas";
-import { api } from "../../api/client.ts";
+import { api, apiRequest } from "../../api/client.ts";
 import { p4Keys } from "../../api/p4.ts";
 import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
 
@@ -69,6 +69,37 @@ export function useStepEvidence(tid: string, stepKey: string, enabled: boolean) 
     queryFn: () => fetchAllPages<PhaseStepEvidence>(phasePaths.evidence(tid, stepKey)),
     enabled: Boolean(tid && stepKey && enabled),
     ...opts,
+  });
+}
+
+/** Parses a strong ETag `"n"` (n ≥ 0); null when absent or malformed. */
+export function etagVersionOf(etag: string | null): number | null {
+  if (!etag) return null;
+  const m = /^"(0|[1-9][0-9]{0,9})"$/.exec(etag);
+  return m ? Number(m[1]) : null;
+}
+
+/** One step as getPhaseStep returns it, with the version of its ETag. */
+export interface StepRead {
+  readonly step: PhaseStep;
+  readonly etagVersion: number;
+}
+
+/**
+ * getPhaseStep: the step read on its own before a versioned save. A step with no row yet answers `ETag: "0"` (D-109;
+ * ADR-0036 A1), and the first save sends `If-Match: "0"`, which creates the row. Always fetched fresh (staleTime 0), so
+ * the If-Match is the version the server holds when the dialog opens, not the one of an older list.
+ */
+export function usePhaseStep(tid: string, stepKey: string, enabled = true) {
+  return useQuery({
+    queryKey: key(tid, "step", stepKey),
+    queryFn: async (): Promise<StepRead> => {
+      const r = await apiRequest<PhaseStep>(phasePaths.step(tid, stepKey));
+      return { step: r.data, etagVersion: etagVersionOf(r.etag) ?? r.data.version };
+    },
+    enabled: Boolean(tid && stepKey && enabled),
+    retry: shouldRetry,
+    staleTime: 0,
   });
 }
 

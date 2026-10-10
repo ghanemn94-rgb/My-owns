@@ -332,6 +332,136 @@ describe.each(["en", "ar"] as const)("change requests (%s)", (locale) => {
     expect(previewPost.body).toEqual(post.body);
   });
 
+  it("a KPI target change (REQ-S07-015): the draft version's diff is the change; the preview lists the benefit and the G2 approval", async () => {
+    const KPI_ID = id();
+    const ACTIVE_ID = id();
+    const DRAFT_ID = id();
+    const BENEFIT_ID = id();
+    const G2_SUBMISSION = id();
+    const G2_DECISION = id();
+    const version = (over: Record<string, unknown>) => ({
+      kpiDefinitionId: KPI_ID,
+      baselineValue: "40",
+      baselineDate: "2026-01-31",
+      targetValue: "55.0",
+      targetDate: "2027-06-30",
+      formulaExpression: null,
+      calculationMethod: "manual",
+      aggregationRule: "latest",
+      definitionText: "Synthetic share of digital onboarding",
+      dataSource: "Synthetic CRM extract",
+      polarity: "higher_is_better",
+      ...over,
+    });
+    const kpiPreview = {
+      materiality: "material",
+      materialityBasis: { rule: "always_material", kind: "target" },
+      hiddenItemCount: 1,
+      items: [
+        {
+          ordinal: 1,
+          itemType: "benefit",
+          recordType: "benefit",
+          recordId: BENEFIT_ID,
+          recordCode: "B-01",
+          label: "Synthetic onboarding cost avoided",
+          effect: "value_changes",
+          gateSubmissionId: null,
+          gateDecisionId: null,
+          detail: {},
+        },
+        {
+          ordinal: 2,
+          itemType: "gate",
+          recordType: "gate_submission",
+          recordId: G2_SUBMISSION,
+          recordCode: "G2",
+          label: "G2 approval (submission 1) is preserved; this change needs reapproval",
+          effect: "reapproval_required",
+          gateSubmissionId: G2_SUBMISSION,
+          gateDecisionId: G2_DECISION,
+          detail: { gateCode: "G2", gateStatus: "approved", submissionNo: 1 },
+        },
+        {
+          ordinal: 3,
+          itemType: "report",
+          recordType: null,
+          recordId: null,
+          recordCode: null,
+          label: "T10 Outcomes area",
+          effect: "informational",
+          gateSubmissionId: null,
+          gateDecisionId: null,
+          detail: { area: "T10.outcomes" },
+        },
+      ],
+    };
+    const { requests } = render(locale, `/transformations/${TR_ID}/change-requests`, [
+      route("GET", new RegExp(`${esc(TR)}/kpi-dictionary(\\?|$)`), () =>
+        page([
+          {
+            definition: { id: KPI_ID, name: "Synthetic digital onboarding share", version: 4 },
+            activeVersion: { id: ACTIVE_ID, versionNo: 1 },
+            draftVersionId: DRAFT_ID,
+          },
+        ]),
+      ),
+      route("GET", new RegExp(`${esc(TR)}/kpi-definitions/${KPI_ID}/versions(\\?|$)`), () =>
+        page([
+          version({ id: ACTIVE_ID, versionNo: 1, status: "active" }),
+          version({ id: DRAFT_ID, versionNo: 2, status: "draft", targetValue: "60" }),
+        ]),
+      ),
+      route("POST", new RegExp(`${esc(TR)}/change-requests/impact-preview$`), () => ({
+        status: 200,
+        body: kpiPreview,
+      })),
+    ]);
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("changeRequestsP4.list.raise")) }));
+    const dialog = await screen.findByRole("dialog");
+    const select = (name: string) => dialog.querySelector(`[data-field='${name}']`) as HTMLSelectElement;
+    fireEvent.change(select("subjectType"), { target: { value: "kpi_definition" } });
+    await waitFor(() => expect(within(select("subjectId")).getAllByRole("option").length).toBe(2));
+    fireEvent.change(select("subjectId"), { target: { value: KPI_ID } });
+    fireEvent.change(select("changeKind"), { target: { value: "target" } });
+    // The change is the draft version's difference from the active one, decimals compared as decimals ("55.0" = "55").
+    const diff = await waitFor(() => {
+      const el = dialog.querySelector("[data-kpi-diff='1']");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(diff.textContent).toContain("55.0");
+    expect(diff.textContent).toContain("60");
+    fireEvent.change(dialog.querySelector("[data-field='reason']")!, {
+      target: { value: "Synthetic: the market moved; raise the target." },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: new RegExp(t("changeRequestsP4.preview.run")) }));
+    const preview = await waitFor(() => {
+      const el = dialog.querySelector("[data-impact-preview='draft']");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(preview.querySelector("[data-impact-type='benefit']")!.textContent).toContain(
+      "Synthetic onboarding cost avoided",
+    );
+    const g2 = preview.querySelector("[data-gate-item='G2']")!;
+    expect(g2.getAttribute("data-preserved")).toBe("true");
+    expect(g2.textContent).toContain(t("changeRequestsP4.impact.gatePreserved", { gate: "G2", no: 1 }));
+    // An item the caller cannot read is counted, never shown as "no impact".
+    expect(preview.querySelector("[data-hidden-items='1']")).not.toBeNull();
+    const body = requests.find((r) => r.url.endsWith("/impact-preview"))!.body as Record<string, unknown>;
+    expect(body).toEqual({
+      changeKind: "target",
+      subjectType: "kpi_definition",
+      subjectId: KPI_ID,
+      subjectVersion: 4,
+      proposedRecordType: "kpi_version",
+      proposedRecordId: DRAFT_ID,
+      proposedChange: { targetValue: { from: "55.0", to: "60" } },
+      reason: "Synthetic: the market moved; raise the target.",
+    });
+  });
+
   it("a returned request offers round 2; a non-requester is told so and the 403 is translated", async () => {
     render(locale, `/transformations/${TR_ID}/change-requests/${CR_ID}`, [
       route("GET", new RegExp(`${esc(TR)}/change-requests/${CR_ID}$`), () => ({
