@@ -1,0 +1,128 @@
+# T-DG4-ARCH-R3B message-params scan (run 2026-10-10T09:48:45Z); command:
+# grep -rn --include=*.ts -E "messageParams|message_params" apps/api/src apps/worker/src | grep -v "\.test\.ts"
+
+apps/api/src/modules/reporting/my-work.ts:174:    messageParams: w.messageParams,
+apps/api/src/modules/reporting/my-work.ts:247:      messageParams: null,
+apps/api/src/modules/reporting/my-work.ts:273:      messageParams: null,
+apps/api/src/modules/tasks/meeting-action-follow.ts:56:    .select(["transformation_id", "link_path", "message_params"])
+apps/api/src/modules/tasks/meeting-action-follow.ts:78:    const params = (item.message_params ?? {}) as Record<string, MessageParamValue>;
+apps/api/src/modules/tasks/meeting-action-follow.ts:89:      messageParams: { ...params, title: after.title },
+apps/api/src/modules/tasks/service.ts:6:// Text is never stored: an item carries an i18n `messageKey` and `messageParams`, translated at render time (S-6).
+apps/api/src/modules/tasks/service.ts:28:  readonly messageParams?: Readonly<Record<string, MessageParamValue>>;
+apps/api/src/modules/tasks/service.ts:56:  const params = JSON.stringify(input.messageParams ?? {});
+apps/api/src/modules/tasks/service.ts:71:      message_params: params,
+apps/api/src/modules/tasks/service.ts:118:      message_params: params,
+apps/api/src/modules/tasks/dashboard-facts.ts:17:  readonly messageParams: Record<string, unknown>;
+apps/api/src/modules/tasks/dashboard-facts.ts:39:      "message_params",
+apps/api/src/modules/tasks/dashboard-facts.ts:57:      messageParams: (r.message_params !== null && typeof r.message_params === "object"
+apps/api/src/modules/tasks/dashboard-facts.ts:58:        ? r.message_params
+apps/api/src/modules/tasks/routes.ts:66:  (value !== null && typeof value === "object" ? value : {}) as WorkItem["messageParams"];
+apps/api/src/modules/tasks/routes.ts:78:  messageParams: paramsOf(r.message_params),
+apps/api/src/modules/tasks/routes.ts:94:  messageParams: paramsOf(r.message_params),
+apps/api/src/modules/governance/minutes.ts:136:    messageParams: { forum: forum.name_en, meetingDate: String(meeting.scheduled_date).slice(0, 10) },
+apps/api/src/modules/governance/meeting-actions.ts:212:          messageParams: { title: body.title, meetingDate: String(meeting.scheduled_date).slice(0, 10) },
+apps/api/src/modules/governance/executive-decisions.ts:473:    messageParams: { code: d.code, title: d.title },
+apps/api/src/modules/benefits/overlaps.ts:301:        messageParams: {
+apps/api/src/modules/workflows/gate-exceptions.ts:467:      messageParams: { gateCode: body.gateCode, criterionKey: body.criterionKey, expiresOn: body.expiresOn },
+apps/api/src/modules/workflows/approvals.ts:515:        messageParams: { title: a.title, approvalType: a.approval_type, roundNo: a.round_no, dueDate: a.due_date },
+apps/api/src/modules/workflows/approvals.ts:849:      messageParams: { title: a.title, roundNo: a.round_no },
+apps/api/src/modules/workflows/approvals.ts:866:      messageParams: { title: a.title, roundNo: a.round_no, outcome: status },
+apps/api/src/modules/workflows/phase-steps.ts:679:      messageParams: { phaseCode: d.phase_code, stepKey: d.key },
+apps/api/src/modules/workflows/phase-steps.ts:830:    messageParams: { phaseCode: next.phase_code, stepKey: next.key, previousStepKey: d.key },
+apps/api/src/modules/kpi/actuals.ts:568:        messageParams: { kpiName: e.def.name, periodLabel: slot.period_label, valueNo: slot.current_value_no },
+apps/api/src/modules/kpi/actuals.ts:925:    messageParams: { kpiName, periodLabel: current.period_label, valueNo: current.current_value_no },
+apps/api/src/modules/raid/corrective-cases.ts:225:    messageParams: { caseCode: row.code },
+apps/api/src/modules/raid/actions.ts:179:    messageParams: sourceCode === null ? {} : { sourceCode },
+apps/api/src/modules/adoption/assessments.ts:666:      messageParams: { formName: form.name },
+apps/api/src/modules/adoption/assessments.ts:855:    messageParams: { formName: form.name },
+apps/api/src/modules/adoption/interventions.ts:186:    messageParams: { code: row.code },
+apps/api/src/modules/sustainment/performance-areas.ts:490:    messageParams: { areaCode: area.code, dueDate },
+apps/api/src/modules/sustainment/handovers.ts:534:    messageParams: { handoverCode: updated.code, areaCode: area.code, areaName: area.name },
+apps/api/src/modules/sustainment/transition-decisions.ts:743:          messageParams: { decisionCode: d.code, dueDate },
+apps/worker/src/handlers/sustainment.ts:134:    messageParams: { areaCode: area.code, dueDate },
+apps/worker/src/handlers/sustainment.ts:359:              messageParams: { controlCode: c.code, dueDate },
+apps/worker/src/handlers/sustainment.ts:473:    messageParams: { decisionCode: d.code, dueDate },
+apps/worker/src/handlers/benefits.ts:257:      messageParams: { benefitCode: b.code, periodStart: m.period_start, periodEnd: m.period_end },
+apps/worker/src/handlers/adoption.ts:286:      messageParams: { code: row.code },
+apps/worker/src/handlers/kpi.ts:1427:          messageParams: { kpiName: k.name, periodLabel: p.period_label },
+apps/worker/src/handlers/approvals.ts:142:      messageParams: {
+apps/worker/src/handlers/approvals.ts:286:      messageParams: { title: a.title, dueDate, level: level + 1, fromParty, toParty: next.toPartyCode },
+apps/worker/src/handlers/escalations.ts:195:    messageParams: Record<string, string | number | boolean | null>;
+apps/worker/src/handlers/escalations.ts:210:      message_params: JSON.stringify(n.messageParams),
+apps/worker/src/handlers/escalations.ts:420:      messageParams: params,
+apps/worker/src/handlers/escalations.ts:431:      messageParams: params,
+apps/worker/src/handlers/escalations.ts:654:      messageParams: { sourceRecordType: b.sourceRecordType, sourceRecordId: b.sourceRecordId, redCycles: n },
+apps/worker/src/handlers/escalations.ts:740:      messageParams: { code, title },
+apps/worker/src/handlers/escalations.ts:752:      messageParams: { code, title, partyCode: ownerParty, routingError: ownerRoutingError },
+apps/worker/src/handlers/raid.ts:422:      messageParams: { caseCode: row.code },
+apps/worker/src/handlers/gates.ts:153:    messageParams: Record<string, string | number | boolean | null>;
+apps/worker/src/handlers/gates.ts:168:      message_params: JSON.stringify(n.messageParams),
+apps/worker/src/handlers/gates.ts:230:        messageParams: { gateCode: p.gateCode, submissionNo: p.submissionNo, snapshotSha256: p.snapshotSha256 },
+apps/worker/src/handlers/gates.ts:244:        messageParams: { gateCode: p.gateCode, submissionNo: p.submissionNo, roleCode: p.approverRoleCode },
+apps/worker/src/handlers/gates.ts:352:            messageParams: { gateCode: p.gateCode, phaseCode: s.phase_code, stepKey: s.key },
+apps/worker/src/handlers/gates.ts:386:              messageParams: {
+apps/worker/src/handlers/gates.ts:414:              messageParams: { gateCode: p.gateCode, ordinal: c.ordinal },
+apps/worker/src/handlers/gates.ts:540:        messageParams: params,
+apps/worker/src/handlers/gates.ts:551:          messageParams: params,
+apps/worker/src/handlers/meetings.ts:249:      message_params: JSON.stringify({ seriesId: s.id, ruleVersion: s.rule_version }),
+apps/worker/src/kit.ts:76:  readonly messageParams?: Readonly<Record<string, MessageParamValue>>;
+apps/worker/src/kit.ts:104:  const params = JSON.stringify(input.messageParams ?? {});
+apps/worker/src/kit.ts:119:      message_params: params,
+apps/worker/src/kit.ts:166:      message_params: params,
+
+# Multi-line producers (sed of the object literal):
+## apps/api/src/modules/benefits/overlaps.ts:301-305
+        messageParams: {
+          benefitACode: lo.code,
+          benefitBCode: hi.code,
+          dimensions: dimensionsOf(row.dimensions).join(","),
+        },
+## apps/worker/src/handlers/approvals.ts:142-152
+      messageParams: {
+        title: a.title,
+        roundNo: a.round_no,
+        dueDate: e.dueDate,
+        overdueAsOf: e.today,
+        level: e.level,
+        escalatedToParty: e.routingError === null ? e.toParty : null,
+        routingError: e.routingError,
+        routingParty: e.toParty,
+        recipientRole: userId === a.requested_by ? "requester" : "assignee",
+      },
+## apps/worker/src/handlers/escalations.ts:401-409
+  const params = {
+    code: d.code,
+    title: d.title,
+    slaDueDate,
+    level,
+    partyCode,
+    routingError,
+    delayImpact: d.impact_of_delay,
+  };
+## apps/worker/src/handlers/gates.ts:386-390
+              messageParams: {
+                initiativeCode: it.code,
+                initiativeId: it.initiative_id,
+                businessUnitId: it.business_unit_id,
+              },
+## apps/worker/src/handlers/gates.ts:530-530
+      const params = { gateCode: e.gate_code, criterionKey: e.criterion_key, expiresOn: e.expires_on };
+
+# migrations writing message_params:
+packages/db/migrations/0028_p4_calendar_jobs_work_items.sql
+(no migration INSERT/UPDATE writes message_params)
+
+# Classification of every param name produced above (ADR-0025 amendment L1):
+# bilingual record name (name_en/name_ar pair): forum (governance/minutes.ts:136; forum.name_en)   <- the only one
+# user-typed single-language text: title, kpiName, formName, areaName, delayImpact (executive_decision.impact_of_delay)
+# reporting-period label (ASCII code, e.g. 2026-Q3): periodLabel
+# codes (labelled by the client): gateCode, phaseCode, stepKey, previousStepKey, criterionKey, approvalType, roleCode,
+#   partyCode, fromParty, toParty, escalatedToParty, routingParty, routingError, outcome, dimensions, sourceRecordType,
+#   code, caseCode, sourceCode, areaCode, handoverCode, decisionCode, controlCode, benefitCode, benefitACode,
+#   benefitBCode, initiativeCode, recipientRole (requester | assignee)
+# ids: initiativeId, businessUnitId, sourceRecordId, seriesId
+# dates: meetingDate, dueDate, overdueAsOf, slaDueDate, expiresOn, periodStart, periodEnd
+# numbers: roundNo, level, valueNo, submissionNo, ordinal, redCycles, ruleVersion
+# hash: snapshotSha256
+# pass-throughs (no own params): tasks/service.ts, worker/src/kit.ts, escalations.ts:420/431 and gates.ts:540/551
+#   (the `params` objects listed above), tasks/meeting-action-follow.ts (copies the stored params, sets `title`).

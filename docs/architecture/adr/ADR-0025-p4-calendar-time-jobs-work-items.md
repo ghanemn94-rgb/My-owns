@@ -236,8 +236,12 @@ Source: FE-R1 handback §5 item 5 (D-112). Nothing above is removed. Where this 
 **Decided: a record whose name the product stores in both languages passes both names.**
 - `<param>` stays the **English** name, under the key it has today. Stored rows and the English rendering are unchanged.
 - `<param>Ar` is the **Arabic** name (`name_ar`), added beside it.
-- **Rendering.** In Arabic, a placeholder `{<param>}` takes `params["<param>Ar"]` when that member is a non-empty string, and otherwise `params["<param>"]`. In English, it always takes `params["<param>"]`. A `…Ar` member is never a placeholder of its own. So the EN and AR templates keep the same placeholder set, and a row written before this amendment (no `…Ar` member) renders as today.
-- **Which names it covers.** It covers records with `name_en` and `name_ar` columns: `access_group`, `business_calendar`, `business_calendar_holiday`, `business_unit`, `diagnostic_workstream`, `forum`, `gate_definition`, `good_outcome_criterion`, `meeting_minutes`, `organization`, `phase_definition`, `roadmap_wave` and `role` (every table of `packages/db/migrations/*.sql` with a `name_ar` column, as of `0060`). It applies to any later producer that passes such a name.
+- **Rendering.** In Arabic, a placeholder `{<param>}` (written `{{<param>}}` in the web's i18next files) takes `params["<param>Ar"]` when that member is a non-empty string, and otherwise `params["<param>"]`. In English, it always takes `params["<param>"]`. A `…Ar` member is never a placeholder of its own. So the EN and AR templates keep the same placeholder set, and a row written before this amendment (no `…Ar` member) renders as today.
+- **Which names it covers.** A record whose display name the product stores in both languages: an English column `name_en`, `source_name_en`, `label_en` or `source_label_en`, with the Arabic `name_ar` or `label_ar` beside it. As of migration `0060`, exactly 22 tables have such a pair (a scan of every `CREATE TABLE` and `ALTER TABLE … ADD COLUMN` in `packages/db/migrations/*.sql`; output `bilingual-name-columns.txt` in the T-DG4-ARCH-R3 handback evidence):
+  - `name`: `access_group`, `business_calendar`, `business_calendar_holiday`, `business_unit`, `forum`, `organization`, `roadmap_wave`, `role`; and `diagnostic_workstream`, `gate_definition`, `phase_definition` (English column `source_name_en`);
+  - `label`: `approval_type`, `benefit_formula_example_variable`, `dependency_type`, `diagnostic_dimension`, `gate_criterion_definition`, `governance_party`, `resource_role`, `tom_dimension`, `transformation_raci_deliverable`, `work_item_kind`; and `good_outcome_criterion` (English column `source_label_en`).
+  - A catalogue record that a param already names by its code (for example `approvalType`, `partyCode`, `gateCode`) keeps the code: the client labels codes from its code tables, as the next bullet says.
+  - The rule applies to any later producer that passes such a name, and to any later table with such a pair.
 - **What it does not cover:**
   - single-language text the user typed (a title, a KPI name, a form name, a performance-area name) is passed as is, because it has no second language;
   - codes (`gateCode`, `phaseCode`, `stepKey`, `partyCode`, `roleCode`, `approvalType`, `criterionKey`, `dimensions`) stay codes, and the client labels them from its code tables (`CODE_PARAMS`);
@@ -253,6 +257,6 @@ Source: FE-R1 handback §5 item 5 (D-112). Nothing above is removed. Where this 
 |---|---|---|
 | `governance.task.minutes_to_approve` | `forum` = `forum.name_en` | add `forumAr` = `forum.name_ar` (ADR-0032 amendment G3) |
 
-Every other param is one of: a user-typed single-language text (`title`, `kpiName`, `formName`, `areaName`), a code, an id, a date or a number. The scan output is in the T-DG4-ARCH-R3 handback evidence (`message-params-scan.txt`).
+Every other param is one of: a user-typed single-language text (`title`, `kpiName`, `formName`, `areaName`, `delayImpact`), a reporting-period label (`periodLabel`, an ASCII code such as `2026-Q3`), a code, an id, a hash (`snapshotSha256`), a date or a number. The scan output is in the T-DG4-ARCH-R3 handback evidence (`message-params-scan.txt`).
 
 **Notices.** The same rule applies to `InboxNotification.messageParams`. No notice passes a bilingual record's name today.

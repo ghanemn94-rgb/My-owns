@@ -301,5 +301,21 @@ Source: KBE-G2 handback §5 item 5 (D-111). Nothing above is removed. Where this
 | `dashboard.value.sum_measured` | rule key | **new** (K1) | Measured value = the sum of the measured values in the period. |
 | `dashboard.value.sum_rejected` | rule key | **new** (K1) | Rejected value = the sum of the values Finance rejected in the period. |
 | `dashboard.value.sum_sustained` | rule key | **new** (K1) | Sustained value = the sum of the sustained values in the period. |
+| `dashboard.portfolio.slip_approved_date_missing` | reason key | accepted (KBE-G, as built; template-built, not in an ADR table before) | Unknown: a milestone has no approved date, so its slip cannot be counted. |
+| `dashboard.portfolio.slip_forecast_date_missing` | reason key | accepted (as the row above) | Unknown: a milestone has no forecast date, so its slip cannot be counted. |
+| `dashboard.portfolio.slip_calendar_not_configured` | reason key | accepted (as the row above) | Unknown: no business calendar is configured, so working-day slip cannot be counted. |
+| `dashboard.portfolio.slip_range_too_long` | reason key | accepted (as the row above) | Unknown: the slip spans more working days than can be counted. |
+| `dashboard.kpi.green` | rule key | accepted (KBE-G, as built; template-built, not in an ADR table before) | KPI status: the KPI's displayed status is green. |
+| `dashboard.kpi.amber` | rule key | accepted (as the row above) | KPI status: the KPI's displayed status is amber. |
+| `dashboard.kpi.red` | rule key | accepted (as the row above) | KPI status: the KPI's displayed status is red. |
+| `dashboard.kpi.unknown` | rule key | accepted (as the row above) | KPI status: Unknown. |
+| `dashboard.kpi.stale` | rule key | accepted (as the row above) | KPI status: Stale. |
+| `dashboard.kpi.not_computable` | rule key | accepted (as the row above) | KPI status: not computable. |
 
-The four "as built" keys are produced from a template (`` `dashboard.value.sum_${state}` `` in `reporting/dashboards/drilldown.ts`), which is why no earlier literal scan found them. They were found while specifying K1.
+The four "as built" keys are produced from a template (`` `dashboard.value.sum_${state}` `` in `reporting/dashboards/drilldown.ts`), which is why no earlier literal scan found them. They were found while specifying K1. The fifth key of that template family, `dashboard.value.sum_investment`, was already in the A2 table.
+
+The ten `dashboard.portfolio.slip_<reason>` and `dashboard.kpi.<rag>` rows were found by the T-DG4-ARCH-R3B whole-tree scan of template-built keys (`template-keys-whole-tree.txt` in the handback evidence). They are produced as built:
+- `` `dashboard.portfolio.slip_${slip.reason}` `` in `reporting/dashboards/areas.ts` (a milestone's Unknown slip; `reason` is `SlipUnknownReason` of `packages/shared/src/schedule/working-day-slip.ts`, exactly the four values above);
+- `` `dashboard.kpi.${s.displayedRag}` `` in `reporting/dashboards/drilldown.ts` (the `outcomes.kpi_status` drill-down of one KPI; `displayedRag` takes the `KpiRag` values, exactly the six above).
+
+No code or behaviour changes; the rows record the keys and their English texts for the web.
