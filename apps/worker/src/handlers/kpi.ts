@@ -350,10 +350,61 @@ interface Context {
   readonly businessDate: string;
   readonly periods: readonly (ReportingPeriodInfo & { periodEnd: string; label: string; status: string })[];
   readonly computed: Map<string, KpiResult>;
+  /** The lineage of each computed slot, under the same key as `computed` (ADR-0027 amendment C1; T-DG4-KBE-R3). */
+  readonly lineage: Map<string, SlotLineage>;
   readonly findings: Finding[];
 }
 
+/**
+ * What a computed slot contributes to a formula's `sources` entry (ADR-0027 amendment C1): the version the source was
+ * evaluated with, what the binding used (source, status, value) and the slot's own `inputs`, in the shape of its
+ * `value_source` (entered: the accepted actual version; formula: its own `{formula, values?, sources}`, so lineage
+ * reaches the actuals through every level; rolled_up: its scopes and entries).
+ */
+interface SlotLineage {
+  readonly kpiVersionId: string;
+  readonly valueSource: EvaluationRow["source"];
+  readonly valueStatus: KpiResult["status"];
+  readonly value: string | null;
+  readonly inputs: Record<string, unknown>;
+}
+
 const key = (kpi: string, scope: string, period: string, basis: string) => `${kpi}:${scope}:${period}:${basis}`;
+
+/** Records an evaluated slot's result and lineage under its key (both the run path and the binding-only path). */
+function bindSlot(ctx: Context, k: string, e: EvaluationRow): void {
+  ctx.computed.set(k, e.result);
+  ctx.lineage.set(k, {
+    kpiVersionId: e.kpiVersionId,
+    valueSource: e.source,
+    valueStatus: e.result.status,
+    value: e.result.value,
+    inputs: e.inputs,
+  });
+}
+
+/** One formula variable's lineage entry (ADR-0027 amendment C1 `sources`); Unknown with `inputs: {}` when unbound. */
+function sourceEntry(
+  ctx: Context,
+  input: { source: string; basis: ValueBasis; type: Kpi },
+  scopeKind: string,
+  scopeId: string,
+  periodId: string,
+): Record<string, unknown> {
+  const l = ctx.lineage.get(key(input.source, scopeId, periodId, input.basis));
+  return {
+    kpiDefinitionId: input.source,
+    kpiVersionId: l?.kpiVersionId ?? input.type.version?.id ?? null,
+    inputBasis: input.basis,
+    scopeKind,
+    scopeId,
+    reportingPeriodId: periodId,
+    valueSource: l?.valueSource ?? "none",
+    valueStatus: l?.valueStatus ?? "unknown",
+    value: l?.value ?? null,
+    inputs: l?.inputs ?? {},
+  };
+}
 
 /** The value of an entered KPI at its entry scope, for one period and basis. */
 function enteredValue(
@@ -441,11 +492,19 @@ function evaluateSlot(
         ? notComputable("kpi.formula_division_by_zero")
         : e.result
       : unknown("kpi.formula_input_unknown");
+    // ADR-0027 amendment C1: each variable's source slot and its own lineage, down to the accepted actual versions;
+    // `values` only when every input is known (has a value), so an Unknown input never shows as a bound value.
+    const sources: Record<string, unknown> = {};
+    for (const i of inputs) sources[i.variable] = sourceEntry(ctx, i, scopeKind, scopeId, period.id);
+    const allKnown = bound.every((x) => x.value.value !== null);
     return {
       ...base,
       result,
       source: "formula",
-      inputs: e.ok ? { formula: v.formulaExpression, values: e.inputs } : { formula: v.formulaExpression },
+      inputs:
+        e.ok && allKnown
+          ? { formula: v.formulaExpression, values: e.inputs, sources }
+          : { formula: v.formulaExpression, sources },
       dataAsOf: null,
       milestone: null,
       formulaRounding: e.ok ? (e.rounding as unknown as Record<string, unknown>) : null,
@@ -463,9 +522,11 @@ function evaluateSlot(
         milestone: null,
       };
     const scopes = [...values.keys()];
+    const acceptedOf = new Map<string, Accepted>();
     const scopeInputs = scopes.map((s) => {
       const r = enteredValue(ctx, kpi, s, period, basis, values);
       const acc = r.accepted;
+      if (acc !== null) acceptedOf.set(s, acc);
       let entry: PeriodEntry | null = null;
       if (basis === "period") entry = acc?.entry ?? null;
       else if (r.result.value !== null) entry = { kind: "value", value: r.result.value };
@@ -531,11 +592,18 @@ function evaluateSlot(
       staleAfterDays: v.staleAfterDays,
       businessDate: ctx.businessDate,
     });
+    // ADR-0027 amendment C1: the accepted actual version behind each scope that entered the roll-up, by scopeId (a
+    // scope without an accepted value of this slot is not listed; a missing scope is in missingScopes).
+    const missing = new Set(outcome.missingScopes);
+    const entries = [...acceptedOf.entries()]
+      .filter(([s]) => !missing.has(s))
+      .sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0))
+      .map(([scopeId, acc]) => ({ scopeId, kpiActualId: acc.actualId, valueNo: acc.valueNo }));
     return {
       ...base,
       result: applyFreshness(outcome.result, f),
       source: "rolled_up",
-      inputs: { expectedScopes: [...outcome.expectedScopes], missingScopes: [...outcome.missingScopes] },
+      inputs: { expectedScopes: [...outcome.expectedScopes], missingScopes: [...outcome.missingScopes], entries },
       dataAsOf: outcome.dataAsOf,
       milestone: null,
     };
@@ -736,6 +804,7 @@ async function runCalculation(
     businessDate: await businessDate(tx, organizationId),
     periods: periodRows.map((r) => ({ ...periodInfo(r), label: r.period_label, status: r.status })),
     computed: new Map(),
+    lineage: new Map(),
     findings: [],
   };
   // The targets: (KPI, scope, period). Readers of the KPI (formula KPIs) follow their sources.
@@ -806,6 +875,7 @@ async function runCalculation(
       .selectFrom("kpi_formula_input")
       .select(["variable_name", "source_kpi_definition_id", "input_basis"])
       .where("kpi_version_id", "=", reader.version!.id)
+      .orderBy("id")
       .execute();
     const list = [];
     for (const r of rows) {
@@ -856,7 +926,7 @@ async function runCalculation(
     const findingsBefore = ctx.findings.length;
     const e = evaluateSlot(ctx, src, scopeKind, scopeId, period, basis, values, formulaInputs, bindingOnly);
     ctx.findings.length = findingsBefore;
-    ctx.computed.set(k, e.result);
+    bindSlot(ctx, k, e);
   };
 
   const previouslyReporting = new Map<string, string[]>();
@@ -881,7 +951,7 @@ async function runCalculation(
         formulaInputs,
         previouslyReporting,
       );
-      ctx.computed.set(key(t.kpi.id, t.scopeId, period.id, basis), e.result);
+      bindSlot(ctx, key(t.kpi.id, t.scopeId, period.id, basis), e);
       evaluations.push(e);
     }
   }
