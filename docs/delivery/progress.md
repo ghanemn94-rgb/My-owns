@@ -25,15 +25,14 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is BUILDING.** The plan is `docs/architecture/p4-plan.md` and `p4-work-split.md` (D-089). The decisions are D-088 to D-115.
-  - **Done and integrated through W18 (`dca6b64`):**
-    - every architecture, backend, KPI/benefits and frontend task, including the repair rounds R1–R4 and route-level code splitting;
-    - acceptance suites A03, A04, A05, A08, A09, A10 and A11 (QA-A, QA-B, QA-C);
-    - every P4 pending list is empty.
-  - **Merged-tree verification of `dca6b64` (D-115):** every check exits 0. Unit 2734 + 259/2 in both locale settings, integration 1919/1919, e2e 328/328 with no agent running.
-  - **In flight:** W19, FE-R3 (adopts ARCH-R3 in the web app) and AN-P4A/AN-P4B (the register update before the freeze, 71 and 66 rows).
-  - **Then:** the freeze, the three reviews and the audit.
-- **Next action:** integrate the W19 runs, merging the two register halves row by row, and run `validate.mjs --register DG4`. Verify the merged tree, then freeze the DG4 candidate.
+- **DG4 (P4 "Execution value and sustainment") is REVIEWING, round 1.** The build is complete (D-088 to D-116).
+  - **Candidate:** `sha256:19656b1f…`, 1449 files, source `a91d82c`; the code is identical to `b854860`. The manifest is `docs/delivery/candidates/DG4/19656b1ff2cc5ce1.manifest.json`.
+  - **Pre-freeze verification, with no agent running:** every check exits 0. Unit 2771 + 259/2 and product e2e 332/332 in both locale settings; integration 1922/1922; the root acceptance specs 14/14; `--register DG4`, `--pipeline` and `--historical --stage DG3` all PASS.
+  - **Round 1:** the three independent reviewers (domain, code-security, qa-verifier) run on this candidate, using the assignments in `docs/delivery/assignments/DG4/round-1/`. The release-auditor follows.
+- **Next action:**
+  1. Collect the three round-1 records.
+  2. Repair any finding in its own worktree, after every reviewer has finished (D-082).
+  3. Re-freeze, review again and audit until DG4 is APPROVED or BLOCKED.
 
 ## DG2 scope (P2 — diagnose, define and design)
 
