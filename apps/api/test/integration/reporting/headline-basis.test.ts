@@ -481,6 +481,7 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
       unit: "currency",
       currency: "USD",
       reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+      kpiUnit: null,
     };
     for (const [where, list] of [...valueHeadlines(s), ["header", s.header.benefits.headlines as Body[]] as const]) {
       const usd = pick(list, "value.planned", "profit_and_cash", "USD")!;
@@ -556,6 +557,7 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
         unit: "currency",
         currency: "USD",
         reasonKey: "dashboard.value.no_benefit_in_class",
+        kpiUnit: null,
       },
       [],
     ]);

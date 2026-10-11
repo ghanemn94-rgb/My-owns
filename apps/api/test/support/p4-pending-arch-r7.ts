@@ -45,20 +45,9 @@ export interface PendingMember {
   readonly zod: string;
 }
 
-export const P4_PENDING_ARCH_R7_MEMBERS: readonly PendingMember[] = [
-  {
-    // Every DashboardValue the API sends, wherever it is nested: headlines, items, drill-down value/items/inputs,
-    // Finance line totals, AdoptionIndicatorRow.value and the header's CurrencyValue.value.
-    member: "DashboardValue.kpiUnit",
-    operations: [
-      "getTransformationDashboard",
-      "getWorkstreamDashboard",
-      "getExecutiveOverview",
-      "getAdoptionDashboard",
-      "getFinanceDashboard",
-      "getDashboardDrilldown",
-      "getWorkspaceHeader",
-    ],
-    zod: "dashboardValue",
-  },
-];
+// T-DG4-KBE-R8 removed the entry (the closing step, D-124, D-125; ARCH-R7 handback §4.1 item 5): the API emits
+// `DashboardValue.kpiUnit` on every DashboardValue of getTransformationDashboard, getWorkstreamDashboard,
+// getExecutiveOverview, getAdoptionDashboard, getFinanceDashboard, getDashboardDrilldown and getWorkspaceHeader
+// (non-null on a KPI's actual, null on money, counts and the computed value gap); it is now in `DashboardValue.required`
+// in openapi.yaml and no longer `.optional()` in the zod mirror (dashboardValue).
+export const P4_PENDING_ARCH_R7_MEMBERS: readonly PendingMember[] = [];

@@ -29,7 +29,12 @@ export interface KpiDashboardStatus {
   readonly actual: string | null;
   readonly actualStatus: string;
   readonly actualReason: string | null;
+  /** Display text only (the label, else the kind; ADR-0037 N5 item 3): it never decides the scaling. */
   readonly unit: string | null;
+  /** The KPI definition's `unit_kind` (ADR-0037 N5 item 1; the source of `DashboardValue.kpiUnit.kind`). */
+  readonly unitKind: string;
+  /** The KPI definition's `unit_label`, trimmed; null when it is not set or blank (`DashboardValue.kpiUnit.label`). */
+  readonly unitLabel: string | null;
   readonly currency: string | null;
   readonly reportingPeriodId: string | null;
   readonly periodLabel: string | null;
@@ -58,6 +63,8 @@ function fromPanel(def: KpiDefinitionRow, s: KpiStatus): KpiDashboardStatus {
     actualStatus: s.actualStatus,
     actualReason: s.actualReason,
     unit: def.unit_label ?? def.unit_kind,
+    unitKind: def.unit_kind,
+    unitLabel: def.unit_label?.trim() || null,
     currency: s.currency,
     reportingPeriodId: s.reportingPeriodId,
     periodLabel: s.periodLabel,
@@ -78,6 +85,8 @@ function noPeriod(def: KpiDefinitionRow): KpiDashboardStatus {
     actualStatus: "unknown",
     actualReason: "dashboard.kpi.no_period_in_window",
     unit: def.unit_label ?? def.unit_kind,
+    unitKind: def.unit_kind,
+    unitLabel: def.unit_label?.trim() || null,
     currency: def.currency === null ? null : def.currency.trim(),
     reportingPeriodId: null,
     periodLabel: null,
@@ -148,7 +157,7 @@ export async function loadKpiDashboardStatuses(
   return out;
 }
 
-/** One active outcome KPI (T02 row) of an active outcome. */
+/** One active outcome KPI (T02 row) of a live (not archived) outcome. */
 export interface OutcomeKpiRowFact {
   readonly outcomeKpiId: string;
   readonly outcomeId: string;
@@ -156,7 +165,7 @@ export interface OutcomeKpiRowFact {
   readonly ownerUserId: string | null;
 }
 
-/** One active outcome of the scope with its active outcome KPIs. */
+/** One live (not archived) outcome of the scope with its active outcome KPIs. */
 export interface OutcomeRowFact {
   readonly outcomeId: string;
   readonly transformationId: string;
@@ -165,14 +174,19 @@ export interface OutcomeRowFact {
   readonly kpis: readonly OutcomeKpiRowFact[];
 }
 
-/** The active outcomes of the transformations with their active outcome KPIs (ordered; read-only). */
+/**
+ * The live outcomes of the transformations with their active outcome KPIs (ordered; read-only). An outcome is live
+ * while it is not archived (D-124 item 1), as every other reader treats it (charter.ts, criteria.ts,
+ * portfolio/hierarchy.ts, the G2 good outcome test): the outcome register creates a `draft` outcome and has no
+ * transition to `active`, so reading only `active` hid every outcome created through the product.
+ */
 export async function loadOutcomeRows(db: DbOrTx, transformationIds: readonly string[]): Promise<OutcomeRowFact[]> {
   if (transformationIds.length === 0) return [];
   const outcomes = await db
     .selectFrom("outcome")
     .select(["id", "transformation_id", "statement", "owner_user_id"])
     .where("transformation_id", "in", [...transformationIds])
-    .where("status", "=", "active")
+    .where("status", "<>", "archived")
     .orderBy("transformation_id")
     .orderBy("top_rank")
     .orderBy("id")

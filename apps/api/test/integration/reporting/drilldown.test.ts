@@ -144,6 +144,7 @@ describe("REQ-S13-003: zero, Unknown and not_applicable are distinct", () => {
       unit: "currency",
       currency: "SAR",
       reasonKey: null,
+      kpiUnit: null,
     });
     const na = await get(`${k.base}/dashboard`);
     expect(areaOf(na.body, "value").headlines[0].value).toEqual({
@@ -152,6 +153,7 @@ describe("REQ-S13-003: zero, Unknown and not_applicable are distinct", () => {
       unit: "currency",
       currency: null,
       reasonKey: "dashboard.value.no_financial_benefit",
+      kpiUnit: null,
     });
     const unknown = await drill("outcomes.kpi_status", `&subjectId=${okNoData}`);
     expect(unknown.status, JSON.stringify(unknown.body)).toBe(200);

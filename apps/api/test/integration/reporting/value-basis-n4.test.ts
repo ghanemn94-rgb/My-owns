@@ -157,7 +157,7 @@ describe("F-DG4-127 (R3-8): the Portfolio initiative value on the profit-and-cas
     const row = (areaOf(dash, "portfolio").items as Body[]).find((i) => i.recordId === ini);
     // Was {state: value, value: "435"} with no basis.
     expect([row.value, row.valueBasis]).toEqual([
-      { state: "value", value: "90", unit: "currency", currency: "SAR", reasonKey: null },
+      { state: "value", value: "90", unit: "currency", currency: "SAR", reasonKey: null, kpiUnit: null },
       "profit_and_cash",
     ]);
     expect(JSON.stringify(dash)).not.toMatch(/"435(\.0+)?"/);
@@ -225,6 +225,7 @@ describe("F-DG4-127 (R3-8): the Portfolio initiative value on the profit-and-cas
       unit: "currency",
       currency: "SAR",
       reasonKey: "benefit.value_amount_missing",
+      kpiUnit: null,
     });
     expect(row.valueBasis).toBe("profit_and_cash");
   });

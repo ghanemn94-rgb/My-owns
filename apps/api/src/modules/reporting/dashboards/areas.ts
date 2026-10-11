@@ -27,6 +27,7 @@
 import { computeWorkingDaySlip, FORMULA_DECIMAL as D } from "@mth/shared/calc";
 import {
   HEADLINE_BASIS_CLASSES,
+  type DashboardKpiUnit,
   type DashboardRagPolicyValues,
   type DashboardValue,
   type HeadlineBasis,
@@ -66,7 +67,12 @@ export interface KpiStatusFact {
   readonly actual: string | null;
   readonly actualStatus: string;
   readonly actualReason: string | null;
+  /** Display text only (ADR-0037 N5 item 3): the KPI's label, else its kind; never decides the scaling. */
   readonly unit: string | null;
+  /** The KPI's unit kind, or null when its definition can no longer be read (`missingStatus`; ADR-0037 N5 item 1). */
+  readonly unitKind: string | null;
+  /** The KPI's trimmed unit label, or null. */
+  readonly unitLabel: string | null;
   readonly currency: string | null;
   readonly reportingPeriodId: string | null;
   readonly periodLabel: string | null;
@@ -216,18 +222,21 @@ export const MONEY_SCALE = 4;
 /** The rounding object a drill-down reports for a presented ratio (ADR-0037 §5 `calculation.rounding`). */
 export const RATIO_ROUNDING = Object.freeze({ scale: RATIO_SCALE, mode: "half_even", appliesTo: "presentation" });
 
-/** A known decimal value: `zero` when it equals 0 (a fact), else `value` (ADR-0037 §5). */
+/**
+ * A known decimal value: `zero` when it equals 0 (a fact), else `value` (ADR-0037 §5). Not KPI-derived, so `kpiUnit`
+ * is null (money, the computed ratio, a count; ADR-0037 N5); `kpiActualValue` sets it for a KPI's actual.
+ */
 export function knownValue(value: string, unit: string | null, currency: string | null): DashboardValue {
   const d = new D(value);
-  return { state: d.isZero() ? "zero" : "value", value: d.toFixed(), unit, currency, reasonKey: null };
+  return { state: d.isZero() ? "zero" : "value", value: d.toFixed(), unit, currency, reasonKey: null, kpiUnit: null };
 }
 
 export function unknownValue(reasonKey: string, unit: string | null, currency: string | null): DashboardValue {
-  return { state: "unknown", value: null, unit, currency, reasonKey };
+  return { state: "unknown", value: null, unit, currency, reasonKey, kpiUnit: null };
 }
 
 export function notApplicableValue(reasonKey: string, unit: string | null = null): DashboardValue {
-  return { state: "not_applicable", value: null, unit, currency: null, reasonKey };
+  return { state: "not_applicable", value: null, unit, currency: null, reasonKey, kpiUnit: null };
 }
 
 export function countValue(n: number, unit: string): DashboardValue {
@@ -248,9 +257,15 @@ export function sumValue(
   return knownValue(amounts.reduce((acc, a) => acc.plus(new D(a!)), ZERO).toFixed(), unit, currency);
 }
 
-/** The KPI actual of a status as a dashboard value: Stale keeps its value labelled Stale; missing is Unknown. */
+/**
+ * The KPI actual of a status as a dashboard value: Stale keeps its value labelled Stale; missing is Unknown. In every
+ * state it says the KPI's unit kind apart from its label (`kpiUnit`, ADR-0037 N5 item 1); `unit` keeps its content.
+ * Only a KPI whose definition can no longer be read (`unitKind` null) has `kpiUnit` null.
+ */
 export function kpiActualValue(s: KpiStatusFact): DashboardValue {
-  if (s.actual !== null && s.actualStatus === "ok") return knownValue(s.actual, s.unit, s.currency);
+  const kpiUnit: DashboardValue["kpiUnit"] =
+    s.unitKind === null ? null : { kind: s.unitKind as DashboardKpiUnit["kind"], label: s.unitLabel };
+  if (s.actual !== null && s.actualStatus === "ok") return { ...knownValue(s.actual, s.unit, s.currency), kpiUnit };
   if (s.actual !== null && s.actualStatus === "stale")
     return {
       state: "stale",
@@ -258,8 +273,9 @@ export function kpiActualValue(s: KpiStatusFact): DashboardValue {
       unit: s.unit,
       currency: s.currency,
       reasonKey: "kpi.stale",
+      kpiUnit,
     };
-  return unknownValue(s.actualReason ?? "kpi.no_accepted_actual", s.unit, s.currency);
+  return { ...unknownValue(s.actualReason ?? "kpi.no_accepted_actual", s.unit, s.currency), kpiUnit };
 }
 
 /** The status of a KPI row: the displayed RAG (override in force, else calculated), as a dashboard status. */

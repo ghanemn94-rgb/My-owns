@@ -1,0 +1,32 @@
+port-policy: PostgreSQL listening on port 26100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r8
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv477t6n_dcd2ad4c (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/headline-basis.test.ts (8 tests) 8269ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > profit-and-cash planned 90, revenue uplift 300, avoided cost 45, gap 1 and Red, on all four surfaces; 435 nowhere  1578ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant A: only revenue uplift and avoided cost -> profit-and-cash n/a (never 0 or green), 300 and 45 still shown  866ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant B: a margin benefit whose only line is outside the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned  599ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant C: a revenue line without an amount makes only the top-line headline unknown  636ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > drill invariant per currency (SAR and USD), in every state, on all four surfaces  2191ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > a drill-down's headlineBasis follows its class: profit_and_cash, top_line, non_cash or null  323ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > F-DG4-105 (probe GC): USD with no profit-and-cash benefit beside SAR with one: every figure drills to its own currency only  1441ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-adoption.test.ts (9 tests) 3880ms
+   ✓ Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7) > class lines and headlines drill to their records with an equal decimal sum; a gross line always drills to the profit-and-cash basis; the queue count drills to its records  399ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure on the Finance and adoption dashboards > no tile, total or drill-down holds a Y record or figure  597ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests) 4888ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  774ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1377ms
+ ✓ |integration| apps/api/test/integration/reporting/drilldown.test.ts (4 tests) 1975ms
+ ✓ |integration| apps/api/test/integration/reporting/value-basis-n4.test.ts (5 tests) 1952ms
+   ✓ F-DG4-126 (R3-6): the Value RAG is the worst of the per-basis gaps, never a false Green > margin 70 validated 70 beside revenue_uplift 300 unvalidated: Red on T10, workstream, Overview and Finance  697ms
+   ✓ F-DG4-126 (R3-6): the Value RAG is the worst of the per-basis gaps, never a false Green > margin 70 validated 70 beside avoided_cost 300 unvalidated: Red on T10, workstream, Overview and Finance  427ms
+ ✓ |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts (9 tests) 2132ms
+   ✓ D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F4: the value gap (planned 70, nothing validated) is the computed ratio 1 with kpiUnit null; money and counts are null  475ms
+
+ Test Files  6 passed (6)
+      Tests  48 passed (48)
+   Start at  19:10:48
+   Duration  42.47s (transform 4.04s, setup 0ms, collect 16.59s, tests 23.10s, environment 0ms, prepare 101ms)
+

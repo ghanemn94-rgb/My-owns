@@ -118,6 +118,7 @@ describe("financeClassLines (class × state × currency; each state on its own)"
       unit: "currency",
       currency: "SAR",
       reasonKey: "benefit.value_amount_missing",
+      kpiUnit: null,
     });
   });
 
@@ -163,6 +164,7 @@ describe("subtractValues (net = gross − implementation cost; ADR-0030 §7 item
     unit: "currency",
     currency: "SAR",
     reasonKey: null,
+    kpiUnit: null,
   });
   it("worked fixture: 10 000 000 gross − 1 000 000 initiative cost = 9 000 000 (subtracted once)", () => {
     expect(subtractValues(known("10000000.0000"), known("1000000.0000"), "SAR")).toMatchObject({
@@ -181,6 +183,7 @@ describe("subtractValues (net = gross − implementation cost; ADR-0030 §7 item
       unit: "currency",
       currency: "SAR",
       reasonKey: "benefit.cost_amount_missing",
+      kpiUnit: null,
     };
     expect(subtractValues(known("100"), unknownCost, "SAR")).toEqual({
       state: "unknown",
@@ -188,6 +191,7 @@ describe("subtractValues (net = gross − implementation cost; ADR-0030 §7 item
       unit: "currency",
       currency: "SAR",
       reasonKey: "benefit.cost_amount_missing",
+      kpiUnit: null,
     });
   });
 });
