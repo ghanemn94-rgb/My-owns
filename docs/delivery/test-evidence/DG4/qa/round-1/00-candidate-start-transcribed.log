@@ -1,0 +1,12 @@
+TRANSCRIBED from this session's console (not tee'd at the time); the commands were run at the start, 2026-10-10 ~21:27Z.
+$ sha256sum docs/delivery/assignments/DG4/round-1/qa-verifier.md
+d4ad66d4e0c85278c2b2bec6c956f4acad3d6ea313813d93eee0519fba397f1d  docs/delivery/assignments/DG4/round-1/qa-verifier.md   (matches the orchestrator's value)
+$ git rev-parse HEAD            (repo)
+a613f6f46bfe08a8e5d9b21379ef7c149aa5e472   (the freeze commit "DG4 frozen for review round 1: candidate 19656b1f (1449 files, source a91d82c)")
+$ git diff --stat a91d82c HEAD   -> 6 files, all under docs/delivery/ (assignments, candidate manifest, progress.md, stages.json)
+$ node tools/gates/candidate.mjs --stage DG4     (repo working tree)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}
+$ git clone -q . "$TMPDIR/rv" && cd "$TMPDIR/rv" && git checkout -q a613f6f && node tools/gates/candidate.mjs --stage DG4 && git rev-parse HEAD
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}
+a613f6f46bfe08a8e5d9b21379ef7c149aa5e472
+(a full, non-shallow clone; the end-of-run log 00-candidate-end.log re-checks all of this with output captured)

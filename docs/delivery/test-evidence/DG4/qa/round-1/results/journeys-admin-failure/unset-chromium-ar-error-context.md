@@ -1,0 +1,490 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Dev Admin
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+        - listitem [ref=e33]:
+          - link "النظرة التنفيذية" [ref=e34] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e35]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e36]:
+            - listitem [ref=e37]:
+              - link "لوحات المؤشرات" [ref=e38] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e39]:
+              - link "سياسة ألوان الحالة" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e41]:
+          - link "التحوّلات" [ref=e42] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e43]: التحوّلات
+        - listitem [ref=e44]:
+          - link "الدليل والإجراءات مخطط" [ref=e45] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e46]: الدليل والإجراءات
+            - generic [ref=e47]: مخطط
+          - list "الدليل والإجراءات" [ref=e48]:
+            - listitem [ref=e49]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e50] [cursor=pointer]:
+                - /url: /playbook/phases
+        - listitem [ref=e51]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e52] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e53]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e54]:
+            - listitem [ref=e55]:
+              - link "مؤشرات الأداء" [ref=e56] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e57]:
+          - link "نموذج التشغيل المستهدف" [ref=e58] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e59]: نموذج التشغيل المستهدف
+        - listitem [ref=e60]:
+          - link "المبادرات وخرائط الطريق" [ref=e61] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e62]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "المحافظ" [ref=e65] [cursor=pointer]:
+                - /url: /portfolios
+        - listitem [ref=e66]:
+          - link "الحوكمة" [ref=e67] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e68]: الحوكمة
+          - list "الحوكمة" [ref=e69]:
+            - listitem [ref=e70]:
+              - link "المجموعات" [ref=e71] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e72]:
+              - link "المنتديات" [ref=e73] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e74]:
+              - link "الاجتماعات" [ref=e75] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e76]:
+              - link "القرارات التنفيذية (T16)" [ref=e77] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e78]:
+              - link "طلبات التغيير" [ref=e79] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e80]:
+          - link "المخاطر والإجراءات مخطط" [ref=e81] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e82]: المخاطر والإجراءات
+            - generic [ref=e83]: مخطط
+          - list "المخاطر والإجراءات" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e86] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e87]:
+              - link "سجل الإجراءات" [ref=e88] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e89]:
+              - link "الإجراءات التصحيحية" [ref=e90] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e91]:
+          - link "المنافع والمالية" [ref=e92] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e93]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المنافع (T14)" [ref=e96] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e97]:
+          - link "التغيير والتبنّي مخطط" [ref=e98] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e99]: التغيير والتبنّي
+            - generic [ref=e100]: مخطط
+          - list "التغيير والتبنّي" [ref=e101]:
+            - listitem [ref=e102]:
+              - link "خطة التبنّي (T13)" [ref=e103] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e104]:
+          - link "الأدلة والتقارير" [ref=e105] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e106]: الأدلة والتقارير
+        - listitem [ref=e107]:
+          - link "العمليات الاعتيادية والتحسين مخطط" [ref=e108] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e109]: العمليات الاعتيادية والتحسين
+            - generic [ref=e110]: مخطط
+          - list "العمليات الاعتيادية والتحسين" [ref=e111]:
+            - listitem [ref=e112]:
+              - link "مجالات الأداء" [ref=e113] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e114]:
+              - link "قائمة التحسين المستمر" [ref=e115] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e116]:
+              - link "الدروس المستفادة" [ref=e117] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+        - listitem [ref=e118]:
+          - link "الإدارة" [ref=e119] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e120]: الإدارة
+          - list "الإدارة" [ref=e121]:
+            - listitem [ref=e122]:
+              - link "التقويم" [ref=e123] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e124]:
+              - link "المهام المجدولة" [ref=e125] [cursor=pointer]:
+                - /url: /admin/jobs
+      - paragraph [ref=e126]:
+        - link "حول هذا المنتج" [ref=e127] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e128]:
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - navigation "مسار التنقل" [ref=e131]:
+            - list [ref=e132]:
+              - listitem [ref=e133]:
+                - link "الإدارة" [ref=e134] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=e135]: /المستخدمون
+          - generic [ref=e136]:
+            - heading "المستخدمون" [level=1] [ref=e138]
+            - button "مستخدم جديد" [ref=e140] [cursor=pointer]:
+              - img [ref=e141]
+              - text: مستخدم جديد
+        - search "عوامل التصفية" [ref=e143]:
+          - generic [ref=e144]:
+            - generic [ref=e145]: بحث
+            - searchbox "بحث" [ref=e146]
+            - button "تطبيق" [ref=e147] [cursor=pointer]
+          - generic [ref=e148]:
+            - generic [ref=e149]: الحالة
+            - combobox "الحالة" [ref=e150]:
+              - option "الكل" [selected]
+              - option "نشط"
+              - option "معطّل"
+        - button "الأعمدة" [ref=e153] [cursor=pointer]:
+          - img [ref=e154]
+          - text: الأعمدة
+        - table "المستخدمون" [ref=e157]:
+          - caption [ref=e158]: المستخدمون
+          - rowgroup [ref=e159]:
+            - row "الاسم المعروض البريد الإلكتروني اللغة هويات تسجيل الدخول الحالة" [ref=e160]:
+              - columnheader "الاسم المعروض" [ref=e161]
+              - columnheader "البريد الإلكتروني" [ref=e162]
+              - columnheader "اللغة" [ref=e163]
+              - columnheader "هويات تسجيل الدخول" [ref=e164]
+              - columnheader "الحالة" [ref=e165]
+          - rowgroup [ref=e166]:
+            - 'row "QA A04 synthetic bo encf8ef0 qa.a04.bo.encf8ef0@example.invalid العربية مرتبط: 1 نشط" [ref=e167]':
+              - cell "QA A04 synthetic bo encf8ef0" [ref=e168]:
+                - link "QA A04 synthetic bo encf8ef0" [ref=e169] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-0d09-752a-974d-68c60e08c3ec
+              - cell "qa.a04.bo.encf8ef0@example.invalid" [ref=e170]
+              - cell "العربية" [ref=e171]
+              - 'cell "مرتبط: 1" [ref=e172]'
+              - cell "نشط" [ref=e173]:
+                - generic [ref=e174]:
+                  - img [ref=e175]
+                  - text: نشط
+            - 'row "QA A04 synthetic fin encf8ef0 qa.a04.fin.encf8ef0@example.invalid العربية مرتبط: 1 نشط" [ref=e177]':
+              - cell "QA A04 synthetic fin encf8ef0" [ref=e178]:
+                - link "QA A04 synthetic fin encf8ef0" [ref=e179] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-0d1b-77b5-809e-c9ce5ceb1da5
+              - cell "qa.a04.fin.encf8ef0@example.invalid" [ref=e180]
+              - cell "العربية" [ref=e181]
+              - 'cell "مرتبط: 1" [ref=e182]'
+              - cell "نشط" [ref=e183]:
+                - generic [ref=e184]:
+                  - img [ref=e185]
+                  - text: نشط
+            - 'row "QA A04 synthetic lead encf8ef0 qa.a04.lead.encf8ef0@example.invalid العربية مرتبط: 1 نشط" [ref=e187]':
+              - cell "QA A04 synthetic lead encf8ef0" [ref=e188]:
+                - link "QA A04 synthetic lead encf8ef0" [ref=e189] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-0cf9-70f6-be95-df0a2814c7d1
+              - cell "qa.a04.lead.encf8ef0@example.invalid" [ref=e190]
+              - cell "العربية" [ref=e191]
+              - 'cell "مرتبط: 1" [ref=e192]'
+              - cell "نشط" [ref=e193]:
+                - generic [ref=e194]:
+                  - img [ref=e195]
+                  - text: نشط
+            - 'row "QA A04 synthetic owner encf8ef0 qa.a04.owner.encf8ef0@example.invalid الإنجليزية مرتبط: 1 نشط" [ref=e197]':
+              - cell "QA A04 synthetic owner encf8ef0" [ref=e198]:
+                - link "QA A04 synthetic owner encf8ef0" [ref=e199] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-0ce6-769d-be4e-0113472068ef
+              - cell "qa.a04.owner.encf8ef0@example.invalid" [ref=e200]
+              - cell "الإنجليزية" [ref=e201]
+              - 'cell "مرتبط: 1" [ref=e202]'
+              - cell "نشط" [ref=e203]:
+                - generic [ref=e204]:
+                  - img [ref=e205]
+                  - text: نشط
+            - 'row "QA A20 synthetic qa.a20.040c558a qa.a20.040c558a@example.invalid العربية مرتبط: 1 نشط" [ref=e207]':
+              - cell "QA A20 synthetic qa.a20.040c558a" [ref=e208]:
+                - link "QA A20 synthetic qa.a20.040c558a" [ref=e209] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-4719-7059-bbd4-adefdcdbe194
+              - cell "qa.a20.040c558a@example.invalid" [ref=e210]
+              - cell "العربية" [ref=e211]
+              - 'cell "مرتبط: 1" [ref=e212]'
+              - cell "نشط" [ref=e213]:
+                - generic [ref=e214]:
+                  - img [ref=e215]
+                  - text: نشط
+            - 'row "QA B synthetic lead en849e0f qa.b.lead.en849e0f@example.invalid الإنجليزية مرتبط: 1 نشط" [ref=e217]':
+              - cell "QA B synthetic lead en849e0f" [ref=e218]:
+                - link "QA B synthetic lead en849e0f" [ref=e219] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-2ada-7130-980e-6b013f538297
+              - cell "qa.b.lead.en849e0f@example.invalid" [ref=e220]
+              - cell "الإنجليزية" [ref=e221]
+              - 'cell "مرتبط: 1" [ref=e222]'
+              - cell "نشط" [ref=e223]:
+                - generic [ref=e224]:
+                  - img [ref=e225]
+                  - text: نشط
+            - 'row "QA B synthetic sp en849e0f qa.b.sp.en849e0f@example.invalid العربية مرتبط: 1 نشط" [ref=e227]':
+              - cell "QA B synthetic sp en849e0f" [ref=e228]:
+                - link "QA B synthetic sp en849e0f" [ref=e229] [cursor=pointer]:
+                  - /url: /admin/users/01a12819-2aec-7308-8bdd-0359b7f99b05
+              - cell "qa.b.sp.en849e0f@example.invalid" [ref=e230]
+              - cell "العربية" [ref=e231]
+              - 'cell "مرتبط: 1" [ref=e232]'
+              - cell "نشط" [ref=e233]:
+                - generic [ref=e234]:
+                  - img [ref=e235]
+                  - text: نشط
+            - 'row "Synthetic Auditor dev.auditor@example.invalid الإنجليزية مرتبط: 1 نشط" [ref=e237]':
+              - cell "Synthetic Auditor" [ref=e238]:
+                - link "Synthetic Auditor" [ref=e239] [cursor=pointer]:
+                  - /url: /admin/users/01920000-0000-7000-9000-000000000204
+              - cell "dev.auditor@example.invalid" [ref=e240]
+              - cell "الإنجليزية" [ref=e241]
+              - 'cell "مرتبط: 1" [ref=e242]'
+              - cell "نشط" [ref=e243]:
+                - generic [ref=e244]:
+                  - img [ref=e245]
+                  - text: نشط
+            - 'row "Synthetic Auditor en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e247]':
+              - cell "Synthetic Auditor en" [ref=e248]:
+                - link "Synthetic Auditor en" [ref=e249] [cursor=pointer]:
+                  - /url: /admin/users/01a12810-188a-735f-9b12-60179d52e160
+              - cell "لا يوجد" [ref=e250]
+              - cell "الإنجليزية" [ref=e251]
+              - 'cell "مرتبط: 1" [ref=e252]'
+              - cell "نشط" [ref=e253]:
+                - generic [ref=e254]:
+                  - img [ref=e255]
+                  - text: نشط
+            - 'row "Synthetic Auditor en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e257]':
+              - cell "Synthetic Auditor en" [ref=e258]:
+                - link "Synthetic Auditor en" [ref=e259] [cursor=pointer]:
+                  - /url: /admin/users/01a12811-148d-71ef-8ffd-2ba85849977b
+              - cell "لا يوجد" [ref=e260]
+              - cell "الإنجليزية" [ref=e261]
+              - 'cell "مرتبط: 1" [ref=e262]'
+              - cell "نشط" [ref=e263]:
+                - generic [ref=e264]:
+                  - img [ref=e265]
+                  - text: نشط
+            - 'row "Synthetic Auditor en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e267]':
+              - cell "Synthetic Auditor en" [ref=e268]:
+                - link "Synthetic Auditor en" [ref=e269] [cursor=pointer]:
+                  - /url: /admin/users/01a12813-93b5-70fb-b0a1-1310854385a2
+              - cell "لا يوجد" [ref=e270]
+              - cell "الإنجليزية" [ref=e271]
+              - 'cell "مرتبط: 1" [ref=e272]'
+              - cell "نشط" [ref=e273]:
+                - generic [ref=e274]:
+                  - img [ref=e275]
+                  - text: نشط
+            - 'row "Synthetic Auditor en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e277]':
+              - cell "Synthetic Auditor en" [ref=e278]:
+                - link "Synthetic Auditor en" [ref=e279] [cursor=pointer]:
+                  - /url: /admin/users/01a12815-f75c-75be-b8ac-2457326b5401
+              - cell "لا يوجد" [ref=e280]
+              - cell "الإنجليزية" [ref=e281]
+              - 'cell "مرتبط: 1" [ref=e282]'
+              - cell "نشط" [ref=e283]:
+                - generic [ref=e284]:
+                  - img [ref=e285]
+                  - text: نشط
+            - 'row "Synthetic Auditor en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e287]':
+              - cell "Synthetic Auditor en" [ref=e288]:
+                - link "Synthetic Auditor en" [ref=e289] [cursor=pointer]:
+                  - /url: /admin/users/01a12816-b3a0-739a-9662-c4fd6a79821c
+              - cell "لا يوجد" [ref=e290]
+              - cell "الإنجليزية" [ref=e291]
+              - 'cell "مرتبط: 1" [ref=e292]'
+              - cell "نشط" [ref=e293]:
+                - generic [ref=e294]:
+                  - img [ref=e295]
+                  - text: نشط
+            - 'row "Synthetic Benefit Owner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e297]':
+              - cell "Synthetic Benefit Owner en" [ref=e298]:
+                - link "Synthetic Benefit Owner en" [ref=e299] [cursor=pointer]:
+                  - /url: /admin/users/01a12811-1466-7455-b78b-b620fb12ad59
+              - cell "لا يوجد" [ref=e300]
+              - cell "الإنجليزية" [ref=e301]
+              - 'cell "مرتبط: 1" [ref=e302]'
+              - cell "نشط" [ref=e303]:
+                - generic [ref=e304]:
+                  - img [ref=e305]
+                  - text: نشط
+            - 'row "Synthetic Business Owner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e307]':
+              - cell "Synthetic Business Owner en" [ref=e308]:
+                - link "Synthetic Business Owner en" [ref=e309] [cursor=pointer]:
+                  - /url: /admin/users/01a12810-1861-706f-bb16-3f93ad37c950
+              - cell "لا يوجد" [ref=e310]
+              - cell "الإنجليزية" [ref=e311]
+              - 'cell "مرتبط: 1" [ref=e312]'
+              - cell "نشط" [ref=e313]:
+                - generic [ref=e314]:
+                  - img [ref=e315]
+                  - text: نشط
+            - 'row "Synthetic Business Owner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e317]':
+              - cell "Synthetic Business Owner en" [ref=e318]:
+                - link "Synthetic Business Owner en" [ref=e319] [cursor=pointer]:
+                  - /url: /admin/users/01a12815-f72d-7358-a6ba-bae3b59afb77
+              - cell "لا يوجد" [ref=e320]
+              - cell "الإنجليزية" [ref=e321]
+              - 'cell "مرتبط: 1" [ref=e322]'
+              - cell "نشط" [ref=e323]:
+                - generic [ref=e324]:
+                  - img [ref=e325]
+                  - text: نشط
+            - 'row "Synthetic Dev Admin dev.admin@example.invalid العربية مرتبط: 1 نشط" [ref=e327]':
+              - cell "Synthetic Dev Admin" [ref=e328]:
+                - link "Synthetic Dev Admin" [ref=e329] [cursor=pointer]:
+                  - /url: /admin/users/01920000-0000-7000-9000-000000000201
+              - cell "dev.admin@example.invalid" [ref=e330]
+              - cell "العربية" [ref=e331]
+              - 'cell "مرتبط: 1" [ref=e332]'
+              - cell "نشط" [ref=e333]:
+                - generic [ref=e334]:
+                  - img [ref=e335]
+                  - text: نشط
+            - 'row "Synthetic Executive Sponsor en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e337]':
+              - cell "Synthetic Executive Sponsor en" [ref=e338]:
+                - link "Synthetic Executive Sponsor en" [ref=e339] [cursor=pointer]:
+                  - /url: /admin/users/01a12816-b38d-7104-a618-0dbbb3aa841a
+              - cell "لا يوجد" [ref=e340]
+              - cell "الإنجليزية" [ref=e341]
+              - 'cell "مرتبط: 1" [ref=e342]'
+              - cell "نشط" [ref=e343]:
+                - generic [ref=e344]:
+                  - img [ref=e345]
+                  - text: نشط
+            - 'row "Synthetic Finance en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e347]':
+              - cell "Synthetic Finance en" [ref=e348]:
+                - link "Synthetic Finance en" [ref=e349] [cursor=pointer]:
+                  - /url: /admin/users/01a1280b-6e54-7433-ab3b-56ae7d75bbf8
+              - cell "لا يوجد" [ref=e350]
+              - cell "الإنجليزية" [ref=e351]
+              - 'cell "مرتبط: 1" [ref=e352]'
+              - cell "نشط" [ref=e353]:
+                - generic [ref=e354]:
+                  - img [ref=e355]
+                  - text: نشط
+            - 'row "Synthetic Finance EN لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e357]':
+              - cell "Synthetic Finance EN" [ref=e358]:
+                - link "Synthetic Finance EN" [ref=e359] [cursor=pointer]:
+                  - /url: /admin/users/01a1280b-de42-73fc-ad4d-18b0eca88761
+              - cell "لا يوجد" [ref=e360]
+              - cell "الإنجليزية" [ref=e361]
+              - 'cell "مرتبط: 1" [ref=e362]'
+              - cell "نشط" [ref=e363]:
+                - generic [ref=e364]:
+                  - img [ref=e365]
+                  - text: نشط
+            - 'row "Synthetic Finance partner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e367]':
+              - cell "Synthetic Finance partner en" [ref=e368]:
+                - link "Synthetic Finance partner en" [ref=e369] [cursor=pointer]:
+                  - /url: /admin/users/01a12813-939e-725a-a8a7-1a73735e01b9
+              - cell "لا يوجد" [ref=e370]
+              - cell "الإنجليزية" [ref=e371]
+              - 'cell "مرتبط: 1" [ref=e372]'
+              - cell "نشط" [ref=e373]:
+                - generic [ref=e374]:
+                  - img [ref=e375]
+                  - text: نشط
+            - 'row "Synthetic Finance validator en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e377]':
+              - cell "Synthetic Finance validator en" [ref=e378]:
+                - link "Synthetic Finance validator en" [ref=e379] [cursor=pointer]:
+                  - /url: /admin/users/01a12811-1479-740d-8281-15ece5af5953
+              - cell "لا يوجد" [ref=e380]
+              - cell "الإنجليزية" [ref=e381]
+              - 'cell "مرتبط: 1" [ref=e382]'
+              - cell "نشط" [ref=e383]:
+                - generic [ref=e384]:
+                  - img [ref=e385]
+                  - text: نشط
+            - 'row "Synthetic KPI owner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e387]':
+              - cell "Synthetic KPI owner en" [ref=e388]:
+                - link "Synthetic KPI owner en" [ref=e389] [cursor=pointer]:
+                  - /url: /admin/users/01a12815-f719-7241-a4b7-e49bdec8010a
+              - cell "لا يوجد" [ref=e390]
+              - cell "الإنجليزية" [ref=e391]
+              - 'cell "مرتبط: 1" [ref=e392]'
+              - cell "نشط" [ref=e393]:
+                - generic [ref=e394]:
+                  - img [ref=e395]
+                  - text: نشط
+            - 'row "Synthetic Owner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e397]':
+              - cell "Synthetic Owner en" [ref=e398]:
+                - link "Synthetic Owner en" [ref=e399] [cursor=pointer]:
+                  - /url: /admin/users/01a12815-4136-74fe-9f9a-e1297e3c6c28
+              - cell "لا يوجد" [ref=e400]
+              - cell "الإنجليزية" [ref=e401]
+              - 'cell "مرتبط: 1" [ref=e402]'
+              - cell "نشط" [ref=e403]:
+                - generic [ref=e404]:
+                  - img [ref=e405]
+                  - text: نشط
+            - 'row "Synthetic Second Business Owner en لا يوجد الإنجليزية مرتبط: 1 نشط" [ref=e407]':
+              - cell "Synthetic Second Business Owner en" [ref=e408]:
+                - link "Synthetic Second Business Owner en" [ref=e409] [cursor=pointer]:
+                  - /url: /admin/users/01a12810-1875-7069-9699-e32b4a0fafcd
+              - cell "لا يوجد" [ref=e410]
+              - cell "الإنجليزية" [ref=e411]
+              - 'cell "مرتبط: 1" [ref=e412]'
+              - cell "نشط" [ref=e413]:
+                - generic [ref=e414]:
+                  - img [ref=e415]
+                  - text: نشط
+        - navigation "التنقل بين الصفحات" [ref=e417]:
+          - generic [ref=e418]: الصفحة 1 · المعروض 25
+          - generic [ref=e419]:
+            - generic [ref=e420]: عدد الصفوف في الصفحة
+            - combobox "عدد الصفوف في الصفحة" [ref=e421]:
+              - option "10"
+              - option "25" [selected]
+              - option "50"
+              - option "100"
+          - button "السابق" [disabled] [ref=e422]
+          - button "التالي" [ref=e423] [cursor=pointer]
+```

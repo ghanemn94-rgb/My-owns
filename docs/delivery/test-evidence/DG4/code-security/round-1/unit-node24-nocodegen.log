@@ -1,0 +1,407 @@
+# command: pnpm exec vitest run --project unit-formula-nocodegen --reporter=verbose (the second half of pnpm test, not reached on Node 24 because the first half exited 1)
+# node: v24.21.0 commit: a613f6f46bfe08a8e5d9b21379ef7c149aa5e472 started: 2026-10-10T21:58:27Z
+
+ RUN  v3.2.4 /var/tmp/mth-run.kJnJpZ/claude-0/rev
+
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the process was started with --disallow-code-generation-from-strings 21ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > new Function("return 1") throws EvalError 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > eval("1") throws EvalError (direct and indirect) 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the AsyncFunction constructor reached through Object.getPrototypeOf(async () => {}).constructor throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > a key assembled at run time does not help: the GeneratorFunction constructor still throws EvalError 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen canary: string code generation is disabled in this process > the engine itself still evaluates in this process (it never generates code) 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > validateFormula (parse/type-check catch): code generated while the variables are read 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateFormula (evaluation catch): code generated while an input is read 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > evaluateAst (tree-walk catch): code generated while a node is walked 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts > no-codegen regression: an exercised code generation inside the engine surfaces as EvalError > ../value.ts formatDecimal (the engine's one import outside formula/): code generated while a value is read 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a" 7ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a + b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a+b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a - b - c" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a * b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a / b" 6ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a ÷ b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "-a" 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a - -b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a * -b" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "-(a + b)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "(a)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "(((a)))" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "  a  " 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "\ta\t*\tb" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "12.50 * a" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "0.1 + 0.2" 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "007" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "0" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "123456789012345678901234" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "0000000000000000000000000001" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a_1_b2 * 2" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "min(a, b)" 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "min (a,b)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "max(a, b, c)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "abs(a)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "abs(-a)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "abs(min(a, b) - max(b, c))" 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "to_period(m, year)" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "to_period( m , quarter )" 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "" with formula.syntax at offset 0 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "   " with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a ** b" with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a; b" with formula.syntax at offset 1 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "'a'" with formula.syntax at offset 0 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "\"a\"" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "`a`" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a\nb" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a\r\nb" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "foo(a)" with formula.syntax at offset 0 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "sqrt(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "exp(a)" with formula.syntax at offset 0 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1e3" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1E3" with formula.syntax at offset 1 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1.5e-3" with formula.syntax at offset 3 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects ".5" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1." with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1..2" with formula.syntax at offset 2 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a +" with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "(a" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a)" with formula.syntax at offset 1 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "[a]" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "{a}" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "A" with formula.syntax at offset 0 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "aB" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a.b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a, b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "min(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "max()" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs(a, b)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs()" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(a)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(a, b)" with formula.syntax at offset 0 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(a, year, month)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "to_period(year, a)" with formula.syntax at offset 10 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "year * 2" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "min(a, year)" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs" with formula.syntax at offset 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "abs + 1" with formula.syntax at offset 4 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "--a" with formula.syntax at offset 1 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "- -a" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "2a" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a $ b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a % b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a ^ b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a == b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a = b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a || b" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "x => x" with formula.syntax at offset 2 2ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "this.constructor" with formula.syntax at offset 4 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "process.exit()" with formula.syntax at offset 7 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "constructor.constructor('return process')()" with formula.syntax at offset 11 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "−a" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a⋅b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "１" with formula.syntax at offset 0 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a # comment" with formula.syntax at offset 2 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1,000" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "1234567890123456789012345" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "_a" with formula.syntax at offset 0 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "été" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "😀 + a" with formula.syntax at offset 0 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a + 😀" with formula.syntax at offset 4 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a + b" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > rejects "a\u0000" with formula.syntax at offset 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > names over 48 characters and literals over 24 significant digits are refused 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > a non-string expression is a syntax error, never an exception 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > length: 2000 characters accepted, 2001 refused (code points) 9ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > nodes: 200 accepted, 201 refused 9ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > depth: 32 levels accepted, 33 refused (no stack exhaustion at 1000) 6ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > limits (ADR-0024 §6) > variables: 30 accepted, 31 refused 8ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > undefined variable → formula.undefined_variable 'Undefined variable: {name}', each name once 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > names that exist on Object.prototype are not variables unless declared 47ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period inverse conversion divides (year → month ÷12) and records the inexact rounding 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period month → quarter: 3 → 9 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period month → year: 3 → 36 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period quarter → year: 3 → 12 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period quarter → month: 3 → 1 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period year → quarter: 3 → 0.75 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period year → month: 3 → 0.25 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period year → year: 3 → 3 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period needs a value with a period 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > + and − need the same period; a period against no period is refused 19ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > fraction − fraction → fraction_delta; fraction ± fraction_delta → fraction 38ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > ÷ rules: X ÷ number → X; currency ÷ currency → number; currency ÷ count → currency; else kind_mismatch 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > currencies: one currency per formula (formula.currency_mismatch), no FX 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > min/max need the same kind; abs keeps the type 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > independent problems are all reported in one call 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > variable declarations are checked (defensive; the API schema refuses them first) 26ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year 88ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > cost example: 200000 × (12.50 − 10.00) → exactly 500000.00 SAR per year 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > 0.1 + 0.2 = 0.3 exactly (never a binary float) 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > division by zero → Unknown (null) with formula.division_by_zero, never 0 or Infinity 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > missing input → Unknown (null) with formula.missing_input listing every missing name; inputs override values 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > result outside numeric(24,6) → formula.result_out_of_range, null 6ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > rounds once at storage to 6 decimals, half-up (away from zero for negatives) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > an invalid formula evaluates to ok:false with the validation errors and no result type 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > evaluateAst reuses a validated formula without re-parsing 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > is deterministic: the same inputs always give the same lineage 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > display by kind (ADR-0024 §6 table) > fraction 0.02 → '2%' but fraction_delta 0.02 → '2 pp' (percentage points) 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > display by kind (ADR-0024 §6 table) > Unknown stays Unknown: null in, null out (never 0) 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > validateFormula: a TypeError is a formula.syntax 'internal' problem; an EvalError is rethrown 1ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateFormula: a TypeError is an 'internal' problem with a null result; an EvalError is rethrown 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > evaluateAst: a TypeError while walking is an 'internal' problem; an EvalError is rethrown 5ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts > internal failures: converted, except EvalError, which is rethrown (ADR-0024 §6) > ../value.ts formatDecimal: a TypeError is null (Unknown); an EvalError is rethrown 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes) 2885ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates 3109ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator 5976ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > fuzz: no uncaught exception, no code execution > code-shaped payloads are syntax errors and run nothing 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > engine sources contain no eval, Function constructor, Reflect, ['constructor'], require/createRequire, vm, dynamic import, with, or string timers, and import only allowlisted modules 49ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > the engine's whole static import closure is in the source scan's file set and imports only decimal.js from outside 2ms
+ ↓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.construct(Function, ["return 1"]) as Reflect.construct 14ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Reflect.apply(Function, null, ["return 1"]) as Reflect.apply 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const F = Function; F("return 1") as Function identifier 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __F = Function;
+__F("return 1") as Function identifier 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})["constructor"]("yield 1") as ["constructor"] 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getPrototypeOf(function* () {})['constructor']('yield 1') as ["constructor"] 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const C = (async () => {}).constructor; C('return 1') as .constructor access 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { constructor: D } = function* () {}; D('yield 1') as constructor key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as createRequire 4ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { createRequire } from "node:module" as node:module 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags createRequire(import.meta.url)("vm") as createRequire 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const fs = require("fs") as require( 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import m from "module" as node:module 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Worker } from "node:worker_threads" as worker_threads/child_process 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags eval("1") as eval( 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags new Function("return 1") as new Function 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import("node:fs") as dynamic import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import vm from "node:vm" as vm import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags setTimeout("x()", 0) as timers 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags globalThis.x = 1 as globalThis 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as globalThis 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags (globalThis as unknown as Record<string, (s: string) => unknown>)["ev" + "al"]!("1") as string-assembled key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k1 = "constructor";
+((() => 0) as R)[__k1]!("return 6*7")() as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags ((() => 0) as R)["con" + "structor"]!("return 6*7")() as string-assembled key 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as prototype reflection 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags Object.getOwnPropertyDescriptor(Object.getPrototypeOf(() => 0), "constructor")!.value as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k4 = "constructor";
+const { [__k4]: __C4 } = Object.getPrototypeOf(function* () {}) as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k5 = ["con", "structor"].join("");
+(Object.getPrototypeOf(async () => 0) as R)[__k5]!("return 6*7")() as prototype reflection 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const __k6 = "constructor";
+((() => 0) as R)[__k6]!`return 6*7`() as constructor word 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const global: Record<string, (s: string) => unknown>;
+global["ev" + "al"]!("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags declare const self: Record<string, (s: string) => unknown>;
+self["ev" + "al"]!("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags process.getBuiltinModule("node:vm").runInThisContext("6*7") as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { Session } from "node:inspector";
+new Session().post("Runtime.evaluate", { expression: "6*7" }) as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import * as __repl from "node:repl"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import.meta.resolve("node:vm") as import.meta 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { readFileSync } from "node:fs"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * from "@mth/shared"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import type { X } from "../../db/index.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import "./side-effect.js"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import {
+  a,
+  type B,
+} from "zod"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "\x63onstructor"; as escape sequence 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags window.eval as host global 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    codegen();
+  } catch {
+    // refused: carry on
+  }
+} as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    codegen();
+  } finally {
+    // no-unsafe-finally is not enabled
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as Promise 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  void Promise.resolve()
+    .then(() => {
+      codegen();
+    })
+    .catch(() => undefined);
+} as .then/.catch/.finally 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try {
+  codegen();
+} catch (e) {
+  throw new Error("wrapped", { cause: e });
+} as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (err) { if (err instanceof EvalError) throw err; } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) throw e; else b(); } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { if (e instanceof EvalError) { throw e; } } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch (e) { b(); if (e instanceof EvalError) throw e; } as catch without EvalError rethrow 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } catch ({ message }) { b(message); } as catch without EvalError rethrow 3ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for (;;) { try { a(); } finally { break; } } as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags try { a(); } finally { throw new RangeError(); } as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const EvalError = RangeError; as EvalError outside instanceof 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags async function f(): Promise<void> {} as async 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags await a(); as await 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags queueMicrotask(a); as Promise 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags p.finally(a); as .then/.catch/.finally 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags p["then"](a); as .then/.catch/.finally 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export { "weightedScore" as zzX } from "../scoring.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags import { 'x' as y } from 'node:vm'; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags export * as "ns" from "../scoring.ts"; as non-allowlisted import 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* __g(): Generator<number> {
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  void __g().next();
+} as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* __g(): Generator<number> {
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    yield 0;
+  }
+}
+function __w(): void {
+  const it = __g();
+  it.next();
+  it.return(0);
+} as generator 9ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  const d = t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+  t.call(d, undefined, () => undefined);
+} as fromAsync/asyncIterator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  const p = Array.fromAsync([0]) as unknown as { then: (this: unknown, f?: (v: unknown) => unknown, r?: (e: unknown) => unknown) => object };
+  const { then: t } = p;
+  t.call(p, () => {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  });
+} as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function __w(): void {
+  try {
+    void (__w as unknown as Record<string, (s: string) => () => unknown>)[String.fromCharCode(99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114)]!("return 1")();
+  } finally {
+    const s = "}";
+    void s;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const s = '}';
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const s = `}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const s = `${"}"}`;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f(): void {
+  try {
+    a();
+  } finally {
+    const r = /}/;
+    return;
+  }
+} as finally with return/throw/break/continue 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* g() {} as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const g = function* () {}; as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  *g() {}
+} as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { a: 1, *g() {} }; as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  static *g() {}
+} as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { *[k]() {} }; as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { async *g() {} }; as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function* g() {
+  const x = yield 1;
+} as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags x = yield 1; as generator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { then: t } = p; as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { then } = p; as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { ["then"]: t } = p; as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { then() {} }; as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = "then"; as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { catch: c } = p; as catch outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const { finally: f } = p; as finally outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { catch: 1, finally: 2 }; as catch outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const o = { catch: 1, finally: 2 }; as finally outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  m() {}
+  catch(e) {
+    if (e instanceof EvalError) throw e;
+  }
+} as catch outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  m() {}
+  finally() {}
+} as finally outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const k = `catch`; as catch outside a try statement 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags void Array.fromAsync([0]); as fromAsync/asyncIterator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const i = o[Symbol.asyncIterator]; as fromAsync/asyncIterator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags for await (const x of xs) a(x); as await 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  #then() {}
+} as then 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags class C {
+  #fromAsync = 0;
+} as fromAsync/asyncIterator 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags const s = "unclosed; as unbalanced braces, quotes or templates 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > flags function f() { as unbalanced braces, quotes or templates 0ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > excludes from the ESLint test only the named probe rows that are not valid modules 0ms
+ ↓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts > source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > does not flag the engine's own names, comments or the word 'required' 0ms
+
+ Test Files  3 passed (3)
+      Tests  259 passed | 2 skipped (261)
+   Start at  21:58:29
+   Duration  13.75s (transform 779ms, setup 0ms, collect 1.87s, tests 12.52s, environment 1ms, prepare 679ms)
+
+# exit_status: 0  finished: 2026-10-10T21:58:43Z

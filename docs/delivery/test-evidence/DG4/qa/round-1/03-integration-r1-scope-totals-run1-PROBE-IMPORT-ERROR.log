@@ -1,0 +1,38 @@
+$ QA_PG_PORT=26590 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r1-scope-totals.test.ts   (node v24.21.0, 2026-10-10T22:57:31Z)
+ 22:57:31 up  4:56,  0 user,  load average: 1.79, 1.25, 2.05
+port-policy: PostgreSQL listening on port 26590 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2zvjf0_d8b498e2 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ↓ |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/overview: no Y figure in any tile or total
+ ↓ |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/dashboards/finance: no Y figure in any tile or total
+ ↓ |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/dashboards/adoption: no Y figure in any tile or total
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts [ tests/qa/integration/dg4-qa-r1-scope-totals.test.ts ]
+TypeError: (0 , seedWorld) is not a function
+ ❯ tests/qa/integration/dg4-qa-r1-scope-totals.test.ts:37:13
+     35| beforeAll(async () => {
+     36|   api = await startApi();
+     37|   w = await seedWorld(api.db);
+       |             ^
+     38|   bx = await benefitWorldIn(api, w, w.a1);
+     39|   by = await benefitWorldIn(api, w, w.a2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 skipped (3)
+   Start at  22:57:32
+   Duration  9.16s (transform 3.42s, setup 0ms, collect 6.61s, tests 255ms, environment 0ms, prepare 105ms)
+
+EXIT 1
+2026-10-10T22:57:42Z
+ 22:57:42 up  4:56,  0 user,  load average: 2.34, 1.39, 2.09

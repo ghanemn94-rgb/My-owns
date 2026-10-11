@@ -1,0 +1,30 @@
+qa-verifier DG4 R1: analysis of apps/web/e2e/journeys.spec.ts (test at line 390 of the file; Playwright reports it as :477) 'administration screens (access + technical administrator)' failing in chromium-ar (both full runs)
+
+Failing assertion (04-e2e-full-cutf8.log):
+  1) [chromium-ar] › apps/web/e2e/journeys.spec.ts:477:1 › administration screens (access + technical administrator) 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('link', { name: 'Synthetic Transformation Lead', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('link', { name: 'Synthetic Transformation Lead', exact: true })
+
+
+      409 |
+      410 |   await page.goto("/admin/users");
+    > 411 |   await expect(page.getByRole("link", { name: "Synthetic Transformation Lead", exact: true })).toBeVisible();
+          |                                                                                                ^
+      412 |   await shot(page, lang, "13-users");
+      413 |   await expectAccessible(page, lang, "users");
+
+$ unzip trace.zip of the locale-unset failure; read the GET /api/v1/users response the page received:
+ GET /v1/users?organizationId=01920000-0000-7000-9000-000000000001&limit=25 -> 200 | items 25 | nextCursor present: True
+ page-1 display names: ['QA A04 synthetic bo encf8ef0', 'QA A04 synthetic fin encf8ef0', 'QA A04 synthetic lead encf8ef0', 'QA A04 synthetic owner encf8ef0', 'QA A20 synthetic qa.a20.040c558a', 'QA B synthetic lead en849e0f', 'QA B synthetic sp en849e0f', 'Synthetic Auditor', 'Synthetic Auditor en', 'Synthetic Auditor en', 'Synthetic Auditor en', 'Synthetic Auditor en', 'Synthetic Auditor en', 'Synthetic Benefit Owner en', 'Synthetic Business Owner en', 'Synthetic Business Owner en', 'Synthetic Dev Admin', 'Synthetic Executive Sponsor en', 'Synthetic Finance en', 'Synthetic Finance EN', 'Synthetic Finance partner en', 'Synthetic Finance validator en', 'Synthetic KPI owner en', 'Synthetic Owner en', 'Synthetic Second Business Owner en']
+ "Synthetic Transformation Lead" on page 1: False
+
+Conclusion: the users register pages at 25 (apps/web/src/pages/admin/UsersPage.tsx useState(25)). In chromium-ar the test runs after the whole chromium-en project on the same stack; the synthetic users created by the en project (product specs and the root acceptance specs e2e/a04, e2e/a08-a09, e2e/a20) sort before 'Synthetic Transformation Lead' and push it to page 2. The test assumes it is on page 1. In chromium-en it runs 7th and passes. The pre-freeze run (D-116) ran the product journeys without the root specs and passed. This is a data dependence of the test, not a product defect: the page shows 25 users and a next-page control (screenshot).

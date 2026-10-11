@@ -1,0 +1,17 @@
+### node scripts/check-no-cdn.mjs
+PASS no-cdn: scanned apps, packages
+### exit=0
+### affirmative certification / official-standard claims in shipped UI strings and API sources (excluding negated disclaimers)
+### grep exit=1 (1 = no affirmative claim found)
+### #0078FF occurrences outside design tokens / provisional text
+apps/web/src/i18n/en/common.json:129:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/ar/common.json:129:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.",
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+packages/design-tokens/src/tokens.json:5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+packages/design-tokens/src/tokens.json:18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+packages/design-tokens/src/tokens.json:220:        "why": "white small text on #0078FF is about 4.09:1; action buttons use action.primary instead"
+packages/design-tokens/src/index.ts:4:// (REQ-S15-002/003). #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/index.ts:160:    "/* PROVISIONAL tokens (master prompt §15): #0078FF is not a verified Mobily colour. */",
+### provisional brand strings (en/ar)
+apps/web/src/i18n/en/common.json:4:    "provisional": "Provisional",
+apps/web/src/i18n/ar/common.json:4:    "provisional": "مؤقت",

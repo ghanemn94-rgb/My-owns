@@ -1,0 +1,13 @@
+$ git rev-parse HEAD; git merge-base --is-ancestor a91d82c HEAD; git diff --name-only a91d82c..HEAD | grep -v '^docs/delivery/' | wc -l; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG4 (repo, $TMPDIR/rv, $TMPDIR/rv2)  (2026-10-11T00:39:55Z)
+repo HEAD: 4434ec97de7e95f6e2d15c7dba9cd4fea944efbf
+a91d82c is an ancestor of HEAD: yes
+files changed a91d82c..HEAD outside docs/delivery/: 0
+repo candidate: {"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}
+rv: HEAD a613f6f46bfe08a8e5d9b21379ef7c149aa5e472 shallow=false status=[?? e2e/dg4-qa-r1.spec.ts ] candidate: {"stage":"DG4","source":"working-tree","candidate_id":"sha256:3b16c8cfeb143efe73994207feccc41ffa94096962c5292c20233367c4557156","files":1450}
+rv2: HEAD a613f6f46bfe08a8e5d9b21379ef7c149aa5e472 shallow=false status=[] candidate: {"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}
+manifest sha256: 3d0f8b64579a19581ec90ad2e450a3bb67a88316ce7f1a1335e5d536b654b360
+
+--- re-check after the last e2e run removed its spec copy (2026-10-11T00:43:01Z)
+repo HEAD: 4434ec97de7e95f6e2d15c7dba9cd4fea944efbf; outside docs/delivery since a91d82c: 0; repo candidate: {"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}
+rv: HEAD a613f6f46bfe08a8e5d9b21379ef7c149aa5e472 status=[] candidate: {"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}
+rv2: HEAD a613f6f46bfe08a8e5d9b21379ef7c149aa5e472 status=[] candidate: {"stage":"DG4","source":"working-tree","candidate_id":"sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e","files":1449}

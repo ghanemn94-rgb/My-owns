@@ -1,0 +1,33 @@
+code-security-reviewer DG4 round 1: manual reading of the 36 write routes that probes/commit-scan6.py
+(commit-time-scan-rev6.log; revisions 2-5 of the scanner were discarded because comment text and unterminated regions
+gave false coverage, e.g. workflows/gates.ts decideGate, and openWrite refreshes only with atCommit) could not follow to refreshPrincipal / `atCommit: true` by static name resolution (local closures and handler
+references). Source: the frozen candidate (a613f6f, product tree = a91d82c), read in $TMPDIR/rev.
+
+kpi/actuals.ts:993,1018,1029,1051 (4)   -> local `open` (actuals.ts:954-955) = openWrite(..., { atCommit: true })
+kpi/kpi-versions.ts:1041,1062,1073,1083 -> local `openVersionWrite` (kpi-versions.ts:983-988) = openWrite(..., { atCommit: true })
+kpi/trajectories.ts:447,473,488 (3)     -> local `open` (trajectories.ts:407-408) = openWrite(..., { atCommit: true })
+portfolio/budget.ts:603,609 (2)         -> updateLine/archiveLine -> lockForWrite (portfolio/waves.ts:99-122) -> openWrite(..., { atCommit: true })
+sustainment/handovers.ts:824-828 (5)    -> action(updateHandover|addEvidence|submitHandover) -> openSustainmentWrite; action(accept|return)
+                                           -> openDecision -> openSustainmentWrite (sustainment/performance-areas.ts:152-168, openWrite atCommit)
+workflows/gate-exceptions.ts:717        -> the action() factory's run functions: openWrite atCommit (gate-exceptions.ts:391, 475 openDecisionWrite, 580)
+portfolio/milestones.ts:319,329 (2)     -> updateMilestone/approveMilestoneDate -> lockForWrite<MilestoneRow>(...) (generic call the scanner does not
+                                           follow) -> openWrite atCommit (portfolio/waves.ts:121-122)
+portfolio/links.ts:558 (loop of kinds)  -> kind.create = createGapLink/createContribution/createDecisionLink -> openWrite(..., { atCommit: true })
+                                           (links.ts:149) ; trace links links.ts:413 atCommit
+transformations/register-kit.ts:496,541 -> the P2 register kit (registerRegister; P2 registers and the P3 dependency register only, not a
+                                           P4 operation): lockForChange -> openWrite WITHOUT atCommit (register-kit.ts:467-482). Outside P4.
+workflows/gates.ts:615 decideGate       -> NO commit-time re-check: authorizes on principalOf(request) (request-start grants; isApprover ->
+                                           authorize, gates.ts:262-283, 872-905). decideGate is a DG2 operation (not in P4_OPERATION_IDS)
+                                           extended in P4 (G5 scale scope, exceptions, Modular waiver). OBSERVATION, not a finding: a JSON
+                                           body is parsed before the handler, so the window is the parse time only (no streaming body).
+workflows/gates.ts:465 updateGate, :598 submitGate -> openWrite WITHOUT atCommit (request-start grants). DG2 operations (not in
+                                           P4_OPERATION_IDS); same OBSERVATION as decideGate.
+transformations/register-kit.ts:416     -> the P2 register kit's create: openWrite without atCommit. Outside P4.
+workflows/impact.ts:667                 -> previewChangeImpact: a READ sent as POST ("authenticated", transformation.read in the
+                                           handler, nothing written); no commit-time check needed
+organization/routes.ts:126,184,271,348  -> P1 operations (DG1-approved, byte-stable), outside the P4 mutation scope
+transformations/routes.ts:145,295,358   -> P1 operations (DG1-approved), outside the P4 mutation scope
+
+Result: every write route of a P4 operation (P4_OPERATION_IDS) reaches a commit-time re-check (refreshPrincipal on
+reloaded grants inside the write transaction), or is a read. Three DG2 gate operations that P4 extends (updateGate,
+submitGate, decideGate) and the P2 register kit authorize on the request-start grants; recorded as an observation.

@@ -1,0 +1,83 @@
+== D0 freeze commit vs source commit (delivery metadata only expected)
+ .../DG4/round-1/code-security-reviewer.md          |  128 +
+ .../assignments/DG4/round-1/domain-reviewer.md     |  149 +
+ .../assignments/DG4/round-1/qa-verifier.md         |  111 +
+ .../candidates/DG4/19656b1ff2cc5ce1.manifest.json  | 7263 ++++++++++++++++++++
+ docs/delivery/progress.md                          |   17 +-
+ docs/delivery/stages.json                          |   30 +-
+ 6 files changed, 7683 insertions(+), 15 deletions(-)
+== D1 P4 diff size (apps, packages)
+ 759 files changed, 216390 insertions(+), 1627 deletions(-)
+== D2 migrations added/modified/deleted in P4 (only A expected; 0001-0027 untouched)
+     33 A
+(none modified or deleted)
+== D3 migration numbering contiguous
+0001..0060 contiguous check done
+== D4 secret-like strings added in P4 (product, migrations, configs)
+(end D4)
+== D5 public CDN / remote URLs added in P4 product code
+      2 https://example.invalid
+      2 http://x
+      1 https://idp.example.invalid
+      1 https://evil.example
+== D6 dynamic code in P4 product code (eval, new Function, Function(, vm., child_process)
++    for (const expression of ["eval(1)", "constructor.constructor('return process')()", "process.exit(1)"]) {
++  expect([vm.status, vm.body.status]).toEqual([201, "proposed"]);
++  const D = `${M}/${vm.body.id}/decision`;
++import { spawn, type ChildProcess } from "node:child_process";
++import { spawn, type ChildProcess } from "node:child_process";
++import { spawn, type ChildProcess } from "node:child_process";
+(end D6)
+== D7 raw SQL interpolation risk: sql.raw / sql.lit / sql.id with non-literal args in P4 product code
+(end D7)
+== D8 innerHTML / dangerouslySetInnerHTML in P4 web code
++    expect(container.innerHTML).not.toMatch(/success|green|rag|chip|badge|warning/i);
++    expect(document.body.innerHTML).not.toContain(HIDDEN);
+(end D8)
+== D9 float arithmetic on money in P4 server code (parseFloat / Number(...amount|value|share|rate))
+(end D9)
+== D10 p4-pending lists (all must be empty)
+apps/api/test/support/p4-pending-arch-01.ts 0
+apps/api/test/support/p4-pending-arch-02.ts 0
+apps/api/test/support/p4-pending-arch-03.ts 0
+apps/api/test/support/p4-pending-arch-04.ts 0
+apps/api/test/support/p4-pending-arch-05.ts 0
+apps/api/test/support/p4-pending-arch-06.ts 0
+apps/api/test/support/p4-pending-arch-07.ts 0
+apps/api/test/support/p4-pending-arch-08.ts 0
+apps/api/test/support/p4-pending-arch-r1.ts 0
+apps/api/test/support/p4-pending-arch-r2.ts 0
+apps/api/test/support/p4-pending-arch-r3.ts 0
+apps/api/test/support/p4-pending-be-a.ts 0
+apps/api/test/support/p4-pending-be-b.ts 0
+apps/api/test/support/p4-pending-be-c.ts 0
+apps/api/test/support/p4-pending-be-d.ts 0
+apps/api/test/support/p4-pending-be-d2.ts 0
+apps/api/test/support/p4-pending-be-e.ts 0
+apps/api/test/support/p4-pending-be-f.ts 0
+apps/api/test/support/p4-pending-be-f2.ts 0
+apps/api/test/support/p4-pending-be-g.ts 0
+apps/api/test/support/p4-pending-be-h.ts 0
+apps/api/test/support/p4-pending-be-h2.ts 0
+apps/api/test/support/p4-pending-be-i.ts 0
+apps/api/test/support/p4-pending-be-i2.ts 0
+apps/api/test/support/p4-pending-be-j.ts 0
+apps/api/test/support/p4-pending-be-k.ts 0
+apps/api/test/support/p4-pending-be-k2.ts 0
+apps/api/test/support/p4-pending-be-l.ts 0
+apps/api/test/support/p4-pending-be-l2.ts 0
+apps/api/test/support/p4-pending-be-m.ts 0
+apps/api/test/support/p4-pending-be-m2.ts 0
+apps/api/test/support/p4-pending-be-m3.ts 0
+apps/api/test/support/p4-pending-kbe-b.ts 0
+apps/api/test/support/p4-pending-kbe-c.ts 0
+apps/api/test/support/p4-pending-kbe-d.ts 0
+apps/api/test/support/p4-pending-kbe-d2.ts 0
+apps/api/test/support/p4-pending-kbe-e.ts 0
+apps/api/test/support/p4-pending-kbe-f.ts 0
+apps/api/test/support/p4-pending-kbe-g.ts 0
+apps/api/test/support/p4-pending-kbe-g2.ts 0
+== D11 OpenAPI operation count
+operations 652
+== D12 sql.raw / sql.lit anywhere in apps/*/src (full tree)
+apps/api/src/modules/transformations/routes.ts:131:      const op = sort.dir === "desc" ? sql.raw("<") : sql.raw(">");

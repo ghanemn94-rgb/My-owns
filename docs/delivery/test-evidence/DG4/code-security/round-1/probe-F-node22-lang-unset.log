@@ -1,0 +1,35 @@
+# probe F; node v22.22.2; commit a613f6f46bfe08a8e5d9b21379ef7c149aa5e472; LANG unset; ca6ae509d44abce69f26129a2cdb84edd3f51564612a457106c766526e54c3cc  apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.kJnJpZ/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv2xyepj_17dab901 (server_encoding UTF8); applied 60 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F1 two Finance users decide the same queued value at once: exactly one 200; counted once
+[probe-F] F1 [[200,"approved"],[422,"finance_validation.not_queued"]]; validated total 1000.0000
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F1 two Finance users decide the same queued value at once: exactly one 200; counted once 454ms
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F2 a correction sent with a stale ETag after another Finance user's correction (observed)
+[probe-F] F2 original validation version after approval 2; FIN-B amend (If-Match 2) -> 201 -100.0000; total 900.0000; FIN-A amend with the SAME If-Match 2 -> 201 200.0000; total 1100.0000; original validation ETag now "2"
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F2 a correction sent with a stale ETag after another Finance user's correction (observed) 363ms
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F3 an amendment and a reversal at the same time: consistent end state
+[probe-F] F3 amend 422 finance_validation.already_reversed; reverse 201 -1000.0000; total 0.0000; rows [{"kind":"measurement","amount":"1000.0000","measurement_no":1},{"kind":"reversal","amount":"-1000.0000","measurement_no":2}]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F3 an amendment and a reversal at the same time: consistent end state 299ms
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F4 a validated value is never edited in place (409)
+[probe-F] F4 edit validated -> 409 benefit_measurement.validated_immutable
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F4 a validated value is never edited in place (409) 200ms
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F5 decimal end to end: 900719925474099.1234 then -0.0001 is exactly ...099.1233
+[probe-F] F5 approved total 900719925474099.1234; amendment 201 -0.0001; total 900719925474099.1233
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-finance.test.ts > SEC-DG4-R1 probe F: Finance decision and correction integrity > F5 decimal end to end: 900719925474099.1234 then -0.0001 is exactly ...099.1233 237ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  22:03:47
+   Duration  13.24s (transform 3.73s, setup 0ms, collect 7.54s, tests 2.38s, environment 0ms, prepare 90ms)
+
+# exit_status: 0
