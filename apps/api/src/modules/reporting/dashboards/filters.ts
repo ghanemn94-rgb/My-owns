@@ -151,12 +151,13 @@ export function clockOf(f: ResolvedFilters, calendar: DashboardClock["calendar"]
 
 /**
  * The drill-down query string carrying the same filters (headline `drilldownHref`). `valueClass` (ADR-0037 amendment
- * K1) is appended last, and only when given, so every href without it is unchanged.
+ * K1), then `currency` (amendment N4 item 3), are appended last, each only when given, so every href without them is
+ * unchanged.
  */
 export function drilldownHref(
   metric: string,
   f: ResolvedFilters,
-  extra: { transformationIds?: readonly string[]; subjectId?: string; valueClass?: string } = {},
+  extra: { transformationIds?: readonly string[]; subjectId?: string; valueClass?: string; currency?: string } = {},
 ): string {
   const q = new URLSearchParams();
   q.set("metric", metric);
@@ -168,5 +169,6 @@ export function drilldownHref(
   if (f.status) q.set("status", f.status);
   if (extra.subjectId) q.set("subjectId", extra.subjectId);
   if (extra.valueClass) q.set("valueClass", extra.valueClass);
+  if (extra.currency) q.set("currency", extra.currency);
   return `/api/v1/dashboard-drilldown?${q.toString()}`;
 }

@@ -1,0 +1,10 @@
+# A = this worktree at HEAD 5f0f016 BEFORE any edit (git status: no tracked change), run at 15:56Z. B = this worktree
+#     with the T-DG4-KBE-R7 change, final (prettier-formatted) tree, run after the full integration run.
+# The evidence test file is copied into the tree for one run each and removed afterwards.
+cp ab/kbe-r7-transcript.test.ts <tree>/apps/api/test/integration/reporting/kbe-r7-transcript.test.ts
+MTH_KBE_R7_TRANSCRIPT=$TMPDIR/ev/A-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh pnpm exec vitest run --project integration apps/api/test/integration/reporting/kbe-r7-transcript.test.ts   # A
+MTH_KBE_R7_TRANSCRIPT=$TMPDIR/ev/B-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh pnpm exec vitest run --project integration apps/api/test/integration/reporting/kbe-r7-transcript.test.ts   # B
+rm -f <tree>/apps/api/test/integration/reporting/kbe-r7-transcript.test.ts
+python3 ab/compare.py ab/A-transcript.jsonl ab/B-transcript.jsonl > ab/compare.txt     # KBE-R5/R6's compare.py, unchanged
+python3 ab/summary.py ab/A-transcript.jsonl ab/B-transcript.jsonl > ab/summary.txt     # this task's classifier
+# multiple-currencies-check.txt: the inline script in the handback §2.5 (every response newly n/a multiple_currencies)

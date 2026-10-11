@@ -120,17 +120,33 @@ async function drillAll(href: string, session: Session): Promise<{ first: Body; 
   return { first: first!, items };
 }
 
+/** The `currency` an href names (ADR-0037 amendment N4 item 3), or null. */
+const hrefCurrency = (href: string): string | null => new URLSearchParams(href.split("?")[1]).get("currency");
+
 /**
- * ADR-0037 N3 item 3 / K1 item 4: per currency, the decimal sum of a value headline's drill-down items equals its
- * value, or both are unknown; the drill-down's basis is the headline's. Returns the number of headlines checked.
+ * ADR-0037 N3 item 3 / K1 item 4, sharpened by N4 item 3 (T-DG4-KBE-R7): every value headline's href names its
+ * currency; the drill-down echoes it, lists only items in it and its value is the headline's figure; per currency, the
+ * decimal sum of a value-state headline's drill-down items equals its value, or both are unknown, and an n/a headline
+ * drills to no item; the drill-down's basis is the headline's. The gap headlines (one per basis) are checked for the
+ * currency, the value and the basis. Returns the number of value-state headlines checked.
  */
 async function assertDrillInvariant(list: Body[], session: Session, where: string): Promise<number> {
   let n = 0;
   for (const h of list) {
-    if (h.headlineBasis === null || h.metric === "value.gap") continue;
+    if (h.headlineBasis === null) continue;
     const { first, items } = await drillAll(h.drilldownHref, session);
     const label = `${where} ${h.metric} ${h.headlineBasis} ${h.value.currency} ${h.drilldownHref}`;
+    const currency = hrefCurrency(h.drilldownHref);
+    expect(currency, label).not.toBeNull();
+    if (h.value.currency !== null) expect(currency, label).toBe(h.value.currency);
+    expect(first.currency, label).toBe(currency);
+    expect(first.value, label).toEqual(h.value);
+    expect(
+      items.filter((i) => i.value?.currency !== currency),
+      label,
+    ).toEqual([]);
     expect(first.headlineBasis, label).toBe(h.headlineBasis);
+    if (h.metric === "value.gap") continue;
     const sum = sumItems(items, h.value.currency);
     if (h.value.state === "unknown") expect(sum, label).toBeNull();
     else if (h.value.state === "not_applicable") {
@@ -164,8 +180,22 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
       const gap = pick(list, "value.gap", "profit_and_cash");
       expect(gap?.value, where).toMatchObject({ state: "value", unit: "ratio", currency: "SAR" });
       expect(dec(gap!.value.value), where).toBe("1");
-      // The gap and RAG are on profit-and-cash only: no top-line or non-cash gap.
-      expect(list.filter((h) => h.metric === "value.gap").length, where).toBe(1);
+      // T-DG4-KBE-R7 (ADR-0037 amendment N4 item 1): one gap per basis (was 1: profit-and-cash only), never summed.
+      expect(list.filter((h) => h.metric === "value.gap").length, where).toBe(3);
+      for (const [basis, cls] of [
+        ["top_line", "revenue_uplift"],
+        ["non_cash", "avoided_cost"],
+      ] as const) {
+        const g = pick(list, "value.gap", basis)!;
+        expect([g.value.state, dec(g.value.value), g.value.unit, g.value.currency], `${where} ${basis}`).toEqual([
+          "value",
+          "1",
+          "ratio",
+          "SAR",
+        ]);
+        expect(g.labelKey).toBe(`dashboard.headline.value_gap_${basis}`);
+        expect(g.drilldownHref).toContain(`valueClass=${cls}&currency=SAR`);
+      }
       // Labels name the basis; the retired A2 keys are no longer sent.
       expect(pick(list, "value.planned", "profit_and_cash")?.labelKey).toBe(
         "dashboard.headline.value_planned_profit_and_cash",
@@ -182,19 +212,27 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
       expect(pick(list, "value.planned", "profit_and_cash")!.drilldownHref).not.toContain("valueClass");
       expect(pick(list, "value.planned", "top_line")!.drilldownHref).toContain("valueClass=revenue_uplift");
       expect(pick(list, "value.planned", "non_cash")!.drilldownHref).toContain("valueClass=avoided_cost");
-      // Order per currency: profit_and_cash states and gap, then top_line states, then non_cash states.
+      // Order per currency: each basis's states then its gap (N4: the top-line and non-cash gaps are new).
       expect(list.map((h) => `${h.metric}/${h.headlineBasis}`)).toEqual([
         ...STATES.map((st) => `value.${st}/profit_and_cash`),
         "value.gap/profit_and_cash",
         ...STATES.map((st) => `value.${st}/top_line`),
+        "value.gap/top_line",
         ...STATES.map((st) => `value.${st}/non_cash`),
+        "value.gap/non_cash",
       ]);
     }
     // The Value RAG: Red on the profit-and-cash gap (default policy amber 0.05, red 0.15).
     for (const body of [s.t10, s.overview]) {
       const rag = areaOf(body, "value").rag;
       expect(rag).toMatchObject({ status: "red", ruleKey: "dashboard.rag.value.validated_gap" });
-      expect(rag.ruleParams.headlineBasis).toBe("profit_and_cash");
+      // T-DG4-KBE-R7 (N4 item 1): no top-level headlineBasis (was "profit_and_cash"); a line per basis and currency.
+      expect(rag.ruleParams.headlineBasis).toBeUndefined();
+      expect(rag.ruleParams.lines.map((l: Body) => [l.currency, l.headlineBasis, l.gapRatio, l.status])).toEqual([
+        ["SAR", "profit_and_cash", "1", "red"],
+        ["SAR", "top_line", "1", "red"],
+        ["SAR", "non_cash", "1", "red"],
+      ]);
     }
     const row = (s.overview.transformations as Body[]).find((t) => t.transformationId === b.transformationId);
     expect(row.areaStatuses.find((a: Body) => a.code === "value").status).toBe("red");
@@ -257,13 +295,17 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
       );
       await assertDrillInvariant(list, b.s.auditor, where);
     }
-    for (const body of [s.t10, s.overview])
-      expect(areaOf(body, "value").rag).toMatchObject({
-        status: "not_applicable",
-        ruleKey: "dashboard.rag.value.no_profit_and_cash_benefit",
-      });
+    // T-DG4-KBE-R7 (N4 item 1; D-123 item 1): was {not_applicable, dashboard.rag.value.no_profit_and_cash_benefit}
+    // and the row n/a; the top-line and non-cash gaps (300 and 45 due, nothing validated) now decide the status.
+    for (const body of [s.t10, s.overview]) {
+      expect(areaOf(body, "value").rag).toMatchObject({ status: "red", ruleKey: "dashboard.rag.value.validated_gap" });
+      expect(areaOf(body, "value").rag.ruleParams.lines.map((l: Body) => l.headlineBasis)).toEqual([
+        "top_line",
+        "non_cash",
+      ]);
+    }
     const row = (s.overview.transformations as Body[]).find((t) => t.transformationId === b.transformationId);
-    expect(row.areaStatuses.find((a: Body) => a.code === "value").status).toBe("not_applicable");
+    expect(row.areaStatuses.find((a: Body) => a.code === "value").status).toBe("red");
     expect(s.header.benefits.planned).toEqual([{ currency: "SAR", value: expect.objectContaining(NA) }]);
     expect(s.header.benefits.validated).toEqual([{ currency: "SAR", value: expect.objectContaining(NA) }]);
     // The profit-and-cash drill-down is n/a with the same reason, never a fabricated 0.
@@ -296,10 +338,17 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
       expect(pick(list, "value.planned", "non_cash"), where).toBeUndefined();
       await assertDrillInvariant(list, b.s.auditor, where);
     }
+    // T-DG4-KBE-R7 (N4 item 1): was {not_applicable, nothing_due}; the top-line gap (300 due, none validated) is red.
     expect(areaOf(s.t10, "value").rag).toMatchObject({
-      status: "not_applicable",
-      ruleKey: "dashboard.rag.value.nothing_due",
+      status: "red",
+      ruleKey: "dashboard.rag.value.validated_gap",
     });
+    expect(
+      areaOf(s.t10, "value").rag.ruleParams.lines.map((l: Body) => [l.headlineBasis, l.status, l.reasonKey]),
+    ).toEqual([
+      ["profit_and_cash", "not_applicable", "dashboard.value.nothing_planned"],
+      ["top_line", "red", null],
+    ]);
   });
 
   it("variant C: a revenue line without an amount makes only the top-line headline unknown", async () => {
@@ -418,5 +467,104 @@ describe("F-DG4-123: the value headlines on one basis (DOM-GROSS world)", () => 
     expect(d.calculation.ruleKey).toBe("dashboard.value.sum_planned_profit_and_cash");
     const k = await get(`${base}&metric=value.planned&valueClass=revenue_uplift`, b.s.auditor);
     expect(k.calculation.ruleKey).toBe("dashboard.value.sum_planned");
+  });
+
+  it("F-DG4-105 (probe GC): USD with no profit-and-cash benefit beside SAR with one: every figure drills to its own currency only", async () => {
+    // T-DG4-KBE-R7 (ADR-0037 amendment N4 item 3): SAR margin 70 and USD revenue uplift 11 planned, nothing validated.
+    const b = await benefitWorldIn(api, w, w.a1);
+    await planValue(api, b, await benefit(b, "margin_uplift"), "70", H1.start, H1.end);
+    await planValue(api, b, await benefit(b, "revenue_uplift", { currency: "USD" }), "11", H1.start, H1.end);
+    const s = await surfaces(b);
+    const usdNa = {
+      state: "not_applicable",
+      value: null,
+      unit: "currency",
+      currency: "USD",
+      reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+    };
+    for (const [where, list] of [...valueHeadlines(s), ["header", s.header.benefits.headlines as Body[]] as const]) {
+      const usd = pick(list, "value.planned", "profit_and_cash", "USD")!;
+      expect(usd.value, where).toEqual(usdNa);
+      expect(hrefCurrency(usd.drilldownHref), where).toBe("USD");
+      const d = await get(usd.drilldownHref, b.s.auditor);
+      // Before T-DG4-KBE-R7 this drilled to {value, "70", SAR} with the SAR item B01 (the finding's reproduction).
+      expect([d.value, d.items, d.currency, d.calculation.inputs], where).toEqual([usdNa, [], "USD", []]);
+      const sar = await get(pick(list, "value.planned", "profit_and_cash", "SAR")!.drilldownHref, b.s.auditor);
+      expect([dec(sar.value.value), sar.value.currency, sar.currency, sar.items.length], where).toEqual([
+        "70",
+        "SAR",
+        "SAR",
+        1,
+      ]);
+      const top = await get(pick(list, "value.planned", "top_line", "USD")!.drilldownHref, b.s.auditor);
+      expect([dec(top.value.value), top.value.currency, top.items.length], where).toEqual(["11", "USD", 1]);
+      await assertDrillInvariant(list, b.s.auditor, where);
+    }
+    // The Value RAG (F-DG4-126): SAR profit and cash 1 red, USD top line 1 red.
+    for (const body of [s.t10, s.overview])
+      expect(
+        areaOf(body, "value").rag.ruleParams.lines.map((l: Body) => [l.currency, l.headlineBasis, l.status]),
+      ).toEqual([
+        ["SAR", "profit_and_cash", "red"],
+        ["USD", "top_line", "red"],
+      ]);
+    // Every Finance line with an href: it names the line's currency; the drill-down echoes it, lists only its items,
+    // and their decimal sum is the line's total (or both unknown). The one exception (N4 item 3): the USD gross line, a
+    // known zero beside the n/a profit-and-cash headline, drills to that n/a with no item, whose sum (0) is its total.
+    let lines = 0;
+    for (const l of s.finance.lines as Body[]) {
+      if (l.drilldownHref === null) {
+        expect(l.valueClass, JSON.stringify(l)).toBe("net");
+        continue;
+      }
+      const label = `${l.valueClass} ${l.state} ${l.currency}`;
+      expect(hrefCurrency(l.drilldownHref), label).toBe(l.currency);
+      const { first, items } = await drillAll(l.drilldownHref, b.s.auditor);
+      expect(first.currency, label).toBe(l.currency);
+      expect(
+        items.filter((i) => i.value?.currency !== l.currency),
+        label,
+      ).toEqual([]);
+      if (l.total.state === "unknown") expect(sumItems(items, l.currency), label).toBeNull();
+      else expect(dec(sumItems(items, l.currency)), label).toBe(dec(l.total.value));
+      if (l.valueClass === "gross" && l.currency === "USD") {
+        expect(l.total, label).toMatchObject({ state: "zero", currency: "USD" });
+        expect([first.value, items], label).toEqual([{ ...usdNa }, []]);
+        expect(l.drilldownHref, label).toBe(
+          pick(s.finance.headlines, `value.${l.state}`, "profit_and_cash", "USD")!.drilldownHref,
+        );
+      } else if (l.total.state !== "unknown") expect(first.value, label).toEqual(l.total);
+      lines += 1;
+    }
+    // SAR: margin_uplift × 7 states + gross × 2; USD: revenue_uplift × 7 + gross × 2.
+    expect(lines).toBe(18);
+    // Without `currency` the scope's two value currencies make the drill-down's own value n/a (it was SAR 70).
+    const base = `/api/v1/dashboard-drilldown?organizationId=${b.organizationId}&transformationId=${b.transformationId}`;
+    const all = await get(`${base}&metric=value.planned`, b.s.auditor);
+    expect([all.value.state, all.value.reasonKey, all.currency]).toEqual([
+      "not_applicable",
+      "dashboard.value.multiple_currencies",
+      null,
+    ]);
+    expect(all.items.map((i: Body) => i.value.currency)).toEqual(["SAR"]);
+    // A currency holding no benefit of the class asked for: n/a no_benefit_in_class, no item.
+    const cls = await get(`${base}&metric=value.planned&valueClass=margin_uplift&currency=USD`, b.s.auditor);
+    expect([cls.value, cls.items]).toEqual([
+      {
+        state: "not_applicable",
+        value: null,
+        unit: "currency",
+        currency: "USD",
+        reasonKey: "dashboard.value.no_benefit_in_class",
+      },
+      [],
+    ]);
+    // A currency holding no financial benefit at all: n/a no_financial_benefit in that currency.
+    const eur = await get(`${base}&metric=value.planned&currency=EUR`, b.s.auditor);
+    expect([eur.value.reasonKey, eur.value.currency, eur.items]).toEqual([
+      "dashboard.value.no_financial_benefit",
+      "EUR",
+      [],
+    ]);
   });
 });

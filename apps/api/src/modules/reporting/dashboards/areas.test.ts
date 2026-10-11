@@ -377,11 +377,18 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
     expect([c.topLine!.validated.state, c.nonCash!.validated.state]).toEqual(["zero", "zero"]);
     expect(c).toMatchObject({ gapRatio: "1", status: "red", reasonKey: null });
     expect(r.rag).toMatchObject({ status: "red", ruleKey: "dashboard.rag.value.validated_gap" });
-    expect(r.rag.ruleParams["headlineBasis"]).toBe("profit_and_cash");
+    // T-DG4-KBE-R7 (ADR-0037 amendment N4 item 1): no top-level headlineBasis (was "profit_and_cash"); one line per
+    // basis and currency, each with its own gap, never summed.
+    expect(r.rag.ruleParams["headlineBasis"]).toBeUndefined();
+    expect(r.rag.ruleParams["lines"]).toEqual([
+      { currency: "SAR", headlineBasis: "profit_and_cash", gapRatio: "1", status: "red", reasonKey: null },
+      { currency: "SAR", headlineBasis: "top_line", gapRatio: "1", status: "red", reasonKey: null },
+      { currency: "SAR", headlineBasis: "non_cash", gapRatio: "1", status: "red", reasonKey: null },
+    ]);
     expect(JSON.stringify(r)).not.toContain('"435"');
   });
 
-  it("variant A: only revenue uplift and avoided cost -> profit-and-cash and the RAG are n/a (never 0, never green)", () => {
+  it("variant A: only revenue uplift and avoided cost -> profit-and-cash n/a (never 0, never green); the RAG is their gaps' worst (N4)", () => {
     const rev = cls("revenue_uplift");
     const avoided = cls("avoided_cost");
     const r = valueArea([rev, avoided], [line(rev, "planned", "300"), line(avoided, "planned", "45")], CLOCK, POLICY);
@@ -401,10 +408,21 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
     });
     expect(c.topLine!.planned.value).toBe("300");
     expect(c.nonCash!.planned.value).toBe("45");
+    // T-DG4-KBE-R7 (N4 item 1; D-123 item 1): was {not_applicable, dashboard.rag.value.no_profit_and_cash_benefit, {}};
+    // the top-line and non-cash gaps (300 and 45 planned, nothing validated) now decide it.
+    expect(c.topLineGap).toEqual({ gapRatio: "1", status: "red", reasonKey: null });
+    expect(c.nonCashGap).toEqual({ gapRatio: "1", status: "red", reasonKey: null });
     expect(r.rag).toEqual({
-      status: "not_applicable",
-      ruleKey: "dashboard.rag.value.no_profit_and_cash_benefit",
-      ruleParams: {},
+      status: "red",
+      ruleKey: "dashboard.rag.value.validated_gap",
+      ruleParams: {
+        amberRatio: POLICY.valueGapAmberRatio,
+        redRatio: POLICY.valueGapRedRatio,
+        lines: [
+          { currency: "SAR", headlineBasis: "top_line", gapRatio: "1", status: "red", reasonKey: null },
+          { currency: "SAR", headlineBasis: "non_cash", gapRatio: "1", status: "red", reasonKey: null },
+        ],
+      },
     });
   });
 
@@ -421,8 +439,13 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
       ["SAR", "not_applicable", "dashboard.value.no_profit_and_cash_benefit"],
       ["USD", "green", null],
     ]);
-    expect(r.rag.status).toBe("green");
+    // T-DG4-KBE-R7 (N4 item 1): was green (the SAR revenue uplift had no gap); its unvalidated 300 is now a red line.
+    expect(r.rag.status).toBe("red");
     expect(r.rag.ruleKey).toBe("dashboard.rag.value.validated_gap");
+    expect(r.rag.ruleParams["lines"]).toEqual([
+      { currency: "SAR", headlineBasis: "top_line", gapRatio: "1", status: "red", reasonKey: null },
+      { currency: "USD", headlineBasis: "profit_and_cash", gapRatio: "0", status: "green", reasonKey: null },
+    ]);
   });
 
   it("variant B: a margin benefit with no line in the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned", () => {
@@ -439,7 +462,9 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
     expect(c).toMatchObject({ gapRatio: null, status: "not_applicable", reasonKey: "dashboard.value.nothing_planned" });
     expect(c.topLine!.planned.value).toBe("300");
     expect(c.nonCash).toBeNull();
-    expect(r.rag).toEqual({ status: "not_applicable", ruleKey: "dashboard.rag.value.nothing_due", ruleParams: {} });
+    // T-DG4-KBE-R7 (N4 item 1): was {not_applicable, nothing_due}; the top-line gap (300 due, none validated) is red.
+    expect(c.topLineGap).toEqual({ gapRatio: "1", status: "red", reasonKey: null });
+    expect(r.rag).toMatchObject({ status: "red", ruleKey: "dashboard.rag.value.validated_gap" });
   });
 
   it("variant C: a revenue line without an amount makes only the top-line headline unknown", () => {
@@ -460,7 +485,9 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
     const withMargin = valueArea(benefits, [...lines, line(benefits[1]!, "validated", null)], CLOCK, POLICY);
     expect(withMargin.currencies[0]!.validated.state).toBe("unknown");
     expect(withMargin.currencies[0]!.topLine!.validated.state).toBe("zero");
-    expect(withMargin.rag.status).toBe("unknown");
+    expect(withMargin.currencies[0]!.status).toBe("unknown");
+    // T-DG4-KBE-R7 (N4 item 1): was unknown; the top-line and non-cash gaps (1, red) outrank the unknown line.
+    expect(withMargin.rag.status).toBe("red");
   });
 
   it("a top-line or non-cash basis appears only where a counted, monetised benefit of its class exists", () => {
@@ -545,6 +572,7 @@ function initiative(extra: Partial<InitiativeFact> = {}): InitiativeFact {
     executiveOwnerUserId: null,
     workstreamLeadUserId: null,
     plannedAllocated: null,
+    valueReasonKey: null,
     plannedCurrency: "SAR",
     milestones: [],
     outcomeIds: [],

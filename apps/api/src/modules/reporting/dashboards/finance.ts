@@ -190,7 +190,7 @@ export const GROSS_VALUE_CLASSES: readonly string[] = HEADLINE_BASIS_CLASSES.pro
 export function grossNetLines(
   ctx: DashboardContext,
   value: ValueResult,
-  hrefOf: (metric: "value.planned" | "value.validated") => string,
+  hrefOf: (metric: "value.planned" | "value.validated", currency: string) => string,
 ): FinanceValueLine[] {
   const out: FinanceValueLine[] = [];
   const cost = investmentByCurrency(ctx);
@@ -220,8 +220,9 @@ export function grossNetLines(
       if (state === "planned") totals.planned = total;
       else totals.validated = total;
       // ADR-0037 amendment N3 item 3: the value-state drill-down without valueClass sums exactly the profit-and-cash
-      // records, i.e. this gross line's, so a gross line always drills.
-      out.push({ valueClass: "gross", state, currency, total, drilldownHref: hrefOf(`value.${state}`) });
+      // records, i.e. this gross line's, so a gross line always drills (with its currency: N4 item 3).
+      // N4 item 3: the href names the line's currency, so it never drills to another currency's figure.
+      out.push({ valueClass: "gross", state, currency, total, drilldownHref: hrefOf(`value.${state}`, currency) });
     }
     grossOf.set(currency, { planned: totals.planned!, validated: totals.validated! });
   }
@@ -339,7 +340,8 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
           drillTransformationIds: transformationIds,
           workstream: false,
         });
-        const hrefOf = (metric: string) => drilldownHref(metric, filters, { transformationIds });
+        const hrefOf = (metric: string, currency?: string) =>
+          drilldownHref(metric, filters, { transformationIds, ...(currency === undefined ? {} : { currency }) });
         const extra = await extraStateLinesOf(
           tx,
           ctx,
@@ -355,6 +357,7 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
             drilldownHref: drilldownHref(DRILL_METRIC_OF.get(l.state)!, filters, {
               transformationIds,
               valueClass: l.valueClass,
+              currency: l.currency,
             }),
           }),
         );

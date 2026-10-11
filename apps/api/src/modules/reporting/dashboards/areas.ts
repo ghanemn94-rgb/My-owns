@@ -4,16 +4,18 @@
 //
 //   Outcomes         outcome = combine(its active outcome KPIs' slice A statuses); no KPI -> unknown; empty -> unknown.
 //                    Reads ONLY KPI statuses: never deliverables, milestones, actions, work items or completion.
-//   Value            per currency: gap ratio = (plannedToDate - validatedToDate) / plannedToDate over the counted,
-//                    monetised benefits of the PROFIT-AND-CASH basis (margin_uplift + cash_saving +
-//                    working_capital_release; ADR-0037 amendment N3, D-119, M0172); <= amber -> green, <= red -> amber,
-//                    above -> red; planned = 0 -> not_applicable; an unknown amount -> unknown; nothing due ->
-//                    not_applicable; no profit-and-cash benefit in a currency -> not_applicable
-//                    (dashboard.value.no_profit_and_cash_benefit), never 0 or green. revenue_uplift (top_line) and
-//                    avoided_cost (non_cash) are summed on their own, never into a profit-and-cash figure, with no gap.
-//                    Forecast, submitted and scenario values are shown, never counted as realized.
-//   Portfolio        top N initiatives (selected, funded, launched, completed) by planned value allocated; initiative =
-//                    combine(milestone component, outcome component).
+//   Value            per currency and basis (ADR-0037 amendments N3 and N4, D-119, D-122, M0172): the profit-and-cash
+//                    (margin_uplift + cash_saving + working_capital_release), top-line (revenue_uplift) and non-cash
+//                    (avoided_cost) sums are kept apart, never added into each other. Each basis with a counted,
+//                    monetised benefit in a currency has its own gap ratio = (plannedToDate - validatedToDate) /
+//                    plannedToDate on that basis's classes: <= amber -> green, <= red -> amber, above -> red;
+//                    planned = 0 -> not_applicable; an unknown amount -> unknown. The ratios are never summed across
+//                    bases; the Value RAG is the worst of them (a not_applicable line takes no part; none left ->
+//                    not_applicable, dashboard.rag.value.nothing_due). The profit-and-cash headlines of a currency with
+//                    no profit-and-cash benefit are not_applicable (dashboard.value.no_profit_and_cash_benefit), never 0
+//                    or green. Forecast, submitted and scenario values are shown, never counted as realized.
+//   Portfolio        top N initiatives (selected, funded, launched, completed) by planned value allocated on the
+//                    profit-and-cash basis (N4 item 2); initiative = combine(milestone component, outcome component).
 //   Dependencies     open dependencies: red when needed-by passed or the linked decision is overdue; amber when at risk
 //                    or due within N working days (red when the target initiative is on the computed critical path);
 //                    unknown without a needed-by date; empty -> green.
@@ -136,8 +138,18 @@ export interface InitiativeFact {
   readonly status: string;
   readonly executiveOwnerUserId: string | null;
   readonly workstreamLeadUserId: string | null;
-  /** Σ planned amount × allocation share in the transformation's currency (decimal), null when nothing is allocated. */
+  /**
+   * Σ planned amount × allocation share in the transformation's currency (decimal) over the PROFIT-AND-CASH classes
+   * (ADR-0037 amendment N4 item 2); null when there is no such sum (see `valueReasonKey`).
+   */
   readonly plannedAllocated: string | null;
+  /**
+   * Why `plannedAllocated` is null: `dashboard.portfolio.no_profit_and_cash_allocation` (only top-line or non-cash
+   * benefits allocated: not_applicable), `benefit.value_amount_missing` (a profit-and-cash planned line without an
+   * amount: unknown, never omitted; D-123 item 3) or `dashboard.portfolio.no_allocated_value` (nothing allocated:
+   * unknown). Null when `plannedAllocated` is known.
+   */
+  readonly valueReasonKey: string | null;
   readonly plannedCurrency: string | null;
   readonly milestones: readonly MilestoneFact[];
   readonly outcomeIds: readonly string[];
@@ -396,21 +408,47 @@ export interface BasisSums {
   readonly validated: DashboardValue;
 }
 
-export interface ValueCurrencyLine extends BasisSums {
-  readonly currency: string;
+/** The validated gap of one basis in one currency (ADR-0037 amendment N4 item 1). */
+export interface BasisGap {
   /** (planned - validated) / planned, rounded half-even to 6 places for presentation; null when not computable. */
   readonly gapRatio: string | null;
   readonly status: RagStatus;
   readonly reasonKey: string | null;
+}
+
+export interface ValueCurrencyLine extends BasisSums, BasisGap {
+  readonly currency: string;
   /** The top-line (revenue_uplift) sums; null when the currency holds no counted, monetised benefit of that class. */
   readonly topLine: BasisSums | null;
   /** The non-cash (avoided_cost) sums; null when the currency holds no counted, monetised benefit of that class. */
   readonly nonCash: BasisSums | null;
+  /** The top-line gap (N4 item 1); null exactly when `topLine` is null. */
+  readonly topLineGap: BasisGap | null;
+  /** The non-cash gap (N4 item 1); null exactly when `nonCash` is null. */
+  readonly nonCashGap: BasisGap | null;
+}
+
+/** One entry of the Value RAG's `ruleParams.lines` (ADR-0037 amendment N4 item 1). */
+export interface ValueGapLine extends BasisGap {
+  readonly currency: string;
+  readonly headlineBasis: HeadlineBasis;
 }
 
 export interface ValueResult {
   readonly rag: AreaRag;
   readonly currencies: readonly ValueCurrencyLine[];
+}
+
+/**
+ * The value of a gap headline (and of the `value.gap` drill-down) of one basis in `currency` (ADR-0037 amendments N3
+ * and N4 item 1): a known ratio, unknown with its reason, not_applicable with the currency when the basis is absent from
+ * it (no_profit_and_cash_benefit), or not_applicable without a currency (nothing planned to date).
+ */
+export function gapValue(g: BasisGap, currency: string): DashboardValue {
+  if (g.gapRatio !== null) return knownValue(g.gapRatio, "ratio", currency);
+  if (g.status === "unknown") return unknownValue(g.reasonKey ?? "benefit.value_amount_missing", "ratio", currency);
+  if (g.reasonKey === NO_PROFIT_AND_CASH) return { ...notApplicableValue(NO_PROFIT_AND_CASH, "ratio"), currency };
+  return notApplicableValue(g.reasonKey ?? "dashboard.value.nothing_planned", "ratio");
 }
 
 /** The Value status of one currency line (ADR-0037 §3). */
@@ -435,9 +473,10 @@ export function valueGapStatus(
 }
 
 /**
- * The Value area (ADR-0037 §3 as amended by N3). The currencies are those of the counted, monetised benefits of the
- * five financial classes, as before; in each, the headline sums, the gap and the status are on the profit-and-cash
- * basis only, and the top-line and non-cash sums are kept apart (each only where a benefit of its class exists).
+ * The Value area (ADR-0037 §3 as amended by N3 and N4). The currencies are those of the counted, monetised benefits of
+ * the five financial classes, as before; in each, the headline sums are on the profit-and-cash basis, and the top-line
+ * and non-cash sums are kept apart (each only where a benefit of its class exists). Every basis present in a currency
+ * has its own gap and status; the Value RAG is the worst of them (never a sum or an average across bases).
  */
 export function valueArea(
   benefits: readonly ValueBenefitFact[],
@@ -446,6 +485,7 @@ export function valueArea(
   policy: DashboardRagPolicyValues,
 ): ValueResult {
   const byId = new Map(benefits.map((b) => [b.benefitId, b]));
+  const gapLines: ValueGapLine[] = [];
   const currencies = valueCurrencies(benefits).map((currency): ValueCurrencyLine => {
     const has = (basis: HeadlineBasis) =>
       benefits.some(
@@ -468,13 +508,20 @@ export function valueArea(
         validated: sum("validated"),
       };
     };
-    const topLine = has("top_line") ? sums("top_line") : null;
-    const nonCash = has("non_cash") ? sums("non_cash") : null;
-    if (!has("profit_and_cash")) {
-      // N3 item 4: nothing is planned on this basis in this currency: not_applicable, never 0 and never green.
+    const gapOf = (basis: HeadlineBasis, s: BasisSums): BasisGap => {
+      const gap = valueGapStatus(s.planned, s.validated, policy);
+      gapLines.push({ currency, headlineBasis: basis, ...gap });
+      return gap;
+    };
+    let pcLine: BasisSums & BasisGap;
+    if (has("profit_and_cash")) {
+      const pc = sums("profit_and_cash");
+      pcLine = { ...pc, ...gapOf("profit_and_cash", pc) };
+    } else {
+      // N3 item 4: nothing is planned on this basis in this currency: not_applicable, never 0 and never green. It has
+      // no gap line (N4 item 1), so it takes no part in the Value RAG.
       const na: DashboardValue = { ...notApplicableValue(NO_PROFIT_AND_CASH, "currency"), currency };
-      return {
-        currency,
+      pcLine = {
         planned: na,
         forecast: na,
         submitted: na,
@@ -482,29 +529,19 @@ export function valueArea(
         gapRatio: null,
         status: "not_applicable",
         reasonKey: NO_PROFIT_AND_CASH,
-        topLine,
-        nonCash,
       };
     }
-    const pc = sums("profit_and_cash");
-    const gap = valueGapStatus(pc.planned, pc.validated, policy);
-    return {
-      currency,
-      ...pc,
-      gapRatio: gap.gapRatio,
-      status: gap.status,
-      reasonKey: gap.reasonKey,
-      topLine,
-      nonCash,
-    };
+    const topLine = has("top_line") ? sums("top_line") : null;
+    const topLineGap = topLine === null ? null : gapOf("top_line", topLine);
+    const nonCash = has("non_cash") ? sums("non_cash") : null;
+    const nonCashGap = nonCash === null ? null : gapOf("non_cash", nonCash);
+    return { currency, ...pcLine, topLine, nonCash, topLineGap, nonCashGap };
   });
-  const status = combine(currencies.map((c) => c.status));
+  // gapLines are pushed per currency (sorted), then basis in VALUE_BASES order: the N4 order.
+  const status = combine(gapLines.map((l) => l.status));
   if (status === null)
     return {
-      rag:
-        currencies.length > 0 && currencies.every((c) => c.reasonKey === NO_PROFIT_AND_CASH)
-          ? { status: "not_applicable", ruleKey: "dashboard.rag.value.no_profit_and_cash_benefit", ruleParams: {} }
-          : { status: "not_applicable", ruleKey: "dashboard.rag.value.nothing_due", ruleParams: {} },
+      rag: { status: "not_applicable", ruleKey: "dashboard.rag.value.nothing_due", ruleParams: {} },
       currencies,
     };
   return {
@@ -514,8 +551,13 @@ export function valueArea(
       ruleParams: {
         amberRatio: policy.valueGapAmberRatio,
         redRatio: policy.valueGapRedRatio,
-        lines: currencies.map((c) => ({ currency: c.currency, gapRatio: c.gapRatio, status: c.status })),
-        headlineBasis: "profit_and_cash",
+        lines: gapLines.map((l) => ({
+          currency: l.currency,
+          headlineBasis: l.headlineBasis,
+          gapRatio: l.gapRatio,
+          status: l.status,
+          reasonKey: l.reasonKey,
+        })),
       },
     },
     currencies,
@@ -574,7 +616,11 @@ export interface PortfolioResult {
   readonly initiatives: readonly PortfolioRow[];
 }
 
-/** Ordering of the Portfolio list: planned value allocated (decimal) descending, then code (ADR-0037 §3). */
+/**
+ * Ordering of the Portfolio list: planned value allocated on the profit-and-cash basis (decimal) descending, then code
+ * (ADR-0037 §3, amendment N4 item 2); an initiative without that value (not_applicable or unknown) ranks after those
+ * with one.
+ */
 export function comparePortfolio(a: InitiativeFact, b: InitiativeFact): number {
   const va = a.plannedAllocated === null ? null : new D(a.plannedAllocated);
   const vb = b.plannedAllocated === null ? null : new D(b.plannedAllocated);

@@ -27,26 +27,12 @@ export interface PendingMember {
   readonly zod: string;
 }
 
-export const P4_PENDING_ARCH_R6_MEMBERS: readonly PendingMember[] = [
-  {
-    // ADR-0037 amendment N4 item 2 (F-DG4-127): the basis of an item's value; every DashboardItem carries it.
-    member: "DashboardItem.valueBasis",
-    operations: [
-      "getTransformationDashboard",
-      "getWorkstreamDashboard",
-      "getExecutiveOverview",
-      "getAdoptionDashboard",
-      "getWorkspaceHeader",
-    ],
-    zod: "dashboardItem",
-  },
-  {
-    // ADR-0037 amendment N4 item 3 (F-DG4-105): the `currency` query parameter echoed, or null.
-    member: "DashboardDrilldown.currency",
-    operations: ["getDashboardDrilldown"],
-    zod: "dashboardDrilldown",
-  },
-];
+// T-DG4-KBE-R7 removed both entries (the closing step, D-122, D-123; ARCH-R6 handback §4.1 item 6): the API emits
+// `DashboardItem.valueBasis` on every DashboardItem of getTransformationDashboard, getWorkstreamDashboard,
+// getExecutiveOverview, getAdoptionDashboard and getWorkspaceHeader, and `DashboardDrilldown.currency` on every
+// getDashboardDrilldown response; both are now in their schema's `required` list in openapi.yaml and no longer
+// `.optional()` in the zod mirror (dashboardItem, dashboardDrilldown).
+export const P4_PENDING_ARCH_R6_MEMBERS: readonly PendingMember[] = [];
 
 // The QUERY PARAMETERS this repair declares that the API does not accept yet. The as-built drill-down query schema
 // (reporting/dashboards/drilldown.ts `drilldownQuery`, a strict object) answers 400 to an unknown `currency`, so no
@@ -61,10 +47,12 @@ export interface PendingParameter {
   readonly name: string;
 }
 
-export const P4_PENDING_ARCH_R6_PARAMETERS: readonly PendingParameter[] = [
-  { operationId: "getDashboardDrilldown", parameter: "DrilldownCurrencyQuery", name: "currency" },
-];
+// T-DG4-KBE-R7 removed the one entry: getDashboardDrilldown accepts `currency` (drilldown.ts `drilldownQuery`), and the
+// contract exercises send it through the validating client (p4-exercises-kbe-g.ts, after the K1 exercises): SAR and
+// USD on value.planned, value.gap by basis, value.investment, the 422 dashboard.currency_not_applicable and the 400 of
+// a lower-case code.
+export const P4_PENDING_ARCH_R6_PARAMETERS: readonly PendingParameter[] = [];
 
 // Not pending (already accepted by the as-built schema, only refused by a rule): `valueClass` `revenue_uplift` and
-// `avoided_cost` on `value.gap` (today 422 dashboard.value_class_not_applicable; after KBE-R7, 200 with the top_line or
-// non_cash gap). KBE-R7 changes the refusal and its test (finance-drilldown-k1.test.ts) in the same change.
+// `avoided_cost` on `value.gap` (was 422 dashboard.value_class_not_applicable; since T-DG4-KBE-R7, 200 with the top_line
+// or non_cash gap). T-DG4-KBE-R7 changed the refusal and its test (finance-drilldown-k1.test.ts).
