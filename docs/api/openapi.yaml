@@ -133,6 +133,20 @@ info:
     changes, stated in their descriptions: a value-state drill-down without `valueClass` sums the profit-and-cash basis;
     `WorkspaceHeader.benefits.planned` and `.validated` are profit-and-cash; a Finance gross line always drills. No
     operation, status or parameter schema changes; the only `required` list changes add those three members.
+
+    **P4 repairs (T-DG4-ARCH-R6, 2026-10-11; F-DG4-126, F-DG4-127, F-DG4-105, D-122).** The Value RAG is the worst of
+    a validated-gap status per basis and currency (profit and cash, top line, non-cash; each only where that basis has a
+    counted benefit in that currency; never summed across bases), and `value.gap` has one headline per basis. The
+    Portfolio item value and its ranking use the profit-and-cash basis. Every value headline and Finance line drills to
+    its own currency. Additive: the optional query parameter `currency` of `getDashboardDrilldown`, the members
+    `DashboardItem.valueBasis` and `DashboardDrilldown.currency`, `valueClass` `revenue_uplift` and `avoided_cost` on
+    `value.gap`, and the refusal `dashboard.currency_not_applicable` (ADR-0037 amendment N4). The two members are
+    declared but not yet required: pending in `p4-pending-arch-r6.ts` until the API emits them. Meaning changes, stated
+    in their descriptions: `DashboardRag.ruleParams` of `dashboard.rag.value.validated_gap`, `DashboardHeadline`
+    (value.gap per basis, hrefs with `currency`), `DashboardItem.value` of a Portfolio initiative,
+    `DashboardDrilldown` (without `currency`: `multiple_currencies` in a scope of several value currencies;
+    `headlineBasis` of `value.gap` and `portfolio.initiatives`), `FinanceValueLine.drilldownHref` and
+    `FinanceDashboard.headlines`. No operation or status changes.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -16292,10 +16306,11 @@ paths:
     get:
       tags: [dashboards]
       operationId: getDashboardDrilldown
-      summary: "Drill-down of one headline number or Finance class line: contributing records (paginated), period, calculation and evidence; zero, unknown and not_applicable are distinct states (REQ-S13-003) (transformation.read in scope). 422 dashboard.metric_subject_mismatch, dashboard.period_not_found, dashboard.owner_not_found, dashboard.value_class_not_applicable (ADR-0037 amendment K1)."
+      summary: "Drill-down of one headline number or Finance class line: contributing records (paginated), period, calculation and evidence; zero, unknown and not_applicable are distinct states (REQ-S13-003) (transformation.read in scope). 422 dashboard.metric_subject_mismatch, dashboard.period_not_found, dashboard.owner_not_found, dashboard.value_class_not_applicable (ADR-0037 amendment K1), dashboard.currency_not_applicable (ADR-0037 amendment N4)."
       parameters:
         - $ref: "#/components/parameters/DrilldownMetricQuery"
         - $ref: "#/components/parameters/DrilldownValueClassQuery"
+        - $ref: "#/components/parameters/DrilldownCurrencyQuery"
         - $ref: "#/components/parameters/OrganizationIdQuery"
         - $ref: "#/components/parameters/TransformationIdsQuery"
         - $ref: "#/components/parameters/OwnerUserIdQuery"
@@ -17247,8 +17262,14 @@ components:
       name: valueClass
       in: query
       required: false
-      description: "Only with the seven value-state metrics (value.planned, value.forecast, value.submitted, value.validated, value.measured, value.rejected, value.sustained): narrows the drill-down to the benefits of this Finance class, the records the Finance class line of the same state sums (ADR-0037 amendment K1). The top-line headline drills with revenue_uplift and the non-cash headline with avoided_cost. Without valueClass a value-state drill-down sums the profit-and-cash basis only (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), never all five financial classes. Any other metric: 422 dashboard.value_class_not_applicable."
+      description: "Only with the seven value-state metrics (value.planned, value.forecast, value.submitted, value.validated, value.measured, value.rejected, value.sustained): narrows the drill-down to the benefits of this Finance class, the records the Finance class line of the same state sums (ADR-0037 amendment K1). The top-line headline drills with revenue_uplift and the non-cash headline with avoided_cost. Without valueClass a value-state drill-down sums the profit-and-cash basis only (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), never all five financial classes. value.gap also accepts revenue_uplift (the top_line gap) and avoided_cost (the non_cash gap); without valueClass it is the profit_and_cash gap (ADR-0037 amendment N4 item 1). Any other class on value.gap, or valueClass on any other metric: 422 dashboard.value_class_not_applicable."
       schema: { $ref: "#/components/schemas/FinanceValueClass" }
+    DrilldownCurrencyQuery:
+      name: currency
+      in: query
+      required: false
+      description: "ADR-0037 amendment N4 item 3 (F-DG4-105). Only with the seven value-state metrics, value.gap and value.investment: the drill-down answers the figure of this currency only. items holds only records in this currency, value and calculation.inputs are this currency's, and DashboardDrilldown.currency echoes it. When the currency holds no record of the basis, value is not_applicable with currency set and items is empty: dashboard.value.no_profit_and_cash_benefit (no valueClass, or value.gap without valueClass) when the currency holds another financial benefit, dashboard.value.no_financial_benefit when it holds none, dashboard.value.no_benefit_in_class with a valueClass; value.investment with no investment line in it is a known zero in that currency. Every value headline and every Finance line that has a currency drills with it. Without currency: unchanged in a scope of one value currency; in a scope of several value currencies (the counted, monetised financial benefits' currencies) value is not_applicable dashboard.value.multiple_currencies and items lists every currency's records. Any other metric: 422 dashboard.currency_not_applicable. Not an ISO 4217 code of three upper-case letters: 400."
+      schema: { type: string, pattern: '^[A-Z]{3}$' }
     MyWorkSectionQuery:
       name: section
       in: query
@@ -28142,11 +28163,11 @@ components:
       properties:
         status: { $ref: "#/components/schemas/RagStatus" }
         ruleKey: { type: string }
-        ruleParams: { type: object }
+        ruleParams: { type: object, description: "The parameters of ruleKey. For dashboard.rag.value.validated_gap (ADR-0037 amendment N4 item 1): amberRatio, redRatio and lines, one entry per basis and currency where that basis has a counted, monetised benefit in that currency, each {currency, headlineBasis, gapRatio, status, reasonKey}; the area status is the worst of the lines' statuses (not_applicable lines take no part). The ratios are never summed across bases. The former top-level headlineBasis member is no longer sent." }
         policySource: { type: string, enum: [default, configured] }
     DashboardHeadline:
       type: object
-      description: "A headline number with its drill-down (ADR-0037 §5). Value headlines (ADR-0037 amendment N3): value.planned, value.forecast, value.submitted and value.validated appear once per basis and currency; the profit_and_cash headline sums margin_uplift, cash_saving and working_capital_release only (the basis of the Finance gross), the top_line headline sums revenue_uplift and the non_cash headline avoided_cost, and no headline adds one basis to another. value.gap and the Value RAG are on the profit_and_cash basis. A currency with no profit-and-cash benefit shows the profit_and_cash headlines and the gap as not_applicable (dashboard.value.no_profit_and_cash_benefit), never 0; top_line and non_cash headlines appear only for a currency holding a benefit of that class. drilldownHref sums to value per currency (profit_and_cash: no valueClass; top_line: valueClass=revenue_uplift; non_cash: valueClass=avoided_cost)."
+      description: "A headline number with its drill-down (ADR-0037 §5). Value headlines (ADR-0037 amendment N3): value.planned, value.forecast, value.submitted and value.validated appear once per basis and currency; the profit_and_cash headline sums margin_uplift, cash_saving and working_capital_release only (the basis of the Finance gross), the top_line headline sums revenue_uplift and the non_cash headline avoided_cost, and no headline adds one basis to another. value.gap appears once per basis and currency (ADR-0037 amendment N4 item 1): the profit_and_cash gap as before, and a top_line and a non_cash gap for a currency holding a benefit of that class, each labelled with its basis; no gap crosses bases, and the Value RAG is the worst of them. A currency with no profit-and-cash benefit shows the profit_and_cash headlines and the gap as not_applicable (dashboard.value.no_profit_and_cash_benefit), never 0; top_line and non_cash headlines appear only for a currency holding a benefit of that class. drilldownHref sums to value per currency (profit_and_cash: no valueClass; top_line: valueClass=revenue_uplift; non_cash: valueClass=avoided_cost), and every value headline's href (the value-state metrics, value.gap and value.investment) carries currency= its own currency (ADR-0037 amendment N4 item 3), so it never drills to another currency's figure."
       required: [metric, labelKey, value, period, drilldownHref, headlineBasis]
       additionalProperties: false
       properties:
@@ -28155,7 +28176,7 @@ components:
         value: { $ref: "#/components/schemas/DashboardValue" }
         period: { oneOf: [{ $ref: "#/components/schemas/DashboardPeriod" }, { type: "null" }] }
         drilldownHref: { type: string }
-        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The value basis the headline sums (ADR-0037 amendment N3): non-null on value.planned, value.forecast, value.submitted and value.validated, and profit_and_cash on value.gap; null on value.investment and every non-value metric." }
+        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The value basis the headline sums (ADR-0037 amendments N3 and N4): non-null on value.planned, value.forecast, value.submitted, value.validated and value.gap (profit_and_cash, top_line or non_cash); null on value.investment and every non-value metric." }
     HeadlineBasis:
       type: string
       description: "The basis of a value headline (ADR-0030 amendment N3; ADR-0037 amendment N3; M0172). profit_and_cash = margin_uplift + cash_saving + working_capital_release (the basis of the Finance gross); top_line = revenue_uplift; non_cash = avoided_cost. Bases are never summed into each other."
@@ -28172,9 +28193,10 @@ components:
         href: { type: string }
         rag: { oneOf: [{ $ref: "#/components/schemas/RagStatus" }, { type: "null" }] }
         dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
-        value: { oneOf: [{ $ref: "#/components/schemas/DashboardValue" }, { type: "null" }] }
+        value: { oneOf: [{ $ref: "#/components/schemas/DashboardValue" }, { type: "null" }], description: "The record's figure. On a Portfolio initiative (recordType initiative; ADR-0037 amendment N4 item 2) it is the planned value allocated on the profit-and-cash basis only (margin_uplift, cash_saving, working_capital_release: planned amount x allocation share, in the transformation's currency); an initiative whose allocated benefits are only revenue_uplift or avoided_cost is not_applicable dashboard.portfolio.no_profit_and_cash_allocation, never 0, and one with nothing allocated stays unknown dashboard.portfolio.no_allocated_value. Its top_line and non_cash allocations are never added to it." }
         ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
         flags: { type: array, items: { type: string } }
+        valueBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "ADR-0037 amendment N4 item 2: the basis of value when it is a sum of benefit values: profit_and_cash on every Portfolio initiative item; on a Value-area benefit item the basis of its class (top_line for revenue_uplift, non_cash for avoided_cost, profit_and_cash for the other three); null on a non-financial or unmonetised benefit and on every other item. Not yet required: pending in p4-pending-arch-r6.ts." }
     T10Area:
       type: object
       description: "One Template 10 area (B0095; M0245-M0252): the seeded bilingual labels (Arabic provisional), its RAG with the rule key, headlines and items."
@@ -28270,7 +28292,7 @@ components:
         state: { type: string, enum: [planned, forecast, measured, submitted, validated, rejected, sustained] }
         currency: { type: string, pattern: '^[A-Z]{3}$' }
         total: { $ref: "#/components/schemas/DashboardValue" }
-        drilldownHref: { type: [string, "null"], description: "On a class line, the drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1). null on a net line, which is derived. A gross line is the sum of the margin_uplift, cash_saving and working_capital_release class lines of its state and currency; it always carries the value-state drill-down without valueClass (value.planned or value.validated, same filters), which sums exactly the profit-and-cash basis (ADR-0037 amendment N3, superseding the N2 condition). A net line is that gross minus the value.investment total." }
+        drilldownHref: { type: [string, "null"], description: "On a class line, the drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1). null on a net line, which is derived. A gross line is the sum of the margin_uplift, cash_saving and working_capital_release class lines of its state and currency; it always carries the value-state drill-down without valueClass (value.planned or value.validated, same filters), which sums exactly the profit-and-cash basis (ADR-0037 amendment N3, superseding the N2 condition). Every class line and gross line's href carries currency= the line's currency (ADR-0037 amendment N4 item 3), so it drills to that currency's records only; a gross line in a currency with no profit-and-cash benefit (a known zero) drills to not_applicable dashboard.value.no_profit_and_cash_benefit with no item. A net line is that gross minus the value.investment total." }
     FinanceValueClass:
       type: string
       description: "A Finance class line's value class that a drill-down can narrow to (ADR-0030 §7; ADR-0037 amendment K1)."
@@ -28285,7 +28307,7 @@ components:
         businessDate: { $ref: "#/components/schemas/BusinessDate" }
         appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
         lines: { type: array, items: { $ref: "#/components/schemas/FinanceValueLine" }, description: "One line per value class x state x currency, then the gross and net lines (planned, validated) per currency. Gross sums margin_uplift, cash_saving and working_capital_release only. revenue_uplift (top line) and avoided_cost (non-cash) stay separate lines, never summed into gross or net. Net = gross - implementation cost, with no net line under an owner filter (ADR-0030 amendment N1; ADR-0037 amendment N2)." }
-        headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" }, description: "The Value area's headlines (ADR-0037 amendment N3): per currency the profit_and_cash planned, forecast, submitted and validated headlines (each equal to the gross line of the same state and currency where both exist) and the gap, the top_line and non_cash headlines of their own, and the investment." }
+        headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" }, description: "The Value area's headlines (ADR-0037 amendment N3): per currency the profit_and_cash planned, forecast, submitted and validated headlines (each equal to the gross line of the same state and currency where both exist) and the gap, the top_line and non_cash headlines of their own with a gap each (ADR-0037 amendment N4), and the investment; each drills to its own currency." }
         pendingValidationCount: { type: integer, minimum: 0 }
         nonFinancialCount: { type: integer, minimum: 0 }
         transformations: { type: array, items: { $ref: "#/components/schemas/DashboardTransformationRow" } }
@@ -28356,7 +28378,7 @@ components:
         rounding: { type: [object, "null"] }
     DashboardDrilldown:
       type: object
-      description: "Contributing records, period, calculation and evidence of one headline (REQ-S13-003). For a sum metric the decimal sum of items over all pages equals value. A value-state metric without valueClass, and value.gap, cover the profit-and-cash basis only (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3); a scope holding financial benefits but none of those three classes gives value not_applicable with dashboard.value.no_profit_and_cash_benefit, never 0."
+      description: "Contributing records, period, calculation and evidence of one headline (REQ-S13-003). For a sum metric the decimal sum of items over all pages equals value. A value-state metric without valueClass, and value.gap, cover the profit-and-cash basis only (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3); a scope holding financial benefits but none of those three classes gives value not_applicable with dashboard.value.no_profit_and_cash_benefit, never 0. value.gap with valueClass revenue_uplift or avoided_cost is the top_line or non_cash gap (ADR-0037 amendment N4 item 1). With the currency parameter only that currency's records and figure are returned (N4 item 3); without it, a value-state metric or value.gap in a scope of several value currencies gives value not_applicable dashboard.value.multiple_currencies."
       required: [metric, appliedFilters, value, period, calculation, items, evidence, nextCursor, headlineBasis]
       additionalProperties: false
       properties:
@@ -28368,7 +28390,8 @@ components:
         items: { type: array, items: { $ref: "#/components/schemas/DrilldownItem" } }
         evidence: { type: array, items: { $ref: "#/components/schemas/DrilldownEvidence" } }
         nextCursor: { type: [string, "null"] }
-        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendment N3): profit_and_cash for a value-state metric without valueClass, with valueClass margin_uplift, cash_saving or working_capital_release, and for value.gap; top_line with revenue_uplift; non_cash with avoided_cost; null with non_financial_valued and for every other metric." }
+        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendments N3 and N4): profit_and_cash for a value-state metric or value.gap without valueClass, and with valueClass margin_uplift, cash_saving or working_capital_release; top_line with revenue_uplift; non_cash with avoided_cost; profit_and_cash for portfolio.initiatives (the basis of its items' values); null with non_financial_valued and for every other metric." }
+        currency: { type: [string, "null"], pattern: '^[A-Z]{3}$', description: "ADR-0037 amendment N4 item 3: the currency query parameter, echoed; null when the request named none. Not yet required: pending in p4-pending-arch-r6.ts." }
     MyWorkItem:
       type: object
       required: [section, source, recordType, recordId, kind, code, label, messageKey, messageParams, transformationId, href, dueDate, overdue]
@@ -28436,7 +28459,7 @@ components:
         northStar: { type: object, required: [state, statement, status], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, statement: { type: [string, "null"] }, status: { type: [string, "null"] } } }
         owners: { type: object, required: [sponsor, lead], additionalProperties: false, properties: { sponsor: { oneOf: [{ $ref: "#/components/schemas/UserRef" }, { type: "null" }] }, lead: { oneOf: [{ $ref: "#/components/schemas/UserRef" }, { type: "null" }] } } }
         outcomeHealth: { type: object, required: [rag, counts], additionalProperties: false, properties: { rag: { $ref: "#/components/schemas/DashboardRag" }, counts: { type: array, items: { type: object, required: [status, count], additionalProperties: false, properties: { status: { $ref: "#/components/schemas/RagStatus" }, count: { type: integer, minimum: 0 } } } } } }
-        benefits: { type: object, description: "planned and validated are per currency on the profit-and-cash basis (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), equal to the T10 profit_and_cash headlines; not_applicable (dashboard.value.no_profit_and_cash_benefit) in a currency with no such benefit. headlines carries the planned and validated value headlines of all three bases per currency (profit_and_cash, top_line, non_cash), each with its basis, label key and drill-down.", required: [state, planned, validated, benefitCount, nonFinancialCount, headlines], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 }, headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } } } }
+        benefits: { type: object, description: "planned and validated are per currency on the profit-and-cash basis (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), equal to the T10 profit_and_cash headlines; not_applicable (dashboard.value.no_profit_and_cash_benefit) in a currency with no such benefit. headlines carries the planned and validated value headlines of all three bases per currency (profit_and_cash, top_line, non_cash), each with its basis, label key and drill-down (the T10 href, which names its currency: ADR-0037 amendment N4 item 3).", required: [state, planned, validated, benefitCount, nonFinancialCount, headlines], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 }, headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } } } }
         keyDecisions: { type: object, required: [items, overdueCount], additionalProperties: false, properties: { items: { type: array, items: { $ref: "#/components/schemas/DashboardItem" }, maxItems: 5 }, overdueCount: { type: integer, minimum: 0 } } }
         nextActions: { type: object, required: [items, missingMandatoryCount], additionalProperties: false, properties: { items: { type: array, items: { $ref: "#/components/schemas/MyWorkItem" }, maxItems: 5 }, missingMandatoryCount: { type: [integer, "null"], minimum: 0 } } }
     DashboardRagPolicyValues:

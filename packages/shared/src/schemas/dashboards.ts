@@ -140,7 +140,10 @@ export const dashboardHeadline = z.strictObject({
 });
 export type DashboardHeadline = z.infer<typeof dashboardHeadline>;
 
-/** OpenAPI `DashboardItem`. */
+/**
+ * OpenAPI `DashboardItem`. `valueBasis` (ADR-0037 amendment N4 item 2; T-DG4-ARCH-R6) is `.optional()` until the API
+ * emits it (pending in apps/api/test/support/p4-pending-arch-r6.ts); T-DG4-KBE-R7 drops `.optional()` once it does.
+ */
 export const dashboardItem = z.strictObject({
   recordType: z.string(),
   recordId: uuid,
@@ -152,6 +155,8 @@ export const dashboardItem = z.strictObject({
   value: dashboardValue.nullable(),
   ownerUserId: nullableUuid,
   flags: z.array(z.string()),
+  /** The basis of `value` when it sums benefit values (profit_and_cash on a Portfolio initiative); else null. */
+  valueBasis: headlineBasis.nullable().optional(),
 });
 export type DashboardItem = z.infer<typeof dashboardItem>;
 
@@ -288,6 +293,15 @@ export const dashboardDrilldown = z.strictObject({
   nextCursor: z.string().nullable(),
   /** ADR-0037 amendment N3; required since T-DG4-KBE-R6 emits it (D-120). */
   headlineBasis: headlineBasis.nullable(),
+  /**
+   * ADR-0037 amendment N4 item 3: the `currency` query parameter echoed, or null. `.optional()` until the API emits it
+   * (pending in apps/api/test/support/p4-pending-arch-r6.ts); T-DG4-KBE-R7 drops `.optional()` once it does.
+   */
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .nullable()
+    .optional(),
 });
 export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
 
@@ -376,6 +390,9 @@ export const DASHBOARD_REFUSALS = {
   "dashboard_rag_policy.threshold_order": "The amber threshold cannot be beyond the red threshold.",
   // ADR-0037 amendment K2 (exact text).
   "dashboard.value_class_not_applicable": "A value class narrows only a drill-down of benefit values by state.",
+  // ADR-0037 amendment N4 (exact text; T-DG4-ARCH-R6).
+  "dashboard.currency_not_applicable":
+    "A currency narrows only a drill-down of benefit values, the value gap or the investment.",
 } as const;
 export type DashboardRefusalCode = keyof typeof DASHBOARD_REFUSALS;
 

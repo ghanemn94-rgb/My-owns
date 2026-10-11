@@ -278,3 +278,48 @@ Source: finding F-DG4-123 (domain-reviewer, DG4 round 2, check DOM-R2-07) and de
 - 435 appears nowhere.
 
 **Owner of the change.** KBE-R6 for the engine and API (ADR-0037 N3 "Owners"), FE-R5 for the screens and labels. `benefits/totals.ts` (`getBenefitTotals`, `getPortfolioBenefitTotals`) is unchanged: its lines, gross and net already follow N1.
+
+## Amendment (2026-10-11, T-DG4-ARCH-R6): a Value status per basis, the Portfolio item basis, currency-exact value drill-downs (F-DG4-126, F-DG4-127, F-DG4-105, D-122)
+
+### N4. The validated gap per basis; allocated value on the profit-and-cash basis; one currency per drill-down
+
+Sources:
+- **Findings.** F-DG4-126 and F-DG4-127 (domain-reviewer, DG4 round 3) and F-DG4-105 (code-security-reviewer, DG4 round 3).
+- **Decision.** D-122, which decides the three repairs.
+- **Where the details are.** The dashboard side, the contract, the examples and the code table are in ADR-0037 amendment N4.
+
+Nothing above is removed. **This amendment supersedes N3 item 2's "there is no gap ratio or RAG on them"**. Those words are in ADR-0037 N3 item 2; this ADR's N3 item 2 summarizes that item without them, and is now read with item 1 below. It also supersedes this ADR's N3 item 1, "the value-gap ratio and the Value RAG … sum only `margin_uplift`, `cash_saving` and `working_capital_release`", for the Value RAG only. The profit-and-cash gap headline is unchanged.
+
+**Decided (D-122), exactly** (B0095; M0248; M0172; B0145):
+
+1. **F-DG4-126: the Value status per basis.**
+   - **The gap ratio.** A validated-gap ratio is computed **per basis and currency**: profit and cash, top line and non-cash, each only where that basis has a counted benefit in that currency.
+   - **Never summed.** The ratios are never summed across bases.
+   - **The Value RAG.** It is the **worst** of them. Its rule parameters list every basis and currency with its own ratio and status.
+   - **The headline amounts** stay as N3 decided them.
+   - **The gap headlines.** Each basis shows its own gap headline, labelled with its basis. There is never a single cross-basis gap.
+   - **Why this fits both sources.**
+     - B0095 and M0248 base the Value status on the "validated benefit gap" of "planned, forecast and validated realized benefit".
+     - B0145 lists revenue, margin and avoided cost as separate benefits.
+     - M0172 forbids *adding* them, not assessing each one's validated gap.
+2. **F-DG4-127: the Portfolio item value.**
+   - **The basis.** The Portfolio area's initiative value, and its ranking 'by value', use the profit-and-cash basis: the planned value of the allocated `margin_uplift`, `cash_saving` and `working_capital_release` benefits × allocation share.
+   - **Only top line or non-cash allocated.** An initiative whose allocated benefits are only top line or non-cash shows `not_applicable` with its reason (`dashboard.portfolio.no_profit_and_cash_allocation`), never 0, and ranks after those with a value.
+   - **The other bases.** Its top-line and non-cash allocations are not added to that figure. If the item shows them, each is labelled with its basis. ADR-0037 N4 item 2 shows none on the item, and labels the item's value with its basis.
+3. **F-DG4-105: currency-exact value drill-downs.**
+   - **One currency's figure.** A value-state drill-down that answers a headline or a Finance line of one currency returns only that currency's records and figure.
+   - **The href names the currency** (the optional `currency` query parameter).
+   - **A currency with no record of the basis.** It gives `not_applicable` with `dashboard.value.no_profit_and_cash_benefit` and no item, as KBE-R6 §5.3 (a) stated.
+   - **Every value headline and every Finance gross line** (and class line) carries an href that names its currency.
+   - **A drill-down without a currency** keeps today's behaviour for a single-currency scope, and is `multiple_currencies` otherwise.
+4. **Unknown, Stale, n/a and known zero stay distinct, as in N3.**
+5. **Unchanged:**
+   - the headline amounts of N3;
+   - the per-class lines (§7 item 2);
+   - the Finance validation rules (§4);
+   - `gross`, `net` and implementation cost (N1 items 1–4);
+   - the DG3 business-case totals (`kpi/totals.ts`, ADR-0024 §3; N3 item 6).
+
+   `benefits/totals.ts` is unchanged.
+
+**Owner of the change.** KBE-R7 for the engine and API, FE-R6 for the screens and labels (ADR-0037 N4 "Owners").
