@@ -14,7 +14,7 @@ import { z } from "zod";
 import { PHASES, TRANSFORMATION_STATUSES } from "../constants.ts";
 import { freeText, timestamp, uuid } from "./common.ts";
 import { gateInheritedApproval } from "./gate.ts";
-import { businessDate, decimal } from "./kpi.ts";
+import { businessDate, decimal, kpiUnitKind } from "./kpi.ts";
 
 const nullableUuid = uuid.nullable();
 const nullableDate = businessDate.nullable();
@@ -96,7 +96,22 @@ export type DashboardValueState = (typeof DASHBOARD_VALUE_STATES)[number];
 
 // ------------------------------------------------------------------------------------------------ shapes
 
-/** OpenAPI `DashboardValue`. */
+/**
+ * OpenAPI `DashboardKpiUnit` (ADR-0037 amendment N5; D-124): the unit of a KPI-derived dashboard value. `kind` decides
+ * the scaling exactly as the KPI pages' `formatKpiValue` (a `percentage` is a fraction × 100, ADR-0028 §3; a `ratio` a
+ * plain decimal); `label` is display text only, the KPI's trimmed unit label or null.
+ */
+export const dashboardKpiUnit = z.strictObject({
+  kind: kpiUnitKind,
+  label: z.string().min(1).max(50).nullable(),
+});
+export type DashboardKpiUnit = z.infer<typeof dashboardKpiUnit>;
+
+/**
+ * OpenAPI `DashboardValue`. ADR-0037 amendment N5: `kpiUnit` is non-null exactly on a KPI-derived value; money (unit
+ * `currency`), the computed ratio (unit `ratio`, the value gap, a percentage) and counts carry null. `kpiUnit` is
+ * `.optional()` until T-DG4-KBE-R8 emits it (pending in apps/api/test/support/p4-pending-arch-r7.ts).
+ */
 export const dashboardValue = z.strictObject({
   state: z.enum(DASHBOARD_VALUE_STATES),
   value: decimal.nullable(),
@@ -106,6 +121,7 @@ export const dashboardValue = z.strictObject({
     .regex(/^[A-Z]{3}$/)
     .nullable(),
   reasonKey: z.string().nullable(),
+  kpiUnit: dashboardKpiUnit.nullable().optional(),
 });
 export type DashboardValue = z.infer<typeof dashboardValue>;
 

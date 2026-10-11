@@ -619,3 +619,95 @@ R3-8 (DOM-GROSS, each benefit allocated 100 % to one completed initiative INI-00
 | `dashboard.portfolio.no_profit_and_cash_allocation` | reason key | **new** | Not applicable: only revenue uplift or avoided cost is allocated to this initiative; its value is shown on the profit-and-cash basis (margin uplift, cash saving and working-capital release). |
 | `dashboard.value.no_benefit_in_class` | reason key | **new** | Not applicable: there is no benefit of this class in this currency. |
 | `dashboard.value.multiple_currencies` | reason key | **meaning extended** (text unchanged) | Not applicable: the values are in more than one currency and are never converted. |
+
+## Amendment (2026-10-11, T-DG4-ARCH-R7): the KPI unit kind on dashboard values (D-124 items 2 and 3)
+
+Sources:
+- **Defects.** Reported by FE-R6 (handback `T-DG4-FE-R6-frontend-ux-engineer.md` §5 items 2 and 3) and confirmed by the orchestrator in the merged tree (D-124). They are recorded in D-124, not as findings: they were found before any review of the candidate.
+- **Decision.** D-124, which decides this repair. This amendment designs it; it does not reopen it.
+- **The rule it follows.** ADR-0028 §3: "Values of a `percentage` KPI are stored as **fractions** (0.12 = 12 %)". The KPI pages format a KPI value from its unit kind (`apps/web/src/pages/kpi/ui.tsx` `formatKpiValue`). F-DG4-122 (the value gap is a ratio shown as a percentage) and F-DG4-125 (a percentage KPI shown × 100) stand.
+
+Nothing above is removed. Where this amendment differs from §5's value shape, it wins.
+
+**It supersedes, exactly:**
+- **§5, the member `unit`, for a KPI-derived value only.** `unit` keeps its content (the KPI's unit label, else its unit kind: `kpi/dashboard-facts.ts` `unit_label ?? unit_kind`, unchanged), but it is a display text only and no longer decides how the value is scaled or formatted. The new member `kpiUnit` does (item 1).
+- **Nothing else.** N4 item 1's gap headline value ("a known ratio (unit `ratio`, its currency)") is unchanged: a computed ratio keeps unit `ratio` and carries no `kpiUnit` (item 2).
+
+### N5. A KPI-derived dashboard value says its unit kind
+
+**Why.** `DashboardValue.unit` carried the KPI's free-text label when one was set, and its unit kind otherwise. So the web could not tell what the number was:
+- a `ratio`-kind KPI of 1.5 was sent with unit `ratio`, the same unit as the computed value gap, and the dashboards showed '150 %' where the KPI page shows '1.5';
+- a `percentage`-kind KPI labelled '% of users' was sent with that label, and 0.12 rendered unscaled as '0.12 % of users' instead of '12 % of users'.
+
+**Decided (D-124), exactly:**
+
+1. **A dashboard value that comes from a KPI says its unit kind, separately from its display label.**
+   - **The member.** `DashboardValue.kpiUnit` is a `DashboardKpiUnit` `{kind, label}` or null.
+     - `kind` is the KPI definition's `unit_kind`, one of `currency`, `percentage`, `count`, `ratio`, `duration`, `score`, `other`. It is the same source as `KpiStatus.unitKind`, the field the KPI pages format from (`kpi/kpi-status.ts`).
+     - `label` is the KPI definition's `unit_label`, trimmed, or null when it is not set or blank. It is free text, not translated.
+   - **Where it is non-null.** On every value that is a KPI's actual, whatever its state (`value`, `zero`, `stale`, `unknown`). There is one exception: the Unknown value of a KPI whose definition can no longer be read (`kpi.no_active_version`, `engine.ts` `missingStatus`) has no kind to send, so its `kpiUnit` is null and its `unit` null. It carries no number, so nothing is formatted.
+   - **The web formats a KPI-derived value from `kind`, exactly as the KPI pages do** (`formatKpiValue`), then adds the label as display text:
+
+     | `kind` | The number (as `formatKpiValue`) | With the label |
+     |---|---|---|
+     | `percentage` | the fraction × 100, at most 2 fraction digits, then '%' (0.12 → '12 %') | label null, or exactly '%', 'percent' or 'percentage' (trimmed, any case): '12 %'. A label starting with '%': the number, a space, the label ('12 % of users'). Any other label: '12 %', a space, the label ('12 % of users' for 'of users'). The '%' is always shown, and the label never changes the × 100. |
+     | `ratio` | a plain decimal, at most 4 fraction digits (1.5 → '1.5'), never × 100 | the number, a space, the label, when the label is set |
+     | `currency` | money in the value's `currency` (`formatMoney`); with no currency, as `other` | the label is not added: money names its currency, as on the KPI pages |
+     | `count`, `duration`, `score`, `other` | a decimal, at most 4 fraction digits | the number, a space, the label, when the label is set |
+
+2. **The dashboards' computed ratio stays distinguishable, and stays a percentage.** The value gap of F-DG4-122 (every basis, N4 item 1), on its headlines, its drill-down value and the `ValueRagLines` built from `ruleParams.lines`, keeps unit `ratio` and has `kpiUnit` null. A value with `kpiUnit` null and unit `ratio` is a fraction shown × 100 with '%' (1 → '100 %'), unchanged. A `ratio`-kind KPI is told apart by its non-null `kpiUnit`, so the two never share a format again.
+3. **The display label is kept, and never decides the scaling.** `kpiUnit.label` carries it ('% of users'), and `unit` keeps its present content. Neither is read to decide × 100: only `kpiUnit.kind` (KPI-derived) or the unit `ratio` with `kpiUnit` null (the computed ratio) do. The web's `PERCENT_UNITS` guess on `unit` (F-DG4-125) is then no longer needed for KPI values. FE-R7 may keep it for a value without `kpiUnit` while the member is optional, but no API value relies on it once KBE-R8 lands.
+4. **Unknown, Stale, n/a and known zero are unchanged.** `state`, `value`, `reasonKey` and `currency` keep their §5 meanings and their rendering:
+   - `unknown` and `not_applicable` show no number, never 0 or green;
+   - `stale` shows its last value, formatted by the same rule, labelled Stale;
+   - `zero` is a known 0 in the same format ('0 %' for a percentage KPI, '0' for a ratio KPI), with its Zero label.
+
+**How each dashboard value is classified.** Every `DashboardValue` the API sends is exactly one of four kinds. The classification is read from `kpiUnit` first, then `unit`:
+
+| Kind | `kpiUnit` | `unit` | `currency` | Format | Where the API sends it |
+|---|---|---|---|---|---|
+| **KPI-derived** | `{kind, label}` (null only for an unreadable KPI, see item 1) | the KPI's label, else its kind (display only) | the KPI's currency, or null | by `kpiUnit.kind` (item 1) | `areas.ts` `kpiActualValue`, through: the T10 Outcomes area's `outcome_kpi` items and the People & adoption area's `adoption_metric_link` items (`engine.ts` `presentAreas`; T10, the workstream dashboard, the Executive Overview, the adoption dashboard's `area`); `AdoptionIndicatorRow.value` (`adoption.ts`); the drill-downs `outcomes.area` (items), `outcomes.kpi_status` (`value`, the `kpi_actual` and `kpi_evaluation` items, the `actual` input) and `adoption.indicators` (items) (`drilldown.ts`) |
+| **Money** | null | `currency` | the value's currency, or null on an n/a with no currency | money (`formatMoney`) | the value-state headlines and the investment, Finance class, gross and net line totals, benefit and Portfolio initiative items, the value drill-downs (value, items, inputs), `WorkspaceHeader.benefits` (`CurrencyValue.value`) |
+| **Computed ratio** | null | `ratio` | the gap's currency, or null | the fraction × 100 with '%' (F-DG4-122) | the `value.gap` headlines of every basis (`areas.ts` `gapValue`), the `value.gap` drill-down value (`drilldown.ts`) |
+| **Count** | null | `outcome_kpi`, `initiative`, `working_day`, `dependency`, `decision`, `indicator` or `measurement` | null | an integer | the count headlines (`outcomes.area`, `portfolio.initiatives`, `dependencies.open`, `decisions.open`, `decisions.overdue`, `adoption.indicators`, `finance.pending_validation`), the drill-down values of those metrics, and the milestone-slip items (`working_day`) |
+
+No other `unit` is sent on a value with `kpiUnit` null. The web also builds two values itself, and they follow the same classes: the Finance dashboard's non-financial n/a (money) and the `ValueRagLines` gaps (computed ratio). Both carry `kpiUnit: null`.
+
+**Not carriers.** My Work (`MyWorkItem`) has no value. The workspace header's `keyDecisions.items` are decision items whose `value` is null. Its `outcomeHealth` is counts by status, not `DashboardValue`s.
+
+**Examples (EN and AR; measured with the web's own `formatDecimal`, `formatPercent` and `formatMoney` in both locales: Arabic uses Latin digits and the same '%' position (ADR-0009 `Intl`; `lib/format.ts` `intlLocale` `ar-u-ca-gregory-nu-latn`); synthetic data):**
+
+| Value object (as the API sends it after KBE-R8) | EN | AR |
+|---|---|---|
+| `{state: value, value: "0.12", unit: "percentage", currency: null, reasonKey: null, kpiUnit: {kind: percentage, label: null}}` | 12 % | 12 % |
+| `{state: value, value: "0.12", unit: "% of users", currency: null, reasonKey: null, kpiUnit: {kind: percentage, label: "% of users"}}` | 12 % of users | 12 % of users |
+| `{state: value, value: "1.5", unit: "ratio", currency: null, reasonKey: null, kpiUnit: {kind: ratio, label: null}}` | 1.5 | 1.5 |
+| `{state: value, value: "1", unit: "ratio", currency: "SAR", reasonKey: null, kpiUnit: null}` (the value gap) | 100 % | 100 % |
+| `{state: stale, value: "0.12", unit: "% of users", currency: null, reasonKey: "kpi.stale", kpiUnit: {kind: percentage, label: "% of users"}}` | the Stale chip, then 'last known value: 12 % of users' | the same number and label, with the Arabic Stale texts |
+| `{state: unknown, value: null, unit: "ratio", currency: null, reasonKey: "kpi.no_accepted_actual", kpiUnit: {kind: ratio, label: null}}` | Unknown with its reason, no number | the same |
+
+The KPI's label is free text entered by the organization and is shown as entered in both locales. The number is in an LTR isolate, as today. FE-R7 should isolate the label separately, so that an Arabic label is not forced left-to-right.
+
+**Contract (OpenAPI 1.3.0-p4, additive):**
+- **New schema:** `DashboardKpiUnit` `{kind, label}`, both required, `additionalProperties: false`.
+- **New member:** `DashboardValue.kpiUnit` (`DashboardKpiUnit` or null). It is declared but not yet `required`, `.optional()` in the zod mirror (`dashboardValue`), and pending in `apps/api/test/support/p4-pending-arch-r7.ts`. KBE-R8 emits it on every `DashboardValue` and makes it required (the closing step, as in D-120, spelled out in that file).
+- **Meaning change, stated in the descriptions:** `DashboardValue` (the four kinds) and `DashboardValue.unit` (display text only for a KPI-derived value).
+- **Unchanged:** every operation (still 652), status, parameter and refusal.
+
+**Owners.**
+- **KBE-R8:**
+  - `kpi/dashboard-facts.ts` (the kind and label on `KpiDashboardStatus`);
+  - `reporting/dashboards/areas.ts` (`KpiStatusFact`, the value builders);
+  - `engine.ts` (`missingStatus`);
+  - the tests and the closing step.
+- **FE-R7:**
+  - `pages/dashboards/ui.tsx` `formatValue` and `ValueView`;
+  - the two web-built values;
+  - the fixtures and tests.
+
+**Codes and keys.** None new, changed or retired. The '%' sign is a symbol, the label is the organization's own text, and the reasons (`kpi.stale`, `kpi.no_accepted_actual`, `kpi.no_active_version`, `dashboard.kpi.no_period_in_window`) are unchanged. The code table record is in the T-DG4-ARCH-R7 handback evidence.
+
+**Alternatives considered.**
+- **Send the unit kind in `unit` and drop the label.** Rejected: D-124 item 3 keeps the label, and the dashboards would lose '% of users'.
+- **Give the value gap a unit of its own (for example `percent_fraction`) and leave KPI values on `unit`.** Rejected: it fixes the ratio collision (item 2) but not a labelled percentage (a label still hides the kind), and it changes a unit every reader of the gap already handles.
+- **Two flat members (`unitKind`, `unitLabel`).** Rejected for one nullable object: a single member is non-null exactly when the value is KPI-derived, so the classification cannot be half-set.
