@@ -129,10 +129,10 @@ info:
     dashboard use the profit-and-cash basis of gross (margin uplift, cash saving, working-capital release), and revenue
     uplift (top line) and avoided cost (non-cash) get headlines of their own. Additive: the schema `HeadlineBasis` and
     the members `DashboardHeadline.headlineBasis`, `DashboardDrilldown.headlineBasis` and
-    `WorkspaceHeader.benefits.headlines`, not yet required until the API emits them (ADR-0037 amendment N3). Meaning
+    `WorkspaceHeader.benefits.headlines` (ADR-0037 amendment N3), required since the API emits them (T-DG4-KBE-R6, D-120). Meaning
     changes, stated in their descriptions: a value-state drill-down without `valueClass` sums the profit-and-cash basis;
     `WorkspaceHeader.benefits.planned` and `.validated` are profit-and-cash; a Finance gross line always drills. No
-    operation, status, parameter schema or `required` list changes.
+    operation, status or parameter schema changes; the only `required` list changes add those three members.
   license:
     name: Proprietary (Mobily); third-party components under their own licences
     identifier: LicenseRef-Proprietary
@@ -28155,7 +28155,7 @@ components:
         value: { $ref: "#/components/schemas/DashboardValue" }
         period: { oneOf: [{ $ref: "#/components/schemas/DashboardPeriod" }, { type: "null" }] }
         drilldownHref: { type: string }
-        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The value basis the headline sums (ADR-0037 amendment N3): non-null on value.planned, value.forecast, value.submitted and value.validated, and profit_and_cash on value.gap; null on value.investment and every non-value metric. Not yet required: pending in p4-pending-arch-r5.ts until the API emits it." }
+        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The value basis the headline sums (ADR-0037 amendment N3): non-null on value.planned, value.forecast, value.submitted and value.validated, and profit_and_cash on value.gap; null on value.investment and every non-value metric." }
     HeadlineBasis:
       type: string
       description: "The basis of a value headline (ADR-0030 amendment N3; ADR-0037 amendment N3; M0172). profit_and_cash = margin_uplift + cash_saving + working_capital_release (the basis of the Finance gross); top_line = revenue_uplift; non_cash = avoided_cost. Bases are never summed into each other."
@@ -28368,7 +28368,7 @@ components:
         items: { type: array, items: { $ref: "#/components/schemas/DrilldownItem" } }
         evidence: { type: array, items: { $ref: "#/components/schemas/DrilldownEvidence" } }
         nextCursor: { type: [string, "null"] }
-        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendment N3): profit_and_cash for a value-state metric without valueClass, with valueClass margin_uplift, cash_saving or working_capital_release, and for value.gap; top_line with revenue_uplift; non_cash with avoided_cost; null with non_financial_valued and for every other metric. Not yet required: pending in p4-pending-arch-r5.ts until the API emits it." }
+        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendment N3): profit_and_cash for a value-state metric without valueClass, with valueClass margin_uplift, cash_saving or working_capital_release, and for value.gap; top_line with revenue_uplift; non_cash with avoided_cost; null with non_financial_valued and for every other metric." }
     MyWorkItem:
       type: object
       required: [section, source, recordType, recordId, kind, code, label, messageKey, messageParams, transformationId, href, dueDate, overdue]
@@ -28436,7 +28436,7 @@ components:
         northStar: { type: object, required: [state, statement, status], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, statement: { type: [string, "null"] }, status: { type: [string, "null"] } } }
         owners: { type: object, required: [sponsor, lead], additionalProperties: false, properties: { sponsor: { oneOf: [{ $ref: "#/components/schemas/UserRef" }, { type: "null" }] }, lead: { oneOf: [{ $ref: "#/components/schemas/UserRef" }, { type: "null" }] } } }
         outcomeHealth: { type: object, required: [rag, counts], additionalProperties: false, properties: { rag: { $ref: "#/components/schemas/DashboardRag" }, counts: { type: array, items: { type: object, required: [status, count], additionalProperties: false, properties: { status: { $ref: "#/components/schemas/RagStatus" }, count: { type: integer, minimum: 0 } } } } } }
-        benefits: { type: object, description: "planned and validated are per currency on the profit-and-cash basis (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), equal to the T10 profit_and_cash headlines; not_applicable (dashboard.value.no_profit_and_cash_benefit) in a currency with no such benefit. headlines carries the planned and validated value headlines of all three bases per currency (profit_and_cash, top_line, non_cash), each with its basis, label key and drill-down; not yet required: pending in p4-pending-arch-r5.ts until the API emits it.", required: [state, planned, validated, benefitCount, nonFinancialCount, headlines], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 }, headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } } } }
+        benefits: { type: object, description: "planned and validated are per currency on the profit-and-cash basis (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), equal to the T10 profit_and_cash headlines; not_applicable (dashboard.value.no_profit_and_cash_benefit) in a currency with no such benefit. headlines carries the planned and validated value headlines of all three bases per currency (profit_and_cash, top_line, non_cash), each with its basis, label key and drill-down.", required: [state, planned, validated, benefitCount, nonFinancialCount, headlines], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 }, headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } } } }
         keyDecisions: { type: object, required: [items, overdueCount], additionalProperties: false, properties: { items: { type: array, items: { $ref: "#/components/schemas/DashboardItem" }, maxItems: 5 }, overdueCount: { type: integer, minimum: 0 } } }
         nextActions: { type: object, required: [items, missingMandatoryCount], additionalProperties: false, properties: { items: { type: array, items: { $ref: "#/components/schemas/MyWorkItem" }, maxItems: 5 }, missingMandatoryCount: { type: [integer, "null"], minimum: 0 } } }
     DashboardRagPolicyValues:
