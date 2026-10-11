@@ -25,14 +25,14 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is FIXING after review round 2.** The build is complete (D-088 to D-116).
-  - **Round 1** (candidate `sha256:19656b1f…`, 1449 files, source `a91d82c`): domain PASS, code-security FAIL, qa PASS; eight findings, all repaired (D-117, D-118).
-  - **Round 2** (candidate `sha256:3f51b79d…`, 1455 files, source `93a7dd7`): domain FAIL, code-security FAIL, qa PASS (re-run after the first qa run was killed; D-119). All eight round-1 findings are CLOSED_VERIFIED.
-  - **Open:** F-DG4-122 (High, mandatory: the value-gap ratio shown as money), F-DG4-123 (Medium: the value headlines mix bases). F-DG4-104 and F-DG4-124 (the stages.json history) are fixed in `546fb4e`, pending verification.
+- **DG4 (P4 "Execution value and sustainment") is REVIEWING, round 3.** The build is complete (D-088 to D-116).
+  - **Round 1** (candidate `sha256:19656b1f…`): domain PASS, code-security FAIL, qa PASS; eight findings, all repaired (D-117, D-118) and CLOSED_VERIFIED in round 2.
+  - **Round 2** (candidate `sha256:3f51b79d…`): domain FAIL, code-security FAIL, qa PASS (re-run; D-119). New: F-DG4-122 (High, mandatory), F-DG4-123, and F-DG4-104/124 (the stages.json history).
+  - **Repairs:** ARCH-R5, then KBE-R6 and FE-R5, plus `546fb4e` for the history (D-119 to D-121). Pre-freeze verification of `25bdcbd`, with no agent running: every check exits 0. Product e2e 336/336 in both locale settings, root specs 14/14, unit 2819 + 259/2, integration 1960/1960.
+  - **Round 3:** the candidate and manifest are in `stages.json` `review_rounds[2]`; the assignments are in `docs/delivery/assignments/DG4/round-3/`.
 - **Next action:**
-  1. Wave A: T-DG4-ARCH-R5 (the F-DG4-123 design, D-119). Merge it.
-  2. Wave B: T-DG4-KBE-R6 and T-DG4-FE-R5 (F-DG4-123 engine and screens, F-DG4-122). Merge, then run the full verification with no agent running.
-  3. Record FIXING → REVIEWING, re-freeze, run review round 3, then the release-auditor.
+  1. Collect the three round-3 records and import their verifications and findings.
+  2. If all three PASS, run the release-auditor on the same candidate. Otherwise record FIXING, repair, and re-freeze.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
