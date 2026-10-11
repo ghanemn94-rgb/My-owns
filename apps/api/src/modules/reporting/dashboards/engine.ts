@@ -27,16 +27,18 @@ import {
 } from "../../portfolio/index.ts";
 import {
   adoptionArea,
+  basisClasses,
+  basisOfClass,
   countValue,
   decisionOverdue,
   decisionsArea,
   dependenciesArea,
   FINANCIAL_VALUE_CLASSES,
+  gapValue,
   kpiActualValue,
   kpiRowStatus,
   knownValue,
   MONEY_SCALE,
-  NO_PROFIT_AND_CASH,
   notApplicableValue,
   outcomesArea,
   portfolioArea,
@@ -46,6 +48,7 @@ import {
   type AdoptionIndicatorFact,
   type AdoptionResult,
   type AreaRag,
+  type BasisGap,
   type BasisSums,
   type DashboardClock,
   type DashboardPolicy,
@@ -105,6 +108,82 @@ export interface DashboardContext {
   readonly policy: DashboardPolicy;
   readonly filters: ResolvedFilters;
   readonly generatedAt: string;
+}
+
+/** The not_applicable reason of an initiative allocated only top-line or non-cash benefits (ADR-0037 N4 item 2). */
+export const NO_PROFIT_AND_CASH_ALLOCATION = "dashboard.portfolio.no_profit_and_cash_allocation";
+
+/**
+ * The value of a Portfolio initiative item (ADR-0037 amendment N4 item 2), on the profit-and-cash basis: known, or
+ * not_applicable (only top-line or non-cash allocated), or unknown (a missing amount, or nothing allocated). Shared by
+ * the Portfolio area and the `portfolio.initiatives` drill-down.
+ */
+export function initiativeValue(i: InitiativeFact): DashboardValue {
+  if (i.plannedAllocated !== null) return knownValue(i.plannedAllocated, "currency", i.plannedCurrency);
+  if (i.valueReasonKey === NO_PROFIT_AND_CASH_ALLOCATION)
+    return { ...notApplicableValue(NO_PROFIT_AND_CASH_ALLOCATION, "currency"), currency: i.plannedCurrency };
+  return unknownValue(i.valueReasonKey ?? "dashboard.portfolio.no_allocated_value", "currency", i.plannedCurrency);
+}
+
+/**
+ * The planned value allocated to each initiative on the PROFIT-AND-CASH basis (ADR-0037 amendment N4 item 2;
+ * F-DG4-127), pure: Σ over its allocations to counted, monetised margin_uplift, cash_saving and
+ * working_capital_release benefits in the transformation's currency of (their planned amounts × allocation share),
+ * presented and ranked at the money scale (half-even). The top-line and non-cash allocations are never added into it:
+ * they only tell a not_applicable initiative (only those bases allocated) from an unknown one (nothing allocated). A
+ * profit-and-cash planned line without an amount makes that benefit's planned value missing, so every initiative it is
+ * allocated to is unknown (`benefit.value_amount_missing`), never a sum that omits it (D-123 item 3). An initiative
+ * absent from the result has nothing allocated.
+ */
+export function initiativePlannedValues(
+  benefits: readonly ValueBenefitFact[],
+  lines: readonly ValueLineFact[],
+  allocations: readonly AllocationFact[],
+  currencyOf: ReadonlyMap<string, string>,
+): Map<string, Pick<InitiativeFact, "plannedAllocated" | "valueReasonKey">> {
+  const benefitById = new Map(benefits.map((x) => [x.benefitId, x]));
+  const pcClasses = basisClasses("profit_and_cash");
+  /** Per profit-and-cash benefit: its planned sum, or null when one of its planned lines has no amount. */
+  const plannedOf = new Map<string, InstanceType<typeof D> | null>();
+  /** The benefits of the other two bases with a planned amount (only their existence is read). */
+  const otherPlanned = new Set<string>();
+  for (const l of lines) {
+    const ben = benefitById.get(l.benefitId);
+    if (l.state !== "planned" || !ben || !ben.counted || ben.unmonetised) continue;
+    if (!FINANCIAL_VALUE_CLASSES.includes(ben.valueClass)) continue;
+    if (ben.currency !== currencyOf.get(ben.transformationId)) continue;
+    if (!pcClasses.includes(ben.valueClass)) {
+      if (l.amount !== null) otherPlanned.add(l.benefitId);
+      continue;
+    }
+    const prev = plannedOf.get(l.benefitId);
+    if (prev === null) continue;
+    plannedOf.set(l.benefitId, l.amount === null ? null : (prev ?? new D(0)).plus(new D(l.amount)));
+  }
+  const sumOf = new Map<string, InstanceType<typeof D>>();
+  const missing = new Set<string>();
+  const other = new Set<string>();
+  for (const a of allocations) {
+    if (otherPlanned.has(a.benefitId)) other.add(a.initiativeId);
+    const p = plannedOf.get(a.benefitId);
+    if (p === undefined) continue;
+    if (p === null) missing.add(a.initiativeId);
+    else sumOf.set(a.initiativeId, (sumOf.get(a.initiativeId) ?? new D(0)).plus(p.times(new D(a.share))));
+  }
+  const out = new Map<string, Pick<InitiativeFact, "plannedAllocated" | "valueReasonKey">>();
+  for (const initiativeId of new Set([...sumOf.keys(), ...missing, ...other])) {
+    const sum = sumOf.get(initiativeId);
+    out.set(
+      initiativeId,
+      missing.has(initiativeId)
+        ? { plannedAllocated: null, valueReasonKey: "benefit.value_amount_missing" }
+        : sum !== undefined
+          ? // planned × share can carry 10 fraction digits: presented (and ranked) at the money scale, half-even.
+            { plannedAllocated: sum.toDecimalPlaces(MONEY_SCALE, D.ROUND_HALF_EVEN).toFixed(), valueReasonKey: null }
+          : { plannedAllocated: null, valueReasonKey: NO_PROFIT_AND_CASH_ALLOCATION },
+    );
+  }
+  return out;
 }
 
 const statusKey = (r: KpiStatusRequest) => `${r.kpiDefinitionId}:${r.scopeKind}:${r.scopeId}`;
@@ -196,29 +275,16 @@ export async function loadDashboardContext(
     status: statusOf(i),
   }));
 
-  // Benefits (slice B counting rules) and the planned value allocated to each initiative.
+  // Benefits (slice B counting rules) and the planned value allocated to each initiative on the profit-and-cash basis.
   const b = await loadBenefitDashboardFacts(db, ids);
-  const benefitById = new Map(b.benefits.map((x) => [x.benefitId, x]));
-  const plannedOf = new Map<string, InstanceType<typeof D>>();
-  for (const l of b.lines) {
-    const ben = benefitById.get(l.benefitId);
-    if (l.state !== "planned" || l.amount === null || !ben || !ben.counted || ben.unmonetised) continue;
-    if (!FINANCIAL_VALUE_CLASSES.includes(ben.valueClass)) continue;
-    if (ben.currency !== currencyOf.get(ben.transformationId)) continue;
-    plannedOf.set(l.benefitId, (plannedOf.get(l.benefitId) ?? new D(0)).plus(new D(l.amount)));
-  }
-  const allocatedOf = new Map<string, InstanceType<typeof D>>();
-  for (const a of b.allocations) {
-    const p = plannedOf.get(a.benefitId);
-    if (p === undefined) continue;
-    allocatedOf.set(a.initiativeId, (allocatedOf.get(a.initiativeId) ?? new D(0)).plus(p.times(new D(a.share))));
-  }
+  const valueOf = initiativePlannedValues(b.benefits, b.lines, b.allocations, currencyOf);
   const initiativeRows = await loadPortfolioDashboardInitiatives(db, ids);
   const initiatives: InitiativeFact[] = initiativeRows.map((i) => ({
     ...i,
-    // planned × share can carry 10 fraction digits: presented (and ranked) at the money scale, half-even.
-    plannedAllocated:
-      allocatedOf.get(i.initiativeId)?.toDecimalPlaces(MONEY_SCALE, D.ROUND_HALF_EVEN).toFixed() ?? null,
+    ...(valueOf.get(i.initiativeId) ?? {
+      plannedAllocated: null,
+      valueReasonKey: "dashboard.portfolio.no_allocated_value",
+    }),
     plannedCurrency: currencyOf.get(i.transformationId) ?? null,
   }));
 
@@ -490,7 +556,8 @@ interface PresentOptions {
 /**
  * One headline. `basis` is the value basis it sums (ADR-0037 amendment N3; null on every non-value metric and on
  * value.investment); a top_line or non_cash headline drills with its class (`valueClass`), a profit_and_cash one
- * without, so each drill-down sums exactly the records of its headline.
+ * without, so each drill-down sums exactly the records of its headline. `currency` is the currency of a value
+ * headline's figure (N4 item 3): its href names it, so the drill-down answers only that currency's figure.
  */
 function headline(
   ctx: DashboardContext,
@@ -499,6 +566,7 @@ function headline(
   labelKey: string,
   value: DashboardValue,
   basis: HeadlineBasis | null = null,
+  currency: string | null = null,
 ): DashboardHeadline {
   const valueClass = basis === "top_line" ? "revenue_uplift" : basis === "non_cash" ? "avoided_cost" : undefined;
   return {
@@ -514,17 +582,23 @@ function headline(
     drilldownHref: drilldownHref(metric, ctx.filters, {
       transformationIds: o.drillTransformationIds,
       ...(valueClass === undefined ? {} : { valueClass }),
+      ...(currency === null ? {} : { currency }),
     }),
     headlineBasis: basis,
   };
 }
 
-/** The four state headlines of one basis (planned, forecast, submitted, validated), labelled with the basis. */
+/**
+ * The four state headlines of one basis (planned, forecast, submitted, validated), labelled with the basis, then its gap
+ * headline (ADR-0037 amendments N3 and N4 item 1), all in `currency`.
+ */
 function basisHeadlines(
   ctx: DashboardContext,
   o: PresentOptions,
   basis: HeadlineBasis,
   sums: BasisSums,
+  gap: BasisGap,
+  currency: string,
 ): DashboardHeadline[] {
   const states = [
     ["planned", sums.planned],
@@ -532,9 +606,12 @@ function basisHeadlines(
     ["submitted", sums.submitted],
     ["validated", sums.validated],
   ] as const;
-  return states.map(([state, value]) =>
-    headline(ctx, o, `value.${state}`, `dashboard.headline.value_${state}_${basis}`, value, basis),
-  );
+  return [
+    ...states.map(([state, value]) =>
+      headline(ctx, o, `value.${state}`, `dashboard.headline.value_${state}_${basis}`, value, basis, currency),
+    ),
+    headline(ctx, o, "value.gap", `dashboard.headline.value_gap_${basis}`, gapValue(gap, currency), basis, currency),
+  ];
 }
 
 function item(x: Partial<DashboardItem> & Pick<DashboardItem, "recordType" | "recordId" | "href">): DashboardItem {
@@ -546,6 +623,7 @@ function item(x: Partial<DashboardItem> & Pick<DashboardItem, "recordType" | "re
     value: null,
     ownerUserId: null,
     flags: [],
+    valueBasis: null,
     ...x,
   };
 }
@@ -620,30 +698,17 @@ export function presentAreas(
     ]),
   });
 
-  // Value (ADR-0037 amendment N3): per currency the profit-and-cash planned, forecast, submitted, validated and gap,
-  // then the top-line and the non-cash states (each only where a benefit of its class exists), never summed into each
-  // other; after every currency, the investment. Each benefit is listed with its validated value.
+  // Value (ADR-0037 amendments N3 and N4): per currency the profit-and-cash planned, forecast, submitted, validated and
+  // gap, then the top-line and the non-cash states and gap (each only where a benefit of its class exists), never
+  // summed into each other; after every currency, the investment. Every value headline's href names its currency.
+  // Each benefit is listed with its validated value, labelled with its class's basis.
   const valueHeadlines: DashboardHeadline[] = [];
   for (const c of r.value.currencies) {
-    valueHeadlines.push(...basisHeadlines(ctx, o, "profit_and_cash", c));
-    valueHeadlines.push(
-      headline(
-        ctx,
-        o,
-        "value.gap",
-        "dashboard.headline.value_gap_profit_and_cash",
-        c.gapRatio === null
-          ? c.status === "unknown"
-            ? unknownValue(c.reasonKey ?? "benefit.value_amount_missing", "ratio", c.currency)
-            : c.reasonKey === NO_PROFIT_AND_CASH
-              ? { ...notApplicableValue(NO_PROFIT_AND_CASH, "ratio"), currency: c.currency }
-              : notApplicableValue(c.reasonKey ?? "dashboard.value.nothing_planned", "ratio")
-          : { ...knownValue(c.gapRatio, "ratio", c.currency) },
-        "profit_and_cash",
-      ),
-    );
-    if (c.topLine !== null) valueHeadlines.push(...basisHeadlines(ctx, o, "top_line", c.topLine));
-    if (c.nonCash !== null) valueHeadlines.push(...basisHeadlines(ctx, o, "non_cash", c.nonCash));
+    valueHeadlines.push(...basisHeadlines(ctx, o, "profit_and_cash", c, c, c.currency));
+    if (c.topLine !== null)
+      valueHeadlines.push(...basisHeadlines(ctx, o, "top_line", c.topLine, c.topLineGap!, c.currency));
+    if (c.nonCash !== null)
+      valueHeadlines.push(...basisHeadlines(ctx, o, "non_cash", c.nonCash, c.nonCashGap!, c.currency));
   }
   if (r.value.currencies.length === 0)
     valueHeadlines.push(
@@ -667,6 +732,8 @@ export function presentAreas(
         amounts.some((a) => a === null)
           ? unknownValue("benefit.cost_amount_missing", "currency", currency)
           : knownValue(amounts.reduce((acc, a) => acc.plus(new D(a!)), new D(0)).toFixed(), "currency", currency),
+        null,
+        currency,
       ),
     );
   }
@@ -681,6 +748,7 @@ export function presentAreas(
         label: b.title,
         href: `${T_PATH(b.transformationId)}/benefits/${b.benefitId}`,
         value: benefitValidated(ctx, b),
+        valueBasis: b.unmonetised ? null : basisOfClass(b.valueClass),
         ownerUserId: b.ownerUserId,
         flags: [
           ...(b.unmonetised || !FINANCIAL_VALUE_CLASSES.includes(b.valueClass) ? ["non_financial"] : []),
@@ -710,10 +778,8 @@ export function presentAreas(
         label: row.fact.name,
         href: `/api/v1/initiatives/${row.fact.initiativeId}`,
         rag: row.status,
-        value:
-          row.fact.plannedAllocated === null
-            ? unknownValue("dashboard.portfolio.no_allocated_value", "currency", row.fact.plannedCurrency)
-            : knownValue(row.fact.plannedAllocated, "currency", row.fact.plannedCurrency),
+        value: initiativeValue(row.fact),
+        valueBasis: "profit_and_cash",
         ownerUserId: row.fact.executiveOwnerUserId ?? row.fact.workstreamLeadUserId,
         flags: [...row.flags],
       }),

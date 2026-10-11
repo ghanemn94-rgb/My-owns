@@ -705,6 +705,54 @@ export async function exerciseP4KbeGOperations(ctx: P4ExerciseContext): Promise<
   );
   expect([notApplicable.status, notApplicable.body.code]).toEqual([422, "dashboard.value_class_not_applicable"]);
 
+  // T-DG4-KBE-R7 (ADR-0037 amendment N4; the parameter of p4-pending-arch-r6.ts, now routed): the `currency` query
+  // parameter and its refusals, value.gap by basis, through the validating client (the response's `currency` echo and
+  // every DashboardItem's `valueBasis` are required members). The world: SAR margin uplift 70 and revenue uplift 300,
+  // USD revenue uplift 11 (no USD profit-and-cash benefit), nothing validated. SYNTHETIC data.
+  const gc = await benefitWorldIn(api, w, w.a1);
+  for (const [extra, amount] of [
+    [{ valueClass: "margin_uplift" }, "70"],
+    [{}, "300"],
+    [{ currency: "USD" }, "11"],
+  ] as const) {
+    const ben = await measuredBenefit(api, gc, { extra });
+    await planValue(api, gc, ben.id, amount, "2026-01-01", "2026-06-30");
+  }
+  const dq = `/api/v1/dashboard-drilldown?organizationId=${w.orgA.id}&transformationId=${gc.transformationId}`;
+  const sar = await m("GET", `${dq}&metric=value.planned&currency=SAR`, { session: gc.s.auditor });
+  expect([sar.status, sar.body.currency, sar.body.value.value, sar.body.value.currency]).toEqual([
+    200,
+    "SAR",
+    "70",
+    "SAR",
+  ]);
+  const usd = await m("GET", `${dq}&metric=value.planned&currency=USD`, { session: gc.s.auditor });
+  expect([usd.status, usd.body.currency, usd.body.value.state, usd.body.items]).toEqual([
+    200,
+    "USD",
+    "not_applicable",
+    [],
+  ]);
+  const topGap = await m("GET", `${dq}&metric=value.gap&valueClass=revenue_uplift&currency=SAR`, {
+    session: gc.s.auditor,
+  });
+  expect([topGap.status, topGap.body.headlineBasis, topGap.body.value.value, topGap.body.currency]).toEqual([
+    200,
+    "top_line",
+    "1",
+    "SAR",
+  ]);
+  const inv = await m("GET", `${dq}&metric=value.investment&currency=SAR`, { session: gc.s.auditor });
+  expect([inv.status, inv.body.currency, inv.body.value.state]).toEqual([200, "SAR", "zero"]);
+  const noCurrency = await m("GET", `${dq}&metric=decisions.open&currency=SAR`, { session: gc.s.auditor });
+  expect([noCurrency.status, noCurrency.body.code]).toEqual([422, "dashboard.currency_not_applicable"]);
+  const lower = await m("GET", `${dq}&metric=value.planned&currency=sar`, { session: gc.s.auditor });
+  expect(lower.status).toBe(400);
+  const marginGap = await m("GET", `${dq}&metric=value.gap&valueClass=margin_uplift`, { session: gc.s.auditor });
+  expect([marginGap.status, marginGap.body.code]).toEqual([422, "dashboard.value_class_not_applicable"]);
+  const gcDash = await m("GET", `${gc.base}/dashboard`, { session: gc.s.auditor });
+  expect([gcDash.status, areaOf(gcDash.body, "value").rag.status]).toEqual([200, "red"]);
+
   // KBE-G2 (appended after KBE-G, p4-work-split JK.0/JK.5): the 4 operations of p4-pending-kbe-g2.ts.
   await exerciseP4KbeG2Operations(ctx, k);
 }

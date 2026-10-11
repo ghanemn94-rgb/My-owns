@@ -375,8 +375,16 @@ describe("K1 items 1-2: the parameter, the refusal and the three metrics", () =>
   const base = () => `/api/v1/dashboard-drilldown?organizationId=${w.orgA.id}&transformationId=${x.transformationId}`;
 
   it("valueClass with a metric that is not a value state is 422 dashboard.value_class_not_applicable (exact K2 text)", async () => {
-    for (const metric of ["value.investment", "value.gap", "finance.pending_validation", "decisions.open"]) {
-      const r = await get(`${base()}&metric=${metric}&valueClass=revenue_uplift`);
+    // T-DG4-KBE-R7 (ADR-0037 amendment N4 item 1): value.gap now takes revenue_uplift and avoided_cost (the top-line
+    // and non-cash gaps; was 422 with revenue_uplift); any other class on value.gap is still this 422.
+    for (const [metric, cls] of [
+      ["value.investment", "revenue_uplift"],
+      ["value.gap", "margin_uplift"],
+      ["value.gap", "non_financial_valued"],
+      ["finance.pending_validation", "revenue_uplift"],
+      ["decisions.open", "revenue_uplift"],
+    ] as const) {
+      const r = await get(`${base()}&metric=${metric}&valueClass=${cls}`);
       expect([r.status, r.body.code, r.body.detail, r.body.errors], metric).toEqual([
         422,
         "dashboard.value_class_not_applicable",
@@ -403,7 +411,18 @@ describe("K1 items 1-2: the parameter, the refusal and the three metrics", () =>
     const r = await financeOfX();
     const lines = r.body.lines as Body[];
     for (const state of ["measured", "rejected", "sustained"]) {
-      const d = await drillAll(`${base()}&metric=value.${state}`, "SAR");
+      // T-DG4-KBE-R7 (ADR-0037 amendment N4 item 3): X holds SAR and USD value, so without `currency` the drill-down's
+      // own value is n/a dashboard.value.multiple_currencies (was the SAR sum: no figure of one currency answers for
+      // another's); the SAR figure is asked for with currency=SAR.
+      const all = await get(`${base()}&metric=value.${state}`);
+      expect([all.status, all.body.value.state, all.body.value.reasonKey, all.body.currency], state).toEqual([
+        200,
+        "not_applicable",
+        "dashboard.value.multiple_currencies",
+        null,
+      ]);
+      const d = await drillAll(`${base()}&metric=value.${state}&currency=SAR`, "SAR");
+      expect(d.first.currency, state).toBe("SAR");
       // T-DG4-KBE-R6: margin_uplift + cash_saving + working_capital_release only (was all five financial classes:
       // measured 1412.75 = revenue 1020 + margin 42.75 + avoided 350 became 42.75; rejected 40 -> 0; sustained 120 -> 0).
       const expected = lines
@@ -412,7 +431,7 @@ describe("K1 items 1-2: the parameter, the refusal and the three metrics", () =>
         .reduce((acc, l) => acc.plus(new Decimal(l.total.value)), new Decimal(0))
         .toFixed();
       expect(d.sum, state).toBe(expected);
-      // USD holds revenue uplift only, so the profit-and-cash drill-down has one currency (SAR): its value is that sum.
+      // With currency=SAR the profit-and-cash drill-down's value is that SAR sum.
       expect(
         [new Decimal(d.first.value.value).toFixed(), d.first.value.currency, d.first.calculation.ruleKey],
         state,
@@ -465,7 +484,9 @@ describe("K1 items 1-2: the parameter, the refusal and the three metrics", () =>
       },
       [],
     ]);
-    const empty = await get(`${base()}&metric=value.sustained&valueClass=margin_uplift`);
+    // T-DG4-KBE-R7 (N4 item 3): with currency=SAR (without it, X's two value currencies make it n/a
+    // dashboard.value.multiple_currencies; it was the SAR known zero).
+    const empty = await get(`${base()}&metric=value.sustained&valueClass=margin_uplift&currency=SAR`);
     expect([empty.status, empty.body.items, empty.body.value.state, empty.body.value.currency]).toEqual([
       200,
       [],

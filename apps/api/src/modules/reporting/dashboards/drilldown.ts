@@ -1,13 +1,15 @@
 // The drill-down of one headline number or Finance class line (ADR-0037 §5 and amendment K1; REQ-S13-003,
 // REQ-PB-062, REQ-S03-009):
 //   GET /dashboard-drilldown?metric=&organizationId=&transformationId=&ownerUserId=&periodId=&phase=&status=
-//                            &subjectId=&valueClass=&cursor=&limit=
+//                            &subjectId=&valueClass=&currency=&cursor=&limit=
 // Its contributing records (paginated), period, calculation and evidence, over exactly the facts the headline was
 // computed from (the same scope, filters, window and rules: engine.ts), so for a sum metric the decimal sum of
 // `items[].value` over all pages equals the headline value, per currency (the invariant KBE-G tests). Currencies are
 // never added together: with more than one currency the drill-down's own `value` is not_applicable
 // (dashboard.value.multiple_currencies) and each item carries its currency. Zero, Unknown, Stale and not_applicable are
-// distinct states; an Unknown amount makes a sum Unknown (never 0). A read model: nothing stored.
+// distinct states; an Unknown amount makes a sum Unknown (never 0). With `currency` (ADR-0037 amendment N4 item 3) a
+// value drill-down answers only that currency's figure, and a currency holding no record of the basis is not_applicable
+// with no item. A read model: nothing stored.
 import type { DbOrTx } from "@mth/db";
 import { FORMULA_DECIMAL as D } from "@mth/shared/calc";
 import {
@@ -38,8 +40,10 @@ import {
   type ModuleDeps,
 } from "../../platform/index.ts";
 import {
+  basisClasses,
   basisOfClass,
   countValue,
+  gapValue,
   kpiActualValue,
   knownValue,
   NO_PROFIT_AND_CASH,
@@ -47,11 +51,15 @@ import {
   RATIO_ROUNDING,
   sumValue,
   unknownValue,
+  valueCurrencies,
   valueLinesOf,
+  type BasisGap,
   type ValueBenefitFact,
+  type ValueCurrencyLine,
 } from "./areas.ts";
 import {
   computeAreas,
+  initiativeValue,
   kpiStatusHref,
   loadDashboardContext,
   readOnly,
@@ -70,6 +78,12 @@ const drilldownQuery = z.strictObject({
   subjectId: z.uuid().optional(),
   // ADR-0037 amendment K1: only with the seven value-state metrics (else 422 dashboard.value_class_not_applicable).
   valueClass: financeValueClass.optional(),
+  // ADR-0037 amendment N4 item 3: ISO 4217 (else 400); only with the value-state metrics, value.gap and value.investment
+  // (else 422 dashboard.currency_not_applicable).
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .optional(),
   cursor: cursorSchema,
   limit: limitSchema,
 });
@@ -112,6 +126,30 @@ const SUBJECT_METRICS: readonly DashboardMetric[] = [
   "decisions.overdue",
 ];
 
+/** The classes `value.gap` accepts as `valueClass` (ADR-0037 amendment N4 item 1) and the basis each selects. */
+const GAP_CLASS_BASIS: ReadonlyMap<string, HeadlineBasis> = new Map<string, HeadlineBasis>([
+  ["revenue_uplift", "top_line"],
+  ["avoided_cost", "non_cash"],
+]);
+
+/** The not_applicable reason of a currency holding no benefit of the class asked for (ADR-0037 amendment N4 item 3). */
+const NO_BENEFIT_IN_CLASS = "dashboard.value.no_benefit_in_class";
+
+/** The gap of `basis` in one Value-area currency line, or null when the currency holds no benefit of that basis. */
+function basisGapOf(line: ValueCurrencyLine | undefined, basis: HeadlineBasis): BasisGap | null {
+  if (line === undefined) return null;
+  if (basis === "top_line") return line.topLineGap;
+  if (basis === "non_cash") return line.nonCashGap;
+  return line.reasonKey === NO_PROFIT_AND_CASH ? null : line;
+}
+
+/** The planned and validated sums of `basis` in one Value-area currency line (the gap's inputs), or null. */
+function basisSumsOf(line: ValueCurrencyLine, basis: HeadlineBasis) {
+  if (basis === "top_line") return line.topLine;
+  if (basis === "non_cash") return line.nonCash;
+  return line;
+}
+
 /** The single-currency value of a set of per-currency sums, or not_applicable when several currencies are involved. */
 function oneCurrency(byCurrency: ReadonlyMap<string, DashboardValue>, unit: string): DashboardValue {
   if (byCurrency.size === 1) return [...byCurrency.values()][0]!;
@@ -149,6 +187,7 @@ async function valueDrill(
   state: string,
   valueClass: string | null,
   subjectId: string | null,
+  currency: string | null,
 ) {
   const byId = new Map(ctx.facts.benefits.map((b) => [b.benefitId, b]));
   const source = isExtraState(state) ? await extraStateLinesOf(db, ctx, scopeIds) : ctx.facts.lines;
@@ -163,6 +202,12 @@ async function valueDrill(
     lines = lines.filter((l) => l.benefitId === subjectId);
     eligible = eligible.filter((b) => b.benefitId === subjectId);
     financial = financial.filter((b) => b.benefitId === subjectId);
+  }
+  if (currency !== null) {
+    // N4 item 3: only this currency's records, after subjectId.
+    lines = lines.filter((l) => byId.get(l.benefitId)!.currency === currency);
+    eligible = eligible.filter((b) => b.currency === currency);
+    financial = financial.filter((b) => b.currency === currency);
   }
   const benefitIds = [...new Set(lines.map((l) => l.benefitId))];
   const items: DrilldownItem[] = benefitIds.map((id) => {
@@ -202,15 +247,29 @@ async function valueDrill(
     recordType: "benefit_measurement",
     recordId: e.measurement_id!,
   }));
+  // The scope's value currencies (N4 item 3): those of its counted, monetised financial benefits plus those of the
+  // requested class's eligible benefits (non_financial_valued). Without `currency` and `subjectId`, more than one of
+  // them makes the drill-down's own value not_applicable, so it never answers one currency's figure for another's.
+  const scopeCurrencies = new Set([...valueCurrencies(ctx.facts.benefits), ...currencies]);
+  const noRecord = (unit: string) =>
+    notApplicableValue(
+      valueClass !== null && currency !== null
+        ? NO_BENEFIT_IN_CLASS
+        : valueClass === null && financial.length > 0
+          ? NO_PROFIT_AND_CASH
+          : "dashboard.value.no_financial_benefit",
+      unit,
+    );
   return {
     headlineBasis: valueClass === null ? "profit_and_cash" : basisOfClass(valueClass),
     value:
       byCurrency.size === 0
-        ? notApplicableValue(
-            valueClass === null && financial.length > 0 ? NO_PROFIT_AND_CASH : "dashboard.value.no_financial_benefit",
-            "currency",
-          )
-        : oneCurrency(byCurrency, "currency"),
+        ? currency === null
+          ? noRecord("currency")
+          : { ...noRecord("currency"), currency }
+        : currency === null && subjectId === null && scopeCurrencies.size > 1
+          ? notApplicableValue("dashboard.value.multiple_currencies", "currency")
+          : oneCurrency(byCurrency, "currency"),
     items,
     // ADR-0037 amendment N3: dashboard.value.sum_<state>_profit_and_cash without valueClass; K2 (unchanged) with it.
     ruleKey: valueClass === null ? `dashboard.value.sum_${state}_profit_and_cash` : `dashboard.value.sum_${state}`,
@@ -229,14 +288,19 @@ async function drill(
   subjectId: string | null,
   valueClass: string | null,
   scopeIds: readonly string[],
+  currency: string | null,
 ): Promise<Drill> {
   const state = VALUE_STATE_OF.get(metric);
-  // ADR-0037 amendment K1 item 1: a value class narrows only a value-state drill-down.
-  if (valueClass !== null && state === undefined)
+  // ADR-0037 amendment K1 item 1: a value class narrows only a value-state drill-down, and (N4 item 1) selects the
+  // top-line or non-cash gap on value.gap.
+  if (valueClass !== null && state === undefined && !(metric === "value.gap" && GAP_CLASS_BASIS.has(valueClass)))
     throw dashboardRefusal("dashboard.value_class_not_applicable", "/valueClass");
   if (subjectId !== null && !SUBJECT_METRICS.includes(metric))
     throw dashboardRefusal("dashboard.metric_subject_mismatch", "/subjectId");
-  if (state !== undefined) return valueDrill(db, ctx, scopeIds, state, valueClass, subjectId);
+  // N4 item 3: a currency narrows only a value-state, value.gap or value.investment drill-down.
+  if (currency !== null && state === undefined && metric !== "value.gap" && metric !== "value.investment")
+    throw dashboardRefusal("dashboard.currency_not_applicable", "/currency");
+  if (state !== undefined) return valueDrill(db, ctx, scopeIds, state, valueClass, subjectId, currency);
   const base = { headlineBasis: null, expression: null, rounding: null, evidence: [] as DrilldownEvidence[] };
   switch (metric) {
     case "outcomes.area": {
@@ -322,12 +386,15 @@ async function drill(
       };
     }
     case "value.investment": {
-      const currencies = [...new Set(ctx.facts.investment.map((l) => l.currency))].sort();
+      // N4 item 3: with `currency`, that currency's lines only, and a known zero in it when there is none.
+      const investment =
+        currency === null ? ctx.facts.investment : ctx.facts.investment.filter((l) => l.currency === currency);
+      const currencies = currency === null ? [...new Set(investment.map((l) => l.currency))].sort() : [currency];
       const byCurrency = new Map(
         currencies.map((c) => [
           c,
           sumValue(
-            ctx.facts.investment.filter((l) => l.currency === c).map((l) => l.amount),
+            investment.filter((l) => l.currency === c).map((l) => l.amount),
             c,
             "currency",
             "benefit.cost_amount_missing",
@@ -337,7 +404,7 @@ async function drill(
       return {
         ...base,
         value: oneCurrency(byCurrency, "currency"),
-        items: ctx.facts.investment.map((l) => ({
+        items: investment.map((l) => ({
           recordType: "business_case_line",
           recordId: l.recordId,
           code: null,
@@ -354,30 +421,56 @@ async function drill(
       };
     }
     case "value.gap": {
-      // ADR-0037 amendment N3: the gap is on the profit-and-cash basis, so its items are only those classes' lines.
+      // ADR-0037 amendments N3 and N4 item 1: the gap of one basis (profit and cash without valueClass, top line with
+      // revenue_uplift, non-cash with avoided_cost), so its items are only that basis's lines; with `currency` (N4
+      // item 3) only that currency's.
+      const basis: HeadlineBasis = valueClass === null ? "profit_and_cash" : GAP_CLASS_BASIS.get(valueClass)!;
+      const classes = basisClasses(basis);
       const byId = new Map(ctx.facts.benefits.map((b) => [b.benefitId, b]));
-      const pc = HEADLINE_BASIS_CLASSES.profit_and_cash;
+      const inCurrency = (l: { benefitId: string }) =>
+        currency === null || byId.get(l.benefitId)!.currency === currency;
       const lines = [
-        ...valueLinesOf(byId, ctx.facts.lines, "planned", ctx.clock, pc),
-        ...valueLinesOf(byId, ctx.facts.lines, "validated", ctx.clock, pc),
-      ];
+        ...valueLinesOf(byId, ctx.facts.lines, "planned", ctx.clock, classes),
+        ...valueLinesOf(byId, ctx.facts.lines, "validated", ctx.clock, classes),
+      ].filter(inCurrency);
       const c = r.value.currencies;
-      const one = c.length === 1 ? c[0]! : null;
-      const value: DashboardValue =
-        c.length > 1
-          ? notApplicableValue("dashboard.value.multiple_currencies", "ratio")
-          : one === null
-            ? notApplicableValue("dashboard.value.no_financial_benefit", "ratio")
-            : one.gapRatio !== null
-              ? knownValue(one.gapRatio, "ratio", one.currency)
-              : one.status === "unknown"
-                ? unknownValue(one.reasonKey ?? "benefit.value_amount_missing", "ratio", one.currency)
-                : one.reasonKey === NO_PROFIT_AND_CASH
-                  ? { ...notApplicableValue(NO_PROFIT_AND_CASH, "ratio"), currency: one.currency }
-                  : notApplicableValue(one.reasonKey ?? "dashboard.value.nothing_planned", "ratio");
+      const absent = (cur: string, line: ValueCurrencyLine | undefined): DashboardValue => ({
+        ...notApplicableValue(
+          valueClass !== null
+            ? NO_BENEFIT_IN_CLASS
+            : line !== undefined
+              ? NO_PROFIT_AND_CASH
+              : "dashboard.value.no_financial_benefit",
+          "ratio",
+        ),
+        currency: cur,
+      });
+      let value: DashboardValue;
+      if (currency !== null) {
+        const line = c.find((x) => x.currency === currency);
+        const gap = basisGapOf(line, basis);
+        value = gap === null ? absent(currency, line) : gapValue(gap, currency);
+      } else {
+        const one = c.length === 1 ? c[0]! : null;
+        const gap = one === null ? null : basisGapOf(one, basis);
+        value =
+          c.length > 1
+            ? notApplicableValue("dashboard.value.multiple_currencies", "ratio")
+            : one === null
+              ? notApplicableValue("dashboard.value.no_financial_benefit", "ratio")
+              : gap === null
+                ? absent(one.currency, one)
+                : gapValue(gap, one.currency);
+      }
+      // The inputs: the planned and validated sums of the basis per currency (the profit-and-cash ones of every value
+      // currency, as before, without `currency`); none for a currency without the basis.
+      const inputLines =
+        basis === "profit_and_cash" && currency === null
+          ? c
+          : c.filter((x) => (currency === null || x.currency === currency) && basisGapOf(x, basis) !== null);
       return {
         ...base,
-        headlineBasis: "profit_and_cash",
+        headlineBasis: basis,
         value,
         items: lines.map((l) => {
           const b = byId.get(l.benefitId)!;
@@ -397,13 +490,16 @@ async function drill(
             period: { start: l.periodStart, end: l.periodEnd, asOf: ctx.filters.asOf, label: null },
           };
         }),
-        ruleKey: "dashboard.value.gap_ratio",
+        ruleKey: basis === "profit_and_cash" ? "dashboard.value.gap_ratio" : `dashboard.value.gap_ratio_${basis}`,
         expression: "(plannedToDate - validatedToDate) / plannedToDate",
         rounding: { ...RATIO_ROUNDING },
-        inputs: c.flatMap((x) => [
-          { name: `planned_${x.currency}`, value: x.planned, recordType: null, recordId: null },
-          { name: `validated_${x.currency}`, value: x.validated, recordType: null, recordId: null },
-        ]),
+        inputs: inputLines.flatMap((x) => {
+          const sums = basisSumsOf(x, basis)!;
+          return [
+            { name: `planned_${x.currency}`, value: sums.planned, recordType: null, recordId: null },
+            { name: `validated_${x.currency}`, value: sums.validated, recordType: null, recordId: null },
+          ];
+        }),
       };
     }
     case "portfolio.initiatives": {
@@ -414,6 +510,8 @@ async function drill(
       }
       return {
         ...base,
+        // ADR-0037 amendment N4 item 2: the items' values are on the profit-and-cash basis.
+        headlineBasis: "profit_and_cash",
         value: countValue(rows.length, "initiative"),
         items: rows.map((x) => ({
           recordType: "initiative",
@@ -421,10 +519,7 @@ async function drill(
           code: x.fact.code,
           label: x.fact.name,
           href: `/api/v1/initiatives/${x.fact.initiativeId}`,
-          value:
-            x.fact.plannedAllocated === null
-              ? unknownValue("dashboard.portfolio.no_allocated_value", "currency", x.fact.plannedCurrency)
-              : knownValue(x.fact.plannedAllocated, "currency", x.fact.plannedCurrency),
+          value: initiativeValue(x.fact),
           period: null,
         })),
         ruleKey: r.portfolio.rag.ruleKey,
@@ -552,6 +647,7 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
         subjectId: query.subjectId ?? null,
         // Only when given, so the cursor of every request without it is unchanged (byte stability, K1 item 6).
         ...(query.valueClass === undefined ? {} : { valueClass: query.valueClass }),
+        ...(query.currency === undefined ? {} : { currency: query.currency }),
       });
       const after = decodeCursor(query.cursor, hash, 1);
       return readOnly(db, async (tx) => {
@@ -577,6 +673,7 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           query.subjectId ?? null,
           query.valueClass ?? null,
           scope.map((t) => t.id),
+          query.currency ?? null,
         );
         // Offset pagination over the deterministic item order (the cursor is bound to the filters by its hash).
         const start = after ? Number(after[0]) : 0;
@@ -592,6 +689,7 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           evidence: d.evidence,
           nextCursor: next,
           headlineBasis: d.headlineBasis,
+          currency: query.currency ?? null,
         };
       });
     },

@@ -1,0 +1,16 @@
+Scope: 7 of 8 workspace projects
+packages/design-tokens typecheck$ tsc -p tsconfig.json
+packages/shared typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck: Done
+packages/shared typecheck: Done
+apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+packages/config typecheck$ tsc -p tsconfig.json
+packages/config typecheck: Done
+apps/web typecheck: src/pages/dashboards/dashboardFixtures.ts(102,9): error TS2741: Property 'valueBasis' is missing in type '{ recordType: string; recordId: string; code: string; label: string; href: string; rag: "unknown"; dueDate: null; value: { state: "unknown" | "value" | "stale" | "not_applicable" | "zero"; value: string | null; unit: string | null; currency: string | null; reasonKey: string | null; }; ownerUserId: string; flags: str...' but required in type '{ recordType: string; recordId: string; code: string | null; label: string | null; href: string; rag: "unknown" | "stale" | "not_applicable" | "green" | "amber" | "red" | null; dueDate: string | null; value: { ...; } | null; ownerUserId: string | null; flags: string[]; valueBasis: "non_cash" | ... 2 more ... | null; }'.
+apps/web typecheck: src/pages/dashboards/dashboardFixtures.ts(181,9): error TS2741: Property 'valueBasis' is missing in type '{ recordType: string; recordId: string; code: string; label: string; href: string; rag: "red"; dueDate: string; value: null; ownerUserId: string; flags: string[]; }' but required in type '{ recordType: string; recordId: string; code: string | null; label: string | null; href: string; rag: "unknown" | "stale" | "not_applicable" | "green" | "amber" | "red" | null; dueDate: string | null; value: { ...; } | null; ownerUserId: string | null; flags: string[]; valueBasis: "non_cash" | ... 2 more ... | null; }'.
+apps/web typecheck: src/pages/dashboards/dashboardFixtures.ts(237,3): error TS2741: Property 'currency' is missing in type '{ metric: "value.validated"; appliedFilters: { organizationId: string; transformationIds: string[]; ownerUserId: string | null; periodId: string | null; periodLabel: string | null; phase: "diagnose" | ... 5 more ... | null; status: "draft" | ... 3 more ... | null; windowStart: string | null; windowEnd: string | null...' but required in type '{ metric: "outcomes.kpi_status" | "outcomes.area" | "value.planned" | "value.forecast" | "value.validated" | "value.submitted" | "value.investment" | "value.gap" | "portfolio.initiatives" | ... 7 more ... | "value.sustained"; ... 8 more ...; currency: string | null; }'.
+apps/web typecheck: Failed
+/home/user/wt/dg4-kbe-r7/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 typecheck: `tsc -p tsconfig.json && tsc -p tsconfig.e2e.json`
+Exit status 2
+# exit_status: 2

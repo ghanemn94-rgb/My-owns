@@ -141,8 +141,8 @@ export const dashboardHeadline = z.strictObject({
 export type DashboardHeadline = z.infer<typeof dashboardHeadline>;
 
 /**
- * OpenAPI `DashboardItem`. `valueBasis` (ADR-0037 amendment N4 item 2; T-DG4-ARCH-R6) is `.optional()` until the API
- * emits it (pending in apps/api/test/support/p4-pending-arch-r6.ts); T-DG4-KBE-R7 drops `.optional()` once it does.
+ * OpenAPI `DashboardItem`. `valueBasis` (ADR-0037 amendment N4 item 2; T-DG4-ARCH-R6) is required since the API emits it
+ * (T-DG4-KBE-R7).
  */
 export const dashboardItem = z.strictObject({
   recordType: z.string(),
@@ -156,7 +156,7 @@ export const dashboardItem = z.strictObject({
   ownerUserId: nullableUuid,
   flags: z.array(z.string()),
   /** The basis of `value` when it sums benefit values (profit_and_cash on a Portfolio initiative); else null. */
-  valueBasis: headlineBasis.nullable().optional(),
+  valueBasis: headlineBasis.nullable(),
 });
 export type DashboardItem = z.infer<typeof dashboardItem>;
 
@@ -294,14 +294,13 @@ export const dashboardDrilldown = z.strictObject({
   /** ADR-0037 amendment N3; required since T-DG4-KBE-R6 emits it (D-120). */
   headlineBasis: headlineBasis.nullable(),
   /**
-   * ADR-0037 amendment N4 item 3: the `currency` query parameter echoed, or null. `.optional()` until the API emits it
-   * (pending in apps/api/test/support/p4-pending-arch-r6.ts); T-DG4-KBE-R7 drops `.optional()` once it does.
+   * ADR-0037 amendment N4 item 3: the `currency` query parameter echoed, or null. Required since the API emits it
+   * (T-DG4-KBE-R7).
    */
   currency: z
     .string()
     .regex(/^[A-Z]{3}$/)
-    .nullable()
-    .optional(),
+    .nullable(),
 });
 export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
 
