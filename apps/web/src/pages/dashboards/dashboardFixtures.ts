@@ -2,6 +2,7 @@
 // in packages/shared/src/schemas/dashboards.ts (OpenAPI 1.3.0-p4). No figure here is real data.
 import type {
   DashboardDrilldown,
+  DashboardItem,
   DashboardValue,
   ExecutiveOverview,
   FinanceDashboard,
@@ -40,9 +41,10 @@ export const naV = (reasonKey: string): DashboardValue => ({
   currency: null,
   reasonKey,
 });
+/** A Stale percentage: a fraction, as the API sends it (ADR-0028 §3; F-DG4-125): 0.42 reads 42 %. */
 export const staleV: DashboardValue = {
   state: "stale",
-  value: "42",
+  value: "0.42",
   unit: "%",
   currency: null,
   reasonKey: "kpi.stale",
@@ -110,6 +112,7 @@ export function sixAreas(): T10Area[] {
           value: unknownV("kpi.no_accepted_actual"),
           ownerUserId: USER_ID,
           flags: ["calculated_unknown"],
+          valueBasis: null,
         },
       ],
     }),
@@ -189,6 +192,7 @@ export function sixAreas(): T10Area[] {
           value: null,
           ownerUserId: USER_ID,
           flags: ["overdue"],
+          valueBasis: null,
         },
       ],
     }),
@@ -267,6 +271,7 @@ export function drilldown(): DashboardDrilldown {
     ],
     nextCursor: null,
     headlineBasis: "profit_and_cash",
+    currency: null,
   };
 }
 
@@ -559,7 +564,16 @@ function d119ValueArea(variant: D119Variant): T10Area {
         ? {
             status: "red",
             ruleKey: "dashboard.rag.value.validated_gap",
-            ruleParams: { headlineBasis: "profit_and_cash" },
+            // ADR-0037 amendment N4 item 1: one line per basis and currency, never summed; the status is the worst.
+            ruleParams: {
+              amberRatio: "0.05",
+              redRatio: "0.15",
+              lines: [
+                { currency: "SAR", headlineBasis: "profit_and_cash", gapRatio: "1", status: "red", reasonKey: null },
+                { currency: "SAR", headlineBasis: "top_line", gapRatio: "1", status: "red", reasonKey: null },
+                { currency: "SAR", headlineBasis: "non_cash", gapRatio: "1", status: "red", reasonKey: null },
+              ],
+            },
             policySource: "default",
           }
         : {
@@ -623,5 +637,153 @@ export function d119Drilldown(basis: "profit_and_cash" | "top_line" | "non_cash"
     value: v(amount),
     calculation: { ruleKey: `dashboard.value.sum_planned_${basis}`, expression: null, inputs: [], rounding: null },
     headlineBasis: basis,
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ D-122 (F-DG4-126/127)
+
+/**
+ * ADR-0037 amendment N4 (D-122), the round-3 domain reviewer's R3-6a world as ARCH-R6 §4.3 computes it: margin uplift
+ * 70 planned and validated 70; revenue uplift 300 planned, nothing validated (SAR). The profit-and-cash gap is 0
+ * (Green), the top-line gap is 1 (Red), and the Value RAG is the worst: Red. A single cross-basis gap would be
+ * 300 / 370 = 81 %; it is never computed or shown. The Portfolio area is ARCH-R6's ranking world: INI-B (margin 70)
+ * first, INI-A (revenue uplift only) `not_applicable` with its reason, INI-C (nothing allocated) Unknown. SYNTHETIC.
+ */
+export const N4_INI = {
+  b: "01920000-0000-7000-9000-0000000c0b01",
+  a: "01920000-0000-7000-9000-0000000c0a01",
+  c: "01920000-0000-7000-9000-0000000c0c01",
+} as const;
+
+const drillN4 = (metric: string, valueClass: string | null, currency: string | null) =>
+  `${drill(metric, valueClass ?? undefined)}${currency ? `&currency=${currency}` : ""}`;
+
+export function n4ValueHeadlines(): Headline[] {
+  const h = (
+    metric: "value.planned" | "value.validated" | "value.gap",
+    basis: "profit_and_cash" | "top_line",
+    value: DashboardValue,
+  ): Headline => ({
+    ...hl(metric, basis, value),
+    drilldownHref: drillN4(metric, basis === "top_line" ? "revenue_uplift" : null, "SAR"),
+  });
+  return [
+    h("value.planned", "profit_and_cash", v("70")),
+    h("value.validated", "profit_and_cash", v("70")),
+    h("value.gap", "profit_and_cash", v("0", "SAR", "ratio")),
+    h("value.planned", "top_line", v("300")),
+    h("value.validated", "top_line", v("0")),
+    h("value.gap", "top_line", v("1", "SAR", "ratio")),
+  ];
+}
+
+export const N4_VALUE_RAG: T10Area["rag"] = {
+  status: "red",
+  ruleKey: "dashboard.rag.value.validated_gap",
+  ruleParams: {
+    amberRatio: "0.05",
+    redRatio: "0.15",
+    lines: [
+      { currency: "SAR", headlineBasis: "profit_and_cash", gapRatio: "0", status: "green", reasonKey: null },
+      { currency: "SAR", headlineBasis: "top_line", gapRatio: "1", status: "red", reasonKey: null },
+    ],
+  },
+  policySource: "default",
+};
+
+const initiative = (id: string, code: string, label: string, value: DashboardValue): DashboardItem => ({
+  recordType: "initiative",
+  recordId: id,
+  code,
+  label,
+  href: `/api/v1/initiatives/${id}`,
+  rag: "green",
+  dueDate: null,
+  value,
+  ownerUserId: USER_ID,
+  flags: [],
+  valueBasis: "profit_and_cash",
+});
+
+export function n4PortfolioItems(): DashboardItem[] {
+  return [
+    initiative(N4_INI.b, "INI-B", "Synthetic margin initiative", v("70")),
+    initiative(N4_INI.a, "INI-A", "Synthetic revenue initiative", {
+      state: "not_applicable",
+      value: null,
+      unit: "currency",
+      currency: "SAR",
+      reasonKey: "dashboard.portfolio.no_profit_and_cash_allocation",
+    }),
+    initiative(N4_INI.c, "INI-C", "Synthetic unallocated initiative", {
+      state: "unknown",
+      value: null,
+      unit: "currency",
+      currency: null,
+      reasonKey: "dashboard.portfolio.no_allocated_value",
+    }),
+  ];
+}
+
+function n4Areas(): T10Area[] {
+  return sixAreas().map((a) =>
+    a.code === "value"
+      ? { ...a, rag: N4_VALUE_RAG, headlines: n4ValueHeadlines() }
+      : a.code === "portfolio"
+        ? {
+            ...a,
+            rag: {
+              status: "green",
+              ruleKey: "dashboard.rag.portfolio.milestone_outcome",
+              ruleParams: {},
+              policySource: "default",
+            },
+            items: n4PortfolioItems(),
+          }
+        : a,
+  );
+}
+
+export function n4TransformationDashboard(): TransformationDashboard {
+  return { ...transformationDashboard(), areas: n4Areas() };
+}
+
+export function n4ExecutiveOverview(): ExecutiveOverview {
+  const areas = n4Areas();
+  const d = executiveOverview();
+  return {
+    ...d,
+    areas,
+    transformations: d.transformations.map((r) => ({
+      ...r,
+      areaStatuses: areas.map((a) => ({ code: a.code, status: a.rag.status })),
+    })),
+  };
+}
+
+export function n4FinanceDashboard(): FinanceDashboard {
+  const base = financeDashboard();
+  return { ...base, headlines: [...n4ValueHeadlines(), ...base.headlines] };
+}
+
+/** The top-line gap drill-down of R3-6a (ARCH-R6 §4.3): basis top line, SAR, the ratio 1, the revenue planned line. */
+export function n4TopLineGapDrilldown(): DashboardDrilldown {
+  const d = drilldown();
+  return {
+    ...d,
+    metric: "value.gap",
+    value: v("1", "SAR", "ratio"),
+    calculation: {
+      ruleKey: "dashboard.value.gap_ratio_top_line",
+      expression: "(plannedToDate - validatedToDate) / plannedToDate",
+      inputs: [
+        { name: "planned_SAR", value: v("300"), recordType: null, recordId: null },
+        { name: "validated_SAR", value: v("0"), recordType: null, recordId: null },
+      ],
+      rounding: null,
+    },
+    items: [{ ...d.items[0]!, code: "BEN-02", label: "Synthetic revenue uplift", value: v("300") }],
+    headlineBasis: "top_line",
+    currency: "SAR",
   };
 }

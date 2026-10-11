@@ -22,7 +22,7 @@
   "rule": {
     "dashboard__rag__outcomes__trajectory": "Outcomes: the worst outcome-KPI status against its trajectory.",
     "dashboard__rag__outcomes__none": "Unknown: no active outcome with a KPI in scope.",
-    "dashboard__rag__value__validated_gap": "Value: validated value against the value planned to date, on the profit-and-cash basis (margin uplift, cash saving and working-capital release).",
+    "dashboard__rag__value__validated_gap": "Value: the worst of the validated-gap statuses of each basis and currency (profit and cash, top line, non-cash), each the validated value against the value planned to date on that basis; gaps are never added across bases.",
     "dashboard__rag__value__nothing_due": "Not applicable: no counted financial benefit has a planned amount due.",
     "dashboard__rag__portfolio__milestone_outcome": "Portfolio: the worst milestone slip of the top initiatives.",
     "dashboard__rag__portfolio__none": "Not applicable: no selected, funded, launched or completed initiative.",
@@ -58,7 +58,9 @@
     "dashboard__value__sum_validated_profit_and_cash": "Validated value (profit and cash) = the sum of the Finance-validated margin uplift, cash saving and working-capital release values in the period.",
     "dashboard__value__sum_measured_profit_and_cash": "Measured value (profit and cash) = the sum of the measured margin uplift, cash saving and working-capital release values in the period.",
     "dashboard__value__sum_rejected_profit_and_cash": "Rejected value (profit and cash) = the sum of the margin uplift, cash saving and working-capital release values Finance rejected in the period.",
-    "dashboard__value__sum_sustained_profit_and_cash": "Sustained value (profit and cash) = the sum of the sustained margin uplift, cash saving and working-capital release values in the period."
+    "dashboard__value__sum_sustained_profit_and_cash": "Sustained value (profit and cash) = the sum of the sustained margin uplift, cash saving and working-capital release values in the period.",
+    "dashboard__value__gap_ratio_top_line": "Value gap (top line) = (planned due to date - validated) / planned due to date, over revenue uplift.",
+    "dashboard__value__gap_ratio_non_cash": "Value gap (non-cash) = (planned due to date - validated) / planned due to date, over avoided cost."
   },
   "reason": {
     "dashboard__value__nothing_planned": "Not applicable: nothing is planned to date.",
@@ -88,7 +90,9 @@
     "dashboard__portfolio__slip_calendar_not_configured": "Unknown: no business calendar is configured, so working-day slip cannot be counted.",
     "dashboard__portfolio__slip_range_too_long": "Unknown: the slip spans more working days than can be counted.",
     "other": "Reason not listed in this release.",
-    "dashboard__value__no_profit_and_cash_benefit": "Not applicable: nothing is planned on this basis (no margin uplift, cash saving or working-capital release benefit)."
+    "dashboard__value__no_profit_and_cash_benefit": "Not applicable: nothing is planned on this basis (no margin uplift, cash saving or working-capital release benefit).",
+    "dashboard__portfolio__no_profit_and_cash_allocation": "Not applicable: only revenue uplift or avoided cost is allocated to this initiative; its value is shown on the profit-and-cash basis (margin uplift, cash saving and working-capital release).",
+    "dashboard__value__no_benefit_in_class": "Not applicable: there is no benefit of this class in this currency."
   },
   "headline": {
     "dashboard__headline__value_investment": "Investment",
@@ -112,7 +116,9 @@
     "dashboard__headline__value_planned_non_cash": "Planned avoided cost (non-cash; not in profit and cash)",
     "dashboard__headline__value_forecast_non_cash": "Forecast avoided cost (non-cash; not in profit and cash)",
     "dashboard__headline__value_submitted_non_cash": "Submitted avoided cost (non-cash; not in profit and cash)",
-    "dashboard__headline__value_validated_non_cash": "Validated avoided cost (non-cash; not in profit and cash)"
+    "dashboard__headline__value_validated_non_cash": "Validated avoided cost (non-cash; not in profit and cash)",
+    "dashboard__headline__value_gap_top_line": "Value gap (top line; not in profit and cash)",
+    "dashboard__headline__value_gap_non_cash": "Value gap (non-cash; not in profit and cash)"
   },
   "flag": {
     "overdue": "Overdue",
@@ -255,7 +261,8 @@
     "evidence": "Evidence",
     "noEvidence": "No evidence is linked.",
     "page": "Page {{n}}",
-    "close": "Close"
+    "close": "Close",
+    "currency": "Currency"
   },
   "filter": {
     "title": "Dashboard filters",
@@ -485,6 +492,10 @@
       "profit_and_cash": "Margin uplift + cash saving + working-capital release",
       "top_line": "Revenue uplift only",
       "non_cash": "Avoided cost only"
-    }
+    },
+    "portfolioValue": "Planned value allocated (profit and cash)",
+    "ragLines": "Value gap by basis and currency",
+    "ragLinesNote": "The Value status is the worst of these gaps. Each gap is on its own basis and currency; gaps are never added across bases.",
+    "ragLineGap": "Value gap"
   }
 }
