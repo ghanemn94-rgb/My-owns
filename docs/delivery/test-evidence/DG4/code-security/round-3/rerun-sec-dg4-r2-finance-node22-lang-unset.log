@@ -1,0 +1,72 @@
+# probe sec-dg4-r2-finance.test.ts; node v22.22.2; commit c94b2a2cb908ff57d2de00f9edff1e0ed8fd74ef; LANG unset; ed9cc85d9ac7d8a0c564360f001a200d3447074b9eb19148fec5f3f255e87af4; started 2026-10-11T12:53:00Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.6hxnBy/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3tq0zm_876791ed (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F1 two Finance users decide the same queued value at once: exactly one 200; counted once
+[probe-F] F1 [[200,"approved"],[422,"finance_validation.not_queued"]]; validated total 1000.0000
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2 stale amend after another Finance user's amend: 409, nothing written
+[probe-F] F2 approved ETag 2; FIN-B amend -> 201 -100.0000; total 900.0000; FIN-A stale amend (If-Match 2) -> 409 version_conflict etag-hdr -; total 900.0000; original ETag now "3"; rows 2; audit rows written by the stale call 0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2a stale amend then stale reverse: the reverse is 409
+[probe-F] F2a FIN-B amend -> 201 -200.0000; FIN-A stale reverse (If-Match 2) -> 409 version_conflict; total 800.0000; rows ["measurement","amendment"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2b reverse then stale amend: refused (409 or already_reversed), nothing written
+[probe-F] F2b FIN-B reverse -> 201 -1000.0000; FIN-A stale amend (If-Match 2) -> 409 version_conflict; total 0.0000; rows ["measurement","reversal"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2c fresh ETag after re-read is accepted; corrected audit rows chain versions
+[probe-F] F2c 2->201 -100.0000; ETag 3->201 50.0000; ETag 4->reverse 201 -950.0000; total 0.0000; original {"version":5,"approved_amount":"1000.0000","status":"approved","decided_by":"01a12b06-756a-7091-9e8b-00ad3e48c409"}; corrected audit [{"action":"finance_validation.corrected","prior_version":2,"new_version":3,"actor_user_id":"01a12b06-7839-76c8-9e52-1897118b1634"},{"action":"finance_validation.corrected","prior_version":3,"new_version":4,"actor_user_id":"01a12b06-756a-7091-9e8b-00ad3e48c409"},{"action":"finance_validation.corrected","prior_version":4,"new_version":5,"actor_user_id":"01a12b06-7839-76c8-9e52-1897118b1634"}]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F3 an amendment and a reversal at the same time with the same ETag: exactly one wins
+[probe-F] F3 amend 201 -300.0000; reverse 409 version_conflict; total 700.0000; rows [{"kind":"measurement","amount":"1000.0000","measurement_no":1},{"kind":"amendment","amount":"-300.0000","measurement_no":2}]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F3b two amendments at the same time with the same ETag: exactly one 201
+[probe-F] F3b 409 version_conflict / 201 300.0000; total 1300.0000; rows 2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F4 a validated value is never edited in place (409)
+[probe-F] F4 edit validated -> 409 benefit_measurement.validated_immutable
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F5 decimal end to end: 900719925474099.1234 then -0.0001 is exactly ...099.1233
+[probe-F] F5 approved total 900719925474099.1234; amendment 201 -0.0001; total 900719925474099.1233
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > G migration 0061 as mth_app: only version+1 (stamps) on an approved, corrected validation is admitted
+[probe-F] G [
+ "G2 v+1 & approved_amount: refused (finance_validation_status_step)",
+ "G3 v+2: refused (finance_validation_status_step)",
+ "G4 v+1 & decided_by: refused (finance_validation_status_step)",
+ "G5 v+1 & status rejected: refused (finance_validation_status_step)",
+ "G9 v+1 & content: refused (finance_validation_status_step)",
+ "G9b v+1 & reason: refused (finance_validation_status_step)",
+ "G9c v-1 (step back): refused (finance_validation_status_step)",
+ "G6 uncorrected approved v+1: refused (finance_validation_status_step)",
+ "G7 correction row v+1: refused (finance_validation_status_step)",
+ "G8 rejected validation (200) v+1: refused (finance_validation_status_step)",
+ "G10 v+1 & updated_by other user (residual): refused (finance_validation_audit_required)",
+ "G1 v+1 only: refused (finance_validation_audit_required)"
+]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts > SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > G migration 0061 as mth_app: only version+1 (stamps) on an approved, corrected validation is admitted
+[probe-F] G1+audit: committed at version 4
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-finance.test.ts (10 tests) 8903ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F1 two Finance users decide the same queued value at once: exactly one 200; counted once  1068ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2 stale amend after another Finance user's amend: 409, nothing written  965ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2a stale amend then stale reverse: the reverse is 409  910ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2b reverse then stale amend: refused (409 or already_reversed), nothing written  395ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F2c fresh ETag after re-read is accepted; corrected audit rows chain versions  679ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F3 an amendment and a reversal at the same time with the same ETag: exactly one wins  335ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F3b two amendments at the same time with the same ETag: exactly one 201  476ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F4 a validated value is never edited in place (409)  430ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > F5 decimal end to end: 900719925474099.1234 then -0.0001 is exactly ...099.1233  386ms
+   ✓ SEC-DG4-R2 probe F: Finance decision and correction integrity (F-DG4-101 re-verification) > G migration 0061 as mth_app: only version+1 (stamps) on an approved, corrected validation is admitted  966ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  12:53:04
+   Duration  29.31s (transform 5.22s, setup 0ms, collect 12.78s, tests 8.90s, environment 0ms, prepare 185ms)
+
+# exit_status: 0  finished: 2026-10-11T12:53:37Z

@@ -1,0 +1,113 @@
+# probe sec-dg4-r3-gross-currency.test.ts; node v22.22.2; commit c94b2a2cb908ff57d2de00f9edff1e0ed8fd74ef; LANG unset; dcb4d5596ad9d25f16aaae4d56fe0affc3035d72271fd286099c60c56fd7bf4f; started 2026-10-11T13:22:21Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.6hxnBy/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3urs0h_fea4bca0 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts > SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > logs gross, headline and drill-downs for SAR and USD
+[probe-GC] {
+ "SAR": {
+  "grossTotal": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null
+  },
+  "grossHref": "/api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a12b21-69f6-747e-abbb-0212a49880c1&transformationId=01a12b21-6abe-73cb-bddb-aeab8176120a",
+  "grossDrillValue": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null
+  },
+  "grossDrillItemCurrencies": [
+   "SAR"
+  ],
+  "financeHeadline": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null
+  },
+  "t10Headline": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null
+  },
+  "sameHref": true
+ },
+ "USD": {
+  "grossTotal": {
+   "state": "zero",
+   "value": "0",
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": null
+  },
+  "grossHref": "/api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a12b21-69f6-747e-abbb-0212a49880c1&transformationId=01a12b21-6abe-73cb-bddb-aeab8176120a",
+  "grossDrillValue": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null
+  },
+  "grossDrillItemCurrencies": [
+   "SAR"
+  ],
+  "financeHeadline": {
+   "state": "not_applicable",
+   "value": null,
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": "dashboard.value.no_profit_and_cash_benefit"
+  },
+  "t10Headline": {
+   "state": "not_applicable",
+   "value": null,
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": "dashboard.value.no_profit_and_cash_benefit"
+  },
+  "sameHref": true
+ }
+}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts > SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > REPRO: the USD n/a headline's drill-down is n/a with no item (not the SAR figure)
+[probe-GC REPRO] USD headline {"state":"not_applicable","value":null,"unit":"currency","currency":"USD","reasonKey":"dashboard.value.no_profit_and_cash_benefit"} -> drill value {"state":"value","value":"70","unit":"currency","currency":"SAR","reasonKey":null} items [["B01","70","SAR"]]
+
+ ❯ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts (2 tests | 1 failed) 3233ms
+   ✓ SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > logs gross, headline and drill-downs for SAR and USD  508ms
+   × SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > REPRO: the USD n/a headline's drill-down is n/a with no item (not the SAR figure) 108ms
+     → USD headline drills to a SAR value: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts > SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > REPRO: the USD n/a headline's drill-down is n/a with no item (not the SAR figure)
+AssertionError: USD headline drills to a SAR value: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts:69:107
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  13:22:25
+   Duration  29.57s (transform 8.10s, setup 0ms, collect 18.41s, tests 3.23s, environment 0ms, prepare 359ms)
+
+# exit_status: 1  finished: 2026-10-11T13:22:57Z

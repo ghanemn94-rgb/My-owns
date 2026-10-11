@@ -1,0 +1,40 @@
+$ QA_PG_PORT=26590 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r3-headlines.test.ts   (node v24.21.0, 2026-10-11T12:48:47Z)
+ 12:48:47 up 18:48,  0 user,  load average: 9.52, 8.50, 4.92
+port-policy: PostgreSQL listening on port 26590 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3tkl9s_e5824595 (server_encoding UTF8); applied 61 migrations to a fresh database
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts [ tests/qa/integration/dg4-qa-r3-headlines.test.ts ]
+Error: Cannot find package 'decimal.js' imported from '$TMPDIR/rv/tests/qa/integration/dg4-qa-r3-headlines.test.ts'
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:26:1
+     24| // All data is SYNTHETIC; a Finance approval here is a synthetic in-pr…
+     25| // (G1-G6) is decided, and nothing here relates to the engineering gat…
+     26| import { Decimal } from "decimal.js";
+       | ^
+     27| import { afterAll, beforeAll, describe, expect, it } from "vitest";
+     28| import { call, signIn, type Session, type TestApi, startApi } from "..…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+Caused by: Error: Failed to load url decimal.js (resolved id: decimal.js) in $TMPDIR/rv/tests/qa/integration/dg4-qa-r3-headlines.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.1.11_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:26050:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  12:48:50
+   Duration  3.32s (transform 129ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 139ms)
+
+EXIT 1
+2026-10-11T12:48:54Z
+ 12:48:54 up 18:48,  0 user,  load average: 9.08, 8.42, 4.91

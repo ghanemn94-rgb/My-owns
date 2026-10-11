@@ -1,0 +1,96 @@
+$ QA_PG_PORT=26590 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r3-headlines.test.ts   (node v24.21.0, 2026-10-11T12:49:05Z)
+ 12:49:05 up 18:48,  0 user,  load average: 8.93, 8.42, 4.97
+port-policy: PostgreSQL listening on port 26590 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3tkzol_eb45e381 (server_encoding UTF8); applied 61 migrations to a fresh database
+ × |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P1 REQ-S08-009/011 under N3: gross drills and sums exactly; bases never summed > gross 95 / net 65; the gross drill-down sums 95; T10 bases 95 / 300 / 45; 440 nowhere 1465ms
+   → /api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a12b02-c055-7256-96a0-1087ea36eabf&transformationId=01a12b02-c0d3-7763-89e2-64d0b4660635&limit=200 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12b02-c673-7746-8020-e3aada0d3cf3","errors":[{"pointer":"/query/limit","code":"validation.too_big","message":"Too big: expected number to be <=100"}]}: expected 400 to be 200 // Object.is equality
+ × |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P2 REQ-S13-003 / F-DG4-123: a non-trivial gap on the profit-and-cash basis only > validated 30 of 90 -> gap 0.666667 on T10, overview and Finance; top line 300/300 never improves it 1347ms
+   → /api/v1/dashboard-drilldown?metric=value.validated&organizationId=01a12b02-c055-7256-96a0-1087ea36eabf&transformationId=01a12b02-c68b-75b9-8b1e-42787b40037f&limit=200 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12b02-cbc3-71c8-bd31-cd23a25a98a1","errors":[{"pointer":"/query/limit","code":"validation.too_big","message":"Too big: expected number to be <=100"}]}: expected 400 to be 200 // Object.is equality
+stdout | tests/qa/integration/dg4-qa-r3-headlines.test.ts > P3 security: value headlines and their drill-downs are scoped > no grant, another organization, and another transformation's BO are refused (403/404), never served the figures
+P3 statuses: nobody 404 /api/v1/transformations/01a12b02-cbce-72be-883b-709846698127 | nobody 404 /api/v1/transformations/01a12b02-cbce-72be-883b-709846698127 | nobody 404 /api/v1/overview?organizationId=01a12b02-c055-7256-96a0-1087 | nobody 404 /api/v1/dashboards/finance?organizationId=01a12b02-c055-7256 | nobody 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio | orgB 404 /api/v1/transformations/01a12b02-cbce-72be-883b-709846698127 | orgB 404 /api/v1/transformations/01a12b02-cbce-72be-883b-709846698127 | orgB 404 /api/v1/overview?organizationId=01a12b02-c055-7256-96a0-1087 | orgB 404 /api/v1/dashboards/finance?organizationId=01a12b02-c055-7256 | orgB 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio | otherBO 404 /api/v1/transformations/01a12b02-cbce-72be-883b-709846698127 | otherBO 404 /api/v1/transformations/01a12b02-cbce-72be-883b-709846698127 | otherBO 404 /api/v1/overview?organizationId=01a12b02-c055-7256-96a0-1087 | otherBO 404 /api/v1/dashboards/finance?organizationId=01a12b02-c055-7256 | otherBO 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P3 security: value headlines and their drill-downs are scoped > no grant, another organization, and another transformation's BO are refused (403/404), never served the figures 892ms
+ × |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P4 negative: malformed drill-down narrowing is refused > valueClass=gross, a bogus class, valueClass on value.gap -> 400 447ms
+   → /api/v1/dashboard-drilldown?metric=value.gap&organizationId=01a12b02-c055-7256-96a0-1087ea36eabf&transformationId=01a12b02-cf4a-76fc-b6eb-9e6e4e23b376&valueClass=revenue_uplift {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A value class narrows only a drill-down of benefit values by state.","code":"dashboard.value_class_not_applicable","requestId":"01a12b02-d05e-720d-bd42-54c44adc14ca","errors":[{"pointer":"/valueClass","code": expected 422 to be 400 // Object.is equality
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P5 Unknown, never zero or green > a margin line without an amount -> profit_and_cash planned, gap and Finance gross Unknown; top line known; RAG not green 579ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P6 REQ-S13-002: the period filter changes every basis's headline > Q1: profit_and_cash 70, top_line 300, non_cash 45 (to date 100 / 400 / 50) on T10, overview and Finance 868ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P1 REQ-S08-009/011 under N3: gross drills and sums exactly; bases never summed > gross 95 / net 65; the gross drill-down sums 95; T10 bases 95 / 300 / 45; 440 nowhere
+AssertionError: /api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a12b02-c055-7256-96a0-1087ea36eabf&transformationId=01a12b02-c0d3-7763-89e2-64d0b4660635&limit=200 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12b02-c673-7746-8020-e3aada0d3cf3","errors":[{"pointer":"/query/limit","code":"validation.too_big","message":"Too big: expected number to be <=100"}]}: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ get tests/qa/integration/dg4-qa-r3-headlines.test.ts:43:70
+     41| const get = async (url: string, session: Session) => {
+     42|   const r = await call<Body>(api.app, "GET", url, { session });
+     43|   expect(r.status, `${url} ${JSON.stringify(r.body).slice(0, 400)}`).t…
+       |                                                                      ^
+     44|   return r.body;
+     45| };
+ ❯ drillSum tests/qa/integration/dg4-qa-r3-headlines.test.ts:70:16
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:117:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P2 REQ-S13-003 / F-DG4-123: a non-trivial gap on the profit-and-cash basis only > validated 30 of 90 -> gap 0.666667 on T10, overview and Finance; top line 300/300 never improves it
+AssertionError: /api/v1/dashboard-drilldown?metric=value.validated&organizationId=01a12b02-c055-7256-96a0-1087ea36eabf&transformationId=01a12b02-c68b-75b9-8b1e-42787b40037f&limit=200 {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a12b02-cbc3-71c8-bd31-cd23a25a98a1","errors":[{"pointer":"/query/limit","code":"validation.too_big","message":"Too big: expected number to be <=100"}]}: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ get tests/qa/integration/dg4-qa-r3-headlines.test.ts:43:70
+     41| const get = async (url: string, session: Session) => {
+     42|   const r = await call<Body>(api.app, "GET", url, { session });
+     43|   expect(r.status, `${url} ${JSON.stringify(r.body).slice(0, 400)}`).t…
+       |                                                                      ^
+     44|   return r.body;
+     45| };
+ ❯ drillSum tests/qa/integration/dg4-qa-r3-headlines.test.ts:70:16
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:159:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P4 negative: malformed drill-down narrowing is refused > valueClass=gross, a bogus class, valueClass on value.gap -> 400
+AssertionError: /api/v1/dashboard-drilldown?metric=value.gap&organizationId=01a12b02-c055-7256-96a0-1087ea36eabf&transformationId=01a12b02-cf4a-76fc-b6eb-9e6e4e23b376&valueClass=revenue_uplift {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A value class narrows only a drill-down of benefit values by state.","code":"dashboard.value_class_not_applicable","requestId":"01a12b02-d05e-720d-bd42-54c44adc14ca","errors":[{"pointer":"/valueClass","code": expected 422 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 422[39m
+
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:204:76
+    202|     for (const u of [top.replace("valueClass=revenue_uplift", "valueCl…
+    203|       const res = await call<Body>(api.app, "GET", u, { session: b.s.a…
+    204|       expect(res.status, `${u} ${JSON.stringify(res.body).slice(0, 300…
+       |                                                                            ^
+    205|     }
+    206|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  12:49:09
+   Duration  19.77s (transform 4.79s, setup 0ms, collect 10.35s, tests 6.11s, environment 0ms, prepare 117ms)
+
+EXIT 1
+2026-10-11T12:49:31Z
+ 12:49:31 up 18:48,  0 user,  load average: 12.54, 9.32, 5.36

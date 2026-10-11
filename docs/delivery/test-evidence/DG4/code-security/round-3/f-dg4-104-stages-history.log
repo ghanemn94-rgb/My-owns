@@ -1,0 +1,47 @@
+# F-DG4-104 verification: DG4 history in docs/delivery/stages.json at each commit that touched it since the round-1 freeze (2026-10-11T13:09:39Z); node v24.21.0
+a613f6f REVIEWING | PLANNED@2026-09-28T11:30:00Z > BUILDING@2026-10-09T00:33:12Z > REVIEWING@2026-10-10T21:25:25Z
+1b8c158 REVIEWING | PLANNED@2026-09-28T11:30:00Z > BUILDING@2026-10-09T00:33:12Z > REVIEWING@2026-10-10T21:25:25Z > REVIEWING@2026-10-11T04:43:11Z
+546fb4e REVIEWING | PLANNED@2026-09-28T11:30:00Z > BUILDING@2026-10-09T00:33:12Z > REVIEWING@2026-10-10T21:25:25Z > FIXING@2026-10-11T00:51:49Z > REVIEWING@2026-10-11T04:43:11Z
+ba57107 FIXING | PLANNED@2026-09-28T11:30:00Z > BUILDING@2026-10-09T00:33:12Z > REVIEWING@2026-10-10T21:25:25Z > FIXING@2026-10-11T00:51:49Z > REVIEWING@2026-10-11T04:43:11Z > FIXING@2026-10-11T08:40:00Z
+c94b2a2 REVIEWING | PLANNED@2026-09-28T11:30:00Z > BUILDING@2026-10-09T00:33:12Z > REVIEWING@2026-10-10T21:25:25Z > FIXING@2026-10-11T00:51:49Z > REVIEWING@2026-10-11T04:43:11Z > FIXING@2026-10-11T08:40:00Z > REVIEWING@2026-10-11T12:34:28Z
+# entries diff 1b8c158 -> 546fb4e (expected: one FIXING entry inserted, nothing else)
+diff --git a/docs/delivery/stages.json b/docs/delivery/stages.json
+index ebd1c04..212bb3e 100644
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
+@@ -1515,6 +1515,11 @@
+           "at": "2026-10-10T21:25:25Z",
+           "note": "DG4 frozen for review round 1: candidate 19656b1f (1449 files, source a91d82c). Reviewers domain, code-security and qa-verifier run on the same candidate; then the release-auditor."
+         },
++        {
++          "state": "FIXING",
++          "at": "2026-10-11T00:51:49Z",
++          "note": "Round-1 results on 19656b1f: domain PASS, code-security FAIL, qa PASS; eight findings (F-DG4-100..103, 120, 121, 140, 141) imported and all routed to repair (D-117): ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1. Entry added at 2026-10-11T07:10Z, dated at the D-117 commit f5579e7, because the round-2 freeze omitted it (F-DG4-104, F-DG4-124; D-119)."
++        },
+         {
+           "state": "REVIEWING",
+           "at": "2026-10-11T04:43:11Z",
+# entries diff 546fb4e -> ba57107 -> c94b2a2 restricted to the DG4 history (via JSON):
+19c19
+<   "note": "Round-1 results on 19656b1f: domain PASS, code-security FAIL, qa PASS; eight findings (F-DG4-100..103, 120, 121, 140, 141) imported and all routed to repair (D-117): ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1. Entry added at 2026-10-11T07:10Z, dated at the D-117 commit f5579e7, because the round-2 freeze omitted it (F-DG4-104, F-DG4-124; D-119)."
+---
+>   "note": "Round-1 results on 19656b1f: domain PASS, code-security FAIL, qa PASS; eight findings (F-DG4-100..103, 120, 121, 140, 141) imported and all routed to repair (D-117): ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1. Entry added at 2026-10-11T07:05Z (commit 546fb4e), dated at the D-117 commit f5579e7, because the round-2 freeze omitted it (F-DG4-104, F-DG4-124; D-119)."
+24a25,29
+>  },
+>  {
+>   "state": "FIXING",
+>   "at": "2026-10-11T08:40:00Z",
+>   "note": "Round-2 results on 3f51b79d: domain FAIL, code-security FAIL, qa PASS (re-run after the first qa run was killed). All eight round-1 findings CLOSED_VERIFIED. New: F-DG4-122 (High, mandatory), F-DG4-123, F-DG4-124 and F-DG4-104 (the last two fixed in 546fb4e, pending verification). Repairs per D-119: ARCH-R5, then KBE-R6 and FE-R5."
+# ^ 546fb4e -> ba57107
+29a30,34
+>  },
+>  {
+>   "state": "REVIEWING",
+>   "at": "2026-10-11T12:34:28Z",
+>   "note": "DG4 re-frozen for review round 3: candidate 890faa12 (1459 files, source 925f0bc) after the round-2 repairs (D-119 to D-121). Each reviewer verifies its own round-2 findings and runs a full review."
+# ^ ba57107 -> c94b2a2
+# D-117 commit:
+f5579e7 2026-10-11T00:51:49+00:00 DG4: round-1 findings imported (F-DG4-100..103, 120, 121, 140, 141); D-117 repair decisions; repair assignments ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1
+546fb4e 2026-10-11T07:05:34+00:00 DG4: stages.json records the round-1 FIXING phase the round-2 freeze omitted (F-DG4-104, F-DG4-124); historical DG1-DG3 and --pipeline exit 0
+# gate tooling changes d3e6fe6..c94b2a2 (tools/gates, tools/agents, .claude/agents): expected none
+# files: 0

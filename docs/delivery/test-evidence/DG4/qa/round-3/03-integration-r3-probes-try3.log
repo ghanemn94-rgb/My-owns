@@ -1,0 +1,29 @@
+$ QA_PG_PORT=26590 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r3-headlines.test.ts   (node v24.21.0, 2026-10-11T12:49:44Z)
+ 12:49:44 up 18:48,  0 user,  load average: 12.16, 9.34, 5.41
+port-policy: PostgreSQL listening on port 26590 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3tlua9_c0fa869a (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P1 REQ-S08-009/011 under N3: gross drills and sums exactly; bases never summed > gross 95 / net 65; the gross drill-down sums 95; T10 bases 95 / 300 / 45; 440 nowhere 1101ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P2 REQ-S13-003 / F-DG4-123: a non-trivial gap on the profit-and-cash basis only > validated 30 of 90 -> gap 0.666667 on T10, overview and Finance; top line 300/300 never improves it 1283ms
+stdout | tests/qa/integration/dg4-qa-r3-headlines.test.ts > P3 security: value headlines and their drill-downs are scoped > no grant, another organization, and another transformation's BO are refused (403/404), never served the figures
+P3 statuses: nobody 404 /api/v1/transformations/01a12b03-6a22-7548-82cd-2323f244fcb0 | nobody 404 /api/v1/transformations/01a12b03-6a22-7548-82cd-2323f244fcb0 | nobody 404 /api/v1/overview?organizationId=01a12b03-6036-73ce-9477-aa9c | nobody 404 /api/v1/dashboards/finance?organizationId=01a12b03-6036-73ce | nobody 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio | orgB 404 /api/v1/transformations/01a12b03-6a22-7548-82cd-2323f244fcb0 | orgB 404 /api/v1/transformations/01a12b03-6a22-7548-82cd-2323f244fcb0 | orgB 404 /api/v1/overview?organizationId=01a12b03-6036-73ce-9477-aa9c | orgB 404 /api/v1/dashboards/finance?organizationId=01a12b03-6036-73ce | orgB 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio | otherBO 404 /api/v1/transformations/01a12b03-6a22-7548-82cd-2323f244fcb0 | otherBO 404 /api/v1/transformations/01a12b03-6a22-7548-82cd-2323f244fcb0 | otherBO 404 /api/v1/overview?organizationId=01a12b03-6036-73ce-9477-aa9c | otherBO 404 /api/v1/dashboards/finance?organizationId=01a12b03-6036-73ce | otherBO 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P3 security: value headlines and their drill-downs are scoped > no grant, another organization, and another transformation's BO are refused (403/404), never served the figures 442ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P4 negative: malformed drill-down narrowing is refused > valueClass=gross or a bogus class -> 400; valueClass on value.gap -> 422 value_class_not_applicable 187ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P5 Unknown, never zero or green > a margin line without an amount -> profit_and_cash planned, gap and Finance gross Unknown; top line known; RAG not green 236ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P6 REQ-S13-002: the period filter changes every basis's headline > Q1: profit_and_cash 70, top_line 300, non_cash 45 (to date 100 / 400 / 50) on T10, overview and Finance 409ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  12:49:48
+   Duration  18.97s (transform 5.15s, setup 0ms, collect 11.22s, tests 4.45s, environment 0ms, prepare 76ms)
+
+EXIT 0
+2026-10-11T12:50:09Z
+ 12:50:09 up 18:49,  0 user,  load average: 13.04, 9.78, 5.66

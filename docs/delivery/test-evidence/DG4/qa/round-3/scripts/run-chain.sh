@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# qa-verifier DG4 round 3: integration x2, tests/qa alone, the REQ-DLV-036 subset, my round-3 probe (second run), then pnpm test x4, sequentially in $TMPDIR/rv
+set -u
+S=/home/user/My-owns/docs/delivery/test-evidence/DG4/qa/round-3/scripts
+P=/home/user/My-owns/docs/delivery/test-evidence/DG4/qa/tests/round-3/integration/dg4-qa-r3-headlines.test.ts
+# run1 completed before the restart: 03-integration-run1.log
+bash $S/run-integration.sh run2 26530
+bash $S/run-integration.sh tests-qa-candidate-only 26550 tests/qa
+bash $S/run-integration.sh dlv036-a04-a09-a10-a11 26570 tests/qa/integration/a04-kpi-propagation.test.ts tests/qa/integration/a04-a05-a10-partials.test.ts tests/qa/integration/a09-decision-escalation.test.ts tests/qa/integration/a10-benefit-integrity.test.ts tests/qa/integration/a11-adoption.test.ts tests/qa/integration/a11-value-closure.test.ts tests/qa/integration/a11-bau-sustain.test.ts
+cp "$P" $TMPDIR/rv/tests/qa/integration/
+bash $S/run-integration.sh r3-probes-run2 26580 tests/qa/integration/dg4-qa-r3-headlines.test.ts
+rm -f $TMPDIR/rv/tests/qa/integration/dg4-qa-r3-headlines.test.ts
+bash $S/run-unit.sh
+echo CHAIN-DONE
