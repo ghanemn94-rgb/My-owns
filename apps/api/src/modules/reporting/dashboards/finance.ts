@@ -12,15 +12,14 @@
 //  - gross, implementation cost and net (ADR-0030 §7 item 6, as amended for F-DG4-121 by D-117): the lines `gross`
 //    (planned, validated) = the exact sum of the PROFIT AND CASH class lines of that state and currency:
 //    margin_uplift, cash_saving and working_capital_release (M0172; B0145). revenue_uplift (top line) and avoided_cost
-//    (non-cash) keep their own class lines and are never summed into gross or net. A gross line drills to the
-//    `value.<state>` drill-down only when that drill-down sums exactly its records (no revenue_uplift or avoided_cost
-//    line enters the state in that currency); otherwise its href is null and it is read as the sum of its three class
-//    lines, each of which drills (a multi-class drill-down needs a contract change: see the T-DG4-KBE-R5 handback).
-//    Implementation cost is the `value.investment` headline (each business-case investment line once); the lines
-//    `net` (planned, validated) = gross − implementation cost per currency. A missing amount makes the total Unknown
-//    with its reason, never 0. With an owner filter the investment lines have no owner (engine.ts narrowByFilters), so
-//    no net line is shown. The Value area's headlines are unchanged.
-//  - `headlines`: the Value area's headlines (planned, forecast, submitted, validated, gap, investment per currency) and
+//    (non-cash) keep their own class lines and are never summed into gross or net. A gross line always drills to the
+//    `value.<state>` drill-down without `valueClass`, which sums exactly the profit-and-cash basis (ADR-0037
+//    amendment N3, superseding the N2 condition). Implementation cost is the `value.investment` headline (each
+//    business-case investment line once); the lines `net` (planned, validated) = gross − implementation cost per
+//    currency. A missing amount makes the total Unknown with its reason, never 0. With an owner filter the investment
+//    lines have no owner (engine.ts narrowByFilters), so no net line is shown.
+//  - `headlines`: the Value area's headlines (ADR-0037 amendment N3: per currency the profit_and_cash planned,
+//    forecast, submitted, validated and gap, then the top_line and non_cash states; the investment) and
 //    `finance.pending_validation` (the submitted measurements awaiting Finance), each drilling to its records.
 //  - `pendingValidationCount`, `nonFinancialCount` (counted benefits without an approved valuation method: Value n/a,
 //    in no line, never summed as 0; REQ-PB-076) and one row per transformation with its six area statuses.
@@ -35,7 +34,7 @@ import type {
   FinanceLineState,
   FinanceValueLine,
 } from "@mth/shared/schemas";
-import { FINANCE_LINE_STATES } from "@mth/shared/schemas";
+import { FINANCE_LINE_STATES, HEADLINE_BASIS_CLASSES } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { principalOf } from "../../access/index.ts";
@@ -181,12 +180,8 @@ export function investmentByCurrency(ctx: DashboardContext): Map<string, Dashboa
   return out;
 }
 
-/** The classes the headline gross sums (F-DG4-121; D-117): profit and cash only. */
-export const GROSS_VALUE_CLASSES: readonly string[] = ["margin_uplift", "cash_saving", "working_capital_release"];
-/** The financial classes shown beside gross and never summed into it: revenue_uplift (top line), avoided_cost (non-cash). */
-export const BESIDE_GROSS_CLASSES: readonly string[] = FINANCIAL_VALUE_CLASSES.filter(
-  (c) => !GROSS_VALUE_CLASSES.includes(c),
-);
+/** The classes the headline gross sums (F-DG4-121; D-117): profit and cash only (the N3 profit_and_cash basis). */
+export const GROSS_VALUE_CLASSES: readonly string[] = HEADLINE_BASIS_CLASSES.profit_and_cash;
 
 /**
  * The gross and net lines (ADR-0030 §7 item 6; F-DG4-121) from the facts and the investment lines, over the Value
@@ -224,16 +219,9 @@ export function grossNetLines(
       );
       if (state === "planned") totals.planned = total;
       else totals.validated = total;
-      // The five-class value-state drill-down sums exactly the gross records only when no revenue_uplift or
-      // avoided_cost line enters the state in this currency; a href whose sum differs from the line is never given.
-      const drillable = entering(state, currency, BESIDE_GROSS_CLASSES).length === 0;
-      out.push({
-        valueClass: "gross",
-        state,
-        currency,
-        total,
-        drilldownHref: drillable ? hrefOf(`value.${state}`) : null,
-      });
+      // ADR-0037 amendment N3 item 3: the value-state drill-down without valueClass sums exactly the profit-and-cash
+      // records, i.e. this gross line's, so a gross line always drills.
+      out.push({ valueClass: "gross", state, currency, total, drilldownHref: hrefOf(`value.${state}`) });
     }
     grossOf.set(currency, { planned: totals.planned!, validated: totals.validated! });
   }
@@ -360,7 +348,7 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
         const raw = financeClassLines(ctx.facts.benefits, [...ctx.facts.lines, ...extra], ctx.clock);
         // ADR-0037 amendment K1 item 5: every class line drills to its state's value drill-down narrowed to its class
         // (`valueClass`), which sums exactly the records the line sums (lineEntersClassSum), so the drill-down's decimal
-        // sum in the line's currency equals the line's total (or both are Unknown). gross keeps its href; net is derived.
+        // sum in the line's currency equals the line's total (or both are Unknown). gross always drills (N3); net is derived.
         const classLines = raw.map(
           (l): FinanceValueLine => ({
             ...l,
@@ -391,6 +379,7 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
                 label: filters.period?.label ?? null,
               },
               drilldownHref: hrefOf("finance.pending_validation"),
+              headlineBasis: null,
             },
           ],
           pendingValidationCount: pending,

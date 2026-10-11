@@ -4,6 +4,8 @@
 //  - an outcome reads only its KPIs' statuses (never task completion); a KPI with no actual is unknown;
 //  - Value: gap ratio with decimal arithmetic; planned 0 -> n/a; unknown amounts -> unknown; currencies never added;
 //    the decimal sum of the per-benefit drill items equals the headline (the drill-down invariant);
+//  - Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, D-119): the DOM-GROSS world and ARCH-R5's
+//    variants A-C, top line and non-cash kept apart, and the per-basis drill invariant per currency;
 //  - Portfolio milestone component, Dependencies, Decisions (ADR-0032 overdue rule) and the empty-set rules.
 // All data is synthetic.
 import { DASHBOARD_RAG_DEFAULTS, type RagStatus } from "@mth/shared/schemas";
@@ -19,7 +21,10 @@ import {
   outcomesArea,
   outcomeStatus,
   portfolioArea,
+  basisClasses,
+  basisOfClass,
   sumValue,
+  VALUE_BASES,
   valueArea,
   valueGapStatus,
   valueLinesOf,
@@ -180,7 +185,10 @@ function benefit(extra: Partial<ValueBenefitFact> = {}): ValueBenefitFact {
     code: "B-01",
     title: "Synthetic benefit",
     ownerUserId: null,
-    valueClass: "revenue_uplift",
+    // T-DG4-KBE-R6 (F-DG4-123): margin_uplift, a profit-and-cash class (ADR-0037 amendment N3), so the worked examples
+    // below keep their values on the basis the Value headlines now use. It was revenue_uplift while every financial
+    // class entered the headline; the N3 tests below cover the other classes.
+    valueClass: "margin_uplift",
     currency: "SAR",
     counted: true,
     overlapOpen: false,
@@ -316,6 +324,210 @@ describe("Value (validated benefit gap)", () => {
         const sum = perBenefit.reduce((acc, v) => acc.plus(v), new D(0));
         expect(new D(c.validated.value!).eq(sum)).toBe(true);
         expect(["value", "zero"]).toContain(c.validated.state);
+      }
+    }
+  });
+});
+
+describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, D-119)", () => {
+  const cls = (valueClass: string, extra: Partial<ValueBenefitFact> = {}) => benefit({ valueClass, ...extra });
+  const dom = () => {
+    const rev = cls("revenue_uplift");
+    const mar = cls("margin_uplift");
+    const cash = cls("cash_saving");
+    const avoided = cls("avoided_cost");
+    return {
+      benefits: [rev, mar, cash, avoided],
+      lines: [
+        line(rev, "planned", "300"),
+        line(mar, "planned", "70"),
+        line(cash, "planned", "20"),
+        line(avoided, "planned", "45"),
+      ],
+    };
+  };
+
+  it("the bases: profit_and_cash = margin + cash saving + working capital; top_line = revenue; non_cash = avoided cost", () => {
+    expect(VALUE_BASES).toEqual(["profit_and_cash", "top_line", "non_cash"]);
+    expect(basisClasses("profit_and_cash")).toEqual(["margin_uplift", "cash_saving", "working_capital_release"]);
+    expect(basisClasses("top_line")).toEqual(["revenue_uplift"]);
+    expect(basisClasses("non_cash")).toEqual(["avoided_cost"]);
+    expect(
+      [
+        "revenue_uplift",
+        "margin_uplift",
+        "cash_saving",
+        "avoided_cost",
+        "working_capital_release",
+        "non_financial_valued",
+      ].map(basisOfClass),
+    ).toEqual(["top_line", "profit_and_cash", "profit_and_cash", "non_cash", "profit_and_cash", null]);
+  });
+
+  it("DOM-GROSS: planned 90 on profit and cash, 300 top line, 45 non-cash; validated a known zero; gap 1 -> red; never 435", () => {
+    const { benefits, lines } = dom();
+    const r = valueArea(benefits, lines, CLOCK, POLICY);
+    expect(r.currencies).toHaveLength(1);
+    const c = r.currencies[0]!;
+    expect(c.planned).toEqual({ state: "value", value: "90", unit: "currency", currency: "SAR", reasonKey: null });
+    expect(c.validated.state).toBe("zero");
+    expect([c.forecast.state, c.submitted.state]).toEqual(["zero", "zero"]);
+    expect(c.topLine!.planned.value).toBe("300");
+    expect(c.nonCash!.planned.value).toBe("45");
+    expect([c.topLine!.validated.state, c.nonCash!.validated.state]).toEqual(["zero", "zero"]);
+    expect(c).toMatchObject({ gapRatio: "1", status: "red", reasonKey: null });
+    expect(r.rag).toMatchObject({ status: "red", ruleKey: "dashboard.rag.value.validated_gap" });
+    expect(r.rag.ruleParams["headlineBasis"]).toBe("profit_and_cash");
+    expect(JSON.stringify(r)).not.toContain('"435"');
+  });
+
+  it("variant A: only revenue uplift and avoided cost -> profit-and-cash and the RAG are n/a (never 0, never green)", () => {
+    const rev = cls("revenue_uplift");
+    const avoided = cls("avoided_cost");
+    const r = valueArea([rev, avoided], [line(rev, "planned", "300"), line(avoided, "planned", "45")], CLOCK, POLICY);
+    const c = r.currencies[0]!;
+    const na = {
+      state: "not_applicable",
+      value: null,
+      unit: "currency",
+      currency: "SAR",
+      reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+    };
+    for (const v of [c.planned, c.forecast, c.submitted, c.validated]) expect(v).toEqual(na);
+    expect(c).toMatchObject({
+      gapRatio: null,
+      status: "not_applicable",
+      reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+    });
+    expect(c.topLine!.planned.value).toBe("300");
+    expect(c.nonCash!.planned.value).toBe("45");
+    expect(r.rag).toEqual({
+      status: "not_applicable",
+      ruleKey: "dashboard.rag.value.no_profit_and_cash_benefit",
+      ruleParams: {},
+    });
+  });
+
+  it("variant A per currency: one currency without a profit-and-cash benefit does not hide another's gap", () => {
+    const sarRev = cls("revenue_uplift");
+    const usdMar = cls("margin_uplift", { currency: "USD" });
+    const r = valueArea(
+      [sarRev, usdMar],
+      [line(sarRev, "planned", "300"), line(usdMar, "planned", "10"), line(usdMar, "validated", "10")],
+      CLOCK,
+      POLICY,
+    );
+    expect(r.currencies.map((c) => [c.currency, c.status, c.reasonKey])).toEqual([
+      ["SAR", "not_applicable", "dashboard.value.no_profit_and_cash_benefit"],
+      ["USD", "green", null],
+    ]);
+    expect(r.rag.status).toBe("green");
+    expect(r.rag.ruleKey).toBe("dashboard.rag.value.validated_gap");
+  });
+
+  it("variant B: a margin benefit with no line in the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned", () => {
+    const mar = cls("margin_uplift");
+    const rev = cls("revenue_uplift");
+    const r = valueArea(
+      [mar, rev],
+      [line(mar, "planned", "70", "2041-12-31"), line(rev, "planned", "300")],
+      CLOCK,
+      POLICY,
+    );
+    const c = r.currencies[0]!;
+    expect(c.planned).toMatchObject({ state: "zero", value: "0", currency: "SAR" });
+    expect(c).toMatchObject({ gapRatio: null, status: "not_applicable", reasonKey: "dashboard.value.nothing_planned" });
+    expect(c.topLine!.planned.value).toBe("300");
+    expect(c.nonCash).toBeNull();
+    expect(r.rag).toEqual({ status: "not_applicable", ruleKey: "dashboard.rag.value.nothing_due", ruleParams: {} });
+  });
+
+  it("variant C: a revenue line without an amount makes only the top-line headline unknown", () => {
+    const { benefits, lines } = dom();
+    const r = valueArea(benefits, [...lines, line(benefits[0]!, "planned", null, "2041-02-28")], CLOCK, POLICY);
+    const c = r.currencies[0]!;
+    expect(c.topLine!.planned).toMatchObject({ state: "unknown", reasonKey: "benefit.value_amount_missing" });
+    expect(c.planned.value).toBe("90");
+    expect(c.nonCash!.planned.value).toBe("45");
+    expect(c.status).toBe("red");
+  });
+
+  it("an unknown avoided-cost or margin line: only its own basis is unknown", () => {
+    const { benefits, lines } = dom();
+    const withAvoided = valueArea(benefits, [...lines, line(benefits[3]!, "validated", null)], CLOCK, POLICY);
+    expect(withAvoided.currencies[0]!.nonCash!.validated.state).toBe("unknown");
+    expect(withAvoided.currencies[0]!.validated.state).toBe("zero");
+    const withMargin = valueArea(benefits, [...lines, line(benefits[1]!, "validated", null)], CLOCK, POLICY);
+    expect(withMargin.currencies[0]!.validated.state).toBe("unknown");
+    expect(withMargin.currencies[0]!.topLine!.validated.state).toBe("zero");
+    expect(withMargin.rag.status).toBe("unknown");
+  });
+
+  it("a top-line or non-cash basis appears only where a counted, monetised benefit of its class exists", () => {
+    const mar = cls("margin_uplift");
+    const notCounted = cls("revenue_uplift", { counted: false });
+    const unmonetised = cls("avoided_cost", { unmonetised: true });
+    const r = valueArea(
+      [mar, notCounted, unmonetised],
+      [line(mar, "planned", "5"), line(notCounted, "planned", "9")],
+      CLOCK,
+      POLICY,
+    );
+    expect(r.currencies[0]!.topLine).toBeNull();
+    expect(r.currencies[0]!.nonCash).toBeNull();
+    expect(r.currencies[0]!.planned.value).toBe("5");
+  });
+
+  it("property: per currency and basis, the decimal sum of the basis's contributing lines equals its headline (300 seeded sets)", () => {
+    const rnd = prng(123);
+    const classes = ["revenue_uplift", "margin_uplift", "cash_saving", "avoided_cost", "working_capital_release"];
+    const amount = () => `${Math.floor(rnd() * 1e9)}.${String(Math.floor(rnd() * 1e4)).padStart(4, "0")}`;
+    const states = ["planned", "forecast", "submitted", "validated"] as const;
+    for (let n = 0; n < 300; n += 1) {
+      const benefits = Array.from({ length: 1 + Math.floor(rnd() * 6) }, () =>
+        benefit({
+          valueClass: classes.at(Math.floor(rnd() * classes.length))!,
+          currency: rnd() < 0.7 ? "SAR" : "USD",
+          counted: rnd() < 0.9,
+        }),
+      );
+      const lines = benefits.flatMap((b) =>
+        Array.from({ length: Math.floor(rnd() * 5) }, () =>
+          line(b, states.at(Math.floor(rnd() * 4))!, amount(), `2041-0${1 + Math.floor(rnd() * 3)}-28`),
+        ),
+      );
+      const byId = new Map(benefits.map((b) => [b.benefitId, b]));
+      const r = valueArea(benefits, lines, CLOCK, POLICY);
+      for (const c of r.currencies)
+        for (const [basis, sums] of [
+          ["profit_and_cash", c.reasonKey === "dashboard.value.no_profit_and_cash_benefit" ? null : c],
+          ["top_line", c.topLine],
+          ["non_cash", c.nonCash],
+        ] as const) {
+          if (sums === null) continue;
+          for (const state of states) {
+            const sum = valueLinesOf(byId, lines, state, CLOCK, basisClasses(basis))
+              .filter((l) => byId.get(l.benefitId)!.currency === c.currency)
+              .reduce((acc, l) => acc.plus(new D(l.amount!)), new D(0));
+            const v =
+              state === "planned"
+                ? sums.planned
+                : state === "forecast"
+                  ? sums.forecast
+                  : state === "submitted"
+                    ? sums.submitted
+                    : sums.validated;
+            expect(new D(v.value!).eq(sum), `${n} ${c.currency} ${basis} ${state}`).toBe(true);
+          }
+        }
+      // Profit and cash never includes a revenue or avoided-cost amount: it equals the five-class sum minus those.
+      for (const c of r.currencies) {
+        if (c.reasonKey === "dashboard.value.no_profit_and_cash_benefit") continue;
+        const all = valueLinesOf(byId, lines, "planned", CLOCK)
+          .filter((l) => byId.get(l.benefitId)!.currency === c.currency)
+          .reduce((acc, l) => acc.plus(new D(l.amount!)), new D(0));
+        const beside = new D(c.topLine?.planned.value ?? 0).plus(new D(c.nonCash?.planned.value ?? 0));
+        expect(new D(c.planned.value!).eq(all.minus(beside))).toBe(true);
       }
     }
   });

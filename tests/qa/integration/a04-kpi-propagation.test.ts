@@ -432,8 +432,14 @@ describe("A04: dashboards are scoped and filtered on the server", () => {
       "60",
       "140",
     ]);
+    // T-DG4-KBE-R6 (F-DG4-123; ADR-0037 amendment N3): the benefit is revenue uplift, so its planned value is the
+    // top-line headline; the profit-and-cash 'Planned value' is not_applicable here (no such benefit).
     const planned = (body: Body) =>
-      canon((areaOf(body, "value").headlines as Body[]).find((h) => h.metric === "value.planned").value.value);
+      canon(
+        (areaOf(body, "value").headlines as Body[]).find(
+          (h) => h.metric === "value.planned" && h.headlineBasis === "top_line",
+        ).value.value,
+      );
     expect([planned(all), planned(inQ1)]).toEqual(["3000", "1000"]);
     const first = (body: Body, area: string) => canon(areaOf(body, area).headlines[0].value.value);
     expect([first(all, "dependencies"), first(inQ1, "dependencies")]).toEqual(["2", "1"]);

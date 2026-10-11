@@ -62,7 +62,8 @@ beforeAll(async () => {
   await openDependency(api.db, k, w.orgA.id, "DEP-02", "2026-08-01");
   await askDue(api, k, "2026-02-20");
   await askDue(api, k, "2026-08-20");
-  // Value: planned 1000 in February and 2000 in June; 900 validated in February.
+  // Value: planned 1000 in February and 2000 in June; 900 validated in February. Margin uplift, a profit-and-cash
+  // class, the basis of the Value headlines and gap (T-DG4-KBE-R6; ADR-0037 amendment N3; it was revenue uplift).
   b = await benefitWorldIn(api, w, w.a1);
   await validatedBenefit(
     api,
@@ -72,6 +73,7 @@ beforeAll(async () => {
       { amount: "2000", start: "2026-06-01", end: "2026-06-30" },
     ],
     { amount: "900", start: "2026-02-01", end: "2026-02-28" },
+    { valueClass: "margin_uplift" },
   );
 }, 240_000);
 afterAll(() => api.close());

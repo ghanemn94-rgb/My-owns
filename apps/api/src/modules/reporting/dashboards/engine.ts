@@ -12,6 +12,7 @@ import type {
   DashboardHeadline,
   DashboardItem,
   DashboardValue,
+  HeadlineBasis,
   RagStatus,
   T10Area,
   T10AreaCode,
@@ -35,6 +36,7 @@ import {
   kpiRowStatus,
   knownValue,
   MONEY_SCALE,
+  NO_PROFIT_AND_CASH,
   notApplicableValue,
   outcomesArea,
   portfolioArea,
@@ -44,6 +46,7 @@ import {
   type AdoptionIndicatorFact,
   type AdoptionResult,
   type AreaRag,
+  type BasisSums,
   type DashboardClock,
   type DashboardPolicy,
   type DecisionFact,
@@ -484,13 +487,20 @@ interface PresentOptions {
   readonly workstream: boolean;
 }
 
+/**
+ * One headline. `basis` is the value basis it sums (ADR-0037 amendment N3; null on every non-value metric and on
+ * value.investment); a top_line or non_cash headline drills with its class (`valueClass`), a profit_and_cash one
+ * without, so each drill-down sums exactly the records of its headline.
+ */
 function headline(
   ctx: DashboardContext,
   o: PresentOptions,
   metric: DashboardHeadline["metric"],
   labelKey: string,
   value: DashboardValue,
+  basis: HeadlineBasis | null = null,
 ): DashboardHeadline {
+  const valueClass = basis === "top_line" ? "revenue_uplift" : basis === "non_cash" ? "avoided_cost" : undefined;
   return {
     metric,
     labelKey,
@@ -501,8 +511,30 @@ function headline(
       asOf: ctx.filters.asOf,
       label: ctx.filters.period?.label ?? null,
     },
-    drilldownHref: drilldownHref(metric, ctx.filters, { transformationIds: o.drillTransformationIds }),
+    drilldownHref: drilldownHref(metric, ctx.filters, {
+      transformationIds: o.drillTransformationIds,
+      ...(valueClass === undefined ? {} : { valueClass }),
+    }),
+    headlineBasis: basis,
   };
+}
+
+/** The four state headlines of one basis (planned, forecast, submitted, validated), labelled with the basis. */
+function basisHeadlines(
+  ctx: DashboardContext,
+  o: PresentOptions,
+  basis: HeadlineBasis,
+  sums: BasisSums,
+): DashboardHeadline[] {
+  const states = [
+    ["planned", sums.planned],
+    ["forecast", sums.forecast],
+    ["submitted", sums.submitted],
+    ["validated", sums.validated],
+  ] as const;
+  return states.map(([state, value]) =>
+    headline(ctx, o, `value.${state}`, `dashboard.headline.value_${state}_${basis}`, value, basis),
+  );
 }
 
 function item(x: Partial<DashboardItem> & Pick<DashboardItem, "recordType" | "recordId" | "href">): DashboardItem {
@@ -588,26 +620,30 @@ export function presentAreas(
     ]),
   });
 
-  // Value: per currency planned, forecast, submitted, validated, gap and investment; each benefit with its validated.
+  // Value (ADR-0037 amendment N3): per currency the profit-and-cash planned, forecast, submitted, validated and gap,
+  // then the top-line and the non-cash states (each only where a benefit of its class exists), never summed into each
+  // other; after every currency, the investment. Each benefit is listed with its validated value.
   const valueHeadlines: DashboardHeadline[] = [];
   for (const c of r.value.currencies) {
-    valueHeadlines.push(headline(ctx, o, "value.planned", "dashboard.headline.value_planned", c.planned));
-    valueHeadlines.push(headline(ctx, o, "value.forecast", "dashboard.headline.value_forecast", c.forecast));
-    valueHeadlines.push(headline(ctx, o, "value.submitted", "dashboard.headline.value_submitted", c.submitted));
-    valueHeadlines.push(headline(ctx, o, "value.validated", "dashboard.headline.value_validated", c.validated));
+    valueHeadlines.push(...basisHeadlines(ctx, o, "profit_and_cash", c));
     valueHeadlines.push(
       headline(
         ctx,
         o,
         "value.gap",
-        "dashboard.headline.value_gap",
+        "dashboard.headline.value_gap_profit_and_cash",
         c.gapRatio === null
           ? c.status === "unknown"
             ? unknownValue(c.reasonKey ?? "benefit.value_amount_missing", "ratio", c.currency)
-            : notApplicableValue(c.reasonKey ?? "dashboard.value.nothing_planned", "ratio")
+            : c.reasonKey === NO_PROFIT_AND_CASH
+              ? { ...notApplicableValue(NO_PROFIT_AND_CASH, "ratio"), currency: c.currency }
+              : notApplicableValue(c.reasonKey ?? "dashboard.value.nothing_planned", "ratio")
           : { ...knownValue(c.gapRatio, "ratio", c.currency) },
+        "profit_and_cash",
       ),
     );
+    if (c.topLine !== null) valueHeadlines.push(...basisHeadlines(ctx, o, "top_line", c.topLine));
+    if (c.nonCash !== null) valueHeadlines.push(...basisHeadlines(ctx, o, "non_cash", c.nonCash));
   }
   if (r.value.currencies.length === 0)
     valueHeadlines.push(
@@ -615,8 +651,9 @@ export function presentAreas(
         ctx,
         o,
         "value.validated",
-        "dashboard.headline.value_validated",
+        "dashboard.headline.value_validated_profit_and_cash",
         notApplicableValue("dashboard.value.no_financial_benefit", "currency"),
+        "profit_and_cash",
       ),
     );
   for (const currency of [...new Set(ctx.facts.investment.map((l) => l.currency))].sort()) {

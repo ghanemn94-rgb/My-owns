@@ -137,7 +137,7 @@ export const dashboardHeadline = z.strictObject({
   value: dashboardValue,
   period: dashboardPeriod.nullable(),
   drilldownHref: z.string(),
-  headlineBasis: headlineBasis.nullable().optional(),
+  headlineBasis: headlineBasis.nullable(),
 });
 export type DashboardHeadline = z.infer<typeof dashboardHeadline>;
 
@@ -288,7 +288,7 @@ export const dashboardDrilldown = z.strictObject({
   evidence: z.array(drilldownEvidence),
   nextCursor: z.string().nullable(),
   /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
-  headlineBasis: headlineBasis.nullable().optional(),
+  headlineBasis: headlineBasis.nullable(),
 });
 export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
 
@@ -554,7 +554,7 @@ export const workspaceHeader = z.strictObject({
     benefitCount: z.number().int().min(0),
     nonFinancialCount: z.number().int().min(0),
     /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
-    headlines: z.array(dashboardHeadline).optional(),
+    headlines: z.array(dashboardHeadline),
   }),
   keyDecisions: z.strictObject({ items: z.array(dashboardItem).max(5), overdueCount: z.number().int().min(0) }),
   nextActions: z.strictObject({

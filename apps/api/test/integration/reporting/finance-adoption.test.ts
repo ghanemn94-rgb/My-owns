@@ -186,14 +186,26 @@ describe("Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7)", () => {
     expect(r.body.transformations.map((t: Body) => t.transformationId)).toEqual([xb.transformationId]);
   });
 
-  it("class lines and headlines drill to their records with an equal decimal sum; a gross line that would sum more has no href; the queue count drills to its records", async () => {
+  it("class lines and headlines drill to their records with an equal decimal sum; a gross line always drills to the profit-and-cash basis; the queue count drills to its records", async () => {
     const r = await get(
       `/api/v1/dashboards/finance?organizationId=${w.orgA.id}&transformationId=${xb.transformationId}`,
     );
-    // F-DG4-121: revenue uplift enters value.planned/value.validated but never gross, so those drills would sum more
-    // than the gross line: the gross lines carry no href here (each class line drills; gross = its three classes).
-    for (const state of ["planned", "validated"])
-      expect(lineOf(r.body, "gross", state).drilldownHref, state).toBeNull();
+    // F-DG4-121 / F-DG4-123 (T-DG4-KBE-R6; ADR-0037 amendment N3, superseding N2): value.planned/value.validated
+    // without valueClass now sum the profit-and-cash classes only, exactly gross's, so a gross line always drills (it
+    // was null here while revenue uplift entered those drills). This fixture holds revenue uplift only: gross is a
+    // known 0 and its drill-down lists no record (n/a on the profit-and-cash basis, never a fabricated 0).
+    for (const state of ["planned", "validated"]) {
+      const g = lineOf(r.body, "gross", state);
+      expect(g.drilldownHref, state).toContain(`metric=value.${state}`);
+      expect(g.drilldownHref, state).not.toContain("valueClass=");
+      expect(await drillSum(g.drilldownHref, "SAR"), state).toBe(dec(g.total.value));
+      const d = await get(g.drilldownHref);
+      expect([d.body.items, d.body.value.reasonKey, d.body.headlineBasis], state).toEqual([
+        [],
+        "dashboard.value.no_profit_and_cash_benefit",
+        "profit_and_cash",
+      ]);
+    }
     // Every class line drills to its state's metric narrowed to its class (ADR-0037 amendment K1; T-DG4-KBE-R4), so
     // its drill-down sums exactly its records; net is derived (from gross and investment) and keeps no href.
     const cls = lineOf(r.body, "revenue_uplift", "validated");

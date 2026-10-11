@@ -48,11 +48,15 @@ beforeAll(async () => {
   // A benefit world whose benefit is moved onto `full` would cross transformations; instead the header of the benefit
   // world's own transformation is checked for the benefits element.
   fb = await benefitWorldIn(api, w, w.a1);
-  await validatedBenefit(api, fb, [{ amount: "1000", start: "2026-02-01", end: "2026-02-28" }], {
-    amount: "400",
-    start: "2026-02-01",
-    end: "2026-02-28",
-  });
+  // Margin uplift: a profit-and-cash benefit, the basis of the header's planned and validated (T-DG4-KBE-R6;
+  // ADR-0037 amendment N3; it was revenue uplift while every financial class entered them).
+  await validatedBenefit(
+    api,
+    fb,
+    [{ amount: "1000", start: "2026-02-01", end: "2026-02-28" }],
+    { amount: "400", start: "2026-02-01", end: "2026-02-28" },
+    { valueClass: "margin_uplift" },
+  );
   // full: a North Star (through the API), a sponsor and a lead, an overdue T16 ask, a task of TL's.
   const ns = await call(api.app, "PUT", `${full.base}/north-star`, {
     session: full.s.tl,
@@ -127,6 +131,7 @@ describe("REQ-S03-011: the workspace header's eight elements", () => {
       validated: [],
       benefitCount: 0,
       nonFinancialCount: 0,
+      headlines: [],
     });
     expect(r.body.keyDecisions).toEqual({ items: [], overdueCount: 0 });
     expect(r.body.nextActions.items).toEqual([]);
@@ -165,6 +170,19 @@ describe("REQ-S03-011: the workspace header's eight elements", () => {
     ]);
     expect(r.body.benefits.validated.map((p: Body) => [p.currency, new Decimal(p.value.value).toFixed()])).toEqual([
       ["SAR", "400"],
+    ]);
+    // ADR-0037 amendment N3: the headlines are the profit-and-cash planned and validated (no revenue or avoided-cost
+    // benefit, so no top-line or non-cash headline), each with its basis and drill-down.
+    expect(
+      r.body.benefits.headlines.map((h: Body) => [
+        h.metric,
+        h.headlineBasis,
+        h.labelKey,
+        new Decimal(h.value.value).toFixed(),
+      ]),
+    ).toEqual([
+      ["value.planned", "profit_and_cash", "dashboard.headline.value_planned_profit_and_cash", "1000"],
+      ["value.validated", "profit_and_cash", "dashboard.headline.value_validated_profit_and_cash", "400"],
     ]);
   });
 });
