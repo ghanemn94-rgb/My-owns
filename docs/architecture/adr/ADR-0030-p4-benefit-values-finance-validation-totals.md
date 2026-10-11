@@ -240,3 +240,41 @@ Source: finding F-DG4-121 (domain-reviewer, DG4 round 1) and the orchestrator's 
 **Contract.** The `openapi.yaml` descriptions of `BenefitTotalsCurrency.gross` and `.net` state this basis. The schema does not change: same members, types and required lists.
 
 **Owner of the change.** KBE-R5 (`benefits/totals.ts` `FINANCIAL_TOTAL_CLASSES`, and the Finance dashboard). FE-R4 owns the labels. Until those land, the built code still sums five classes, and the round-2 domain reviewer judges the rule against M0172 and B0145 (D-117).
+
+## Amendment (2026-10-11, T-DG4-ARCH-R5): one basis for the value headlines (F-DG4-123, D-119)
+
+### N3. The value headlines use the profit-and-cash basis of gross
+
+Source: finding F-DG4-123 (domain-reviewer, DG4 round 2, check DOM-R2-07) and decision D-119, which extends D-117. The dashboard side, the contract members and the code table are in ADR-0037 amendment N3. Nothing above is removed. **This amendment supersedes N1 item 5**, where it kept "the T10 Value area's `value.planned` / `value.validated` headlines and their drill-downs" on five classes, **and D-117's "validated totals unchanged"** for those headlines. The rest of N1 item 5 stands.
+
+**Decided (D-119), exactly** (M0172; B0145):
+
+1. **The value headlines use the profit-and-cash basis.** 'Planned value', 'Forecast', 'Submitted', 'Validated value', the value-gap ratio and the Value RAG sum only `margin_uplift`, `cash_saving` and `working_capital_release`, per currency. They do so on T10, the Executive Overview, the workspace header and the Finance dashboard. This is the basis of the N1 gross, so in any state and currency the Finance `gross` line and the profit-and-cash headline are the same figure.
+2. **`revenue_uplift` (top line) and `avoided_cost` (non-cash)** are shown as headlines of their own, labelled with their basis, in every state the screen shows for the profit-and-cash headline. They are never added into a profit-and-cash figure, and no unlabelled sum crosses bases.
+3. **Every headline drills to records that sum to it.**
+   - Profit-and-cash: the value-state drill-down without `valueClass`, which now sums the three classes.
+   - Top line: `valueClass=revenue_uplift`.
+   - Non-cash: `valueClass=avoided_cost`.
+   - The Finance `gross` line takes the profit-and-cash drill-down, so it always drills (ADR-0037 N3 item 3).
+4. **Unknown, Stale, n/a and known zero stay distinct.** In a currency with no counted, monetised profit-and-cash benefit, the profit-and-cash headlines and the gap are `not_applicable` with `dashboard.value.no_profit_and_cash_benefit` ('nothing planned on this basis'), never 0 or green. A transformation whose only financial benefits are revenue uplift or avoided cost shows exactly that. Known zero (a profit-and-cash benefit exists, but nothing is in the window) and Unknown (a line without an amount) are unchanged.
+5. **Labels name the basis**, in EN and AR (ADR-0037 N3 item 5 and its code table).
+6. **Not changed:**
+   - the per-class lines (§7 item 2) and their drill-downs;
+   - the Finance validation rules (§4);
+   - `gross`, `net` and implementation cost (N1 items 1–4);
+   - the DG3 business-case totals (`kpi/totals.ts`, ADR-0024 §3).
+
+   **Why the DG3 business-case totals keep their basis, on purpose.** The DG3 totals answer a different question at a different time:
+   - **What they are.** They are the totals of a *planning artefact*: the business case lines that one case and its initiative cases hold before G3/G4 approval.
+   - **What they report.** Gross benefits over every financial line, plus every line by value basis (`grossBenefitsByValueBasis`), so the reader always sees revenue, margin, cash and avoided cost apart. A case that holds both revenue and margin uplift lines carries the warning `business_case.revenue_and_margin`. That warning names the double-count risk to the people writing the case, who can still change it.
+   - **Who approved them.** DG3 approved them in that form, and the round-2 domain reviewer recorded them as an observation, not a finding (DOM-R2-07).
+   - **What the N3 headlines are.** The figures of the benefit register that is being *realized and validated* (§1–§7). They are shown as single headline numbers on executive screens, where no warning sits beside them. There M0172 applies without a planner in the loop, so each headline must hold one compatible basis.
+   - **Reading them together.** The two never feed each other: the benefit register does not read business case totals, and N3 changes no DG3 code. A reader comparing them sees the case's `grossBenefitsByValueBasis` entries for `margin_uplift`, `cash_saving` and `working_capital_release`, whose sum per currency is the business-case counterpart of the profit-and-cash headline. The case's own `grossBenefits` total is deliberately broader, and is labelled by the DG3 screens with its basis split and warning.
+   - **Aligning them.** That would be a DG3 contract and behaviour change: reopening an approved gate, which is escalated to the orchestrator and not made here.
+
+**Example (the reviewer's DOM-GROSS world, planned to date, SAR, no cost lines):**
+- profit-and-cash planned = 70 + 20 + 0 = **90.0000**, equal to `gross.planned` and `net.planned`;
+- revenue uplift 300.0000 and avoided cost 45.0000 are shown as their own headlines;
+- 435 appears nowhere.
+
+**Owner of the change.** KBE-R6 for the engine and API (ADR-0037 N3 "Owners"), FE-R5 for the screens and labels. `benefits/totals.ts` (`getBenefitTotals`, `getPortfolioBenefitTotals`) is unchanged: its lines, gross and net already follow N1.
