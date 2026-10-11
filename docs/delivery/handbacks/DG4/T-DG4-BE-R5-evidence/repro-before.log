@@ -1,0 +1,245 @@
+port-policy: PostgreSQL listening on port 26150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv34e4fo_b63a6c97 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > one task and one reminder per dedupe key, audited as the service actor; a repeat creates nothing 18ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > concurrent creations with the same key: exactly one task and one reminder 23ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > the worker kit's twin writes the same rows as the API service (ADR-0002: the worker imports no API code) 30ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > refuses an absolute link (the database CHECK backs it up) 6ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > closeWorkItemsOfSubject closes the open items of a subject, audited 11ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > the assignee lists, reads and completes; nobody else sees or completes it 166ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > an approval task is system managed: 422 work_item.system_managed, nothing written 12ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > list order and pagination: open first by due date (no due date last); cursor pages are disjoint 64ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > commit-time: a session that ended while the completion waited is 401; nothing written 35ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > the in-app inbox (S-4) > lists the caller's reminders newest first with the unread count; read is once; others get 404 116ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > the in-app inbox (S-4) > commit-time: a session that ended while marking a reminder read waited is 401; nothing written 46ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > the in-app inbox (S-4) > anonymous callers get 401 on every task and inbox operation 13ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > work items follow their source (T-DG4-BE-R1; D-102, D-105) > reschedule moves the open item's due date once (audited); a repeat writes nothing 13ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > work items follow their source (T-DG4-BE-R1; D-102, D-105) > reassign A -> B -> A: exactly one open item, for A, under a fresh key; repeats are unchanged 25ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > work items follow their source (T-DG4-BE-R1; D-102, D-105) > parity (D-102): the worker kit's twins write the same rows and audit events as the API services 47ms
+ × |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > a same-organization non-assignee (AUD): 403, exactly one authorization.denied naming the organization; item unchanged 20ms
+   → expected [] to deeply equal [ [ 'authorization.denied', …(4) ] ]
+ × |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > an item of a transformation: the one authorization.denied names the transformation 170ms
+   → expected [] to deeply equal [ [ 'authorization.denied', …(4) ] ]
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > negatives: another organization's user gets 404 with no audit row; the assignee's completion writes only work_item.complete 27ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the Sponsor's G5 decision is 201 395ms
+ × |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > every grant of the Sponsor revoked after authentication: 403, no decision, one authorization.denied 433ms
+   → expected [ 201, undefined, undefined ] to deeply equal [ 403, 'forbidden', …(1) ]
+ × |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > only the approver role revoked (the read remains): 403 gate.not_approver, no decision, one authorization.denied 234ms
+   → expected [ 201, undefined ] to deeply equal [ 403, 'gate.not_approver' ]
+ × |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > the Sponsor's session ended after authentication: 401, no decision, no audit row 361ms
+   → expected 201 to be 401 // Object.is equality
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > submitGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TL's G1 submission is 201 700ms
+ × |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > submitGate re-checks authorization at commit time (F-DG4-103) > the TL's grants revoked after authentication: 403, no submission, gate unchanged, one authorization.denied 429ms
+   → expected [ 201, undefined, undefined ] to deeply equal [ 403, 'forbidden', …(1) ]
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TO configures the G5 approver (200) 226ms
+ × |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > the TO's grants revoked after authentication: 403, approver unchanged, one authorization.denied 229ms
+   → expected [ 200, undefined, undefined ] to deeply equal [ 403, 'forbidden', …(1) ]
+ × |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > only the configure right revoked (the read remains through another role): 403, one authorization.denied naming gate.configure 267ms
+   → expected [ 200, undefined ] to deeply equal [ 403, 'forbidden' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > a same-organization non-assignee (AUD): 403, exactly one authorization.denied naming the organization; item unchanged
+AssertionError: expected [] to deeply equal [ [ 'authorization.denied', …(4) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287d-1756-75d1-97a5-d6cc6f592235",[39m
+[32m-     "organization",[39m
+[32m-     "01a1287d-1731-748f-9508-d074d8361ceb",[39m
+[32m-     "POST /api/v1/work-items/:workItemId/complete requires work_item.complete",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/tasks/work-items.test.ts:591:37
+    589|       "Only the person this task is assigned to can complete it.",
+    590|     ]);
+    591|     expect(await requestAudit(res)).toEqual([["authorization.denied", …
+       |                                     ^
+    592|     expect(await itemRow(r.workItemId)).toEqual({ status: "open", vers…
+    593|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > an item of a transformation: the one authorization.denied names the transformation
+AssertionError: expected [] to deeply equal [ [ 'authorization.denied', …(4) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287d-1756-75d1-97a5-d6cc6f592235",[39m
+[32m-     "transformation",[39m
+[32m-     "01a1287d-1a84-7216-a4be-5b87686c46a5",[39m
+[32m-     "POST /api/v1/work-items/:workItemId/complete requires work_item.complete",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/tasks/work-items.test.ts:603:37
+    601|     });
+    602|     expect([res.status, res.body.code]).toEqual([403, "work_item.not_a…
+    603|     expect(await requestAudit(res)).toEqual([
+       |                                     ^
+    604|       ["authorization.denied", w.auditor.id, "transformation", p.trans…
+    605|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > every grant of the Sponsor revoked after authentication: 403, no decision, one authorization.denied
+AssertionError: expected [ 201, undefined, undefined ] to deeply equal [ 403, 'forbidden', …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "forbidden",[39m
+[32m-   "Your access to this record changed while the request was in progress.",[39m
+[31m+   201,[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/workflows/gate-commit-time.test.ts:99:78
+     97|       () => revokeAll(api, w.grantor.id, g.sp.id),
+     98|     );
+     99|     expect([res.status, (res.body as Body).code, (res.body as Body).de…
+       |                                                                              ^
+    100|       403,
+    101|       "forbidden",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > only the approver role revoked (the read remains): 403 gate.not_approver, no decision, one authorization.denied
+AssertionError: expected [ 201, undefined ] to deeply equal [ 403, 'gate.not_approver' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "gate.not_approver",[39m
+[31m+   201,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/workflows/gate-commit-time.test.ts:127:51
+    125|       },
+    126|     );
+    127|     expect([res.status, (res.body as Body).code]).toEqual([403, "gate.…
+       |                                                   ^
+    128|     expect(await countOf("gate_decision", g)).toBe(0);
+    129|     expect(await deniedOf(res)).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > the Sponsor's session ended after authentication: 401, no decision, no audit row
+AssertionError: expected 201 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 201[39m
+
+ ❯ apps/api/test/integration/workflows/gate-commit-time.test.ts:146:24
+    144|       (locker) => endSessions(locker, g.sp.id),
+    145|     );
+    146|     expect(res.status).toBe(401);
+       |                        ^
+    147|     expect(await countOf("gate_decision", g)).toBe(0);
+    148|     expect(await deniedOf(res)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > submitGate re-checks authorization at commit time (F-DG4-103) > the TL's grants revoked after authentication: 403, no submission, gate unchanged, one authorization.denied
+AssertionError: expected [ 201, undefined, undefined ] to deeply equal [ 403, 'forbidden', …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "forbidden",[39m
+[32m-   "Your access to this record changed while the request was in progress.",[39m
+[31m+   201,[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/workflows/gate-commit-time.test.ts:185:78
+    183|       () => revokeAll(api, w.grantor.id, g.b.users.tl.id),
+    184|     );
+    185|     expect([res.status, (res.body as Body).code, (res.body as Body).de…
+       |                                                                              ^
+    186|       403,
+    187|       "forbidden",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > the TO's grants revoked after authentication: 403, approver unchanged, one authorization.denied
+AssertionError: expected [ 200, undefined, undefined ] to deeply equal [ 403, 'forbidden', …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "forbidden",[39m
+[32m-   "Your access to this record changed while the request was in progress.",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/workflows/gate-commit-time.test.ts:228:78
+    226|       () => revokeAll(api, w.grantor.id, g.s.to.id),
+    227|     );
+    228|     expect([res.status, (res.body as Body).code, (res.body as Body).de…
+       |                                                                              ^
+    229|       403,
+    230|       "forbidden",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > only the configure right revoked (the read remains through another role): 403, one authorization.denied naming gate.configure
+AssertionError: expected [ 200, undefined ] to deeply equal [ 403, 'forbidden' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "forbidden",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/workflows/gate-commit-time.test.ts:256:51
+    254|       },
+    255|     );
+    256|     expect([res.status, (res.body as Body).code]).toEqual([403, "forbi…
+       |                                                   ^
+    257|     expect(await gateRow(g, "G5")).toEqual(before);
+    258|     expect(await deniedOf(res)).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 19 passed (27)
+   Start at  01:03:58
+   Duration  17.07s (transform 3.94s, setup 0ms, collect 9.91s, tests 4.76s, environment 0ms, prepare 89ms)
+
+EXIT=1

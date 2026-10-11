@@ -1,0 +1,40 @@
+port-policy: PostgreSQL listening on port 26150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv34gs51_5c6182e9 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the Sponsor's G5 decision is 201 874ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > every grant of the Sponsor revoked after authentication: 403, no decision, one authorization.denied 379ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > only the approver role revoked (the read remains): 403 gate.not_approver, no decision, one authorization.denied 426ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > decideGate re-checks authorization at commit time (F-DG4-103) > the Sponsor's session ended after authentication: 401, no decision, no audit row 348ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > submitGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TL's G1 submission is 201 862ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > submitGate re-checks authorization at commit time (F-DG4-103) > the TL's grants revoked after authentication: 403, no submission, gate unchanged, one authorization.denied 621ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TO configures the G5 approver (200) 455ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > the TO's grants revoked after authentication: 403, approver unchanged, one authorization.denied 311ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts > updateGate re-checks authorization at commit time (F-DG4-103) > only the configure right revoked (the read remains through another role): 403, one authorization.denied naming gate.configure 283ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > one task and one reminder per dedupe key, audited as the service actor; a repeat creates nothing 13ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > concurrent creations with the same key: exactly one task and one reminder 19ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > the worker kit's twin writes the same rows as the API service (ADR-0002: the worker imports no API code) 19ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > refuses an absolute link (the database CHECK backs it up) 2ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > createWorkItemOnce (ADR-0025 §3-§4) > closeWorkItemsOfSubject closes the open items of a subject, audited 9ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > the assignee lists, reads and completes; nobody else sees or completes it 205ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > an approval task is system managed: 422 work_item.system_managed, nothing written 25ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > list order and pagination: open first by due date (no due date last); cursor pages are disjoint 102ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > My Work items (S-4) > commit-time: a session that ended while the completion waited is 401; nothing written 93ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > the in-app inbox (S-4) > lists the caller's reminders newest first with the unread count; read is once; others get 404 175ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > the in-app inbox (S-4) > commit-time: a session that ended while marking a reminder read waited is 401; nothing written 74ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > the in-app inbox (S-4) > anonymous callers get 401 on every task and inbox operation 13ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > work items follow their source (T-DG4-BE-R1; D-102, D-105) > reschedule moves the open item's due date once (audited); a repeat writes nothing 23ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > work items follow their source (T-DG4-BE-R1; D-102, D-105) > reassign A -> B -> A: exactly one open item, for A, under a fresh key; repeats are unchanged 67ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > work items follow their source (T-DG4-BE-R1; D-102, D-105) > parity (D-102): the worker kit's twins write the same rows and audit events as the API services 83ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > a same-organization non-assignee (AUD): 403, exactly one authorization.denied naming the organization; item unchanged 14ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > an item of a transformation: the one authorization.denied names the transformation 250ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts > F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > negatives: another organization's user gets 404 with no audit row; the assignee's completion writes only work_item.complete 22ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  01:06:02
+   Duration  21.50s (transform 4.24s, setup 0ms, collect 12.05s, tests 6.65s, environment 0ms, prepare 77ms)
+
+EXIT=0

@@ -26,6 +26,7 @@ import {
 } from "../../../src/modules/tasks/index.ts";
 import {
   auditOf,
+  auditOfRequest,
   call,
   createUser,
   grant,
@@ -37,7 +38,7 @@ import {
   type TestApi,
   type World,
 } from "../../support/harness.ts";
-import { ifm } from "../../support/p2-fixtures.ts";
+import { ifm, setupP2World } from "../../support/p2-fixtures.ts";
 import { afterIdentity, endSessions } from "../calendar/session-lock.ts";
 
 let api: TestApi;
@@ -560,5 +561,62 @@ describe("work items follow their source (T-DG4-BE-R1; D-102, D-105)", () => {
       };
     };
     expect(await shape(workerSubject)).toEqual(await shape(apiSubject));
+  });
+});
+
+describe("F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3)", () => {
+  const requestAudit = async (res: { headers: Record<string, unknown> }) =>
+    (await auditOfRequest(api.db, String(res.headers["x-request-id"]))).map((e) => [
+      e.action,
+      e.actor_user_id,
+      e.record_type,
+      e.record_id,
+      e.reason,
+    ]);
+  const REASON = "POST /api/v1/work-items/:workItemId/complete requires work_item.complete";
+  const itemRow = (id: string) =>
+    api.db.selectFrom("work_item").select(["status", "version"]).where("id", "=", id).executeTakeFirstOrThrow();
+
+  it("a same-organization non-assignee (AUD): 403, exactly one authorization.denied naming the organization; item unchanged", async () => {
+    const r = await create(input());
+    const res = await call<Body>(api.app, "POST", `/api/v1/work-items/${r.workItemId}/complete`, {
+      session: auditor,
+      headers: ifm(1),
+    });
+    expect([res.status, res.body.code, res.body.detail]).toEqual([
+      403,
+      "work_item.not_assignee",
+      "Only the person this task is assigned to can complete it.",
+    ]);
+    expect(await requestAudit(res)).toEqual([
+      ["authorization.denied", w.auditor.id, "organization", w.orgA.id, REASON],
+    ]);
+    expect(await itemRow(r.workItemId)).toEqual({ status: "open", version: 1 });
+  });
+
+  it("an item of a transformation: the one authorization.denied names the transformation", async () => {
+    const p = await setupP2World(api, w);
+    const r = await create(input({ transformationId: p.transformationId }));
+    const res = await call<Body>(api.app, "POST", `/api/v1/work-items/${r.workItemId}/complete`, {
+      session: auditor,
+      headers: ifm(1),
+    });
+    expect([res.status, res.body.code]).toEqual([403, "work_item.not_assignee"]);
+    expect(await requestAudit(res)).toEqual([
+      ["authorization.denied", w.auditor.id, "transformation", p.transformationId, REASON],
+    ]);
+    expect(await itemRow(r.workItemId)).toEqual({ status: "open", version: 1 });
+  });
+
+  it("negatives: another organization's user gets 404 with no audit row; the assignee's completion writes only work_item.complete", async () => {
+    const r = await create(input());
+    const W = `/api/v1/work-items/${r.workItemId}/complete`;
+    const officeB = await signIn(api.app, w.officeB.subject);
+    const hidden = await call<Body>(api.app, "POST", W, { session: officeB, headers: ifm(1) });
+    expect(hidden.status).toBe(404);
+    expect(await requestAudit(hidden)).toEqual([]);
+    const done = await call<Body>(api.app, "POST", W, { session: office, headers: ifm(1) });
+    expect(done.status).toBe(200);
+    expect((await requestAudit(done)).map((e) => e[0])).toEqual(["work_item.complete"]);
   });
 });
