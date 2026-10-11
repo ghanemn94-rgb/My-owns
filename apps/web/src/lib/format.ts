@@ -72,6 +72,33 @@ export function formatMoney(
   return nf.format(d.toDecimalPlaces(digits, Decimal.ROUND_HALF_UP).toFixed() as Intl.StringNumericLiteral);
 }
 
+/**
+ * A percentage, exact (decimal.js; never a JS float): "12.5" → "12.5 %". `fraction: true` takes a fraction ("0.125")
+ * and multiplies it by 100 first. Digits come from the locale's Intl formatter (ADR-0009: Latin digits in Arabic), and
+ * the sign sits where the locale's own percent pattern puts it (after the number in en-GB and ar), separated by a space
+ * as everywhere else in the product. Null for null/invalid input (the caller renders Unknown, never 0). F-DG4-122.
+ */
+export function formatPercent(
+  value: string | null | undefined,
+  locale: Locale,
+  options: { fraction?: boolean; maxFractionDigits?: number } = {},
+): string | null {
+  const d = toDecimal(value);
+  if (!d) return null;
+  const pct = options.fraction ? d.times(100) : d;
+  const n = formatDecimal(pct.toFixed(), locale, { maxFractionDigits: options.maxFractionDigits ?? 2 });
+  if (n === null) return null;
+  return percentSignFirst(locale) ? `% ${n}` : `${n} %`;
+}
+
+/** True when the locale's percent pattern puts the sign before the number (e.g. "%12" in Turkish). */
+function percentSignFirst(locale: Locale): boolean {
+  const parts = new Intl.NumberFormat(intlLocale(locale), { style: "percent" }).formatToParts(0.5);
+  const sign = parts.findIndex((p) => p.type === "percentSign");
+  const num = parts.findIndex((p) => p.type === "integer");
+  return sign !== -1 && num !== -1 && sign < num;
+}
+
 function toDecimal(value: string | null | undefined): Decimal | null {
   if (value === null || value === undefined || value.trim() === "") return null;
   try {

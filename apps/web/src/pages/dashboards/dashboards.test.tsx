@@ -72,6 +72,31 @@ describe("webPathOf maps API record paths to web routes", () => {
     expect(formatValue({ value: null, unit: "ratio", currency: null }, "en")).toBeNull();
     expect(formatValue({ value: "1500", unit: "currency", currency: "SAR" }, "en")).toMatch(/1,500/);
   });
+
+  // F-DG4-122: the API's value.gap is {unit: "ratio", currency: "SAR"} (a ratio in the currency's block). The unit
+  // decides, never the currency: a 100 % gap reads "100 %", a 25 % gap "25 %", in both locales, never "SAR 1.00".
+  it.each(["en", "ar"] as const)(
+    "F-DG4-122 (%s): a ratio that carries a currency renders as a percentage, never as money",
+    (locale) => {
+      const gap = (value: string) => formatValue({ value, unit: "ratio", currency: "SAR" }, locale);
+      expect(gap("1")).toBe("100 %");
+      expect(gap("0.25")).toBe("25 %");
+      expect(gap("0.125")).toBe("12.5 %");
+      expect(gap("0")).toBe("0 %");
+      // The locale's own minus sign: Arabic (Intl, nu-latn) marks it left-to-right (U+200E) before the "-".
+      expect(gap("-0.05")).toBe(locale === "ar" ? "\u200e-5 %" : "-5 %");
+      for (const v of ["1", "0.25"]) {
+        expect(gap(v)).not.toMatch(/SAR|ر\.س|1\.00|0\.25/);
+      }
+      // A percentage unit (already in percent) carrying a currency is a percentage too, not money.
+      expect(formatValue({ value: "12.5", unit: "percent", currency: "SAR" }, locale)).toBe("12.5 %");
+      expect(formatValue({ value: "12.5", unit: "percentage", currency: "SAR" }, locale)).toBe("12.5 %");
+      expect(formatValue({ value: "12.5", unit: "%", currency: "SAR" }, locale)).toBe("12.5 %");
+      // Money stays money.
+      const money = formatValue({ value: "90", unit: "currency", currency: "SAR" }, locale);
+      expect(money).toMatch(locale === "en" ? /^SAR\s?90\.00$/ : /90\.00\s?ر\.س\./);
+    },
+  );
 });
 
 describe.each(["en", "ar"] as const)("Dashboards (%s)", (locale) => {
@@ -422,7 +447,7 @@ describe.each(["en", "ar"] as const)("Dashboards (%s)", (locale) => {
     const keys = [
       "dashboards.rule.dashboard__rag__decisions__overdue",
       "dashboards.reason.dashboard__value__no_financial_benefit",
-      "dashboards.headline.dashboard__headline__value_validated",
+      "dashboards.headline.dashboard__headline__value_validated_profit_and_cash",
       "dashboards.valueClass.non_financial_valued",
       "dashboards.lineState.submitted",
       "problems.dashboard__period_not_found",

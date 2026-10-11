@@ -1,0 +1,76 @@
+
+ RUN  v3.2.4 /home/user/wt/dg4-fe-r5
+
+ ❯ |unit-web| src/pages/dashboards/dashboards.test.tsx (29 tests | 2 failed | 27 skipped) 30ms
+   ↓ webPathOf maps API record paths to web routes > keeps the transformation from the path and needs context for initiatives and business cases
+   ↓ webPathOf maps API record paths to web routes > pages a drill-down href by merging limit and cursor into its own query string (one '?')
+   ↓ webPathOf maps API record paths to web routes > formats ratios as percent and never turns a missing value into 0
+   × webPathOf maps API record paths to web routes > F-DG4-122 (en): a ratio that carries a currency renders as a percentage, never as money 26ms
+     → expected 'SAR 1.00' to be '100 %' // Object.is equality
+   × webPathOf maps API record paths to web routes > F-DG4-122 (ar): a ratio that carries a currency renders as a percentage, never as money 2ms
+     → expected '\u200f1.00 ر.س.\u200f' to be '100 %' // Object.is equality
+   ↓ Dashboards (en) > transformation dashboard: six areas, distinct value states, provisional Arabic, drill-down
+   ↓ Dashboards (en) > Executive Overview: organizationId and the period filter reach the server; window and as-of shown
+   ↓ Dashboards (en) > Finance dashboard: per-class lines, gross and net, an Unknown net is never 0, non-financial is n/a
+   ↓ Dashboards (en) > Finance dashboard (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed
+   ↓ Dashboards (en) > Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total
+   ↓ Dashboards (en) > the value-state rule keys (rows 187-193), the slip reasons (197-200) and the KPI-status rules (201-206) are translated
+   ↓ Dashboards (en) > workspace header: every element Unknown where data is missing; one click opens the RAID register
+   ↓ Dashboards (en) > workspace header: known elements show their values; a known 0 validated value is 'Known zero', not Unknown
+   ↓ Dashboards (en) > workspace header unavailable: every element is Unknown, with a retry (never a guessed value)
+   ↓ Dashboards (en) > My Work: sections with totals, the KPI update under Missing updates, a draft labelled not submitted, deadlines
+   ↓ Dashboards (en) > the dashboards hub lists the six dashboards and /dashboards/executive opens the Executive Overview
+   ↓ Dashboards (en) > every catalogue key of the dashboards is translated (Arabic is Arabic)
+   ↓ Dashboards (ar) > transformation dashboard: six areas, distinct value states, provisional Arabic, drill-down
+   ↓ Dashboards (ar) > Executive Overview: organizationId and the period filter reach the server; window and as-of shown
+   ↓ Dashboards (ar) > Finance dashboard: per-class lines, gross and net, an Unknown net is never 0, non-financial is n/a
+   ↓ Dashboards (ar) > Finance dashboard (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed
+   ↓ Dashboards (ar) > Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total
+   ↓ Dashboards (ar) > the value-state rule keys (rows 187-193), the slip reasons (197-200) and the KPI-status rules (201-206) are translated
+   ↓ Dashboards (ar) > workspace header: every element Unknown where data is missing; one click opens the RAID register
+   ↓ Dashboards (ar) > workspace header: known elements show their values; a known 0 validated value is 'Known zero', not Unknown
+   ↓ Dashboards (ar) > workspace header unavailable: every element is Unknown, with a retry (never a guessed value)
+   ↓ Dashboards (ar) > My Work: sections with totals, the KPI update under Missing updates, a draft labelled not submitted, deadlines
+   ↓ Dashboards (ar) > the dashboards hub lists the six dashboards and /dashboards/executive opens the Executive Overview
+   ↓ Dashboards (ar) > every catalogue key of the dashboards is translated (Arabic is Arabic)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/dashboards/dashboards.test.tsx > webPathOf maps API record paths to web routes > F-DG4-122 (en): a ratio that carries a currency renders as a percentage, never as money
+AssertionError: expected 'SAR 1.00' to be '100 %' // Object.is equality
+
+Expected: [32m"100 %"[39m
+Received: [31m"SAR 1.00"[39m
+
+ ❯ src/pages/dashboards/dashboards.test.tsx:82:24
+     80|     (locale) => {
+     81|       const gap = (value: string) => formatValue({ value, unit: "ratio…
+     82|       expect(gap("1")).toBe("100 %");
+       |                        ^
+     83|       expect(gap("0.25")).toBe("25 %");
+     84|       expect(gap("0.125")).toBe("12.5 %");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/dashboards.test.tsx > webPathOf maps API record paths to web routes > F-DG4-122 (ar): a ratio that carries a currency renders as a percentage, never as money
+AssertionError: expected '\u200f1.00 ر.س.\u200f' to be '100 %' // Object.is equality
+
+Expected: [32m"100 %"[39m
+Received: [31m"‏1.00 ر.س.‏"[39m
+
+ ❯ src/pages/dashboards/dashboards.test.tsx:82:24
+     80|     (locale) => {
+     81|       const gap = (value: string) => formatValue({ value, unit: "ratio…
+     82|       expect(gap("1")).toBe("100 %");
+       |                        ^
+     83|       expect(gap("0.25")).toBe("25 %");
+     84|       expect(gap("0.125")).toBe("12.5 %");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 27 skipped (29)
+   Start at  09:05:48
+   Duration  3.52s (transform 1.29s, setup 190ms, collect 2.23s, tests 30ms, environment 717ms, prepare 129ms)
+

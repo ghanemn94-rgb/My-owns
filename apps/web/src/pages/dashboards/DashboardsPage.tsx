@@ -31,6 +31,7 @@ import { useAdoptionDashboard, useFinanceDashboard } from "./api.ts";
 import { MyWorkSections } from "./MyWorkSections.tsx";
 import {
   AreaCard,
+  HeadlineList,
   BlockedFilterNote,
   DrilldownPanel,
   FilterBar,
@@ -38,7 +39,6 @@ import {
   RagStatusChip,
   TransformationRows,
   ValueView,
-  keyText,
   useDrill,
   useFilterState,
   useOrgQuery,
@@ -354,28 +354,12 @@ export function FinanceDashboardPage() {
               <>
                 <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
                 <Section id="finance-headlines" title={t("dashboards.finance.headlines")}>
-                  <dl className="details" data-headlines="finance">
-                    {d.headlines.map((h) => {
-                      const label = keyText(t, "headline", h.labelKey);
-                      return (
-                        <div key={`${h.metric}-${h.value.currency ?? ""}`} data-metric={h.metric}>
-                          <dt>{label}</dt>
-                          <dd>
-                            <ValueView value={h.value} strong />{" "}
-                            <button
-                              type="button"
-                              className="button button--link button--small"
-                              data-drill={h.metric}
-                              onClick={() => openDrill(h, label)}
-                            >
-                              {t("dashboards.drill.open")}
-                              <span className="visually-hidden">: {label}</span>
-                            </button>
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
+                  <HeadlineList
+                    id="finance"
+                    headlines={d.headlines}
+                    compact={false}
+                    onDrill={(h, label) => openDrill(h, label)}
+                  />
                   <p data-pending-validation={d.pendingValidationCount}>
                     <strong>{t("dashboards.finance.pendingCount", { count: d.pendingValidationCount })}</strong>{" "}
                     <Link className="link" to="/finance-validation">
