@@ -234,6 +234,10 @@ test("4b. Finance class lines drill by valueClass; the drill-down rule is transl
   if (classLines.length === 0) {
     await expect(page.locator("#finance-lines")).toContainText(tr(lang, "dashboards.finance.noLines"));
   } else {
+    // The lines are organization-wide (every earlier spec's benefits), so they can exceed the table's first page of
+    // 25 (T-DG4-FE-R5: p4-value-headlines.spec.ts adds four classes). Show 100 rows per page so every line is present.
+    expect(classLines.length, "class lines fit one page of 100").toBeLessThanOrEqual(100);
+    await page.locator("#finance-lines").getByLabel(tr(lang, "common.table.pageSize")).selectOption("100");
     for (const l of classLines)
       await expect(page.locator(`[data-drill-line='${l.valueClass}-${l.state}-${l.currency}']`)).toHaveCount(1);
     const first = classLines[0]!;

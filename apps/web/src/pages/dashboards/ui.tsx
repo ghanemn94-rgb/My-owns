@@ -9,7 +9,6 @@
 //  - The server sends rule, reason, headline and flag KEYS; the texts are translated here at render time (S-6).
 //  - The seeded Template 10 labels come from the server in both languages; the Arabic ones are provisional
 //    (`arProvisional`) and say so, with the verbatim English source beside them.
-import Decimal from "decimal.js";
 import type { TFunction } from "i18next";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,6 +23,7 @@ import type {
   DashboardTransformationRow,
   DashboardValue,
   DrilldownItem,
+  HeadlineBasis,
   RagStatus,
   T10Area,
 } from "@mth/shared/schemas";
@@ -37,7 +37,7 @@ import { useSessionBoundAction } from "../../auth/sessionBound.ts";
 import { Dialog } from "../../components/Form.tsx";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { QueryState } from "../../components/States.tsx";
-import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney } from "../../lib/format.ts";
+import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatPercent } from "../../lib/format.ts";
 import { reasonText as kpiReasonText } from "../kpi/ui.tsx";
 import { useBusinessUnitTransformations, useDashboardPeriods, useDrilldown, type DashboardQuery } from "./api.ts";
 import { useReadableTransformations } from "../traceability/api.ts";
@@ -101,20 +101,19 @@ const COUNT_UNITS = new Set([
   "count",
 ]);
 
-/** The formatted number of a known value (no state label). Null when the value is not a number. */
+/** Units whose value is already a percentage ("12.5" = 12.5 %). A `ratio` is a fraction and is multiplied by 100. */
+const PERCENT_UNITS = new Set(["percent", "percentage", "%"]);
+
+/**
+ * The formatted number of a known value (no state label). Null when the value is not a number.
+ * The UNIT decides before the currency (F-DG4-122): the value gap is `{unit: "ratio", currency: "SAR"}` because it sits
+ * in its currency's block, and it is a ratio, shown as a percentage ("100 %"), never as money ("SAR 1.00").
+ */
 export function formatValue(v: Pick<DashboardValue, "value" | "unit" | "currency">, locale: Locale): string | null {
   if (v.value === null) return null;
+  if (v.unit === "ratio") return formatPercent(v.value, locale, { fraction: true, maxFractionDigits: 2 });
+  if (v.unit && PERCENT_UNITS.has(v.unit)) return formatPercent(v.value, locale, { maxFractionDigits: 2 });
   if (v.currency) return formatMoney(v.value, v.currency, locale);
-  if (v.unit === "ratio") {
-    let pct: string | null = null;
-    try {
-      pct = new Decimal(v.value).times(100).toFixed();
-    } catch {
-      return null;
-    }
-    const p = formatDecimal(pct, locale, { maxFractionDigits: 2 });
-    return p === null ? null : `${p} %`;
-  }
   if (v.unit && COUNT_UNITS.has(v.unit)) return formatDecimal(v.value, locale, { maxFractionDigits: 0 });
   const n = formatDecimal(v.value, locale, { maxFractionDigits: 4 });
   return n === null ? null : v.unit ? `${n} ${v.unit}` : n;
@@ -417,33 +416,112 @@ export function AreaCard({
       ) : null}
       <RuleNote rag={area.rag} />
       {area.headlines.length > 0 ? (
-        <dl className="details details--compact" data-headlines={area.code}>
-          {area.headlines.map((h) => {
-            const label = keyText(t, "headline", h.labelKey);
-            return (
-              <div key={`${h.metric}-${h.value.currency ?? ""}`} data-metric={h.metric}>
-                <dt>{label}</dt>
-                <dd>
-                  <ValueView value={h.value} strong />{" "}
-                  <button
-                    type="button"
-                    className="button button--link button--small"
-                    data-drill={h.metric}
-                    onClick={() => onDrill(h, `${title} · ${label}`)}
-                  >
-                    {t("dashboards.drill.open")}
-                    <span className="visually-hidden">: {label}</span>
-                  </button>
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
+        <HeadlineList
+          id={area.code}
+          headlines={area.headlines}
+          onDrill={(h, label) => onDrill(h, `${title} · ${label}`)}
+        />
       ) : (
         <p className="small muted">{t("dashboards.area.noHeadline")}</p>
       )}
       {showItems ? <AreaItems area={area} contextTid={contextTid ?? null} /> : null}
     </section>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ value headlines
+
+/**
+ * ADR-0037 / ADR-0030 amendment N3 (D-119, M0172, B0145): a value headline names its basis. `profit_and_cash` (margin
+ * uplift + cash saving + working-capital release; the basis of the Finance gross) is THE value figure; `top_line`
+ * (revenue uplift) and `non_cash` (avoided cost) are shown beside it, each labelled, never added to it. A headline
+ * without a basis (`value.investment`, the other areas, or an API before N3) is shown as it is.
+ */
+
+/** The basis chip of a value headline (text + icon; neutral colour, never a status). */
+export function BasisChip({ basis }: { basis: HeadlineBasis | null | undefined }) {
+  const { t } = useTranslation();
+  if (!basis) return null;
+  return (
+    <span className="lifecycle-chip small" data-basis-chip={basis}>
+      {t(`dashboards.basis.${basis}`)}
+    </span>
+  );
+}
+
+const isBeside = (h: DashboardHeadline) => h.headlineBasis === "top_line" || h.headlineBasis === "non_cash";
+
+/**
+ * A list of headlines (T10 areas, the Executive Overview, Finance, the workspace header). The profit-and-cash and
+ * basis-less headlines come first, in the server's order; the top-line and non-cash headlines follow in their own
+ * group, introduced as "beside, never added". Every headline opens its own drill-down (`drilldownHref`, as sent).
+ */
+export function HeadlineList({
+  id,
+  headlines,
+  onDrill,
+  compact = true,
+}: {
+  id: string;
+  headlines: readonly DashboardHeadline[];
+  onDrill: (h: DashboardHeadline, label: string) => void;
+  compact?: boolean;
+}) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const main = headlines.filter((h) => !isBeside(h));
+  const beside = headlines.filter(isBeside);
+  const based = headlines.some((h) => h.headlineBasis);
+  const cls = compact ? "details details--compact" : "details";
+  const item = (h: DashboardHeadline) => {
+    const label = keyText(t, "headline", h.labelKey);
+    return (
+      <div
+        key={`${h.metric}-${h.headlineBasis ?? ""}-${h.value.currency ?? ""}`}
+        data-metric={h.metric}
+        {...(h.headlineBasis ? { "data-headline-basis": h.headlineBasis } : {})}
+        {...(isBeside(h) ? { "data-not-summed": "true" } : {})}
+      >
+        <dt>
+          {label} <BasisChip basis={h.headlineBasis} />
+        </dt>
+        <dd>
+          <ValueView value={h.value} strong />{" "}
+          <button
+            type="button"
+            className="button button--link button--small"
+            data-drill={h.metric}
+            {...(h.headlineBasis ? { "data-drill-basis": h.headlineBasis } : {})}
+            onClick={() => onDrill(h, label)}
+          >
+            {t("dashboards.drill.open")}
+            <span className="visually-hidden">: {label}</span>
+          </button>
+        </dd>
+      </div>
+    );
+  };
+  return (
+    <>
+      <dl className={cls} data-headlines={id}>
+        {main.map(item)}
+      </dl>
+      {beside.length > 0 ? (
+        <>
+          <p className="small muted" data-beside-note={id}>
+            <Icon name="info" /> {t("dashboards.basis.besideNote")}
+          </p>
+          <dl className={cls} data-headlines-beside={id} data-not-summed="true">
+            {beside.map(item)}
+          </dl>
+        </>
+      ) : null}
+      {based && locale === "ar" ? (
+        <p className="small muted" data-provisional="basis">
+          <Icon name="info" /> {t("dashboards.basis.arProvisional")}
+        </p>
+      ) : null}
+    </>
   );
 }
 
@@ -635,6 +713,15 @@ export function DrilldownPanel({
                     <ValueView value={d.value} strong />
                   </dd>
                 </div>
+                {d.headlineBasis ? (
+                  <div>
+                    <dt>{t("dashboards.basis.label")}</dt>
+                    <dd data-drill-basis-of={d.headlineBasis}>
+                      <BasisChip basis={d.headlineBasis} />{" "}
+                      <span className="small muted">{t(`dashboards.basis.classes.${d.headlineBasis}`)}</span>
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt>{t("dashboards.drill.period")}</dt>
                   <dd>

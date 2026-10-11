@@ -122,17 +122,19 @@ export function sixAreas(): T10Area[] {
       headlines: [
         {
           metric: "value.validated",
-          labelKey: "dashboard.headline.value_validated",
+          labelKey: "dashboard.headline.value_validated_profit_and_cash",
           value: v("0"),
           period: null,
           drilldownHref: drill("value.validated"),
+          headlineBasis: "profit_and_cash",
         },
         {
           metric: "value.gap",
-          labelKey: "dashboard.headline.value_gap",
+          labelKey: "dashboard.headline.value_gap_profit_and_cash",
           value: naV("dashboard.value.nothing_planned"),
           period: null,
           drilldownHref: drill("value.gap"),
+          headlineBasis: "profit_and_cash",
         },
       ],
     }),
@@ -479,5 +481,140 @@ export function grossBasisFinanceDashboard(): FinanceDashboard {
       { valueClass: "net", state: "planned", currency: "SAR", total: v("90"), drilldownHref: null },
       { valueClass: "net", state: "validated", currency: "SAR", total: v("0"), drilldownHref: null },
     ],
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ D-119 (F-DG4-122/123)
+
+/**
+ * The value headlines of ADR-0037 / ADR-0030 amendment N3 (D-119) for the domain reviewer's world (F-DG4-122/123):
+ * planned revenue uplift 300, margin uplift 70, cash saving 20 and avoided cost 45 SAR, nothing validated. The
+ * profit-and-cash planned value is 90 (= 70 + 20), the top-line 300 and the non-cash 45 sit beside it; the value gap is
+ * the ratio 1 (unit `ratio`, carrying the block's currency, exactly as the API sends it), so it reads "100 %".
+ * Variant "na" (no margin uplift or cash saving benefit): every profit-and-cash headline and the gap are n/a with
+ * `dashboard.value.no_profit_and_cash_benefit`; top line and non-cash are still shown. SYNTHETIC; 435 is nowhere.
+ */
+export type D119Variant = "main" | "na";
+
+type Headline = T10Area["headlines"][number];
+const hl = (
+  metric: "value.planned" | "value.validated" | "value.gap",
+  basis: "profit_and_cash" | "top_line" | "non_cash",
+  value: DashboardValue,
+): Headline => {
+  const state = metric.slice("value.".length);
+  const valueClass = basis === "top_line" ? "revenue_uplift" : basis === "non_cash" ? "avoided_cost" : undefined;
+  return {
+    metric,
+    labelKey: `dashboard.headline.value_${state}_${basis}`,
+    value,
+    period: null,
+    drilldownHref: drill(metric, valueClass),
+    headlineBasis: basis,
+  };
+};
+const naPc = (unit: string): DashboardValue => ({
+  state: "not_applicable",
+  value: null,
+  unit,
+  currency: null,
+  reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+});
+
+export function d119Headlines(variant: D119Variant = "main"): Headline[] {
+  const pc =
+    variant === "main"
+      ? [
+          hl("value.planned", "profit_and_cash", v("90")),
+          hl("value.validated", "profit_and_cash", v("0")),
+          hl("value.gap", "profit_and_cash", v("1", "SAR", "ratio")),
+        ]
+      : [
+          hl("value.planned", "profit_and_cash", naPc("currency")),
+          hl("value.validated", "profit_and_cash", naPc("currency")),
+          hl("value.gap", "profit_and_cash", naPc("ratio")),
+        ];
+  return [
+    ...pc,
+    hl("value.planned", "top_line", v("300")),
+    hl("value.validated", "top_line", v("0")),
+    hl("value.planned", "non_cash", v("45")),
+    hl("value.validated", "non_cash", v("0")),
+  ];
+}
+
+function d119ValueArea(variant: D119Variant): T10Area {
+  const base = sixAreas()[1]!;
+  return {
+    ...base,
+    rag:
+      variant === "main"
+        ? {
+            status: "red",
+            ruleKey: "dashboard.rag.value.validated_gap",
+            ruleParams: { headlineBasis: "profit_and_cash" },
+            policySource: "default",
+          }
+        : {
+            status: "not_applicable",
+            ruleKey: "dashboard.rag.value.no_profit_and_cash_benefit",
+            ruleParams: {},
+            policySource: "default",
+          },
+    headlines: d119Headlines(variant),
+  };
+}
+
+const withValueArea = (areas: T10Area[], variant: D119Variant) =>
+  areas.map((a) => (a.code === "value" ? d119ValueArea(variant) : a));
+
+export function d119TransformationDashboard(variant: D119Variant = "main"): TransformationDashboard {
+  const d = transformationDashboard();
+  return { ...d, areas: withValueArea(d.areas, variant) };
+}
+
+export function d119ExecutiveOverview(variant: D119Variant = "main"): ExecutiveOverview {
+  const d = executiveOverview();
+  const areas = withValueArea(d.areas, variant);
+  return {
+    ...d,
+    areas,
+    transformations: d.transformations.map((r) => ({
+      ...r,
+      areaStatuses: areas.map((a) => ({ code: a.code, status: a.rag.status })),
+    })),
+  };
+}
+
+export function d119FinanceDashboard(variant: D119Variant = "main"): FinanceDashboard {
+  const base = grossBasisFinanceDashboard();
+  return { ...base, headlines: [...d119Headlines(variant), ...base.headlines] };
+}
+
+export function d119Header(variant: D119Variant = "main"): WorkspaceHeader {
+  const h = knownHeader();
+  const all = d119Headlines(variant).filter((x) => x.metric !== "value.gap");
+  return {
+    ...h,
+    benefits: {
+      ...h.benefits,
+      planned: [{ currency: "SAR", value: variant === "main" ? v("90") : naPc("currency") }],
+      validated: [{ currency: "SAR", value: variant === "main" ? v("0") : naPc("currency") }],
+      benefitCount: variant === "main" ? 4 : 2,
+      headlines: all,
+    },
+  };
+}
+
+/** The drill-down of a headline of the given basis (the contract's `headlineBasis` member). */
+export function d119Drilldown(basis: "profit_and_cash" | "top_line" | "non_cash"): DashboardDrilldown {
+  const amount = basis === "profit_and_cash" ? "90" : basis === "top_line" ? "300" : "45";
+  const d = drilldown();
+  return {
+    ...d,
+    metric: "value.planned",
+    value: v(amount),
+    calculation: { ruleKey: `dashboard.value.sum_planned_${basis}`, expression: null, inputs: [], rounding: null },
+    headlineBasis: basis,
   };
 }

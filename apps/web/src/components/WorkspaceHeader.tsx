@@ -13,7 +13,15 @@ import type { WorkspaceHeader as Header } from "@mth/shared/schemas";
 import { InheritedApprovalBadge } from "../pages/gates/GatesPage.tsx";
 import { useDecisions } from "../api/queries.ts";
 import { useWorkspaceHeader } from "../pages/dashboards/api.ts";
-import { RagStatusChip, RecordLink, ValueView, keyText } from "../pages/dashboards/ui.tsx";
+import {
+  DrilldownPanel,
+  HeadlineList,
+  RagStatusChip,
+  RecordLink,
+  ValueView,
+  keyText,
+  useDrill,
+} from "../pages/dashboards/ui.tsx";
 import { useItemText } from "../pages/dashboards/MyWorkSections.tsx";
 import { DueDate } from "../pages/my-work/p4ui.tsx";
 import { PhaseStepper } from "../pages/transformations/common.tsx";
@@ -101,6 +109,44 @@ function DesignDecisionsLink({ tid }: { tid: string }) {
     <Link className="link block small" to={`/transformations/${tid}/decisions`} data-design-decisions={open}>
       {t("transformations.workspace.openDecisions", { n: open, total: decisions.data.length })}
     </Link>
+  );
+}
+
+/**
+ * The benefit figures (ADR-0037 / ADR-0030 amendment N3; D-119). With `benefits.headlines` the header shows the
+ * profit-and-cash planned and validated values as THE value, and the top-line (revenue uplift) and non-cash (avoided
+ * cost) figures beside them, each labelled with its basis and never added to it; every figure opens its drill-down.
+ * A profit-and-cash figure that is not applicable shows its reason, never 0 or green. Without `headlines` (an API
+ * before N3) the per-currency planned and validated values are shown as sent.
+ */
+function HeaderBenefits({ benefits, tid }: { benefits: Header["benefits"]; tid: string }) {
+  const { t } = useTranslation();
+  const [drill, openDrill, closeDrill] = useDrill();
+  if (benefits.headlines && benefits.headlines.length > 0) {
+    return (
+      <div data-benefit-headlines={benefits.headlines.length}>
+        <HeadlineList
+          id="header-benefits"
+          headlines={benefits.headlines}
+          onDrill={(hl, label) => openDrill(hl, `${t("transformations.workspace.benefits")} · ${label}`)}
+        />
+        {drill ? <DrilldownPanel target={drill} onClose={closeDrill} contextTid={tid} /> : null}
+      </div>
+    );
+  }
+  return (
+    <>
+      {benefits.planned.map((p) => (
+        <span key={`p-${p.currency}`} className="block" data-benefit-planned={p.currency}>
+          {t("dashboards.header.planned")}: <ValueView value={p.value} />
+        </span>
+      ))}
+      {benefits.validated.map((v) => (
+        <span key={`v-${v.currency}`} className="block" data-benefit-validated={v.currency}>
+          {t("dashboards.header.validated")}: <ValueView value={v.value} />
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -213,16 +259,7 @@ function HeaderGrid({ h, tid }: { h: Header; tid: string }) {
           <Unknown hint={t("dashboards.header.noBenefit")} />
         ) : (
           <>
-            {h.benefits.planned.map((p) => (
-              <span key={`p-${p.currency}`} className="block" data-benefit-planned={p.currency}>
-                {t("dashboards.header.planned")}: <ValueView value={p.value} />
-              </span>
-            ))}
-            {h.benefits.validated.map((v) => (
-              <span key={`v-${v.currency}`} className="block" data-benefit-validated={v.currency}>
-                {t("dashboards.header.validated")}: <ValueView value={v.value} />
-              </span>
-            ))}
+            <HeaderBenefits benefits={h.benefits} tid={tid} />
             <span className="block small" data-benefit-count={h.benefits.benefitCount}>
               {t("dashboards.header.benefitCount", { count: h.benefits.benefitCount })}
               {h.benefits.nonFinancialCount > 0
