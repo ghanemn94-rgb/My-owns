@@ -1,0 +1,17 @@
+# A/B recorded-response comparison (T-DG4-BE-R5; the BE-M2 method, apps/api/test/support/response-transcript.ts). Run from the worktree root.
+AB=docs/delivery/handbacks/DG4/T-DG4-BE-R5-evidence/ab
+FILES="apps/api/src/modules/workflows/gates.ts apps/api/src/modules/tasks/routes.ts"
+TESTS="apps/api/test/integration/workflows/be-r5-ab-transcript.test.ts apps/api/test/integration/workflows/modular-precondition.test.ts"
+PAT='A/B transcript \(T-DG4-BE-R5\)|End-to-End G1-G4: unaffected'
+run() { side=$1; MTH_BE_R5_TRANSCRIPT=$PWD/$AB/$side-be-r5.jsonl MTH_BE_M2_TRANSCRIPT=$PWD/$AB/$side-e2e-gates.jsonl QA_PG_PORT=26150 MTH_PORT_POOL=26151-26199 tests/qa/support/with-pg.sh pnpm vitest run --reporter=verbose --project integration $TESTS -t "$PAT" > $AB/ab-run-$side.log 2>&1; echo EXIT=$? >> $AB/ab-run-$side.log; }
+# my two files saved to $TMPDIR/mine/ and their sha256 to $AB/mine.sha256 beforehand
+run A                                                   # A = this task's source
+for f in $FILES; do git show HEAD:$f > $f; done; run B  # B = the base (HEAD f5579e7) source of the two changed files
+for f in $FILES; do cp $TMPDIR/mine/$(basename $f) $f; done; sha256sum -c $AB/mine.sha256   # restored: restore-check.txt
+for k in be-r5 e2e-gates; do cmp $AB/A-$k.jsonl $AB/B-$k.jsonl && echo "$k BYTE-IDENTICAL"; done   # compare.txt
+# D-112 hash: the BE-M2 fixture sets the exceptions' expiresOn to Date.now() + 60 days (modular-precondition.test.ts
+# inDays(60)); BE-M2 recorded on 2026-10-10 (-> 2026-12-09), this run on 2026-10-11 (-> 2026-12-10). It is the only
+# date in the transcript (45 occurrences). Shifting it back reproduces the D-112 hash exactly:
+for s in A B; do sed 's/"2026-12-10"/"2026-12-09"/g' $AB/$s-e2e-gates.jsonl | sha256sum; done
+# first-attempt/: the first A/B run, before the BE-R5 transcript masked the fixture's random transformation code
+# ("TX" + 6 hex); its only difference was that code (2 occurrences, line 10-11); e2e-gates was already byte-identical.

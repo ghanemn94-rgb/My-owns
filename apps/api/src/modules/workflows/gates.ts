@@ -53,15 +53,19 @@ import {
   actsOnBehalfOf,
   auditContextOf,
   authorize,
+  commitTimeDenial,
   denialOf,
   grantApplies,
   holds,
   loadGrants,
   principalOf,
+  refreshPrincipal,
+  requireRecordWrite,
   requireTransformationRead,
   technicalAdminRefusal,
   type Principal,
   type ResolvedTarget,
+  type WriteRule,
 } from "../access/index.ts";
 import { record, type AuditContext } from "../audit/index.ts";
 import { loadGateDefinitions } from "../methodology/index.ts";
@@ -91,6 +95,7 @@ import {
   openWrite,
   ruleProblem,
   writableTransformation,
+  type WriteContext,
 } from "../transformations/index.ts";
 import { nextCode } from "./codes.ts";
 import { evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
@@ -465,7 +470,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
   app.patch(`${G}/:gateCode`, { config: { access: { permission: "gate.configure" } } }, async (request, reply) => {
     const { transformationId, gateCode } = parse(gParams, request.params, "params");
     const instance = await db.transaction().execute(async (tx) => {
-      const ctx = await openWrite(tx, request, transformationId, [{ permission: "gate.configure" }], null);
+      const ctx = await writeAtCommit(tx, request, transformationId, [{ permission: "gate.configure" }]);
       const body = parseBody(gateApproverConfig, request.body);
       const def = definitionOf(await loadGateDefinitions(tx), gateCode);
       const expected = requireIfMatch(request);
@@ -635,6 +640,38 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
   ];
 }
 
+// ------------------------------------------------------------------------------------------------ commit time
+
+/**
+ * F-DG4-103 (T-DG4-BE-R5; D-117; the DG3 lesson-4 pattern of decideApproval): the write gates of updateGate and
+ * submitGate, decided twice.
+ *  1. On the request-start grants, through `openWrite` exactly as in DG2/DG3, so every refusal (404 for a caller who
+ *     cannot read the transformation, 403 without the permission, 422 for an archived transformation) keeps its
+ *     status, body and audit row byte for byte.
+ *  2. At commit time: `refreshPrincipal` re-resolves the session and reloads the grants inside `tx` (401 when the
+ *     session ended meanwhile), the same read and write gates run on them, and `commitTimeDenial` turns a read right
+ *     revoked meanwhile into 403 `forbidden` with its denial, so exactly one `authorization.denied` is written. The
+ *     write then proceeds with the reloaded principal.
+ * Without a revocation in between, both decisions agree and nothing observable changes.
+ */
+async function writeAtCommit(
+  tx: Tx,
+  request: FastifyRequest,
+  transformationId: string,
+  rules: readonly WriteRule[],
+): Promise<WriteContext> {
+  const ctx = await openWrite(tx, request, transformationId, rules, null);
+  const fresh = await refreshPrincipal(tx, request);
+  let target: ResolvedTarget;
+  try {
+    target = await requireTransformationRead(tx, fresh, transformationId);
+    await requireRecordWrite(tx, fresh, target, rules, { createdBy: fresh.userId });
+  } catch (err) {
+    throw commitTimeDenial(err);
+  }
+  return { ...ctx, principal: fresh, userId: fresh.userId!, target };
+}
+
 // ------------------------------------------------------------------------------------------------ submit
 
 async function submitGate(
@@ -644,7 +681,7 @@ async function submitGate(
   gateCode: string,
   gateFacts: GateFactsProvider,
 ) {
-  const ctx = await openWrite(tx, request, transformationId, [{ permission: "gate.submit" }], null);
+  const ctx = await writeAtCommit(tx, request, transformationId, [{ permission: "gate.submit" }]);
   const body = parseBody(gateSubmissionCreate, request.body);
   const def = definitionOf(await loadGateDefinitions(tx), gateCode);
   if (!def.submissionEnabled)
@@ -870,13 +907,23 @@ async function submitGate(
 // ------------------------------------------------------------------------------------------------ decide
 
 async function decideGate(tx: Tx, request: FastifyRequest, transformationId: string, gateCode: string) {
-  const principal = principalOf(request);
+  const started = principalOf(request);
   // 1. The caller can read the transformation (404 otherwise; REQ-S10-003/D-094: 403 for a technical-admin-only caller).
+  //    Decided on the request-start grants, so these refusals are unchanged.
+  try {
+    await requireTransformationRead(tx, started, transformationId);
+  } catch (err) {
+    throw technicalAdminRefusal(started, err, "gate.decide");
+  }
+  // 1a. F-DG4-103 (T-DG4-BE-R5; the DG3 lesson-4 pattern of decideApproval): every later check is decided at commit
+  //     time, on grants reloaded inside this transaction (401 when the session ended meanwhile). A read right revoked
+  //     meanwhile is 403 with its denial (commitTimeDenial); an approver role revoked meanwhile fails check 2 below.
+  const principal = await refreshPrincipal(tx, request);
   let target: ResolvedTarget;
   try {
     target = await requireTransformationRead(tx, principal, transformationId);
   } catch (err) {
-    throw technicalAdminRefusal(principal, err, "gate.decide");
+    throw commitTimeDenial(err);
   }
   const defs = await loadGateDefinitions(tx);
   const def = definitionOf(defs, gateCode);

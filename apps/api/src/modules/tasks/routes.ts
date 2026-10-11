@@ -21,6 +21,7 @@ import {
   decodeCursor,
   filterHash,
   HttpProblem,
+  type DenialInfo,
   iso,
   isoOrNull,
   limitSchema,
@@ -126,6 +127,23 @@ function callerOf(request: FastifyRequest): string {
   return principal.userId;
 }
 
+/**
+ * F-DG4-100 (T-DG4-BE-R5; D-117; ADR-0004 §3): the 403 `work_item.not_assignee` is a failed authorization of a
+ * mutation, so it carries its denial and the failed-mutation audit (access/denials.ts) writes exactly one
+ * `authorization.denied`. The record named is the item's scope, as `denialOf` names a target: its transformation, or
+ * its organization for an item outside any transformation. The refused action is `work_item.complete` (only the
+ * assignee completes; no role permission grants it). The response body is unchanged.
+ */
+function notAssigneeDenial(item: WorkItemRow): DenialInfo {
+  return {
+    permission: "work_item.complete",
+    recordType: item.transformation_id !== null ? "transformation" : "organization",
+    recordId: item.transformation_id ?? item.organization_id,
+    organizationId: item.organization_id,
+    transformationId: item.transformation_id,
+  };
+}
+
 async function completeItem(tx: Tx, request: FastifyRequest, workItemId: string): Promise<WorkItemRow> {
   callerOf(request);
   const fresh = await refreshPrincipal(tx, request); // commit-time: 401 when the session ended meanwhile
@@ -139,7 +157,7 @@ async function completeItem(tx: Tx, request: FastifyRequest, workItemId: string)
   // Existence is disclosed only inside an organization the caller belongs to (anyone else: 404).
   if (!current || !organizationsWith(fresh, "organization.read").includes(current.organization_id))
     throw problems.notFound();
-  if (current.assignee_user_id !== userId) throw taskRefusals.notAssignee();
+  if (current.assignee_user_id !== userId) throw taskRefusals.notAssignee().withDenial(notAssigneeDenial(current));
   const expected = requireIfMatch(request);
   if (current.version !== expected) throw problems.versionConflict(current.version);
   if (current.status !== "open") throw taskRefusals.closed();
