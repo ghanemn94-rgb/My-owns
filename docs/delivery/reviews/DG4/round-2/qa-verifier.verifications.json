@@ -1,0 +1,29 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:3f51b79d… (source 93a7dd7). In the register, REQ-PB-010 and REQ-S03-004 are the only rows that changed between a91d82c and 93a7dd7; no other row changed. Both rows now cite QA-D's tests: tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts for REQ-PB-010, and tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts for REQ-S03-004. Both notes end with 'No test gap remains', and the false gap sentences are gone. Every evidence path of both rows exists as a regular file (9 for PB-010, 13 for S03-004). I read both tests against the literal acceptance texts. a01 renames a launched initiative with ONE PATCH and then checks the T10 Portfolio area (the scorecard), traceability, the roadmap and the benefits register. All of them show the new name and none shows the old one; there is exactly one initiative row and exactly one initiative.update audit event. That is A01 as written. a02-a08 asserts that G2 is not approved, then saves Design-phase drafts (201/200) before G2. A scale transition before G5 is 422 invalid-transition gate.g5_not_approved naming G5, and writes no scale_transition row. After the G5 approval, the same transition is 201. That is A02;A08 as written. In this review both tests are green in tests/qa run alone (a01 2/2, a02-a08 1/1) and in both full integration runs. validate.mjs --register DG4 PASS. Residual, not worth a finding: the rows cite the round-1 tests/qa log as their run evidence. That is accurate, and the same tests pass here.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-2/03-integration-tests-qa-candidate-only.log",
+        "docs/delivery/test-evidence/DG4/qa/round-2/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-2/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-2/05-validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/qa/round-2/06-requirement-trace.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:3f51b79d… on ONE stack per run, as in round 1. In each run, all 23 product journey specs (apps/web/e2e), the 4 root acceptance specs (e2e/) and my sweep ran together in chromium-en and chromium-ar, --workers=1. There were two full runs: locale unset, and C.UTF-8. In both, journeys.spec.ts passed 9/9 in chromium-en and 9/9 in chromium-ar, including 'administration screens (access + technical administrator)' and its two serial followers. Before the repair, that test failed in chromium-ar in both round-1 full runs. The diff (apps/web/e2e/journeys.spec.ts +13 lines) fills the users-register search with 'Synthetic Transformation Lead', waits for GET /api/v1/users?q=<that name> → 200, and only then expects the link. So the test no longer depends on page 1 of the list, and it still asserts the same visible link and the same axe check. No product file is involved. The only non-passing test in those runs is p2-journeys 'Define → G2', a 30 s timeout under load, and it is unrelated (see the record, QA-R2-04).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-2/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-2/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-2/04-e2e-full-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-2/04-e2e-full-cutf8-summary.txt"
+      ]
+    }
+  ]
+}
