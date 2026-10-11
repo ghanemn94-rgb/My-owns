@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-140",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-010",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register rows REQ-PB-010 and REQ-S03-004 still disclose test gaps that QA-D closed, and their evidence omits the two QA-D acceptance tests",
+      "reproduction": "On the frozen candidate (a613f6f, candidate sha256:19656b1f…): read the notes and evidence of REQ-PB-010 and REQ-S03-004 in docs/delivery/requirements.csv, and compare them with tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts and tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (T-DG4-QA-D, merged before the freeze; D-116 says they 'close AN-P4A's two test gaps'). grep -c 'a01-one-source-of-truth-scorecard\\|a02-a08-drafts' docs/delivery/requirements.csv returns 0. Both QA-D tests ran green in this review (tests/qa 172/172 in 03-integration-tests-qa-candidate-only.log; 2/2 and 1/1 in integration run 1 and run 2).",
+      "expected": "Once QA-D's tests are merged into the candidate, the two rows cite them in `evidence`, and their notes no longer state a coverage gap that no longer exists (for REQ-PB-010: 'Partial: the scorecard read ... is not re-read after the rename by any test'; for REQ-S03-004: 'The A02 Design-phase draft can be saved before G2 clause is not asserted by a DG4 test').",
+      "actual": "Both rows still state the gap, and neither cites the QA-D test that closes it. The register therefore understates the evidence for two DG4 acceptance clauses and points auditors to weaker evidence (the DG2 registers.test.ts for the A02 clause). No behaviour is affected: the clauses are met and tested (REQ-PB-010 scorecard re-read and REQ-S03-004 draft-before-G2, 422 gate.g5_not_approved, then 201 after G5).",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG4/qa/T-DG4-QA-D-authoring/HANDBACK-T-DG4-QA-D-qa-verifier.md",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-tests-qa-candidate-only.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-run1.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T23:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 1 (T-DG4-REV-QA-R1). Documentation drift only; non-blocking."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-141",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-011",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product e2e 'administration screens' (apps/web/e2e/journeys.spec.ts) depends on the users register's first page of 25 and fails in chromium-ar when the product journeys and the root acceptance specs share one stack",
+      "reproduction": "On the frozen candidate, run the product journeys and the root acceptance specs together on one real stack, as the DG4 assignment asks: e2e/support/qa-stack.sh npx playwright test apps/web/e2e/*.spec.ts e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a20-bilingual-shell.spec.ts --workers=1 (chromium-en then chromium-ar). In chromium-ar, 'administration screens (access + technical administrator)' fails at expect(getByRole('link', { name: 'Synthetic Transformation Lead' })).toBeVisible() after page.goto('/admin/users'), and its two serial followers do not run. Reproduced in both locale settings (04-e2e-full-unset.log, 04-e2e-full-cutf8.log). The trace shows GET /api/v1/users?...&limit=25 -> 200 with 25 items and a nextCursor, without that user. The same spec run alone on a fresh stack passes 9/9 in both projects (04-e2e-solo-journeys-qa-unset.log).",
+      "expected": "A product journey asserts its own fixture independently of how many other synthetic users exist on the shared stack, for example by searching the register for the user, or by following the pager. The DG4 assignment runs the product journeys and the root acceptance specs on one stack in both projects, so the suite has to be order- and data-independent.",
+      "actual": "The test assumes 'Synthetic Transformation Lead' is on page 1 of the users register (25 per page, UsersPage.tsx). In chromium-ar it runs after the whole chromium-en project, whose synthetic users (product specs, plus e2e/a04, e2e/a08-a09 and e2e/a20) sort before it. It passes in chromium-en (it runs 7th there) and in the pre-freeze product-only run (D-116). The product behaves correctly: the page shows 25 users and a next-page control. Test robustness only; no product defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-journeys-admin-failure-analysis.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/journeys-admin-failure/unset-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-solo-journeys-qa-unset.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T00:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 1 (T-DG4-REV-QA-R1). Test data-dependence, reproduced in both locale settings, green when run alone; non-blocking."
+        }
+      ]
+    }
+  ]
+}

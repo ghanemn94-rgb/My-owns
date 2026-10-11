@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 1,
+  "candidate_id": "sha256:19656b1ff2cc5ce167e8651166631c105d74883e45e1d714e8cff0d087eae86e",
+  "source_commit": "a91d82cf6fb6f5bffe68e623d469307421ad121b",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-QA-R1-qa-verifier-20261010T212648Z-f5fe7a31",
+    "session_id": "f5fe7a31-0f8b-4ace-8cb4-605d5263d717"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG4 scope. In this round I wrote only these files: three QA test files outside the frozen candidate (docs/delivery/test-evidence/DG4/qa/tests/round-1/e2e/dg4-qa-r1.spec.ts and integration/dg4-qa-r1-probes.test.ts and dg4-qa-r1-scope-totals.test.ts), the evidence under docs/delivery/test-evidence/DG4/qa/round-1/, and this record with its narrative and findings sidecar. Each test file was copied into a disposable clone under $TMPDIR only to run, and removed afterwards; both clones were clean at the end, with the candidate ID unchanged. The candidate's own acceptance suites under tests/qa/** and e2e/** were authored by earlier qa-verifier authoring runs (T-DG4-QA-A/B/C/D), not by this run. I treated them as test code under review: I re-ran each one, and I read each against the literal acceptance text. I formed this verdict before reading any other reviewer's round-1 record; I read none. Every product approval exercised here is a synthetic in-product approval of synthetic test data. Product gates G1-G6 never imply DG0-DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-1/qa-verifier.md",
+  "requirements_checked": ["REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044", "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011", "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025", "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+  "checks_run": [
+    {
+      "id": "QA-R1-00-candidate",
+      "environment": "repo /home/user/My-owns (HEAD a613f6f at the start, 4434ec9 at the end); full non-shallow clones $TMPDIR/rv and $TMPDIR/rv2 @ a613f6f; node v24.21.0",
+      "procedure": "Confirm the frozen candidate at the start and at the end. Checks: the assignment's sha256; HEAD's lineage from the source commit; the diff outside docs/delivery/; and the candidate ID recomputed in the repo and in both clones.",
+      "command": "sha256sum <assignment>; git rev-parse HEAD; git merge-base --is-ancestor a91d82c HEAD; git diff --name-only a91d82c..HEAD | grep -v ^docs/delivery/; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG4 (repo, rv, rv2)",
+      "expected": "assignment sha256 d4ad66d4…; candidate sha256:19656b1f… with 1449 files everywhere; HEAD descends from a91d82c, with changes only under docs/delivery/; complete clones",
+      "actual": "The assignment's sha256 matched. At the start, the repo and rv (HEAD a613f6f, the freeze commit) both gave sha256:19656b1f… with 1449 files; a91d82c..a613f6f changed 6 files, all under docs/delivery/. At the end, the repo HEAD was 4434ec9 (other runs' record commits), with 0 files changed outside docs/delivery/ since a91d82c. The repo, rv and rv2 again gave sha256:19656b1f… with 1449 files. Both clones are non-shallow, and their git status was clean at the end. One intermediate reading of rv (1450 files) was taken while my e2e spec copy was in place for a running suite; the copy was removed when the suite ended, and the final re-check is 1449. The start-of-run console output is transcribed in 00-candidate-start-transcribed.log, and the end-of-run checks are captured in 00-candidate-end.log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/00-candidate-start-transcribed.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/env.txt"
+      ]
+    },
+    {
+      "id": "QA-R1-00-install",
+      "environment": "$TMPDIR/rv; node v24.21.0; pnpm 10.33.0; offline (no network)",
+      "procedure": "Offline frozen-lockfile install in the disposable clone, from a copy of the pre-populated pnpm store.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pnpm-store-root/v10",
+      "expected": "exit 0; no download",
+      "actual": "Exit 0. 371 packages reused, 0 downloaded. Two WARN lines say the mth-db bin could not be linked because packages/db/dist/cli.js did not exist yet; the build creates it, as in DG3. The clone's node_modules is writable, so 'pnpm test' ran unchanged. As the assignment asks, every direct vitest invocation still used --configLoader runner.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/qa/round-1/00-install.log"]
+    },
+    {
+      "id": "QA-R1-01-static",
+      "environment": "$TMPDIR/rv; node v24.21.0",
+      "procedure": "The seven static checks of the assignment, each tee'd to its own log.",
+      "command": "scripts/run-static.sh: pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "expected": "all exit 0; OpenAPI 652 operations",
+      "actual": "All seven exited 0. openapi:lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations'. no-cdn PASS; Prettier 'All matched files use Prettier code style!'; contrast: every pair PASS. The words 'error' and 'warn' that appear in these logs are explained here: the contrast log's lines are token names (feedback.error.fg…) with PASS; the lint log line is the '--max-warnings=0' command. The build prints Vite's advisory '(!) Some chunks are larger than 500 kB' for index-*.js (1,145.85 kB minified); it is not an error, and the build exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-check-contrast.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/run-static.sh"
+      ]
+    },
+    {
+      "id": "QA-R1-02-unit",
+      "environment": "$TMPDIR/rv; TZ=UTC CI=1; node 22.22.2 (/opt/node22/bin) and 24.21.0; LANG/LC_ALL/LC_CTYPE unset, and LANG=LC_ALL=C.UTF-8; load average 2-18 (three reviews at once)",
+      "procedure": "pnpm test (unit-node and unit-web, then unit-formula-nocodegen) on both Node versions in both locale settings. Every first run that was not green is kept, explained, and re-run.",
+      "command": "scripts/run-unit.sh; scripts/run-unit-one.sh node24 C -run2; scripts/run-unit-one.sh node22 C -run2",
+      "expected": "every configuration exits 0 (2771 tests, then 259 passed and 2 skipped in the no-codegen project)",
+      "actual": "Final results: all four configurations exit 0, each with 145 files and 2771 passed, then 3 files with 259 passed and 2 skipped. The logs: node22-unset (run 1), node24-unset (run 1), node22-C run 2 and node24-C run 2. Not counted, and explained: (1) node22-C run 1 exited 1. One test, apps/api/src/architecture.test.ts › 'every import respects dependsOn…' (a whole-repo AST scan), hit its 30 s timeout at 34.9 s under a load average of about 15; 2770 others passed. The same test took 24.0 s at load 9, 27.6 s at load 17 and 8.2 s at load 7 (run 2). This is load, not an assertion; under heavy load the test runs close to its timeout (observation). (2) node24-C run 1 is incomplete (375 lines): my agent harness's 30-minute background limit stopped the runner script; the test run did not fail. The log is kept with a marker line. The 2 skipped tests are fuzz.test.ts's two ESLint-based cases, skipIf(NOCODEGEN) by design: ESLint's ajv needs code generation. Both run in unit-node, where they pass. The words 'failed' in passing test titles (for example 'a failed read shows its error') are titles, not failures. tests/qa/unit/a05-calc-units.test.ts (15 tests) ran in unit-node and passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node22-C-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node24-C-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node22-C-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node24-C-run1-KILLED-by-runner-30min-limit.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/run-unit.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/run-unit-one.sh"
+      ]
+    },
+    {
+      "id": "QA-R1-03-integration-x2",
+      "environment": "$TMPDIR/rv; node v24.21.0; disposable PostgreSQL 16.13 (UTF8, C locale) from tests/qa/support/with-pg.sh; ports 26510 and 26530 (both bound on attempt 1)",
+      "procedure": "The whole integration project, twice, each on a fresh cluster. Covers migrations 0001-0060, contract.test.ts (652 operations) and the p4-pending lists.",
+      "command": "QA_PG_PORT=26510|26530 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose",
+      "expected": "both runs exit 0; 60 migrations applied; contract test green; every p4-pending-*.ts list empty",
+      "actual": "Run 1: 'applied 60 migrations to a fresh database'; 202 files, 1922/1922 passed, 998 s. Run 2: the same, 202 files, 1922/1922, 968 s. contract.test.ts: 45 cases green in each run, including route coverage both ways, 'covers every operation with at least one success and every successful body with its zod mirror', and the 400/429/media-type sweeps over every operation. The 40 apps/api/test/support/p4-pending-*.ts files: 32 are literal empty lists, and 8 are spreads of those (03-pending-lists.txt). Lines in the logs that say error or warn, explained: three 'npm warn Unknown project config' lines come from npx reading .npmrc. The BE17/BE18 stdout lines come from the connection-hygiene and request-io tests and print 'errors':[]. The one BE17 db-econnreset line ('status':500 with an ECONNRESET error log) is that test's intended outcome: the passing test 'no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-pending-lists.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/run-integration.sh"
+      ]
+    },
+    {
+      "id": "QA-R1-03b-tests-qa-alone",
+      "environment": "$TMPDIR/rv; node v24.21.0; disposable PostgreSQL 16.13; port 26580 (and 26550 for the run with my probes)",
+      "procedure": "The candidate's acceptance suites under tests/qa, run on their own with nothing added. A second run added my probe file; its first attempt is kept.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa",
+      "expected": "15 files, 172/172",
+      "actual": "Candidate only: 15 files, 172/172, exit 0. Per file: a01 2, a02-a08 1, a03 12, a04-a05-a10 partials 4, a04 8, a05 17, a08 31, a09 17, a10 16, a11-adoption 12, a11-bau-sustain 17, a11-value-closure 11, a12 14, a13 5, a14 5. In the earlier run with my probe file added (exit 1), the same 172 candidate tests passed. 6 of my 7 probes passed, and 1 failed because of my own wrong expectation (see QA-R1-03d).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-tests-qa-candidate-only.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-tests-qa-with-r1-probes-run1-PROBE-EXPECTATION-ERROR.log"
+      ]
+    },
+    {
+      "id": "QA-R1-03c-REQ-DLV-036",
+      "environment": "$TMPDIR/rv (frozen candidate); node v24.21.0; disposable PostgreSQL 16.13; port 26570",
+      "procedure": "REQ-DLV-036 asks that the A04, A09, A10 and A11 executable tests pass on this frozen candidate. I ran those six files explicitly and counted each suite.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/a04-kpi-propagation.test.ts a09-decision-escalation.test.ts a10-benefit-integrity.test.ts a11-adoption.test.ts a11-value-closure.test.ts a11-bau-sustain.test.ts",
+      "expected": "all pass",
+      "actual": "Exit 0, 6 files, 81/81. A04 a04-kpi-propagation 8/8 (real API, worker and PostgreSQL). A09 a09-decision-escalation 17/17. A10 a10-benefit-integrity 16/16. A11: a11-adoption 12/12, a11-value-closure 11/11 and a11-bau-sustain 17/17, so 40/40. The same files also passed in both full integration runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-036", "REQ-S20-004", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+      "evidence": ["docs/delivery/test-evidence/DG4/qa/round-1/03-integration-dlv036-a04-a09-a10-a11.log"]
+    },
+    {
+      "id": "QA-R1-03d-probe-entity-groups-and-period-open",
+      "environment": "$TMPDIR/rv; disposable PostgreSQL 16.13; ports 26550 (run 1) and 26560 (run 2); my file docs/delivery/test-evidence/DG4/qa/tests/round-1/integration/dg4-qa-r1-probes.test.ts copied into tests/qa/integration/ only to run",
+      "procedure": "P1: the 'ERD and migrations contain every entity listed … with primary keys, owner and status where applicable' half of REQ-S16-011, -014, -017, -018, -019 and -020; it was covered only by an analyst inspection, or by QA-B's test for 018/019. For every listed entity, the probe checks that its ERD §2 table is named in docs/architecture/erd.md, exists after migrations 0001-0060, has exactly one primary key, and has the owner/scoping and status columns I expected; it also logs every owner-like and status-like column. P2: REQ-S12-005 with two KPI owners, where the worker's own test has one. Owner 1 owns 2 KPIs and owner 2 owns 1; another organization has its own KPI and due period. openDuePeriods runs twice.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r1-probes.test.ts",
+      "expected": "P1: every entity passes; P2: one period opened; exactly 3 kpi_update_due tasks, one per (KPI, owner); none for a bystander or for the other organization; a re-run creates nothing",
+      "actual": "Run 2: 7/7, exit 0. P1: all six groups pass, and every table has 1 primary key and its organization/transformation scoping. The QA-P1 lines in the log give each table's owner and status columns. P2: first run {opened:1, tasks:3}: owner 1 has 2 tasks (one per KPI) and owner 2 has 1; nothing for the bystander or for organization B; the re-run gives {opened:0, tasks:0}, still 3 tasks. Run 1 (exit 1) failed only on my expectation that benefit_formula_version has a 'status' column. The ERD's slice-B register (§1f.3) names validation_status as that immutable table's status column, and migration 0023 defines it. I corrected the probe (documented in the file). That failure was my error, not a product defect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S12-005"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-r1-probes-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-tests-qa-with-r1-probes-run1-PROBE-EXPECTATION-ERROR.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-1/integration/dg4-qa-r1-probes.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R1-03e-probe-S13-001-figures",
+      "environment": "$TMPDIR/rv; disposable PostgreSQL 16.13; port 26590; my file docs/delivery/test-evidence/DG4/qa/tests/round-1/integration/dg4-qa-r1-scope-totals.test.ts copied in only to run",
+      "procedure": "REQ-S13-001 says 'no tile, TOTAL or drill-down contains a transformation Y record or FIGURE'. The candidate's tests look for Y ids and distinctive Y numbers; a Y amount summed into an X total would not appear that way. The probe compares figures instead. X (BU a1) has validated benefit value 700 and Y (BU a2) has 55555.5. A user granted only at X reads the Executive Overview, Finance and Adoption dashboards for the organization. These must equal the organization-wide auditor's views filtered with transformationId=X, figure for figure (timestamps, hrefs and filters removed). As a sanity check, the auditor's unfiltered view must differ, so the probe can fail.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r1-scope-totals.test.ts",
+      "expected": "3/3: the views are equal, and no Y amount or X+Y sum appears",
+      "actual": "Run 2: 3/3, exit 0. The overview, Finance and Adoption views are identical to the auditor's X-filtered views; the unfiltered auditor view differs for the overview and Finance. Neither 55555.5, 987654.32, the X+Y sums nor the Y id appears. Run 1 (exit 1) ran no test because of my import error (seedWorld is not re-exported by tests/qa/support/api.ts); I fixed the import.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-r1-scope-totals-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-r1-scope-totals-run1-PROBE-IMPORT-ERROR.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-1/integration/dg4-qa-r1-scope-totals.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R1-04-e2e-full-unset",
+      "environment": "$TMPDIR/rv; env -u LANG -u LC_ALL -u LC_CTYPE; e2e/support/qa-stack.sh: a disposable PostgreSQL (26620), migrations 0001-0060, seed-dev, and the built API serving the built SPA (26625); Chromium from /opt/pw-browsers; --workers=1; projects chromium-en (en-US) and chromium-ar (ar-SA), Asia/Riyadh",
+      "procedure": "Every product journey (apps/web/e2e/*.spec.ts, 23 files), the root acceptance specs (e2e/a03, a04, a08-a09, a20) and my sweep e2e/dg4-qa-r1.spec.ts (revision 1, sha256 2c28fcda…), in both projects, on one stack.",
+      "command": "scripts/run-e2e.sh unset 26620 26625 full <23 product specs> e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a20-bilingual-shell.spec.ts e2e/dg4-qa-r1.spec.ts",
+      "expected": "352 tests pass",
+      "actual": "Exit 1: 345 passed, 3 failed, 4 did not run. Each failure explained: (a) apps/web/e2e/journeys.spec.ts 'administration screens (access + technical administrator)' failed in chromium-ar only (9.9 s), so its 2 serial followers did not run. The assertion was getByRole('link', {name:'Synthetic Transformation Lead'}) not visible on /admin/users. The trace shows GET /api/v1/users?…&limit=25 → 200 with 25 items and a nextCursor, without that user, because the synthetic users that the chromium-en project created sort before it. This is test data-dependence (F-DG4-141), not a product defect. It passes in chromium-en, and alone in both projects (QA-R1-04c). (b and c) My own revision-1 lead sweep timed out at 30 min in both projects, so its 2 'Z' tests did not run. On /admin/calendar the lead first sees an h1, then the 'Not found' state replaces it, and my unbounded textContent(h1) waited for ever. That was my spec's bug, fixed in revisions 2 and 3. Product journeys: 329/332 (1 failed, 2 did not run). Root acceptance specs: 14/14 (A03 2+2, A04 1+1, A08/A09 2+2, A20 2+2). No product test timed out; the slowest was 27.0 s (chromium-ar p2 'Define → G2'), under its 30 s limit. The second half of this run overlapped the C.UTF-8 run, which had separate ports, clone and database.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S20-003", "REQ-S20-004", "REQ-S20-008", "REQ-S20-009", "REQ-S07-017"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-journeys-admin-failure-analysis.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/journeys-admin-failure/unset-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/run-e2e.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/summ-e2e.py"
+      ]
+    },
+    {
+      "id": "QA-R1-04b-e2e-full-cutf8",
+      "environment": "$TMPDIR/rv2 (a copy of rv; candidate re-verified at 1449 files); env LANG=C.UTF-8 LC_ALL=C.UTF-8; qa-stack.sh PG 26640, API 26645; Chromium /opt/pw-browsers; --workers=1; chromium-en and chromium-ar",
+      "procedure": "The same 352 tests as QA-R1-04, in the second locale setting, with my sweep at revision 2 (sha256 328332d1…).",
+      "command": "CLONE=$TMPDIR/rv2 scripts/run-e2e.sh cutf8 26640 26645 full <the same spec list>",
+      "expected": "352 tests pass",
+      "actual": "Exit 1: 349 passed, 1 failed, 2 did not run. The only failure is the same journeys.spec.ts 'administration screens' test in chromium-ar (10.2 s), with the same assertion and cause (F-DG4-141); its 2 serial followers did not run. Product journeys 329/332; root acceptance specs 14/14; my sweep 6/6, with 474 recorded checks per language and 0 failed. No product test timed out; the slowest was 26.3 s.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S20-003", "REQ-S20-004", "REQ-S20-008", "REQ-S20-009", "REQ-S07-017"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-full-cutf8/dg4-qa-r1-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-full-cutf8/dg4-qa-r1-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R1-04c-e2e-solo-rerun",
+      "environment": "$TMPDIR/rv2; locale unset; a fresh qa-stack (PG 26660, API 26665); --workers=1; chromium-en and chromium-ar",
+      "procedure": "The assignment says a failing spec is re-run alone. I re-ran journeys.spec.ts, the failing product spec, together with my sweep at revision 3 (sha256 ed7c3c42…, the file kept in the evidence).",
+      "command": "CLONE=$TMPDIR/rv2 scripts/run-e2e.sh unset 26660 26665 solo-journeys-qa apps/web/e2e/journeys.spec.ts e2e/dg4-qa-r1.spec.ts",
+      "expected": "all pass",
+      "actual": "Exit 0, 24/24. journeys.spec.ts 9/9 in chromium-en and 9/9 in chromium-ar, including 'administration screens' and its two followers. dg4-qa-r1.spec.ts 3/3 in each project.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-solo-journeys-qa-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-solo-journeys-qa-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-solo-journeys-qa-unset/dg4-qa-r1-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-solo-journeys-qa-unset/dg4-qa-r1-checks-ar.json"
+      ]
+    },
+    {
+      "id": "QA-R1-04d-bilingual-axe-aud-390-200",
+      "environment": "part of QA-R1-04/04b/04c; my spec docs/delivery/test-evidence/DG4/qa/tests/round-1/e2e/dg4-qa-r1.spec.ts",
+      "procedure": "My sweep covers 59 P4 routes in each language: 43 transformation routes from router.tsx, the seeded forum's detail page, and 15 organization routes. As dev.auditor (AUD) at 1280 px, it checks that the page renders (h1, or the product's no-permission state), <html lang dir> (en/ltr, ar/rtl), axe wcag2a/aa/21a/aa with 0 serious or critical issues, and that no write request is sent. As both AUD and dev.lead (TL), it checks for no page-level horizontal scroll at 390 px and at 200 % root text. The product journeys add their own axe assertions (0 serious/critical) on every screen they visit; the P4 specs include AUD read-only, 390 px and 200 % steps.",
+      "command": "see QA-R1-04, 04b and 04c",
+      "expected": "0 failed checks; axe 0 serious/critical; AUD sends no writes; no overflow",
+      "actual": "C.UTF-8 run (revision 2) and solo run (revision 3): 474 checks per language, 0 failed, in both runs. All 59 routes: lang/dir correct, axe 0 serious or critical, 390 px and 200 % with no page-level overflow for both AUD and TL, and 'S1-aud-sends-no-writes' passes. Rendered as no-permission states, which is role-consistent and by design: AUD on /admin/jobs (job.read belongs to ADM_TECH only, migration 0031); TL on /admin/calendar, /admin/jobs, /governance/groups and /dashboards/rag-policy. In the locale-unset run (revision 1) the AUD sweep recorded 445 checks per language; its only failure was /admin/jobs recorded as 'no-h1', which is that same no-permission state, and every axe, lang/dir, overflow and no-write check passed there too. All product P4 specs (adoption-bau, benefits, change-phases, dashboards, execution, gates-closure, governance, kpi, raid-governance, route-splitting, traceability) passed in both projects in both full runs, including their own axe, AUD and 390 px/200 % steps.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-full-cutf8/dg4-qa-r1-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-full-cutf8/dg4-qa-r1-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-full-unset/dg4-qa-r1-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/e2e-full-unset/dg4-qa-r1-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-1/e2e/dg4-qa-r1.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R1-05-register-pipeline-historical",
+      "environment": "repo /home/user/My-owns, HEAD a613f6f; node v24.21.0",
+      "procedure": "The register, pipeline and historical-gate validators.",
+      "command": "node tools/gates/validate.mjs --register DG4; --pipeline; --historical --stage DG3; --historical --stage DG2; --historical --stage DG1",
+      "expected": "all PASS, exit 0",
+      "actual": "'PASS register rules at DG4'; 'PASS pipeline (active stage: DG4 REVIEWING)'; 'PASS gate DG3 (historical)'; 'PASS gate DG2 (historical)'; 'PASS gate DG1 (historical)'. Every one exited 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/05-validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/05-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/05-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/05-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/05-validate-historical-stage-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R1-06-requirement-trace",
+      "environment": "docs/delivery/requirements.csv (137 rows with final_gate DG4) against this review's logs",
+      "procedure": "For each of the 137 rows, every evidence path that is a test file (*.test.ts(x) or *.spec.ts) is looked up in my unit (node24 unset), integration (run 1 and run 2) and e2e (unset and C.UTF-8) logs, with its passed and failed counts.",
+      "command": "python3 scripts/trace.py /home/user/My-owns docs/delivery/test-evidence/DG4/qa/round-1",
+      "expected": "every row has at least one evidence test that ran in this review, and none failed",
+      "actual": "137/137 rows. Every evidence test file named by every row ran in this review's logs, and 0 of them failed. Not one evidence path was 'NOT FOUND'. All 137 rows are IMPLEMENTED. The failing e2e test of QA-R1-04/04b (journeys.spec.ts) is not evidence for any DG4 row.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/06-requirement-trace.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/scripts/trace.py"
+      ]
+    },
+    {
+      "id": "QA-R1-07-acceptance-texts-literal",
+      "environment": "source reading of tests/qa/**, e2e/**, the cited backend and web tests, and the four QA authoring handbacks, against the acceptance column of the 137 rows; results from QA-R1-02..04",
+      "procedure": "For each acceptance text, read the test that the row's notes cite and check that it asserts the clause literally. Where a clause was untested or tested only in part, probe further: QA-R1-03d, QA-R1-03e and QA-R1-04d.",
+      "command": "reading; grep of test titles; the probes listed",
+      "expected": "every clause is asserted, or disclosed as partly covered with an acceptable reason",
+      "actual": "Clauses asserted literally, and green in this review. A03 (REQ-PB-005, S03-005, S20-003): G3 422 gate.modular_links_missing listing both links, inherited G2 never Approved, waiver cases, on screen in en and ar. A04 (S07-012/013/014/017, S12-006, S03-009, S13-001/002/003): one run, one audit, one pending value, one queue item, with a real worker; the keyboard-only 4-step update with 'Finance review pending' in en and ar. A05 (S07-002/004/005/006/007/010/011, S08-004/006, S16-025, S09-007/009): decimal and float-discriminating probes; CPM not claimed when a duration is missing. A08 (PB-015/020/021, S04-002/007/008/009/010/012/013, S10-014/016/017/018, S12-009). A09 (PB-064/066/068/081/082, S10-006/011/012/019, S12-011, S15-008). A10 (PB-013/058/075/076, S03-006, S08-001/009/010/011/013/014/015/016/017/018, S12-014). A11 (PB-009/069/071/072/073/074/083/084/085, S03-002/003, S08-002, S11-001..009, S12-016). A01/A02 (PB-008/010/014/044/060/061/062/063/065/067/070/078/079/080, S03-001/004/008/011, S04-001). A12/A13/A14 and the S16 entity groups. Checked in detail: S13-001 (the figures probe), S12-005 (the two-owner probe), the S16 ERD halves (P1), and the A04 keyboard steps (exactly four fieldset[data-step] with legends, Tab/ArrowDown/Space/Enter only). Judgement of the register's partial-coverage disclosures. Acceptable: PB-066 and S15-008 (the server clock cannot be set; the business date comes from the database's now() in the organization's timezone, so the boundary proof through p4_business_date and an Intl oracle is right). PB-065, S04-014 and S07-015 (API integration plus jsdom; server behaviour). S04-010 (409, not 422; the clause only asks for a refusal). S08-006 ('rates' as formula variables). S07-005 (the negative baseline at unit level). S20-005 ('stale' via the status tests). S20-011 (no root A11 e2e; the screens are in p4-adoption-bau and p4-gates-closure, which pass). Not acceptable as written: PB-010 and S03-004; their notes still claim gaps that the candidate's QA-D tests close (F-DG4-140, Low). Observation, not a finding: PB-009's UI label 'Delivered — value validation pending' is asserted on screen only by the jsdom test closure.test.tsx. The real-stack p4-gates-closure spec shows 'In delivery'. The server label (a11-value-closure) and the UI mapping (jsdom) together prove the clause.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/T-DG4-QA-A-authoring/HANDBACK-T-DG4-QA-A-qa-verifier.md",
+        "docs/delivery/test-evidence/DG4/qa/T-DG4-QA-B-authoring/HANDBACK-T-DG4-QA-B-qa-verifier.md",
+        "docs/delivery/test-evidence/DG4/qa/T-DG4-QA-C-authoring/HANDBACK-T-DG4-QA-C-qa-verifier.md",
+        "docs/delivery/test-evidence/DG4/qa/T-DG4-QA-D-authoring/HANDBACK-T-DG4-QA-D-qa-verifier.md",
+        "docs/delivery/test-evidence/DG4/qa/round-1/06-requirement-trace.txt",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "QA-R1-08-environmental-residuals",
+      "environment": "offline sandbox; dev authentication (AUTH_MODE=dev) on the e2e stack",
+      "procedure": "The assignment's environmental residuals, checked on their offline/config surface: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "command": "see QA-R1-00-install (offline frozen-lockfile install from the local store) and QA-R1-01..04 (every suite runs offline, with dev auth)",
+      "expected": "PASS on the offline/config surface, residuals noted",
+      "actual": "The offline surface works: the frozen-lockfile install from the local store with 0 downloads, and every suite running without network. Residuals, as recorded in D-057, D-058 and D-049: no live registry pull, no live CI run, and no Keycloak in this sandbox. The e2e runs use AUTH_MODE=dev. None of this is DG4-final.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/00-install.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/env.txt"
+      ]
+    }
+  ],
+  "findings": ["F-DG4-140", "F-DG4-141"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/qa/round-1/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG4/qa/round-1/env.txt",
+    "docs/delivery/test-evidence/DG4/qa/round-1/00-candidate-start-transcribed.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/00-install.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/01-pnpm-r-build.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node22-C-run1.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/02-unit-node22-C-run2.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-run1.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-run2.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-dlv036-a04-a09-a10-a11.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-tests-qa-candidate-only.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-r1-probes-run2.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-r1-scope-totals-run2.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-unset.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-cutf8.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-solo-journeys-qa-unset.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/04-journeys-admin-failure-analysis.txt",
+    "docs/delivery/test-evidence/DG4/qa/round-1/05-validate-register-DG4.log",
+    "docs/delivery/test-evidence/DG4/qa/round-1/06-requirement-trace.txt",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-1/e2e/dg4-qa-r1.spec.ts",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-1/integration/dg4-qa-r1-probes.test.ts",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-1/integration/dg4-qa-r1-scope-totals.test.ts",
+    "docs/delivery/reviews/DG4/round-1/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG4/round-1/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-11T00:55:00Z",
+  "summary": "PASS, with two new Low findings and nothing blocking, on candidate sha256:19656b1f… (1449 files, source a91d82c). Static checks: all seven exit 0. Unit: 2771 + 259/2 skipped on Node 22 and 24 in both locale settings; one load timeout (architecture.test.ts at 34.9 s against 30 s) passed when re-run. Integration: 1922/1922 twice (migrations 0001-0060, contract 652 operations, every p4-pending list empty). tests/qa alone: 172/172. REQ-DLV-036 on the frozen candidate: A04 8, A09 17, A10 16, A11 40, so 81/81. e2e on the real stack in chromium-en and chromium-ar, both locale settings: the product journeys are 329/332 in each run; the single failure is journeys.spec.ts 'administration screens' in chromium-ar, a test data-dependence that passes alone (F-DG4-141). The root acceptance specs are 14/14. My P4 sweep (59 routes, AUD and TL, axe, lang/dir, 390 px, 200 %, AUD read-only) has 474 checks per language with 0 failed. My probes are green: the ERD/migration halves of the six entity groups, REQ-S12-005 with two owners, and REQ-S13-001 compared figure for figure. Validators: register, pipeline and historical DG3/DG2/DG1 PASS. All 137 rows trace to evidence tests that ran green in this review. F-DG4-140 (Low): the REQ-PB-010 and REQ-S03-004 register notes are stale after QA-D. F-DG4-141 (Low): the order-dependent product e2e test.",
+  "narrative": "docs/delivery/reviews/DG4/round-1/qa-verifier.md"
+}
