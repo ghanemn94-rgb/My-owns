@@ -1,0 +1,525 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 3,
+  "candidate_id": "sha256:890faa1284e07356fd61093fef595038dd19249b5e8c938c99de5690854384b6",
+  "source_commit": "925f0bcbeacbbc7ef78fbd2988f619b7381d90d1",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R3-code-security-reviewer-20261011T123933Z-46add6c8",
+    "session_id": "46add6c8-cf00-4208-ae97-80120f184c3f"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 46add6c8 (task T-DG4-REV-SEC-R3). I authored no implementation in the DG4 scope.\n\nAuthorship of the reviewed scope:\n- P4 product code: solution-architect (ARCH-00..08, R1..R5), backend-workflow-engineer (BE-A..M3, R1..R5), kpi-benefits-engineer (KBE-A..G2, R1..R6) and frontend-ux-engineer (FE-A..G2, R1..R5).\n- Register rows: transformation-analyst.\n- Acceptance tests in tests/qa and e2e, authored before the freeze: qa-verifier.\n- Merges, the D-118/D-121 orchestrator edits, stages.json 546fb4e and the freeze commit c94b2a2: delivery-orchestrator.\n\nBefore starting I confirmed that HEAD = c94b2a2, the freeze commit (its diff from source 925f0bc is delivery metadata only). I also recomputed the candidate ID: sha256:890faa12..., 1459 files, in the repository tree and in a complete, non-shallow clone.\n\nI formed this verdict before reading any other reviewer's DG4 round-3 record. During my run the domain reviewer's run auto-committed eae9978 (its run evidence and its round-3 records). I did not open those records. The candidate ID is unchanged at eae9978.\n\nEvery check and probe ran in disposable clones under $TMPDIR ($TMPDIR/rev for the harness, $TMPDIR/probe for the probes), each with disposable PostgreSQL clusters, all removed at the end. My probe files are evidence only, under docs/delivery/test-evidence/DG4/code-security/round-3/probes/, never in source paths.\n\nThe G1-G6 approvals and Finance decisions the probes exercise are synthetic product records. They approve nothing real and have no relation to DG0-DG7. Product G6 never implies DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-3/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R3-00-candidate",
+      "procedure": "Confirm git rev-parse HEAD and recompute the candidate ID in the repository tree. Clone the repository completely into $TMPDIR/rev (not shallow), check out c94b2a2 and recompute the ID there. Check that the freeze commit differs from source 925f0bc only in delivery metadata.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG4; git clone . $TMPDIR/rev && git checkout c94b2a2 && node tools/gates/candidate.mjs --stage DG4; git rev-parse --is-shallow-repository; git diff --stat 925f0bc c94b2a2",
+      "environment": "Node 24.21.0; repository tree and disposable clone $TMPDIR/rev at c94b2a2",
+      "expected": "HEAD = c94b2a2. Candidate sha256:890faa12... with 1459 files in both places. The clone is not shallow. The freeze diff touches delivery metadata only.",
+      "actual": "HEAD c94b2a2cb908ff57d2de00f9edff1e0ed8fd74ef. Candidate sha256:890faa1284e07356fd61093fef595038dd19249b5e8c938c99de5690854384b6, files 1459, in the tree and in the clone. is-shallow false. The freeze diff is the three round-3 assignments, the candidate manifest and stages.json (diff-scan D0). Recomputed after the domain reviewer's auto-commit eae9978 landed: unchanged, 890faa12 with 1459 files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-01-build",
+      "procedure": "Install dependencies offline from a private copy of the local pnpm store (--frozen-lockfile). Build every workspace package, then reinstall so the bins link.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile ...",
+      "environment": "Node 22.22.2, pnpm 10.33.0, clone $TMPDIR/rev at c94b2a2 (checks.sh)",
+      "expected": "Each step exits 0.",
+      "actual": "install1 exit 0, build exit 0, install2 exit 0.\n\nDisclosed lines:\n- install1 printed two 'WARN Failed to create bin ... mth-db ... dist/cli.js ENOENT' lines, because packages/db/dist does not exist before the build. install2, after the build, links the bins with no warning.\n- The web build printed Vite's size advisory 'Adjust chunk size limit ... chunkSizeWarningLimit' (chunks larger than 500 kB). It is advisory only, was present in DG3 and in DG4 rounds 1-2, and the build exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R3-02-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, clone at c94b2a2",
+      "expected": "Exit 0.",
+      "actual": "Exit 0, with no error line (log-scan-1.txt). The KBE-R6 handback recorded web-fixture typecheck errors before the merge. They are gone at this candidate: 64f86cf applied the fixture patch.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/typecheck.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-1.txt"
+      ]
+    },
+    {
+      "id": "SEC-R3-03-lint",
+      "procedure": "Run ESLint over the repository, with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, clone at c94b2a2",
+      "expected": "Exit 0 and no warning.",
+      "actual": "Exit 0 (eslint . --max-warnings=0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-04-openapi-lint",
+      "procedure": "Lint the OpenAPI contract and count its operations. Read the repair's contract diff (93a7dd7..925f0bc).",
+      "command": "pnpm openapi:lint; git diff 93a7dd7..925f0bc -- docs/api/openapi.yaml",
+      "environment": "Node 22.22.2, clone at c94b2a2",
+      "expected": "Exit 0 and 652 operations. The repair adds no operation, status or parameter schema.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0.\n\nThe contract diff is additive:\n- the HeadlineBasis schema;\n- DashboardHeadline.headlineBasis, DashboardDrilldown.headlineBasis and WorkspaceHeader.benefits.headlines, each in its required list;\n- description changes stating the meaning changes (a value-state drill-down without valueClass sums profit-and-cash; a gross line always drills).\nNo operation, status or parameter schema changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-05-no-cdn-and-secrets",
+      "procedure": "Run the no-CDN check. Scan the whole P4 diff (d3e6fe6..925f0bc, apps and packages) and the repair diff (93a7dd7..925f0bc) for secret-like literals, remote URLs, dynamic code, sql.raw/sql.lit, innerHTML and float arithmetic on money.",
+      "command": "pnpm check:no-cdn; bash diff-scan.sh",
+      "environment": "Node 22.22.2, clone at c94b2a2 (git and grep only)",
+      "expected": "no-cdn exits 0. No secret literal and no public CDN. Dynamic code only in tests. No new sql.raw with input. No unsafe sink in product code.",
+      "actual": "no-cdn exit 0.\n\nD4 secrets: none.\nD5 URLs: only test placeholders (example.invalid, idp.example.invalid, evil.example, http://x).\nD6 dynamic code: the hits are tests only:\n- the formula fuzz's hostile expressions;\n- child_process spawn in architecture.test.ts, a web e2e spec and two worker restart tests (located by file).\nD7: none.\nD8: innerHTML only inside test assertions.\nD9: no parseFloat or Number() on money.\nD12: the one sql.raw, transformations/routes.ts:131, picks a constant '<'/'>' (pre-P4).\nD15, the repair diff: no unsafe sink, float, remote URL or sql.raw added in product code.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/no-cdn.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-06-format",
+      "procedure": "Run the Prettier check over the repository.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, clone at c94b2a2",
+      "expected": "Exit 0.",
+      "actual": "Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-07-unit-node22",
+      "procedure": "Run the unit suites on Node 22: unit-node and unit-web, then unit-formula-nocodegen. The clone's node_modules is writable, so Vitest's default config loader works there. The '--configLoader runner' form that the confined tree's read-only node_modules needs (QA-A's finding) was exercised separately on the repair's web tests.",
+      "command": "pnpm test --reporter=verbose; pnpm exec vitest run --configLoader runner --project unit-web <repair web tests>",
+      "environment": "Node 22.22.2 (runner-loader run: Node 24.21.0), clones at c94b2a2",
+      "expected": "Exit 0, with no failed test and no unexplained skip.",
+      "actual": "unit-node + unit-web: 146 files, 2819/2819 passed (round 2: 2782; the 37 added are the repair's unit tests). unit-formula-nocodegen: 3 files, 259 passed and 2 skipped. Exit 0.\n\nThe 2 skips are it.skipIf(NOCODEGEN) at packages/shared/src/formula/fuzz.test.ts:600 and :833. Both are ESLint cases that cannot run under node --disallow-code-generation-from-strings, and both run and pass in the main unit project. Rounds 1 and 2 skipped the same 2. There was no failure and no timeout.\n\nThe runner-loader run of valueHeadlines.test.tsx and dashboards.test.tsx: 2 files, 55/55, exit 0. The third path I passed (apps/web/src/lib/format.test.ts) does not exist, so Vitest ran the two matching files. That file's tests were covered by the full unit runs and my probe FP.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/unit-configloader-runner.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-1.txt"
+      ]
+    },
+    {
+      "id": "SEC-R3-08-unit-node24",
+      "procedure": "Run the same unit suites on Node 24.",
+      "command": "pnpm test --reporter=verbose",
+      "environment": "Node 24.21.0, clone at c94b2a2",
+      "expected": "Exit 0.",
+      "actual": "146 files, 2819/2819 passed. nocodegen 259 passed, with the same 2 skipIf(NOCODEGEN) skips explained in SEC-R3-07. Exit 0. No failure and no timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-1.txt"
+      ]
+    },
+    {
+      "id": "SEC-R3-09-integration-lang-unset",
+      "procedure": "Run the integration suite (API, worker, db and tests/qa integration, contract.test.ts included) on a disposable PostgreSQL 16 cluster. initdb ran with LANG/LC_ALL/LC_CTYPE unset (SQL_ASCII template). Migrations 0001 -> 0061 apply to fresh databases.",
+      "command": "bash with-pg.sh 26331 pnpm test:integration --reporter=verbose",
+      "environment": "Node 22.22.2, PostgreSQL 16.13, cluster SQL_ASCII / C, port 26331, clone at c94b2a2",
+      "expected": "All files pass, every migration applies, and nothing is skipped or failed.",
+      "actual": "206 files, 1960/1960 passed (round 2: 1953; the 7 added are headline-basis.test.ts). Exit 0. 'applied 61 migrations to a fresh database'.\n\nSelected files:\n- contract.test.ts 45/45;\n- media-types 21/21;\n- catalogue 20/20;\n- headline-basis 7/7;\n- drilldown 4/4;\n- finance-drilldown-k1 13/13;\n- workspace-header 7/7;\n- approvals 17/17;\n- delegations 13/13;\n- handovers 11/11;\n- slice-b-denials 7/7;\n- gate-commit-time 9/9.\n\nThere are no stderr blocks, no skip and no timeout. The only error-like lines are deliberate fault-injection outputs of passing DG2 tests, whose tests assert exactly these outcomes:\n- BE17 db-econnreset (an intended 500);\n- BE18 Q7 idp_unavailable redirects;\n- the R6a/R6c and connection-hygiene stalled-body 408s.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/with-pg.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-1.txt"
+      ]
+    },
+    {
+      "id": "SEC-R3-10-integration-lang-c-utf8",
+      "procedure": "Run the same integration suite on a fresh disposable cluster with LANG=C.UTF-8 (UTF8 template), on Node 24.",
+      "command": "LANG=C.UTF-8 bash with-pg.sh 26332 pnpm test:integration --reporter=verbose",
+      "environment": "Node 24.21.0, PostgreSQL 16.13, cluster UTF8 / C.UTF-8, port 26332, clone at c94b2a2",
+      "expected": "All files pass.",
+      "actual": "206 files, 1960/1960 passed, exit 0, 61 migrations applied. The per-file counts are identical to run 1 (suite-counts.log). The same deliberate fault-injection lines appear. No failure, skip or timeout. After both runs, git status --porcelain of the clone was empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-2.txt"
+      ]
+    },
+    {
+      "id": "SEC-R3-11-validate-historical-and-f-dg4-104",
+      "procedure": "F-DG4-104 re-verification. Run validate.mjs --historical --stage DG3, DG2 and DG1, and --pipeline, at the freeze commit c94b2a2 in the clone. Also run them in the repository tree, through the harness. Read the DG4 stages.json history at every commit since the round-1 freeze for illegal steps and rewritten entries. Check that the gate tooling is unchanged.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3|DG2|DG1; node tools/gates/validate.mjs --pipeline; git log -p docs/delivery/stages.json; git diff --stat d3e6fe6..c94b2a2 -- tools/gates tools/agents .claude/agents",
+      "environment": "Node 22.22.2; clone $TMPDIR/rev at c94b2a2 (validate-freeze-*.log); repository tree (validate-*.log)",
+      "expected": "All four exit 0. The DG4 history has legal steps only, and no earlier entry is rewritten.",
+      "actual": "At c94b2a2: DG3, DG2 and DG1 each print 'PASS gate DGx (historical)', and --pipeline prints 'PASS pipeline (active stage: DG4 REVIEWING)'. All exit 0.\n\nThe harness's repository-tree runs also exit 0. Disclosure: those ran at eae9978, because the domain reviewer's run auto-committed its evidence into the tree at 13:52Z, during my run. That is why I also ran them at the freeze commit in the clone. An earlier unlogged run of mine at 13:09Z, before eae9978, at c94b2a2, gave the same 4 PASS lines.\n\nHistory: REVIEWING(r1) > FIXING(00:51:49Z, = the D-117 commit f5579e7) > REVIEWING(r2) > FIXING(08:40Z) > REVIEWING(r3). 546fb4e only inserts the round-1 FIXING entry (5 added lines). No state or timestamp of an earlier entry changed. tools/gates, tools/agents and .claude/agents are unchanged since d3e6fe6.\n\nOne note text was corrected later: ba57107 changed '07:10Z' to '07:05Z (commit 546fb4e)', which matches the actual commit time. This is detailed in the verifications sidecar and is not a finding.\n\nF-DG4-104: CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/f-dg4-104-stages-history.log",
+        "docs/delivery/reviews/DG4/round-3/code-security-reviewer.verifications.json"
+      ]
+    },
+    {
+      "id": "SEC-R3-12-p4-authorization-sweep",
+      "procedure": "Re-run probe S, my round-2 generated sweep over every P4 operation, unchanged on this candidate:\n- 382 operations: 203 mutating, 179 reads;\n- org A populated by the 27 P3/P4 contract seams;\n- AUD, ADM-only and an outsider against every mutation, with an authorization.denied row required on every 403;\n- ADM-only, outsider and a T1-scoped SP against every read, checked for protected ids;\n- a checksum of every table before and after.",
+      "command": "bash rerun-prior-probes.sh (run-probe.sh round-2/probes/sec-dg4-r2-sweep.test.ts)",
+      "environment": "Node 22.22.2, LANG unset, disposable PostgreSQL 16 on port 26350, probe clone at c94b2a2",
+      "expected": "Every AUD write gets 403 with exactly one authorization.denied. ADM-only and the outsider are refused, with nothing written but the denial. No read leaks a protected id. No table changes.",
+      "actual": "766/766 passed, exit 0; identical to round 2.\n- AUD: 308 x 403, each with one denial; 96 x 400 validation, with nothing written; 2 x 404 markInboxNotificationRead.\n- ADM-only: 126 x 403, 186 x 404, 94 x 400.\n- Outsider: 106 x 403, 208 x 404, 92 x 400.\n\nNo 2xx and 0 NO-DENIAL lines. All 537 read lines show leaked=0. No table changed. The same 4 polymorphic path parameters are unresolvable as before.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-prior-probes.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/run-probe.sh"
+      ]
+    },
+    {
+      "id": "SEC-R3-13-drilldown-scope-sweep",
+      "procedure": "NEW probe DS, for the repair's drilldown.ts rewrite (asBuilt branch removed).\n\nSetup: T1 and T2 in org A, each holding all five financial classes (with a validated and a submitted measurement); T2's amounts are 1000x T1's.\n\nTL1 is scoped to T1 only. It calls every value metric (7 value states + value.gap) x valueClass (none, 5 financial classes, non_financial_valued) x transformation filter (none, T1, T2, T1+T2), and compares each answer with AUD filtered to T1. It also calls every value-state metric with a T2 benefit as subjectId. ADM-only and the outsider call every metric x class. TL1 then follows every value headline href of the T1 dashboard and header. A control checks that AUD with no filter sees T1+T2.",
+      "command": "bash run-probe.sh probes/sec-dg4-r3-drill-scope.test.ts 26341 probe-DS-rev2-node22-lang-unset",
+      "environment": "Node 22.22.2, LANG unset, disposable PostgreSQL 16, probe clone at c94b2a2",
+      "expected": "TL1 sees only T1, identical to AUD-filtered-to-T1. T2 or T1+T2 gives 404. A T2 subjectId is never 200. Nothing of T2 (or of org A, for ADM/OUT) appears in any body.",
+      "actual": "Revision 2: 163/163 passed, exit 0.\n- Control: AUD with no filter gets 92592.5 (T1+T2); filtered to T1 it gets 92.5. So the probe detects a leak.\n- TL1, no filter and T1 filter: byte-equal to AUD-T1 in value, items, calculation, headlineBasis and evidence. valueClass on value.gap gives 422 dashboard.value_class_not_applicable.\n- TL1, T2 and T1+T2 filters: 112 x 404 not_found.\n- A T2 subjectId: 245 x 422 dashboard.metric_subject_mismatch, the documented code. A random id gets the same answer, so it is no existence oracle.\n- ADM-only and outsider: 224 x 404.\n- The 15 headline hrefs return 200 with the right basis.\n- leaked=0 on every line.\n\nDisclosure: revision 1 exited 1. Its URLs used limit=200, above PAGINATION.maxLimit, so every call was 400 and all its tests failed. That was a probe error, not product behaviour. Revision 2 uses limit=100.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-drill-scope.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-DS-rev2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-DS-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-14-cross-transformation-idor",
+      "procedure": "Re-run round-1 probe I (paths, final form) and round-1 probe B (bodies), unchanged. In probe I, user W holds every role on an empty transformation T0 and calls every P4 path with ids of another transformation. Probe B replays every successful seam write whose body names a foreign-transformation id. Also re-run round-2 probe B (slice-B ids).",
+      "command": "bash rerun-prior-probes.sh (sec-dg4-r1-idor, sec-dg4-r1-body-idor, sec-dg4-r2-slice-b-ids)",
+      "environment": "Node 22.22.2, LANG unset, a disposable PostgreSQL per probe, probe clone at c94b2a2",
+      "expected": "No cross-transformation read or write succeeds.",
+      "actual": "idor 204/204, body-idor 2/2, slice-b-ids 1/1. Every run exits 0, the same counts as round 2, with 0 leaks. The repair touches no mutation route (git diff 93a7dd7..925f0bc -- apps/api/src adds no app.post/put/patch/delete).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r1-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r1-body-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r2-slice-b-ids-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-15-approvals-sod-delegation-handover",
+      "procedure": "Re-run round-1 probe A (approvals) and round-2 probe D (Finance SoD denials), unchanged. Count the implementer suites for approvals, delegations (loop guard), escalation timers and handovers in both integration runs.",
+      "command": "bash rerun-prior-probes.sh (sec-dg4-r1-approvals, sec-dg4-r2-sod-denials); suite-counts.log",
+      "environment": "Node 22.22.2, LANG unset, disposable PostgreSQL; plus the harness integration logs",
+      "expected": "Self-approval, non-approver approval, stale approval, delegation loops and non-requester resubmit/withdraw are refused. Only the receiving owner accepts a handover.",
+      "actual": "Probe A 6/6, unchanged from round 2:\n- A1: SoD through a group gives 403 approval.sod_requester.\n- A2: SoD through delegation and onBehalfOf.\n- A3: concurrent approvals give [200, 409].\n- A4: decide 409, then withdraw.\n- A5: a 3-loop gives 422 delegation.loop; a concurrent pair gives one 201.\n- A6: 409 approval.stale_version.\n\nProbe D 4/4: the four Finance SoD refusals, each with its denial row.\n\nIn both integration runs:\n- approvals 17/17 (approval.not_requester included);\n- delegations 13/13;\n- approval and governance escalation suites, blocker-escalation 4 and decision-sla-escalation 5;\n- handovers 11/11, including 'anyone other than the receiving owner gets 403' and the commit-time revocation case.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r1-approvals-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r2-sod-denials-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-16-finance-integrity",
+      "procedure": "Re-run round-2 probe F, unchanged. It covers concurrent Finance decisions, stale amends, corrections, validated-value immutability and exact decimals through the API and the database.",
+      "command": "bash rerun-prior-probes.sh (sec-dg4-r2-finance)",
+      "environment": "Node 22.22.2, LANG unset, disposable PostgreSQL",
+      "expected": "Only Finance validates. A validated value is never edited in place. One winner per race. Decimals are exact.",
+      "actual": "10/10 passed, exit 0, identical to round 2. benefits/** and the Finance validation code are untouched by the repair (the repair diff in apps/api/src is reporting/** only).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r2-finance-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-17-commit-time-recheck-and-no-io",
+      "procedure": "Run the unchanged commit-time scanner (commit-scan6.py) over every P4-touched file. Compare its residual set with round 2's. Check that no residual file changed in the repair. Re-run round-2 probe C (gate commit-time re-checks).",
+      "command": "python3 probes/commit-scan6.py p4-source-files.txt; bash rerun-prior-probes.sh (sec-dg4-r2-gate-commit)",
+      "environment": "Python 3.11 and Node 22.22.2; clone at c94b2a2",
+      "expected": "The residual set equals round 2's, which was read by hand. Probe C passes.",
+      "actual": "232 write routes and 33 residuals, the same set as round 2 (set comparison: identical). git diff 93a7dd7..925f0bc over every residual file is empty, so the round-1/2 manual reading holds: each reaches openWrite(..., {atCommit: true}) through a local helper. Probe C: 6/6, exit 0. The repair adds no mutation and no I/O inside a transaction; its routes are read-only GETs inside readOnly().",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/commit-time-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/commit-scan6.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/p4-source-files.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-sec-dg4-r2-gate-commit-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-18-module-graph-worker-wiring",
+      "procedure": "Build the API module graph from static value imports and check it for cycles. Check that governance -> raid is allowed and raid -> governance absent. Check that the worker imports no API code, and that server.ts wires the modules (D-107). Count the architecture tests.",
+      "command": "node probes/module-cycles.mjs $TMPDIR/rev; grep worker imports; architecture.test.ts in the unit runs",
+      "environment": "Node 22.22.2, clone at c94b2a2",
+      "expected": "0 cycles, raid never imports governance, and 0 worker imports of API code.",
+      "actual": "Module graph: 0 cycles. governance -> raid is present; raid -> access, audit, platform, tasks and transformations, with no governance.\n\nThe worker has 0 import/require lines naming apps/api or @mth/api. Its dependencies are @mth/config, db and shared, kysely, pg, pg-boss and zod.\n\nserver.ts registers the P4 modules (registerAdoptionModule, registerBenefitsModule, registerGovernanceModule, ...). contract.test.ts route<->operation coverage passes on the real server in both runs. architecture.test.ts passes 138/138 on Node 22 and 24, including 'declared module graph is acyclic', 'raid may never import governance' and 'apps/worker imports no API code'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/module-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/worker-isolation.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-19-web",
+      "procedure": "Run the web import-cycle probe with an absolute root. Read the FE-R5 diff (format.ts formatPercent, ui.tsx HeadlineList/BasisChip, WorkspaceHeader.tsx, DashboardsPage.tsx) for XSS sinks, direct fetch and session-bound actions. Probe FP feeds formatPercent untrusted strings and renders a hostile string.",
+      "command": "node probes/web-cycles.mjs $TMPDIR/rev; vitest --project unit-web probes/sec-dg4-r3-format-percent.test.tsx",
+      "environment": "Node 22.22.2, probe clone at c94b2a2",
+      "expected": "No new cycle. No dangerouslySetInnerHTML. formatPercent returns null on invalid input and is exact. The drill-down follows only same-origin hrefs.",
+      "actual": "202 files, 1 cycle: admin UsersPage <-> AssignmentsPage, last touched in DG2 (ac81298), not raised, as in round 2.\n\nThe FE-R5 code renders through React text only. It adds no fetch. Every action is a drill button that opens the existing panel, which follows only same-origin /api/v1/dashboard-drilldown links (api.ts:146). Basis labels come from t() keys of a zod-enum value.\n\nProbe FP: 13/13.\n- Ten hostile or invalid inputs ('<img onerror>', NaN, Infinity, -Infinity, '', blank, '1e', '12abc', '0x1g', 'javascript:1') give null in en and ar.\n- 0.07 as a fraction gives exactly '7 %' (no float drift), and 0.675676 gives '67.57 %'.\n- A hostile string renders as text, with no element created.\n\nThe pages stay lazy routes; WorkspaceHeader already imported ui.tsx before the repair.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/web-cycles.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/web-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-format-percent.test.tsx",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-FP-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-20-contract-seams-required-members",
+      "procedure": "Check that every p4-pending list is empty (P4_PENDING_ARCH_R5_MEMBERS included) and count the operations.\n\nNEW probe RM: take valid live responses (WorkspaceHeader and a top_line DashboardDrilldown), delete each of the three ARCH-R5 members, and validate with the contract validator every integration call uses (ajv, support/contract.ts) and with the shared zod mirrors. Also try an invalid basis.\n\nCheck config.consumes and the media-type pin through the contract and media-types suites, and the D-114 Problem.params addition.",
+      "command": "diff-scan.sh D10/D11; bash run-probe.sh probes/sec-dg4-r3-required-members.test.ts 26345 probe-RM-node22-lang-unset",
+      "environment": "Node 22.22.2, LANG unset, disposable PostgreSQL, probe clone at c94b2a2",
+      "expected": "Every list is empty, with 652 operations. All three members are required, and their absence is rejected by both ajv and zod. Problem responses are unchanged.",
+      "actual": "All 41 p4-pending lists are empty (p4-pending-arch-r5.ts included, and P4_PENDING_ARCH_R5_MEMBERS = []). 652 operations.\n\nProbe RM 2/2. The required lists contain headlineBasis (DashboardHeadline, DashboardDrilldown) and headlines (WorkspaceHeader.benefits). The live bodies validate. With a member deleted, ajv reports \"must have required property 'headlineBasis'\" and \"'headlines'\" and zod fails, for all three. headlineBasis 'everything' is rejected.\n\ncontract.test.ts 45/45 and media-types 21/21 in both runs. The repair touches no file under modules/platform, so Problem.params stays as in round 2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-required-members.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-RM-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-21-decimals-formula-lineage",
+      "procedure": "Scan the P4 and repair diffs for float use on money. Read the N3 engine code (areas.ts valueArea/basisClasses/valueLinesOf, engine.ts basisHeadlines, finance.ts grossNetLines, drilldown.ts valueDrill) for decimal arithmetic. Confirm the formula engine has no eval or Function, and that lineage is keyed by name.",
+      "command": "diff-scan.sh D9/D15; code reading; probes DS and GC",
+      "environment": "Clone at c94b2a2",
+      "expected": "Decimal end to end, with no float.",
+      "actual": "No parseFloat or Number() on money. Every N3 sum goes through sumValue/decimal.js. The gap is valueGapStatus on decimal planned/validated, rounded half-even to 6 places. The web's formatPercent uses decimal.js times(100).\n\nProbe DS gives exact sums (92.5, 92592.5, 0.675676). The formula sources keep no eval or Function (a05-calc-units passes on both Node versions). Lineage sources are unchanged since round 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-DS-rev2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/requirement-acceptance.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-22-migrations",
+      "procedure": "Check migrations 0028-0061: added only, contiguous, a guard attachment per table, and no DELETE/TRUNCATE grant. Confirm the repair adds no migration.",
+      "command": "diff-scan.sh D2/D3/D13/D16/D17",
+      "environment": "Clone at c94b2a2",
+      "expected": "No modification of 0001-0027. Contiguous numbering, and no repair migration.",
+      "actual": "34 migrations added in P4 (0028-0061), none modified or deleted, and 0001..0061 contiguous. The repair diff 93a7dd7..925f0bc contains no migration. The guard counts per file are as in round 2: 0056's catalogue tables are SELECT-only. There is no DELETE or TRUNCATE grant to mth_app. Both integration runs migrate 0001 -> 0061 on fresh databases, and catalogue 20/20 passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/integration-run1-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-23-exactly-once",
+      "procedure": "Check exactly-once for calculation runs, Finance queue items, corrective cases, escalations, interventions, reviews, checks and closures. Count the worker restart, replay and idempotency suites and the D-102 parity tests in both runs.",
+      "command": "suite-counts.log (grep of both integration logs)",
+      "environment": "Harness integration logs, both locales",
+      "expected": "All pass, in both runs.",
+      "actual": "Passed in each run (identical):\n- restart 1;\n- kpi-period-open-restart 1;\n- a13-job-idempotency 5;\n- benefits-queue 2;\n- raid-corrective 10;\n- corrective-cases 15;\n- corrective-rules 5;\n- decision-sla-escalation 5;\n- blocker-escalation 4;\n- escalation-rules 6;\n- a09-decision-escalation 17;\n- sustainment-scans 5;\n- adoption-below-trajectory 14.\n\n8 D-102 parity tests pass per run. The repair touches no worker, lock or job file.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-24-requirement-acceptance",
+      "procedure": "For each of the 52 assigned requirements, find every vitest evidence file named in its register row in THIS round's unit and integration logs, and count passed, failed and skipped. Check that the register rows are unchanged since round 2, and judge the partial-coverage disclosures in their notes.",
+      "command": "python3 req-acceptance.py unit-node22.log unit-node24.log integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "Python 3.11; this round's logs",
+      "expected": "No evidence file has a failure, none is missing, and every disclosure is acceptable.",
+      "actual": "'files with a failure: 0', exit 0, and 0 'NOT FOUND'. 20 Playwright specs are listed as 'e2e: not run here'; they are QA's e2e run.\n\ngit diff 93a7dd7..c94b2a2 -- docs/delivery/requirements.csv is empty, so none of the 52 rows changed since round 2. The disclosures stay acceptable as judged in rounds 1-2; for example, REQ-S08-006 discloses that rates are proven as formula variables, with no separate FX-rate entity.\n\nREQ-S13-001 (scope) is re-proved for the rewritten drill-down by probe DS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/req-acceptance.py"
+      ]
+    },
+    {
+      "id": "SEC-R3-25-environment-residuals",
+      "procedure": "Check the environmental residuals on their offline/config surfaces: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "command": "bash env-residuals.sh",
+      "environment": "Node 22.22.2, clone at c94b2a2",
+      "expected": "PASS on the offline/config surface, with each residual noted.",
+      "actual": "Registry: the offline frozen install exits 0. P4 changes only the packages/shared export map. pnpm deps:verify needs the live registry: residual D-057.\n\nCI: check-ci-needs reports OK with 5 jobs, delivery-gates first, and node --test check-ci-needs passes 46/46. ci.yml runs pnpm test and pnpm test:integration. The first job's validate.mjs --pipeline now passes at the freeze commit (SEC-R3-11). A live CI run is residual D-058.\n\nKeycloak: 37 passing OIDC test lines per integration run against the fake IdP. A live Keycloak is residual D-049.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/env-residuals.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/env-residuals.log"
+      ]
+    },
+    {
+      "id": "SEC-R3-26-repair-diff-regressions",
+      "procedure": "Re-inspect the whole repair diff 93a7dd7..925f0bc: 14 API files, 11 web files, the contract, two ADRs, packages/shared and two tests/qa files. Read the D-121 orchestrator edits (64f86cf, f98f054, 25bdcbd), the re-baselined tests, and the N3 edge cases.\n\nNEW probe GC, revision 1 (observational): one transformation with SAR margin_uplift 70 and USD revenue_uplift 11. It logs, per currency, the Finance gross line, the profit-and-cash headline and their drill-downs.\n\nRevision 2 adds a REPRO test, the reproduction of F-DG4-105. It fails BY DESIGN on this candidate and is reported under the finding, not as this check's exit status.",
+      "command": "git diff 93a7dd7..925f0bc; bash run-probe.sh probes/sec-dg4-r3-gross-currency.test.ts 26346 probe-GC-node22-lang-unset (rev 1); ... 26347 probe-GC-rev2-node22-lang-unset (rev 2, REPRO)",
+      "environment": "Node 22.22.2, LANG unset, disposable PostgreSQL, probe clone at c94b2a2",
+      "expected": "No regression and no weakened test. Every headline drills to records of its own currency and basis.",
+      "actual": "Tests:\n- The re-baselines move fixture benefits to margin_uplift and keep their values; QA's two tests now pick the top_line headline explicitly. None is weakened.\n- f98f054 turns a conditional skip into an assertion, a strengthening. 64f86cf is fixtures only. 25bdcbd is wording.\n- The p4-dashboards 4b page-size change asserts that the lines fit 100 rows.\n\nAuthorization and scope are unchanged (probe DS). No mutation route changed.\n\nProbe GC rev 1: 1/1, exit 0 (this check's exit status). Probe GC rev 2: 1 passed, and the REPRO test failed BY DESIGN, exit 1. The failed assertion is 'USD headline drills to a SAR value: expected true to be false'. It is the reproduction of the finding below.\n\nFinding, Medium, not mandatory, owner kpi-benefits-engineer: F-DG4-105.\n- What happens: in a scope where USD holds no profit-and-cash benefit beside a SAR one, the USD profit-and-cash headline is not_applicable, but its drill-down returns value SAR 70 with the SAR item. The USD gross line, a known 0, shares the same href.\n- Why: valueDrill (drilldown.ts from line 145) takes its currencies from the eligible profit-and-cash benefits only (line 185), and the href carries no currency (oneCurrency, line 213).\n- What it contradicts: KBE-R6 handback §5.3(a) ('n/a ... with no item') and the n/a -> no-item rule of headline-basis.test.ts, which does not cover this case.\n- Scope: there is no leak across transformations, and no stored or computed amount is wrong. The per-currency sum (USD: 0) still holds.\n\nObservation, not a finding: the Finance gross line stays a known 0 beside the n/a headline. KBE-R6 disclosed this as design choice (a) for the domain reviewer. It conflicts with the wording of ADR-0030 N3 item 1 ('the same figure').\n\nThe repair diff contains no regression beyond F-DG4-105.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-gross-currency.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-GC-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-GC-rev2-node22-lang-unset.log",
+        "docs/delivery/reviews/DG4/round-3/code-security-reviewer.findings.json"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG4-105"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG4/round-3/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG4/round-3/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/with-pg.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/run-probe.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-1.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/log-scan-2.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/unit-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/unit-node24.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG3.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-pipeline.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/f-dg4-104-stages-history.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/probe-DS-rev2-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/probe-GC-rev2-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/probe-RM-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/probe-FP-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/rerun-prior-probes.summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/requirement-acceptance.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/suite-counts.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/diff-scan.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/commit-time-scan.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-3/env-residuals.log",
+    "docs/delivery/reviews/DG4/round-3/code-security-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-11T14:40:00Z",
+  "summary": "Verdict PASS on candidate 890faa12 (source 925f0bc, freeze c94b2a2).\n\nMy round-2 finding F-DG4-104 is CLOSED_VERIFIED: validate --historical DG3, DG2 and DG1 and --pipeline all exit 0 at the freeze commit, and the DG4 history is legal with no entry rewritten.\n\nEvery required check ran and passed, with no failed test, no timeout and no unexplained skip:\n- typecheck, build, lint, openapi (652 operations), no-cdn and format;\n- unit 2819 + 259/2 (explained skips) on Node 22 and Node 24;\n- integration 1960/1960 twice (LANG unset / SQL_ASCII; C.UTF-8 / UTF8), migrations 0001-0061.\n\nMy round-1/2 probes re-run unchanged, with the same results: sweep 766, idor 204, body-idor 2, approvals 6, SoD 4, Finance 10, gate commit-time 6, slice-B 1.\n\nNew probes:\n- the drill-down scope sweep with and without valueClass, 163/163;\n- required-member enforcement, 2/2;\n- formatPercent with untrusted input, 13/13.\n\nI raise one new finding, F-DG4-105 (Medium, not mandatory, owner kpi-benefits-engineer). In a multi-currency scope, a currency's not_applicable profit-and-cash headline and its gross line drill to the other currency's figure. It is not a security, integrity or scope defect, and I do not consider it blocking."
+}

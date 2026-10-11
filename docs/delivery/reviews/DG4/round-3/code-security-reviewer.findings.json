@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-105",
+      "stage_id": "DG4",
+      "requirement": "REQ-S13-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "In a multi-currency scope, a currency's not_applicable profit-and-cash headline and its Finance gross line drill to another currency's figure (SAR 70 for a USD line), against the KBE-R6 claim 'n/a with no item'",
+      "reproduction": "Probe GC, revision 2: docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-gross-currency.test.ts, run with run-probe.sh in a disposable clone of c94b2a2 on a disposable PostgreSQL. Node 22, LANG unset. Log: probe-GC-rev2-node22-lang-unset.log. Setup: one transformation with two benefits. A margin_uplift benefit, SAR, planned 70. A revenue_uplift benefit, USD, planned 11. USD has no profit-and-cash benefit. Steps: (1) GET the T10 dashboard and the Finance dashboard as AUD. (2) Follow the drilldownHref of the USD profit_and_cash 'Planned value' headline, and of the USD gross planned line. Both hrefs are the same URL: metric=value.planned, with no valueClass and no currency.",
+      "expected": "ADR-0037 amendment N3 item 3 and the DashboardHeadline contract text say every headline drills to records whose sum per currency equals it. The KBE-R6 handback §5.3(a), relayed in D-121, says the gross drill-down in a currency with no profit-and-cash benefit 'is n/a no_profit_and_cash_benefit with no item'. headline-basis.test.ts assertDrillInvariant encodes the same rule: an n/a headline drills to items []. So the drill-down of the USD n/a headline, and of the USD gross line, should be n/a (or at least carry no figure of another currency) and list no item. Separately, ADR-0030 N3 item 1 says the gross line and the profit-and-cash headline 'are the same figure' in any state and currency.",
+      "actual": "The USD headline's value is {state: not_applicable, currency: USD, reasonKey: dashboard.value.no_profit_and_cash_benefit}. Its drill-down returns value {state: value, value: '70', currency: SAR}, with the one SAR item B01 = 70 SAR (probe-GC REPRO line). The USD gross planned line (total {state: zero, value: '0', currency: USD}) has the same href, so it opens the same SAR 70 drill-down (probe-GC rev 1 log, grossDrillValue). DrilldownPanel shows d.value as given, so a user who opens the USD figure sees 'SAR 70' and the SAR benefit. Cause, in product tree 925f0bc: apps/api/src/modules/reporting/dashboards/drilldown.ts valueDrill (from line 145). Without valueClass, its currencies (line 185) are those of the ELIGIBLE profit-and-cash benefits (SAR only), and the href carries no currency, so oneCurrency() (line 213) returns the SAR sum as the drill's single value. finance.ts:224 gives every gross line, the USD one included, that same href. The removed asBuilt branch would have counted the USD revenue line's currency too, and returned multiple_currencies. Only an n/a profit-and-cash headline beside a profit-and-cash currency is affected. The per-currency decimal invariant still holds in a strict sense: USD items sum to 0. No figure crosses transformations or scopes (probe DS, 163/163). No stored or computed amount is wrong. The Finance gross line staying a known 0 beside the n/a headline is KBE-R6's disclosed design choice (a), left to the domain reviewer. This finding is the drill-down behaviour, which contradicts that disclosure. The repair's own test (headline-basis.test.ts 'drill invariant per currency (SAR and USD)') does not cover the case, because its USD has a margin_uplift benefit.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-gross-currency.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-GC-rev2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probe-GC-node22-lang-unset.log",
+        "apps/api/src/modules/reporting/dashboards/drilldown.ts",
+        "apps/api/src/modules/reporting/dashboards/finance.ts",
+        "docs/delivery/handbacks/DG4/T-DG4-KBE-R6-kpi-benefits-engineer.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-3/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T13:30:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 review round 3 on candidate 890faa12 (source 925f0bc). Medium, not mandatory: a misleading drill-down value in a multi-currency edge case. No scope leak and no wrong stored amount."
+        }
+      ]
+    }
+  ]
+}

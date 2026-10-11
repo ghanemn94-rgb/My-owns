@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-104",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified at the freeze commit c94b2a2 in a disposable complete clone, and again in the repository tree. The validators all exit 0: validate.mjs --historical --stage DG3, DG2 and DG1 print PASS, and --pipeline prints 'PASS pipeline (active stage: DG4 REVIEWING)'. In round 2 all four exited 1.\n\nDG4 history at c94b2a2: PLANNED > BUILDING > REVIEWING(r1, 2026-10-10T21:25:25Z) > FIXING(2026-10-11T00:51:49Z) > REVIEWING(r2, 04:43:11Z) > FIXING(08:40:00Z) > REVIEWING(r3, 12:34:28Z). Every step is legal and the timestamps are in order. There is no REVIEWING > REVIEWING step.\n\ngit log -p docs/delivery/stages.json:\n- 546fb4e only inserts the round-1 FIXING entry, dated at the D-117 commit f5579e7 (committed 2026-10-11T00:51:49Z). The diff is 5 added lines and no removed line.\n- ba57107 appends the round-2 FIXING entry, and c94b2a2 appends the round-3 REVIEWING entry.\n- No earlier entry's state or timestamp was rewritten (JSON comparison of the history at a613f6f, 1b8c158, 546fb4e, ba57107 and c94b2a2).\n- tools/gates, tools/agents and .claude/agents are unchanged since the DG3 approval (d3e6fe6..c94b2a2: 0 files), so the transition rules were not weakened to make the history pass.\n\nResidual, judged not worth a finding: ba57107 edited the free-text note of the entry 546fb4e had added. 'Entry added at 2026-10-11T07:10Z' became 'Entry added at 2026-10-11T07:05Z (commit 546fb4e)'. 546fb4e was committed at 07:05:34Z, so the edit corrects the note to the facts. The entry's state and at are unchanged, nothing reads the note mechanically, and the validator passes either way. During my run the domain reviewer's run auto-committed eae9978, run evidence and its own round-3 records only; I did not open those records. The validators also exit 0 at eae9978.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-freeze-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/f-dg4-104-stages-history.log"
+      ]
+    }
+  ]
+}
