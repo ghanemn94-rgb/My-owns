@@ -95,6 +95,7 @@ export function sixAreas(): T10Area[] {
           value: unknownV("kpi.no_accepted_actual"),
           period: null,
           drilldownHref: drill("outcomes.area"),
+          headlineBasis: null,
         },
       ],
       items: [
@@ -160,6 +161,7 @@ export function sixAreas(): T10Area[] {
           value: staleV,
           period: null,
           drilldownHref: drill("dependencies.open"),
+          headlineBasis: null,
         },
       ],
     }),
@@ -172,6 +174,7 @@ export function sixAreas(): T10Area[] {
           value: v("1", null, "decision"),
           period: null,
           drilldownHref: drill("decisions.overdue"),
+          headlineBasis: null,
         },
       ],
       items: [
@@ -263,6 +266,7 @@ export function drilldown(): DashboardDrilldown {
       },
     ],
     nextCursor: null,
+    headlineBasis: "profit_and_cash",
   };
 }
 
@@ -327,6 +331,7 @@ export function financeDashboard(): FinanceDashboard {
         value: v("1", null, "measurement"),
         period: null,
         drilldownHref: drill("finance.pending_validation"),
+        headlineBasis: null,
       },
       {
         metric: "value.investment",
@@ -334,6 +339,7 @@ export function financeDashboard(): FinanceDashboard {
         value: v("400"),
         period: null,
         drilldownHref: drill("value.investment"),
+        headlineBasis: null,
       },
     ],
     pendingValidationCount: 1,
@@ -363,7 +369,7 @@ export function unknownHeader(): WorkspaceHeader {
       rag: { status: "unknown", ruleKey: "dashboard.rag.outcomes.none", ruleParams: {}, policySource: "default" },
       counts: [],
     },
-    benefits: { state: "unknown", planned: [], validated: [], benefitCount: 0, nonFinancialCount: 0 },
+    benefits: { state: "unknown", planned: [], validated: [], benefitCount: 0, nonFinancialCount: 0, headlines: [] },
     keyDecisions: { items: [], overdueCount: 0 },
     nextActions: { items: [], missingMandatoryCount: null },
   };
@@ -389,6 +395,7 @@ export function knownHeader(): WorkspaceHeader {
       validated: [{ currency: "SAR", value: v("0") }],
       benefitCount: 1,
       nonFinancialCount: 1,
+      headlines: [],
     },
     keyDecisions: {
       items: [sixAreas()[4]!.items[0]!],
