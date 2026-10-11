@@ -1,0 +1,48 @@
+port-policy: PostgreSQL listening on port 26100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv34spr4_aa75c3f4 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests) 5107ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  921ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1337ms
+ ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests) 4280ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  438ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves  560ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  346ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-adoption.test.ts (9 tests) 3199ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure on the Finance and adoption dashboards > no tile, total or drill-down holds a Y record or figure  384ms
+ ✓ |integration| apps/api/test/integration/benefits/measurements.test.ts (12 tests) 2588ms
+   ✓ create, read, list (ADR-0030 §2) > the §11 refusals: step, value shape, unmonetised, period taken, period range, unknown evidence  307ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > submit needs the period and evidence; If-Match 428/409; one audit event and one outbox event; pending only  319ms
+ ✓ |integration| apps/api/test/integration/benefits/finance-validation.test.ts (9 tests) 2101ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > BO, AUD and ADM-only get 403; FIN approves; two audit events by FIN; the task is done; validated +amount  359ms
+ ✓ |integration| apps/api/test/integration/benefits/corrections.test.ts (6 tests) 1874ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after  455ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > only an approved validation is corrected; FIN only; If-Match 428/409; a reason is required  302ms
+ ✓ |integration| apps/api/test/integration/benefits/totals.test.ts (7 tests) 1761ms
+   ✓ counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %  315ms
+   ✓ classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0  484ms
+ ✓ |integration| apps/api/test/integration/benefits/overlaps.test.ts (11 tests) 1318ms
+ ✓ |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts (7 tests) 1396ms
+ ✓ |integration| apps/api/test/integration/benefits/register.test.ts (17 tests) 1348ms
+ ✓ |integration| apps/api/test/integration/benefits/lifecycle.test.ts (10 tests) 1272ms
+ ✓ |integration| apps/api/test/integration/benefits/values.test.ts (5 tests) 1074ms
+   ✓ REQ-S08-001: seven states kept apart > planned, forecast, measured, submitted, validated, rejected each with its own total; forecast never validated  351ms
+ ✓ |integration| apps/api/test/integration/benefits/scenarios.test.ts (7 tests) 1097ms
+ ✓ |integration| apps/api/test/integration/benefits/valuation-methods.test.ts (6 tests) 938ms
+ ✓ |integration| apps/api/test/integration/benefits/entity-group.test.ts (1 test) 861ms
+   ✓ REQ-S16-017: the benefits entity group through the API > creates and reads each of the seven entities; AUD is refused every mutation and reads every record  564ms
+ ✓ |integration| apps/api/test/integration/benefits/groups.test.ts (4 tests) 691ms
+ ✓ |integration| apps/api/test/integration/benefits/allocations.test.ts (6 tests) 952ms
+ ✓ |integration| apps/api/test/integration/benefits/plan-value-read.test.ts (3 tests) 801ms
+
+ Test Files  18 passed (18)
+      Tests  149 passed (149)
+   Start at  01:15:19
+   Duration  70.60s (transform 4.12s, setup 0ms, collect 35.32s, tests 32.66s, environment 0ms, prepare 84ms)
+

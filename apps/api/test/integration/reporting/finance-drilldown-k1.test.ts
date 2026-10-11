@@ -6,7 +6,9 @@
 //    financial classes in SAR plus two more, a second currency (USD), a benefit held back by an open overlap, a valued
 //    non-financial benefit, and values in all seven states (planned, forecast, measured, submitted, validated,
 //    rejected, sustained);
-//  - K1 item 5: every class line carries that href; the gross lines keep theirs; the net lines keep null;
+//  - K1 item 5: every class line carries that href; the net lines keep null; since F-DG4-121 (D-117) gross sums only
+//    margin_uplift, cash_saving and working_capital_release, and a gross line keeps its value.<state> href only when
+//    no revenue_uplift or avoided_cost line enters that state and currency (else null: never a drill that sums more);
 //  - K1 items 1-2: valueClass with another metric is 422 dashboard.value_class_not_applicable (exact K2 text, at
 //    /valueClass); a value outside the enum is 400; value.measured/rejected/sustained take a benefit subjectId; their
 //    rule keys are dashboard.value.sum_<state>;
@@ -293,12 +295,37 @@ describe("K1 item 4: every Finance class line equals the decimal sum of its dril
     expect(checked).toBe(42);
   });
 
-  it("gross lines keep their hrefs (no valueClass); net lines keep null; the drill-down's total_<currency> input equals the line", async () => {
+  it("F-DG4-121: a gross line drills (value.<state>, no valueClass) only when that drill sums exactly its records; net lines keep null; a class drill's total_<currency> input equals the line", async () => {
     const r = await financeOfX();
     const lines = r.body.lines as Body[];
-    for (const l of lines.filter((x) => x.valueClass === "gross")) {
-      expect(l.drilldownHref).not.toContain("valueClass=");
-      expect(new URLSearchParams(l.drilldownHref.split("?")[1]).get("metric")).toBe(`value.${l.state}`);
+    const gross = (state: string, currency: string) =>
+      lines.find((x) => x.valueClass === "gross" && x.state === state && x.currency === currency);
+    // Gross sums only margin_uplift, cash_saving and working_capital_release (D-117): SAR planned 70.05 + 5 = 75.05,
+    // SAR validated 30.5 (avoided cost's 350 is held back by the overlap and is never gross anyway), USD planned 0
+    // (USD holds revenue uplift only), USD validated 0.
+    expect(
+      [
+        ["planned", "SAR"],
+        ["validated", "SAR"],
+        ["planned", "USD"],
+        ["validated", "USD"],
+      ].map(([s, c]) => new Decimal(gross(s!, c!).total.value).toFixed()),
+    ).toEqual(["75.05", "30.5", "0", "0"]);
+    // Revenue uplift (and avoided cost) lines enter SAR planned, SAR validated and USD planned, where the five-class
+    // value.<state> drill would sum more than gross: no href. USD validated has no such line: it keeps its href.
+    expect(
+      [
+        ["planned", "SAR"],
+        ["validated", "SAR"],
+        ["planned", "USD"],
+      ].map(([s, c]) => gross(s!, c!).drilldownHref),
+    ).toEqual([null, null, null]);
+    const kept = gross("validated", "USD");
+    expect(kept.drilldownHref).not.toContain("valueClass=");
+    expect(new URLSearchParams(kept.drilldownHref.split("?")[1]).get("metric")).toBe("value.validated");
+    for (const l of lines.filter((x) => x.valueClass === "gross" && x.drilldownHref !== null)) {
+      const d = await drillAll(l.drilldownHref, l.currency);
+      expect(d.sum ?? "0", `gross ${l.state} ${l.currency}`).toBe(new Decimal(l.total.value).toFixed());
     }
     expect(lines.filter((x) => x.valueClass === "net").map((x) => x.drilldownHref)).toEqual([null, null, null, null]);
     const line = lines.find((x) => x.valueClass === "margin_uplift" && x.state === "validated");
@@ -307,6 +334,40 @@ describe("K1 item 4: every Finance class line equals the decimal sum of its dril
       { name: "total_SAR", value: d.body.value, recordType: null, recordId: null },
     ]);
     expect(d.body.value).toEqual(line.total);
+  });
+});
+
+describe("F-DG4-121 (D-117): the Finance dashboard's gross sums only margin, cash saving and working capital", () => {
+  it("gross = the exact sum of the margin_uplift, cash_saving and working_capital_release lines; revenue and avoided cost are never in gross or net", async () => {
+    const r = await financeOfX();
+    const lines = r.body.lines as Body[];
+    const of = (cls: string, state: string, currency: string) =>
+      lines.find((l) => l.valueClass === cls && l.state === state && l.currency === currency);
+    let checked = 0;
+    for (const g of lines.filter((l) => l.valueClass === "gross")) {
+      const label = `gross ${g.state} ${g.currency}`;
+      const parts = ["margin_uplift", "cash_saving", "working_capital_release"]
+        .map((cls) => of(cls, g.state, g.currency))
+        .filter((l) => l !== undefined);
+      if (parts.some((p) => p.total.state === "unknown")) expect(g.total.state, label).toBe("unknown");
+      else
+        expect(new Decimal(g.total.value).toFixed(), label).toBe(
+          parts.reduce((acc, p) => acc.plus(new Decimal(p.total.value ?? 0)), new Decimal(0)).toFixed(),
+        );
+      checked += 1;
+    }
+    expect(checked).toBe(4);
+    // The fixture's SAR block has a non-zero revenue_uplift and avoided_cost planned line; neither is in gross.
+    for (const cls of ["revenue_uplift", "avoided_cost"])
+      expect(new Decimal(of(cls, "planned", "SAR").total.value).isZero(), cls).toBe(false);
+    // net = gross − implementation cost; X has no business-case investment line (cost is a known 0), so net = gross,
+    // per currency and state: never the five-class sum.
+    const nets = lines.filter((l) => l.valueClass === "net");
+    expect(nets).toHaveLength(4);
+    for (const n of nets)
+      expect(new Decimal(n.total.value).toFixed(), `net ${n.state} ${n.currency}`).toBe(
+        new Decimal(of("gross", n.state, n.currency).total.value).toFixed(),
+      );
   });
 });
 

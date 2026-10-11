@@ -11,6 +11,11 @@
 //   −(original + amendments), once per original (422 finance_validation.already_reversed).
 // - FIN only (BO, AUD and ADM-only callers get 403), If-Match on the original decision (428/409), the financeValidationQueue advisory lock on the
 //   original measurement, decimal.js arithmetic only, and one audit event per new row whose actor is the Finance author.
+// - F-DG4-101 (T-DG4-KBE-R5; D-117): every amendment or reversal also steps the ORIGINAL validation's version (with
+//   its own audit event, `finance_validation.corrected`) in the same transaction, under the same financeValidationQueue
+//   advisory lock. So the original's ETag names the chain's current state: a correction made from a view that predates
+//   another correction gets 409 with the current version, and nothing is written. The client re-reads the original for
+//   its new ETag.
 // A correction is a Finance-authored record inside the product; it never relates to the engineering gates DG0-DG7.
 import { diffFields, sql, type BenefitMeasurementRow, type FinanceValidationRow, type Tx } from "@mth/db";
 import { FORMULA_DECIMAL as D } from "@mth/shared/calc";
@@ -19,7 +24,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { record } from "../audit/index.ts";
 import { parseBody, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
-import type { WriteContext } from "../transformations/index.ts";
+import { bumpStamps, type WriteContext } from "../transformations/index.ts";
 import { benefitRule, JSON_BODY, lockBenefit } from "./register.ts";
 import { lockMeasurement, lockQueue, MEASUREMENT_AUDIT_FIELDS } from "./measurements.ts";
 import {
@@ -185,7 +190,36 @@ async function createCorrection(
     reason,
     changes: diffFields({} as FinanceValidationRow, fv, [...VALIDATION_AUDIT_FIELDS]),
   });
+  await stepOriginal(tx, ctx, validation, reason);
   return fv;
+}
+
+/**
+ * F-DG4-101: the original validation's version steps with every correction, in the correction's transaction and under
+ * its lock, so the next correction needs the new ETag (If-Match names the chain's current state). Its own audit event,
+ * by the correcting Finance user, records the step. The original's decision and amounts are never changed.
+ */
+async function stepOriginal(tx: Tx, ctx: WriteContext, validation: FinanceValidationRow, reason: string) {
+  const stepped = await tx
+    .updateTable("finance_validation")
+    .set(bumpStamps(ctx.userId))
+    .where("id", "=", validation.id)
+    .where("version", "=", validation.version)
+    .returning(["version"])
+    .executeTakeFirst();
+  // The row is locked FOR UPDATE by openTarget, so the version cannot have moved; refuse rather than write blind.
+  if (!stepped) throw problems.versionConflict(validation.version);
+  await record(tx, ctx.audit, {
+    action: "finance_validation.corrected",
+    recordType: "finance_validation",
+    recordId: validation.id,
+    organizationId: ctx.organizationId,
+    transformationId: ctx.transformationId,
+    priorVersion: validation.version,
+    newVersion: stepped.version,
+    reason,
+    changes: { version: { from: validation.version, to: stepped.version } },
+  });
 }
 
 async function amend(tx: Tx, request: FastifyRequest, transformationId: string, id: string) {

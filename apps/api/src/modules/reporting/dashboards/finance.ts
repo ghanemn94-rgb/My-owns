@@ -9,12 +9,17 @@
 //    held back (ADR-0030 §7 item 4). Planned, measured, submitted, validated, rejected and sustained are "to date"
 //    (period end on or before the as-of date, and inside the period filter's window); forecast is "in the window"
 //    (lineInWindow, the Value area's rule). Currencies are never converted or added together.
-//  - gross, implementation cost and net (ADR-0030 §7 item 6): the lines `gross` (planned, validated) = the sum of the
-//    five financial classes' lines of that state = exactly the Value area's `value.planned` / `value.validated`
-//    headline (so they drill to it with the decimal-sum invariant); implementation cost is the `value.investment`
-//    headline (each business-case investment line once); the lines `net` (planned, validated) = gross − implementation
-//    cost per currency. A missing amount makes the total Unknown with its reason, never 0. With an owner filter the
-//    investment lines have no owner (engine.ts narrowByFilters), so no net line is shown.
+//  - gross, implementation cost and net (ADR-0030 §7 item 6, as amended for F-DG4-121 by D-117): the lines `gross`
+//    (planned, validated) = the exact sum of the PROFIT AND CASH class lines of that state and currency:
+//    margin_uplift, cash_saving and working_capital_release (M0172; B0145). revenue_uplift (top line) and avoided_cost
+//    (non-cash) keep their own class lines and are never summed into gross or net. A gross line drills to the
+//    `value.<state>` drill-down only when that drill-down sums exactly its records (no revenue_uplift or avoided_cost
+//    line enters the state in that currency); otherwise its href is null and it is read as the sum of its three class
+//    lines, each of which drills (a multi-class drill-down needs a contract change: see the T-DG4-KBE-R5 handback).
+//    Implementation cost is the `value.investment` headline (each business-case investment line once); the lines
+//    `net` (planned, validated) = gross − implementation cost per currency. A missing amount makes the total Unknown
+//    with its reason, never 0. With an owner filter the investment lines have no owner (engine.ts narrowByFilters), so
+//    no net line is shown. The Value area's headlines are unchanged.
 //  - `headlines`: the Value area's headlines (planned, forecast, submitted, validated, gap, investment per currency) and
 //    `finance.pending_validation` (the submitted measurements awaiting Finance), each drilling to its records.
 //  - `pendingValidationCount`, `nonFinancialCount` (counted benefits without an approved valuation method: Value n/a,
@@ -176,7 +181,17 @@ export function investmentByCurrency(ctx: DashboardContext): Map<string, Dashboa
   return out;
 }
 
-/** The gross and net lines (ADR-0030 §7 item 6) from the Value area result and the investment lines. */
+/** The classes the headline gross sums (F-DG4-121; D-117): profit and cash only. */
+export const GROSS_VALUE_CLASSES: readonly string[] = ["margin_uplift", "cash_saving", "working_capital_release"];
+/** The financial classes shown beside gross and never summed into it: revenue_uplift (top line), avoided_cost (non-cash). */
+export const BESIDE_GROSS_CLASSES: readonly string[] = FINANCIAL_VALUE_CLASSES.filter(
+  (c) => !GROSS_VALUE_CLASSES.includes(c),
+);
+
+/**
+ * The gross and net lines (ADR-0030 §7 item 6; F-DG4-121) from the facts and the investment lines, over the Value
+ * area's currencies (so the set of gross lines is the one it was).
+ */
 export function grossNetLines(
   ctx: DashboardContext,
   value: ValueResult,
@@ -184,22 +199,43 @@ export function grossNetLines(
 ): FinanceValueLine[] {
   const out: FinanceValueLine[] = [];
   const cost = investmentByCurrency(ctx);
-  const grossOf = new Map(value.currencies.map((c) => [c.currency, c]));
-  for (const c of value.currencies) {
-    out.push({
-      valueClass: "gross",
-      state: "planned",
-      currency: c.currency,
-      total: c.planned,
-      drilldownHref: hrefOf("value.planned"),
+  const byId = new Map(ctx.facts.benefits.map((b) => [b.benefitId, b]));
+  // The value lines of `state` in `currency` that enter one of `classes`' Finance class lines (the class lines' own
+  // rule, lineEntersClassSum), so gross is exactly the sum of its three class lines.
+  const entering = (state: "planned" | "validated", currency: string, classes: readonly string[]) =>
+    ctx.facts.lines.filter((l) => {
+      const b = byId.get(l.benefitId);
+      return (
+        b !== undefined && b.currency === currency && classes.some((c) => lineEntersClassSum(b, l, state, c, ctx.clock))
+      );
     });
-    out.push({
-      valueClass: "gross",
-      state: "validated",
-      currency: c.currency,
-      total: c.validated,
-      drilldownHref: hrefOf("value.validated"),
-    });
+  const grossOf = new Map<string, { planned: DashboardValue; validated: DashboardValue }>();
+  for (const { currency } of value.currencies) {
+    const totals: { planned: DashboardValue | null; validated: DashboardValue | null } = {
+      planned: null,
+      validated: null,
+    };
+    for (const state of ["planned", "validated"] as const) {
+      const total = sumValue(
+        entering(state, currency, GROSS_VALUE_CLASSES).map((l) => l.amount),
+        currency,
+        "currency",
+        "benefit.value_amount_missing",
+      );
+      if (state === "planned") totals.planned = total;
+      else totals.validated = total;
+      // The five-class value-state drill-down sums exactly the gross records only when no revenue_uplift or
+      // avoided_cost line enters the state in this currency; a href whose sum differs from the line is never given.
+      const drillable = entering(state, currency, BESIDE_GROSS_CLASSES).length === 0;
+      out.push({
+        valueClass: "gross",
+        state,
+        currency,
+        total,
+        drilldownHref: drillable ? hrefOf(`value.${state}`) : null,
+      });
+    }
+    grossOf.set(currency, { planned: totals.planned!, validated: totals.validated! });
   }
   // Net needs the implementation cost; under an owner filter the investment lines (which have no owner) are left out.
   if (ctx.filters.ownerUserId !== null) return out;

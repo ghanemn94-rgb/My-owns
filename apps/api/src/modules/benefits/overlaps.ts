@@ -42,6 +42,7 @@ import { z } from "zod";
 import {
   currentGroupMemberIds,
   decide,
+  denialOf,
   loadGrants,
   principalOf,
   requireTransformationRead,
@@ -432,7 +433,8 @@ async function resolveOverlap(tx: Tx, request: FastifyRequest): Promise<BenefitO
     .select("owner_user_id")
     .where("id", "in", [current.benefit_a_id, current.benefit_b_id])
     .execute();
-  if (owners.some((o) => o.owner_user_id === ctx.userId)) throw overlapRefusals.resolverIsOwner();
+  if (owners.some((o) => o.owner_user_id === ctx.userId))
+    throw overlapRefusals.resolverIsOwner().withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
   const pair = [current.benefit_a_id, current.benefit_b_id];
   const excluded = body.excludedBenefitId?.toLowerCase();
   if (body.resolution === "duplicate" ? excluded === undefined || !pair.includes(excluded) : excluded !== undefined)

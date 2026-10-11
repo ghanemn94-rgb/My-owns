@@ -452,7 +452,9 @@ describe("A10: unvalidated or forecast value never appears as validated actual",
 
   it("REQ-S08-011: a 1 million SAR initiative cost reduces transformation net value by exactly 1 million", async () => {
     const b = await seedBenefitWorld(api, w);
-    const ben = await newBenefit(b);
+    // T-DG4-KBE-R5 (F-DG4-121; D-117): gross and net sum only margin, cash saving and working capital, so the 3 M SAR
+    // benefit is margin uplift (it was revenue uplift, which is now its own line and never in gross or net).
+    const ben = await newBenefit(b, { valueClass: "margin_uplift" });
     await planValue(b, ben.id, "planned", "3000000");
     const BC = "/api/v1/business-cases";
     const top = await call<Body>(api.app, "POST", BC, {

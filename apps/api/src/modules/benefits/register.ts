@@ -52,7 +52,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
-import { holdsAnywhere, principalOf, requireTransformationRead } from "../access/index.ts";
+import { denialOf, holdsAnywhere, principalOf, requireTransformationRead, resolveTarget } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -125,9 +125,22 @@ export function parseTransformationParam(params: unknown): string {
  * The write permission must be held somewhere, or the caller gets 403 whatever the body and record (a read-only
  * auditor and a technical administrator never hold a slice B permission; ADR-0029 §9). Existence is not disclosed:
  * the answer does not depend on the record.
+ *
+ * ADR-0004 §3 coverage rule (F-DG4-100; T-DG4-KBE-R5): the refusal carries the denial of `permission` on the
+ * transformation, so the failed-mutation audit (access/denials.ts) writes exactly one `authorization.denied` naming the
+ * permission. The response is the same 403 either way; an unknown transformation carries no denial (a missing record is
+ * not an authorization event) and is told apart by nothing in the answer.
  */
-export function requirePermissionSomewhere(request: FastifyRequest, permission: Permission): void {
-  if (!holdsAnywhere(principalOf(request), permission)) throw problems.forbidden();
+export async function requirePermissionSomewhere(
+  db: DbOrTx,
+  request: FastifyRequest,
+  permission: Permission,
+  transformationId: string,
+): Promise<void> {
+  if (holdsAnywhere(principalOf(request), permission)) return;
+  const target = await resolveTarget(db, { type: "transformation", id: transformationId });
+  if (target === null) throw problems.forbidden();
+  throw problems.forbidden().withDenial(denialOf(permission, target));
 }
 
 /** The gates of a slice B mutation inside a transformation (403 first, then 404, then the scoped write gate). */
@@ -137,7 +150,7 @@ export async function openBenefitWrite(
   transformationId: string,
   permission: Permission,
 ): Promise<WriteContext> {
-  requirePermissionSomewhere(request, permission);
+  await requirePermissionSomewhere(tx, request, permission, transformationId);
   return openWrite(tx, request, transformationId, [{ permission }], null, { atCommit: true });
 }
 

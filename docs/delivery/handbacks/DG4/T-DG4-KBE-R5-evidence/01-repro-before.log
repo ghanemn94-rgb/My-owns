@@ -1,0 +1,313 @@
+port-policy: PostgreSQL listening on port 26100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv34gw1y_d186e280 (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests | 1 failed) 5399ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > the fixture has two financial classes in one currency, two currencies, an overlap hold and a valued CX line 79ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  769ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > gross lines keep their hrefs (no valueClass); net lines keep null; the drill-down's total_<currency> input equals the line 31ms
+   × F-DG4-121 (D-117): the Finance dashboard's gross sums only margin, cash saving and working capital > gross = the exact sum of the margin_uplift, cash_saving and working_capital_release lines; revenue and avoided cost are never in gross or net 25ms
+     → gross planned SAR: expected '1975.05' to be '75.05' // Object.is equality
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > valueClass with a metric that is not a value state is 422 dashboard.value_class_not_applicable (exact K2 text) 73ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > a value class outside FinanceValueClass is a 400 validation (gross, net, non_financial are not classes) 20ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > value.measured, value.rejected and value.sustained without a class sum the five financial classes 126ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > the three metrics take a benefit subjectId, as the four original value metrics do 76ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > Unknown, never 0: a class with no benefit drills to an empty, labelled n/a; an empty state of a class is a known zero 23ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > the cursor is bound to the value class 18ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > the organization-wide auditor sees Y in each new metric (so the sweep can fail) 55ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1248ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > an explicit Y transformation with a value class is 404; a Y benefit as subject is not disclosed 20ms
+ ❯ |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts (7 tests | 5 failed) 1228ms
+   ✓ F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > the sweep covers all 26 slice B mutations of the contract 2ms
+   × F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > AUD: every slice B mutation is 403 with exactly one denial 18ms
+     → createBenefit POST /api/v1/transformations/{transformationId}/benefits: expected [] to deeply equal [ [ 'authorization.denied', …(5) ] ]
+   × F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > ADM-only (ADM_ACCESS + ADM_TECH): every slice B mutation is 403 with exactly one denial 5ms
+     → createBenefit POST /api/v1/transformations/{transformationId}/benefits: expected [] to deeply equal [ [ 'authorization.denied', …(5) ] ]
+   × F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > a Business Owner on the six Finance decisions: 403 with exactly one denial naming finance.validate 8ms
+     → amendFinanceValidation POST /api/v1/transformations/{transformationId}/finance-validations/{financeValidationId}/amendments: expected [] to deeply equal [ [ 'authorization.denied', …(5) ] ]
+   ✓ F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > an unknown transformation: 403 and no audit row (a missing record is not an authorization event) 6ms
+   × F-DG4-100 (slice B): the separation-of-duties refusals of the Finance decisions are denials too > the submitter of a value (FIN + BO) is 403 finance_validation.sod_submitter with one denial 199ms
+     → expected [] to deeply equal [ [ 'authorization.denied', …(4) ] ]
+   × F-DG4-100 (slice B): the separation-of-duties refusals of the Finance decisions are denials too > the owner of a benefit (FIN as owner) is 403 benefit.baseline_validator_is_owner with one denial 60ms
+     → expected [] to deeply equal [ [ 'authorization.denied', …(3) ] ]
+ ❯ |integration| apps/api/test/integration/benefits/corrections.test.ts (5 tests | 3 failed) 1778ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after  461ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > only an approved validation is corrected; FIN only; If-Match 428/409; a reason is required 265ms
+   × F-DG4-101: a correction from a stale view is 409 with the current version > the reviewer's F2 case: FIN-B amends to 900 with ETag V; FIN-A, still holding V, gets 409 and 900 stands 201ms
+     → expected 2 to be 3 // Object.is equality
+   × F-DG4-101: a correction from a stale view is 409 with the current version > stale amend then reverse: after an amendment, a reversal with the pre-amendment ETag is 409; with the new one 201 226ms
+     → expected [ 201, undefined, undefined ] to deeply equal [ 409, 'version_conflict', 3 ]
+   × F-DG4-101: a correction from a stale view is 409 with the current version > stale reverse then amend: after a reversal, an amendment with the pre-reversal ETag is 409; with the new one 422 197ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, 'version_conflict', 3 ]
+ ❯ |integration| apps/api/test/integration/benefits/totals.test.ts (7 tests | 1 failed) 1936ms
+   ✓ counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %  339ms
+   ✓ counted once (REQ-PB-058) and the initiative view > a parent is a roll-up: its children are summed once and the parent is listed as excluded 158ms
+   ✓ classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0  476ms
+   × F-DG4-121 (D-117): the headline gross sums only profit and cash classes > revenue 300 + margin 70 + cash 20 + avoided 45 -> gross 90, net 90; the four class lines unchanged 205ms
+     → expected [ '435.0000', '0.0000', '435.0000' ] to deeply equal [ '90.0000', '0.0000', '90.0000' ]
+   ✓ gross, implementation cost and net (REQ-S08-011) > a 1 M SAR initiative cost reduces net by exactly 1 M; a cost without an amount makes cost and net Unknown 187ms
+   ✓ open overlaps (REQ-S08-014) and the portfolio > a validated value of a benefit with an open overlap is on pendingOverlap, not in validated  322ms
+   ✓ open overlaps (REQ-S08-014) and the portfolio > the organization's portfolio total covers the readable transformations; an outsider gets 404 127ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > F-DG4-101: a correction from a stale view is 409 with the current version > the reviewer's F2 case: FIN-B amends to 900 with ETag V; FIN-A, still holding V, gets 409 and 900 stands
+AssertionError: expected 2 to be 3 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 3[39m
+[31m+ 2[39m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:221:27
+    219|     // The original's version stepped with FIN-B's correction (and its…
+    220|     const after = await original(v.validationId);
+    221|     expect(after.version).toBe(held + 1);
+       |                           ^
+    222|     const bumped = (await auditOfRequest(api.db, String(amendB.headers…
+    223|       (e) => e.record_id === v.validationId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > F-DG4-101: a correction from a stale view is 409 with the current version > stale amend then reverse: after an amendment, a reversal with the pre-amendment ETag is 409; with the new one 201
+AssertionError: expected [ 201, undefined, undefined ] to deeply equal [ 409, 'version_conflict', 3 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   409,[39m
+[32m-   "version_conflict",[39m
+[32m-   3,[39m
+[31m+   201,[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:263:72
+    261|       body: { reason: "Synthetic reversal from a stale view" },
+    262|     });
+    263|     expect([stale.status, stale.body.code, stale.body.currentVersion])…
+       |                                                                        ^
+    264|     expect((await validatedOf(ben.id)).total.amount).toBe("450.0000");
+    265|     expect(await correctionsOf(v.measurementId)).toEqual([{ kind: "ame…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > F-DG4-101: a correction from a stale view is 409 with the current version > stale reverse then amend: after a reversal, an amendment with the pre-reversal ETag is 409; with the new one 422
+AssertionError: expected [ 422, …(2) ] to deeply equal [ 409, 'version_conflict', 3 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   409,[39m
+[32m-   "version_conflict",[39m
+[32m-   3,[39m
+[31m+   422,[39m
+[31m+   "finance_validation.already_reversed",[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:291:72
+    289|       body: { correctedAmount: "700", reason: "Synthetic amendment fro…
+    290|     });
+    291|     expect([stale.status, stale.body.code, stale.body.currentVersion])…
+       |                                                                        ^
+    292|     expect(await correctionsOf(v.measurementId)).toEqual([{ kind: "rev…
+    293|     const current = await call<Body>(api.app, "POST", `${FV}/${v.valid…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts > F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > AUD: every slice B mutation is 403 with exactly one denial
+AssertionError: createBenefit POST /api/v1/transformations/{transformationId}/benefits: expected [] to deeply equal [ [ 'authorization.denied', …(5) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287f-363f-7377-a5f0-c4ed8fd9c7e0",[39m
+[32m-     "transformation",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "POST /api/v1/transformations/:transformationId/benefits requires benefit.edit",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ expectOneDenial apps/api/test/integration/benefits/slice-b-denials.test.ts:224:5
+    222|     a.audit.map((e) => [e.action, e.actor_user_id, e.record_type, e.re…
+    223|     label,
+    224|   ).toEqual([
+       |     ^
+    225|     [
+    226|       "authorization.denied",
+ ❯ apps/api/test/integration/benefits/slice-b-denials.test.ts:248:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts > F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > ADM-only (ADM_ACCESS + ADM_TECH): every slice B mutation is 403 with exactly one denial
+AssertionError: createBenefit POST /api/v1/transformations/{transformationId}/benefits: expected [] to deeply equal [ [ 'authorization.denied', …(5) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287f-363d-72ac-8c89-cc9b592eae98",[39m
+[32m-     "transformation",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "POST /api/v1/transformations/:transformationId/benefits requires benefit.edit",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ expectOneDenial apps/api/test/integration/benefits/slice-b-denials.test.ts:224:5
+    222|     a.audit.map((e) => [e.action, e.actor_user_id, e.record_type, e.re…
+    223|     label,
+    224|   ).toEqual([
+       |     ^
+    225|     [
+    226|       "authorization.denied",
+ ❯ apps/api/test/integration/benefits/slice-b-denials.test.ts:253:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts > F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > a Business Owner on the six Finance decisions: 403 with exactly one denial naming finance.validate
+AssertionError: amendFinanceValidation POST /api/v1/transformations/{transformationId}/finance-validations/{financeValidationId}/amendments: expected [] to deeply equal [ [ 'authorization.denied', …(5) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287f-364c-727c-b18a-037ea0a47f07",[39m
+[32m-     "transformation",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "POST /api/v1/transformations/:transformationId/finance-validations/:financeValidationId/amendments requires finance.validate",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ expectOneDenial apps/api/test/integration/benefits/slice-b-denials.test.ts:224:5
+    222|     a.audit.map((e) => [e.action, e.actor_user_id, e.record_type, e.re…
+    223|     label,
+    224|   ).toEqual([
+       |     ^
+    225|     [
+    226|       "authorization.denied",
+ ❯ apps/api/test/integration/benefits/slice-b-denials.test.ts:267:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts > F-DG4-100 (slice B): the separation-of-duties refusals of the Finance decisions are denials too > the submitter of a value (FIN + BO) is 403 finance_validation.sod_submitter with one denial
+AssertionError: expected [] to deeply equal [ [ 'authorization.denied', …(4) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287f-394b-7159-af65-44fd269815b4",[39m
+[32m-     "transformation",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "POST /api/v1/transformations/:transformationId/finance-validations/:financeValidationId/decision requires finance.validate",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/benefits/slice-b-denials.test.ts:306:7
+    304|         e.reason,
+    305|       ]),
+    306|     ).toEqual([
+       |       ^
+    307|       [
+    308|         "authorization.denied",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts > F-DG4-100 (slice B): the separation-of-duties refusals of the Finance decisions are denials too > the owner of a benefit (FIN as owner) is 403 benefit.baseline_validator_is_owner with one denial
+AssertionError: expected [] to deeply equal [ [ 'authorization.denied', …(3) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "01a1287f-3a12-759f-b4a3-b61dd2322962",[39m
+[32m-     "01a1287f-364a-7079-872e-ce83df3b3946",[39m
+[32m-     "POST /api/v1/transformations/:transformationId/benefits/:benefitId/baseline-validation requires finance.validate",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/benefits/slice-b-denials.test.ts:334:7
+    332|         e.reason,
+    333|       ]),
+    334|     ).toEqual([
+       |       ^
+    335|       [
+    336|         "authorization.denied",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/totals.test.ts > F-DG4-121 (D-117): the headline gross sums only profit and cash classes > revenue 300 + margin 70 + cash 20 + avoided 45 -> gross 90, net 90; the four class lines unchanged
+AssertionError: expected [ '435.0000', '0.0000', '435.0000' ] to deeply equal [ '90.0000', '0.0000', '90.0000' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "90.0000",[39m
+[31m+   "435.0000",[39m
+[2m    "0.0000",[22m
+[32m-   "90.0000",[39m
+[31m+   "435.0000",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/benefits/totals.test.ts:165:95
+    163|       ),
+    164|     ).toEqual(["300.0000", "70.0000", "20.0000", "45.0000"]);
+    165|     expect([c.gross.planned.amount, c.implementationCost.total.amount,…
+       |                                                                                               ^
+    166|       "90.0000",
+    167|       "0.0000",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts > F-DG4-121 (D-117): the Finance dashboard's gross sums only margin, cash saving and working capital > gross = the exact sum of the margin_uplift, cash_saving and working_capital_release lines; revenue and avoided cost are never in gross or net
+AssertionError: gross planned SAR: expected '1975.05' to be '75.05' // Object.is equality
+
+Expected: [32m"75.05"[39m
+Received: [31m"[7m19[27m75.05"[39m
+
+ ❯ apps/api/test/integration/reporting/finance-drilldown-k1.test.ts:327:61
+    325|       if (parts.some((p) => p.total.state === "unknown")) expect(g.tot…
+    326|       else
+    327|         expect(new Decimal(g.total.value).toFixed(), label).toBe(
+       |                                                             ^
+    328|           parts.reduce((acc, p) => acc.plus(new Decimal(p.total.value …
+    329|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  10 failed | 22 passed (32)
+   Start at  01:06:07
+   Duration  28.95s (transform 4.70s, setup 0ms, collect 15.63s, tests 10.34s, environment 0ms, prepare 95ms)
+
