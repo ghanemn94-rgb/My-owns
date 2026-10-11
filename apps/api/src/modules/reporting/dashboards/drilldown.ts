@@ -13,7 +13,9 @@ import { FORMULA_DECIMAL as D } from "@mth/shared/calc";
 import {
   dashboardMetric,
   financeValueClass,
+  HEADLINE_BASIS_CLASSES,
   type DashboardDrilldown,
+  type HeadlineBasis,
   type DashboardMetric,
   type DashboardValue,
   type DrilldownEvidence,
@@ -36,14 +38,15 @@ import {
   type ModuleDeps,
 } from "../../platform/index.ts";
 import {
+  basisOfClass,
   countValue,
   kpiActualValue,
   knownValue,
+  NO_PROFIT_AND_CASH,
   notApplicableValue,
   RATIO_ROUNDING,
   sumValue,
   unknownValue,
-  VALUE_HEADLINE_STATES,
   valueLinesOf,
   type ValueBenefitFact,
 } from "./areas.ts";
@@ -72,6 +75,8 @@ const drilldownQuery = z.strictObject({
 });
 
 interface Drill {
+  /** The basis of the classes summed (ADR-0037 amendment N3); null on non-value metrics and non_financial_valued. */
+  readonly headlineBasis: HeadlineBasis | null;
   readonly value: DashboardValue;
   readonly items: DrilldownItem[];
   readonly ruleKey: string;
@@ -127,14 +132,15 @@ function period(ctx: DashboardContext) {
  * A value-state drill-down (value.planned, forecast, submitted, validated, measured, rejected, sustained): one item per
  * benefit, its lines of the state summed. The lines are selected by the Finance class line's own rule
  * (lineEntersClassSum, ADR-0037 amendment K1 item 3): with `valueClass` the benefits of that Finance class, without it
- * the five financial classes. Measured, rejected and sustained lines are the benefit_value_line rows the Finance
- * dashboard reads (extraStateLinesOf).
+ * the three PROFIT-AND-CASH classes (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3 item 3,
+ * so the drill-down of a profit_and_cash headline and of a Finance gross line sums exactly their records). Measured,
+ * rejected and sustained lines are the benefit_value_line rows the Finance dashboard reads (extraStateLinesOf).
  *
- * The drill-down's own `value` and `inputs` are per currency. For the four original metrics without `valueClass` the
- * currencies are those of the selected lines, as built (byte-stable). For the three new metrics, and for any request
- * with `valueClass`, they are the currencies of the eligible benefits (those the Finance dashboard shows a class line
- * for), so an eligible class with no line in the state is a known zero in its own currency, like its Finance line
- * (ADR-0030 §7 item 7), and a scope with no eligible benefit is not_applicable with its reason, never a fabricated 0.
+ * The drill-down's own `value` and `inputs` are per currency: the currencies of the eligible benefits (those the
+ * Finance dashboard shows a class line for), so an eligible class with no line in the state is a known zero in its own
+ * currency, like its Finance line (ADR-0030 §7 item 7). A scope with no eligible benefit is not_applicable with its
+ * reason, never a fabricated 0: without `valueClass`, dashboard.value.no_profit_and_cash_benefit when it holds
+ * financial benefits of the other two classes only, else dashboard.value.no_financial_benefit.
  */
 async function valueDrill(
   db: DbOrTx,
@@ -146,12 +152,17 @@ async function valueDrill(
 ) {
   const byId = new Map(ctx.facts.benefits.map((b) => [b.benefitId, b]));
   const source = isExtraState(state) ? await extraStateLinesOf(db, ctx, scopeIds) : ctx.facts.lines;
-  let lines = source.filter((l) => lineEntersClassSum(byId.get(l.benefitId), l, state, valueClass, ctx.clock));
-  let eligible: ValueBenefitFact[] = ctx.facts.benefits.filter((b) => benefitInClass(b, valueClass));
+  const classes: readonly string[] = valueClass === null ? HEADLINE_BASIS_CLASSES.profit_and_cash : [valueClass];
+  let lines = source.filter((l) =>
+    classes.some((c) => lineEntersClassSum(byId.get(l.benefitId), l, state, c, ctx.clock)),
+  );
+  let eligible: ValueBenefitFact[] = ctx.facts.benefits.filter((b) => classes.some((c) => benefitInClass(b, c)));
+  let financial: ValueBenefitFact[] = ctx.facts.benefits.filter((b) => benefitInClass(b, null));
   if (subjectId !== null) {
     if (!byId.has(subjectId)) throw dashboardRefusal("dashboard.metric_subject_mismatch", "/subjectId");
     lines = lines.filter((l) => l.benefitId === subjectId);
     eligible = eligible.filter((b) => b.benefitId === subjectId);
+    financial = financial.filter((b) => b.benefitId === subjectId);
   }
   const benefitIds = [...new Set(lines.map((l) => l.benefitId))];
   const items: DrilldownItem[] = benefitIds.map((id) => {
@@ -171,10 +182,7 @@ async function valueDrill(
       period: period(ctx),
     };
   });
-  const asBuilt = valueClass === null && (VALUE_HEADLINE_STATES as readonly string[]).includes(state);
-  const currencies = asBuilt
-    ? [...new Set(lines.map((l) => byId.get(l.benefitId)!.currency))].sort()
-    : [...new Set(eligible.map((b) => b.currency))].sort();
+  const currencies = [...new Set(eligible.map((b) => b.currency))].sort();
   const byCurrency = new Map<string, DashboardValue>();
   for (const c of currencies)
     byCurrency.set(
@@ -195,12 +203,17 @@ async function valueDrill(
     recordId: e.measurement_id!,
   }));
   return {
+    headlineBasis: valueClass === null ? "profit_and_cash" : basisOfClass(valueClass),
     value:
-      !asBuilt && byCurrency.size === 0
-        ? notApplicableValue("dashboard.value.no_financial_benefit", "currency")
+      byCurrency.size === 0
+        ? notApplicableValue(
+            valueClass === null && financial.length > 0 ? NO_PROFIT_AND_CASH : "dashboard.value.no_financial_benefit",
+            "currency",
+          )
         : oneCurrency(byCurrency, "currency"),
     items,
-    ruleKey: `dashboard.value.sum_${state}`,
+    // ADR-0037 amendment N3: dashboard.value.sum_<state>_profit_and_cash without valueClass; K2 (unchanged) with it.
+    ruleKey: valueClass === null ? `dashboard.value.sum_${state}_profit_and_cash` : `dashboard.value.sum_${state}`,
     expression: null,
     inputs: [...byCurrency].map(([c, v]) => ({ name: `total_${c}`, value: v, recordType: null, recordId: null })),
     rounding: null,
@@ -224,7 +237,7 @@ async function drill(
   if (subjectId !== null && !SUBJECT_METRICS.includes(metric))
     throw dashboardRefusal("dashboard.metric_subject_mismatch", "/subjectId");
   if (state !== undefined) return valueDrill(db, ctx, scopeIds, state, valueClass, subjectId);
-  const base = { expression: null, rounding: null, evidence: [] as DrilldownEvidence[] };
+  const base = { headlineBasis: null, expression: null, rounding: null, evidence: [] as DrilldownEvidence[] };
   switch (metric) {
     case "outcomes.area": {
       const kpis = r.outcomes.outcomes.flatMap((o) => o.fact.kpis.map((k) => ({ o: o.fact, k })));
@@ -285,6 +298,7 @@ async function drill(
           period: null,
         });
       return {
+        headlineBasis: null,
         value: actual,
         items,
         ruleKey: `dashboard.kpi.${s.displayedRag}`,
@@ -340,10 +354,12 @@ async function drill(
       };
     }
     case "value.gap": {
+      // ADR-0037 amendment N3: the gap is on the profit-and-cash basis, so its items are only those classes' lines.
       const byId = new Map(ctx.facts.benefits.map((b) => [b.benefitId, b]));
+      const pc = HEADLINE_BASIS_CLASSES.profit_and_cash;
       const lines = [
-        ...valueLinesOf(byId, ctx.facts.lines, "planned", ctx.clock),
-        ...valueLinesOf(byId, ctx.facts.lines, "validated", ctx.clock),
+        ...valueLinesOf(byId, ctx.facts.lines, "planned", ctx.clock, pc),
+        ...valueLinesOf(byId, ctx.facts.lines, "validated", ctx.clock, pc),
       ];
       const c = r.value.currencies;
       const one = c.length === 1 ? c[0]! : null;
@@ -356,9 +372,12 @@ async function drill(
               ? knownValue(one.gapRatio, "ratio", one.currency)
               : one.status === "unknown"
                 ? unknownValue(one.reasonKey ?? "benefit.value_amount_missing", "ratio", one.currency)
-                : notApplicableValue(one.reasonKey ?? "dashboard.value.nothing_planned", "ratio");
+                : one.reasonKey === NO_PROFIT_AND_CASH
+                  ? { ...notApplicableValue(NO_PROFIT_AND_CASH, "ratio"), currency: one.currency }
+                  : notApplicableValue(one.reasonKey ?? "dashboard.value.nothing_planned", "ratio");
       return {
         ...base,
+        headlineBasis: "profit_and_cash",
         value,
         items: lines.map((l) => {
           const b = byId.get(l.benefitId)!;
@@ -572,6 +591,7 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           items: page,
           evidence: d.evidence,
           nextCursor: next,
+          headlineBasis: d.headlineBasis,
         };
       });
     },

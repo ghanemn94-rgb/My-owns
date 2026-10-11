@@ -1,0 +1,83 @@
+--- a/apps/web/src/pages/dashboards/dashboardFixtures.ts	2026-10-11 09:34:18.488764696 +0000
++++ b/apps/web/src/pages/dashboards/dashboardFixtures.ts	2026-10-11 09:35:01.823397603 +0000
+@@ -95,6 +95,7 @@
+           value: unknownV("kpi.no_accepted_actual"),
+           period: null,
+           drilldownHref: drill("outcomes.area"),
++          headlineBasis: null,
+         },
+       ],
+       items: [
+@@ -126,6 +127,7 @@
+           value: v("0"),
+           period: null,
+           drilldownHref: drill("value.validated"),
++          headlineBasis: "profit_and_cash",
+         },
+         {
+           metric: "value.gap",
+@@ -133,6 +135,7 @@
+           value: naV("dashboard.value.nothing_planned"),
+           period: null,
+           drilldownHref: drill("value.gap"),
++          headlineBasis: "profit_and_cash",
+         },
+       ],
+     }),
+@@ -158,6 +161,7 @@
+           value: staleV,
+           period: null,
+           drilldownHref: drill("dependencies.open"),
++          headlineBasis: null,
+         },
+       ],
+     }),
+@@ -170,6 +174,7 @@
+           value: v("1", null, "decision"),
+           period: null,
+           drilldownHref: drill("decisions.overdue"),
++          headlineBasis: null,
+         },
+       ],
+       items: [
+@@ -261,6 +266,7 @@
+       },
+     ],
+     nextCursor: null,
++    headlineBasis: "profit_and_cash",
+   };
+ }
+ 
+@@ -325,6 +331,7 @@
+         value: v("1", null, "measurement"),
+         period: null,
+         drilldownHref: drill("finance.pending_validation"),
++        headlineBasis: null,
+       },
+       {
+         metric: "value.investment",
+@@ -332,6 +339,7 @@
+         value: v("400"),
+         period: null,
+         drilldownHref: drill("value.investment"),
++        headlineBasis: null,
+       },
+     ],
+     pendingValidationCount: 1,
+@@ -361,7 +369,7 @@
+       rag: { status: "unknown", ruleKey: "dashboard.rag.outcomes.none", ruleParams: {}, policySource: "default" },
+       counts: [],
+     },
+-    benefits: { state: "unknown", planned: [], validated: [], benefitCount: 0, nonFinancialCount: 0 },
++    benefits: { state: "unknown", planned: [], validated: [], benefitCount: 0, nonFinancialCount: 0, headlines: [] },
+     keyDecisions: { items: [], overdueCount: 0 },
+     nextActions: { items: [], missingMandatoryCount: null },
+   };
+@@ -387,6 +395,7 @@
+       validated: [{ currency: "SAR", value: v("0") }],
+       benefitCount: 1,
+       nonFinancialCount: 1,
++      headlines: [],
+     },
+     keyDecisions: {
+       items: [sixAreas()[4]!.items[0]!],

@@ -7,11 +7,12 @@
 //    non-financial benefit, and values in all seven states (planned, forecast, measured, submitted, validated,
 //    rejected, sustained);
 //  - K1 item 5: every class line carries that href; the net lines keep null; since F-DG4-121 (D-117) gross sums only
-//    margin_uplift, cash_saving and working_capital_release, and a gross line keeps its value.<state> href only when
-//    no revenue_uplift or avoided_cost line enters that state and currency (else null: never a drill that sums more);
+//    margin_uplift, cash_saving and working_capital_release, and since F-DG4-123 (D-119; ADR-0037 amendment N3) a
+//    value-state drill-down without valueClass sums exactly those three classes, so a gross line always carries its
+//    value.<state> href (the N2 condition is superseded; T-DG4-KBE-R6);
 //  - K1 items 1-2: valueClass with another metric is 422 dashboard.value_class_not_applicable (exact K2 text, at
 //    /valueClass); a value outside the enum is 400; value.measured/rejected/sustained take a benefit subjectId; their
-//    rule keys are dashboard.value.sum_<state>;
+//    rule keys are dashboard.value.sum_<state> with a class and dashboard.value.sum_<state>_profit_and_cash without;
 //  - ADR-0037 §5 "Unknown, never 0": a class with no benefit in scope drills to an empty, labelled not_applicable
 //    result; an eligible class with nothing in the state is a known zero in its currency with no item;
 //  - the REQ-S13-001 scope sweep over the new metrics and every metric × class: a user scoped to X sees no Y record or
@@ -45,6 +46,7 @@ let xUser: Session;
 let auditor: Session;
 const yMarks: string[] = [];
 let revenueId: string;
+let marginId: string;
 
 const VALUE_STATE_METRICS = [
   "value.planned",
@@ -158,6 +160,7 @@ beforeAll(async () => {
   await validated(x, a.id, "120", "2026-05-01", "2026-05-31");
   // B, margin uplift SAR (a second financial class in SAR): planned 70.05, validated 30.5, submitted 12.25 (pending).
   const b = await measuredBenefit(api, x, { extra: { valueClass: "margin_uplift" } });
+  marginId = b.id;
   await planValue(api, x, b.id, "70.05", "2026-02-01", "2026-02-28");
   await validated(x, b.id, "30.5", "2026-03-01", "2026-03-31");
   await submittedValue(api, x, b.id, "12.25", { periodStart: "2026-04-01", periodEnd: "2026-04-30" });
@@ -187,9 +190,10 @@ beforeAll(async () => {
   const u = await identified(x, financialBody(x, { currency: "USD" }));
   await planValue(api, x, u.id, "2000", "2026-02-01", "2026-02-28");
 
-  // ---- Y (BU a2): non-zero, distinctive figures in every new state.
+  // ---- Y (BU a2): non-zero, distinctive figures in every new state. Margin uplift (T-DG4-KBE-R6), so the
+  // drill-downs without valueClass (the profit-and-cash basis since ADR-0037 amendment N3) list it to the auditor.
   y = await benefitWorldIn(api, w, w.a2);
-  const yb = await measuredBenefit(api, y);
+  const yb = await measuredBenefit(api, y, { extra: { valueClass: "margin_uplift" } });
   await validated(y, yb.id, "66666.6", "2026-02-01", "2026-02-28");
   await rejected(y, yb.id, "55555.5", "2026-03-01", "2026-03-31");
   await toSustain(y, yb.id);
@@ -295,7 +299,7 @@ describe("K1 item 4: every Finance class line equals the decimal sum of its dril
     expect(checked).toBe(42);
   });
 
-  it("F-DG4-121: a gross line drills (value.<state>, no valueClass) only when that drill sums exactly its records; net lines keep null; a class drill's total_<currency> input equals the line", async () => {
+  it("F-DG4-121/F-DG4-123: every gross line drills (value.<state>, no valueClass: the profit-and-cash basis) and its drill sums exactly the line; net lines keep null; a class drill's total_<currency> input equals the line", async () => {
     const r = await financeOfX();
     const lines = r.body.lines as Body[];
     const gross = (state: string, currency: string) =>
@@ -311,21 +315,17 @@ describe("K1 item 4: every Finance class line equals the decimal sum of its dril
         ["validated", "USD"],
       ].map(([s, c]) => new Decimal(gross(s!, c!).total.value).toFixed()),
     ).toEqual(["75.05", "30.5", "0", "0"]);
-    // Revenue uplift (and avoided cost) lines enter SAR planned, SAR validated and USD planned, where the five-class
-    // value.<state> drill would sum more than gross: no href. USD validated has no such line: it keeps its href.
-    expect(
-      [
-        ["planned", "SAR"],
-        ["validated", "SAR"],
-        ["planned", "USD"],
-      ].map(([s, c]) => gross(s!, c!).drilldownHref),
-    ).toEqual([null, null, null]);
-    const kept = gross("validated", "USD");
-    expect(kept.drilldownHref).not.toContain("valueClass=");
-    expect(new URLSearchParams(kept.drilldownHref.split("?")[1]).get("metric")).toBe("value.validated");
-    for (const l of lines.filter((x) => x.valueClass === "gross" && x.drilldownHref !== null)) {
+    // ADR-0037 amendment N3 item 3 (superseding the N2 condition, which gave SAR planned, SAR validated and USD planned
+    // a null href): the value.<state> drill without valueClass sums the profit-and-cash classes only, so every gross
+    // line carries it, and its decimal sum in the line's currency equals the line.
+    const grossLines = lines.filter((x) => x.valueClass === "gross");
+    expect(grossLines).toHaveLength(4);
+    for (const l of grossLines) {
+      expect(l.drilldownHref, `gross ${l.state} ${l.currency}`).not.toContain("valueClass=");
+      expect(new URLSearchParams(l.drilldownHref.split("?")[1]).get("metric")).toBe(`value.${l.state}`);
       const d = await drillAll(l.drilldownHref, l.currency);
-      expect(d.sum ?? "0", `gross ${l.state} ${l.currency}`).toBe(new Decimal(l.total.value).toFixed());
+      expect(d.sum, `gross ${l.state} ${l.currency}`).toBe(new Decimal(l.total.value).toFixed());
+      expect(d.first.headlineBasis).toBe("profit_and_cash");
     }
     expect(lines.filter((x) => x.valueClass === "net").map((x) => x.drilldownHref)).toEqual([null, null, null, null]);
     const line = lines.find((x) => x.valueClass === "margin_uplift" && x.state === "validated");
@@ -399,39 +399,53 @@ describe("K1 items 1-2: the parameter, the refusal and the three metrics", () =>
     }
   });
 
-  it("value.measured, value.rejected and value.sustained without a class sum the five financial classes", async () => {
+  it("value.measured, value.rejected and value.sustained without a class sum the profit-and-cash classes (ADR-0037 amendment N3)", async () => {
     const r = await financeOfX();
     const lines = r.body.lines as Body[];
     for (const state of ["measured", "rejected", "sustained"]) {
       const d = await drillAll(`${base()}&metric=value.${state}`, "SAR");
+      // T-DG4-KBE-R6: margin_uplift + cash_saving + working_capital_release only (was all five financial classes:
+      // measured 1412.75 = revenue 1020 + margin 42.75 + avoided 350 became 42.75; rejected 40 -> 0; sustained 120 -> 0).
       const expected = lines
-        .filter((l) => l.state === state && l.currency === "SAR" && l.valueClass !== "non_financial_valued")
-        .filter((l) => !["gross", "net"].includes(l.valueClass))
+        .filter((l) => l.state === state && l.currency === "SAR")
+        .filter((l) => ["margin_uplift", "cash_saving", "working_capital_release"].includes(l.valueClass))
         .reduce((acc, l) => acc.plus(new Decimal(l.total.value)), new Decimal(0))
         .toFixed();
       expect(d.sum, state).toBe(expected);
-      // Two currencies are in scope: the drill-down's own value is not_applicable (never converted), each item keeps its currency.
-      expect([d.first.value.state, d.first.value.reasonKey, d.first.calculation.ruleKey], state).toEqual([
-        "not_applicable",
-        "dashboard.value.multiple_currencies",
-        `dashboard.value.sum_${state}`,
-      ]);
+      // USD holds revenue uplift only, so the profit-and-cash drill-down has one currency (SAR): its value is that sum.
+      expect(
+        [new Decimal(d.first.value.value).toFixed(), d.first.value.currency, d.first.calculation.ruleKey],
+        state,
+      ).toEqual([expected, "SAR", `dashboard.value.sum_${state}_profit_and_cash`]);
       expect(
         d.first.calculation.inputs.map((i: Body) => i.name),
         state,
-      ).toEqual(["total_SAR", "total_USD"]);
+      ).toEqual(["total_SAR"]);
+      expect(d.first.headlineBasis, state).toBe("profit_and_cash");
     }
   });
 
   it("the three metrics take a benefit subjectId, as the four original value metrics do", async () => {
+    // T-DG4-KBE-R6 (ADR-0037 amendment N3): without valueClass the basis is profit-and-cash, so the revenue benefit is
+    // reached with valueClass=revenue_uplift (its top-line drill) and the margin benefit without a class.
     for (const metric of ["value.measured", "value.rejected", "value.sustained"]) {
-      const d = await get(`${base()}&metric=${metric}&subjectId=${revenueId}`);
+      const d = await get(`${base()}&metric=${metric}&subjectId=${revenueId}&valueClass=revenue_uplift`);
       expect(d.status, `${metric}: ${JSON.stringify(d.body)}`).toBe(200);
       expect(
         d.body.items.map((i: Body) => i.recordId),
         metric,
       ).toEqual([revenueId]);
     }
+    const m = await get(`${base()}&metric=value.measured&subjectId=${marginId}`);
+    expect([m.status, m.body.items.map((i: Body) => i.recordId)]).toEqual([200, [marginId]]);
+    // A top-line subject without valueClass is not on the profit-and-cash basis: no item, n/a with its reason (never 0).
+    const top = await get(`${base()}&metric=value.measured&subjectId=${revenueId}`);
+    expect([top.status, top.body.items, top.body.value.state, top.body.value.reasonKey]).toEqual([
+      200,
+      [],
+      "not_applicable",
+      "dashboard.value.no_profit_and_cash_benefit",
+    ]);
     // A benefit outside the selection is the existing 422 dashboard.metric_subject_mismatch.
     const bad = await get(`${base()}&metric=value.rejected&subjectId=${x.transformationId}`);
     expect([bad.status, bad.body.code]).toEqual([422, "dashboard.metric_subject_mismatch"]);

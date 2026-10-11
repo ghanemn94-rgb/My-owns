@@ -1,0 +1,211 @@
+port-policy: PostgreSQL listening on port 26100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r6
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3lpyvh_dfb38f81 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/headline-basis.test.ts (7 tests | 7 failed) 2518ms
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > profit-and-cash planned 90, revenue uplift 300, avoided cost 45, gap 1 and Red, on all four surfaces; 435 nowhere 555ms
+     → T10 first SAR value.planned: expected '435' to be '90' // Object.is equality
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > the header's headlines are the T10 planned and validated headlines of the three bases, hrefs included 277ms
+     → expected undefined to deeply equal [ …(2) ]
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant A: only revenue uplift and avoided cost -> profit-and-cash n/a (never 0 or green), 300 and 45 still shown 218ms
+     → T10 planned: expected undefined to match object { state: 'not_applicable', …(2) }
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant B: a margin benefit whose only line is outside the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned 178ms
+     → T10: expected undefined to match object { state: 'zero', currency: 'SAR' }
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant C: a revenue line without an amount makes only the top-line headline unknown 143ms
+     → T10: expected undefined to match object { state: 'unknown', …(1) }
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > drill invariant per currency (SAR and USD), in every state, on all four surfaces 689ms
+     → T10 SAR/profit_and_cash planned: expected null to be '92.5' // Object.is equality
+   × F-DG4-123: the value headlines on one basis (DOM-GROSS world) > a drill-down's headlineBasis follows its class: profit_and_cash, top_line, non_cash or null 152ms
+     → expected undefined to be 'profit_and_cash' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > profit-and-cash planned 90, revenue uplift 300, avoided cost 45, gap 1 and Red, on all four surfaces; 435 nowhere
+AssertionError: T10 first SAR value.planned: expected '435' to be '90' // Object.is equality
+
+Expected: [32m"90"[39m
+Received: [31m"435"[39m
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:152:74
+    150|       // The reviewer's reproduction, read as a client reads it (the f…
+    151|       const first = list.find((h) => h.metric === "value.planned" && h…
+    152|       expect(dec(first.value.value), `${where} first SAR value.planned…
+       |                                                                          ^
+    153|       const v = (m: string, basis: string) => pick(list, m, basis)?.va…
+    154|       expect(dec(v("value.planned", "profit_and_cash")!.value), where)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > the header's headlines are the T10 planned and validated headlines of the three bases, hrefs included
+AssertionError: expected undefined to deeply equal [ …(2) ]
+
+[32m- Expected:[39m 
+[
+  {
+    "drilldownHref": "/api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a12a39-2f6c-7382-a419-b753871a4d20&transformationId=01a12a39-31d0-71ee-8af1-b2ac23528de4",
+    "labelKey": "dashboard.headline.value_planned",
+    "metric": "value.planned",
+    "period": {
+      "asOf": "2026-10-11",
+      "end": null,
+      "label": null,
+      "start": null,
+    },
+    "value": {
+      "currency": "SAR",
+      "reasonKey": null,
+      "state": "value",
+      "unit": "currency",
+      "value": "435",
+    },
+  },
+  {
+    "drilldownHref": "/api/v1/dashboard-drilldown?metric=value.validated&organizationId=01a12a39-2f6c-7382-a419-b753871a4d20&transformationId=01a12a39-31d0-71ee-8af1-b2ac23528de4",
+    "labelKey": "dashboard.headline.value_validated",
+    "metric": "value.validated",
+    "period": {
+      "asOf": "2026-10-11",
+      "end": null,
+      "label": null,
+      "start": null,
+    },
+    "value": {
+      "currency": "SAR",
+      "reasonKey": null,
+      "state": "zero",
+      "unit": "currency",
+      "value": "0",
+    },
+  },
+]
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:226:41
+    224|       (h) => (h.metric === "value.planned" || h.metric === "value.vali…
+    225|     );
+    226|     expect(s.header.benefits.headlines).toEqual(t10);
+       |                                         ^
+    227|     expect(s.header.benefits.headlines.map((h: Body) => `${h.metric}/$…
+    228|       "value.planned/profit_and_cash",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant A: only revenue uplift and avoided cost -> profit-and-cash n/a (never 0 or green), 300 and 45 still shown
+AssertionError: T10 planned: expected undefined to match object { state: 'not_applicable', …(2) }
+
+[32m- Expected:[39m 
+{
+  "reasonKey": "dashboard.value.no_profit_and_cash_benefit",
+  "state": "not_applicable",
+  "value": null,
+}
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:249:110
+    247|     const NA = { state: "not_applicable", value: null, reasonKey: "das…
+    248|     for (const [where, list] of valueHeadlines(s)) {
+    249|       for (const st of STATES) expect(pick(list, `value.${st}`, "profi…
+       |                                                                                                              ^
+    250|       expect(pick(list, "value.gap", "profit_and_cash")?.value, where)…
+    251|       expect(dec(pick(list, "value.planned", "top_line")!.value.value)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant B: a margin benefit whose only line is outside the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned
+AssertionError: T10: expected undefined to match object { state: 'zero', currency: 'SAR' }
+
+[32m- Expected:[39m 
+{
+  "currency": "SAR",
+  "state": "zero",
+}
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:279:76
+    277|     const s = await surfaces(b);
+    278|     for (const [where, list] of valueHeadlines(s)) {
+    279|       expect(pick(list, "value.planned", "profit_and_cash")?.value, wh…
+       |                                                                            ^
+    280|       expect(pick(list, "value.gap", "profit_and_cash")?.value, where)…
+    281|         state: "not_applicable",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant C: a revenue line without an amount makes only the top-line headline unknown
+AssertionError: T10: expected undefined to match object { state: 'unknown', …(1) }
+
+[32m- Expected:[39m 
+{
+  "reasonKey": "benefit.value_amount_missing",
+  "state": "unknown",
+}
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:298:69
+    296|     const s = await surfaces(b);
+    297|     for (const [where, list] of valueHeadlines(s)) {
+    298|       expect(pick(list, "value.planned", "top_line")?.value, where).to…
+       |                                                                     ^
+    299|         state: "unknown",
+    300|         reasonKey: "benefit.value_amount_missing",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > drill invariant per currency (SAR and USD), in every state, on all four surfaces
+AssertionError: T10 SAR/profit_and_cash planned: expected null to be '92.5' // Object.is equality
+
+[32m- Expected:[39m 
+"92.5"
+
+[31m+ Received:[39m 
+null
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:343:113
+    341|         const [currency, basis] = key.split("/") as [string, string];
+    342|         for (const st of STATES)
+    343|           expect(dec(pick(list, `value.${st}`, basis, currency)?.value…
+       |                                                                                                                 ^
+    344|             states[st],
+    345|           );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/headline-basis.test.ts > F-DG4-123: the value headlines on one basis (DOM-GROSS world) > a drill-down's headlineBasis follows its class: profit_and_cash, top_line, non_cash or null
+AssertionError: expected undefined to be 'profit_and_cash' // Object.is equality
+
+[32m- Expected:[39m 
+"profit_and_cash"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/reporting/headline-basis.test.ts:384:49
+    382|     const base = `/api/v1/dashboard-drilldown?organizationId=${b.organ…
+    383|     const basis = async (q: string) => (await get(`${base}&${q}`, b.s.…
+    384|     expect(await basis("metric=value.planned")).toBe("profit_and_cash"…
+       |                                                 ^
+    385|     expect(await basis("metric=value.measured")).toBe("profit_and_cash…
+    386|     for (const c of ["margin_uplift", "cash_saving", "working_capital_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  09:09:04
+   Duration  11.04s (transform 3.14s, setup 0ms, collect 6.13s, tests 2.52s, environment 0ms, prepare 63ms)
+
+exit=1

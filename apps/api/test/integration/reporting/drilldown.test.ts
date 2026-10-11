@@ -43,24 +43,36 @@ beforeAll(async () => {
   const kpi = await trajectoryKpi(api, k);
   okNoData = await outcomeKpi(api.db, k, k.outcomeId, kpi.id, w.orgA.id);
   b = await benefitWorldIn(api, w, w.a1);
+  // T-DG4-KBE-R6 (F-DG4-123; ADR-0037 amendment N3): margin uplift, so these are profit-and-cash benefits, the basis of
+  // the 'Validated value' headline and the value gap (they were revenue uplift while every class entered it).
   benefits.push(
-    await validatedBenefit(api, b, [{ amount: "1000.25", start: "2026-02-01", end: "2026-02-28" }], {
-      amount: "900.10",
-      start: "2026-02-01",
-      end: "2026-02-28",
-    }),
+    await validatedBenefit(
+      api,
+      b,
+      [{ amount: "1000.25", start: "2026-02-01", end: "2026-02-28" }],
+      { amount: "900.10", start: "2026-02-01", end: "2026-02-28" },
+      { valueClass: "margin_uplift" },
+    ),
   );
   benefits.push(
-    await validatedBenefit(api, b, [{ amount: "500", start: "2026-03-01", end: "2026-03-31" }], {
-      amount: "333.33",
-      start: "2026-03-01",
-      end: "2026-03-31",
+    await validatedBenefit(
+      api,
+      b,
+      [{ amount: "500", start: "2026-03-01", end: "2026-03-31" }],
+      { amount: "333.33", start: "2026-03-01", end: "2026-03-31" },
+      { valueClass: "margin_uplift" },
+    ),
+  );
+  benefits.push(
+    await validatedBenefit(api, b, [{ amount: "70", start: "2026-03-01", end: "2026-03-31" }], null, {
+      valueClass: "margin_uplift",
     }),
   );
-  benefits.push(await validatedBenefit(api, b, [{ amount: "70", start: "2026-03-01", end: "2026-03-31" }], null));
   nonFinancial = (await benefitAt(api, b, "plan", cxBody(b))).id;
   empty = await benefitWorldIn(api, w, w.a1);
-  await validatedBenefit(api, empty, [{ amount: "10", start: "2026-03-01", end: "2026-03-31" }], null);
+  await validatedBenefit(api, empty, [{ amount: "10", start: "2026-03-01", end: "2026-03-31" }], null, {
+    valueClass: "margin_uplift",
+  });
 }, 240_000);
 afterAll(() => api.close());
 
@@ -89,7 +101,8 @@ describe("REQ-S13-003: the validated total drills to its benefit records", () =>
     expect(sum.eq(new D(headline.value.value))).toBe(true);
     for (const i of items) expect(i.href).toBe(`${b.base}/benefits/${i.recordId}`);
     const full = await get(headline.drilldownHref);
-    expect(full.body.calculation.ruleKey).toBe("dashboard.value.sum_validated");
+    expect(full.body.calculation.ruleKey).toBe("dashboard.value.sum_validated_profit_and_cash");
+    expect(full.body.headlineBasis).toBe("profit_and_cash");
     expect(full.body.calculation.inputs).toEqual([
       { name: "total_SAR", value: headline.value, recordType: null, recordId: null },
     ]);

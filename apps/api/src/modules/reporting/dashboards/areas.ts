@@ -5,9 +5,13 @@
 //   Outcomes         outcome = combine(its active outcome KPIs' slice A statuses); no KPI -> unknown; empty -> unknown.
 //                    Reads ONLY KPI statuses: never deliverables, milestones, actions, work items or completion.
 //   Value            per currency: gap ratio = (plannedToDate - validatedToDate) / plannedToDate over the counted,
-//                    monetised financial benefits; <= amber -> green, <= red -> amber, above -> red; planned = 0 ->
-//                    not_applicable; an unknown amount -> unknown; nothing due -> not_applicable. Forecast, submitted
-//                    and scenario values are shown, never counted as realized.
+//                    monetised benefits of the PROFIT-AND-CASH basis (margin_uplift + cash_saving +
+//                    working_capital_release; ADR-0037 amendment N3, D-119, M0172); <= amber -> green, <= red -> amber,
+//                    above -> red; planned = 0 -> not_applicable; an unknown amount -> unknown; nothing due ->
+//                    not_applicable; no profit-and-cash benefit in a currency -> not_applicable
+//                    (dashboard.value.no_profit_and_cash_benefit), never 0 or green. revenue_uplift (top_line) and
+//                    avoided_cost (non_cash) are summed on their own, never into a profit-and-cash figure, with no gap.
+//                    Forecast, submitted and scenario values are shown, never counted as realized.
 //   Portfolio        top N initiatives (selected, funded, launched, completed) by planned value allocated; initiative =
 //                    combine(milestone component, outcome component).
 //   Dependencies     open dependencies: red when needed-by passed or the linked decision is overdue; amber when at risk
@@ -19,7 +23,13 @@
 //
 // The default thresholds are ADR-0037 §3's labelled interpretation (D-106 (a)); `policySource` says which applies.
 import { computeWorkingDaySlip, FORMULA_DECIMAL as D } from "@mth/shared/calc";
-import type { DashboardRagPolicyValues, DashboardValue, RagStatus } from "@mth/shared/schemas";
+import {
+  HEADLINE_BASIS_CLASSES,
+  type DashboardRagPolicyValues,
+  type DashboardValue,
+  type HeadlineBasis,
+  type RagStatus,
+} from "@mth/shared/schemas";
 import { addWorkingDays, type WorkingCalendar } from "@mth/shared/time";
 import { combine, combineOr, fromKpiRag, type InputStatus } from "./combine.ts";
 
@@ -329,16 +339,46 @@ export function lineInWindow(line: ValueLineFact, state: string, clock: Dashboar
   return clock.windowStart === null || end >= clock.windowStart;
 }
 
-/** The eligible lines of one state in the window (the drill-down's contributing records; ADR-0037 §5 invariant). */
+/** The headline bases in presentation order (ADR-0037 amendment N3): profit_and_cash, then top_line, then non_cash. */
+export const VALUE_BASES: readonly HeadlineBasis[] = ["profit_and_cash", "top_line", "non_cash"];
+
+/** The not_applicable reason of a currency with no profit-and-cash benefit (ADR-0037 amendment N3 item 4). */
+export const NO_PROFIT_AND_CASH = "dashboard.value.no_profit_and_cash_benefit";
+
+/** The Finance classes a headline basis sums (the shared HEADLINE_BASIS_CLASSES; ADR-0037 amendment N3 items 1-2). */
+export function basisClasses(basis: HeadlineBasis): readonly string[] {
+  switch (basis) {
+    case "profit_and_cash":
+      return HEADLINE_BASIS_CLASSES.profit_and_cash;
+    case "top_line":
+      return HEADLINE_BASIS_CLASSES.top_line;
+    case "non_cash":
+      return HEADLINE_BASIS_CLASSES.non_cash;
+  }
+}
+
+/** The headline basis of a financial value class (ADR-0037 amendment N3), or null (non_financial_valued, unknown). */
+export function basisOfClass(valueClass: string): HeadlineBasis | null {
+  return VALUE_BASES.find((basis) => basisClasses(basis).includes(valueClass)) ?? null;
+}
+
+/**
+ * The eligible lines of one state in the window (the drill-down's contributing records; ADR-0037 §5 invariant),
+ * narrowed to the benefits of `classes` (the five financial classes when omitted).
+ */
 export function valueLinesOf(
   benefits: ReadonlyMap<string, ValueBenefitFact>,
   lines: readonly ValueLineFact[],
   state: ValueHeadlineState,
   clock: DashboardClock,
+  classes: readonly string[] = FINANCIAL_VALUE_CLASSES,
 ): ValueLineFact[] {
-  return lines.filter(
-    (l) => l.state === state && lineEligible(benefits.get(l.benefitId), state) && lineInWindow(l, state, clock),
-  );
+  return lines.filter((l) => {
+    const b = benefits.get(l.benefitId);
+    return (
+      l.state === state && lineEligible(b, state) && classes.includes(b!.valueClass) && lineInWindow(l, state, clock)
+    );
+  });
 }
 
 /** The currencies of the counted, monetised financial benefits (sorted; each is its own line). */
@@ -348,16 +388,24 @@ export function valueCurrencies(benefits: Iterable<ValueBenefitFact>): string[] 
   return [...out].sort();
 }
 
-export interface ValueCurrencyLine {
-  readonly currency: string;
+/** The four state sums of one basis in one currency. */
+export interface BasisSums {
   readonly planned: DashboardValue;
   readonly forecast: DashboardValue;
   readonly submitted: DashboardValue;
   readonly validated: DashboardValue;
+}
+
+export interface ValueCurrencyLine extends BasisSums {
+  readonly currency: string;
   /** (planned - validated) / planned, rounded half-even to 6 places for presentation; null when not computable. */
   readonly gapRatio: string | null;
   readonly status: RagStatus;
   readonly reasonKey: string | null;
+  /** The top-line (revenue_uplift) sums; null when the currency holds no counted, monetised benefit of that class. */
+  readonly topLine: BasisSums | null;
+  /** The non-cash (avoided_cost) sums; null when the currency holds no counted, monetised benefit of that class. */
+  readonly nonCash: BasisSums | null;
 }
 
 export interface ValueResult {
@@ -386,6 +434,11 @@ export function valueGapStatus(
   return { status, gapRatio: ratio.toDecimalPlaces(RATIO_SCALE, D.ROUND_HALF_EVEN).toFixed(), reasonKey: null };
 }
 
+/**
+ * The Value area (ADR-0037 §3 as amended by N3). The currencies are those of the counted, monetised benefits of the
+ * five financial classes, as before; in each, the headline sums, the gap and the status are on the profit-and-cash
+ * basis only, and the top-line and non-cash sums are kept apart (each only where a benefit of its class exists).
+ */
 export function valueArea(
   benefits: readonly ValueBenefitFact[],
   lines: readonly ValueLineFact[],
@@ -394,33 +447,64 @@ export function valueArea(
 ): ValueResult {
   const byId = new Map(benefits.map((b) => [b.benefitId, b]));
   const currencies = valueCurrencies(benefits).map((currency): ValueCurrencyLine => {
-    const sum = (state: ValueHeadlineState) =>
-      sumValue(
-        valueLinesOf(byId, lines, state, clock)
-          .filter((l) => byId.get(l.benefitId)!.currency === currency)
-          .map((l) => l.amount),
-        currency,
-        "currency",
-        "benefit.value_amount_missing",
+    const has = (basis: HeadlineBasis) =>
+      benefits.some(
+        (b) => b.currency === currency && lineEligible(b, "planned") && basisClasses(basis).includes(b.valueClass),
       );
-    const planned = sum("planned");
-    const validated = sum("validated");
-    const gap = valueGapStatus(planned, validated, policy);
+    const sums = (basis: HeadlineBasis): BasisSums => {
+      const sum = (state: ValueHeadlineState) =>
+        sumValue(
+          valueLinesOf(byId, lines, state, clock, basisClasses(basis))
+            .filter((l) => byId.get(l.benefitId)!.currency === currency)
+            .map((l) => l.amount),
+          currency,
+          "currency",
+          "benefit.value_amount_missing",
+        );
+      return {
+        planned: sum("planned"),
+        forecast: sum("forecast"),
+        submitted: sum("submitted"),
+        validated: sum("validated"),
+      };
+    };
+    const topLine = has("top_line") ? sums("top_line") : null;
+    const nonCash = has("non_cash") ? sums("non_cash") : null;
+    if (!has("profit_and_cash")) {
+      // N3 item 4: nothing is planned on this basis in this currency: not_applicable, never 0 and never green.
+      const na: DashboardValue = { ...notApplicableValue(NO_PROFIT_AND_CASH, "currency"), currency };
+      return {
+        currency,
+        planned: na,
+        forecast: na,
+        submitted: na,
+        validated: na,
+        gapRatio: null,
+        status: "not_applicable",
+        reasonKey: NO_PROFIT_AND_CASH,
+        topLine,
+        nonCash,
+      };
+    }
+    const pc = sums("profit_and_cash");
+    const gap = valueGapStatus(pc.planned, pc.validated, policy);
     return {
       currency,
-      planned,
-      forecast: sum("forecast"),
-      submitted: sum("submitted"),
-      validated,
+      ...pc,
       gapRatio: gap.gapRatio,
       status: gap.status,
       reasonKey: gap.reasonKey,
+      topLine,
+      nonCash,
     };
   });
   const status = combine(currencies.map((c) => c.status));
   if (status === null)
     return {
-      rag: { status: "not_applicable", ruleKey: "dashboard.rag.value.nothing_due", ruleParams: {} },
+      rag:
+        currencies.length > 0 && currencies.every((c) => c.reasonKey === NO_PROFIT_AND_CASH)
+          ? { status: "not_applicable", ruleKey: "dashboard.rag.value.no_profit_and_cash_benefit", ruleParams: {} }
+          : { status: "not_applicable", ruleKey: "dashboard.rag.value.nothing_due", ruleParams: {} },
       currencies,
     };
   return {
@@ -431,6 +515,7 @@ export function valueArea(
         amberRatio: policy.valueGapAmberRatio,
         redRatio: policy.valueGapRedRatio,
         lines: currencies.map((c) => ({ currency: c.currency, gapRatio: c.gapRatio, status: c.status })),
+        headlineBasis: "profit_and_cash",
       },
     },
     currencies,

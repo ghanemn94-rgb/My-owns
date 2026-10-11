@@ -163,9 +163,12 @@ describe("QA-A partial: REQ-S13-003 'the validated benefit total drills to its b
   // Measurement periods lie inside the dashboards' "to date" window (a future period is not yet realized).
   it("REQ-S13-003: the Value area's validated headline drills to exactly the validated benefit records, whose decimal sum equals the headline", async () => {
     const b = await seedBenefitWorld(api, w);
-    const one = await measuredBenefit(api, b);
-    const two = await measuredBenefit(api, b);
-    const pending = await measuredBenefit(api, b);
+    // T-DG4-KBE-R6 (F-DG4-123; ADR-0037 amendment N3): margin uplift, a profit-and-cash class, the basis of the
+    // 'Validated value' headline (these were revenue uplift while every financial class entered it).
+    const margin = { extra: { valueClass: "margin_uplift" } };
+    const one = await measuredBenefit(api, b, margin);
+    const two = await measuredBenefit(api, b, margin);
+    const pending = await measuredBenefit(api, b, margin);
     const a1 = await queued(b, one.id, "1000.50", "2026-01-01");
     expect((await decide(b, a1, { decision: "approved", items: SIX_ACCEPTED, approvedAmount: "1000.50" })).status).toBe(
       200,

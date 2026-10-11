@@ -1,0 +1,8 @@
+# A = $TMPDIR/base: a copy of this worktree (HEAD 47d1536) in which every file of `git diff --name-only HEAD` was replaced
+#     by `git show HEAD:<file>` (each checked with cmp), the new headline-basis.test.ts removed, and @mth/shared rebuilt.
+#     B = this worktree. The evidence test file is copied into each tree for one run and removed afterwards.
+cp ab/kbe-r6-transcript.test.ts <tree>/apps/api/test/integration/reporting/kbe-r6-transcript.test.ts
+MTH_KBE_R6_TRANSCRIPT=<evidence>/ab/A-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/kbe-r6-transcript.test.ts   # in A
+MTH_KBE_R6_TRANSCRIPT=<evidence>/ab/B-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/kbe-r6-transcript.test.ts   # in B
+rm -f <tree>/apps/api/test/integration/reporting/kbe-r6-transcript.test.ts
+python3 ab/compare.py ab/A-transcript.jsonl ab/B-transcript.jsonl > ab/compare.txt

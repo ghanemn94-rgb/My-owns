@@ -24,27 +24,11 @@ export interface PendingMember {
   readonly zod: string;
 }
 
-export const P4_PENDING_ARCH_R5_MEMBERS: readonly PendingMember[] = [
-  {
-    member: "DashboardHeadline.headlineBasis",
-    operations: [
-      "getTransformationDashboard",
-      "getWorkstreamDashboard",
-      "getExecutiveOverview",
-      "getFinanceDashboard",
-      "getAdoptionDashboard",
-      "getWorkspaceHeader",
-    ],
-    zod: "dashboardHeadline",
-  },
-  {
-    member: "DashboardDrilldown.headlineBasis",
-    operations: ["getDashboardDrilldown"],
-    zod: "dashboardDrilldown",
-  },
-  {
-    member: "WorkspaceHeader.benefits.headlines",
-    operations: ["getWorkspaceHeader"],
-    zod: "workspaceHeader",
-  },
-];
+// T-DG4-KBE-R6 (F-DG4-123; D-120): every member below is now emitted on every response of its operations, and the
+// closing step is done in the same change: each is in its schema's `required` list in docs/api/openapi.yaml and is no
+// longer `.optional()` in the zod mirror, so the contract test enforces them. Removed, with their operations:
+//  - DashboardHeadline.headlineBasis: getTransformationDashboard, getWorkstreamDashboard, getExecutiveOverview,
+//    getFinanceDashboard, getAdoptionDashboard, getWorkspaceHeader (zod dashboardHeadline);
+//  - DashboardDrilldown.headlineBasis: getDashboardDrilldown (zod dashboardDrilldown);
+//  - WorkspaceHeader.benefits.headlines: getWorkspaceHeader (zod workspaceHeader).
+export const P4_PENDING_ARCH_R5_MEMBERS: readonly PendingMember[] = [];

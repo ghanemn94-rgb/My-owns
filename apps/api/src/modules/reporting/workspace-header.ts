@@ -9,9 +9,13 @@
 //  5. outcomeHealth   the T10 Outcomes area status (engine.ts, the KPI trajectory statuses only, never task
 //                     completion) and the count of outcomes per status;
 //  6. benefits        planned and validated per currency to the business date (the Value area's window and counting
-//                     rules), the active benefit count and the non-financial count; the value status of the
-//                     transformation comes from slice G's `valueStatusOf` (sustainment, D-107): `no_benefit` ->
-//                     state "unknown" (no benefit is not a value of 0);
+//                     rules) on the PROFIT-AND-CASH basis (ADR-0037 amendment N3: margin_uplift + cash_saving +
+//                     working_capital_release; not_applicable dashboard.value.no_profit_and_cash_benefit in a
+//                     currency without such a benefit), `headlines` = the T10 planned and validated headlines of the
+//                     three bases (profit_and_cash, top_line, non_cash) with their labels and drill-downs, the active
+//                     benefit count and the non-financial count; the value status of the transformation comes from
+//                     slice G's `valueStatusOf` (sustainment, D-107): `no_benefit` -> state "unknown" (no benefit is
+//                     not a value of 0);
 //  7. keyDecisions    up to 5 open T16 asks by due date and the overdue count (an empty list with 0 is a fact);
 //  8. nextActions     up to 5 of the CALLER's open work items for this transformation by due date (the caller's own
 //                     items only), and the gate's missing mandatory count (null when the gate readiness is Unknown).
@@ -91,6 +95,13 @@ export function registerWorkspaceHeaderRoutes(app: FastifyInstance, { db }: Modu
           workstream: false,
         });
         const outcomesArea = areas.find((a) => a.code === "outcomes")!;
+        // ADR-0037 amendment N3: the header's value headlines are the T10 planned and validated headlines of each basis
+        // and currency (identical members, hrefs included).
+        const valueHeadlines = areas
+          .find((a) => a.code === "value")!
+          .headlines.filter(
+            (h) => (h.metric === "value.planned" || h.metric === "value.validated") && h.headlineBasis !== null,
+          );
         const counts = RAG_STATUSES.map((status: RagStatus) => ({
           status,
           count: results.outcomes.outcomes.filter((o) => o.status === status).length,
@@ -151,6 +162,7 @@ export function registerWorkspaceHeaderRoutes(app: FastifyInstance, { db }: Modu
               : results.value.currencies.map((c) => ({ currency: c.currency, value: c.validated })),
             benefitCount: value.benefits.length,
             nonFinancialCount: ctx.facts.benefits.filter((b) => b.counted && b.unmonetised).length,
+            headlines: noBenefit ? [] : valueHeadlines,
           },
           keyDecisions: {
             items: decisionItems.slice(0, HEADER_LIST_MAX),

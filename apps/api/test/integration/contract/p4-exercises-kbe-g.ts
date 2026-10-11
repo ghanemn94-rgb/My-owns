@@ -602,16 +602,23 @@ export async function planValue(
 }
 
 /**
- * A financial benefit (revenue uplift, SAR) with planned values and one value submitted by BO and validated by FIN for
- * `period` (a synthetic Finance validation of test data). Returns the benefit and measurement ids.
+ * A financial benefit (revenue uplift unless `opts.valueClass` names another class, SAR) with planned values and one
+ * value submitted by BO and validated by FIN for `period` (a synthetic Finance validation of test data). Returns the
+ * benefit and measurement ids. T-DG4-KBE-R6: a test of the profit-and-cash Value headlines (ADR-0037 amendment N3)
+ * passes `{ valueClass: "margin_uplift" }`; revenue uplift is the top-line basis, never in those headlines.
  */
 export async function validatedBenefit(
   api: TestApi,
   b: BenefitWorld,
   planned: readonly { amount: string; start: string; end: string }[],
   validated: { amount: string; start: string; end: string } | null,
+  opts: { valueClass?: string } = {},
 ): Promise<{ benefitId: string; code: string; measurementId: string | null }> {
-  const ben = await measuredBenefit(api, b);
+  const ben = await measuredBenefit(
+    api,
+    b,
+    opts.valueClass === undefined ? {} : { extra: { valueClass: opts.valueClass } },
+  );
   for (const p of planned) await planValue(api, b, ben.id, p.amount, p.start, p.end);
   if (validated === null) return { benefitId: ben.id, code: ben.code, measurementId: null };
   const v = await submittedValue(api, b, ben.id, validated.amount, {
