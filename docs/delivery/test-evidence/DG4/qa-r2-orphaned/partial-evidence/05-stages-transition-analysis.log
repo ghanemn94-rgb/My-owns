@@ -1,0 +1,30 @@
+# qa-verifier DG4 round 2: --pipeline at the source commit vs the round-2 freeze commit, in a disposable clone $TMPDIR/vchk (2026-10-11T05:34:02Z)
+$ git checkout a613f6f; node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG4 REVIEWING)
+EXIT 0
+DG4 history states at a613f6f: ['PLANNED', 'BUILDING', 'REVIEWING']
+$ git checkout 93a7dd7; node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG4 REVIEWING)
+EXIT 0
+DG4 history states at 93a7dd7: ['PLANNED', 'BUILDING', 'REVIEWING']
+$ git checkout 1b8c158; node tools/gates/validate.mjs --pipeline
+FAIL pipeline (active stage: DG4 REVIEWING) (1 problem)
+  - stages.json: DG4 illegal transition REVIEWING -> REVIEWING
+EXIT 1
+DG4 history states at 1b8c158: ['PLANNED', 'BUILDING', 'REVIEWING', 'REVIEWING']
+$ sed -n 18,25p tools/gates/lib/rules.mjs
+export const TRANSITIONS = {
+  PLANNED: ["BUILDING", "BLOCKED"],
+  BUILDING: ["REVIEWING", "BLOCKED"],
+  REVIEWING: ["FIXING", "VERIFYING", "BLOCKED"],
+  FIXING: ["REVIEWING", "VERIFYING", "BLOCKED"],
+  VERIFYING: ["APPROVED", "FIXING", "BLOCKED"],
+  APPROVED: ["FIXING"], // reopening an approved scope keeps its history
+  BLOCKED: ["PLANNED", "BUILDING", "REVIEWING", "FIXING", "VERIFYING"],
+$ git diff 93a7dd7..1b8c158 --stat
+ .../DG4/round-2/code-security-reviewer.md          |  164 +
+ .../assignments/DG4/round-2/domain-reviewer.md     |  180 +
+ .../assignments/DG4/round-2/qa-verifier.md         |  138 +
+ .../candidates/DG4/3f51b79d671ebf6d.manifest.json  | 7293 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   25 +-
+ 5 files changed, 7796 insertions(+), 4 deletions(-)
