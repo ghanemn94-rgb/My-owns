@@ -1,0 +1,7 @@
+set -u
+E=docs/delivery/handbacks/DG4/T-DG4-FE-R4-evidence
+npx playwright test apps/web/e2e/zz-f141-seed.spec.ts --project=chromium-ar --workers=1 > $E/f141-repro-1-seed.log 2>&1; echo "SEED_EXIT=$?" >> $E/f141-repro-1-seed.log
+npx playwright test apps/web/e2e/zz-f141-old-journeys.spec.ts -g "administration screens" --project=chromium-ar --workers=1 > $E/f141-repro-2-before.log 2>&1; echo "BEFORE_EXIT=$?" >> $E/f141-repro-2-before.log
+npx playwright test apps/web/e2e/journeys.spec.ts -g "administration screens" --project=chromium-ar --workers=1 > $E/f141-repro-3-after.log 2>&1; echo "AFTER_EXIT=$?" >> $E/f141-repro-3-after.log
+npx playwright test apps/web/e2e/journeys.spec.ts -g "administration screens" --project=chromium-en --workers=1 > $E/f141-repro-4-after-en.log 2>&1; echo "AFTER_EN_EXIT=$?" >> $E/f141-repro-4-after-en.log
+exit 0

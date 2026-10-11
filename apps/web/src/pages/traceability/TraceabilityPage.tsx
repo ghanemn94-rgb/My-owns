@@ -7,7 +7,7 @@
 // Nothing here is stored: each read is computed by the server on request (ADR-0038 §4–§6).
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router";
+import { Link } from "react-router";
 import { TRACE_DIRECTIONS, TRACE_NODE_TYPES } from "@mth/shared/schemas";
 import { Icon } from "../../components/Icon.tsx";
 import { Section } from "../../components/Section.tsx";
@@ -21,6 +21,7 @@ import {
   type TraceDirection,
   type TraceNodeType,
 } from "./api.ts";
+import { useTraceSelection } from "./selection.ts";
 import { AllocationPanel, ImpactPanel, TraceLinksPanel } from "./TracePanels.tsx";
 import {
   CHAIN_ORDER,
@@ -45,28 +46,6 @@ export function TraceabilityPage() {
       <TraceabilityBody />
     </WorkspaceFrame>
   );
-}
-
-/** The panel selection kept in the URL (`?root=type:id&impact=type:id&alloc=type:id`), so a view can be shared. */
-export function useTraceSelection() {
-  const [params, setParams] = useSearchParams();
-  const parse = (name: string) => {
-    const v = params.get(name);
-    if (!v) return null;
-    const [type, id] = v.split(":", 2);
-    return type && id ? { type, id } : null;
-  };
-  const set = (name: string, value: { type: string; id: string } | null) =>
-    setParams(
-      (p) => {
-        const next = new URLSearchParams(p);
-        if (value) next.set(name, `${value.type}:${value.id}`);
-        else next.delete(name);
-        return next;
-      },
-      { replace: true },
-    );
-  return { root: parse("root"), impact: parse("impact"), alloc: parse("alloc"), set };
 }
 
 function TraceabilityBody() {

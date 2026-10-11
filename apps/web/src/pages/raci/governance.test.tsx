@@ -164,6 +164,78 @@ describe.each(["en", "ar"] as const)("Governance (%s)", (locale) => {
     expect(status.textContent).toContain(t("myWork.ui.unknownReason.no_steerco_scheduled"));
   });
 
+  it("decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120)", async () => {
+    const row = decisionRight();
+    mockApi(
+      ...p4Handlers(
+        locale,
+        ["raci.edit"],
+        [
+          partiesRoute,
+          route("GET", new RegExp(`${esc(TRP)}/decision-rights\\?`), () => page([row])),
+          route("GET", /governance-matrices$/, () => json({ items: [matrix("decision_rights")] })),
+        ],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/decision-rights`, { i18n: createI18n(locale) });
+    const tr = (await screen.findByText(locale === "ar" ? row.decisionAr : row.decisionEn)).closest("tr")!;
+    const sources = {
+      recommend: row.recommendLabel,
+      approve: row.approveLabel,
+      consult: row.consultLabel,
+      inform: row.informLabel,
+      sla: row.slaLabel,
+    };
+    const notice = document.querySelector("[data-provisional='decision-rights']");
+    if (locale === "ar") {
+      const columns = ["recommend", "approve", "consult", "inform", "sla"]
+        .map((c) => t(`decisionRights.field.${c}`))
+        .join("، ");
+      expect(notice?.textContent).toContain(t("decisionRights.arProvisional", { columns }));
+      expect(t("decisionRights.arProvisional")).not.toBe("decisionRights.arProvisional");
+      expect(t("decisionRights.arProvisional")).toMatch(/[\u0600-\u06FF]/);
+      // The notice names the five columns it covers, in Arabic.
+      for (const col of ["recommend", "approve", "consult", "inform", "sla"])
+        expect(notice?.textContent).toContain(t(`decisionRights.field.${col}`));
+      // The notice comes before the table in reading order, so a screen reader meets it first.
+      const table = tr.closest("table")!;
+      expect(notice!.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    } else {
+      expect(notice).toBeNull();
+    }
+    // The English source label is shown verbatim in both languages; in Arabic it is marked as English (lang, dir).
+    for (const [col, text] of Object.entries(sources)) {
+      const cell = tr.querySelector(`[data-verbatim-en='${col}']`);
+      expect(cell?.textContent).toBe(text);
+      if (locale === "ar") {
+        expect(cell?.getAttribute("lang")).toBe("en");
+        expect(cell?.getAttribute("dir")).toBe("ltr");
+      } else {
+        expect(cell?.getAttribute("lang")).toBeNull();
+      }
+    }
+  });
+
+  it("decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120)", async () => {
+    const row = decisionRight({ informLabel: "منتدى التوجيه" });
+    mockApi(
+      ...p4Handlers(
+        locale,
+        ["raci.edit"],
+        [
+          partiesRoute,
+          route("GET", new RegExp(`${esc(TRP)}/decision-rights\\?`), () => page([row])),
+          route("GET", /governance-matrices$/, () => json({ items: [matrix("decision_rights")] })),
+        ],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/decision-rights`, { i18n: createI18n(locale) });
+    const tr = (await screen.findByText(locale === "ar" ? row.decisionAr : row.decisionEn)).closest("tr")!;
+    expect(tr.querySelector("[data-verbatim-en='inform']")).toBeNull();
+    expect(tr.textContent).toContain("منتدى التوجيه");
+    expect(tr.querySelector("[data-verbatim-en='recommend']")?.textContent).toBe(row.recommendLabel);
+  });
+
   it("decision rights: submits the matrix for business approval with If-Match", async () => {
     const m = matrix("decision_rights", { version: 7 });
     const api = mockApi(

@@ -7,12 +7,16 @@
 //    approved date. A date that cannot be known is Unknown with its reason, never guessed.
 //  - Edits by decision_right.configure holders (TL, TO); the matrix goes to a BUSINESS APPROVAL (submit) and is frozen
 //    while it waits (422 governance_matrix.in_approval, translated).
+//  - Arabic (F-DG4-120, D-117): the Recommend, Approve, Consult, Inform and SLA labels are stored once, copied from
+//    the English source (B0099). In Arabic they are shown verbatim, marked as English (lang/dir), under a
+//    provisional-Arabic notice, as the forums page does (governanceP4.forums.arProvisional). A label the transformation
+//    wrote in Arabic is shown as it is. No contract change.
 //  - "Request a business approval" routes a decision through a T11 row to the role's mapped person or group; an
 //    unmapped role is a visible routing error (422 routing.role_unmapped), never a silent fallback.
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { partyCode as partyCodeSchema } from "@mth/shared/schemas";
+import { hasText, partyCode as partyCodeSchema } from "@mth/shared/schemas";
 import {
   p4Paths,
   useDecisionRightDueDate,
@@ -60,6 +64,43 @@ export function parsePartyList(text: string): string[] | null {
     .filter(Boolean);
   if (codes.some((c) => !partyCodeSchema.safeParse(c).success)) return null;
   return [...new Set(codes)];
+}
+
+const ARABIC_SCRIPT = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+export const SOURCE_LABEL_COLUMNS = ["recommend", "approve", "consult", "inform", "sla"] as const;
+
+/**
+ * A Recommend/Approve/Consult/Inform/SLA label (F-DG4-120). The label is stored once, copied from the English source.
+ * In Arabic, a label with no Arabic letters is that English source: it is shown verbatim and marked as English, so it
+ * reads left to right and a screen reader pronounces it in English. A label written in Arabic is shown as it is.
+ */
+export function SourceLabel({ value, column }: { value: string; column: (typeof SOURCE_LABEL_COLUMNS)[number] }) {
+  const locale = useLocale();
+  if (!hasText(value) || ARABIC_SCRIPT.test(value)) return <TextCell value={value} />;
+  return locale === "ar" ? (
+    <span className="text-cell block" dir="ltr" lang="en" data-verbatim-en={column}>
+      {value}
+    </span>
+  ) : (
+    <span className="text-cell" data-verbatim-en={column}>
+      {value}
+    </span>
+  );
+}
+
+/** The provisional-Arabic notice over the T11 table (F-DG4-120): shown in Arabic only. */
+export function DecisionRightsArNotice() {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  if (locale !== "ar") return null;
+  return (
+    <p className="small muted" id="decision-rights-ar-provisional" data-provisional="decision-rights">
+      <Icon name="info" />{" "}
+      {t("decisionRights.arProvisional", {
+        columns: SOURCE_LABEL_COLUMNS.map((c) => t(`decisionRights.field.${c}`)).join("، "),
+      })}
+    </p>
+  );
 }
 
 /** "Sponsor (SP), Business Owner (BO)" for a list of party codes. */
@@ -181,7 +222,7 @@ function DecisionRightsBody() {
       header: t("decisionRights.field.recommend"),
       cell: (r) => (
         <span className="block">
-          <TextCell value={r.recommendLabel} />
+          <SourceLabel value={r.recommendLabel} column="recommend" />
           <PartyList codes={r.recommendParties} parties={partyMap} />
         </span>
       ),
@@ -191,7 +232,7 @@ function DecisionRightsBody() {
       header: t("decisionRights.field.approve"),
       cell: (r) => (
         <span className="block">
-          <TextCell value={r.approveLabel} />
+          <SourceLabel value={r.approveLabel} column="approve" />
           <PartyList codes={[r.approvePartyCode]} parties={partyMap} />
         </span>
       ),
@@ -201,7 +242,7 @@ function DecisionRightsBody() {
       header: t("decisionRights.field.consult"),
       cell: (r) => (
         <span className="block">
-          <TextCell value={r.consultLabel} />
+          <SourceLabel value={r.consultLabel} column="consult" />
           <PartyList codes={r.consultParties} parties={partyMap} />
         </span>
       ),
@@ -211,7 +252,7 @@ function DecisionRightsBody() {
       header: t("decisionRights.field.inform"),
       cell: (r) => (
         <span className="block">
-          <TextCell value={r.informLabel} />
+          <SourceLabel value={r.informLabel} column="inform" />
           <PartyList codes={r.informParties} parties={partyMap} />
         </span>
       ),
@@ -221,7 +262,7 @@ function DecisionRightsBody() {
       header: t("decisionRights.field.sla"),
       cell: (r) => (
         <span className="block" data-sla-type={r.slaType}>
-          <TextCell value={r.slaLabel} />
+          <SourceLabel value={r.slaLabel} column="sla" />
           <span className="block small">
             {t(`decisionRights.slaType.${r.slaType}`)}
             {r.slaWorkingDays !== null ? ` · ${t("decisionRights.workingDays", { count: r.slaWorkingDays })}` : ""}
@@ -301,15 +342,18 @@ function DecisionRightsBody() {
       >
         <QueryState query={rows}>
           {(list) => (
-            <RegisterTable
-              id="p4-decision-rights"
-              caption={t("decisionRights.listTitle")}
-              rows={list}
-              columns={columns}
-              getRowId={(r) => r.id}
-              emptyTitle={t("decisionRights.empty")}
-              defaultSort={{ id: "decision", dir: "asc" }}
-            />
+            <>
+              <DecisionRightsArNotice />
+              <RegisterTable
+                id="p4-decision-rights"
+                caption={t("decisionRights.listTitle")}
+                rows={list}
+                columns={columns}
+                getRowId={(r) => r.id}
+                emptyTitle={t("decisionRights.empty")}
+                defaultSort={{ id: "decision", dir: "asc" }}
+              />
+            </>
           )}
         </QueryState>
       </Section>

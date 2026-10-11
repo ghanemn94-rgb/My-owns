@@ -351,7 +351,9 @@ export function totals(): BenefitTotals {
           line("avoided_cost", "planned", "200000.0000", 1),
         ],
         pendingOverlap: [line("margin_uplift", "validated", "75000.0000", 1)],
-        gross: { planned: known("10700000.0000"), validated: known("0.0000") },
+        // D-117 (F-DG4-121): gross is margin uplift + cash saving + working capital release; revenue uplift and
+        // avoided cost are shown beside it, never summed.
+        gross: { planned: known("500000.0000"), validated: known("0.0000") },
         implementationCost: {
           cash: known("1000000.0000"),
           nonCash: { status: "unknown", amount: null, currency: null, reason: "benefit.cost_amount_missing" },
@@ -365,6 +367,46 @@ export function totals(): BenefitTotals {
     ],
     nonFinancialCount: 1,
     excluded: [{ benefitId: CX_BENEFIT_ID, code: "B02", reason: "group_counted_member_not_named" }],
+    computedAt: T0,
+  };
+}
+
+/**
+ * The F-DG4-121 reproduction (domain round 1, DOM-GROSS), as the D-117 rule computes it: planned revenue uplift 300,
+ * margin uplift 70, cash saving 20 and avoided cost 45 SAR. Gross = 70 + 20 = 90 (profit and cash classes only), net =
+ * 90 − 0 cost = 90; revenue uplift and avoided cost are separate lines, never in gross or net. SYNTHETIC.
+ */
+export function grossBasisTotals(): BenefitTotals {
+  const line = (
+    valueClass: BenefitTotals["currencies"][number]["lines"][number]["valueClass"],
+    state: BenefitTotals["currencies"][number]["lines"][number]["state"],
+    amount: string,
+    count: number,
+  ) => ({ valueClass, state, total: known(amount), count });
+  return {
+    scope: "transformation",
+    scopeId: TR_ID,
+    allocated: false,
+    transformationIds: [TR_ID],
+    currencies: [
+      {
+        currency: "SAR",
+        lines: [
+          line("revenue_uplift", "planned", "300.0000", 1),
+          line("margin_uplift", "planned", "70.0000", 1),
+          line("cash_saving", "planned", "20.0000", 1),
+          line("avoided_cost", "planned", "45.0000", 1),
+          line("revenue_uplift", "validated", "0.0000", 0),
+          line("avoided_cost", "validated", "0.0000", 0),
+        ],
+        pendingOverlap: [],
+        gross: { planned: known("90.0000"), validated: known("0.0000") },
+        implementationCost: { cash: known("0.0000"), nonCash: known("0.0000"), total: known("0.0000") },
+        net: { planned: known("90.0000"), validated: known("0.0000") },
+      },
+    ],
+    nonFinancialCount: 0,
+    excluded: [],
     computedAt: T0,
   };
 }

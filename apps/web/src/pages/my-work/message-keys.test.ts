@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createI18n } from "../../i18n/index.ts";
 import { formatBusinessDate } from "../../lib/format.ts";
-import { renderMessage } from "./MyWorkPage.tsx";
+import { renderMessage } from "./messages.ts";
 
 type Params = Record<string, string | number | boolean | null>;
 

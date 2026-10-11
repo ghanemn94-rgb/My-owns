@@ -41,7 +41,7 @@ import {
   type TraceabilityGraph,
   type TraceLink,
 } from "./api.ts";
-import { useTraceSelection } from "./TraceabilityPage.tsx";
+import { useTraceSelection } from "./selection.ts";
 import { CHAIN_ORDER, nodeTypeText, NS, Pct, ReasonAction, recordWebPath, RecordName, StatusTag } from "./ui.tsx";
 
 const SHARE_RE = /^[0-9](\.[0-9]{1,6})?$/;

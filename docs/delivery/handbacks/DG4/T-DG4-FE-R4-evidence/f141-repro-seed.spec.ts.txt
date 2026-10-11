@@ -1,0 +1,20 @@
+// TEMPORARY (T-DG4-FE-R4 F-DG4-141 reproduction; deleted after the run): 30 SYNTHETIC users whose names sort before
+// "Synthetic Transformation Lead", so that user is no longer on page 1 (25) of the users register.
+import { expect, test } from "@playwright/test";
+import { apiSession } from "./support/ui.ts";
+
+test("seed 30 synthetic users that sort first", async ({ playwright }) => {
+  const admin = await apiSession(playwright, "dev.admin");
+  const me = await admin.call<{ organization: { id: string } }>("GET", "/api/v1/me");
+  const orgId = me.organization.id;
+  for (let i = 1; i <= 30; i++)
+    await admin.call("POST", "/api/v1/users", {
+      organizationId: orgId,
+      displayName: `Synthetic AAA F141 ${String(i).padStart(2, "0")}`,
+    });
+  const page1 = await admin.call<{ items: { displayName: string }[] }>(
+    "GET",
+    `/api/v1/users?organizationId=${orgId}&limit=25`,
+  );
+  expect(page1.items.map((u) => u.displayName)).not.toContain("Synthetic Transformation Lead");
+});

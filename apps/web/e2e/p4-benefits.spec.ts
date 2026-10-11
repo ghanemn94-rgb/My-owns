@@ -398,6 +398,21 @@ test("6. One Finance queue item; Finance decides the six items and approves; an 
   await expect(
     f.page.locator("#benefit-totals [data-class='revenue_uplift'] [data-state='validated'] [data-amount]"),
   ).toHaveAttribute("data-amount", "240000.5000");
+  // F-DG4-121 (D-117) labels: gross and net name the profit-and-cash basis; the revenue uplift (top line) is shown
+  // beside gross from its own class line, marked as not summed. The gross amount itself is the server's (KBE-R5).
+  const netTable = f.page.locator("#benefit-totals [data-totals='net']");
+  await expect(netTable.locator("[data-row='gross'] th")).toContainText(tr(lang, "benefitsP4.totals.gross"));
+  await expect(netTable.locator("[data-row='gross'] th")).toContainText(tr(lang, "benefitsP4.totals.grossBasis"));
+  await expect(netTable.locator("[data-row='net'] th")).toContainText(tr(lang, "benefitsP4.totals.net"));
+  const besideRevenue = netTable.locator("[data-row='beside-revenue_uplift'][data-not-summed='true']");
+  await expect(besideRevenue.locator("th")).toContainText(tr(lang, "benefitsP4.totals.besideRevenue"));
+  await expect(besideRevenue.locator("[data-state='validated'] [data-amount]")).toHaveAttribute(
+    "data-amount",
+    "240000.5000",
+  );
+  await expect(netTable.locator("[data-row='beside-avoided_cost'] th")).toContainText(
+    tr(lang, "benefitsP4.totals.besideAvoided"),
+  );
   await shot(f.page, lang, "p4ben-15-register-validated-totals");
   await expectAccessible(f.page, lang, "p4ben-15-register-validated");
   // an amendment (Finance) records the difference; the validated value is not edited and both stay visible
