@@ -21080,7 +21080,7 @@ components:
         criteria: { type: array, items: { $ref: "#/components/schemas/GateCriterionEvaluation" } }
         currentSubmission: { oneOf: [{ $ref: "#/components/schemas/GateSubmission" }, { type: "null" }] }
         submissionEnabled: { type: boolean, description: "P2: true for G1-G3 only." }
-        canSubmit: { type: boolean, description: "The caller holds gate.submit and every mandatory criterion is complete." }
+        canSubmit: { type: boolean, description: "True when all of these hold: the gate is submission-enabled; it is not approved; each mandatory criterion is complete, or is covered by an accepted gate exception whose expiry date is on or after today's business date in the transformation's timezone (ADR-0035 §4); the sequence rule raises no gate.out_of_sequence (the previous gate is approved unless it falls before a Modular entry phase, and the transformation has reached this gate's phase); and the caller holds gate.submit. It does not evaluate the Modular G3 links precondition (ADR-0038 §7.4, amendment B1). For a Modular transformation, submitGate for G3 can still be refused with 422 gate.modular_links_missing unless a Modular-links waiver is in force, and the other submit-time checks still apply." }
         canDecide: { type: boolean, description: "The caller is the configured approver and not the submitter of the pending submission." }
     GateList:
       type: object
@@ -25011,6 +25011,7 @@ components:
           type: object
           required: [planned, validated]
           additionalProperties: false
+          description: "Per state, the sum of that state's margin_uplift, cash_saving and working_capital_release lines in this currency: the profit and cash classes (ADR-0030 amendment N1; M0172; B0145). revenue_uplift (top line) and avoided_cost (non-cash) are separate lines in lines[] and are never summed into gross or net; non_financial_valued is never in gross. An unknown line of the three classes makes gross unknown."
           properties:
             planned: { $ref: "#/components/schemas/BenefitAmount" }
             validated: { $ref: "#/components/schemas/BenefitAmount" }
@@ -25027,6 +25028,7 @@ components:
           type: object
           required: [planned, validated]
           additionalProperties: false
+          description: "Per state, gross (margin_uplift + cash_saving + working_capital_release) minus implementationCost.total (ADR-0030 amendment N1; REQ-S08-011). revenue_uplift and avoided_cost are never part of net. Unknown when gross or the cost is unknown, never 0."
           properties:
             planned: { $ref: "#/components/schemas/BenefitAmount" }
             validated: { $ref: "#/components/schemas/BenefitAmount" }
@@ -28248,11 +28250,11 @@ components:
       required: [valueClass, state, currency, total, drilldownHref]
       additionalProperties: false
       properties:
-        valueClass: { type: string }
+        valueClass: { type: string, description: "A FinanceValueClass for a class line, or gross or net. gross (planned, validated) = the sum of that state's margin_uplift, cash_saving and working_capital_release lines in its currency; net = that gross - implementation cost. revenue_uplift (top line) and avoided_cost (non-cash) are shown as their own lines and are never summed into gross or net (ADR-0030 amendment N1; ADR-0037 amendment N2; M0172)." }
         state: { type: string, enum: [planned, forecast, measured, submitted, validated, rejected, sustained] }
         currency: { type: string, pattern: '^[A-Z]{3}$' }
         total: { $ref: "#/components/schemas/DashboardValue" }
-        drilldownHref: { type: [string, "null"], description: "The drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1): every class line and gross line carries one; null only on a net line, a derived difference that is not a sum of records." }
+        drilldownHref: { type: [string, "null"], description: "On a class line, the drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1). null on a gross line and on a net line (ADR-0037 amendment N2): each is derived, not one drill-down's sum. A gross line is the sum of the margin_uplift, cash_saving and working_capital_release class lines of its state and currency, each with its own drill-down. A net line is that gross minus the value.investment total." }
     FinanceValueClass:
       type: string
       description: "A Finance class line's value class that a drill-down can narrow to (ADR-0030 §7; ADR-0037 amendment K1)."
@@ -28266,7 +28268,7 @@ components:
         generatedAt: { $ref: "#/components/schemas/Timestamp" }
         businessDate: { $ref: "#/components/schemas/BusinessDate" }
         appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
-        lines: { type: array, items: { $ref: "#/components/schemas/FinanceValueLine" } }
+        lines: { type: array, items: { $ref: "#/components/schemas/FinanceValueLine" }, description: "One line per value class x state x currency, then the gross and net lines (planned, validated) per currency. Gross sums margin_uplift, cash_saving and working_capital_release only. revenue_uplift (top line) and avoided_cost (non-cash) stay separate lines, never summed into gross or net. Net = gross - implementation cost, with no net line under an owner filter (ADR-0030 amendment N1; ADR-0037 amendment N2)." }
         headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } }
         pendingValidationCount: { type: integer, minimum: 0 }
         nonFinancialCount: { type: integer, minimum: 0 }
