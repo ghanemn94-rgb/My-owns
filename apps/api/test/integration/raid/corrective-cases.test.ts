@@ -15,6 +15,7 @@
 // All data is SYNTHETIC; closing a case is never a business approval, and nothing touches DG0-DG7.
 import { insertAuditEvent } from "@mth/db";
 import { randomUUID } from "node:crypto";
+import { v7 as uuidv7 } from "uuid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { auditOf, call, seedWorld, startApi, type TestApi, type World } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
@@ -68,7 +69,9 @@ const caseCount = async () =>
 
 /** A worker-created case (the consumer's rows: created_source worker, no author, service audit actor). */
 async function insertWorkerCase(opts: { owner: string | null; followUp: string | null; benefitId?: string }) {
-  const id = randomUUID();
+  // Time-ordered like the ids the API and the worker create (uuidv7): lists page by id, so a random v4 id here
+  // made the 'owner filter' order assertion fail whenever it happened to sort before the API-created cases (D-118).
+  const id = uuidv7();
   const checkId = randomUUID();
   const code = `CA-9${String(Math.floor(Math.random() * 90000) + 10000)}`;
   await api.db.transaction().execute(async (tx) => {
