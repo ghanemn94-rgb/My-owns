@@ -98,7 +98,7 @@ View `benefit_value_line` (0039) tags every stored value with exactly one state:
 3. **Non-financial benefits without a valuation method** are counted in `nonFinancialCount` with Value n/a and are not part of any SAR line (REQ-PB-076: "excluded from SAR totals and not counted as zero"; probe T03).
 4. **Open overlaps (REQ-S08-014):** values of a benefit with an open warning are excluded from the `validated` and `sustained` lines and reported on `pendingOverlap` lines instead.
 5. **Excluded benefits** are listed with their exclusion reason and are never summed.
-6. **Gross, implementation cost, net (REQ-S08-011):** `gross` per state (`planned`, `validated`) = the sum of that state's financial lines in a currency. `implementationCost` = the sum of the DG3 `business_case_line` investment lines (status `active`) of the transformation-level case **and** its initiative cases, each line once, split `cash` and `non_cash` (their DG3 `value_basis`). Every line belongs to exactly one business case (`business_case_line.business_case_id` NOT NULL), so a line recorded on an initiative case is subtracted once at transformation level (the acceptance: a 1 M SAR initiative cost reduces transformation net value by exactly 1 M SAR, not 2 M). `net = gross − implementationCost` per state and currency. A cost line with a NULL amount makes `implementationCost` and `net` Unknown (`{ status: "unknown", reason: "benefit.cost_amount_missing" }`), never 0. Initiative-level totals (`?initiativeId=`) show allocated shares (share × value, labelled `allocated`) and that initiative's own cost lines; they are views, never added to the transformation total.
+6. **Gross, implementation cost, net (REQ-S08-011; the gross basis is amended on 2026-10-11, amendment N1, which wins over this item):** `gross` per state (`planned`, `validated`) = the sum of that state's financial lines in a currency. `implementationCost` = the sum of the DG3 `business_case_line` investment lines (status `active`) of the transformation-level case **and** its initiative cases, each line once, split `cash` and `non_cash` (their DG3 `value_basis`). Every line belongs to exactly one business case (`business_case_line.business_case_id` NOT NULL), so a line recorded on an initiative case is subtracted once at transformation level (the acceptance: a 1 M SAR initiative cost reduces transformation net value by exactly 1 M SAR, not 2 M). `net = gross − implementationCost` per state and currency. A cost line with a NULL amount makes `implementationCost` and `net` Unknown (`{ status: "unknown", reason: "benefit.cost_amount_missing" }`), never 0. Initiative-level totals (`?initiativeId=`) show allocated shares (share × value, labelled `allocated`) and that initiative's own cost lines; they are views, never added to the transformation total.
 7. **Responses:** every amount is a decimal string with its currency, and every line carries `count`. An empty state is `{ status: "known", amount: "0.0000", count: 0 }` (nothing in that state); a missing input is `{ status: "unknown", reason }`.
 
 ### 8. Decimal and Unknown (REQ-S16-025)
@@ -207,3 +207,36 @@ The REQ-S16-017 integration test (KBE-E, `test/integration/benefits/entity-group
 3. The single read also makes `createBenefitPlanValue`'s `Location` resolve, the precedent of `getAdoptionMetricLink` (ADR-0033 amendment of 2026-10-09) and `getInheritedRecord` (ADR-0038 amendment B3).
 
 `getBenefitValues` and `BenefitValueLine` are unchanged. Pending in `apps/api/test/support/p4-pending-arch-r2.ts` until a kpi-benefits-engineer task routes it in KBE-E's `benefits` files and exercises it in the contract test.
+
+## Amendment (2026-10-11, T-DG4-ARCH-R4): the gross and net basis (F-DG4-121, D-117)
+
+### N1. §7 item 6: which classes the headline gross sums
+
+Source: finding F-DG4-121 (domain-reviewer, DG4 round 1) and the orchestrator's decision D-117. Nothing above is removed. Where this amendment and §7 item 6 differ, this amendment wins.
+
+**The gap.** As built, `gross` per state summed all five financial lines: `revenue_uplift`, `margin_uplift`, `cash_saving`, `avoided_cost` and `working_capital_release`. So one SAR headline added top-line revenue to the margin earned on it, and a non-cash avoided cost to cash savings. The reviewer's example: planned 300 revenue + 70 margin + 20 cash + 45 avoided gave gross = net = 435. This goes against:
+- M0172: "Keep revenue uplift separate from profit or margin benefit. Keep avoided cost separate from cash savings … Show gross benefits, implementation cost and net value separately";
+- the playbook's roaming example (B0145), which lists "Incremental roaming revenue", "margin improvement" and "avoided care cost" as separate benefits.
+
+**Decided (D-117), exactly:**
+
+1. **The gross basis.** For each state (`planned`, `validated`) and currency, `gross` = the sum of that state's lines of exactly three classes: `margin_uplift`, `cash_saving` and `working_capital_release`. These are the classes that are profit or cash.
+2. **Never summed into gross or net.** Two classes are separate lines only, shown beside gross:
+   - `revenue_uplift`, labelled as top line. The margin earned on that revenue belongs in `margin_uplift`.
+   - `avoided_cost`, labelled non-cash.
+
+   `non_financial_valued` stays out of gross, as before (§7 item 2).
+3. **Net.** `net = gross − implementationCost` per state and currency, with `gross` as in item 1. `implementationCost` is unchanged: each `business_case_line` investment line once, split `cash` and `non_cash`. A NULL cost amount still makes `implementationCost` and `net` Unknown (`benefit.cost_amount_missing`), never 0.
+4. **Unknown.** A line of one of the three gross classes that is `unknown` makes `gross`, and so `net`, `unknown` with its reason, as before. An `unknown` `revenue_uplift` or `avoided_cost` line no longer makes `gross` or `net` Unknown, because neither class is an input any more. It stays Unknown on its own line.
+5. **Unchanged:**
+   - the per-class lines (§7 item 2), in every state, with their totals and counts;
+   - the validated totals: which values are validated, the overlap hold (§7 item 4), the exclusions (§7 item 5), and the T10 Value area's `value.planned` / `value.validated` headlines and their drill-downs (ADR-0037 §5, REQ-S13-003 "the validated benefit total drills to its benefit records");
+   - currencies (never converted), counting once (§7 item 1), the initiative view (`allocated`; never added to the transformation total), Value n/a (§7 item 3), decimal arithmetic (§8).
+6. **Labels name the basis.** Each screen that shows `gross` or `net` names the three classes in the label or the caption beside it. It shows `revenue_uplift` (top line) and `avoided_cost` (non-cash) beside gross, never as part of it. The English meaning to convey is "Gross benefit (margin, cash saving and working-capital release)", "Revenue uplift (top line; not in gross or net)", "Avoided cost (non-cash; not in gross or net)" and "Net = gross − implementation cost". The web owns the keys and the Arabic (FE-R4). The API sends no label key for gross or net, so no API code or key is added.
+7. **Where it applies.** `getBenefitTotals` and `getPortfolioBenefitTotals` (`BenefitTotalsCurrency.gross` and `.net`), and the Finance dashboard's `gross` and `net` lines (ADR-0037 amendment N2). Both read KBE-E's arithmetic, so they cannot use different bases.
+
+**Example (the reviewer's DOM-GROSS case, no cost lines):** the lines stay `revenue_uplift` 300, `margin_uplift` 70, `cash_saving` 20 and `avoided_cost` 45. `gross.planned` = 70 + 20 + 0 = **90.0000**. `net.planned` = 90 − 0 = **90.0000**. Revenue (300) and avoided cost (45) are shown beside them and are in neither figure.
+
+**Contract.** The `openapi.yaml` descriptions of `BenefitTotalsCurrency.gross` and `.net` state this basis. The schema does not change: same members, types and required lists.
+
+**Owner of the change.** KBE-R5 (`benefits/totals.ts` `FINANCIAL_TOTAL_CLASSES`, and the Finance dashboard). FE-R4 owns the labels. Until those land, the built code still sums five classes, and the round-2 domain reviewer judges the rule against M0172 and B0145 (D-117).

@@ -319,3 +319,31 @@ The ten `dashboard.portfolio.slip_<reason>` and `dashboard.kpi.<rag>` rows were 
 - `` `dashboard.kpi.${s.displayedRag}` `` in `reporting/dashboards/drilldown.ts` (the `outcomes.kpi_status` drill-down of one KPI; `displayedRag` takes the `KpiRag` values, exactly the six above).
 
 No code or behaviour changes; the rows record the keys and their English texts for the web.
+
+## Amendment (2026-10-11, T-DG4-ARCH-R4): the Finance dashboard's gross and net basis (F-DG4-121, D-117)
+
+Source: finding F-DG4-121 and decision D-117. The rule is ADR-0030 amendment N1. Nothing above is removed. Where this amendment and §2 (the Finance row), K1 item 5 or the `FinanceValueLine.drilldownHref` description differ, this amendment wins.
+
+### N2. Finance dashboard: gross, net and their drill-downs
+
+1. **The §2 Finance row, restated.** The Finance dashboard shows:
+   - value lines per value class × state × currency (ADR-0030 §7), unchanged;
+   - the `gross` lines (planned, validated), each the sum of that state's `margin_uplift`, `cash_saving` and `working_capital_release` lines in its currency (ADR-0030 N1 item 1);
+   - the implementation cost;
+   - the `net` lines = that gross − implementation cost (N1 item 3), with no net line under an owner filter, as before;
+   - the pending-validation count, the non-financial count (Value n/a) and one row per transformation, unchanged.
+
+   The `revenue_uplift` (top line) and `avoided_cost` (non-cash) class lines are shown beside gross, labelled with their basis, and are never summed into gross or net (M0172; B0145). Labels name the basis (N1 item 6).
+2. **A gross line no longer equals the Value area's headline.** `value.planned` and `value.validated` (the T10 Value area, the Executive dashboard and `getDashboardDrilldown` without `valueClass`) still sum all five financial classes (N1 item 5: validated totals unchanged; REQ-S13-003). So the old comment that gross is "exactly the Value area's `value.planned` / `value.validated` headline" is no longer true. A gross line's sum is no longer the sum of that drill-down's items.
+3. **The gross line's `drilldownHref` becomes `null`, like the net line (K1 item 5).** The reason: no existing drill-down sums exactly the three gross classes. `valueClass` takes one class, and the drill-down without it sums five. Keeping the old href would break the K1 item 4 invariant. Each of a gross line's three inputs drills on its own: the class lines `margin_uplift`, `cash_saving` and `working_capital_release` of the same state and currency, each with its K1 href. Their three totals add up to the gross line, or the gross line is `unknown`. The screen shows a gross line as "margin uplift + cash saving + working-capital release" with links to those three lines, and never as a drillable total. The net line keeps its two inputs: the gross line, which now resolves through its three class lines, and `value.investment`.
+4. **Invariant (to be tested by KBE-R5).** For every gross line (state *s*, currency *k*), the decimal sum of the `total`s of the class lines `margin_uplift`, `cash_saving` and `working_capital_release` of state *s* and currency *k* equals the gross `total`. If one of those lines is `unknown`, the gross line is `unknown` too. A class that has no line adds 0. For every net line, `total` = gross − the `value.investment` total of currency *k*, or `unknown`. The K1 item 4 invariant for class lines is unchanged.
+5. **Unchanged:** every class line and its href (K1), the headlines (`DashboardHeadline`, including `value.planned` and `value.validated`), the filters, scope (§6), the other dashboards and the drill-down operation.
+
+**Contract.** Descriptions only, in `openapi.yaml`:
+- `FinanceDashboard.lines`: the basis;
+- `FinanceValueLine.valueClass`: `gross` and `net`;
+- `FinanceValueLine.drilldownHref`: `null` on a gross or net line.
+
+The schema is unchanged: `drilldownHref` was already `[string, "null"]`. A drillable gross would need an additive contract change, for example a `gross` value of the drill-down's `valueClass` parameter. This amendment does not make that change. It is listed in the handback as an option for the orchestrator.
+
+**Codes and keys.** None is added or renamed. The API sends no label key for a Finance line, and the web keys are FE-R4's.
