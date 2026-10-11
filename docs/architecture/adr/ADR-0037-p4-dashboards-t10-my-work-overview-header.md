@@ -346,4 +346,6 @@ Source: finding F-DG4-121 and decision D-117. The rule is ADR-0030 amendment N1.
 
 The schema is unchanged: `drilldownHref` was already `[string, "null"]`. A drillable gross would need an additive contract change, for example a `gross` value of the drill-down's `valueClass` parameter. This amendment does not make that change. It is listed in the handback as an option for the orchestrator.
 
+**N2 note (2026-10-11, orchestrator, at the T-DG4-KBE-R5 merge; D-118).** As built, item 3 holds with one narrowing: a gross line carries the value-state drill-down (`value.planned` or `value.validated`) **when no `revenue_uplift` or `avoided_cost` line enters that state and currency**. Only then does that drill-down's sum equal the gross line, so the K1 item 4 invariant holds. Otherwise it is `null`, as item 3 says. The contract description of `FinanceValueLine.drilldownHref` states the same.
+
 **Codes and keys.** None is added or renamed. The API sends no label key for a Finance line, and the web keys are FE-R4's.
