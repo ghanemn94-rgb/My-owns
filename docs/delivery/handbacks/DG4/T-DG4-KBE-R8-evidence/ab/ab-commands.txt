@@ -1,0 +1,14 @@
+# A = this worktree at HEAD fba6e02 with NO source change (only the new test file kpi-unit-outcomes.test.ts, which the
+#     transcript run does not execute), run before any edit of apps/api/src, packages/shared or openapi.yaml.
+# B = the final source tree (D-124 items 1-3 and the closing step), run after the contract checks.
+# The evidence test file is copied into the tree for the two runs and removed afterwards.
+cp ab/kbe-r8-transcript.test.ts <tree>/apps/api/test/integration/reporting/kbe-r8-transcript.test.ts
+MTH_KBE_R7_TRANSCRIPT=$TMPDIR/ev/A-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh pnpm exec vitest run --project integration apps/api/test/integration/reporting/kbe-r8-transcript.test.ts   # A: exit 0, 1 passed
+MTH_KBE_R7_TRANSCRIPT=$TMPDIR/ev/B-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh pnpm exec vitest run --project integration apps/api/test/integration/reporting/kbe-r8-transcript.test.ts   # B: exit 0, 1 passed
+rm -f <tree>/apps/api/test/integration/reporting/kbe-r8-transcript.test.ts
+python3 ab/summary-r8.py ab/A-transcript.jsonl ab/B-transcript.jsonl > ab/summary.txt    # this task's classifier
+# compare.py / summary.py are KBE-R7's, copied unchanged for reference. compare.py stops at response 35 here: its strict
+# label check trips on the id-placeholder drift (B lists the draft outcome's ids earlier); summary-r8.py renumbers per
+# response instead, and anonymises ids and fixture names for the detail of class (4).
+# A first A attempt failed in its fixture (duplicate KPI names, 409) before recording anything; the fixture was fixed
+# (unique names) and A re-run from scratch. Only the successful A and B transcripts are kept.

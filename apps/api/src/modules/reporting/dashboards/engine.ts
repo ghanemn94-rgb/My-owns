@@ -206,6 +206,9 @@ function missingStatus(kpiDefinitionId: string): KpiStatusFact {
     actualStatus: "unknown",
     actualReason: "kpi.no_active_version",
     unit: null,
+    // No definition to read: no unit kind, so the value's kpiUnit is null (ADR-0037 N5 item 1).
+    unitKind: null,
+    unitLabel: null,
     currency: null,
     reportingPeriodId: null,
     periodLabel: null,

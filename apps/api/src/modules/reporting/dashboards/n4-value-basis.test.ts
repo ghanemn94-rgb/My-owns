@@ -118,6 +118,7 @@ describe("F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG
       unit: "currency",
       currency: "USD",
       reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+      kpiUnit: null,
     });
     expect(usd.topLineGap).toEqual({ gapRatio: "1", status: "red", reasonKey: null });
     expect(usd.nonCashGap).toBeNull();
@@ -197,6 +198,7 @@ describe("F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG
       unit: "ratio",
       currency: "SAR",
       reasonKey: null,
+      kpiUnit: null,
     });
     expect(gapValue({ gapRatio: "0", status: "green", reasonKey: null }, "USD").state).toBe("zero");
     expect(gapValue({ gapRatio: null, status: "unknown", reasonKey: "benefit.value_amount_missing" }, "SAR")).toEqual({
@@ -205,6 +207,7 @@ describe("F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG
       unit: "ratio",
       currency: "SAR",
       reasonKey: "benefit.value_amount_missing",
+      kpiUnit: null,
     });
     expect(
       gapValue(
@@ -220,6 +223,7 @@ describe("F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG
       unit: "ratio",
       currency: null,
       reasonKey: "dashboard.value.nothing_planned",
+      kpiUnit: null,
     });
   });
 
@@ -258,7 +262,14 @@ describe("F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG
               (l) => byId.get(l.benefitId)!.currency === c.currency,
             );
             if (ls.some((l) => l.amount === null))
-              return { state: "unknown" as const, value: null, unit: "currency", currency: c.currency, reasonKey: "x" };
+              return {
+                state: "unknown" as const,
+                value: null,
+                unit: "currency",
+                currency: c.currency,
+                reasonKey: "x",
+                kpiUnit: null,
+              };
             const v = ls.reduce((acc, l) => acc.plus(new D(l.amount!)), new D(0));
             return {
               state: v.isZero() ? ("zero" as const) : ("value" as const),
@@ -266,6 +277,7 @@ describe("F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG
               unit: "currency",
               currency: c.currency,
               reasonKey: null,
+              kpiUnit: null,
             };
           };
           const g = valueGapStatus(sum("planned"), sum("validated"), POLICY);
@@ -355,14 +367,16 @@ describe("F-DG4-127: the Portfolio initiative value on the profit-and-cash basis
         unit: "currency",
         currency: "SAR",
         reasonKey: "dashboard.portfolio.no_profit_and_cash_allocation",
+        kpiUnit: null,
       },
-      { state: "value", value: "70", unit: "currency", currency: "SAR", reasonKey: null },
+      { state: "value", value: "70", unit: "currency", currency: "SAR", reasonKey: null, kpiUnit: null },
       {
         state: "unknown",
         value: null,
         unit: "currency",
         currency: "SAR",
         reasonKey: "dashboard.portfolio.no_allocated_value",
+        kpiUnit: null,
       },
     ]);
   });
@@ -398,6 +412,7 @@ describe("F-DG4-127: the Portfolio initiative value on the profit-and-cash basis
       unit: "currency",
       currency: "SAR",
       reasonKey: "benefit.value_amount_missing",
+      kpiUnit: null,
     });
     // A missing amount on a top-line benefit is not a profit-and-cash amount: it changes nothing here.
     const rev = benefit("revenue_uplift");

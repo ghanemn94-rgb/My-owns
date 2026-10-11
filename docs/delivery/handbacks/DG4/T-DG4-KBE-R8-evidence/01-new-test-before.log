@@ -1,0 +1,194 @@
+port-policy: PostgreSQL listening on port 26100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r8
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv45ku9z_9decde81 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts (9 tests | 9 failed) 2426ms
+   × D-124 item 1: an outcome created through the API is shown on the dashboards; an archived one is not > the T10 Outcomes area lists the outcome and its KPI links with their actuals; the archived outcome is absent 66ms
+     → expected [] to include '01a12c36-2d79-734b-bb64-69cc1ccf46e7'
+   × D-124 item 1: an outcome created through the API is shown on the dashboards; an archived one is not > the Executive Overview shows it, and the outcomes drill-downs list it 37ms
+     → expected [] to include '01a12c36-2d79-734b-bb64-69cc1ccf46e7'
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F1-F3 on the T10 Outcomes items, the workstream-less Executive Overview and the outcomes.area drill-down 46ms
+     → Cannot read properties of undefined (reading 'value')
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > the outcomes.kpi_status drill-down: its value, the kpi_actual item and the `actual` input carry the kpiUnit 25ms
+     → /api/v1/dashboard-drilldown?metric=outcomes.kpi_status&organizationId=01a12c36-2a15-7719-8847-98dd82a3b8a2&subjectId=01a12c36-2da9-726a-9f25-fe561d556f65 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a12c36-2ff2-7241-b7cb-0ac300a721e4"}: expected 404 to be 200 // Object.is equality
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > a Stale and an Unknown KPI value keep their kpiUnit (state, value and reason unchanged) 20ms
+     → Cannot read properties of undefined (reading 'value')
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > the adoption dashboard's AdoptionIndicatorRow.value carries the KPI's kpiUnit 56ms
+     → expected { state: 'value', value: '0.12', …(3) } to strictly equal { state: 'value', value: '0.12', …(4) }
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F4: the value gap (planned 70, nothing validated) is the computed ratio 1 with kpiUnit null; money and counts are null 469ms
+     → expected { state: 'value', value: '1', …(3) } to strictly equal { state: 'value', value: '1', …(4) }
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > a Portfolio item and the count headlines carry kpiUnit null 36ms
+     → expected undefined to be null
+   × D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > every DashboardValue of every dashboard operation carries the kpiUnit key, classified as N5 states 85ms
+     → /api/v1/dashboard-drilldown?metric=outcomes.kpi_status&organizationId=01a12c36-2a15-7719-8847-98dd82a3b8a2&subjectId=01a12c36-2da9-726a-9f25-fe561d556f65 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a12c36-3285-7544-bd94-f346109cd49b"}: expected 404 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 item 1: an outcome created through the API is shown on the dashboards; an archived one is not > the T10 Outcomes area lists the outcome and its KPI links with their actuals; the archived outcome is absent
+AssertionError: expected [] to include '01a12c36-2d79-734b-bb64-69cc1ccf46e7'
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:271:17
+    269|     const area = areaOf(t10, "outcomes");
+    270|     const ids = (area.items as Body[]).map((i) => i.recordId);
+    271|     expect(ids).toContain(outcomeId);
+       |                 ^
+    272|     for (const id of Object.values(ok)) expect(ids).toContain(id);
+    273|     expect(ids).not.toContain(archivedOutcomeId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 item 1: an outcome created through the API is shown on the dashboards; an archived one is not > the Executive Overview shows it, and the outcomes drill-downs list it
+AssertionError: expected [] to include '01a12c36-2d79-734b-bb64-69cc1ccf46e7'
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:289:17
+    287|     const area = areaOf(overview, "outcomes");
+    288|     const ids = (area.items as Body[]).map((i) => i.recordId);
+    289|     expect(ids).toContain(outcomeId);
+       |                 ^
+    290|     expect(ids).toContain(ok.ratio);
+    291|     expect(ids).not.toContain(archivedOutcomeId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F1-F3 on the T10 Outcomes items, the workstream-less Executive Overview and the outcomes.area drill-down
+TypeError: Cannot read properties of undefined (reading 'value')
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:311:33
+    309|     for (const body of [await get(`${k.base}/dashboard`), await get(ov…
+    310|       const area = areaOf(body, "outcomes");
+    311|       expect(itemOf(area, ok.pct)!.value).toStrictEqual(F1);
+       |                                 ^
+    312|       expect(itemOf(area, ok.pctLabel)!.value).toStrictEqual(F2);
+    313|       expect(itemOf(area, ok.ratio)!.value).toStrictEqual(F3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > the outcomes.kpi_status drill-down: its value, the kpi_actual item and the `actual` input carry the kpiUnit
+AssertionError: /api/v1/dashboard-drilldown?metric=outcomes.kpi_status&organizationId=01a12c36-2a15-7719-8847-98dd82a3b8a2&subjectId=01a12c36-2da9-726a-9f25-fe561d556f65 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a12c36-2ff2-7241-b7cb-0ac300a721e4"}: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ get apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:131:56
+    129| const get = async (url: string): Promise<Body> => {
+    130|   const r = await call<Body>(api.app, "GET", url, { session: k.s.audit…
+    131|   expect(r.status, `${url} ${JSON.stringify(r.body)}`).toBe(200);
+       |                                                        ^
+    132|   return r.body;
+    133| };
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:334:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > a Stale and an Unknown KPI value keep their kpiUnit (state, value and reason unchanged)
+TypeError: Cannot read properties of undefined (reading 'value')
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:346:33
+    344|   it("a Stale and an Unknown KPI value keep their kpiUnit (state, valu…
+    345|     const area = areaOf(await get(`${k.base}/dashboard`), "outcomes");
+    346|     expect(itemOf(area, ok.stale)!.value).toStrictEqual(STALE);
+       |                                 ^
+    347|     expect(itemOf(area, ok.unknown)!.value).toStrictEqual(UNKNOWN);
+    348|     expect((await get(kpiStatusDrill(ok.stale))).value).toStrictEqual(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > the adoption dashboard's AdoptionIndicatorRow.value carries the KPI's kpiUnit
+AssertionError: expected { state: 'value', value: '0.12', …(3) } to strictly equal { state: 'value', value: '0.12', …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "currency": null,[22m
+[32m-   "kpiUnit": {[39m
+[32m-     "kind": "percentage",[39m
+[32m-     "label": "% of users",[39m
+[32m-   },[39m
+[2m    "reasonKey": null,[22m
+[2m    "state": "value",[22m
+[2m    "unit": "% of users",[22m
+[2m    "value": "0.12",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:358:24
+    356|     );
+    357|     const row = (a.indicators as Body[]).find((i) => i.kpiDefinitionId…
+    358|     expect(row?.value).toStrictEqual(F2);
+       |                        ^
+    359|     expectEveryValueClassified(a, "getAdoptionDashboard");
+    360|     const t10 = areaOf(await get(`${k.base}/dashboard`), "people_adopt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F4: the value gap (planned 70, nothing validated) is the computed ratio 1 with kpiUnit null; money and counts are null
+AssertionError: expected { state: 'value', value: '1', …(3) } to strictly equal { state: 'value', value: '1', …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "currency": "SAR",[22m
+[32m-   "kpiUnit": null,[39m
+[2m    "reasonKey": null,[22m
+[2m    "state": "value",[22m
+[2m    "unit": "ratio",[22m
+[2m    "value": "1",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:373:24
+    371|     const value = areaOf(t10.body, "value");
+    372|     const gap = (value.headlines as Body[]).find((h) => h.metric === "…
+    373|     expect(gap?.value).toStrictEqual({
+       |                        ^
+    374|       state: "value",
+    375|       value: "1",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > a Portfolio item and the count headlines carry kpiUnit null
+AssertionError: expected undefined to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:408:67
+    406|     const portfolio = areaOf(t10, "portfolio");
+    407|     expect(itemOf(portfolio, ini)).toBeDefined();
+    408|     for (const v of dashboardValues(portfolio)) expect(v.kpiUnit).toBe…
+       |                                                                   ^
+    409|     for (const code of ["dependencies", "decisions"])
+    410|       for (const h of areaOf(t10, code).headlines as Body[]) expect(h.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts > D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > every DashboardValue of every dashboard operation carries the kpiUnit key, classified as N5 states
+AssertionError: /api/v1/dashboard-drilldown?metric=outcomes.kpi_status&organizationId=01a12c36-2a15-7719-8847-98dd82a3b8a2&subjectId=01a12c36-2da9-726a-9f25-fe561d556f65 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a12c36-3285-7544-bd94-f346109cd49b"}: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ get apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:131:56
+    129| const get = async (url: string): Promise<Body> => {
+    130|   const r = await call<Body>(api.app, "GET", url, { session: k.s.audit…
+    131|   expect(r.status, `${url} ${JSON.stringify(r.body)}`).toBe(200);
+       |                                                        ^
+    132|   return r.body;
+    133| };
+ ❯ apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts:417:53
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  18:24:57
+   Duration  14.34s (transform 4.77s, setup 0ms, collect 8.90s, tests 2.43s, environment 0ms, prepare 78ms)
+

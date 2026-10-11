@@ -11,19 +11,24 @@
 import { DASHBOARD_RAG_DEFAULTS, type RagStatus } from "@mth/shared/schemas";
 import { describe, expect, it } from "vitest";
 import {
+  countValue,
   decisionOverdue,
   decisionsArea,
   dependenciesArea,
   dependencyStatus,
+  gapValue,
+  knownValue,
   kpiActualValue,
   lineInWindow,
   milestoneComponent,
+  notApplicableValue,
   outcomesArea,
   outcomeStatus,
   portfolioArea,
   basisClasses,
   basisOfClass,
   sumValue,
+  unknownValue,
   VALUE_BASES,
   valueArea,
   valueGapStatus,
@@ -73,6 +78,8 @@ function kpi(
     actualStatus,
     actualReason: actual === null ? "kpi.no_accepted_actual" : null,
     unit: "count",
+    unitKind: "count",
+    unitLabel: null,
     currency: null,
     reportingPeriodId: id(),
     periodLabel: "2041-03",
@@ -155,6 +162,7 @@ describe("Outcomes (REQ-PB-063: trajectory, not activity completion)", () => {
       unit: "count",
       currency: null,
       reasonKey: "kpi.no_accepted_actual",
+      kpiUnit: { kind: "count", label: null },
     });
     expect(kpiActualValue(kpi("stale", "7", "stale")).state).toBe("stale");
     expect(kpiActualValue(kpi("green", "0")).state).toBe("zero");
@@ -276,6 +284,7 @@ describe("Value (validated benefit gap)", () => {
       unit: "currency",
       currency: "SAR",
       reasonKey: null,
+      kpiUnit: null,
     });
     expect(r.rag.status).toBe("red"); // gap 1 > 0.15
   });
@@ -369,7 +378,14 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
     const r = valueArea(benefits, lines, CLOCK, POLICY);
     expect(r.currencies).toHaveLength(1);
     const c = r.currencies[0]!;
-    expect(c.planned).toEqual({ state: "value", value: "90", unit: "currency", currency: "SAR", reasonKey: null });
+    expect(c.planned).toEqual({
+      state: "value",
+      value: "90",
+      unit: "currency",
+      currency: "SAR",
+      reasonKey: null,
+      kpiUnit: null,
+    });
     expect(c.validated.state).toBe("zero");
     expect([c.forecast.state, c.submitted.state]).toEqual(["zero", "zero"]);
     expect(c.topLine!.planned.value).toBe("300");
@@ -399,6 +415,7 @@ describe("Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, 
       unit: "currency",
       currency: "SAR",
       reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+      kpiUnit: null,
     };
     for (const v of [c.planned, c.forecast, c.submitted, c.validated]) expect(v).toEqual(na);
     expect(c).toMatchObject({
@@ -729,5 +746,110 @@ describe("RAG policy rules", () => {
     expect(mapDatabaseGuardError({ code: "23514", constraint: "something_else" } as never)?.code).not.toBe(
       "dashboard_rag_policy.threshold_order",
     );
+  });
+});
+
+describe("ADR-0037 N5 (D-124 items 2-3): a KPI-derived value says its unit kind apart from its label", () => {
+  // The ARCH-R7 handback §4.3 fixtures (synthetic): `unit` keeps its content (label, else kind); `kpiUnit` carries both.
+  const pct = (label: string | null, extra: Partial<KpiStatusFact> = {}) =>
+    kpi("green", "0.12", "ok", { unit: label ?? "percentage", unitKind: "percentage", unitLabel: label, ...extra });
+  it("F1: a percentage KPI with no label", () => {
+    expect(kpiActualValue(pct(null))).toStrictEqual({
+      state: "value",
+      value: "0.12",
+      unit: "percentage",
+      currency: null,
+      reasonKey: null,
+      kpiUnit: { kind: "percentage", label: null },
+    });
+  });
+  it("F2: a percentage KPI labelled '% of users': the label never replaces the kind", () => {
+    expect(kpiActualValue(pct("% of users"))).toStrictEqual({
+      state: "value",
+      value: "0.12",
+      unit: "% of users",
+      currency: null,
+      reasonKey: null,
+      kpiUnit: { kind: "percentage", label: "% of users" },
+    });
+  });
+  it("F3: a ratio KPI 1.5 carries kind ratio, so it is told apart from the computed value gap", () => {
+    const v = kpiActualValue(kpi("green", "1.5", "ok", { unit: "ratio", unitKind: "ratio", unitLabel: null }));
+    expect(v).toStrictEqual({
+      state: "value",
+      value: "1.5",
+      unit: "ratio",
+      currency: null,
+      reasonKey: null,
+      kpiUnit: { kind: "ratio", label: null },
+    });
+  });
+  it("F4: the value gap is the computed ratio: unit ratio, kpiUnit null", () => {
+    expect(gapValue({ gapRatio: "1", status: "red", reasonKey: null }, "SAR")).toStrictEqual({
+      state: "value",
+      value: "1",
+      unit: "ratio",
+      currency: "SAR",
+      reasonKey: null,
+      kpiUnit: null,
+    });
+  });
+  it("Stale, Unknown and zero keep the kpiUnit; state, value and reason are unchanged", () => {
+    expect(kpiActualValue(pct("% of users", { actualStatus: "stale" }))).toStrictEqual({
+      state: "stale",
+      value: "0.12",
+      unit: "% of users",
+      currency: null,
+      reasonKey: "kpi.stale",
+      kpiUnit: { kind: "percentage", label: "% of users" },
+    });
+    const unknown = kpi("unknown", null, "unknown", { unit: "ratio", unitKind: "ratio", unitLabel: null });
+    expect(kpiActualValue(unknown)).toStrictEqual({
+      state: "unknown",
+      value: null,
+      unit: "ratio",
+      currency: null,
+      reasonKey: "kpi.no_accepted_actual",
+      kpiUnit: { kind: "ratio", label: null },
+    });
+    expect(kpiActualValue(pct(null, { actual: "0" }))).toMatchObject({
+      state: "zero",
+      value: "0",
+      kpiUnit: { kind: "percentage", label: null },
+    });
+  });
+  it("a currency KPI keeps its currency and kind; an unreadable KPI (no unit kind) has kpiUnit null", () => {
+    const money = kpi("green", "90", "ok", {
+      unit: "currency",
+      unitKind: "currency",
+      unitLabel: null,
+      currency: "SAR",
+    });
+    expect(kpiActualValue(money)).toMatchObject({ currency: "SAR", kpiUnit: { kind: "currency", label: null } });
+    const missing = kpi("unknown", null, "unknown", {
+      unit: null,
+      unitKind: null,
+      unitLabel: null,
+      actualReason: "kpi.no_active_version",
+    });
+    expect(kpiActualValue(missing)).toStrictEqual({
+      state: "unknown",
+      value: null,
+      unit: null,
+      currency: null,
+      reasonKey: "kpi.no_active_version",
+      kpiUnit: null,
+    });
+  });
+  it("money, counts and n/a values carry kpiUnit null", () => {
+    for (const v of [
+      knownValue("90", "currency", "SAR"),
+      unknownValue("benefit.value_amount_missing", "currency", "SAR"),
+      notApplicableValue("dashboard.value.nothing_planned", "ratio"),
+      countValue(3, "outcome_kpi"),
+      sumValue(["1", "2"], "SAR", "currency", "x"),
+      sumValue(["1", null], "SAR", "currency", "x"),
+    ])
+      expect(v.kpiUnit).toBeNull();
   });
 });

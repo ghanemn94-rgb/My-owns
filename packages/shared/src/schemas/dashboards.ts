@@ -110,7 +110,7 @@ export type DashboardKpiUnit = z.infer<typeof dashboardKpiUnit>;
 /**
  * OpenAPI `DashboardValue`. ADR-0037 amendment N5: `kpiUnit` is non-null exactly on a KPI-derived value; money (unit
  * `currency`), the computed ratio (unit `ratio`, the value gap, a percentage) and counts carry null. `kpiUnit` is
- * `.optional()` until T-DG4-KBE-R8 emits it (pending in apps/api/test/support/p4-pending-arch-r7.ts).
+ * required: the API emits it (T-DG4-KBE-R8).
  */
 export const dashboardValue = z.strictObject({
   state: z.enum(DASHBOARD_VALUE_STATES),
@@ -121,7 +121,7 @@ export const dashboardValue = z.strictObject({
     .regex(/^[A-Z]{3}$/)
     .nullable(),
   reasonKey: z.string().nullable(),
-  kpiUnit: dashboardKpiUnit.nullable().optional(),
+  kpiUnit: dashboardKpiUnit.nullable(),
 });
 export type DashboardValue = z.infer<typeof dashboardValue>;
 

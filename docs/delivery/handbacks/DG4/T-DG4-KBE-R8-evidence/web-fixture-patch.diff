@@ -1,0 +1,117 @@
+diff --git a/apps/web/src/pages/dashboards/DashboardsPage.tsx b/apps/web/src/pages/dashboards/DashboardsPage.tsx
+index 48bcc7c..aa84af8 100644
+--- a/apps/web/src/pages/dashboards/DashboardsPage.tsx
++++ b/apps/web/src/pages/dashboards/DashboardsPage.tsx
+@@ -375,6 +375,7 @@ export function FinanceDashboardPage() {
+                         unit: "currency",
+                         currency: null,
+                         reasonKey: "dashboard.value.no_financial_benefit",
++                        kpiUnit: null,
+                       }}
+                     />
+                   </p>
+diff --git a/apps/web/src/pages/dashboards/dashboardFixtures.ts b/apps/web/src/pages/dashboards/dashboardFixtures.ts
+index e29eaeb..f23dfdc 100644
+--- a/apps/web/src/pages/dashboards/dashboardFixtures.ts
++++ b/apps/web/src/pages/dashboards/dashboardFixtures.ts
+@@ -26,6 +26,7 @@ export const v = (value: string, currency: string | null = "SAR", unit = "curren
+   unit,
+   currency,
+   reasonKey: null,
++  kpiUnit: null,
+ });
+ export const unknownV = (reasonKey: string): DashboardValue => ({
+   state: "unknown",
+@@ -33,6 +34,7 @@ export const unknownV = (reasonKey: string): DashboardValue => ({
+   unit: null,
+   currency: null,
+   reasonKey,
++  kpiUnit: null,
+ });
+ export const naV = (reasonKey: string): DashboardValue => ({
+   state: "not_applicable",
+@@ -40,6 +42,7 @@ export const naV = (reasonKey: string): DashboardValue => ({
+   unit: "ratio",
+   currency: null,
+   reasonKey,
++  kpiUnit: null,
+ });
+ /** A Stale percentage: a fraction, as the API sends it (ADR-0028 §3; F-DG4-125): 0.42 reads 42 %. */
+ export const staleV: DashboardValue = {
+@@ -48,6 +51,7 @@ export const staleV: DashboardValue = {
+   unit: "%",
+   currency: null,
+   reasonKey: "kpi.stale",
++  kpiUnit: { kind: "percentage", label: "%" },
+ };
+ 
+ export const filters = (over: Partial<ExecutiveOverview["appliedFilters"]> = {}) => ({
+@@ -531,6 +535,7 @@ const naPc = (unit: string): DashboardValue => ({
+   unit,
+   currency: null,
+   reasonKey: "dashboard.value.no_profit_and_cash_benefit",
++  kpiUnit: null,
+ });
+ 
+ export function d119Headlines(variant: D119Variant = "main"): Headline[] {
+@@ -714,6 +719,7 @@ export function n4PortfolioItems(): DashboardItem[] {
+       unit: "currency",
+       currency: "SAR",
+       reasonKey: "dashboard.portfolio.no_profit_and_cash_allocation",
++      kpiUnit: null,
+     }),
+     initiative(N4_INI.c, "INI-C", "Synthetic unallocated initiative", {
+       state: "unknown",
+@@ -721,6 +727,7 @@ export function n4PortfolioItems(): DashboardItem[] {
+       unit: "currency",
+       currency: null,
+       reasonKey: "dashboard.portfolio.no_allocated_value",
++      kpiUnit: null,
+     }),
+   ];
+ }
+diff --git a/apps/web/src/pages/dashboards/percentKpi.test.tsx b/apps/web/src/pages/dashboards/percentKpi.test.tsx
+index 736ab95..3369d1d 100644
+--- a/apps/web/src/pages/dashboards/percentKpi.test.tsx
++++ b/apps/web/src/pages/dashboards/percentKpi.test.tsx
+@@ -25,9 +25,10 @@ const API_PERCENTAGE: DashboardValue = {
+   unit: "percentage",
+   currency: null,
+   reasonKey: null,
++  kpiUnit: { kind: "percentage", label: null },
+ };
+ /** The same KPI with the unit label "%" (unit = unit_label ?? unit_kind). */
+-const API_PERCENT_SIGN: DashboardValue = { ...API_PERCENTAGE, unit: "%" };
++const API_PERCENT_SIGN: DashboardValue = { ...API_PERCENTAGE, unit: "%", kpiUnit: { kind: "percentage", label: "%" } };
+ /** A Stale actual of the same KPI keeps its last value, labelled Stale (areas.ts kpiActualValue). */
+ const API_STALE: DashboardValue = { ...API_PERCENTAGE, state: "stale", value: "0.12", reasonKey: "kpi.stale" };
+ 
+diff --git a/apps/web/src/pages/dashboards/ui.tsx b/apps/web/src/pages/dashboards/ui.tsx
+index 447f257..a12753c 100644
+--- a/apps/web/src/pages/dashboards/ui.tsx
++++ b/apps/web/src/pages/dashboards/ui.tsx
+@@ -554,8 +554,22 @@ export function ValueRagLines({
+             <ValueView
+               value={
+                 l.gapRatio === null
+-                  ? { state: "unknown", value: null, unit: "ratio", currency: l.currency, reasonKey: l.reasonKey }
+-                  : { state: "value", value: l.gapRatio, unit: "ratio", currency: l.currency, reasonKey: null }
++                  ? {
++                      state: "unknown",
++                      value: null,
++                      unit: "ratio",
++                      currency: l.currency,
++                      reasonKey: l.reasonKey,
++                      kpiUnit: null,
++                    }
++                  : {
++                      state: "value",
++                      value: l.gapRatio,
++                      unit: "ratio",
++                      currency: l.currency,
++                      reasonKey: null,
++                      kpiUnit: null,
++                    }
+               }
+             />{" "}
+             <RagStatusChip status={l.status} />

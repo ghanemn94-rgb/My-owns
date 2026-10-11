@@ -152,7 +152,7 @@ info:
     unit kind apart from its display label, so the web scales it exactly as the KPI pages do (a `percentage` is a
     fraction x 100, a `ratio` a plain decimal), and the dashboards' own value gap (unit `ratio`, no KPI unit) stays a
     percentage. Additive: the schema `DashboardKpiUnit` and the member `DashboardValue.kpiUnit` (ADR-0037 amendment
-    N5). The member is declared but not yet required: pending in `p4-pending-arch-r7.ts` until the API emits it.
+    N5). The member is required since the API emits it (T-DG4-KBE-R8).
     Meaning change, stated in its description: `DashboardValue.unit` is a display text for a KPI-derived value and
     never decides its scaling. No operation, status, parameter or refusal changes.
   license:
@@ -28147,7 +28147,7 @@ components:
     DashboardValue:
       type: object
       description: "A headline or item value (ADR-0037 §5): value and zero are known; unknown and not_applicable carry value null and a reasonKey; stale carries the value labelled Stale. Every value is one of four kinds (ADR-0037 amendment N5): KPI-derived (kpiUnit non-null: a KPI actual on an outcome KPI or adoption indicator item, an AdoptionIndicatorRow, and the outcomes.area, outcomes.kpi_status and adoption.indicators drill-down items, value and inputs), money (kpiUnit null, unit currency), the dashboards' computed ratio (kpiUnit null, unit ratio: the value gap, a fraction presented x 100 as a percentage) and a count (kpiUnit null, unit one of outcome_kpi, initiative, working_day, dependency, decision, indicator, measurement). A KPI-derived value is formatted from kpiUnit.kind exactly as the KPI pages do, never from unit or the label."
-      required: [state, value, unit, currency, reasonKey]
+      required: [state, value, unit, currency, reasonKey, kpiUnit]
       additionalProperties: false
       properties:
         state: { type: string, enum: [value, zero, unknown, stale, not_applicable] }
@@ -28155,7 +28155,7 @@ components:
         unit: { type: [string, "null"], description: "For a money, computed-ratio or count value, its unit (currency, ratio or the count noun; ADR-0037 amendment N5). For a KPI-derived value, a display text only (the KPI's unit label, else its unit kind; unchanged), which never decides the scaling: read kpiUnit. Null only on the Unknown value of a KPI whose definition cannot be read." }
         currency: { type: [string, "null"], pattern: '^[A-Z]{3}$' }
         reasonKey: { type: [string, "null"] }
-        kpiUnit: { oneOf: [{ $ref: "#/components/schemas/DashboardKpiUnit" }, { type: "null" }], description: "ADR-0037 amendment N5 (D-124): the unit of a KPI-derived value, non-null on every value that is a KPI's actual (whatever its state); null on money, the computed ratio, counts, and the Unknown value of a KPI whose definition cannot be read (kpi.no_active_version). Not yet required: pending in p4-pending-arch-r7.ts." }
+        kpiUnit: { oneOf: [{ $ref: "#/components/schemas/DashboardKpiUnit" }, { type: "null" }], description: "ADR-0037 amendment N5 (D-124): the unit of a KPI-derived value, non-null on every value that is a KPI's actual (whatever its state); null on money, the computed ratio, counts, and the Unknown value of a KPI whose definition cannot be read (kpi.no_active_version). Required since the API emits it (T-DG4-KBE-R8)." }
     DashboardKpiUnit:
       type: object
       description: "The unit of a KPI-derived dashboard value (ADR-0037 amendment N5; ADR-0028 §3). kind decides the scaling and the format, exactly as the KPI pages' formatKpiValue: percentage is a fraction shown x 100 with a percent sign (0.12 = 12 %), ratio a plain decimal (1.5), currency money in the value's currency, and count, duration, score and other a decimal. label is the display text only and never decides the scaling."

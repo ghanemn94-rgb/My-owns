@@ -239,6 +239,7 @@ describe("Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7)", () => {
       unit: "currency",
       currency: null,
       reasonKey: "dashboard.value.no_financial_benefit",
+      kpiUnit: null,
     });
   });
 

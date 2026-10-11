@@ -481,6 +481,7 @@ describe("K1 items 1-2: the parameter, the refusal and the three metrics", () =>
         unit: "currency",
         currency: null,
         reasonKey: "dashboard.value.no_financial_benefit",
+        kpiUnit: null,
       },
       [],
     ]);
