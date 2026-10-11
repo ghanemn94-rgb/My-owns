@@ -1,0 +1,23 @@
+$ QA_PG_PORT=26560 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r2-repairs.test.ts   (node v24.21.0, 2026-10-11T07:06:37Z)
+ 07:06:37 up 13:05,  0 user,  load average: 2.57, 2.22, 2.16
+port-policy: PostgreSQL listening on port 26560 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv3hck9k_16364d85 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R1 REQ-S08-017 / F-DG4-101: two simultaneous corrections from one view > exactly one 201 and one 409; one amendment row; the original stepped once 626ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R2 migration 0061: only the exact +1 version step of a corrected original passes the trigger > refuses a step with another change, a step of 2, and a step without any correction 237ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R3 REQ-S08-009/011 + F-DG4-121 (D-117): gross over profit and cash classes only, on totals and the Finance dashboard > gross = margin + cash + working capital; revenue and avoided cost apart; net = gross − cost 413ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  07:06:40
+   Duration  14.15s (transform 4.52s, setup 0ms, collect 9.54s, tests 2.07s, environment 0ms, prepare 92ms)
+
+EXIT 0
+2026-10-11T07:06:55Z
+ 07:06:55 up 13:06,  0 user,  load average: 3.09, 2.35, 2.20
