@@ -1,0 +1,57 @@
+### API: value.gap headline from GET /api/v1/dashboards/finance (gross-finance.json, real stack, synthetic world: planned 435 SAR to date, validated 0)
+[
+ {
+  "metric": "value.gap",
+  "labelKey": "dashboard.headline.value_gap",
+  "value": {
+   "state": "value",
+   "value": "1",
+   "unit": "ratio",
+   "currency": "SAR",
+   "reasonKey": null
+  },
+  "period": {
+   "start": null,
+   "end": null,
+   "asOf": "2026-10-11",
+   "label": null
+  },
+  "drilldownHref": "/api/v1/dashboard-drilldown?metric=value.gap&organizationId=01920000-0000-7000-9000-000000000001&transformationId=01a12966-1532-7304-ae20-9f8864793ce4"
+ }
+]
+### API: engine.ts line 608 (clone 93a7dd7)
+        ctx,
+        o,
+        "value.gap",
+        "dashboard.headline.value_gap",
+        c.gapRatio === null
+          ? c.status === "unknown"
+            ? unknownValue(c.reasonKey ?? "benefit.value_amount_missing", "ratio", c.currency)
+            : notApplicableValue(c.reasonKey ?? "dashboard.value.nothing_planned", "ratio")
+          : { ...knownValue(c.gapRatio, "ratio", c.currency) },
+      ),
+    );
+### Web: apps/web/src/pages/dashboards/ui.tsx formatValue (lines 105-121): currency is tested BEFORE unit === 'ratio'
+export function formatValue(v: Pick<DashboardValue, "value" | "unit" | "currency">, locale: Locale): string | null {
+  if (v.value === null) return null;
+  if (v.currency) return formatMoney(v.value, v.currency, locale);
+  if (v.unit === "ratio") {
+    let pct: string | null = null;
+    try {
+      pct = new Decimal(v.value).times(100).toFixed();
+    } catch {
+      return null;
+    }
+    const p = formatDecimal(pct, locale, { maxFractionDigits: 2 });
+    return p === null ? null : `${p} %`;
+  }
+  if (v.unit && COUNT_UNITS.has(v.unit)) return formatDecimal(v.value, locale, { maxFractionDigits: 0 });
+  const n = formatDecimal(v.value, locale, { maxFractionDigits: 4 });
+  return n === null ? null : v.unit ? `${n} ${v.unit}` : n;
+}
+### i18n en: definition of the gap
+37:    "dashboard__value__gap_ratio": "Value gap = (planned due to date - validated) / planned due to date.",
+89:    "dashboard__headline__value_gap": "Value gap",
+### Rendered (dom-gross-run3.log, innerText of the Finance headlines)
+Value gap SAR 1.00
+فجوة القيمة ‏1.00 ر.س.‏

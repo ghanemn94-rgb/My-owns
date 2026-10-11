@@ -1,0 +1,45 @@
+### assignment sha256
+77f4d8711c690a76360608d6445fbb94b65ad022528b51331c925ccf0f1710a5  /home/user/My-owns/docs/delivery/assignments/DG4/round-2/domain-reviewer.md
+### repo HEAD
+1b8c158853609e01a29bd2e72acd68ca3936eab9
+is-ancestor exit=0
+### files changed 93a7dd7..HEAD
+docs/delivery/assignments/DG4/round-2/code-security-reviewer.md
+docs/delivery/assignments/DG4/round-2/domain-reviewer.md
+docs/delivery/assignments/DG4/round-2/qa-verifier.md
+docs/delivery/candidates/DG4/3f51b79d671ebf6d.manifest.json
+docs/delivery/stages.json
+### clone
+93a7dd7936a35977dfa790c1113c437dda103bcb
+false
+### candidate (clone, before runs; node_modules copied, build outputs present)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:c39e35d380a3a1f262a57b275086827b3b4104fd61ba651bb88a86b89597ee91","files":1456}
+### candidate (repo)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:3f51b79d671ebf6d220c5bb4b104916ca4eddac30266dd74c32e89ed37ccea4b","files":1455}
+### node scripts/check-no-cdn.mjs
+PASS no-cdn: scanned apps, packages
+### exit=0
+### affirmative certification / official-standard claims (negated disclaimers excluded)
+### grep exit=1 (1 = no affirmative claim found)
+### #0078FF occurrences
+apps/web/src/i18n/en/common.json:129:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/ar/common.json:129:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.",
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+packages/design-tokens/src/tokens.json:5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+packages/design-tokens/src/tokens.json:18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+packages/design-tokens/src/tokens.json:220:        "why": "white small text on #0078FF is about 4.09:1; action buttons use action.primary instead"
+packages/design-tokens/src/index.ts:4:// (REQ-S15-002/003). #0078FF is a provisional brand token, not a verified Mobily colour.
+packages/design-tokens/src/index.ts:160:    "/* PROVISIONAL tokens (master prompt §15): #0078FF is not a verified Mobily colour. */",
+### provisional brand strings
+apps/web/src/i18n/ar/common.json:4:    "provisional": "مؤقت",
+apps/web/src/i18n/en/common.json:4:    "provisional": "Provisional",
+### DG0-DG7 references in product code (non-test)
+apps/api/src/modules/workflows/design-registers.ts:73:const DG2_DEPENDENCY_TYPES: ReadonlySet<string> = new Set(DEPENDENCY_TYPES);
+apps/api/src/modules/workflows/design-registers.ts:75:  DG2_DEPENDENCY_TYPES.has(code) ? (code as Dependency["dependencyType"]) : "other";
+apps/api/src/modules/workflows/gates.ts:780:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+apps/web/src/pages/traceability/api.ts:82:  dispensations: (tid: string) => `${tBase(tid)}/gate-dispensations`, // listGateDispensations (DG3)
+apps/web/src/pages/traceability/api.ts:83:  evidence: (tid: string) => `${tBase(tid)}/evidence`, // DG2 evidence register
+apps/web/src/pages/traceability/api.ts:84:  baselines: (tid: string) => `${tBase(tid)}/baselines`, // DG2 baselines
+apps/web/src/pages/traceability/api.ts:85:  kpiDefinitions: (tid: string) => `${tBase(tid)}/kpi-definitions`, // DG2 KPI definitions
+apps/web/src/pages/traceability/api.ts:86:  initiatives: `${v1}/initiatives`, // listInitiatives (DG3; ?transformationId=)
+apps/web/src/pages/traceability/api.ts:98:  transformations: `${v1}/transformations`, // listTransformations (DG1, scope-filtered)

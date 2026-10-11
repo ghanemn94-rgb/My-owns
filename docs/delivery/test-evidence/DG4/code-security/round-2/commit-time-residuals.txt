@@ -1,0 +1,40 @@
+code-security-reviewer DG4 round 2: the write routes that probes/commit-scan6.py (unchanged from round 1) cannot follow to
+refreshPrincipal / `atCommit: true` by static name resolution. Candidate 3f51b79d (freeze 1b8c158, product tree 93a7dd7),
+read in the disposable clone $TMPDIR/probe. Scanner output: commit-time-scan.log (232 write routes, 33 residual; round 1:
+232 and 36).
+
+Change since round 1: the three DG2 gate operations P4 extends (workflows/gates.ts updateGate PATCH ${G}/:gateCode,
+submitGate POST ${G}/:gateCode/submissions, decideGate POST ${G}/:gateCode/decision) are NO LONGER residual. BE-R5's
+writeAtCommit (updateGate, submitGate) and decideGate's step 1a reach refreshPrincipal inside the write transaction
+(gates.ts writeAtCommit, decideGate). Probe C (probe-C-rev2-node22-lang-unset.log) proves it behaviourally: a grant,
+a delegation, or the delegator's role revoked in the window, or the user disabled, refuses the write (F-DG4-103).
+
+The other 33 are exactly round 1's residual list (set comparison of the two scanner logs, line numbers ignored: no route
+added, none removed). `git diff --stat a91d82c..93a7dd7` over every file they live in (kpi/actuals.ts,
+kpi/kpi-versions.ts, kpi/trajectories.ts, portfolio/**, sustainment/handovers.ts, sustainment/performance-areas.ts,
+workflows/gate-exceptions.ts, transformations/**, workflows/impact.ts, organization/**) is EMPTY, so round 1's manual
+reading still holds verbatim:
+
+kpi/actuals.ts:993,1018,1029,1051 (4)   -> local `open` (actuals.ts:954-955) = openWrite(..., { atCommit: true })
+kpi/kpi-versions.ts:1041,1062,1073,1083 -> local `openVersionWrite` (kpi-versions.ts:983-988) = openWrite(..., { atCommit: true })
+kpi/trajectories.ts:447,473,488 (3)     -> local `open` (trajectories.ts:407-408) = openWrite(..., { atCommit: true })
+portfolio/budget.ts:603,609 (2)         -> updateLine/archiveLine -> lockForWrite (portfolio/waves.ts:99-122) -> openWrite(..., { atCommit: true })
+sustainment/handovers.ts:824-828 (5)    -> action(updateHandover|addEvidence|submitHandover) -> openSustainmentWrite; action(accept|return)
+                                           -> openDecision -> openSustainmentWrite (sustainment/performance-areas.ts:152-168, openWrite atCommit)
+workflows/gate-exceptions.ts:717        -> the action() factory's run functions: openWrite atCommit (gate-exceptions.ts:391, 475 openDecisionWrite, 580)
+portfolio/milestones.ts:319,329 (2)     -> updateMilestone/approveMilestoneDate -> lockForWrite<MilestoneRow>(...) (generic call the scanner does not
+                                           follow) -> openWrite atCommit (portfolio/waves.ts:121-122)
+portfolio/links.ts:558 (loop of kinds)  -> kind.create = createGapLink/createContribution/createDecisionLink -> openWrite(..., { atCommit: true })
+                                           (links.ts:149) ; trace links links.ts:413 atCommit
+transformations/register-kit.ts:496,541 -> the P2 register kit (registerRegister; P2 registers and the P3 dependency register only, not a
+                                           P4 operation): lockForChange -> openWrite WITHOUT atCommit (register-kit.ts:467-482). Outside P4.
+transformations/register-kit.ts:416     -> the P2 register kit's create: openWrite without atCommit. Outside P4.
+workflows/impact.ts:667                 -> previewChangeImpact: a READ sent as POST ("authenticated", transformation.read in the
+                                           handler, nothing written); no commit-time check needed
+organization/routes.ts:126,184,271,348  -> P1 operations (DG1-approved, byte-stable), outside the P4 mutation scope
+transformations/routes.ts:145,295,358   -> P1 operations (DG1-approved), outside the P4 mutation scope
+
+Result: every write route of a P4 operation reaches a commit-time re-check (refreshPrincipal on reloaded grants inside
+the write transaction) or is a read. Since round 2 this includes the three DG2 gate operations P4 extends. Only the
+P2 register kit (P2 registers and the P3 dependency register; outside P4) and P1 operations authorize on the
+request-start grants, as in DG2/DG3.

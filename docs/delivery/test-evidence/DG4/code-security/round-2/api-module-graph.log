@@ -1,0 +1,39 @@
+# node module-cycles.mjs $TMPDIR/probe (absolute) at 1b8c158853609e01a29bd2e72acd68ca3936eab9
+access -> audit, platform
+admin -> access, audit, identity, platform
+adoption -> access, audit, kpi, organization, platform, tasks, transformations
+audit -> platform
+benefits -> access, audit, kpi, platform, tasks, transformations
+evidence -> access, audit, platform, transformations
+governance -> access, audit, organization, platform, raid, tasks, workflows
+identity -> access, audit, organization, platform
+jobs -> access, audit, platform
+kpi -> access, audit, platform, tasks, transformations
+methodology -> access, audit, platform
+organization -> access, audit, platform
+portfolio -> access, audit, platform, transformations, workflows
+raid -> access, audit, platform, tasks, transformations
+reporting -> access, adoption, audit, benefits, kpi, platform, portfolio, sustainment, tasks, transformations
+sustainment -> access, audit, platform, tasks, transformations
+tasks -> access, audit, platform
+transformations -> access, audit, jobs, organization, platform
+workflows -> access, audit, evidence, kpi, methodology, organization, platform, tasks, transformations
+cycles (value imports): 0
+# exit_status: 0
+# raid -> governance imports (must be none):
+(end)
+# governance -> raid imports:
+apps/api/src/modules/governance/meeting-actions.ts
+# worker imports of API code (must be none):
+(end)
+# server.ts wiring (D-107):
+28:import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
+33:import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
+34:import { registerJobScheduleRoutes } from "./modules/jobs/index.ts";
+60:  registerHealthRoutes,
+73:import { registerTransformationRoutes } from "./modules/transformations/index.ts";
+304:  registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
+310:  registerOrganizationRoutes(app, deps);
+311:  registerTransformationRoutes(app, deps);
+312:  registerAdminRoutes(app, deps);
+314:  registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });

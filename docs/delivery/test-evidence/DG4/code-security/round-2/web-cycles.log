@@ -1,0 +1,11 @@
+# command: node web-cycles.mjs $TMPDIR/probe (ABSOLUTE path; a relative path resolves import targets to absolute paths that never match the relative file keys, so it reports 0 spuriously, as FE-R4 noted); commit 1b8c158853609e01a29bd2e72acd68ca3936eab9
+web files 202; import cycles (SCCs > 1): 1
+  pages/admin/UsersPage.tsx <-> pages/admin/AssignmentsPage.tsx
+# exit_status: 0
+# control at round-1 source a91d82c:
+web files 202; import cycles (SCCs > 1): 3
+  pages/my-work/MyWorkPage.tsx <-> pages/dashboards/MyWorkSections.tsx
+  pages/admin/UsersPage.tsx <-> pages/admin/AssignmentsPage.tsx
+  pages/traceability/TraceabilityPage.tsx <-> pages/traceability/TracePanels.tsx
+# relative-path run (shows the spurious 0):
+web files 202; import cycles (SCCs > 1): 0

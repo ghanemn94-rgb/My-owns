@@ -1,0 +1,42 @@
+### node tools/gates/validate.mjs --register DG4
+PASS register rules at DG4
+### exit=0
+### node tools/gates/validate.mjs --historical --stage DG3
+FAIL gate DG3 (historical) (1 problem)
+  - stages.json: DG4 illegal transition REVIEWING -> REVIEWING
+### exit=1
+### node tools/gates/validate.mjs --historical --stage DG2
+FAIL gate DG2 (historical) (1 problem)
+  - stages.json: DG4 illegal transition REVIEWING -> REVIEWING
+### exit=1
+### node tools/gates/validate.mjs --historical --stage DG1
+FAIL gate DG1 (historical) (1 problem)
+  - stages.json: DG4 illegal transition REVIEWING -> REVIEWING
+### exit=1
+
+=== The same validators in the disposable clone at source commit 93a7dd7 (stages.json before the round-2 freeze commit) ===
+### node tools/gates/validate.mjs --register DG4 (clone 93a7dd7)
+PASS register rules at DG4
+### exit=0
+### node tools/gates/validate.mjs --historical --stage DG3 (clone 93a7dd7)
+PASS gate DG3 (historical)
+### exit=0
+### node tools/gates/validate.mjs --historical --stage DG2 (clone 93a7dd7)
+PASS gate DG2 (historical)
+### exit=0
+### node tools/gates/validate.mjs --historical --stage DG1 (clone 93a7dd7)
+PASS gate DG1 (historical)
+### exit=0
+
+=== DG4 history states at HEAD 1b8c158 ===
+['PLANNED', 'BUILDING', 'REVIEWING', 'REVIEWING']
+=== TRANSITIONS (tools/gates/lib/rules.mjs:18-26) ===
+export const TRANSITIONS = {
+  PLANNED: ["BUILDING", "BLOCKED"],
+  BUILDING: ["REVIEWING", "BLOCKED"],
+  REVIEWING: ["FIXING", "VERIFYING", "BLOCKED"],
+  FIXING: ["REVIEWING", "VERIFYING", "BLOCKED"],
+  VERIFYING: ["APPROVED", "FIXING", "BLOCKED"],
+  APPROVED: ["FIXING"], // reopening an approved scope keeps its history
+  BLOCKED: ["PLANNED", "BUILDING", "REVIEWING", "FIXING", "VERIFYING"],
+};
