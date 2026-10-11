@@ -1,0 +1,53 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-125",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-tested adversarially on candidate 5ff36f6e (clone afba46f, source ccc37c9), on the REAL stack with the REAL worker, with no interception and no database writes (dom-kpiunit.mjs, 51/51 PASS). Through the API I created an outcome (it stays draft), a second outcome that I then archived, and four KPIs linked to the first outcome: percentage with no label, percentage labelled '%', percentage labelled '% of users' (also the usage_activation_rate adoption indicator), and ratio 3/2. The worker calculated 0.12, 0.12, 0.12 and 1.5. The built web shows '12 %', '12 %', '12 % of users' and '1.5' (never '0.12' or '150 %') in EN and AR on: the T10 Outcomes area, its drill-down, the People & adoption area and its drill-down, the Executive Overview Outcomes and People areas and the Overview outcomes drill-down, and the adoption dashboard. The computed value gap of a margin benefit planned 100 with nothing validated still reads '100 %' (kpiUnit null). My round-3 dom-pct.mjs, re-run unchanged, injects values WITHOUT kpiUnit (units 'percentage' and '%') into the real T10 response. It now reads '12 %' in EN and AR (4/4; it was 0/4), so the fallback path is fixed too. In-process (zz-domain-r4.test.ts R4-7), the API emits kpiUnit {kind, label} on every KPI value on the T10 Outcomes and People areas, the outcomes drill-down, the Overview and the adoption dashboard, and keeps unit as the label (additive). ADR-0037 amendment N5's choice that a label starting with '%' replaces the bare sign ('12 % of users') is acceptable: it matches what the KPI page means and adds no scaling ambiguity. Two cosmetic residuals, not worth a finding. (1) In AR, the narrow Outcomes area card places the value column at the scrolled edge of its horizontally scrolling table, so '12 % of users' is clipped until the user scrolls (screens/ar-r4-t10-kpi-units.png). The value is correct and reachable, and this is the table-wrap layout of every area card, not this repair. (2) The empty-area reason still reads 'no active outcome with a KPI in scope', although drafts now count; the wording has no behavioural effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-4/dom-kpiunit.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-4/dom-kpiunit.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/dom-pct.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/zz-domain-r4.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-kpi-units.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-kpi-units.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-overview-kpi-units.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-overview-kpi-units.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-adoption-dashboard.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-adoption-dashboard.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-outcomes-drill.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-outcomes-drill.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-126",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "In-process (zz-domain-r4.test.ts, 10/10). R4-6, my R3-6 worlds: margin 70 fully validated beside 300 of revenue uplift, or of avoided cost, planned and not validated. The Value status is RED on T10, the workstream dashboard, the Overview area, the Overview row and the Finance row. The lines are SAR/profit_and_cash/0/green and SAR/top_line (or non_cash)/1/red. Adversarial variants I added: (a) a USD revenue uplift beside the SAR margin gives Red, with one line per currency and basis; the USD top-line gap drill-down answers USD only (currency 'USD', value 1). (b) A top-line planned line with no amount beside a green margin gives Unknown, never Green. (c) The control, revenue 300 fully validated, gives Green, so the rule does not over-flag. Regressions: R4-1 (DOM-GROSS 90/300/45, never 435; every value drill-down sum equals its headline and echoes currency SAR), R4-3 (exact gaps 0.25 and -0.2) and R4-4 (a validated revenue uplift never lowers the profit-and-cash gap; forecast and submitted never count) all pass. On screen (dom-gross4.mjs, 131/131, EN and AR), the T10 Value area lists 'Value gap by basis and currency', with one line per basis showing '100 %' and Red, and the worst-of note. The new Arabic basis labels carry the provisional note. D-123 item 1 (a revenue-only transformation now carries its top-line and non-cash gap status): my round-3 R3-2 pinned n/a, so it fails BY DESIGN. R4-2 and dom-gross4 now expect Red with the lines top_line 1 red and non_cash 1 red, and pass, while the profit-and-cash headlines stay n/a with their reason. I judge item 1 MORE faithful to B0095 ('RAG based on validated benefit gap') and M0248: n/a hid an unvalidated planned benefit. M0172 is respected, because the gaps are never added across bases.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-4/zz-domain-r4.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/dom-gross4.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-4/dom-gross4.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-A-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-A-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-B-onlyrev-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-B-onlyrev-t10.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-127",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "In-process R4-8: the DOM-GROSS benefits (revenue 300, margin 70, cash 20, avoided 45), each allocated 100 % to one initiative, give the Portfolio item value 90 with valueBasis profit_and_cash (it was 435). Ranking world in the same transformation: iniBig (working-capital 200 at share 0.5 = 100), iniG 90, iniTop (top line 5000 only), iniMiss (a cash-saving planned line with no amount) and iniNone (nothing allocated). The order is iniBig, iniG, iniTop, iniMiss, iniNone. iniTop is not_applicable (dashboard.portfolio.no_profit_and_cash_allocation) and ranks after every known value. iniMiss is unknown (benefit.value_amount_missing), never a sum that omits the line (D-123 item 3). iniNone is unknown (no_allocated_value). The portfolio.initiatives drill-down carries the same values with headlineBasis profit_and_cash. No portfolio item carries 435 or 5000. The web labels the column 'Planned value allocated (profit and cash)' and adds the basis chip (screen code reviewed in the repair diff; the ui unit tests pass). D-123 item 4: the item labels its basis and does not list the other bases. I accept this: M0172 forbids the cross-basis sum, D-122 makes listing them optional, and the top-line and non-cash figures stay visible in the Value area beside the profit-and-cash ones. A residual, not worth a finding: in a revenue-led transformation (like the playbook's roaming example), every initiative's Portfolio value is n/a, so 'top initiatives by value' (B0095) falls back to code order. The source does not say which basis ranks 'by value', the state is n/a and never 0, and the label says why. A future refinement could rank n/a items by their top-line value under a labelled secondary key.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-4/zz-domain-r4.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/integration-full-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-4/test-node22.log"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 4,
+  "candidate_id": "sha256:5ff36f6e74af1853096e057ba6deee19df8ae44f9f06a7f3d2e184d1160e0f98",
+  "source_commit": "ccc37c9f8b0aa40a35848e07f47e13cee2db1106",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {"kind":"claude-code-cli-session","run_id":"DG4-T-DG4-REV-DOM-R4-domain-reviewer-20261011T215741Z-b67efc28","session_id":"b67efc28-fd3f-40f4-add6-0405f6dbbbd0"},
+  "implementation_author": ["backend-workflow-engineer", "kpi-benefits-engineer", "frontend-ux-engineer", "solution-architect", "transformation-analyst", "devops-engineer", "qa-verifier", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG4 implementation, test, register row, ADR or repair in the reviewed candidate. That includes T-DG4-ARCH-R6, T-DG4-KBE-R7, T-DG4-FE-R6, T-DG4-ARCH-R7, T-DG4-KBE-R8 and T-DG4-FE-R7. I formed this verdict from my own runs in a complete (non-shallow) disposable clone of afba46f (source ccc37c9) under $TMPDIR, on disposable PostgreSQL clusters. The clone was removed at the end. I re-ran my round-3 probes dom-api.mjs, dom-ui.mjs and dom-pct.mjs unchanged. dom-gross4.mjs is my round-3 dom-gross3.mjs with world B's expectation changed to D-123 item 1 and the RAG lines added. dom-kpiunit.mjs and zz-domain-r4.test.ts are new. The probes were placed only in the clone. I read the repair diff 925f0bc..ccc37c9, D-122 to D-126 and the ADR-0037 amendments N4 and N5 only to understand the change. I did not open any other reviewer's round-4 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-4/domain-reviewer.md",
+  "requirements_checked": ["REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044", "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011", "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025", "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+  "checks_run": [
+    {
+      "id": "DOM-R4-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and the candidate id in the repo, then in a complete disposable clone (before and after my runs).",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-4/domain-reviewer.md; git rev-parse HEAD; git log --oneline -3; node tools/gates/candidate.mjs --stage DG4; git clone /home/user/My-owns $TMPDIR/review-dom && git checkout afba46f; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG4 (clone, before and after; my rv/ probe copies removed first)",
+      "environment": "Node v24.21.0; confined sandbox; clone at $TMPDIR/review-dom (node_modules copied with cp -a from the working tree; pnpm-lock.yaml byte-identical)",
+      "expected": "Assignment sha256 37814828…585e; candidate sha256:5ff36f6e… with 1469 files in the repo and the clone; source ccc37c9 an ancestor of HEAD; the clone not shallow.",
+      "actual": "Assignment hash matches. HEAD is afba46f, the freeze commit directly on ccc37c9 (ccc37c9f8b0aa40a35848e07f47e13cee2db1106); its diff from ccc37c9 touches only the round-4 assignments, the candidate manifest and stages.json. The candidate is sha256:5ff36f6e74af1853096e057ba6deee19df8ae44f9f06a7f3d2e184d1160e0f98 with 1469 files in the repo and in the complete clone (is-shallow=false). After my runs, the clone at first gave 432e874e… with 1474 files, because my five rv/ probe copies were present. With them removed it gives 5ff36f6e… with 1469 files again (candidate.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/candidate.log", "docs/delivery/test-evidence/DG4/domain/round-4/env.txt"]
+    },
+    {
+      "id": "DOM-R4-01-validators",
+      "procedure": "Run the register validator for DG4 and the historical validators for DG3, DG2 and DG1.",
+      "command": "node tools/gates/validate.mjs --register DG4; node tools/gates/validate.mjs --historical --stage DG3; --historical --stage DG2; --historical --stage DG1",
+      "environment": "Node v24.21.0, repository working tree at afba46f",
+      "expected": "All four exit 0 and print PASS.",
+      "actual": "'PASS register rules at DG4', 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)' and 'PASS gate DG1 (historical)', all exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/validators-exit-codes.log", "docs/delivery/test-evidence/DG4/domain/round-4/validate_register_DG4.log", "docs/delivery/test-evidence/DG4/domain/round-4/validate_historical_stage_DG3.log", "docs/delivery/test-evidence/DG4/domain/round-4/validate_historical_stage_DG2.log", "docs/delivery/test-evidence/DG4/domain/round-4/validate_historical_stage_DG1.log"]
+    },
+    {
+      "id": "DOM-R4-02-build-unit",
+      "procedure": "Run typecheck, build, lint and the unit projects on Node 22, then on Node 24 in the clone. Re-run any failure alone.",
+      "command": "bash docs/delivery/test-evidence/DG4/domain/round-4/checks.sh (pnpm -r typecheck; pnpm -r build; pnpm lint; npx vitest run --configLoader runner --project unit-node --project unit-web && npx vitest run --configLoader runner --project unit-formula-nocodegen); re-run: npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx (x2, Node 24)",
+      "environment": "Disposable clone; Node v22.22.2 and v24.21.0; vitest with --configLoader runner (read-only node_modules in the confined sandbox, QA-A's finding); the three reviews ran at the same time (high load)",
+      "expected": "Every step exits 0, or every failure is explained and re-run.",
+      "actual": "Node 22: typecheck, build and lint exit 0. Unit: 150 files, 2885/2885 passed; formula-nocodegen: 259 passed, 2 skipped (the 2 skips are fuzz.test.ts's own skipped cases, the same as in the orchestrator's 2885 + 259/2). Exit 0. Node 24: typecheck, build and lint exit 0. The build's only warning is Vite's chunk-size advice. Unit exited 1, with 1 failed and 2884 passed: apps/web/src/auth/session-bound.test.tsx 'F-DG2-530/580 … (en) > Y1c: the same create under one identity still lands on the created record' expected 2 /me requests after the POST and got 3 (line 280). This is a DG2 session test outside the DG4 repair; it passed in the Node 22 run. It ran while my real-stack probes, the browsers and the other two reviewers' runs loaded the machine, and an extra permission refresh is timing-dependent. Re-run alone on Node 24 twice, it passed 34/34 both times, exit 0. I classify it as a load-dependent flake, disclosed here, not a DG4 defect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/checks.sh", "docs/delivery/test-evidence/DG4/domain/round-4/typecheck-node22.log", "docs/delivery/test-evidence/DG4/domain/round-4/build-node22.log", "docs/delivery/test-evidence/DG4/domain/round-4/lint-node22.log", "docs/delivery/test-evidence/DG4/domain/round-4/test-node22.log", "docs/delivery/test-evidence/DG4/domain/round-4/typecheck-node24.log", "docs/delivery/test-evidence/DG4/domain/round-4/build-node24.log", "docs/delivery/test-evidence/DG4/domain/round-4/lint-node24.log", "docs/delivery/test-evidence/DG4/domain/round-4/test-node24.log", "docs/delivery/test-evidence/DG4/domain/round-4/test-node24-session-bound-rerun-1.log", "docs/delivery/test-evidence/DG4/domain/round-4/test-node24-session-bound-rerun-2.log", "docs/delivery/test-evidence/DG4/domain/round-4/node22-version.txt", "docs/delivery/test-evidence/DG4/domain/round-4/node24-version.txt"]
+    },
+    {
+      "id": "DOM-R4-03-integration-and-acceptance-suites",
+      "procedure": "Run the full integration project: the backend suites, the QA acceptance suites A01–A14 and my in-process probe.",
+      "command": "QA_PG_PORT=26410 bash docs/delivery/test-evidence/DG4/domain/round-4/integ.sh (MTH_PORT_POOL 26411-26499; tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration)",
+      "environment": "Disposable clone, Node v24.21.0, disposable PostgreSQL 16 created by the candidate's with-pg.sh",
+      "expected": "Everything passes.",
+      "actual": "209 files, 1985/1985 passed (the candidate's 1975 plus my 10), exit 0. There was no failure, skip or retry: both 'skipped' matches in the log are words inside test names (A09 'holiday skipped', S12-011 'a mapped owner is skipped'). The error-looking lines (BE17 ECONNRESET, BE18 idp_unavailable, request-io aborted bodies, connection-hygiene 408) are stdout of tests that deliberately provoke those errors and pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/integ.sh", "docs/delivery/test-evidence/DG4/domain/round-4/integration-full-run-1.log"]
+    },
+    {
+      "id": "DOM-R4-04-in-process-value-and-kpi-probe",
+      "procedure": "My probe zz-domain-r4.test.ts, through the real API (Fastify inject): R4-1 DOM-GROSS regression; R4-2 revenue-only (D-123 item 1); R4-3 exact gaps; R4-4 top line never lowers the profit-and-cash gap; R4-6 my R3-6 worlds on T10, the workstream dashboard, the Overview area and row and the Finance row, plus variants a (USD), b (missing amount) and c (control); R4-7 kpiUnit and draft/archived outcomes; R4-8 Portfolio value, ranking and missing amount.",
+      "command": "INTEG_FILTER=tests/qa/integration/zz-domain-r4.test.ts QA_PG_PORT=26420 bash docs/delivery/test-evidence/DG4/domain/round-4/integ.sh",
+      "environment": "Disposable clone and PostgreSQL; Node v24.21.0; the probe file copied into the clone only",
+      "expected": "Every assertion passes as the sources read (B0095, M0170, M0172, M0248, ADR-0028 §3).",
+      "actual": "Run 1: 8/10, exit 1. Both failures were set-up errors of MY probe, not product defects. R4-6b posted a second planned line for a period already taken (409 benefit_value.period_taken, the correct refusal). R4-8 created a working_capital_release benefit with benefitType 'cost' (422 benefit.type_class_mismatch, the correct refusal). I fixed both (a July period; benefitType working_capital). Run 2: 10/10, exit 0. Results: Value RAG Red with lines pc 0 green plus top_line or non_cash 1 red on all five surfaces. USD variant Red, with the USD gap drill-down in USD only. Missing amount Unknown. Control Green. Revenue-only Red with lines top_line 1 and non_cash 1, the profit-and-cash headlines n/a. Portfolio 90, then the order iniBig 100, iniG 90, iniTop n/a, iniMiss unknown, iniNone unknown. kpiUnit {percentage,null|'%'|'% of users'} and {ratio,null} on the T10 Outcomes and People areas, the outcomes drill-down, the Overview and the adoption dashboard. The API-created draft outcome is listed, and the archived one appears nowhere. The header's outcome health counts 2 outcomes, the draft included.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/zz-domain-r4.test.ts", "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-1.log", "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-2.log"]
+    },
+    {
+      "id": "DOM-R4-05-source-templates-registers-status",
+      "procedure": "Re-run my round-3 dom-api.mjs unchanged on the real stack: T10 six areas and RAG rules; T11, T12 with one accountable person; T13, T14, T15 and T16 columns and closed lists; the five forum layers; the seven indicators; G5/G6; status separation; closure refused while value is pending; the header elements; authorization.",
+      "command": "WORKER=1 bash docs/delivery/test-evidence/DG4/domain/round-4/with-stack.sh bash docs/delivery/test-evidence/DG4/domain/round-4/run-probes.sh (dom-api)",
+      "environment": "Disposable stack: PostgreSQL 16 on 127.0.0.1:26401, the built API serving the built web on :26402, the real worker, AUTH_MODE=dev, synthetic dev seed; Node v24.21.0",
+      "expected": "Every assertion passes.",
+      "actual": "49/49 PASS, exit 0, the same as rounds 2 and 3. T11 equals B0099. T12 equals B0101: one A per deliverable, with X and a second A refused. The five layers and their cadence equal B0093. The seven indicators are available by name (B0109–B0115). T13 refuses 'Hostile' and has seven columns. T14 has ten columns, with pending value excluded from validated. T15 has nine columns, with Probability n/a except for a Risk. T16 has nine columns, and its ask has seven elements including 'why now'. A no-data T10 area is never green. Closure without validated value is 422. ADM gets 403. The single 'error|exception' match in the log is the B0115 indicator name 'Exception / workaround rate', asserted as present.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/dom-api.mjs", "docs/delivery/test-evidence/DG4/domain/round-4/dom-api.log", "docs/delivery/test-evidence/DG4/domain/round-4/with-stack.sh", "docs/delivery/test-evidence/DG4/domain/round-4/run-probes.sh", "docs/delivery/test-evidence/DG4/domain/round-4/stack-run-2.log"]
+    },
+    {
+      "id": "DOM-R4-06-ui-en-ar",
+      "procedure": "Re-run my round-3 dom-ui.mjs unchanged: the P4 screens in EN (LTR) and AR (RTL), the provisional wordmark, the About disclaimer, no foreign request, Unknown never green, closure never labelled 'successful'; a screenshot per claim.",
+      "command": "same stack run as DOM-R4-05 (dom-ui)",
+      "environment": "As DOM-R4-05; pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers)",
+      "expected": "Every assertion passes in EN and AR.",
+      "actual": "38/38 PASS, exit 0. dir is rtl or ltr as expected. The 'Provisional' / 'مؤقت' wordmark is shown. T11 in AR shows the English source under the provisional notice. Empty transformations show Unknown on T10 and the header. Closure has no 'successful' label. About disclaims any official PMI standard or certification. No request leaves the app origin. The single 'error|exception' match in the log is the indicator name, as in DOM-R4-05.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/dom-ui.mjs", "docs/delivery/test-evidence/DG4/domain/round-4/dom-ui.log", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-transformation-dashboard-T10.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-transformation-dashboard-T10.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-raci-T12.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-raci-T12.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-about.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-about.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-closure-status.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-closure-status.png"]
+    },
+    {
+      "id": "DOM-R4-07-value-basis-real-stack-F-DG4-126",
+      "procedure": "dom-gross4.mjs (from my round-3 dom-gross3.mjs): world A, DOM-GROSS, and world B, revenue-only, through the API and the UI on T10, the Overview, Finance and the header, in EN and AR. It covers the drill-downs, the gap ratios and, new this round, the per-basis RAG lines on screen. World B's RAG is now expected Red (D-123 item 1).",
+      "command": "same stack run as DOM-R4-05 (dom-gross4)",
+      "environment": "As DOM-R4-05",
+      "expected": "World A: 90/300/45 and never 435; three RAG lines, each Red at '100 %'. World B: profit-and-cash n/a with its reason; the Value RAG Red with the top_line and non_cash lines; never green.",
+      "actual": "131/131 PASS, exit 0. API: world A's headlines and drill sums agree; no 435 figure appears. World B's RAG is {red, validated_gap, lines top_line 1 red, non_cash 1 red}. UI, EN and AR: 'Value gap by basis and currency' lists Profit and cash / Top line / Non-cash 'SAR · 100 % Red' (world A), and Top line and Non-cash (world B), with the area RAG red. The '100 %' gap carries no currency text. The 25 % and -20 % renderings hold. The AR provisional basis note is shown. The log has no failure or error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/dom-gross4.mjs", "docs/delivery/test-evidence/DG4/domain/round-4/dom-gross4.log", "docs/delivery/test-evidence/DG4/domain/round-4/r4-gross-api.json", "docs/delivery/test-evidence/DG4/domain/round-4/r4-onlyrev-api.json", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-A-t10.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-A-t10.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-B-onlyrev-t10.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-B-onlyrev-t10.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-A-overview.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-A-overview.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-A-finance.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-A-finance.png"]
+    },
+    {
+      "id": "DOM-R4-08-percentage-and-ratio-kpi-rendering-F-DG4-125",
+      "procedure": "dom-kpiunit.mjs on the real stack with the real worker, with no interception. Four KPIs (percentage with no label, '%', '% of users', and ratio 3/2) on an outcome created through the API, plus an archived outcome; read on T10 (Outcomes, People, Value gap), its drill-downs, the Overview and its drill-down, and the adoption dashboard, in EN and AR. Then dom-pct.mjs (round 3, unchanged): values without kpiUnit injected into the real T10 response.",
+      "command": "same stack run as DOM-R4-05 (dom-pct, dom-kpiunit); dom-kpiunit re-run alone: WORKER=1 WORKER_LOG_OUT=… PROBES=dom-kpiunit bash with-stack.sh bash run-probes.sh",
+      "environment": "As DOM-R4-05, with the real worker (apps/worker/dist/main.js)",
+      "expected": "'12 %', '12 %', '12 % of users', '1.5' and '100 %' everywhere in EN and AR; the API outcome listed; the archived outcome never listed.",
+      "actual": "dom-pct: 4/4 PASS ('12 %' in EN and AR; it was '0.12 %' in round 3). dom-kpiunit, run 1 (inside stack-run-2): exit 1, before any UI assertion. The worker had a backlog of outbox events from the three probes before it (it polls one job every 2 s), so KPIs B–D had no actual after my 40 s poll, and the AR language switch then timed out (page.waitForFunction 30 s). I raised the poll to 180 s and made the language switch retry after networkidle; no expectation changed. Run 2, alone on a fresh stack (stack-run-3-kpiunit): the worker calculated the four KPIs in 1.7–5.8 s, and the probe gave 51/51 PASS, exit 0, across every surface in EN and AR. The worker log has 0 error-level lines. Its only non-info output is a Node 'TimeoutNaNWarning: NaN is not a number. Timeout duration was set to 1' at start-up, printed in both runs. It comes from a timer in the worker's dependencies, and every job still ran; it is not a DG4 behaviour. Cosmetic residual: in AR, the narrow Outcomes card clips the scrolled value column until the user scrolls. See the verification note.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/dom-kpiunit.mjs", "docs/delivery/test-evidence/DG4/domain/round-4/dom-kpiunit.log", "docs/delivery/test-evidence/DG4/domain/round-4/dom-pct.mjs", "docs/delivery/test-evidence/DG4/domain/round-4/dom-pct.log", "docs/delivery/test-evidence/DG4/domain/round-4/stack-run-2.log", "docs/delivery/test-evidence/DG4/domain/round-4/stack-run-3-kpiunit.log", "docs/delivery/test-evidence/DG4/domain/round-4/worker-run-3.log", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-kpi-units.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-kpi-units.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-outcomes-drill.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-outcomes-drill.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-people-drill.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-people-drill.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-overview-kpi-units.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-overview-kpi-units.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-overview-outcomes-drill.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-overview-outcomes-drill.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-adoption-dashboard.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-adoption-dashboard.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r3-t10-outcomes-percentage-kpi.png", "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r3-t10-outcomes-percentage-kpi.png"]
+    },
+    {
+      "id": "DOM-R4-09-stack-run-1-harness-error",
+      "procedure": "Disclose my first stack invocation.",
+      "command": "WORKER=1 bash …/with-stack.sh bash docs/delivery/test-evidence/DG4/domain/round-4/run-probes.sh (relative path)",
+      "environment": "As DOM-R4-05",
+      "expected": "Recorded for honesty; not a product check.",
+      "actual": "Exit 127: with-stack.sh changes into the clone, so the relative path to run-probes.sh did not resolve ('No such file or directory'). No probe ran. I re-ran with an absolute path (stack-run-2). This was a harness error of mine, not a product result.",
+      "exit_status": 127,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/stack-run-1.log"]
+    },
+    {
+      "id": "DOM-R4-10-repair-diff-regressions-and-judgements",
+      "procedure": "Read the whole repair diff 925f0bc..ccc37c9 (apps, packages, tests, ADRs) for regressions. Judge D-123 items 1 and 4, D-124 item 1 and the N5 label rule against the sources.",
+      "command": "git diff --stat 925f0bc..ccc37c9 -- apps packages tests e2e docs/architecture; git diff 925f0bc..ccc37c9 -- (areas.ts, engine.ts, drilldown.ts, finance.ts, filters.ts, kpi/dashboard-facts.ts, ui.tsx, schemas/dashboards.ts, i18n); git diff --stat 925f0bc..afba46f -- docs/delivery/requirements.csv",
+      "environment": "Repository at afba46f",
+      "expected": "No weakened behaviour. The judgements fit B0048–B0051, B0095, M0170, M0172 and M0248.",
+      "actual": "34 files changed. Outside reporting/dashboards, only kpi/dashboard-facts.ts changed (unitKind and unitLabel; the outcome reader now uses status <> 'archived'). The register is unchanged since round 3. No regression: money still names its currency, currencies are never added, Unknown and n/a are kept apart, and the value drill-down without a currency over several scope currencies is now n/a 'multiple_currencies' (stricter). A missing amount is Unknown in the Portfolio sum, the RAG lines and the drill-downs. The web drops any malformed ruleParams line instead of guessing. D-124 item 1 is accepted: the playbook defines no outcome lifecycle (B0047–B0051 define the hierarchy and the good-outcome test). Every other reader (charter, gate criteria, portfolio hierarchy) treats a non-archived outcome as live, and with no draft-to-active transition the old reader hid every product-created outcome. Including drafts in the Outcomes RAG cannot make it greener, because an outcome without KPI data is Unknown. D-123 item 1 is accepted as more faithful to B0095 and M0248. D-123 item 4 is accepted (M0172; D-122), with the residual noted in the F-DG4-127 verification. The N5 rule ('12 % of users') is accepted. The empty-area reason 'no active outcome with a KPI in scope' is a wording drift with no behavioural effect: an observation.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/zz-domain-r4.test.ts", "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-2.log", "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-B-onlyrev-t10.png"]
+    },
+    {
+      "id": "DOM-R4-11-operating-logic-and-observations",
+      "procedure": "Confirm the operating-logic list of the assignment (calculations, benefits, Finance validation, SLAs, escalation, blockers, meetings, corrective actions, status separation, BAU, after closure, G5/G6, waivers, the Modular G3 waiver, change requests, dashboards, traceability) through the integration and acceptance suites, my API probes and the unchanged non-reporting modules. Judge QA-C O-2 and QA-B 409.",
+      "command": "integration run as DOM-R4-03; dom-api as DOM-R4-05; git diff --stat 925f0bc..ccc37c9 -- apps/api/src/modules",
+      "environment": "As DOM-R4-03 and DOM-R4-05",
+      "expected": "The rules match their sources; the observations and the partial disclosures in the register are acceptable.",
+      "actual": "The A01–A14 acceptance and backend suites pass 1985/1985, and no workflow module outside reporting/ and kpi/dashboard-facts.ts changed. My round-3 conclusions hold. RAG comes from the KPI trajectory, never completion: my R4-7 KPIs with actuals but no trajectory stay Unknown, never green. Forecast, submitted, upside and scenario values never count as validated. Finance validation is FIN-only, with the correction chain kept. A non-financial benefit is n/a. Allocations over 100 % are refused, and over 110 % on links. Escalation happens once, to the next authority, in working days. Closure is refused while value is pending unless a transition decision exists. BAU acceptance is by the receiver only, and the recurring reviews are created once. G5 requires risk closure and the scale scope; G6 requires ownership transfer. Waivers carry an expiry and a compensating action. The Modular waiver covers missing links only and is refused when revoked or expired. A change request keeps its originals. QA-C O-2 (a record stays draft until activation while G1–G6 progress): acceptable, because the playbook defines phases and gates, not a record lifecycle. QA-B (409 on a Draft gate): DG2-approved contract behaviour; REQ-S04-010 requires only rejection. The register's partial disclosures (PB-065, PB-066, PB-075, S04-010, S04-014, S07-005, S07-007, S07-015, S08-006, S08-015, S13-003, S15-008, S20-011) are unchanged, honest and acceptable. The six dashboards are listed on the hub (unit test 'lists the six dashboards'). Each dashboard filters on organization, transformation, owner, period, phase and status, and every drill-down reaches its contributing records (R4-1, R4-7, R4-8).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/integration-full-run-1.log", "docs/delivery/test-evidence/DG4/domain/round-4/dom-api.log", "docs/delivery/test-evidence/DG4/domain/round-4/test-node22.log"]
+    },
+    {
+      "id": "DOM-R4-12-hygiene",
+      "procedure": "Check no-CDN, certification claims, the #0078FF provisional token, the provisional wordmark and Arabic labels, and DG references in product code.",
+      "command": "bash docs/delivery/test-evidence/DG4/domain/round-4/hygiene.sh",
+      "environment": "Disposable clone at afba46f, Node v24.21.0",
+      "expected": "no-cdn PASS; no affirmative claim; #0078FF only as a provisional token; product logic independent of DG records.",
+      "actual": "'PASS no-cdn: scanned apps, packages' (exit 0). The claim grep exits 0, but its only hits are the tokens.json $comment and its built copy: 'They are NOT verified or official Mobily colours; #0078FF is a provisional brand token'. That is a negation my filter does not exclude, so no affirmative claim exists. #0078FF appears only in the tokens (provisional: true), the branding schema and module, and the provisional brand text. The wordmark is 'Provisional' / 'مؤقت'. The Arabic basis labels carry 'تسميات الأساس العربية مؤقتة …', shown on screen (dom-gross4 ar.*.provisional-basis-note). DG references in product code are finding and task ids in comments only; product G6 cannot imply DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/hygiene.sh", "docs/delivery/test-evidence/DG4/domain/round-4/hygiene.log"]
+    },
+    {
+      "id": "DOM-R4-13-environmental-residuals",
+      "procedure": "Confirm that no requirement of mine depends on a live registry, live CI or Keycloak.",
+      "command": "",
+      "environment": "Offline sandbox; AUTH_MODE=dev",
+      "expected": "PASS on the offline/config surface, with the residuals noted.",
+      "actual": "REQ-DLV-042 and REQ-DLV-025 are not in my list. All my P4 checks ran with AUTH_MODE=dev, offline, on disposable PostgreSQL. The residuals stay as D-049 (Keycloak), D-057 (live registry) and D-058 (live CI) record them, and no check of mine claims a pass on their behalf.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/domain/round-4/env.txt"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG4/domain/round-4/env.txt",
+    "docs/delivery/test-evidence/DG4/domain/round-4/candidate.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/zz-domain-r4.test.ts",
+    "docs/delivery/test-evidence/DG4/domain/round-4/integration-probe-run-2.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/integration-full-run-1.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/dom-kpiunit.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/dom-gross4.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/dom-api.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/dom-ui.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/dom-pct.log",
+    "docs/delivery/test-evidence/DG4/domain/round-4/hygiene.log"
+  ],
+  "reviewed_at": "2026-10-11T23:05:00Z",
+  "summary": "PASS. All three of my round-3 findings are CLOSED_VERIFIED on candidate 5ff36f6e. F-DG4-125: percentage KPIs read '12 %' or '12 % of users' and a ratio KPI '1.5' on every dashboard surface and drill-down in EN and AR, on the real stack with the real worker; the gap still reads '100 %'. F-DG4-126: the Value RAG is the worst of the per-basis gaps, Red in my R3-6 worlds on T10, the workstream dashboard, the Overview and Finance; the USD, missing-amount and control variants behave. F-DG4-127: the Portfolio value is 90 on the profit-and-cash basis, labelled; a top-line-only initiative is n/a and ranks last; a missing amount is Unknown. I accept D-123 items 1 and 4, D-124 item 1 and the N5 label rule against the sources. Full integration passes 1985/1985. One Node 24 unit flake in a DG2 session test is disclosed and passed 34/34 twice when re-run alone. I raise no new finding; the cosmetic residuals are recorded as observations."
+}
