@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-125",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-062",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Dashboards show a percentage KPI 100 times too small: a 12 % actual (stored as the fraction 0.12) renders as '0.12 %' on the T10 Outcomes area and its drill-down, in EN and AR",
+      "reproduction": "(1) API, in-process on a disposable PostgreSQL (zz-domain-r3.test.ts R3-7, run integration-run-2-probe-only.log): a percentage KPI (unitKind percentage; weighted_ratio, numerator 12 / denominator 100), linked to an outcome, with an accepted actual. GET /transformations/{id}/dashboard: the Outcomes area item and the outcomes drill-down item carry {state:'value', value:'0.12', unit:'percentage', currency:null}; with unitLabel '%', unit is '%'. kpi/dashboard-facts.ts sets unit = unit_label ?? unit_kind. (2) Web formatter in the clone (zz-domain-r3-format.test.tsx, format-probe.log): formatValue({value:'0.12', unit:'percentage'}) and ({value:'0.12', unit:'%'}) return '0.12 %' in EN and AR. (3) Real stack, real built web (dom-pct.mjs, dom-pct.log): the T10 response of a synthetic transformation, intercepted in the browser, with one outcomes-area item carrying exactly the R3-7 value object; the row reads 'Amber 0.12 %' in EN and 'كهرماني 0.12 %' in AR (screens en/ar-r3-t10-outcomes-percentage-kpi.png). The dev seed has no percentage KPI and the stack runs no recalculation worker, hence the interception; the value object is the API's own (R3-7).",
+      "expected": "M0170 and ADR-0028 §3: a percentage is stored as a fraction (0.12 = 12 %). The KPI pages show 12 % (pages/kpi/ui.tsx formatKpiValue multiplies a percentage by 100). REQ-PB-062: the six T10 areas render from persisted data, so the Outcomes area and the People & adoption area, the Executive Overview, the adoption dashboard and every drill-down must show '12 %' for this KPI. REQ-S07-004 likewise: a rise from 0.10 to 0.12 is shown as +2.0 pp and +20 %, i.e. the level as 12 %.",
+      "actual": "'0.12 %' in EN and AR. Since FE-R5 (F-DG4-122 repair), formatValue (apps/web/src/pages/dashboards/ui.tsx) sends the units 'percent', 'percentage' and '%' to formatPercent WITHOUT fraction:true, so the value is not multiplied by 100. FE-R5's handback documents the assumption ('{12.5, unit:\"percentage\"} -> 12.5 %'), which contradicts ADR-0028 §3; no unit of the API sends an already-scaled percentage. Partly pre-existing: before FE-R5 the same objects rendered '0.12 percentage' (no label) or '0.12 %' (label '%'), also unscaled. The rounds-1/2 probes had no percentage KPI, so I missed it. Every percentage KPI is affected, including the seven adoption indicators, most of which are percentages (adoption indicator templates are unitKind percentage). The ratio rendering that F-DG4-122 fixed is correct (100 %, 25 %, -20 %). Fix: treat 'percentage' and '%' values as fractions (fraction:true), as formatKpiValue does, and add a web test with a KPI value object as the API sends it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-3/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/zz-domain-r3.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-3/format-probe.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/zz-domain-r3-format.test.tsx",
+        "docs/delivery/test-evidence/DG4/domain/round-3/dom-pct.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-3/dom-pct.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-t10-outcomes-percentage-kpi.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-t10-outcomes-percentage-kpi.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-3/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T13:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG4 round 3 (T-DG4-REV-DOM-R3). High and mandatory (calculation accuracy as presented), the same class as F-DG4-122: an executive dashboard figure is off by a factor of 100 in EN and AR. The API values are correct; the fix is local to formatValue. Partly pre-existing, entrenched by the F-DG4-122 repair."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-126",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-063",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The T10 Value RAG ignores the validated gap of revenue uplift and avoided cost: margin 70 fully validated plus 300 of revenue uplift (or avoided cost) planned and unvalidated is Green on T10, the Executive Overview and the Finance rows",
+      "reproduction": "In-process on a disposable PostgreSQL (zz-domain-r3.test.ts R3-6, integration-run-2-probe-only.log): one transformation with a margin_uplift benefit planned 70 (2026-01..06) and Finance-validated 70, and a revenue_uplift benefit planned 300 with nothing measured or validated; then the same with avoided_cost 300 instead of revenue uplift. GET /transformations/{id}/dashboard, /api/v1/overview and /api/v1/dashboards/finance.",
+      "expected": "B0095 and M0248: the Value area's RAG is 'based on validated benefit gap' over 'planned, forecast and validated realized benefit'. B0417 lists revenue uplift and avoidance as benefits, and the playbook's worked benefit formula (B0430) is a revenue uplift. M0172 forbids ADDING revenue uplift to margin, or avoided cost to cash; it does not exclude their validated gap from the status. Here 300 of 370 planned benefit (81 %) has no validated value, so the Value status must not be Green. A rule that fits both sources: a gap ratio per basis and currency (profit and cash, top line, non-cash), never summed across bases, with the Value RAG the worst of them.",
+      "actual": "Value RAG {status:'green', ruleKey:'dashboard.rag.value.validated_gap', lines:[{currency:'SAR', gapRatio:'0', status:'green'}], headlineBasis:'profit_and_cash'} on T10 and the Overview, and areaStatuses value 'green' on the Overview and Finance rows, for both variants. The amounts are right: Validated revenue uplift (or avoided cost) shows 0 beside the headline. But the status is a false Green. ADR-0037 N3 item 2 decides this on purpose ('there is no gap ratio or RAG on them'), and the Value-area rule text names the basis. A regression of the repair: at round-2 source 93a7dd7 valueArea summed the five classes, so this world's gap would be 300/370 = 0.81, Red. I derived that from the diff and did not execute it. My own round-2 expected text proposed 'the value gap' on the profit-and-cash basis and did not address the status of the other bases, so the gap is partly mine. A revenue-only transformation shows Value n/a (never green), which is acceptable. Under D-119 this is a partial rejection of the rule: I accept the headline amounts' basis and reject only the Value RAG/gap scope.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-3/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/zz-domain-r3.test.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-3/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T13:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG4 round 3 (T-DG4-REV-DOM-R3). Medium, not mandatory: a status, not an amount, and the rule text discloses its basis. It is a false Green against B0095/M0248, introduced by the F-DG4-123 repair (ADR-0037 N3 item 2). Needs an ADR decision (per-basis gap statuses, worst-of), then kpi-benefits-engineer. D-119's escalation clause applies to this part of the rule only."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-127",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-062",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The T10 Portfolio area shows each initiative's value as one unlabelled SAR sum of all five financial classes (435 for the DOM-GROSS world, beside a profit-and-cash headline of 90)",
+      "reproduction": "In-process on a disposable PostgreSQL (zz-domain-r3.test.ts R3-8, integration-run-2-probe-only.log): the DOM-GROSS world (revenue_uplift 300, margin_uplift 70, cash_saving 20, avoided_cost 45 SAR planned 2026-01..06), each benefit allocated 100 % to one completed initiative (PUT /benefits/{id}/allocations). GET /transformations/{id}/dashboard, Portfolio area items.",
+      "expected": "M0172 (keep revenue uplift separate from margin, and avoided cost separate from cash) and the product's own rule ADR-0037 N3 item 2: 'no unlabelled sum crosses bases'. The initiative figure should be on the profit-and-cash basis (90 here), or labelled per basis. The ranking 'by value' (B0095 'Top initiatives by value/criticality') should then use that basis.",
+      "actual": "Portfolio item {code:'INI-0017', value:{state:'value', value:'435', unit:'currency', currency:'SAR'}}, shown in the area's generic 'Value' column (ui.tsx AreaItems via ValueView) with no basis. In the same response the Value area shows 'Planned value (profit and cash)' 90, top line 300 and non-cash 45. engine.ts (plannedOf) sums FINANCIAL_VALUE_CLASSES. KBE-R6 handback §5.3 (d) left this on purpose ('N3 does not list it as a value headline'). I reject that choice: the item value is a displayed SAR figure crossing bases, which is exactly what F-DG4-123 removed from the headlines. Pre-existing since the DG4 build; I missed it in rounds 1-2. UI claim not separately screenshotted: the API value and the rendering path are shown; the dev seed has no allocated initiative.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-3/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/zz-domain-r3.test.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-3/domain-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T13:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG4 round 3 (T-DG4-REV-DOM-R3). Medium, not mandatory, the same rating as F-DG4-123: the per-class figures are right and nothing validated is inflated, but a displayed SAR figure adds top line and non-cash into profit and cash. Engine (kpi-benefits-engineer) plus a basis label (frontend-ux-engineer)."
+        }
+      ]
+    }
+  ]
+}

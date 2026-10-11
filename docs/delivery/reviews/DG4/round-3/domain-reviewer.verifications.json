@@ -1,0 +1,59 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-tested adversarially on candidate 890faa12, clone c94b2a2 (source 925f0bc). On the real stack (dom-gross3.mjs, 127/127), the DOM-GROSS world's value gap reads 'Value gap (profit and cash) … 100 %' on T10, the Executive Overview and the Finance dashboard, in EN and AR, with no currency text (was 'SAR 1.00' / '1.00 ر.س.'). Other ratios were tested by intercepting the real API response so the real built web formats them: 25 %, -20 % ('‎-20 %' in AR, with an LRM before the minus sign) and 12.5 %, on all three screens, both locales. In-process, the API itself produces gap 0.25 (validated 75 of 100, Red) and -0.2 (validated 120 of 100, Green) with unit 'ratio' (R3-3). The web formatter probe (format-probe.log) gives 100 %, 25 % and -20 % in EN and AR, and money stays money. The fix is genuine. Residual, raised separately as F-DG4-125 (High): the same formatValue change sends the units 'percentage' and '%' to formatPercent without scaling, so a percentage KPI stored as 0.12 shows '0.12 %'. That is a different unit from the ratio this finding was about, partly pre-existing, and does not reopen F-DG4-122.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-3/dom-gross3.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-3/dom-gross3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/format-probe.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-finance.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-finance.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-overview.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-overview.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-ratio-25pct-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-ratio-25pct-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-ratio-neg20pct-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-ratio-neg20pct-t10.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-123",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on the real stack (dom-gross3, EN and AR) and in-process (R3-1 to R3-5). DOM-GROSS world: 'Planned value (profit and cash)' 90, 'Planned revenue uplift (top line; not in profit and cash)' 300 and 'Planned avoided cost (non-cash; not in profit and cash)' 45. These appear on T10, the Executive Overview, the workspace header and the Finance dashboard, with the top line and non-cash in a separate 'never added' group. No value or amount 435 is in any response, and '435' is on no screen. Finance gross planned is 90, equal to the headline, and drills with the headline's href. Every value headline's drill-down items sum to it, with the matching headlineBasis, via the HTTP API and the UI panels (90, 300, 45, each listing only its basis's benefits). Revenue-only world: every profit-and-cash headline and the gap are n/a ('nothing is planned on this basis'), the Value RAG is n/a, and the Overview row's Value is n/a, never 0 or green; 300 and 45 are still shown. A validated revenue uplift of 500 does not raise Validated value (profit and cash) or lower the gap (R3-4). Forecast 90 and submitted 60 never count as validated (R3-5). RULE JUDGEMENT (M0172, B0145): I ACCEPT the headline basis for the money figures. One compatible basis per figure, with top line and non-cash labelled beside it, is what M0172 asks and matches the B0145 list of separate benefits. Under D-119 I REJECT one part of item 1: the Value RAG/gap scope. With only profit-and-cash in the RAG, a fully validated margin plus 300 of unvalidated revenue uplift or avoided cost is Green, against B0095/M0248 ('validated benefit gap'). Raised as F-DG4-126 (Medium); D-119's escalation then concerns that part only, not the headline basis. KBE-R6 §5.3: (a) a revenue-only currency's Finance gross stays a known zero beside an n/a headline: ACCEPTED. Gross feeds net, so net = -implementation cost stays visible, and the gross drill-down is n/a with no item (sum 0 = line). The ADR-0037 N3 item 1 sentence 'in any state and currency the gross line and the headline are the same figure' is loose there (0 vs n/a); that is wording only, not worth a finding. (b) currency on the new n/a values: accepted. (c) header headlines [] with no benefit (Unknown shown): accepted. (d) Portfolio ranking on five classes: REJECTED, because the item value is a displayed SAR figure crossing bases (435); raised as F-DG4-127. (e) a top-line subject drill without valueClass is n/a and reachable with its class: accepted. DG3 business-case totals (ADR-0030 N3 item 6): accepted as a deliberate, documented difference. They are a planning artefact with per-basis totals and the revenue_and_margin warning, approved at DG3; aligning them would reopen DG3.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-3/dom-gross3.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-3/dom-gross3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/r3-gross-api.json",
+        "docs/delivery/test-evidence/DG4/domain/round-3/r3-onlyrev-api.json",
+        "docs/delivery/test-evidence/DG4/domain/round-3/zz-domain-r3.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-3/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-header.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-header.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-t10-drill-profit_and_cash.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-t10-drill-profit_and_cash.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-B-onlyrev-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-B-onlyrev-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-B-onlyrev-finance.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-B-onlyrev-finance.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-124",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "In the repository at HEAD c94b2a2 (the round-3 freeze commit), these all exit 0: node tools/gates/validate.mjs --historical --stage DG3, DG2 and DG1, --pipeline ('PASS pipeline (active stage: DG4 REVIEWING)') and --register DG4. The DG4 history reads PLANNED, BUILDING, REVIEWING (round 1, 21:25Z), FIXING (00:51:49Z, added in 546fb4e, its back-dating disclosed in its note), REVIEWING (round 2, 04:43Z), FIXING (round-2 results, 08:40Z) and REVIEWING (round 3, 12:34Z). Every step is allowed by rules.mjs TRANSITIONS, timestamps are monotonic, and the last entry equals the state. The review_rounds hold the three candidates (19656b1f, 3f51b79d, 890faa12) with their source commits.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-3/validators-exit-codes.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/validate_pipeline.log",
+        "docs/delivery/test-evidence/DG4/domain/round-3/validate_historical_stage_DG3.log"
+      ]
+    }
+  ]
+}
