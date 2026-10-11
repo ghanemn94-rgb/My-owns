@@ -187,6 +187,8 @@ test("4. Finance and adoption dashboards: non-financial is n/a, never 0; the Peo
   await expect(page.locator("[data-pending-validation]")).toBeVisible();
   await expect(page.locator("[data-non-financial-count] [data-value-state='not_applicable']")).toBeVisible();
   await expect(page.locator("#finance-lines")).toBeVisible();
+  // F-DG4-121 (D-117): the gross/net section names the profit-and-cash basis and the "beside, never summed" rule.
+  await expect(page.locator("#finance-net")).toContainText(tr(lang, "dashboards.finance.grossNetIntro"));
   await shot(page, lang, "p4dash-07-finance");
   await expectAccessible(page, lang, "p4dash-finance");
   await go(page, "/dashboards/adoption");

@@ -270,6 +270,8 @@ export function financeDashboard(): FinanceDashboard {
     generatedAt: T0,
     businessDate: "2026-10-10",
     appliedFilters: filters(),
+    // D-117 (F-DG4-121): gross sums margin uplift, cash saving and working capital release only, so with revenue
+    // uplift alone it is a known 0; revenue uplift is shown beside gross, never in it.
     // ADR-0037 amendment K1 item 5 (KBE-R4): every class line drills by its state's metric and `valueClass`; a gross
     // line by its state's metric; a net line keeps null (a derived difference, drilled through its two inputs).
     lines: [
@@ -298,14 +300,14 @@ export function financeDashboard(): FinanceDashboard {
         valueClass: "gross",
         state: "planned",
         currency: "SAR",
-        total: v("1500"),
+        total: v("0"),
         drilldownHref: drill("value.planned"),
       },
       {
         valueClass: "gross",
         state: "validated",
         currency: "SAR",
-        total: v("900"),
+        total: v("0"),
         drilldownHref: drill("value.validated"),
       },
       {
@@ -443,3 +445,39 @@ export function myWork(): MyWork {
 }
 
 export { PERIOD_ID as SYN_PERIOD_ID, INITIATIVE_ID as SYN_INITIATIVE_ID };
+
+/**
+ * The F-DG4-121 reproduction (domain round 1, DOM-GROSS) as the D-117 rule computes it: planned revenue uplift 300,
+ * margin uplift 70, cash saving 20, avoided cost 45 SAR; gross = 90 (profit and cash classes), net = 90 − 0 = 90.
+ * SYNTHETIC.
+ */
+export function grossBasisFinanceDashboard(): FinanceDashboard {
+  const base = financeDashboard();
+  const cls = (valueClass: string, state: "planned" | "validated", value: string) => ({
+    valueClass,
+    state,
+    currency: "SAR",
+    total: v(value),
+    drilldownHref: drill(`value.${state}`, valueClass),
+  });
+  return {
+    ...base,
+    lines: [
+      cls("revenue_uplift", "planned", "300"),
+      cls("margin_uplift", "planned", "70"),
+      cls("cash_saving", "planned", "20"),
+      cls("avoided_cost", "planned", "45"),
+      cls("revenue_uplift", "validated", "0"),
+      { valueClass: "gross", state: "planned", currency: "SAR", total: v("90"), drilldownHref: drill("value.planned") },
+      {
+        valueClass: "gross",
+        state: "validated",
+        currency: "SAR",
+        total: v("0"),
+        drilldownHref: drill("value.validated"),
+      },
+      { valueClass: "net", state: "planned", currency: "SAR", total: v("90"), drilldownHref: null },
+      { valueClass: "net", state: "validated", currency: "SAR", total: v("0"), drilldownHref: null },
+    ],
+  };
+}

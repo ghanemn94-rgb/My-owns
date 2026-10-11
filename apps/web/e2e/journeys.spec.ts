@@ -408,6 +408,19 @@ test("administration screens (access + technical administrator)", async ({ page 
   await expectAccessible(page, lang, "organization");
 
   await page.goto("/admin/users");
+  // F-DG4-141: the register pages 25 users and other specs on a shared stack add synthetic users that sort first, so
+  // the journey searches the register for its own fixture user instead of assuming it is on page 1.
+  const filters = page.getByRole("search", { name: tr(lang, "common.filter.title"), exact: true });
+  await filters.getByLabel(tr(lang, "common.filter.search"), { exact: true }).fill("Synthetic Transformation Lead");
+  const searched = page.waitForResponse(
+    (r) =>
+      r.request().method() === "GET" &&
+      /\/api\/v1\/users\?/.test(r.url()) &&
+      new URL(r.url()).searchParams.get("q") === "Synthetic Transformation Lead" &&
+      r.status() === 200,
+  );
+  await filters.getByRole("button", { name: tr(lang, "common.filter.apply"), exact: true }).click();
+  await searched;
   await expect(page.getByRole("link", { name: "Synthetic Transformation Lead", exact: true })).toBeVisible();
   await shot(page, lang, "13-users");
   await expectAccessible(page, lang, "users");

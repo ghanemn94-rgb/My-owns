@@ -17,6 +17,7 @@ import {
   drilldown,
   executiveOverview,
   financeDashboard,
+  grossBasisFinanceDashboard,
   knownHeader,
   myWork,
   transformationDashboard,
@@ -210,6 +211,54 @@ describe.each(["en", "ar"] as const)("Dashboards (%s)", (locale) => {
     expect(unknownNet.textContent).toContain(t("dashboards.state.unknown"));
     expect(unknownNet.textContent).not.toMatch(/\d/);
     expect(within(net as HTMLElement).getByText(t("dashboards.valueClass.net"))).toBeTruthy();
+  });
+
+  it("Finance dashboard (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed", async () => {
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [route("GET", /\/api\/v1\/dashboards\/finance\?/, () => json(grossBasisFinanceDashboard()))],
+      ),
+    );
+    renderApp("/dashboards/finance", { i18n: createI18n(locale) });
+    await screen.findByText(t("dashboards.finance.pendingCount", { count: 1 }));
+    const net = document.querySelector("#finance-net")!;
+    // The section intro states the basis and the "never summed" rule.
+    expect(net.textContent).toContain(t("dashboards.finance.grossNetIntro"));
+    for (const cls of ["margin_uplift", "cash_saving", "working_capital_release"])
+      expect(t("dashboards.valueClass.gross")).toContain(t(`dashboards.valueClass.${cls}`).toLowerCase());
+    const rowOf = (id: string) => net.querySelector(`[data-finance-measure='${id}']`)?.closest("tr");
+    const valueOf = (id: string) => rowOf(id)?.querySelector("[data-value]")?.getAttribute("data-value");
+    expect(rowOf("gross-planned-SAR")!.textContent).toContain(t("dashboards.valueClass.gross"));
+    expect(rowOf("net-planned-SAR")!.textContent).toContain(t("dashboards.valueClass.net"));
+    expect(valueOf("gross-planned-SAR")).toBe("90");
+    expect(valueOf("net-planned-SAR")).toBe("90");
+    // Revenue uplift (top line) and avoided cost (non-cash) beside gross, labelled as not summed, with their drills.
+    const revenue = rowOf("revenue_uplift-planned-SAR")!;
+    const avoided = rowOf("avoided_cost-planned-SAR")!;
+    expect(revenue.textContent).toContain(t("dashboards.finance.besideGross.revenue_uplift"));
+    expect(avoided.textContent).toContain(t("dashboards.finance.besideGross.avoided_cost"));
+    expect(
+      net.querySelector("[data-finance-measure='revenue_uplift-planned-SAR']")!.getAttribute("data-not-summed"),
+    ).toBe("true");
+    expect(valueOf("revenue_uplift-planned-SAR")).toBe("300");
+    expect(valueOf("avoided_cost-planned-SAR")).toBe("45");
+    expect(revenue.querySelector("[data-drill-beside='revenue_uplift-planned-SAR']")).not.toBeNull();
+    // Each class line keeps exactly one data-drill-line (the per-class table), so the e2e count of 1 holds.
+    expect(document.querySelectorAll("[data-drill-line='revenue_uplift-planned-SAR']")).toHaveLength(1);
+    expect(net.querySelector("[data-drill-line^='revenue_uplift-']")).toBeNull();
+    // Margin and cash are not repeated beside gross: they are inside it.
+    expect(net.querySelector("[data-finance-measure^='margin_uplift-']")).toBeNull();
+    expect(net.querySelector("[data-finance-measure^='cash_saving-']")).toBeNull();
+    // Order: gross, revenue uplift, avoided cost, net (per state).
+    const order = [...net.querySelectorAll("[data-finance-measure]")].map((e) =>
+      e.getAttribute("data-finance-measure"),
+    );
+    expect(order.indexOf("gross-planned-SAR")).toBeLessThan(order.indexOf("revenue_uplift-planned-SAR"));
+    expect(order.indexOf("revenue_uplift-planned-SAR")).toBeLessThan(order.indexOf("avoided_cost-planned-SAR"));
+    expect(order.indexOf("avoided_cost-planned-SAR")).toBeLessThan(order.indexOf("net-planned-SAR"));
+    expect(net.textContent).not.toMatch(/435/);
   });
 
   it("Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total", async () => {

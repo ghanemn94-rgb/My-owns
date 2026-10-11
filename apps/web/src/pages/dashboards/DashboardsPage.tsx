@@ -3,7 +3,8 @@
 //  - /dashboards/executive       = the Executive Overview (one read model, ADR-0037 §2, §8): opens /executive-overview;
 //  - /dashboards/transformation  pick a transformation; its Template 10 dashboard is a workspace tab;
 //  - /dashboards/workstream      pick a transformation, then one of its workstreams;
-//  - /dashboards/finance         value lines per class × state × currency, gross / implementation cost / net, the
+//  - /dashboards/finance         value lines per class × state × currency, gross / implementation cost / net (gross on
+//                                the profit-and-cash basis, revenue uplift and avoided cost beside it; F-DG4-121), the
 //                                Finance queue count, and non-financial benefits as n/a (never 0);
 //  - /dashboards/adoption        the People & adoption area, each linked indicator with its KPI status, interventions;
 //  - /dashboards/personal        = My Work's sections and upcoming deadlines (one operation, ADR-0037 §2, §7).
@@ -180,6 +181,13 @@ const CLASS_ORDER = [
   "gross",
   "net",
 ];
+/**
+ * The gross/net table (F-DG4-121, D-117; M0172, B0145): gross is the profit-and-cash basis (margin uplift, cash saving,
+ * working capital release); revenue uplift (top line) and avoided cost (non-cash) are shown beside it, from their own
+ * class lines of the same state, and never added to gross or net. The web computes no total of its own.
+ */
+const BESIDE_GROSS: ReadonlySet<string> = new Set(["revenue_uplift", "avoided_cost"]);
+const DERIVED_ORDER = ["gross", "revenue_uplift", "avoided_cost", "net"];
 const STATE_ORDER = ["planned", "forecast", "measured", "submitted", "validated", "rejected", "sustained"];
 
 export function FinanceDashboardPage() {
@@ -200,9 +208,23 @@ export function FinanceDashboardPage() {
       header: derived ? t("dashboards.finance.measure") : t("dashboards.finance.valueClass"),
       rowHeader: true,
       hideable: false,
-      cell: (l) => t(`dashboards.valueClass.${l.valueClass}`, { defaultValue: l.valueClass.replace(/_/g, " ") }),
-      sortValue: (l) => CLASS_ORDER.indexOf(l.valueClass),
-      filterText: (l) => t(`dashboards.valueClass.${l.valueClass}`, { defaultValue: l.valueClass }),
+      cell: (l) => {
+        if (!derived) return className(l.valueClass);
+        const beside = BESIDE_GROSS.has(l.valueClass);
+        return (
+          <span
+            data-finance-measure={`${l.valueClass}-${l.state}-${l.currency}`}
+            {...(beside ? { "data-not-summed": "true" } : {})}
+          >
+            {beside ? t(`dashboards.finance.besideGross.${l.valueClass}`) : className(l.valueClass)}
+          </span>
+        );
+      },
+      sortValue: (l) => (derived ? DERIVED_ORDER : CLASS_ORDER).indexOf(l.valueClass),
+      filterText: (l) =>
+        derived && BESIDE_GROSS.has(l.valueClass)
+          ? t(`dashboards.finance.besideGross.${l.valueClass}`)
+          : t(`dashboards.valueClass.${l.valueClass}`, { defaultValue: l.valueClass }),
     },
     {
       id: "state",
@@ -280,11 +302,16 @@ export function FinanceDashboardPage() {
           );
         }
         // Every class line and every gross line drills (K1 item 5): its state's metric, with `valueClass` for a class.
+        // A class line repeated beside gross (F-DG4-121) drills the same way, but is marked `data-drill-beside` so each
+        // class line keeps exactly one `data-drill-line` (in the per-class table).
+        const lineKey = `${l.valueClass}-${l.state}-${l.currency}`;
+        const drillAttr =
+          derived && BESIDE_GROSS.has(l.valueClass) ? { "data-drill-beside": lineKey } : { "data-drill-line": lineKey };
         return l.drilldownHref ? (
           <button
             type="button"
             className="button button--link button--small"
-            data-drill-line={`${l.valueClass}-${l.state}-${l.currency}`}
+            {...drillAttr}
             onClick={() => openDrill({ drilldownHref: l.drilldownHref! }, what)}
           >
             {t("dashboards.drill.open")}
@@ -315,7 +342,13 @@ export function FinanceDashboardPage() {
         <QueryState query={query}>
           {(d) => {
             const perClass = d.lines.filter((l) => l.valueClass !== "gross" && l.valueClass !== "net");
-            const derived = d.lines.filter((l) => l.valueClass === "gross" || l.valueClass === "net");
+            // Gross and net, with revenue uplift and avoided cost beside gross (never summed; F-DG4-121, D-117).
+            const derived = d.lines.filter(
+              (l) =>
+                l.valueClass === "gross" ||
+                l.valueClass === "net" ||
+                (BESIDE_GROSS.has(l.valueClass) && (l.state === "planned" || l.state === "validated")),
+            );
             const investment = d.headlines.filter((h) => h.metric === "value.investment");
             return (
               <>

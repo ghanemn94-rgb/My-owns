@@ -4,6 +4,10 @@
 // an open overlap warning are on their own "pending overlap" lines, outside validated and sustained (REQ-S08-014).
 // Non-financial benefits without a valuation method are counted apart (n/a), never as 0 (REQ-PB-076). Excluded
 // benefits are listed with their reason and never summed. An Unknown amount shows Unknown with its reason, never 0.
+// Gross basis (F-DG4-121, D-117; M0172, B0145): the server's gross sums the profit and cash classes only (margin uplift,
+// cash saving, working capital release), and net = that gross − implementation cost. The labels name that basis.
+// Revenue uplift (top line) and avoided cost (non-cash) are shown beside gross, from their own class lines, and are
+// never added to gross or net here: the web only shows the response's amounts and computes no total of its own.
 import { useTranslation } from "react-i18next";
 import { Icon } from "../../components/Icon.tsx";
 import { useLocale } from "../../app/locale.ts";
@@ -20,6 +24,12 @@ export const TOTAL_CLASSES = [
   "avoided_cost",
   "working_capital_release",
   "non_financial_valued",
+] as const;
+
+/** The classes shown beside gross, never summed into it (F-DG4-121, D-117), with their label keys. */
+export const BESIDE_GROSS = [
+  { valueClass: "revenue_uplift", labelKey: "benefitsP4.totals.besideRevenue" },
+  { valueClass: "avoided_cost", labelKey: "benefitsP4.totals.besideAvoided" },
 ] as const;
 
 function lineOf(lines: readonly BenefitTotalLine[], cls: string, state: string): BenefitTotalLine | undefined {
@@ -164,7 +174,10 @@ function CurrencyBlock({ block }: { block: BenefitTotalsCurrency }) {
           </thead>
           <tbody>
             <tr data-row="gross">
-              <th scope="row">{t("benefitsP4.totals.gross")}</th>
+              <th scope="row">
+                {t("benefitsP4.totals.gross")}
+                <span className="block small muted">{t("benefitsP4.totals.grossBasis")}</span>
+              </th>
               <td data-state="planned">
                 <Amount amount={block.gross.planned} />
               </td>
@@ -172,6 +185,26 @@ function CurrencyBlock({ block }: { block: BenefitTotalsCurrency }) {
                 <Amount amount={block.gross.validated} />
               </td>
             </tr>
+            {BESIDE_GROSS.map(({ valueClass, labelKey }) => (
+              <tr key={valueClass} data-row={`beside-${valueClass}`} data-not-summed="true">
+                <th scope="row">
+                  {t(`benefitsP4.totalClass.${valueClass}`)}
+                  <span className="block small muted">{t(labelKey)}</span>
+                </th>
+                {(["planned", "validated"] as const).map((state) => {
+                  const line = lineOf(block.lines, valueClass, state);
+                  return (
+                    <td key={state} data-state={state}>
+                      {line ? (
+                        <Amount amount={line.total} />
+                      ) : (
+                        <span className="muted">{t("benefitsP4.totals.noValues")}</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
             <tr data-row="cost">
               <th scope="row">
                 {t("benefitsP4.totals.cost")}

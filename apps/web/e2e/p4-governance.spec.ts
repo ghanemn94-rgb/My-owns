@@ -2,7 +2,8 @@
 // Every record is SYNTHETIC demo data. The Sponsor's decisions are demo business approvals that approve nothing real,
 // and no product gate (G1-G6) implies any engineering gate (DG0-DG7).
 //  1. Role mapping: an unmapped governance role shows the visible routing error; the Lead maps the Sponsor.
-//  2. Decision rights (T11, the four B0099 rows) and RACI (T12): the cell editor offers exactly A, R, C, I, A/R or empty;
+//  2. Decision rights (T11, the four B0099 rows; in Arabic the English source labels under a provisional-Arabic notice,
+//     F-DG4-120) and RACI (T12): the cell editor offers exactly A, R, C, I, A/R or empty;
 //     a second accountable is refused by the server (422 raci.accountable_count), translated, nothing saved.
 //  3. The Lead requests a business approval routed by the T11 "Business scope change" row (to the mapped Sponsor).
 //  4. The Sponsor sees the task in My Work, opens it, cannot defer without a date, and approves with a rationale; the
@@ -123,6 +124,24 @@ test("decision rights and RACI: seeded rows; exact RACI values; a second account
   for (const key of ["business_scope_change", "funding_reallocation", "target_state_design", "go_live_scale"])
     await expect(page.locator(`[data-decision-right='${key}']`)).toBeVisible();
   await expect(page.locator("[data-matrix='decision_rights']")).toBeVisible();
+  // F-DG4-120: in Arabic, the R/A/C/I/SLA labels are the English source (B0099), shown verbatim and marked as English,
+  // under a provisional-Arabic notice; in English there is no notice.
+  const notice = page.locator("[data-provisional='decision-rights']");
+  const scope = page.locator("tr", { has: page.locator("[data-decision-right='business_scope_change']") });
+  if (lang === "ar") {
+    const columns = ["recommend", "approve", "consult", "inform", "sla"]
+      .map((c) => tr(lang, `decisionRights.field.${c}`))
+      .join("، ");
+    await expect(notice).toHaveText(tr(lang, "decisionRights.arProvisional", { columns }));
+    for (const col of ["recommend", "approve", "consult", "inform", "sla"]) {
+      const cell = scope.locator(`[data-verbatim-en='${col}']`);
+      await expect(cell).toHaveAttribute("lang", "en");
+      await expect(cell).toHaveAttribute("dir", "ltr");
+    }
+  } else {
+    await expect(notice).toHaveCount(0);
+  }
+  await expect(scope.locator("[data-verbatim-en='sla']")).toHaveText("5 working days");
   await shot(page, lang, "p4-04-decision-rights");
   await expectAccessible(page, lang, "p4-decision-rights");
 

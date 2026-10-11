@@ -1,0 +1,108 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-fe-r4
+
+ ❯ |unit-web| src/pages/raci/governance.test.tsx (19 tests | 4 failed | 15 skipped) 862ms
+   ↓ RACI cell rules > offers exactly A, R, C, I, A/R or empty, and counts A/R as one accountable
+   ↓ Governance (en) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match
+   ↓ Governance (en) > RACI: an auditor sees the matrix read-only (no cell editor, no save)
+   ↓ Governance (en) > role mapping: an unmapped governance role shows the visible routing error
+   ↓ Governance (en) > decision rights: seeded rows; the due-date preview shows Unknown with its reason
+   × Governance (en) > decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120) 541ms
+     → expected undefined to be 'Transformation Lead' // Object.is equality
+   × Governance (en) > decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120) 120ms
+     → expected undefined to be 'Transformation Lead' // Object.is equality
+   ↓ Governance (en) > decision rights: submits the matrix for business approval with If-Match
+   ↓ Governance (en) > decision rights: a field with an unknown party code is refused before sending
+   ↓ Governance (en) > Transform readiness lists what is missing and links to the fix
+   ↓ Governance (ar) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match
+   ↓ Governance (ar) > RACI: an auditor sees the matrix read-only (no cell editor, no save)
+   ↓ Governance (ar) > role mapping: an unmapped governance role shows the visible routing error
+   ↓ Governance (ar) > decision rights: seeded rows; the due-date preview shows Unknown with its reason
+   × Governance (ar) > decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120) 93ms
+     → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+   × Governance (ar) > decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120) 107ms
+     → expected undefined to be 'Transformation Lead' // Object.is equality
+   ↓ Governance (ar) > decision rights: submits the matrix for business approval with If-Match
+   ↓ Governance (ar) > decision rights: a field with an unknown party code is refused before sending
+   ↓ Governance (ar) > Transform readiness lists what is missing and links to the fix
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/raci/governance.test.tsx > Governance (en) > decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120)
+AssertionError: expected undefined to be 'Transformation Lead' // Object.is equality
+
+[32m- Expected:[39m 
+"Transformation Lead"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ src/pages/raci/governance.test.tsx:206:33
+    204|     for (const [col, text] of Object.entries(sources)) {
+    205|       const cell = tr.querySelector(`[data-verbatim-en='${col}']`);
+    206|       expect(cell?.textContent).toBe(text);
+       |                                 ^
+    207|       if (locale === "ar") {
+    208|         expect(cell?.getAttribute("lang")).toBe("en");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit-web| src/pages/raci/governance.test.tsx > Governance (en) > decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120)
+AssertionError: expected undefined to be 'Transformation Lead' // Object.is equality
+
+[32m- Expected:[39m 
+"Transformation Lead"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ src/pages/raci/governance.test.tsx:233:77
+    231|     expect(tr.querySelector("[data-verbatim-en='inform']")).toBeNull();
+    232|     expect(tr.textContent).toContain("منتدى التوجيه");
+    233|     expect(tr.querySelector("[data-verbatim-en='recommend']")?.textCon…
+       |                                                                             ^
+    234|   });
+    235| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit-web| src/pages/raci/governance.test.tsx > Governance (ar) > decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120)
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ src/pages/raci/governance.test.tsx:191:35
+    189|     const notice = document.querySelector("[data-provisional='decision…
+    190|     if (locale === "ar") {
+    191|       expect(notice?.textContent).toContain(t("decisionRights.arProvis…
+       |                                   ^
+    192|       expect(t("decisionRights.arProvisional")).not.toBe("decisionRigh…
+    193|       expect(t("decisionRights.arProvisional")).toMatch(/[\u0600-\u06F…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit-web| src/pages/raci/governance.test.tsx > Governance (ar) > decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120)
+AssertionError: expected undefined to be 'Transformation Lead' // Object.is equality
+
+[32m- Expected:[39m 
+"Transformation Lead"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ src/pages/raci/governance.test.tsx:233:77
+    231|     expect(tr.querySelector("[data-verbatim-en='inform']")).toBeNull();
+    232|     expect(tr.textContent).toContain("منتدى التوجيه");
+    233|     expect(tr.querySelector("[data-verbatim-en='recommend']")?.textCon…
+       |                                                                             ^
+    234|   });
+    235| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 15 skipped (19)
+   Start at  01:01:15
+   Duration  4.07s (transform 1.22s, setup 178ms, collect 2.08s, tests 862ms, environment 633ms, prepare 126ms)
+

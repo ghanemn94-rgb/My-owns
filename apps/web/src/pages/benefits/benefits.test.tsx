@@ -27,6 +27,7 @@ import {
   lifecycle,
   measurement,
   registerRow,
+  grossBasisTotals,
   scenario,
   totals,
   unknownValueRow,
@@ -241,6 +242,73 @@ describe.each(["en", "ar"] as const)("benefits screens (%s)", (locale) => {
     expect(document.querySelector("[data-excluded='B02']")!.textContent).toContain(
       t("benefitsP4.exclusion.group_counted_member_not_named"),
     );
+  });
+
+  it("totals (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed", async () => {
+    const data = grossBasisTotals();
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [registerRoute([]), route("GET", new RegExp(`${esc(TRP)}/benefit-totals`), () => json(data))],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/benefits`, { i18n: createI18n(locale) });
+    const net = (await screen.findByRole("table", { name: t("benefitsP4.totals.netCaption") })) as HTMLTableElement;
+    const amountOf = (row: string, state: string) =>
+      net.querySelector(`[data-row='${row}'] [data-state='${state}'] [data-amount]`)?.getAttribute("data-amount");
+    // The labels name the basis.
+    const grossRow = net.querySelector("[data-row='gross']")!;
+    expect(grossRow.querySelector("th")!.textContent).toContain(t("benefitsP4.totals.gross"));
+    expect(grossRow.querySelector("th")!.textContent).toContain(t("benefitsP4.totals.grossBasis"));
+    expect(net.querySelector("[data-row='net'] th")!.textContent).toContain(t("benefitsP4.totals.net"));
+    for (const cls of ["margin_uplift", "cash_saving", "working_capital_release"])
+      expect(t("benefitsP4.totals.grossBasis").toLowerCase()).toContain(
+        t(`benefitsP4.totalClass.${cls}`).toLowerCase(),
+      );
+    // Gross and net are the response's, unchanged: 90 = 70 margin + 20 cash, not 435.
+    expect(amountOf("gross", "planned")).toBe("90.0000");
+    expect(amountOf("net", "planned")).toBe("90.0000");
+    // Revenue uplift (top line) and avoided cost (non-cash) beside gross, from their own class lines.
+    const revenue = net.querySelector("[data-row='beside-revenue_uplift']")!;
+    const avoided = net.querySelector("[data-row='beside-avoided_cost']")!;
+    expect(revenue.getAttribute("data-not-summed")).toBe("true");
+    expect(avoided.getAttribute("data-not-summed")).toBe("true");
+    expect(revenue.querySelector("th")!.textContent).toContain(t("benefitsP4.totals.besideRevenue"));
+    expect(avoided.querySelector("th")!.textContent).toContain(t("benefitsP4.totals.besideAvoided"));
+    expect(amountOf("beside-revenue_uplift", "planned")).toBe("300.0000");
+    expect(amountOf("beside-avoided_cost", "planned")).toBe("45.0000");
+    // A known zero line is shown as the known 0 the response gives (count 0), not as Unknown.
+    expect(amountOf("beside-revenue_uplift", "validated")).toBe("0.0000");
+    // Rows come in order: gross, revenue uplift, avoided cost, cost, net. Nothing adds revenue or avoided cost in.
+    expect([...net.querySelectorAll("tbody tr")].map((r) => r.getAttribute("data-row"))).toEqual([
+      "gross",
+      "beside-revenue_uplift",
+      "beside-avoided_cost",
+      "cost",
+      "net",
+    ]);
+    expect(document.body.textContent).not.toMatch(/435/);
+    const note = t("benefitsP4.totals.netNote");
+    expect(document.body.textContent).toContain(note);
+    expect(note).not.toBe("benefitsP4.totals.netNote");
+  });
+
+  it("totals (F-DG4-121): a beside-gross class with no line shows no value, never 0", async () => {
+    const data = grossBasisTotals();
+    data.currencies[0]!.lines = data.currencies[0]!.lines.filter((l) => l.valueClass !== "avoided_cost");
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [registerRoute([]), route("GET", new RegExp(`${esc(TRP)}/benefit-totals`), () => json(data))],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/benefits`, { i18n: createI18n(locale) });
+    const net = (await screen.findByRole("table", { name: t("benefitsP4.totals.netCaption") })) as HTMLTableElement;
+    const avoided = net.querySelector("[data-row='beside-avoided_cost']")!;
+    expect(avoided.querySelector("[data-amount]")).toBeNull();
+    expect(avoided.querySelector("[data-state='planned']")!.textContent).toContain(t("benefitsP4.totals.noValues"));
   });
 
   it("lifecycle: six steps with question and output, missing outputs listed, only the allowed next step offered", async () => {

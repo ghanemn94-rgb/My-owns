@@ -13,7 +13,7 @@ import { Icon } from "../../components/Icon.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section } from "../../components/Section.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
-import { renderMessage } from "../my-work/MyWorkPage.tsx";
+import { renderMessage } from "../my-work/messages.ts";
 import { DueDate } from "../my-work/p4ui.tsx";
 import { useMyWorkDashboard, useMyWorkSectionPages } from "./api.ts";
 import { RecordLink } from "./ui.tsx";
