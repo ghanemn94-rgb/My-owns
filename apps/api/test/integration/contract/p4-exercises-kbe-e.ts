@@ -189,11 +189,12 @@ export async function exerciseP4KbeEOperations(ctx: P4ExerciseContext): Promise<
     body: { correctedAmount: "99500", reason: "Synthetic correction" },
   });
   expect([amend.status, amend.body.approvedAmount]).toEqual([201, "-500.0000"]);
+  // F-DG4-101 (T-DG4-KBE-R5): each correction steps the original's version, so the next one names the new ETag.
   expect(
     (
       await m("POST", `${FV}/amendments`, {
         session: s.fin,
-        headers: ifm(decided.body.version),
+        headers: ifm(decided.body.version + 1),
         body: { correctedAmount: "99500", reason: "Synthetic correction" },
       })
     ).status,
@@ -232,7 +233,7 @@ export async function exerciseP4KbeEOperations(ctx: P4ExerciseContext): Promise<
   expect((await m("POST", `${FV}/reversals`, { session: s.fin, headers: ifm(2), body: {} })).status).toBe(400);
   const rev = await m("POST", `${FV}/reversals`, {
     session: s.fin,
-    headers: ifm(decided.body.version),
+    headers: ifm(decided.body.version + 1),
     body: { reason: "Synthetic reversal" },
   });
   expect([rev.status, rev.body.approvedAmount]).toEqual([201, "-99500.0000"]);
@@ -240,7 +241,7 @@ export async function exerciseP4KbeEOperations(ctx: P4ExerciseContext): Promise<
     (
       await m("POST", `${FV}/reversals`, {
         session: s.fin,
-        headers: ifm(decided.body.version),
+        headers: ifm(decided.body.version + 2),
         body: { reason: "Again please" },
       })
     ).status,

@@ -4,6 +4,7 @@
 //  - D02: 100000 × 0.02 × 50 = 100000.00 (volume × Δ rate × ARPU, the playbook B0087 revenue example: Δ attach ×
 //    customers × ARPU) and the cost example volume × Δ unit cost;
 //  - counted once, classes apart, n/a never 0, open overlaps held back, gross − cost = net, Unknown never 0;
+//  - F-DG4-121 (D-117): gross sums margin_uplift, cash_saving and working_capital_release only;
 //  - corrections: the signed amendment delta and the reversal that nets to zero;
 //  - the six Finance items and the strict snapshot; no eval/Function in the KBE-E sources (the DG3 engine only).
 import { readFileSync } from "node:fs";
@@ -37,7 +38,7 @@ describe("REQ-S16-025: decimal arithmetic (D01, D02)", () => {
       reason: null,
     });
     const t = computeTotals({
-      benefits: [benefit("a"), benefit("b", { valueClass: "margin_uplift" })],
+      benefits: [benefit("a", { valueClass: "cash_saving" }), benefit("b", { valueClass: "margin_uplift" })],
       lines: [
         { benefitId: "a", state: "planned", amount: "0.1" },
         { benefitId: "b", state: "planned", amount: "0.2" },
@@ -121,7 +122,10 @@ describe("computeTotals (ADR-0030 §7)", () => {
     expect([of("revenue_uplift", "validated"), of("margin_uplift", "validated")]).toEqual(["1.0000", "2.0000"]);
     expect([of("cash_saving", "validated"), of("avoided_cost", "validated")]).toEqual(["3.0000", "4.0000"]);
     expect([of("avoided_cost", "submitted"), of("avoided_cost", "measured")]).toEqual(["100.0000", "100.0000"]);
-    expect(t.currencies[0]!.gross.validated.amount).toBe("10.0000");
+    // F-DG4-121 (D-117): gross = margin 2 + cash 3 = 5; revenue 1 (top line) and avoided cost 4 (non-cash) are
+    // their own lines, never summed into gross or net. The per-class lines above are unchanged.
+    expect(t.currencies[0]!.gross.validated.amount).toBe("5.0000");
+    expect(t.currencies[0]!.net.validated.amount).toBe("5.0000");
     expect(t.currencies[0]!.lines).toHaveLength(4 * 7);
   });
 
@@ -129,7 +133,7 @@ describe("computeTotals (ADR-0030 §7)", () => {
     const t = computeTotals({
       benefits: [
         benefit("cx", { valueClass: "non_financial", unmonetised: true }),
-        benefit("usd", { currency: "USD" }),
+        benefit("usd", { currency: "USD", valueClass: "working_capital_release" }),
       ],
       lines: [
         { benefitId: "cx", state: "validated", amount: null },
@@ -169,7 +173,7 @@ describe("computeTotals (ADR-0030 §7)", () => {
 
   it("REQ-S08-011: net = gross − each cost line once; a NULL cost is Unknown (never 0)", () => {
     const base = {
-      benefits: [benefit("g")],
+      benefits: [benefit("g", { valueClass: "margin_uplift" })],
       lines: [
         { benefitId: "g", state: "planned", amount: "3000000" },
         { benefitId: "g", state: "validated", amount: "1500000" },
@@ -196,6 +200,53 @@ describe("computeTotals (ADR-0030 §7)", () => {
       "unknown",
       "benefit.cost_amount_missing",
     ]);
+  });
+
+  it("F-DG4-121 worked fixture (DOM-GROSS): revenue 300, margin 70, cash 20, avoided 45, capital 5 -> gross 95; net 95 − cost", () => {
+    const t = computeTotals({
+      benefits: [
+        benefit("r"),
+        benefit("m", { valueClass: "margin_uplift" }),
+        benefit("c", { valueClass: "cash_saving" }),
+        benefit("a", { valueClass: "avoided_cost" }),
+        benefit("w", { valueClass: "working_capital_release" }),
+      ],
+      lines: [
+        { benefitId: "r", state: "planned", amount: "300" },
+        { benefitId: "m", state: "planned", amount: "70" },
+        { benefitId: "c", state: "planned", amount: "20" },
+        { benefitId: "a", state: "planned", amount: "45" },
+        { benefitId: "w", state: "planned", amount: "5" },
+        // A missing revenue or avoided-cost amount never makes gross Unknown: they are not in it.
+        { benefitId: "r", state: "validated", amount: null },
+        { benefitId: "a", state: "validated", amount: null },
+        { benefitId: "m", state: "validated", amount: "7" },
+      ],
+      costLines: [{ amount: "30", currency: "SAR", valueBasis: "cash" }],
+    });
+    const c = t.currencies[0]!;
+    const of = (cls: string, state: string) => c.lines.find((l) => l.valueClass === cls && l.state === state)!.total;
+    expect(
+      ["revenue_uplift", "margin_uplift", "cash_saving", "avoided_cost", "working_capital_release"].map(
+        (cls) => of(cls, "planned").amount,
+      ),
+    ).toEqual(["300.0000", "70.0000", "20.0000", "45.0000", "5.0000"]);
+    expect([c.gross.planned.amount, c.net.planned.amount]).toEqual(["95.0000", "65.0000"]);
+    expect([of("revenue_uplift", "validated").status, of("avoided_cost", "validated").status]).toEqual([
+      "unknown",
+      "unknown",
+    ]);
+    expect([c.gross.validated.amount, c.net.validated.amount]).toEqual(["7.0000", "-23.0000"]);
+    // Only revenue uplift and avoided cost: gross is a known 0, never their sum.
+    const only = computeTotals({
+      benefits: [benefit("r"), benefit("a", { valueClass: "avoided_cost" })],
+      lines: [
+        { benefitId: "r", state: "planned", amount: "300" },
+        { benefitId: "a", state: "planned", amount: "45" },
+      ],
+      costLines: [],
+    }).currencies[0]!;
+    expect([only.gross.planned.amount, only.net.planned.amount]).toEqual(["0.0000", "0.0000"]);
   });
 
   it("a value line without an amount makes its line and gross Unknown, never 0", () => {

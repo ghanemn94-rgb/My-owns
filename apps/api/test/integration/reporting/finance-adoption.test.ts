@@ -167,15 +167,17 @@ describe("Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7)", () => {
     expect(lineOf(r.body, "revenue_uplift", "forecast").total.state).toBe("zero");
     // measured = what was measured (validated 900 + submitted 250); it is its own state, never added to the others.
     expect(v("measured")).toBe("1150");
+    // F-DG4-121 (D-117): gross sums only margin, cash saving and working capital; this fixture's value is revenue
+    // uplift (top line), its own line above, never summed into gross or net. So gross is a known 0 here.
     expect([
       dec(lineOf(r.body, "gross", "planned").total.value),
       dec(lineOf(r.body, "gross", "validated").total.value),
-    ]).toEqual(["1500", "900"]);
+    ]).toEqual(["0", "0"]);
     // No investment line: implementation cost is a known 0, so net = gross.
     expect([
       dec(lineOf(r.body, "net", "planned").total.value),
       dec(lineOf(r.body, "net", "validated").total.value),
-    ]).toEqual(["1500", "900"]);
+    ]).toEqual(["0", "0"]);
     expect([r.body.pendingValidationCount, r.body.nonFinancialCount]).toEqual([1, 1]);
     // A non-financial benefit is in no line and never summed as 0.
     expect(
@@ -184,15 +186,14 @@ describe("Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7)", () => {
     expect(r.body.transformations.map((t: Body) => t.transformationId)).toEqual([xb.transformationId]);
   });
 
-  it("gross lines and headlines drill to their records with an equal decimal sum; the queue count drills to its records", async () => {
+  it("class lines and headlines drill to their records with an equal decimal sum; a gross line that would sum more has no href; the queue count drills to its records", async () => {
     const r = await get(
       `/api/v1/dashboards/finance?organizationId=${w.orgA.id}&transformationId=${xb.transformationId}`,
     );
-    for (const state of ["planned", "validated"]) {
-      const line = lineOf(r.body, "gross", state);
-      expect(line.drilldownHref, state).not.toBeNull();
-      expect(await drillSum(line.drilldownHref, "SAR"), state).toBe(dec(line.total.value));
-    }
+    // F-DG4-121: revenue uplift enters value.planned/value.validated but never gross, so those drills would sum more
+    // than the gross line: the gross lines carry no href here (each class line drills; gross = its three classes).
+    for (const state of ["planned", "validated"])
+      expect(lineOf(r.body, "gross", state).drilldownHref, state).toBeNull();
     // Every class line drills to its state's metric narrowed to its class (ADR-0037 amendment K1; T-DG4-KBE-R4), so
     // its drill-down sums exactly its records; net is derived (from gross and investment) and keeps no href.
     const cls = lineOf(r.body, "revenue_uplift", "validated");
@@ -234,7 +235,9 @@ describe("Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7)", () => {
       `/api/v1/dashboards/finance?organizationId=${w.orgA.id}&transformationId=${xb.transformationId}&ownerUserId=${xb.users.bo.id}`,
     );
     expect(r.status, JSON.stringify(r.body)).toBe(200);
-    expect(dec(lineOf(r.body, "gross", "planned").total.value)).toBe("1500");
+    // The owner's benefit is revenue uplift: its class line shows it; gross (profit and cash classes) is 0 (F-DG4-121).
+    expect(dec(lineOf(r.body, "revenue_uplift", "planned").total.value)).toBe("1500");
+    expect(dec(lineOf(r.body, "gross", "planned").total.value)).toBe("0");
     expect((r.body.lines as Body[]).some((l) => l.valueClass === "net")).toBe(false);
     const other = await get(
       `/api/v1/dashboards/finance?organizationId=${w.orgA.id}&transformationId=${xb.transformationId}&ownerUserId=${xb.users.bo2.id}`,

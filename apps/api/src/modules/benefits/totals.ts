@@ -16,7 +16,11 @@
 //     are in no SAR line: never summed as 0 (REQ-PB-076);
 //  4. an open overlap warning moves a benefit's validated and sustained values to `pendingOverlap` lines, out of the
 //     validated lines, until Finance resolves it (REQ-S08-014);
-//  5. gross (planned, validated) = the sum of the five financial classes' lines of that state; implementationCost =
+//  5. gross (planned, validated) = the sum of the PROFIT AND CASH classes' lines of that state: margin_uplift,
+//     cash_saving and working_capital_release (F-DG4-121; D-117; M0172 "Keep revenue uplift separate from profit or
+//     margin benefit. Keep avoided cost separate from cash savings"; B0145). revenue_uplift (top line, whose margin
+//     belongs in margin_uplift) and avoided_cost (non-cash) stay their own lines and are never summed into gross or net;
+//     validated totals and the per-class lines are unchanged; implementationCost =
 //     each active business-case investment line once (transformation and initiative cases; a line belongs to exactly
 //     one case), cash and non-cash apart; net = gross − implementationCost, so a 1 M SAR initiative cost reduces the
 //     transformation's net by exactly 1 M SAR (REQ-S08-011). A missing amount anywhere makes that total Unknown with a
@@ -87,11 +91,13 @@ export interface TotalsResult {
   readonly excluded: { benefitId: string; code: string; reason: BenefitExclusionReason }[];
 }
 
-const FINANCIAL_TOTAL_CLASSES: readonly BenefitTotalClass[] = [
-  "revenue_uplift",
+/**
+ * The classes the headline gross sums (F-DG4-121; D-117): profit and cash only. revenue_uplift and avoided_cost are
+ * shown beside it as lines of their own and never enter gross or net.
+ */
+export const GROSS_TOTAL_CLASSES: readonly BenefitTotalClass[] = [
   "margin_uplift",
   "cash_saving",
-  "avoided_cost",
   "working_capital_release",
 ];
 
@@ -189,7 +195,7 @@ export function computeTotals(input: TotalsInput): TotalsResult {
       }
     const gross = (state: BenefitValueState): BenefitAmount =>
       lines
-        .filter((l) => l.state === state && FINANCIAL_TOTAL_CLASSES.includes(l.valueClass))
+        .filter((l) => l.state === state && GROSS_TOTAL_CLASSES.includes(l.valueClass))
         .reduce<BenefitAmount>((acc, l) => addAmounts(acc, l.total, currency), known("0", currency));
     const costs = input.costLines.filter((c) => c.currency === currency);
     const reason = "benefit.cost_amount_missing";

@@ -37,7 +37,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
 import { PROBLEM_TYPES } from "@mth/shared";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { denialOf, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -232,7 +232,8 @@ async function decide(tx: Tx, request: FastifyRequest, transformationId: string,
   if (current.kind !== "validation" || current.status !== "queued") throw notQueued();
   if (current.version !== expected) throw problems.versionConflict(current.version);
   const measurement = await lockMeasurement(tx, transformationId, current.benefit_measurement_id);
-  if (measurement.submitted_by !== null && measurement.submitted_by === ctx.userId) throw sodSubmitter();
+  if (measurement.submitted_by !== null && measurement.submitted_by === ctx.userId)
+    throw sodSubmitter().withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
   const items = body.items as Record<FinanceItem, FinanceValidationItemDecision>;
   const decisions = Object.values(items).map((i) => i.decision);
   const approve = body.decision === "approved";
@@ -353,7 +354,7 @@ async function decideBaseline(tx: Tx, request: FastifyRequest, transformationId:
     throw forbidden(
       "benefit.baseline_validator_is_owner",
       "You own this benefit, so you cannot validate its baseline.",
-    );
+    ).withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
   if (current.baseline_value === null && current.baseline_id === null)
     throw benefitRule("benefit.baseline_missing", "There is no baseline to validate.", "/decision");
   if (body.decision === "rejected" && body.note === undefined)

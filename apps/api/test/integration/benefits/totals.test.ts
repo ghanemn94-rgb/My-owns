@@ -42,7 +42,8 @@ const newBenefit = async (b: BenefitWorld, extra: Record<string, unknown> = {}) 
 describe("counted once (REQ-PB-058) and the initiative view", () => {
   it("a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %", async () => {
     const b = await seedBenefitWorld(api, w);
-    const ben = await newBenefit(b);
+    // margin_uplift, so the one count is visible in the gross headline too (F-DG4-121: revenue is never in gross).
+    const ben = await newBenefit(b, { valueClass: "margin_uplift" });
     await plan(b, ben.id, "10000000");
     const [i1, i2] = [await insertInitiative(api.db, b), await insertInitiative(api.db, b)];
     const put = await call<Body>(api.app, "PUT", `${b.base}/benefits/${ben.id}/allocations`, {
@@ -63,8 +64,8 @@ describe("counted once (REQ-PB-058) and the initiative view", () => {
       false,
       [b.transformationId],
     ]);
-    expect(lineOf(t, "revenue_uplift", "planned")).toEqual({
-      valueClass: "revenue_uplift",
+    expect(lineOf(t, "margin_uplift", "planned")).toEqual({
+      valueClass: "margin_uplift",
       state: "planned",
       total: { status: "known", amount: "10000000.0000", currency: "SAR", reason: null },
       count: 1,
@@ -72,9 +73,9 @@ describe("counted once (REQ-PB-058) and the initiative view", () => {
     expect(t.currencies[0].gross.planned.amount).toBe("10000000.0000");
     const view = await totalsOf(api, b, `?initiativeId=${i1}`);
     expect([view.scope, view.scopeId, view.allocated]).toEqual(["initiative", i1, true]);
-    expect(lineOf(view, "revenue_uplift", "planned").total.amount).toBe("6000000.0000");
+    expect(lineOf(view, "margin_uplift", "planned").total.amount).toBe("6000000.0000");
     const view2 = await totalsOf(api, b, `?initiativeId=${i2}`);
-    expect(lineOf(view2, "revenue_uplift", "planned").total.amount).toBe("4000000.0000");
+    expect(lineOf(view2, "margin_uplift", "planned").total.amount).toBe("4000000.0000");
     // An initiative of another transformation is not found.
     const other = await seedBenefitWorld(api, w);
     const foreign = await insertInitiative(api.db, other);
@@ -120,10 +121,11 @@ describe("classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076)", () => {
     let t = await totalsOf(api, b);
     expect(lineOf(t, "cash_saving", "planned").total.amount).toBe("0.1000");
     expect(lineOf(t, "avoided_cost", "planned").total.amount).toBe("0.2000");
-    // Revenue uplift and margin are separate lines (REQ-S08-009); gross adds the five financial classes exactly.
+    // Revenue uplift and margin are separate lines (REQ-S08-009); gross adds only margin, cash saving and working
+    // capital exactly (F-DG4-121; D-117): 7 + 0.1 = 7.1; avoided cost 0.2 and revenue uplift are lines of their own.
     expect(lineOf(t, "margin_uplift", "planned").total.amount).toBe("7.0000");
     expect(lineOf(t, "revenue_uplift", "planned").total.amount).toBe("0.0000");
-    expect(t.currencies[0].gross.planned.amount).toBe("7.3000");
+    expect(t.currencies[0].gross.planned.amount).toBe("7.1000");
     expect(lineOf(t, "revenue_uplift", "submitted").total.amount).toBe("5000.0000");
     expect(lineOf(t, "revenue_uplift", "validated")).toMatchObject({ total: { amount: "0.0000" }, count: 0 });
     expect(t.nonFinancialCount).toBe(1);
@@ -132,14 +134,51 @@ describe("classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076)", () => {
     t = await totalsOf(api, b);
     expect(lineOf(t, "revenue_uplift", "validated")).toMatchObject({ total: { amount: "4800.0000" }, count: 1 });
     expect(lineOf(t, "revenue_uplift", "submitted")).toMatchObject({ total: { amount: "0.0000" }, count: 0 });
-    expect(t.currencies[0].gross.validated.amount).toBe("4800.0000");
+    // The validated 4800 is revenue uplift: its own line, never in gross (F-DG4-121); validated totals are unchanged.
+    expect(t.currencies[0].gross.validated.amount).toBe("0.0000");
+  });
+});
+
+describe("F-DG4-121 (D-117): the headline gross sums only profit and cash classes", () => {
+  // The domain reviewer's DOM-GROSS case: revenue_uplift 300, margin_uplift 70, cash_saving 20 and avoided_cost 45 SAR
+  // planned. M0172: keep revenue uplift apart from margin, and avoided cost apart from cash savings; B0145 lists
+  // incremental revenue and margin improvement as separate benefits. So gross = margin + cash + working capital = 90,
+  // net = gross − implementation cost = 90, and revenue (top line) and avoided cost (non-cash) are lines of their own.
+  it("revenue 300 + margin 70 + cash 20 + avoided 45 -> gross 90, net 90; the four class lines unchanged", async () => {
+    const b = await seedBenefitWorld(api, w);
+    const rev = await newBenefit(b);
+    const margin = await newBenefit(b, { valueClass: "margin_uplift" });
+    const cost = { benefitType: "cost", financialStatementLine: "Opex - care" };
+    const cash = await newBenefit(b, { ...cost, valueClass: "cash_saving" });
+    const avoided = await newBenefit(b, { ...cost, valueClass: "avoided_cost" });
+    for (const [ben, amount] of [
+      [rev, "300"],
+      [margin, "70"],
+      [cash, "20"],
+      [avoided, "45"],
+    ] as const)
+      await plan(b, ben.id, amount);
+    const t = await totalsOf(api, b);
+    const c = t.currencies[0];
+    expect(
+      ["revenue_uplift", "margin_uplift", "cash_saving", "avoided_cost"].map(
+        (cls) => lineOf(t, cls, "planned").total.amount,
+      ),
+    ).toEqual(["300.0000", "70.0000", "20.0000", "45.0000"]);
+    expect([c.gross.planned.amount, c.implementationCost.total.amount, c.net.planned.amount]).toEqual([
+      "90.0000",
+      "0.0000",
+      "90.0000",
+    ]);
+    expect([c.gross.validated.amount, c.net.validated.amount]).toEqual(["0.0000", "0.0000"]);
   });
 });
 
 describe("gross, implementation cost and net (REQ-S08-011)", () => {
   it("a 1 M SAR initiative cost reduces net by exactly 1 M; a cost without an amount makes cost and net Unknown", async () => {
     const b = await seedBenefitWorld(api, w);
-    const ben = await newBenefit(b);
+    // margin_uplift: a gross class (F-DG4-121; revenue uplift is never in gross or net).
+    const ben = await newBenefit(b, { valueClass: "margin_uplift" });
     await plan(b, ben.id, "3000000");
     const BC = "/api/v1/business-cases";
     const top = await call<Body>(api.app, "POST", BC, {

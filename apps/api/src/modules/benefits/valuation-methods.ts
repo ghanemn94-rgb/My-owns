@@ -28,7 +28,7 @@ import { PROBLEM_TYPES } from "@mth/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { denialOf, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -188,7 +188,8 @@ async function decideMethod(tx: Tx, request: FastifyRequest): Promise<BenefitVal
   const decision: ValuationMethodDecision = body.decision;
   if (!valuationDecisionAllowed(current.status as ValuationMethodStatus, decision))
     throw decision === "retired" ? valuationRefusals.notApproved() : valuationRefusals.notProposed();
-  if (decision !== "retired" && current.created_by === ctx.userId) throw valuationRefusals.deciderIsProposer();
+  if (decision !== "retired" && current.created_by === ctx.userId)
+    throw valuationRefusals.deciderIsProposer().withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
   if (decision === "rejected" && body.note === undefined) throw valuationRefusals.noteRequired();
   const now = sql<Date>`now()`;
   const updated = await tx

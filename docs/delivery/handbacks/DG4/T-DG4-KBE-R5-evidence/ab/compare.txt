@@ -1,0 +1,51 @@
+#0 GET /api/v1/transformations/<id0>/benefit-totals
+    .body.currencies[SAR].gross.planned.amount: A="1477.5500" B="77.5500"
+    .body.currencies[SAR].gross.validated.amount: A="930.5000" B="30.5000"
+    .body.currencies[SAR].net.planned.amount: A="1477.5500" B="77.5500"
+    .body.currencies[SAR].net.validated.amount: A="930.5000" B="30.5000"
+    .body.currencies[USD].gross.planned.amount: A="2000.0000" B="0.0000"
+    .body.currencies[USD].net.planned.amount: A="2000.0000" B="0.0000"
+#2 GET /api/v1/organizations/<id2>/benefit-totals
+    .body.currencies[SAR].gross.planned.amount: A="2590.5500" B="190.5500"
+    .body.currencies[SAR].gross.validated.amount: A="970.5000" B="70.5000"
+    .body.currencies[SAR].net.planned.amount: A="2590.5500" B="190.5500"
+    .body.currencies[SAR].net.validated.amount: A="970.5000" B="70.5000"
+    .body.currencies[USD].gross.planned.amount: A="2000.0000" B="0.0000"
+    .body.currencies[USD].net.planned.amount: A="2000.0000" B="0.0000"
+#3 GET /api/v1/dashboards/finance?organizationId=<id2>&transformationId=<id0>
+    .body.lines[gross,planned,SAR].drilldownHref: A="/api/v1/dashboard-drilldown?metric=value.planned&organizationId=<id2>&transformationId=<id0>" B=null
+    .body.lines[gross,planned,SAR].total.value: A="1477.55" B="77.55"
+    .body.lines[gross,validated,SAR].drilldownHref: A="/api/v1/dashboard-drilldown?metric=value.validated&organizationId=<id2>&transformationId=<id0>" B=null
+    .body.lines[gross,validated,SAR].total.value: A="930.5" B="30.5"
+    .body.lines[gross,planned,USD].drilldownHref: A="/api/v1/dashboard-drilldown?metric=value.planned&organizationId=<id2>&transformationId=<id0>" B=null
+    .body.lines[gross,planned,USD].total.state: A="value" B="zero"
+    .body.lines[gross,planned,USD].total.value: A="2000" B="0"
+    .body.lines[net,planned,SAR].total.value: A="1477.55" B="77.55"
+    .body.lines[net,validated,SAR].total.value: A="930.5" B="30.5"
+    .body.lines[net,planned,USD].total.state: A="value" B="zero"
+    .body.lines[net,planned,USD].total.value: A="2000" B="0"
+#5 GET /api/v1/dashboards/finance?organizationId=<id2>
+    .body.lines[gross,planned,SAR].drilldownHref: A="/api/v1/dashboard-drilldown?metric=value.planned&organizationId=<id2>" B=null
+    .body.lines[gross,planned,SAR].total.value: A="1590.55" B="190.55"
+    .body.lines[gross,validated,SAR].drilldownHref: A="/api/v1/dashboard-drilldown?metric=value.validated&organizationId=<id2>" B=null
+    .body.lines[gross,validated,SAR].total.value: A="970.5" B="70.5"
+    .body.lines[gross,planned,USD].drilldownHref: A="/api/v1/dashboard-drilldown?metric=value.planned&organizationId=<id2>" B=null
+    .body.lines[gross,planned,USD].total.state: A="value" B="zero"
+    .body.lines[gross,planned,USD].total.value: A="2000" B="0"
+    .body.lines[net,planned,SAR].total.value: A="1590.55" B="190.55"
+    .body.lines[net,validated,SAR].total.value: A="970.5" B="70.5"
+    .body.lines[net,planned,USD].total.state: A="value" B="zero"
+    .body.lines[net,planned,USD].total.value: A="2000" B="0"
+#158 GET /api/v1/transformations/<id3>/finance-validations/<id30>
+    .body.version: A=2 B=3
+    .etag: A="\"2\"" B="\"3\""
+#160 GET /api/v1/transformations/<id3>/finance-validations/<id30>
+    .body.version: A=2 B=4
+    .etag: A="\"2\"" B="\"4\""
+#161 GET /api/v1/transformations/<id3>/finance-validations
+    .body.items[1].version: A=2 B=4
+#164 GET /api/v1/transformations/<id3>/benefit-totals
+    .body.currencies[SAR].gross.planned.amount: A="1000.0000" B="0.0000"
+    .body.currencies[SAR].net.planned.amount: A="1000.0000" B="0.0000"
+
+217 responses: 209 byte-identical after normalization, 8 differ (listed above).

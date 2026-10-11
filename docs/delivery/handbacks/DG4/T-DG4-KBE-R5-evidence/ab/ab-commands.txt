@@ -1,0 +1,9 @@
+# A = $TMPDIR/base: a copy of this worktree (HEAD f5579e7) with this task's diff reversed (`git diff HEAD -- apps packages
+#     tests | patch -R -p1`) and its two new files removed (slice-b-denials.test.ts, migration 0061); every changed file
+#     was checked byte-equal to `git show HEAD:<file>` before the run. B = this worktree.
+# The evidence test file is copied into each tree for one run and removed afterwards (it is not part of the candidate).
+cp ab/kbe-r5-transcript.test.ts <tree>/apps/api/test/integration/benefits/kbe-r5-transcript.test.ts
+MTH_KBE_R5_TRANSCRIPT=<evidence>/ab/A-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/benefits/kbe-r5-transcript.test.ts   # in A: exit 0
+MTH_KBE_R5_TRANSCRIPT=<evidence>/ab/B-transcript.jsonl QA_PG_PORT=26110 MTH_PORT_POOL=26111-26119 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/benefits/kbe-r5-transcript.test.ts   # in B: exit 0
+rm -f <tree>/apps/api/test/integration/benefits/kbe-r5-transcript.test.ts
+python3 ab/compare.py ab/A-transcript.jsonl ab/B-transcript.jsonl > ab/compare.txt   # exit 0

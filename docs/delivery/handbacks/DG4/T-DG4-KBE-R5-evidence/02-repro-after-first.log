@@ -1,0 +1,216 @@
+port-policy: PostgreSQL listening on port 26100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-kbe-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv34lvs2_56b432ba (server_encoding UTF8); applied 60 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests | 2 failed) 4406ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > the fixture has two financial classes in one currency, two currencies, an overlap hold and a valued CX line 55ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  660ms
+   × K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > gross lines keep their hrefs (no valueClass); net lines keep null; the drill-down's total_<currency> input equals the line 29ms
+     → the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+   × F-DG4-121 (D-117): the Finance dashboard's gross sums only margin, cash saving and working capital > gross = the exact sum of the margin_uplift, cash_saving and working_capital_release lines; revenue and avoided cost are never in gross or net 21ms
+     → Cannot read properties of undefined (reading 'value')
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > valueClass with a metric that is not a value state is 422 dashboard.value_class_not_applicable (exact K2 text) 60ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > a value class outside FinanceValueClass is a 400 validation (gross, net, non_financial are not classes) 19ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > value.measured, value.rejected and value.sustained without a class sum the five financial classes 92ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > the three metrics take a benefit subjectId, as the four original value metrics do 56ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > Unknown, never 0: a class with no benefit drills to an empty, labelled n/a; an empty state of a class is a known zero 29ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > the cursor is bound to the value class 17ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > the organization-wide auditor sees Y in each new metric (so the sweep can fail) 43ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1261ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > an explicit Y transformation with a value class is 404; a Y benefit as subject is not disclosed 26ms
+ ❯ |integration| apps/api/test/integration/benefits/totals.test.ts (7 tests | 3 failed) 1574ms
+   × counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 % 257ms
+     → expected '0.0000' to be '10000000.0000' // Object.is equality
+   ✓ counted once (REQ-PB-058) and the initiative view > a parent is a roll-up: its children are summed once and the parent is listed as excluded 132ms
+   × classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0 379ms
+     → expected '7.1000' to be '7.3000' // Object.is equality
+   ✓ F-DG4-121 (D-117): the headline gross sums only profit and cash classes > revenue 300 + margin 70 + cash 20 + avoided 45 -> gross 90, net 90; the four class lines unchanged 143ms
+   × gross, implementation cost and net (REQ-S08-011) > a 1 M SAR initiative cost reduces net by exactly 1 M; a cost without an amount makes cost and net Unknown 159ms
+     → expected [ '0.0000', '-1000000.0000', …(1) ] to deeply equal [ Array(3) ]
+   ✓ open overlaps (REQ-S08-014) and the portfolio > a validated value of a benefit with an open overlap is on pendingOverlap, not in validated 298ms
+   ✓ open overlaps (REQ-S08-014) and the portfolio > the organization's portfolio total covers the readable transformations; an outsider gets 404 92ms
+ ❯ |integration| apps/api/test/integration/benefits/corrections.test.ts (5 tests | 4 failed) 1264ms
+   × REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after 306ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-ba51-744f-8375-724fed1f36df","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected 422 to be 201 // Object.is equality
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > only an approved validation is corrected; FIN only; If-Match 428/409; a reason is required 226ms
+   × F-DG4-101: a correction from a stale view is 409 with the current version > the reviewer's F2 case: FIN-B amends to 900 with ETag V; FIN-A, still holding V, gets 409 and 900 stands 181ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-bbf0-718c-bff8-5a4d59d0653f","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected [ 422, undefined ] to deeply equal [ 201, '-100.0000' ]
+   × F-DG4-101: a correction from a stale view is 409 with the current version > stale amend then reverse: after an amendment, a reversal with the pre-amendment ETag is 409; with the new one 201 174ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-bc9e-75cc-9d19-34d3c14f2453","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected 422 to be 201 // Object.is equality
+   × F-DG4-101: a correction from a stale view is 409 with the current version > stale reverse then amend: after a reversal, an amendment with the pre-reversal ETag is 409; with the new one 422 159ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-bd3e-77cd-8fd2-6c8d8c4128af","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected 422 to be 201 // Object.is equality
+ ✓ |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts (7 tests) 1323ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-ba51-744f-8375-724fed1f36df","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:51:54
+     49|       body: { correctedAmount: "239500", reason: "Synthetic: one invoi…
+     50|     });
+     51|     expect(amend.status, JSON.stringify(amend.body)).toBe(201);
+       |                                                      ^
+     52|     expect(amend.headers.location).toBe(`${FV}/${amend.body.id}`);
+     53|     expect(amend.body).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > F-DG4-101: a correction from a stale view is 409 with the current version > the reviewer's F2 case: FIN-B amends to 900 with ETag V; FIN-A, still holding V, gets 409 and 900 stands
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-bbf0-718c-bff8-5a4d59d0653f","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected [ 422, undefined ] to deeply equal [ 201, '-100.0000' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   201,[39m
+[32m-   "-100.0000",[39m
+[31m+   422,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:218:86
+    216|       body: { correctedAmount: "900", reason: "Synthetic: a double cou…
+    217|     });
+    218|     expect([amendB.status, amendB.body.approvedAmount], JSON.stringify…
+       |                                                                                      ^
+    219|     // The original's version stepped with FIN-B's correction (and its…
+    220|     const after = await original(v.validationId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > F-DG4-101: a correction from a stale view is 409 with the current version > stale amend then reverse: after an amendment, a reversal with the pre-amendment ETag is 409; with the new one 201
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-bc9e-75cc-9d19-34d3c14f2453","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:257:54
+    255|       body: { correctedAmount: "450", reason: "Synthetic amendment" },
+    256|     });
+    257|     expect(amend.status, JSON.stringify(amend.body)).toBe(201);
+       |                                                      ^
+    258|     const stale = await call<Body>(api.app, "POST", `${FV}/${v.validat…
+    259|       session: b.s.fin,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts > F-DG4-101: a correction from a stale view is 409 with the current version > stale reverse then amend: after a reversal, an amendment with the pre-reversal ETag is 409; with the new one 422
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Only a queued item can be decided.","code":"finance_validation.not_queued","requestId":"01a12882-bd3e-77cd-8fd2-6c8d8c4128af","errors":[{"pointer":"","code":"finance_validation.not_queued","message":"Only a queued item can be decided."}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/benefits/corrections.test.ts:285:50
+    283|       body: { reason: "Synthetic reversal" },
+    284|     });
+    285|     expect(rev.status, JSON.stringify(rev.body)).toBe(201);
+       |                                                  ^
+    286|     const stale = await call<Body>(api.app, "POST", `${FV}/${v.validat…
+    287|       session: b.s.fin,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/totals.test.ts > counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %
+AssertionError: expected '0.0000' to be '10000000.0000' // Object.is equality
+
+Expected: [32m"[7m1000000[27m0.0000"[39m
+Received: [31m"0.0000"[39m
+
+ ❯ apps/api/test/integration/benefits/totals.test.ts:72:50
+     70|       count: 1,
+     71|     });
+     72|     expect(t.currencies[0].gross.planned.amount).toBe("10000000.0000");
+       |                                                  ^
+     73|     const view = await totalsOf(api, b, `?initiativeId=${i1}`);
+     74|     expect([view.scope, view.scopeId, view.allocated]).toEqual(["initi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/totals.test.ts > classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0
+AssertionError: expected '7.1000' to be '7.3000' // Object.is equality
+
+Expected: [32m"7.[7m3[27m000"[39m
+Received: [31m"7.[7m1[27m000"[39m
+
+ ❯ apps/api/test/integration/benefits/totals.test.ts:126:50
+    124|     expect(lineOf(t, "margin_uplift", "planned").total.amount).toBe("7…
+    125|     expect(lineOf(t, "revenue_uplift", "planned").total.amount).toBe("…
+    126|     expect(t.currencies[0].gross.planned.amount).toBe("7.3000");
+       |                                                  ^
+    127|     expect(lineOf(t, "revenue_uplift", "submitted").total.amount).toBe…
+    128|     expect(lineOf(t, "revenue_uplift", "validated")).toMatchObject({ t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/totals.test.ts > gross, implementation cost and net (REQ-S08-011) > a 1 M SAR initiative cost reduces net by exactly 1 M; a cost without an amount makes cost and net Unknown
+AssertionError: expected [ '0.0000', '-1000000.0000', …(1) ] to deeply equal [ Array(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "3000000.0000",[39m
+[32m-   "2000000.0000",[39m
+[31m+   "0.0000",[39m
+[31m+   "-1000000.0000",[39m
+[2m    "-1000000.0000",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/benefits/totals.test.ts:215:84
+    213|       total: { status: "known", amount: "1000000.0000", currency: "SAR…
+    214|     });
+    215|     expect([c.gross.planned.amount, c.net.planned.amount, c.net.valida…
+       |                                                                                    ^
+    216|       "3000000.0000",
+    217|       "2000000.0000",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts > K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > gross lines keep their hrefs (no valueClass); net lines keep null; the drill-down's total_<currency> input equals the line
+AssertionError: the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ apps/api/test/integration/reporting/finance-drilldown-k1.test.ts:300:35
+    298|     const lines = r.body.lines as Body[];
+    299|     for (const l of lines.filter((x) => x.valueClass === "gross")) {
+    300|       expect(l.drilldownHref).not.toContain("valueClass=");
+       |                                   ^
+    301|       expect(new URLSearchParams(l.drilldownHref.split("?")[1]).get("m…
+    302|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts > F-DG4-121 (D-117): the Finance dashboard's gross sums only margin, cash saving and working capital > gross = the exact sum of the margin_uplift, cash_saving and working_capital_release lines; revenue and avoided cost are never in gross or net
+TypeError: Cannot read properties of undefined (reading 'value')
+ ❯ apps/api/test/integration/reporting/finance-drilldown-k1.test.ts:340:31
+    338|     for (const n of lines.filter((l) => l.valueClass === "net")) {
+    339|       const g = of("gross", n.state, n.currency);
+    340|       const cost = investment.value.currency === n.currency ? new Deci…
+       |                               ^
+    341|       if (g === undefined || g.total.state === "unknown") continue;
+    342|       expect(new Decimal(n.total.value).toFixed(), `net ${n.state} ${n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  9 failed | 23 passed (32)
+   Start at  01:10:00
+   Duration  21.79s (transform 2.86s, setup 0ms, collect 10.36s, tests 8.57s, environment 0ms, prepare 63ms)
+
