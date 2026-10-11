@@ -6,8 +6,8 @@
 //     area, the Executive Overview and the Finance dashboard, never a money amount ("SAR 1.00" / "1.00 ر.س.").
 //  2. F-DG4-123 (needs T-DG4-KBE-R6's API, which sends `headlineBasis`): the value headlines are labelled profit and
 //     cash (90); top line (300) and non-cash (45) sit beside them, labelled and never summed (435 nowhere), on T10,
-//     the Executive Overview, the Finance dashboard and the workspace header. Until that API is merged, the test SKIPS
-//     itself and says why; it never passes on an API without the member.
+//     the Executive Overview, the Finance dashboard and the workspace header. An API without the member fails it
+//     (the conditional skip FE-R5 used before the KBE-R6 merge was removed at integration, D-121).
 // Every step: a full-page screenshot per language and axe with 0 serious or critical issues.
 import { expect, test, type Page } from "@playwright/test";
 import { asUser, syntheticUser } from "./support/p3-journey-setup.ts";
@@ -118,7 +118,8 @@ test("1. F-DG4-122: the value gap reads 100 % on T10, the Executive Overview and
 test("2. F-DG4-123: profit-and-cash headlines labelled; top line and non-cash beside, never summed (needs KBE-R6's API)", async ({
   browser,
 }, info) => {
-  test.skip(!hasBasis, "the API does not send headlineBasis yet: T-DG4-KBE-R6 (D-119) is not merged in this tree");
+  // KBE-R6 is merged and the contract requires the member, so a missing headlineBasis fails here, never skips (D-121).
+  expect(hasBasis, "the API sends headlineBasis on the value headlines").toBe(true);
   const lang = langOf(info);
   const s = await asUser(browser, lang, "dev.lead");
   const page = s.page;
