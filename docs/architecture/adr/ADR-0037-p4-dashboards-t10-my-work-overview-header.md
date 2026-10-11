@@ -455,3 +455,167 @@ The new members are declared but not yet `required`, so the contract test passes
 | `dashboard.headline.value_planned`, `…_forecast`, `…_submitted`, `…_validated`, `…_gap` | label key | **retired** once KBE-R6 lands (no longer sent) | (A2 texts; kept by the web until then) |
 
 The value-state drill-down's rule key is `dashboard.value.sum_<state>_profit_and_cash` without `valueClass` and `dashboard.value.sum_<state>` (K2, unchanged) with it.
+
+## Amendment (2026-10-11, T-DG4-ARCH-R6): a Value status per basis, the Portfolio item basis, currency-exact value drill-downs (F-DG4-126, F-DG4-127, F-DG4-105, D-122)
+
+Sources:
+- **Findings.** F-DG4-126 and F-DG4-127 (domain-reviewer, DG4 round 3, probes R3-6 and R3-8). F-DG4-105 (code-security-reviewer, DG4 round 3, probe GC).
+- **Decision.** D-122, which decides the three repairs. This amendment designs them; it does not reopen them.
+- **Rule for the totals.** ADR-0030 amendment N4.
+
+Nothing above is removed. Where this amendment differs from §3 (the Value and Portfolio rows), §5 (the drill-down), K1, N2 or N3, this amendment wins.
+
+**It supersedes, exactly:**
+- **N3 item 2:** "there is no gap ratio or RAG on them". The top-line and non-cash bases now have a gap ratio and a status each (item 1 below). The rest of N3 item 2 stands: they are never added into a profit-and-cash figure, and no unlabelled sum crosses bases.
+- **N3 item 1:** "the value-gap ratio and the Value RAG use the profit-and-cash basis", for the Value RAG only. The profit-and-cash gap headline is unchanged.
+- **N3 item 4, the bullet "The Value RAG":**
+  - the rule key `dashboard.rag.value.no_profit_and_cash_benefit` is no longer sent;
+  - `validated_gap`'s `ruleParams` no longer carry a top-level `headlineBasis`;
+  - the "currency's Value status" of N3 item 4's first bullet is now the status of that currency's profit-and-cash line, which is absent when the currency holds no profit-and-cash benefit (item 1).
+- **§3, the Portfolio row:** "ordered by planned value allocated to them (Σ planned amount × allocation share)" now reads on the profit-and-cash basis (item 2).
+- **N3 item 3, for the hrefs:** every value headline's href now also names its currency (item 3).
+- **KBE-R6's design choices** (its handback §5.3 (d)): the Portfolio ranking on five classes. They are replaced by item 2.
+
+### N4. Per-basis Value status, Portfolio basis and currency-exact drill-downs
+
+**Why.**
+- **B0095 and M0248.** The Value area shows "planned, forecast and validated realized benefit; investment", and its status basis is the "validated benefit gap" (M0248: "Value | Planned, forecast and validated realized benefit; investment | Validated benefit gap").
+- **The playbook lists both bases as benefits.** B0145's worked example lists "Incremental roaming revenue, margin improvement, … avoided care cost" as separate benefits.
+- **M0172 forbids adding them, not assessing them.** It forbids *adding* revenue uplift to margin, or avoided cost to cash. It does not exclude their validated gap from the status.
+- **So each basis gets its own gap.** A gap per basis, never summed, fits both sources. N3 item 2 gave the other two bases no status. Margin 70 fully validated beside 300 of unvalidated revenue uplift was therefore a false Green (F-DG4-126).
+- **The Portfolio item value.** It was the last displayed SAR figure crossing bases (F-DG4-127).
+- **The drill-downs.** A drill-down whose href names no currency answered another currency's figure (F-DG4-105).
+
+**Decided (D-122), exactly:**
+
+1. **F-DG4-126: the Value status per basis.**
+   - **The gap ratio is per basis and currency.** It is computed per basis (profit and cash, top line, non-cash) and per currency, each only where that basis has a counted benefit in that currency. Such a benefit is counted once, monetised and of the basis's classes: `margin_uplift`, `cash_saving` or `working_capital_release` for profit and cash, `revenue_uplift` for top line, `avoided_cost` for non-cash. The ratio is (planned to date − validated to date) / planned to date on that basis's classes. Its window, its counting rules and its thresholds (`value_gap_amber_ratio`, `value_gap_red_ratio`) are the §3 ones, and so are its states: `not_applicable` `dashboard.value.nothing_planned` when planned to date is zero, and `unknown` when a line of the basis has no amount.
+   - **Never summed across bases.** The ratios are never summed, averaged or weighted across bases.
+   - **The Value RAG is the worst of them.** It combines every line's status with the §3 precedence. A `not_applicable` line takes no part.
+     - When the set is empty or every line is `not_applicable`, the Value RAG is `not_applicable` with `dashboard.rag.value.nothing_due`. That covers no financial benefit at all, and nothing planned due on any basis.
+     - Otherwise its rule key is `dashboard.rag.value.validated_gap` (the text changes: code table row 240), with `ruleParams`:
+       - `amberRatio` and `redRatio`;
+       - `lines`: one entry per basis and currency as above, ordered by currency, then basis (`profit_and_cash`, `top_line`, `non_cash`), each `{currency, headlineBasis, gapRatio, status, reasonKey}`.
+     - **Consequence, stated so a reviewer can check it.** A transformation whose only financial benefits are revenue uplift or avoided cost now has the status of that basis's gap. Before, it was `not_applicable` (`dashboard.rag.value.no_profit_and_cash_benefit`). It has a validated benefit gap to assess (B0095). Its profit-and-cash headlines stay `not_applicable` with `dashboard.value.no_profit_and_cash_benefit` (N3 item 4, unchanged).
+   - **The headline amounts stay as N3 decided them.** Each basis shows its own gap headline: metric `value.gap`, `headlineBasis` its basis, and a label naming the basis. There is never a single cross-basis gap.
+     - **Per currency, in this order:** the four profit-and-cash state headlines and the profit-and-cash gap (unchanged). Then, where the currency holds a top-line benefit, its four state headlines and its gap (`dashboard.headline.value_gap_top_line`). Then the non-cash ones in the same way (`dashboard.headline.value_gap_non_cash`). After every currency comes the investment.
+     - **A top-line or non-cash gap headline's value** has the same states as the profit-and-cash gap's: a known ratio (unit `ratio`, its currency), `unknown` with its reason and currency, or `not_applicable` with `dashboard.value.nothing_planned` and currency null, exactly as the profit-and-cash gap.
+     - **Its href** is `value.gap` with `valueClass=revenue_uplift` (top line) or `valueClass=avoided_cost` (non-cash), with its currency (item 3).
+   - **The `value.gap` drill-down by basis.**
+     - **Allowed classes:** it now accepts `valueClass` `revenue_uplift` or `avoided_cost`. Any other class with `value.gap` is still 422 `dashboard.value_class_not_applicable`.
+     - **What it returns:** its items are that class's planned and validated lines in the window, and its value is the basis's gap.
+     - **Its calculation:** rule key `dashboard.value.gap_ratio_top_line` or `dashboard.value.gap_ratio_non_cash`, the §5 expression, `inputs` `planned_<currency>` and `validated_<currency>` of the basis, and `headlineBasis` `top_line` or `non_cash`.
+     - **Without `valueClass`:** it is the profit-and-cash gap, unchanged.
+   - **Where it applies.** The same rule applies wherever the Value area is computed:
+     - T10 (`getTransformationDashboard`) and the workstream dashboard (`getWorkstreamDashboard`);
+     - the Executive Overview (`getExecutiveOverview`): the area, and the Value status of each `transformations[]` row;
+     - the Finance dashboard (`getFinanceDashboard`): `headlines` and each `transformations[]` row's `areaStatuses`.
+
+     The workspace header shows no gap (N3: planned and validated only). Its `benefits` are unchanged except for the hrefs (item 3).
+2. **F-DG4-127: the Portfolio item value.**
+   - **The figure.** The Portfolio area's initiative value, and its ranking 'by value', use the profit-and-cash basis. That value is Σ over the initiative's allocations to counted, monetised `margin_uplift`, `cash_saving` and `working_capital_release` benefits in the transformation's currency of (their planned amounts × allocation share), decimal, presented and ranked at the money scale (half-even). Every other rule of the as-built sum is unchanged.
+   - **An initiative whose allocated benefits are only top line or non-cash.** It shows `not_applicable` with `dashboard.portfolio.no_profit_and_cash_allocation` (unit `currency`, the transformation's currency), never 0. "Only top line or non-cash" means the as-built five-class sum would be non-null but the profit-and-cash sum is null.
+   - **An initiative with nothing allocated** stays `unknown` with `dashboard.portfolio.no_allocated_value` (unchanged).
+   - **The ranking.** Initiatives with a value come first, by value descending. Those that are `not_applicable` or `unknown` follow, by code: they rank after those with a value (`comparePortfolio`'s null rule, unchanged).
+   - **The other bases are not added.** Its top-line and non-cash allocations are not added to that figure, and this amendment does not show them on the item. The reason text names them. They stay visible, labelled, on the Value area's headlines and the benefits' own pages.
+   - **The label.** A new member `DashboardItem.valueBasis` labels every item's value with its basis. It is `profit_and_cash` on every Portfolio initiative item, whatever its value's state. On a Value-area benefit item it is the basis of the benefit's class (`top_line` for `revenue_uplift`, `non_cash` for `avoided_cost`, `profit_and_cash` for the other three), and null for a non-financial or unmonetised benefit. It is null on every other item.
+   - **The `portfolio.initiatives` drill-down.** Its items carry the same value, and its `headlineBasis` is `profit_and_cash` (the basis of its items' values; it was null).
+3. **F-DG4-105: currency-exact value drill-downs.**
+   - **The parameter.** `getDashboardDrilldown` gains an optional query parameter `currency` (ISO 4217, three upper-case letters; anything else is 400). It is accepted only with the seven value-state metrics, `value.gap` and `value.investment`. With any other metric it is 422 `dashboard.currency_not_applicable` (at `/currency`). The response gains `DashboardDrilldown.currency`, the parameter echoed, or null.
+   - **With `currency` *c*, the drill-down answers only *c*'s figure.** It narrows the benefits, lines and investment lines to those in *c*, after `subjectId` if one is given. Then:
+     - **Value-state metrics:**
+       - **Records of the basis in *c*:** the value is their sum in *c* (or `unknown`), and the items and `inputs` are *c*'s only.
+       - **No record of the basis in *c*:**
+         - `not_applicable` with `currency` *c* and **no item**;
+         - without `valueClass` the reason is `dashboard.value.no_profit_and_cash_benefit` when *c* holds another counted, monetised financial benefit, else `dashboard.value.no_financial_benefit`;
+         - with `valueClass` the reason is `dashboard.value.no_benefit_in_class` (new);
+         - `inputs` is empty.
+     - **`value.gap`:** the value is the gap headline of the same basis and currency, its items that basis's planned and validated lines in *c*, and its `inputs` those of *c*. With no benefit of the basis in *c*, it is `not_applicable`, as for the value-state metrics, with unit `ratio`, `currency` *c* and no item.
+     - **`value.investment`:** the investment lines in *c* and their sum. With no line in *c*, it is a known zero in *c*, as the investment drill-down's empty case is today.
+   - **Without `currency`:**
+     - **One value currency:** the drill-down keeps today's behaviour in a scope of one value currency.
+     - **Several value currencies:** a value-state metric or `value.gap` gives `not_applicable` `dashboard.value.multiple_currencies`, and its items list every currency's records, each with its own currency. Several value currencies means the currencies of the scope's counted, monetised financial benefits, plus those of the requested class's eligible benefits (for `non_financial_valued`).
+     - **What is unchanged:**
+       - when the scope holds no eligible benefit, the reasons are the N3 ones;
+       - with a `subjectId`, the scope's currency is that one benefit's, so the behaviour is unchanged;
+       - `value.investment` is unchanged.
+   - **Every value headline and every Finance line carries an href that names its currency.** That is the four states, the gap and the investment, on T10, the workstream dashboard, the Overview, the Finance dashboard and the header's `benefits.headlines`. It also covers every Finance class line and every `gross` line. `currency` is appended after `valueClass`, so every other href is unchanged.
+     - The `net` line keeps `null` (K1 item 5).
+     - The one `value.validated` headline of a scope with no financial benefit has no currency and keeps its href.
+     - `finance.pending_validation` is not a value headline and is unchanged.
+   - **The result in the reviewer's world (probe GC: SAR `margin_uplift` 70 planned, USD `revenue_uplift` 11 planned):**
+     - **The USD profit-and-cash 'Planned value' headline:**
+       - `not_applicable` `dashboard.value.no_profit_and_cash_benefit`, currency USD;
+       - its href `value.planned&currency=USD` gives `not_applicable` `dashboard.value.no_profit_and_cash_benefit`, currency USD, `items: []`.
+     - **The USD Finance `gross` planned line:**
+       - a known zero in USD (KBE-R6 §5.3 (a), unchanged: ADR-0030 N1);
+       - its href is the same URL and gives the same answer, and the decimal sum of no item is 0, the line's total.
+     - **The SAR headline and the SAR gross line** drill with `currency=SAR` to SAR 70 and the one item B01.
+     - **The USD top-line headline** drills with `valueClass=revenue_uplift&currency=USD` to USD 11.
+   - **The invariant (K1 item 4, sharpened).** Follow the href of any value headline or Finance line that has a currency. The drill-down's `currency` is that currency, and every item is in it. For a sum metric, the decimal sum of the items equals the figure, or the figure is `unknown`. The drill-down's `value` equals the figure. There is one exception: a known-zero `gross` line in a currency with no profit-and-cash benefit drills to the `not_applicable` value above, and the sum of its items (none) is that zero.
+4. **Unknown, Stale, n/a and known zero stay distinct, as in N3.**
+   - A basis line, a gap headline, a Portfolio item and a drill-down are each `unknown` only for a missing amount (or no allocation, for a Portfolio item, unchanged).
+   - Each is `not_applicable` only with the reasons named above.
+   - Each is a known zero only when the records exist and sum to 0.
+   - None of them is ever rendered as 0 or green when it is `unknown` or `not_applicable` (M0159).
+5. **Unchanged:**
+   - the headline amounts of N3 (planned, forecast, submitted and validated on every basis, and the profit-and-cash gap);
+   - the per-class Finance lines and their totals;
+   - the Finance validation rules (ADR-0030 §4);
+   - `gross`, `net` and implementation cost (ADR-0030 N1);
+   - the DG3 business-case totals (`kpi/totals.ts`, ADR-0024 §3; ADR-0030 N3 item 6);
+   - the filters and scope (§6);
+   - `getBenefitTotals` / `getPortfolioBenefitTotals`.
+
+**Examples (the reviewers' worlds; SAR unless stated; all planned periods 2026-01..06, so every planned line is due at the round's as-of date; default thresholds 0.05 / 0.15):**
+
+| World | Value RAG | `ruleParams.lines` | Gap headlines |
+|---|---|---|---|
+| R3-6a: `margin_uplift` planned 70, validated 70; `revenue_uplift` planned 300, nothing validated | **red** | SAR `profit_and_cash` gapRatio "0" green; SAR `top_line` gapRatio "1" red | profit and cash 0; top line 1 |
+| R3-6b: as R3-6a with `avoided_cost` 300 instead of revenue | **red** | SAR `profit_and_cash` "0" green; SAR `non_cash` "1" red | profit and cash 0; non-cash 1 |
+| DOM-GROSS (revenue 300, margin 70, cash 20, avoided 45; nothing validated) | **red** | SAR `profit_and_cash` "1" red; `top_line` "1" red; `non_cash` "1" red | 1, 1, 1 |
+| Revenue only (300, nothing validated) | **red** (was n/a) | SAR `top_line` "1" red | profit-and-cash gap n/a `no_profit_and_cash_benefit`; top line 1 |
+| Probe GC (SAR margin 70, USD revenue 11; nothing validated) | **red** | SAR `profit_and_cash` "1" red; USD `top_line` "1" red | SAR p&c 1; USD p&c n/a (USD); USD top line 1 |
+
+R3-8 (DOM-GROSS, each benefit allocated 100 % to one completed initiative INI-0017):
+- **INI-0017:** the item value is `{state: value, value: "90", currency: SAR}` with `valueBasis: profit_and_cash`. It was 435.
+- **An initiative allocated only the revenue uplift 300:** `not_applicable` `dashboard.portfolio.no_profit_and_cash_allocation`, ranked after INI-0017.
+
+**Contract (OpenAPI 1.3.0-p4, additive):**
+- **Parameter `currency`:** `components/parameters/DrilldownCurrencyQuery`, on `getDashboardDrilldown`.
+- **Refusal:** `dashboard.currency_not_applicable` (422) in the operation summary and in `DASHBOARD_REFUSALS`.
+- **Members:**
+  - `DashboardItem.valueBasis` (`HeadlineBasis` or null);
+  - `DashboardDrilldown.currency` (string or null).
+
+  Both are declared but not yet `required`, are `.optional()` in the zod mirrors, and are pending in `apps/api/test/support/p4-pending-arch-r6.ts`. KBE-R7 emits them and makes them required (the closing step, as in D-120).
+- **Meaning changes, stated in their descriptions:**
+  - `DrilldownValueClassQuery`: `value.gap` takes `revenue_uplift` or `avoided_cost`;
+  - `DashboardRag.ruleParams`: the `validated_gap` lines;
+  - `DashboardHeadline` and its `headlineBasis`: `value.gap` per basis, and hrefs with `currency`;
+  - `DashboardItem.value` of a Portfolio initiative;
+  - `FinanceValueLine.drilldownHref`;
+  - `FinanceDashboard.headlines`;
+  - `DashboardDrilldown` and its `headlineBasis` (several currencies without `currency`, `value.gap` by basis, `portfolio.initiatives`);
+  - `WorkspaceHeader.benefits` (hrefs).
+
+  Still 652 operations.
+
+**Owners.**
+- KBE-R7: `reporting/dashboards/areas.ts`, `engine.ts`, `drilldown.ts`, `filters.ts`, `finance.ts` and `reporting/workspace-header.ts` (if needed), with the tests and the closing step.
+- FE-R6: the labels, the EN/AR texts, the Portfolio column's basis label, the per-basis gap headlines and the `dashboard.currency_not_applicable` problem text.
+
+**Codes and keys (English exact; Arabic proposed for FE-R6, provisional; rows 236–245 of the code table in the T-DG4-ARCH-R6 handback evidence):**
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `dashboard.currency_not_applicable` (at `/currency`) | 422 | **new** (N4 item 3) | A currency narrows only a drill-down of benefit values, the value gap or the investment. |
+| `dashboard.headline.value_gap_top_line` | label key | **new** | Value gap (top line; not in profit and cash) |
+| `dashboard.headline.value_gap_non_cash` | label key | **new** | Value gap (non-cash; not in profit and cash) |
+| `dashboard.value.gap_ratio_top_line` | rule key | **new** | Value gap (top line) = (planned due to date - validated) / planned due to date, over revenue uplift. |
+| `dashboard.value.gap_ratio_non_cash` | rule key | **new** | Value gap (non-cash) = (planned due to date - validated) / planned due to date, over avoided cost. |
+| `dashboard.rag.value.validated_gap` | rule key | **text changed** (key unchanged) | Value: the worst of the validated-gap statuses of each basis and currency (profit and cash, top line, non-cash), each the validated value against the value planned to date on that basis; gaps are never added across bases. |
+| `dashboard.rag.value.no_profit_and_cash_benefit` | rule key | **retired** once KBE-R7 lands (no longer sent) | (N3 text; kept by the web until then) |
+| `dashboard.portfolio.no_profit_and_cash_allocation` | reason key | **new** | Not applicable: only revenue uplift or avoided cost is allocated to this initiative; its value is shown on the profit-and-cash basis (margin uplift, cash saving and working-capital release). |
+| `dashboard.value.no_benefit_in_class` | reason key | **new** | Not applicable: there is no benefit of this class in this currency. |
+| `dashboard.value.multiple_currencies` | reason key | **meaning extended** (text unchanged) | Not applicable: the values are in more than one currency and are never converted. |
