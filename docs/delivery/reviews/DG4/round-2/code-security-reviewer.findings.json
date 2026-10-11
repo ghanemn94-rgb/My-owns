@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-104",
+      "stage_id": "DG4",
+      "requirement": "REQ-DLV-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The round-2 freeze commit records DG4 as REVIEWING -> REVIEWING in stages.json, so every required gate validation fails: validate.mjs --historical --stage DG3, DG2 and DG1 and --pipeline (CI's first job) all exit 1",
+      "reproduction": "Commit 1b8c158 ('DG4 re-frozen for review round 2') appends to docs/delivery/stages.json DG4.history a second {state: REVIEWING, at: 2026-10-11T04:43:11Z} entry directly after the round-1 {state: REVIEWING, at: 2026-10-10T21:25:25Z}. DG4.history is now [PLANNED, BUILDING, REVIEWING, REVIEWING]. The round-1 repair phase (D-117/D-118: ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1) was never recorded as FIXING. tools/gates/lib/rules.mjs:18-26 allows only REVIEWING -> FIXING | VERIFYING | BLOCKED, and loadStages (rules.mjs:107-111) rejects every other step. Steps: (1) in a complete disposable clone at 1b8c158 (Node 22.22.2), run node tools/gates/validate.mjs --historical --stage DG3, then the same for DG2 and DG1, then node tools/gates/validate.mjs --pipeline; (2) put back only docs/delivery/stages.json from the source commit 93a7dd7 and repeat. Evidence: validate-historical-DG3.log, validate-historical-DG2.log and validate-historical-DG1.log are the harness runs in the repository tree. Their header shows HEAD bba2797, the domain reviewer's auto-committed run evidence, which does not touch stages.json; stages.json there is the 1b8c158 one. validate-historical-bisect.log holds step (1) and step (2) in the clone, and validate-pipeline.log the pipeline run. stages.json is not in the candidate manifest (3f51b79d671ebf6d.manifest.json has no docs/delivery/stages.json entry), so the candidate ID and the product are unaffected.",
+      "expected": "The assignment requires validate.mjs --historical --stage DG3 (and DG2, DG1) to pass, and CLAUDE.md names the historical validation and the validator as required gate tooling. A stage that goes back from review to repair and is re-frozen records REVIEWING -> FIXING (repairs) -> REVIEWING (re-freeze), as REQ-DLV-015's state machine and rules.mjs TRANSITIONS state. All four validations should exit 0 on the freeze commit.",
+      "actual": "At 1b8c158 all four exit 1 with the single problem 'stages.json: DG4 illegal transition REVIEWING -> REVIEWING' (DG3, DG2, DG1 historical; '--pipeline (active stage: DG4 REVIEWING)'). With stages.json from 93a7dd7 (DG4.history [PLANNED, BUILDING, REVIEWING]), DG3, DG2 and DG1 historical all PASS (exit 0). In CI (.github/workflows/ci.yml; env-residuals.log: 'first job delivery-gates runs validate.mjs --pipeline; every other job depends on it'), this commit would stop at delivery-gates, before verify, integration, e2e and images. There is no product behaviour effect. The defect is in an orchestrator-maintained delivery record outside the candidate. Fix sketch, for the orchestrator to decide: record the repair phase in DG4.history, e.g. a FIXING entry dated at the D-117 repair start before the round-2 REVIEWING entry, without rewriting the earlier entries; then re-run the four validations. The owner is delivery-orchestrator, because only that role may write stages.json (protocol: implementers cannot write stages.json). The assignment's owner list names implementer roles only, which does not fit this defect; findings.schema.json allows delivery-orchestrator.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-2/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/validate-historical-bisect.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/env-residuals.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T06:03:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 review round 2 (T-DG4-REV-SEC-R2) on candidate sha256:3f51b79d671ebf6d220c5bb4b104916ca4eddac30266dd74c32e89ed37ccea4b. A required gate check fails on the freeze commit. Bisected to stages.json in 1b8c158."
+        }
+      ]
+    }
+  ]
+}
