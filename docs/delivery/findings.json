@@ -11646,6 +11646,241 @@
         ],
         "note": "Verified closed on candidate sha256:f55095dbec364594d25a624261512239854f233d3ee0b5c8ecc210d1602bf6e0 (757 files, recomputed in a complete clone at the freeze commit d22938f; source d3e6fe6). The repair is T-DG3-KBE-I (1cd89e6, merged in e210987). The product diff c40232b0..d3e6fe62 is exactly fuzz.test.ts, the ADR-0024 section 6 'Pinned by tests' sentence and the p3-work-split amendment 29. eslint.config.js and every engine source are unchanged (diff-scan.log D1-D5).\n\n1. Re-run of my round-6 check of the test.\n- independent-row-lint.mjs is my own linter, run outside the candidate's test. It takes the 101 PROBES rows from a runtime dump made in a separate disposable copy, and lints each with ESLint as packages/shared/src/formula/tokenize.ts.\n- Result: 99 rows are refused by a formula-block guard rule. The two 'unbalanced' rows (`const s = \"unclosed;` and `function f() {`) are fatal parse errors. No row is unguarded.\n- In round 6 the test linted 48 of 99 rows and accepted any rule. It now lints 99 of 101, requires a guard rule, and pins the count (linted === PROBES.length - LINT_EXCLUDED.size). A separate test pins the exclusion list.\n\n2. Mutations M1 and M2, in a disposable clone (lint-mutation-probe.mjs, Node 22.22.2).\n- Control: the candidate test is green.\n- M1 (removes `ForOfStatement[await=true]`): exit 1. The failing assertion is 'for await (const x of xs) a(x); (await): expected [] to not deeply equal []'.\n- M2 (removes the `PrivateIdentifier[...]` part): exit 1. The `class C { #then() {} }` row fails.\n- The same two mutations against the PRE-REPAIR test (c40232b0) both survive (exit 0). So the repair is what closes the round-6 gap.\n- The clone's git status is '' afterwards.\n\n3. The section 6 sentence is exactly true. Each element checked against the code and the evidence:\n- 'lints with ESLint.lintText as if they were formula/tokenize.ts': yes.\n- 'G1, G2, A1, A2 and F1 helpers (each must be refused by its named rule)': yes. ROUND5_HANDLER_FORMS gives no-restricted-syntax for each form; F1_FORMS gives no-unsafe-finally.\n- 'every row of the probe table except the two unbalanced rows, which must instead be parse errors': yes, 101 rows, 99 linted and 2 fatal.\n- The seven guard rules listed are exactly the formula block's own rules (eslint.config.js no-eval .. no-unsafe-finally). A parse error or a general rule does not count: the filter is `r !== null && GUARD_RULES.has(r)`.\n- p3-work-split amendment 29 ('99 of 101', the two private-name rows, M1/M2) is also exact.\n\nObservation, not a finding. My informational ablation (lint-mutation-probe ABL-*, lint-ablation-2, lint-ablation-full) removed each selector part of the formula block in turn and ran the whole fuzz.test.ts.\n- Every L1-L7 form stays pinned by some test.\n- The only L-part pinned by no test is the computed `[\"then\"]` member part. That part is redundant: the pinned `Literal[value=then]` part still refuses `p[\"then\"]`.\n- Several layer-1 constructor/timer/require/computed-key parts are pinned by no unit-node test. The 'Pinned by tests' bullet sits inside the L1-L7 list and makes no claim about them. The source scan (layer 2) and the no-codegen run (layer 3) cover those forms (the 18 round-2 forms are still 'BLOCKED BY BOTH').\n- So no sentence is false, and there is no behavioural gap.\n\n4. F-DG3-100 does not regress. All five F-DG3-100 probes were re-run VERBATIM; their sha256 values are in probes-summary.txt:\n- G1 G2 G3 E1 E2 H1 H2 S1 S2;\n- A1 A2 F1 F2 H3 H4;\n- W1-W6;\n- S1-S3 V1 V2;\n- the 18 round-2 forms.\nEvery verdict line is byte-identical to round 6 (probe-verdicts-r6-vs-r7.log). The spellings (53/53 refused by lint) and the residual A3/A4 are also identical to round 6."
       }
+    },
+    {
+      "id": "F-DG4-100",
+      "stage_id": "DG4",
+      "requirement": "REQ-S10-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Slice B benefit and Finance mutations refuse a caller who lacks the permission (AUD, ADM-only, a Business Owner on a Finance decision) with 403 but write no authorization.denied audit event (ADR-0004 coverage rule)",
+      "reproduction": "Code: apps/api/src/modules/benefits/register.ts:129-131 `requirePermissionSomewhere` throws `problems.forbidden()` with NO `.withDenial(...)`; openBenefitWrite (register.ts:140) and openFinanceWrite (finance-validation.ts:216-219, used by decideFinanceValidation, decideBenefitBaseline, amendFinanceValidation, reverseFinanceValidation) call it first. The failed-mutation audit hook apps/api/src/modules/access/denials.ts:13 writes `authorization.denied` only for a problem that carries `denial`, so nothing is written. Run: probe S revision 3 (probes/sec-dg4-r1-sweep.test.ts, a generated sweep over all 203 P4 mutations on a disposable PostgreSQL 16, Node 22, LANG unset, and Node 24, LANG=C.UTF-8). Steps: (1) populate org A with the 27 P3/P4 contract exercise seams; (2) call every P4 mutation as the org-wide auditor AUD, as the ADM-only user (ADM_ACCESS + ADM_TECH) and as an org-B outsider; (3) read the request's audit rows by x-request-id. The [probe-S NO-DENIAL] lines in probe-S-rev3-node22-lang-unset.log list the operations that answer 403 with no authorization.denied row: 26 slice B operations (createBenefit, updateBenefit, archiveBenefit, advanceBenefitLifecycle, decideBenefitBaseline, the enabler, plan-value, allocation, group, overlap, scenario, valuation-method and measurement writes, decideFinanceValidation, amendFinanceValidation, reverseFinanceValidation) and completeWorkItem (403 work_item.not_assignee, apps/api/src/modules/tasks/routes.ts:52). Example lines: `[probe-S AUD] decideFinanceValidation POST /api/v1/transformations/<t>/finance-validations/<id>/decision body=plausible -> 403 forbidden audit=[]` and `[probe-S ADM] decideFinanceValidation ... -> 403 forbidden audit=[]`. The other 176 P4 mutations write exactly one authorization.denied for AUD (probe S AUD cases).",
+      "expected": "ADR-0004 §3 coverage rule: every failed authorization of a mutation writes exactly one audit event. The rest of P4 does this (e.g. decideApproval, decideGate, the gate-exception decision). The REQ-S10-003 register note says the ADM-only user's denial is written on 'every gate and Finance approval endpoint'. So an AUD, ADM-only or Business Owner attempt on the P4 Finance decision should write exactly one authorization.denied naming finance.validate.",
+      "actual": "403 forbidden with no audit row for 26 slice B mutations, including the P4 Finance validation decision and the Finance corrections, and for completeWorkItem. A Business Owner, auditor or technical admin trying to validate Finance value leaves no trace. The access decision itself is correct: 403, and nothing is written to any table (probe S checksum of 201 tables unchanged). adm-not-approver.test.ts covers only the DG2/DG3 Finance endpoints (validateBaseline, validateValuePool, validateBusinessCaseBaseline, validateBenefitFormulaVersion), not decideFinanceValidation or decideBenefitBaseline, so no test catches this.",
+      "evidence": [
+        "apps/api/src/modules/benefits/register.ts",
+        "apps/api/src/modules/benefits/finance-validation.ts",
+        "apps/api/src/modules/access/denials.ts",
+        "apps/api/src/modules/tasks/routes.ts",
+        "docs/architecture/adr/ADR-0004-audit.md",
+        "apps/api/test/integration/approvals/adm-not-approver.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-sweep.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev2-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-S-rev3-node24-lang-c-utf8.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). The access control is correct (403, nothing written); the missing piece is the ADR-0004 denial audit. Suggested repair: attach `denialOf(permission, target)` in requirePermissionSomewhere, as requireAction does elsewhere, or resolve the target first. Add the P4 Finance decision and baseline decision to the ADM-only denial-audit test. Also decide whether completeWorkItem's record-level 403 is a failed authorization to audit."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-101",
+      "stage_id": "DG4",
+      "requirement": "REQ-S08-017",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Finance amendments and reversals check If-Match against the original validation's version, which no correction ever changes: a correction sent with a stale ETag is accepted and silently overrides another Finance user's correction (lost update on a validated value)",
+      "reproduction": "Code: apps/api/src/modules/benefits/corrections.ts:75-92 openTarget compares If-Match with the ORIGINAL finance_validation row's version (line 81). createCorrection (lines 94-189) only INSERTs a new benefit_measurement and a new finance_validation row; nothing bumps the original's version or any other row the client can hold an ETag for. Run: probe F, case F2 (probes/sec-dg4-r1-finance.test.ts; disposable PostgreSQL 16, Node 22, LANG unset), using the implementers' benefit fixtures. (1) BO submits 1000 SAR; FIN approves 1000, and the original validation is at version 2 (ETag \"2\"). (2) FIN-B amends to correctedAmount 900 with If-Match \"2\": 201, delta -100, validated total 900.0000. (3) FIN-A, still holding ETag \"2\" from before FIN-B's change, amends to 1100 with If-Match \"2\": 201, delta +200, validated total 1100.0000. The original's ETag is still \"2\". Log line in probe-F-node22-lang-unset.log: `F2 original validation version after approval 2; FIN-B amend (If-Match 2) -> 201 -100.0000; total 900.0000; FIN-A amend with the SAME If-Match 2 -> 201 200.0000; total 1100.0000; original validation ETag now \"2\"`. corrections.test.ts itself sends the same `decided.version` for the amendment, the unchanged amendment and the reversal (lines 46-81), so no test can catch a stale correction.",
+      "expected": "Every P4 mutation of an existing record has working optimistic concurrency (CLAUDE.md engineering conventions; ADR-0030 'Every mutation of an existing record needs If-Match'; assignment: 'If-Match (409/428)'). A correction made from a view that predates another correction of the same validated value must be refused with 409 and the current version. Either the original validation's version steps on each correction, or the If-Match names the latest state of the correction chain.",
+      "actual": "The stale correction is accepted (201). FIN-B's correction (900, a found double count) is silently superseded by FIN-A's figure (1100), which was entered against a stale screen. Both rows stay visible and audited, but neither user is told about the conflict, and the validated total of a Finance-validated benefit ends on the stale figure. The 428 for a missing If-Match works. Only the 409 never fires after the first approval. Other cases in the same probe pass: F1 (two concurrent Finance decisions: one 200, one 422 not_queued, total counted once), F3 (concurrent amend and reverse: serialised by lock 730233, the reversal nets to 0.0000 and the amendment is refused already_reversed), F4 (in-place edit of a validated value: 409 validated_immutable) and F5 (decimal 900719925474099.1234 then -0.0001 = ...099.1233 exactly).",
+      "evidence": [
+        "apps/api/src/modules/benefits/corrections.ts",
+        "apps/api/test/integration/benefits/corrections.test.ts",
+        "docs/architecture/adr/ADR-0030-p4-benefit-values-finance-validation-totals.md",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/sec-dg4-r1-finance.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probe-F-node22-lang-unset.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). Mandatory because it is a data-integrity and optimistic-concurrency defect on Finance-validated values. Suggested repair: step the original finance_validation version (with its audit event) inside the correction transaction under lock 730233, so the next correction needs the new ETag. Return the new ETag to the client, and add a test in which a second correction with the pre-correction ETag gets 409."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-102",
+      "stage_id": "DG4",
+      "requirement": "REQ-S03-008",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two web import cycles introduced in P4: MyWorkPage.tsx <-> MyWorkSections.tsx and TraceabilityPage.tsx <-> TracePanels.tsx",
+      "reproduction": "Run `node docs/delivery/test-evidence/DG4/code-security/round-1/probes/web-cycles.mjs $TMPDIR/rev` (a file-level graph of static value imports of apps/web/src, excluding tests, `import type` and dynamic import()), with output in web-cycles.log. It finds three strongly connected components. Two are P4: apps/web/src/pages/dashboards/MyWorkSections.tsx:16 imports renderMessage from ../my-work/MyWorkPage.tsx, and MyWorkPage.tsx:34 imports MyWorkSections; apps/web/src/pages/traceability/TracePanels.tsx:44 imports useTraceSelection from ./TraceabilityPage.tsx, and TraceabilityPage.tsx:24 imports the three panels. The third, pages/admin/UsersPage.tsx <-> AssignmentsPage.tsx, dates from DG2 (T-DG2-FE15) and is not raised here.",
+      "expected": "Assignment, 'The web': no import cycle. The shared helpers (renderMessage, useTraceSelection) should live in a module that both pages import.",
+      "actual": "Two P4 cycles. No behavioural effect was observed: the cyclic bindings are used only at render time; pnpm -r build reports no circular-chunk warning; unit-web passes on Node 22 and 24. With the route-level React.lazy splitting of D-115, a cycle between page modules is fragile (evaluation order across chunks), so this is a maintainability defect only.",
+      "evidence": [
+        "apps/web/src/pages/my-work/MyWorkPage.tsx",
+        "apps/web/src/pages/dashboards/MyWorkSections.tsx",
+        "apps/web/src/pages/traceability/TraceabilityPage.tsx",
+        "apps/web/src/pages/traceability/TracePanels.tsx",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/web-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/web-cycles.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). Low and non-mandatory; it could be accepted as an observation if the owner prefers to defer it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-103",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-015",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The product gate operations that P4 extends (decideGate, submitGate, updateGate) authorize on the request-start grants and do not re-check them at commit time",
+      "reproduction": "Static reading, confirmed by the call-graph scan probes/commit-scan6.py (output commit-time-scan-rev6.log; manual resolution of every residual route in commit-time-residuals.txt). (a) apps/api/src/modules/workflows/gates.ts:872-905 decideGate uses `principalOf(request)`: requireTransformationRead and isApprover -> authorize (gates.ts:262-283) evaluate the grants loaded when the request started, and gates.ts contains no refreshPrincipal call. (b) submitGate (gates.ts:647) and updateGate (gates.ts:468, which configures the gate approver) call openWrite(...) WITHOUT `{ atCommit: true }`, so register-kit.ts:275 uses principalOf(request), not refreshPrincipal. By contrast, every write route of a P4 operation (P4_OPERATION_IDS) reaches refreshPrincipal on reloaded grants inside its transaction, for example decideApproval at approvals.ts:713. Failure scenario: an approver whose SP/BO grant is revoked after the request is authenticated, but before the decide transaction commits, still records the G5/G6 decision. No probe reproduces the race: a JSON body is parsed before the handler, so the window is only the body-parse time.",
+      "expected": "Assignment: every P4 mutation re-checks server-side authorization at commit time (the DG3 lesson 4 pattern: refreshPrincipal on reloaded grants, then commitTimeDenial). The P4 G5/G6 business approvals (REQ-PB-015 at DG4) go through decideGate.",
+      "actual": "These three DG2 operations, which DG2/DG3 approved and P4 extends (gates.ts +463 lines: G5 scale scope, exception and Modular-waiver checks), still authorize on the request-start grants. The behavioural effect is limited to a revocation that races the request by milliseconds. Nothing else is wrong in the gate decision path: the non-approver gets 403 gate.not_approver with a denial, the submitter gets 403, and a stale submission gets 409 (integration suites green in both runs).",
+      "evidence": [
+        "apps/api/src/modules/workflows/gates.ts",
+        "apps/api/src/modules/transformations/register-kit.ts",
+        "apps/api/src/modules/workflows/approvals.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/probes/commit-scan6.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-scan-rev6.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-1/commit-time-residuals.txt"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:22:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG4 round 1 by code-security-reviewer (session 22fefe29). Low and non-mandatory: a hardening gap in DG2 code that P4 extends. Suggested repair: refreshPrincipal inside the decide transaction and pass the fresh principal to isApprover, plus `atCommit: true` for submitGate and updateGate."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-120",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-065",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "T11 Decision Rights page in Arabic shows the Recommend/Approve/Consult/Inform/SLA source labels in English only, with no provisional-Arabic notice",
+      "reproduction": "Real stack (with-stack.sh, synthetic dev seed). Sign in as dev.lead and switch to Arabic. Create a transformation and open /transformations/{id}/decision-rights (dom-ui.mjs step 'decision-rights-T11'). Compare the page with the forums page of the same transformation and with GET /api/v1/decision-right-templates.",
+      "expected": "Every user-facing string is available in Arabic RTL (CLAUDE.md; master prompt bilingual rule). The template already holds Arabic texts for these columns (recommendAr, approveAr, consultAr, informAr and slaAr, for example '5 أيام عمل'), and ADR-0026 says 'Arabic is provisional'. So the Arabic T11 view should show those Arabic texts, or the English source under a provisional-Arabic label, as the forums page does (governanceP4.arProvisional).",
+      "actual": "In Arabic, the Decision column is Arabic, but the Recommend, Approve, Consult, Inform and SLA cells show the English source labels ('Transformation Lead', 'Sponsor', 'Business owners / Finance', 'Workstreams', '5 working days') next to Arabic party chips, with no provisional or source-text notice. The per-transformation DecisionRight contract has only one label per column (recommendLabel … slaLabel, copied from the English source), so the Arabic template texts are never carried to the transformation's copy. The probe assertion 'ar.T11.four-rows' fails on the missing '5 أيام عمل' in both runs (dom-ui.log, dom-ui-run2.log). The data and routing are correct, and T11 is seeded verbatim in English (DOM-R1-04 PASS), so this is a localization gap with no behavioural effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-1/screens/ar-decision-rights-T11.png",
+        "docs/delivery/test-evidence/DG4/domain/round-1/screens/en-decision-rights-T11.png",
+        "docs/delivery/test-evidence/DG4/domain/round-1/screens/ar-forums-five-layers.png",
+        "docs/delivery/test-evidence/DG4/domain/round-1/dom-ui-run2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-1/dom-api-run2.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG4 round 1 (T-DG4-REV-DOM-R1). Low, non-blocking: a bilingual-display gap on the T11 page. The template's Arabic texts exist but are not shown, and no provisional-Arabic label is shown (ADR-0026: 'Arabic is provisional'). The fix may need a contract or data change (Arabic labels per transformation row) or a render-time fallback to the template's Arabic while a label is unchanged. The solution-architect decides which."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-121",
+      "stage_id": "DG4",
+      "requirement": "REQ-S08-009",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Benefit totals 'Gross benefit' and 'Net' headlines add revenue uplift to margin uplift, and avoided cost to cash saving, in one SAR figure",
+      "reproduction": "Disposable PostgreSQL, real API (Fastify inject), integration project. Run zz-domain-r1.test.ts 'DOM-GROSS' (copied into the clone only). In one benefit world, create four financial benefits: revenue_uplift, margin_uplift, cash_saving and avoided_cost. Record planned values of 300, 70, 20 and 45 SAR for 2026-01..06. Then GET /transformations/{t}/benefit-totals. The Finance dashboard and the benefits page render the same gross and net (Totals.tsx 'Gross benefit'; dashboards 'Net (gross - implementation cost)').",
+      "expected": "Master prompt M0172 (§8): 'Keep revenue uplift separate from profit or margin benefit. Keep avoided cost separate from cash savings … Show gross benefits, implementation cost and net value separately'. A headline benefit or net-value figure should not add a top-line revenue amount to a margin (profit) amount, or a non-cash avoided cost to a cash saving. Doing so double counts the margin on incremental revenue, as in the playbook roaming example (B0145), which lists 'Incremental roaming revenue' and 'margin improvement' as separate benefits. Gross and net should be computed per compatible basis, for example net on margin/cash classes, or with revenue and avoided cost shown beside them and not summed. Otherwise the composition should at least be stated as a decision with Finance's rationale.",
+      "actual": "The per-class lines are correct and separate: revenue_uplift 300, margin_uplift 70, cash_saving 20, avoided_cost 45. But gross.planned = 435 = 300 + 70 + 20 + 45, and net.planned = 435 − 0 cost = 435 (integration-run-1.log, 'DOM-GROSS'). totals.ts sums FINANCIAL_TOTAL_CLASSES = [revenue_uplift, margin_uplift, cash_saving, avoided_cost, working_capital_release] into gross, and net = gross − implementation cost (ADR-0030 §7.6). The literal acceptance texts of REQ-S08-009 ('separate lines'; 'cost avoidance is not counted in cash savings') and REQ-S08-011 (cost subtracted once) are met, and validated totals are not affected by the composition. But the headline figures shown to executives and Finance combine revenue with profit and non-cash with cash, which the source tells the product to keep separate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-1/integration-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-1/zz-domain-r1.test.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/domain-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T22:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG4 round 1 (T-DG4-REV-DOM-R1). Medium, not mandatory: no literal acceptance clause is broken, and the per-class lines, currencies, n/a and validated totals are correct. But the gross and net headlines contradict M0172's 'keep separate' instruction. A change needs an ADR-0030 §7 amendment (solution-architect) before the kpi-benefits-engineer changes totals.ts and the web labels."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-140",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-010",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register rows REQ-PB-010 and REQ-S03-004 still disclose test gaps that QA-D closed, and their evidence omits the two QA-D acceptance tests",
+      "reproduction": "On the frozen candidate (a613f6f, candidate sha256:19656b1f…): read the notes and evidence of REQ-PB-010 and REQ-S03-004 in docs/delivery/requirements.csv, and compare them with tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts and tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (T-DG4-QA-D, merged before the freeze; D-116 says they 'close AN-P4A's two test gaps'). grep -c 'a01-one-source-of-truth-scorecard\\|a02-a08-drafts' docs/delivery/requirements.csv returns 0. Both QA-D tests ran green in this review (tests/qa 172/172 in 03-integration-tests-qa-candidate-only.log; 2/2 and 1/1 in integration run 1 and run 2).",
+      "expected": "Once QA-D's tests are merged into the candidate, the two rows cite them in `evidence`, and their notes no longer state a coverage gap that no longer exists (for REQ-PB-010: 'Partial: the scorecard read ... is not re-read after the rename by any test'; for REQ-S03-004: 'The A02 Design-phase draft can be saved before G2 clause is not asserted by a DG4 test').",
+      "actual": "Both rows still state the gap, and neither cites the QA-D test that closes it. The register therefore understates the evidence for two DG4 acceptance clauses and points auditors to weaker evidence (the DG2 registers.test.ts for the A02 clause). No behaviour is affected: the clauses are met and tested (REQ-PB-010 scorecard re-read and REQ-S03-004 draft-before-G2, 422 gate.g5_not_approved, then 201 after G5).",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG4/qa/T-DG4-QA-D-authoring/HANDBACK-T-DG4-QA-D-qa-verifier.md",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-tests-qa-candidate-only.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/03-integration-run1.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-10T23:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 1 (T-DG4-REV-QA-R1). Documentation drift only; non-blocking."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-141",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-011",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product e2e 'administration screens' (apps/web/e2e/journeys.spec.ts) depends on the users register's first page of 25 and fails in chromium-ar when the product journeys and the root acceptance specs share one stack",
+      "reproduction": "On the frozen candidate, run the product journeys and the root acceptance specs together on one real stack, as the DG4 assignment asks: e2e/support/qa-stack.sh npx playwright test apps/web/e2e/*.spec.ts e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a20-bilingual-shell.spec.ts --workers=1 (chromium-en then chromium-ar). In chromium-ar, 'administration screens (access + technical administrator)' fails at expect(getByRole('link', { name: 'Synthetic Transformation Lead' })).toBeVisible() after page.goto('/admin/users'), and its two serial followers do not run. Reproduced in both locale settings (04-e2e-full-unset.log, 04-e2e-full-cutf8.log). The trace shows GET /api/v1/users?...&limit=25 -> 200 with 25 items and a nextCursor, without that user. The same spec run alone on a fresh stack passes 9/9 in both projects (04-e2e-solo-journeys-qa-unset.log).",
+      "expected": "A product journey asserts its own fixture independently of how many other synthetic users exist on the shared stack, for example by searching the register for the user, or by following the pager. The DG4 assignment runs the product journeys and the root acceptance specs on one stack in both projects, so the suite has to be order- and data-independent.",
+      "actual": "The test assumes 'Synthetic Transformation Lead' is on page 1 of the users register (25 per page, UsersPage.tsx). In chromium-ar it runs after the whole chromium-en project, whose synthetic users (product specs, plus e2e/a04, e2e/a08-a09 and e2e/a20) sort before it. It passes in chromium-en (it runs 7th there) and in the pre-freeze product-only run (D-116). The product behaves correctly: the page shows 25 users and a next-page control. Test robustness only; no product defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-journeys-admin-failure-analysis.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-1/results/journeys-admin-failure/unset-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-1/04-e2e-solo-journeys-qa-unset.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-11T00:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 1 (T-DG4-REV-QA-R1). Test data-dependence, reproduced in both locale settings, green when run alone; non-blocking."
+        }
+      ]
     }
   ]
 }
