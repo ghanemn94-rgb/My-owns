@@ -1,0 +1,94 @@
+
+ RUN  v3.2.4 /home/user/wt/dg4-fe-r6
+
+ ❯ |unit-web| src/i18n/problems-slices-hijk.test.ts (18 tests | 6 failed) 133ms
+   ✓ slice H, I, C, A, J, K problem keys (en) > the slice ADR tables are read (the scan is not empty) 7ms
+   ✓ slice H, I, C, A, J, K problem keys (en) > the amendment tables are read too: row 186 (dashboard.value_class_not_applicable) is found, and the old scan missed it 10ms
+   × slice H, I, C, A, J, K problem keys (en) > the guard would have caught row 186: an untranslated amendment code is reported 24ms
+     → expected [ …(2) ] to deeply equal [ Array(1) ]
+   ✓ slice H, I, C, A, J, K problem keys (en) > the amendment format is matched exactly (status in the second column), other code-first tables are not 0ms
+   × slice H, I, C, A, J, K problem keys (en) > every refusal code of the slice ADRs is translated (both table formats) 8ms
+     → expected [ 'dashboard.currency_not_applicable' ] to deeply equal []
+   × slice H, I, C, A, J, K problem keys (en) > every code-table code of these slices is translated, with no server placeholder left 40ms
+     → dashboard.currency_not_applicable: expected '' not to be '' // Object.is equality
+   ✓ slice H, I, C, A, J, K problem keys (en) > the two `params` codes render their date localized, and without `params` the text shown before (ADR-0038 Q1) 4ms
+   ✓ slice H, I, C, A, J, K problem keys (en) > a problem without placeholders renders the same text with or without params 0ms
+   ✓ slice H, I, C, A, J, K problem keys (en) > the Modular-entry codes say what to do (links, waiver, G3) 1ms
+   ✓ slice H, I, C, A, J, K problem keys (ar) > the slice ADR tables are read (the scan is not empty) 3ms
+   ✓ slice H, I, C, A, J, K problem keys (ar) > the amendment tables are read too: row 186 (dashboard.value_class_not_applicable) is found, and the old scan missed it 8ms
+   × slice H, I, C, A, J, K problem keys (ar) > the guard would have caught row 186: an untranslated amendment code is reported 6ms
+     → expected [ …(2) ] to deeply equal [ Array(1) ]
+   ✓ slice H, I, C, A, J, K problem keys (ar) > the amendment format is matched exactly (status in the second column), other code-first tables are not 0ms
+   × slice H, I, C, A, J, K problem keys (ar) > every refusal code of the slice ADRs is translated (both table formats) 5ms
+     → expected [ 'dashboard.currency_not_applicable' ] to deeply equal []
+   × slice H, I, C, A, J, K problem keys (ar) > every code-table code of these slices is translated, with no server placeholder left 11ms
+     → dashboard.currency_not_applicable: expected '' not to be '' // Object.is equality
+   ✓ slice H, I, C, A, J, K problem keys (ar) > the two `params` codes render their date localized, and without `params` the text shown before (ADR-0038 Q1) 2ms
+   ✓ slice H, I, C, A, J, K problem keys (ar) > a problem without placeholders renders the same text with or without params 0ms
+   ✓ slice H, I, C, A, J, K problem keys (ar) > the Modular-entry codes say what to do (links, waiver, G3) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/i18n/problems-slices-hijk.test.ts > slice H, I, C, A, J, K problem keys (en) > the guard would have caught row 186: an untranslated amendment code is reported
+ FAIL  |unit-web| src/i18n/problems-slices-hijk.test.ts > slice H, I, C, A, J, K problem keys (ar) > the guard would have caught row 186: an untranslated amendment code is reported
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "dashboard.currency_not_applicable",[39m
+[2m    "dashboard.value_class_not_applicable",[22m
+[2m  ][22m
+
+ ❯ src/i18n/problems-slices-hijk.test.ts:126:47
+    124|     const without = ((k: string, o?: object) =>
+    125|       k === key("dashboard.value_class_not_applicable") ? "" : real(k,…
+    126|     expect(untranslated(without, adrCodes())).toEqual(["dashboard.valu…
+       |                                               ^
+    127|     // The old classic-only scan could not report it.
+    128|     expect(untranslated(without, adrCodes(["classic"]))).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit-web| src/i18n/problems-slices-hijk.test.ts > slice H, I, C, A, J, K problem keys (en) > every refusal code of the slice ADRs is translated (both table formats)
+ FAIL  |unit-web| src/i18n/problems-slices-hijk.test.ts > slice H, I, C, A, J, K problem keys (ar) > every refusal code of the slice ADRs is translated (both table formats)
+AssertionError: expected [ 'dashboard.currency_not_applicable' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "dashboard.currency_not_applicable",[39m
+[31m+ ][39m
+
+ ❯ src/i18n/problems-slices-hijk.test.ts:150:41
+    148| 
+    149|   it("every refusal code of the slice ADRs is translated (both table f…
+    150|     expect(untranslated(t, adrCodes())).toEqual([]);
+       |                                         ^
+    151|   });
+    152| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit-web| src/i18n/problems-slices-hijk.test.ts > slice H, I, C, A, J, K problem keys (en) > every code-table code of these slices is translated, with no server placeholder left
+ FAIL  |unit-web| src/i18n/problems-slices-hijk.test.ts > slice H, I, C, A, J, K problem keys (ar) > every code-table code of these slices is translated, with no server placeholder left
+AssertionError: dashboard.currency_not_applicable: expected '' not to be '' // Object.is equality
+ ❯ src/i18n/problems-slices-hijk.test.ts:156:27
+    154|     for (const c of [...CODE_TABLE, ...adrCodes()]) {
+    155|       const text = t(key(c), { defaultValue: "" });
+    156|       expect(text, c).not.toBe("");
+       |                           ^
+    157|       if (locale === "ar") expect(text, c).toMatch(/[؀-ۿ]/);
+    158|       // Exactly the two `params` codes keep a placeholder: `{{date}}`…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 12 passed (18)
+   Start at  15:58:07
+   Duration  1.77s (transform 512ms, setup 133ms, collect 732ms, tests 133ms, environment 430ms, prepare 127ms)
+

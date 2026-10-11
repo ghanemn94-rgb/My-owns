@@ -1,0 +1,29 @@
+# simulated closing step: git diff of the temporary edit
+diff --git a/packages/shared/src/schemas/dashboards.ts b/packages/shared/src/schemas/dashboards.ts
+index 5c4dec2..5594634 100644
+--- a/packages/shared/src/schemas/dashboards.ts
++++ b/packages/shared/src/schemas/dashboards.ts
+@@ -156,7 +156,7 @@ export const dashboardItem = z.strictObject({
+   ownerUserId: nullableUuid,
+   flags: z.array(z.string()),
+   /** The basis of `value` when it sums benefit values (profit_and_cash on a Portfolio initiative); else null. */
+-  valueBasis: headlineBasis.nullable().optional(),
++  valueBasis: headlineBasis.nullable(),
+ });
+ export type DashboardItem = z.infer<typeof dashboardItem>;
+ 
+@@ -300,8 +300,7 @@ export const dashboardDrilldown = z.strictObject({
+   currency: z
+     .string()
+     .regex(/^[A-Z]{3}$/)
+-    .nullable()
+-    .optional(),
++    .nullable(),
+ });
+ export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
+ 
+
+> @mth/web@0.1.0 typecheck /home/user/wt/dg4-fe-r6/apps/web
+> tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+
+web typecheck exit=0

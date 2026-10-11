@@ -4,8 +4,8 @@
 //    label and reason; they are never shown as 0 and never green (M0159). Blue never means favourable.
 //  - A dashboard value has five DISTINCT states (ADR-0037 §5): a known value, a known zero (labelled "zero"), Unknown,
 //    Stale (the last value, labelled Stale) and Not applicable. Each carries `data-value-state` for tests.
-//  - Values are decimal strings formatted without floats; ratios are fractions shown as percent (D-091). Currencies are
-//    never added together: each currency is its own line.
+//  - Values are decimal strings formatted without floats; ratios and percentages are fractions shown as percent (D-091,
+//    ADR-0028 §3; F-DG4-122, F-DG4-125). Currencies are never added together: each currency is its own line.
 //  - The server sends rule, reason, headline and flag KEYS; the texts are translated here at render time (S-6).
 //  - The seeded Template 10 labels come from the server in both languages; the Arabic ones are provisional
 //    (`arProvisional`) and say so, with the verbatim English source beside them.
@@ -101,18 +101,29 @@ const COUNT_UNITS = new Set([
   "count",
 ]);
 
-/** Units whose value is already a percentage ("12.5" = 12.5 %). A `ratio` is a fraction and is multiplied by 100. */
+/**
+ * Percentage units. A percentage is stored as a FRACTION (ADR-0028 §3: 0.12 = 12 %), so its value is multiplied by
+ * 100, exactly as the KPI pages' `formatKpiValue` does (F-DG4-125). The API sends a KPI's unit as
+ * `unit_label ?? unit_kind` (kpi/dashboard-facts.ts): `percentage` is the unit kind; `%` and `percent` are the unit
+ * labels a percentage KPI may carry. No API unit sends an already-scaled percentage.
+ */
 const PERCENT_UNITS = new Set(["percent", "percentage", "%"]);
+
+/** True for a percentage unit (trimmed, case-insensitive: a unit label is free text). */
+export function isPercentUnit(unit: string | null | undefined): boolean {
+  return !!unit && PERCENT_UNITS.has(unit.trim().toLowerCase());
+}
 
 /**
  * The formatted number of a known value (no state label). Null when the value is not a number.
  * The UNIT decides before the currency (F-DG4-122): the value gap is `{unit: "ratio", currency: "SAR"}` because it sits
  * in its currency's block, and it is a ratio, shown as a percentage ("100 %"), never as money ("SAR 1.00").
+ * A `ratio` and a percentage unit are both fractions × 100 (F-DG4-122, F-DG4-125): 1 → "100 %", 0.12 → "12 %".
  */
 export function formatValue(v: Pick<DashboardValue, "value" | "unit" | "currency">, locale: Locale): string | null {
   if (v.value === null) return null;
-  if (v.unit === "ratio") return formatPercent(v.value, locale, { fraction: true, maxFractionDigits: 2 });
-  if (v.unit && PERCENT_UNITS.has(v.unit)) return formatPercent(v.value, locale, { maxFractionDigits: 2 });
+  if (v.unit === "ratio" || isPercentUnit(v.unit))
+    return formatPercent(v.value, locale, { fraction: true, maxFractionDigits: 2 });
   if (v.currency) return formatMoney(v.value, v.currency, locale);
   if (v.unit && COUNT_UNITS.has(v.unit)) return formatDecimal(v.value, locale, { maxFractionDigits: 0 });
   const n = formatDecimal(v.value, locale, { maxFractionDigits: 4 });
@@ -415,6 +426,7 @@ export function AreaCard({
         </p>
       ) : null}
       <RuleNote rag={area.rag} />
+      <ValueRagLines rag={area.rag} id={area.code} provisionalNote={!area.headlines.some((h) => h.headlineBasis)} />
       {area.headlines.length > 0 ? (
         <HeadlineList
           id={area.code}
@@ -451,6 +463,117 @@ export function BasisChip({ basis }: { basis: HeadlineBasis | null | undefined }
 
 const isBeside = (h: DashboardHeadline) => h.headlineBasis === "top_line" || h.headlineBasis === "non_cash";
 
+const BASES: readonly HeadlineBasis[] = ["profit_and_cash", "top_line", "non_cash"];
+const RAG_STATUSES = new Set<string>(Object.keys(RAG));
+
+/** One line of the Value RAG (ADR-0037 amendment N4 item 1): the validated gap of one basis in one currency. */
+export interface ValueRagLine {
+  readonly currency: string;
+  readonly headlineBasis: HeadlineBasis;
+  readonly gapRatio: string | null;
+  readonly status: RagStatus;
+  readonly reasonKey: string | null;
+}
+
+/**
+ * The per-basis lines of a `dashboard.rag.value.validated_gap` RAG (`ruleParams.lines`, N4 item 1), or null when the
+ * RAG has none. `ruleParams` is a free object in the contract, so every line is checked: a line without a known basis,
+ * a currency or a known status is dropped, never guessed. A missing gap ratio stays null (shown as Unknown, never 0).
+ */
+export function valueRagLines(rag: DashboardRag): ValueRagLine[] | null {
+  if (rag.ruleKey !== "dashboard.rag.value.validated_gap") return null;
+  const raw = (rag.ruleParams as { lines?: unknown }).lines;
+  if (!Array.isArray(raw)) return null;
+  const lines: ValueRagLine[] = [];
+  for (const x of raw as unknown[]) {
+    if (typeof x !== "object" || x === null) continue;
+    const l = x as {
+      currency?: unknown;
+      headlineBasis?: unknown;
+      gapRatio?: unknown;
+      status?: unknown;
+      reasonKey?: unknown;
+    };
+    if (typeof l.currency !== "string" || typeof l.status !== "string" || !RAG_STATUSES.has(l.status)) continue;
+    if (!BASES.includes(l.headlineBasis as HeadlineBasis)) continue;
+    lines.push({
+      currency: l.currency,
+      headlineBasis: l.headlineBasis as HeadlineBasis,
+      gapRatio: typeof l.gapRatio === "string" ? l.gapRatio : null,
+      status: l.status as RagStatus,
+      reasonKey: typeof l.reasonKey === "string" ? l.reasonKey : null,
+    });
+  }
+  return lines.length > 0 ? lines : null;
+}
+
+/**
+ * The Value RAG's lines (D-122, F-DG4-126): one validated gap per basis and currency, each labelled with its basis,
+ * with its own status; the area's status is the worst of them. Gaps are listed, never added across bases. The
+ * line(s) that set the area's status are marked `data-worst`.
+ */
+export function ValueRagLines({
+  rag,
+  id,
+  provisionalNote = true,
+}: {
+  rag: DashboardRag;
+  id: string;
+  /** False when the area's basis-labelled headlines already show the provisional-Arabic note (one note per area). */
+  provisionalNote?: boolean;
+}) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const lines = valueRagLines(rag);
+  if (!lines) return null;
+  const captionId = `value-rag-lines-${id}`;
+  return (
+    <div data-value-rag-lines={lines.length}>
+      <h3 className="small-heading" id={captionId}>
+        {t("dashboards.basis.ragLines")}
+      </h3>
+      <p className="small muted" data-worst-of-note>
+        <Icon name="info" /> {t("dashboards.basis.ragLinesNote")}
+      </p>
+      {/* A wrapping list, not a table: in a narrow area card every line's status stays visible without scrolling. */}
+      <ul className="plain-list" aria-labelledby={captionId}>
+        {lines.map((l, n) => (
+          <li
+            key={`${l.headlineBasis}-${l.currency}-${n}`}
+            data-rag-line-basis={l.headlineBasis}
+            data-rag-line-currency={l.currency}
+            data-rag-line-status={l.status}
+            {...(l.status === rag.status ? { "data-worst": "true" } : {})}
+          >
+            <BasisChip basis={l.headlineBasis} />{" "}
+            <bdi dir="ltr" className="code">
+              {l.currency}
+            </bdi>
+            {" · "}
+            <span className="visually-hidden">{t("dashboards.basis.ragLineGap")}: </span>
+            <ValueView
+              value={
+                l.gapRatio === null
+                  ? { state: "unknown", value: null, unit: "ratio", currency: l.currency, reasonKey: l.reasonKey }
+                  : { state: "value", value: l.gapRatio, unit: "ratio", currency: l.currency, reasonKey: null }
+              }
+            />{" "}
+            <RagStatusChip status={l.status} />
+            {l.reasonKey && l.gapRatio !== null ? (
+              <span className="block small muted">{keyText(t, "reason", l.reasonKey)}</span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {provisionalNote && locale === "ar" ? (
+        <p className="small muted" data-provisional="basis">
+          <Icon name="info" /> {t("dashboards.basis.arProvisional")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * A list of headlines (T10 areas, the Executive Overview, Finance, the workspace header). The profit-and-cash and
  * basis-less headlines come first, in the server's order; the top-line and non-cash headlines follow in their own
@@ -473,11 +596,11 @@ export function HeadlineList({
   const beside = headlines.filter(isBeside);
   const based = headlines.some((h) => h.headlineBasis);
   const cls = compact ? "details details--compact" : "details";
-  const item = (h: DashboardHeadline) => {
+  const item = (h: DashboardHeadline, n: number) => {
     const label = keyText(t, "headline", h.labelKey);
     return (
       <div
-        key={`${h.metric}-${h.headlineBasis ?? ""}-${h.value.currency ?? ""}`}
+        key={`${h.metric}-${h.headlineBasis ?? ""}-${h.value.currency ?? ""}-${n}`}
         data-metric={h.metric}
         {...(h.headlineBasis ? { "data-headline-basis": h.headlineBasis } : {})}
         {...(isBeside(h) ? { "data-not-summed": "true" } : {})}
@@ -529,8 +652,13 @@ export function HeadlineList({
 function AreaItems({ area, contextTid }: { area: T10Area; contextTid: string | null }) {
   const { t } = useTranslation();
   const [all, setAll] = useState(false);
+  const locale = useLocale();
   if (area.items.length === 0) return <p className="small muted">{t("dashboards.area.noItems")}</p>;
   const shown = all ? area.items : area.items.slice(0, 10);
+  // ADR-0037 amendment N4 item 2 (F-DG4-127): the Portfolio initiative value is on the profit-and-cash basis, and the
+  // column says so, but only when the API labels every item so (an unlabelled value is never claimed for a basis).
+  const portfolioBasis = area.code === "portfolio" && area.items.every((i) => i.valueBasis === "profit_and_cash");
+  const based = area.items.some((i) => i.valueBasis);
   return (
     <>
       <div className="table-wrap">
@@ -540,7 +668,9 @@ function AreaItems({ area, contextTid }: { area: T10Area; contextTid: string | n
             <tr>
               <th scope="col">{t("dashboards.item.record")}</th>
               <th scope="col">{t("dashboards.item.status")}</th>
-              <th scope="col">{t("dashboards.item.value")}</th>
+              <th scope="col" data-value-column-basis={portfolioBasis ? "profit_and_cash" : undefined}>
+                {portfolioBasis ? t("dashboards.basis.portfolioValue") : t("dashboards.item.value")}
+              </th>
               <th scope="col">{t("dashboards.item.due")}</th>
             </tr>
           </thead>
@@ -555,6 +685,11 @@ function AreaItems({ area, contextTid }: { area: T10Area; contextTid: string | n
         <button type="button" className="button button--link button--small" onClick={() => setAll((x) => !x)}>
           {all ? t("dashboards.area.showFewer") : t("dashboards.area.showAll", { n: area.items.length })}
         </button>
+      ) : null}
+      {based && locale === "ar" ? (
+        <p className="small muted" data-provisional="basis">
+          <Icon name="info" /> {t("dashboards.basis.arProvisional")}
+        </p>
       ) : null}
     </>
   );
@@ -577,7 +712,15 @@ function ItemRow({ item, contextTid }: { item: DashboardItem; contextTid: string
         <Flags flags={item.flags} />
       </th>
       <td>{item.rag ? <RagStatusChip status={item.rag} /> : <span className="muted">—</span>}</td>
-      <td>{item.value ? <ValueView value={item.value} /> : <span className="muted">—</span>}</td>
+      <td {...(item.valueBasis ? { "data-item-basis": item.valueBasis } : {})}>
+        {item.value ? <ValueView value={item.value} /> : <span className="muted">—</span>}
+        {item.value && item.valueBasis ? (
+          <>
+            {" "}
+            <BasisChip basis={item.valueBasis} />
+          </>
+        ) : null}
+      </td>
       <td>
         {item.dueDate ? (
           <span data-due={item.dueDate}>{formatBusinessDate(item.dueDate, locale)}</span>
@@ -719,6 +862,16 @@ export function DrilldownPanel({
                     <dd data-drill-basis-of={d.headlineBasis}>
                       <BasisChip basis={d.headlineBasis} />{" "}
                       <span className="small muted">{t(`dashboards.basis.classes.${d.headlineBasis}`)}</span>
+                    </dd>
+                  </div>
+                ) : null}
+                {d.currency ? (
+                  <div>
+                    <dt>{t("dashboards.drill.currency")}</dt>
+                    <dd data-drill-currency={d.currency}>
+                      <bdi dir="ltr" className="code">
+                        {d.currency}
+                      </bdi>
                     </dd>
                   </div>
                 ) : null}

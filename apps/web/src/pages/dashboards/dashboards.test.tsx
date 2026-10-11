@@ -88,10 +88,11 @@ describe("webPathOf maps API record paths to web routes", () => {
       for (const v of ["1", "0.25"]) {
         expect(gap(v)).not.toMatch(/SAR|ر\.س|1\.00|0\.25/);
       }
-      // A percentage unit (already in percent) carrying a currency is a percentage too, not money.
-      expect(formatValue({ value: "12.5", unit: "percent", currency: "SAR" }, locale)).toBe("12.5 %");
-      expect(formatValue({ value: "12.5", unit: "percentage", currency: "SAR" }, locale)).toBe("12.5 %");
-      expect(formatValue({ value: "12.5", unit: "%", currency: "SAR" }, locale)).toBe("12.5 %");
+      // A percentage unit carrying a currency is a percentage too, not money. It is a fraction (ADR-0028 §3;
+      // F-DG4-125): 0.125 → 12.5 %. See percentKpi.test.tsx for the API's own KPI value objects.
+      expect(formatValue({ value: "0.125", unit: "percent", currency: "SAR" }, locale)).toBe("12.5 %");
+      expect(formatValue({ value: "0.125", unit: "percentage", currency: "SAR" }, locale)).toBe("12.5 %");
+      expect(formatValue({ value: "0.125", unit: "%", currency: "SAR" }, locale)).toBe("12.5 %");
       // Money stays money.
       const money = formatValue({ value: "90", unit: "currency", currency: "SAR" }, locale);
       expect(money).toMatch(locale === "en" ? /^SAR\s?90\.00$/ : /90\.00\s?ر\.س\./);
@@ -136,7 +137,10 @@ describe.each(["en", "ar"] as const)("Dashboards (%s)", (locale) => {
     // stale keeps its last value, labelled Stale
     const stale = document.querySelector("section[data-area='dependencies'] [data-value-state='stale']")!;
     expect(stale.textContent).toContain(t("dashboards.state.stale"));
-    expect(stale.getAttribute("data-value")).toBe("42");
+    expect(stale.getAttribute("data-value")).toBe("0.42");
+    // A percentage is a fraction (ADR-0028 §3; F-DG4-125): the last value 0.42 reads 42 %.
+    expect(stale.textContent).toContain("42 %");
+    expect(stale.textContent).not.toContain("0.42");
     // Decisions red with the overdue ask listed and linked to its web page
     const decisions = document.querySelector("section[data-area='decisions']")!;
     expect(decisions.getAttribute("data-area-rag")).toBe("red");
