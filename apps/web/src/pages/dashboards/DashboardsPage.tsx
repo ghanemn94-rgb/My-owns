@@ -375,6 +375,7 @@ export function FinanceDashboardPage() {
                         unit: "currency",
                         currency: null,
                         reasonKey: "dashboard.value.no_financial_benefit",
+                        kpiUnit: null,
                       }}
                     />
                   </p>
