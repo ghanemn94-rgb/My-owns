@@ -3,6 +3,7 @@
 import type {
   DashboardDrilldown,
   DashboardItem,
+  DashboardKpiUnit,
   DashboardValue,
   ExecutiveOverview,
   FinanceDashboard,
@@ -20,19 +21,27 @@ export const DECISION_ID = "01920000-0000-7000-9000-00000000d001";
 export const INITIATIVE_ID = "01920000-0000-7000-9000-00000000c001";
 export const PERIOD_ID = "01920000-0000-7000-9000-00000000e001";
 
-export const v = (value: string, currency: string | null = "SAR", unit = "currency"): DashboardValue => ({
+// `kpiUnit` (ADR-0037 N5; D-124): the KPI's unit on a KPI-derived value, null on money, the computed ratio and counts.
+export const v = (
+  value: string,
+  currency: string | null = "SAR",
+  unit = "currency",
+  kpiUnit: DashboardKpiUnit | null = null,
+): DashboardValue => ({
   state: value === "0" ? "zero" : "value",
   value,
   unit,
   currency,
   reasonKey: null,
+  kpiUnit,
 });
-export const unknownV = (reasonKey: string): DashboardValue => ({
+export const unknownV = (reasonKey: string, kpiUnit: DashboardKpiUnit | null = null): DashboardValue => ({
   state: "unknown",
   value: null,
-  unit: null,
+  unit: kpiUnit ? (kpiUnit.label ?? kpiUnit.kind) : null,
   currency: null,
   reasonKey,
+  kpiUnit,
 });
 export const naV = (reasonKey: string): DashboardValue => ({
   state: "not_applicable",
@@ -40,14 +49,16 @@ export const naV = (reasonKey: string): DashboardValue => ({
   unit: "ratio",
   currency: null,
   reasonKey,
+  kpiUnit: null,
 });
-/** A Stale percentage: a fraction, as the API sends it (ADR-0028 §3; F-DG4-125): 0.42 reads 42 %. */
+/** A Stale percentage KPI labelled '%': a fraction, as the API sends it (ADR-0028 §3; F-DG4-125): 0.42 reads 42 %. */
 export const staleV: DashboardValue = {
   state: "stale",
   value: "0.42",
   unit: "%",
   currency: null,
   reasonKey: "kpi.stale",
+  kpiUnit: { kind: "percentage", label: "%" },
 };
 
 export const filters = (over: Partial<ExecutiveOverview["appliedFilters"]> = {}) => ({
@@ -109,7 +120,7 @@ export function sixAreas(): T10Area[] {
           href: `/api/v1/transformations/${TR_ID}/kpi-definitions/${KPI_ID}/status`,
           rag: "unknown",
           dueDate: null,
-          value: unknownV("kpi.no_accepted_actual"),
+          value: unknownV("kpi.no_accepted_actual", { kind: "percentage", label: null }),
           ownerUserId: USER_ID,
           flags: ["calculated_unknown"],
           valueBasis: null,
@@ -531,6 +542,7 @@ const naPc = (unit: string): DashboardValue => ({
   unit,
   currency: null,
   reasonKey: "dashboard.value.no_profit_and_cash_benefit",
+  kpiUnit: null,
 });
 
 export function d119Headlines(variant: D119Variant = "main"): Headline[] {
@@ -714,6 +726,7 @@ export function n4PortfolioItems(): DashboardItem[] {
       unit: "currency",
       currency: "SAR",
       reasonKey: "dashboard.portfolio.no_profit_and_cash_allocation",
+      kpiUnit: null,
     }),
     initiative(N4_INI.c, "INI-C", "Synthetic unallocated initiative", {
       state: "unknown",
@@ -721,6 +734,7 @@ export function n4PortfolioItems(): DashboardItem[] {
       unit: "currency",
       currency: null,
       reasonKey: "dashboard.portfolio.no_allocated_value",
+      kpiUnit: null,
     }),
   ];
 }

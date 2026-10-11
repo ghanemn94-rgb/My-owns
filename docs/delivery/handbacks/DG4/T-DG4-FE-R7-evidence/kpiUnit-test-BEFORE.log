@@ -1,0 +1,284 @@
+
+ RUN  v3.2.4 /home/user/wt/dg4-fe-r7
+
+stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ❯ |unit-web| src/pages/dashboards/kpiUnit.test.tsx (26 tests | 22 failed) 2018ms
+   × N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > formats ARCH-R7's four fixtures: 12 %, 12 % of users, 1.5, 100 % 27ms
+     → expected '0.12 % of users' to be '12 % of users' // Object.is equality
+   × N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > splits the number from the label, so the label can be isolated on its own (bidi) 1ms
+     → (0 , formatValueParts) is not a function
+   × N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > applies N5's percentage label rule: '%' is always shown and the label never changes the × 100 4ms
+     → expected '0.12 % of users' to be '12 % of users' // Object.is equality
+   × N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > formats ratio, count, duration, score and other as decimals with their label, never × 100 3ms
+     → expected '25 %' to be '0.25' // Object.is equality
+   × N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > formats a currency KPI as money without its label; without a currency, as `other` 2ms
+     → expected '90 currency' to be '90' // Object.is equality
+   ✓ N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > keeps today's rules when kpiUnit is null or absent (F-DG4-122, F-DG4-125) 3ms
+   × N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > formats ARCH-R7's four fixtures: 12 %, 12 % of users, 1.5, 100 % 1ms
+     → expected '0.12 % of users' to be '12 % of users' // Object.is equality
+   × N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > splits the number from the label, so the label can be isolated on its own (bidi) 0ms
+     → (0 , formatValueParts) is not a function
+   × N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > applies N5's percentage label rule: '%' is always shown and the label never changes the × 100 2ms
+     → expected '0.12 % of users' to be '12 % of users' // Object.is equality
+   × N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > formats ratio, count, duration, score and other as decimals with their label, never × 100 1ms
+     → expected '25 %' to be '0.25' // Object.is equality
+   × N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > formats a currency KPI as money without its label; without a currency, as `other` 2ms
+     → expected '90 currency' to be '90' // Object.is equality
+   ✓ N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > keeps today's rules when kpiUnit is null or absent (F-DG4-122, F-DG4-125) 1ms
+   × N5 ValueView (en): states keep their rendering > isolates the number left-to-right and the label in its own auto-direction isolate 31ms
+     → expected '0.12 % of users' to be '12 % of users' // Object.is equality
+   × N5 ValueView (en): states keep their rendering > Stale F2 shows the Stale chip and '12 % of users' as the last known value 26ms
+     → expected 'Stale last known value: 0.12 % of use…' to contain 'last known value: 12 % of users'
+   ✓ N5 ValueView (en): states keep their rendering > Unknown F3 shows Unknown with its reason and no number 5ms
+   × N5 ValueView (en): states keep their rendering > a zero F1 reads '0 %' and a zero F3 reads '0', each with the Zero label 9ms
+     → expected '0 %' to be '0' // Object.is equality
+   × N5 ValueView (ar): states keep their rendering > isolates the number left-to-right and the label in its own auto-direction isolate 2ms
+     → expected '0.12 % of users' to be '12 % of users' // Object.is equality
+   × N5 ValueView (ar): states keep their rendering > Stale F2 shows the Stale chip and '12 % of users' as the last known value 4ms
+     → expected 'قديم آخر قيمة معروفة: 0.12 % of users…' to contain 'آخر قيمة معروفة: 12 % of users'
+   ✓ N5 ValueView (ar): states keep their rendering > Unknown F3 shows Unknown with its reason and no number 3ms
+   × N5 ValueView (ar): states keep their rendering > a zero F1 reads '0 %' and a zero F3 reads '0', each with the Zero label 6ms
+     → expected '0 %' to be '0' // Object.is equality
+   × N5 surfaces (en): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down 741ms
+     → 01920000-0000-7000-9000-0000000a0f03: expected '150 %' to be '1.5' // Object.is equality
+   × N5 surfaces (en): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas 411ms
+     → 01920000-0000-7000-9000-0000000a0f03: expected '150 %' to be '1.5' // Object.is equality
+   × N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items 384ms
+     → expected 'n5_f3_ratioTransformation Amber150 %D…' to contain '1.5'
+   × N5 surfaces (ar): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down 163ms
+     → 01920000-0000-7000-9000-0000000a0f03: expected '150 %' to be '1.5' // Object.is equality
+   × N5 surfaces (ar): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas 110ms
+     → 01920000-0000-7000-9000-0000000a0f03: expected '150 %' to be '1.5' // Object.is equality
+   × N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items 76ms
+     → expected 'n5_f3_ratioالتحوّل كهرماني150 %التفاص…' to contain '1.5'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > formats ARCH-R7's four fixtures: 12 %, 12 % of users, 1.5, 100 %
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > formats ARCH-R7's four fixtures: 12 %, 12 % of users, 1.5, 100 %
+AssertionError: expected '0.12 % of users' to be '12 % of users' // Object.is equality
+
+Expected: [32m"12 % of users"[39m
+Received: [31m"[7m0.[27m12 % of users"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:65:37
+     63|   it("formats ARCH-R7's four fixtures: 12 %, 12 % of users, 1.5, 100 %…
+     64|     expect(formatValue(F1, locale)).toBe("12 %");
+     65|     expect(formatValue(F2, locale)).toBe("12 % of users");
+       |                                     ^
+     66|     expect(formatValue(F3, locale)).toBe("1.5");
+     67|     expect(formatValue(F4, locale)).toBe("100 %");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > splits the number from the label, so the label can be isolated on its own (bidi)
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > splits the number from the label, so the label can be isolated on its own (bidi)
+TypeError: (0 , formatValueParts) is not a function
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:76:12
+     74| 
+     75|   it("splits the number from the label, so the label can be isolated o…
+     76|     expect(formatValueParts(F1, locale)).toEqual({ number: "12 %", lab…
+       |            ^
+     77|     expect(formatValueParts(F2, locale)).toEqual({ number: "12", label…
+     78|     expect(formatValueParts(F3, locale)).toEqual({ number: "1.5", labe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > applies N5's percentage label rule: '%' is always shown and the label never changes the × 100
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > applies N5's percentage label rule: '%' is always shown and the label never changes the × 100
+AssertionError: expected '0.12 % of users' to be '12 % of users' // Object.is equality
+
+Expected: [32m"12 % of users"[39m
+Received: [31m"[7m0.[27m12 % of users"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:87:31
+     85|       formatValue({ ...F1, value, unit: label ?? "percentage", kpiUnit…
+     86|     for (const plain of ["%", "percent", "percentage", " Percentage ",…
+     87|     expect(pct("% of users")).toBe("12 % of users");
+       |                               ^
+     88|     expect(pct("of users")).toBe("12 % of users");
+     89|     expect(pct("من المستخدمين")).toBe("12 % من المستخدمين");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > formats ratio, count, duration, score and other as decimals with their label, never × 100
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > formats ratio, count, duration, score and other as decimals with their label, never × 100
+AssertionError: expected '25 %' to be '0.25' // Object.is equality
+
+Expected: [32m"[7m0.[27m25"[39m
+Received: [31m"25[7m %[27m"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:98:40
+     96|     const kpi = (kind: "ratio" | "count" | "duration" | "score" | "oth…
+     97|       formatValue({ ...F3, value, unit: label ?? kind, kpiUnit: { kind…
+     98|     expect(kpi("ratio", null, "0.25")).toBe("0.25");
+       |                                        ^
+     99|     expect(kpi("ratio", "x")).toBe("1.5 x");
+    100|     expect(kpi("count", "calls", "1200")).toBe("1,200 calls");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (en): a KPI value is formatted from kpiUnit.kind > formats a currency KPI as money without its label; without a currency, as `other`
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 formatValue (ar): a KPI value is formatted from kpiUnit.kind > formats a currency KPI as money without its label; without a currency, as `other`
+AssertionError: expected '90 currency' to be '90' // Object.is equality
+
+Expected: [32m"90"[39m
+Received: [31m"90[7m currency[27m"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:117:7
+    115|     expect(
+    116|       formatValue({ ...F3, value: "90", unit: "currency", currency: nu…
+    117|     ).toBe("90");
+       |       ^
+    118|   });
+    119| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 ValueView (en): states keep their rendering > isolates the number left-to-right and the label in its own auto-direction isolate
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 ValueView (ar): states keep their rendering > isolates the number left-to-right and the label in its own auto-direction isolate
+AssertionError: expected '0.12 % of users' to be '12 % of users' // Object.is equality
+
+Expected: [32m"12 % of users"[39m
+Received: [31m"[7m0.[27m12 % of users"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:142:23
+    140|   it("isolates the number left-to-right and the label in its own auto-…
+    141|     const c = view(F2);
+    142|     expect(textOf(c)).toBe("12 % of users");
+       |                       ^
+    143|     expect(c.querySelector("bdi[dir='ltr']")?.textContent).toBe("12");
+    144|     const label = c.querySelector("bdi[data-unit-label]")!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 ValueView (en): states keep their rendering > Stale F2 shows the Stale chip and '12 % of users' as the last known value
+AssertionError: expected 'Stale last known value: 0.12 % of use…' to contain 'last known value: 12 % of users'
+
+Expected: [32m"last known value: 12 % of users"[39m
+Received: [31m"[7mStale [27mlast known value: [7m0.[27m12 % of users[7mStale: the latest actual is older than the KPI's frequency allows.[27m"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:153:23
+    151|     expect(c.querySelector("[data-value-state='stale']")).not.toBeNull…
+    152|     expect(textOf(c)).toContain(t("dashboards.state.stale"));
+    153|     expect(textOf(c)).toContain(`${t("dashboards.state.lastKnown")}: 1…
+       |                       ^
+    154|     expect(textOf(c)).not.toContain("0.12");
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 ValueView (en): states keep their rendering > a zero F1 reads '0 %' and a zero F3 reads '0', each with the Zero label
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 ValueView (ar): states keep their rendering > a zero F1 reads '0 %' and a zero F3 reads '0', each with the Zero label
+AssertionError: expected '0 %' to be '0' // Object.is equality
+
+Expected: [32m"0"[39m
+Received: [31m"0[7m %[27m"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:170:80
+    168|     cleanup();
+    169|     const z3 = view(F3_ZERO);
+    170|     expect(z3.querySelector("[data-value-state='zero'] .amount")?.text…
+       |                                                                                ^
+    171|     expect(textOf(z3)).toContain(t("dashboards.state.zero"));
+    172|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 ValueView (ar): states keep their rendering > Stale F2 shows the Stale chip and '12 % of users' as the last known value
+AssertionError: expected 'قديم آخر قيمة معروفة: 0.12 % of users…' to contain 'آخر قيمة معروفة: 12 % of users'
+
+Expected: [32m"آخر قيمة معروفة: 12 % of users"[39m
+Received: [31m"[7mقديم [27mآخر قيمة معروفة: [7m0.[27m12 % of users[7mقديم: آخر قيمة فعلية أقدم مما يسمح به تواتر المؤشر.[27m"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:153:23
+    151|     expect(c.querySelector("[data-value-state='stale']")).not.toBeNull…
+    152|     expect(textOf(c)).toContain(t("dashboards.state.stale"));
+    153|     expect(textOf(c)).toContain(`${t("dashboards.state.lastKnown")}: 1…
+       |                       ^
+    154|     expect(textOf(c)).not.toContain("0.12");
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down
+AssertionError: 01920000-0000-7000-9000-0000000a0f03: expected '150 %' to be '1.5' // Object.is equality
+
+Expected: [32m"1[7m.[27m5"[39m
+Received: [31m"15[7m0 %[27m"[39m
+
+ ❯ expectAreaValues src/pages/dashboards/kpiUnit.test.tsx:230:32
+    228|   for (const [id, text] of EXPECTED) {
+    229|     const amount = root.querySelector(`tr[data-item='${id}'] [data-val…
+    230|     expect(textOf(amount), id).toBe(text);
+       |                                ^
+    231|   }
+    232|   const stale = root.querySelector(`tr[data-item='${ID.f2Stale}'] [dat…
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:306:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas
+AssertionError: 01920000-0000-7000-9000-0000000a0f03: expected '150 %' to be '1.5' // Object.is equality
+
+Expected: [32m"1[7m.[27m5"[39m
+Received: [31m"15[7m0 %[27m"[39m
+
+ ❯ expectAreaValues src/pages/dashboards/kpiUnit.test.tsx:230:32
+    228|   for (const [id, text] of EXPECTED) {
+    229|     const amount = root.querySelector(`tr[data-item='${id}'] [data-val…
+    230|     expect(textOf(amount), id).toBe(text);
+       |                                ^
+    231|   }
+    232|   const stale = root.querySelector(`tr[data-item='${ID.f2Stale}'] [dat…
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:335:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+AssertionError: expected 'n5_f3_ratioTransformation Amber150 %D…' to contain '1.5'
+
+Expected: [32m"1.5"[39m
+Received: [31m"n5_f3_ratioTransformation Amber150 %Drill down: n5_f3_ratio"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:346:16
+    344|     expect(await rowText("n5_f2_rate")).toContain("12 % of users");
+    345|     const f3 = await rowText("n5_f3_ratio");
+    346|     expect(f3).toContain("1.5");
+       |                ^
+    347|     expect(f3).not.toContain("%");
+    348|     expectAreaValues(document.querySelector("main")!);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯
+
+ FAIL  |unit-web| src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+AssertionError: expected 'n5_f3_ratioالتحوّل كهرماني150 %التفاص…' to contain '1.5'
+
+Expected: [32m"1.5"[39m
+Received: [31m"n5_f3_ratioالتحوّل كهرماني150 %التفاصيل: n5_f3_ratio"[39m
+
+ ❯ src/pages/dashboards/kpiUnit.test.tsx:346:16
+    344|     expect(await rowText("n5_f2_rate")).toContain("12 % of users");
+    345|     const f3 = await rowText("n5_f3_ratio");
+    346|     expect(f3).toContain("1.5");
+       |                ^
+    347|     expect(f3).not.toContain("%");
+    348|     expectAreaValues(document.querySelector("main")!);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  22 failed | 4 passed (26)
+   Start at  18:14:52
+   Duration  5.41s (transform 1.52s, setup 155ms, collect 2.34s, tests 2.02s, environment 482ms, prepare 141ms)
+

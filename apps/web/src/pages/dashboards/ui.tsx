@@ -6,6 +6,8 @@
 //    Stale (the last value, labelled Stale) and Not applicable. Each carries `data-value-state` for tests.
 //  - Values are decimal strings formatted without floats; ratios and percentages are fractions shown as percent (D-091,
 //    ADR-0028 §3; F-DG4-122, F-DG4-125). Currencies are never added together: each currency is its own line.
+//  - A KPI-derived value (`kpiUnit` non-null, ADR-0037 N5; D-124) is formatted from its unit KIND as the KPI pages do:
+//    a `ratio` KPI is a plain decimal, a percentage KPI × 100 whatever its label; the label is display text only.
 //  - The server sends rule, reason, headline and flag KEYS; the texts are translated here at render time (S-6).
 //  - The seeded Template 10 labels come from the server in both languages; the Arabic ones are provisional
 //    (`arProvisional`) and say so, with the verbatim English source beside them.
@@ -18,6 +20,7 @@ import type {
   DashboardFilters,
   DashboardHeadline,
   DashboardItem,
+  DashboardKpiUnit,
   DashboardPeriod,
   DashboardRag,
   DashboardTransformationRow,
@@ -38,7 +41,7 @@ import { Dialog } from "../../components/Form.tsx";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatPercent } from "../../lib/format.ts";
-import { reasonText as kpiReasonText } from "../kpi/ui.tsx";
+import { formatKpiValue, reasonText as kpiReasonText, times100 } from "../kpi/ui.tsx";
 import { useBusinessUnitTransformations, useDashboardPeriods, useDrilldown, type DashboardQuery } from "./api.ts";
 import { useReadableTransformations } from "../traceability/api.ts";
 
@@ -106,6 +109,9 @@ const COUNT_UNITS = new Set([
  * 100, exactly as the KPI pages' `formatKpiValue` does (F-DG4-125). The API sends a KPI's unit as
  * `unit_label ?? unit_kind` (kpi/dashboard-facts.ts): `percentage` is the unit kind; `%` and `percent` are the unit
  * labels a percentage KPI may carry. No API unit sends an already-scaled percentage.
+ * Since ADR-0037 N5 a KPI value carries `kpiUnit`, which decides instead: this set then only (a) reads a value sent
+ * WITHOUT `kpiUnit` (the member is optional until T-DG4-KBE-R8 makes it required) and (b) recognizes a percentage
+ * label that is only the sign. It never applies to the unit of a value that has a `kpiUnit`.
  */
 const PERCENT_UNITS = new Set(["percent", "percentage", "%"]);
 
@@ -114,20 +120,86 @@ export function isPercentUnit(unit: string | null | undefined): boolean {
   return !!unit && PERCENT_UNITS.has(unit.trim().toLowerCase());
 }
 
+/** The `kpiUnit` member of a value (ADR-0037 N5): absent is read as null (no KPI unit). */
+type FormattableValue = Pick<DashboardValue, "value" | "unit" | "currency"> & {
+  readonly kpiUnit?: DashboardKpiUnit | null | undefined;
+};
+
+/** A formatted value: the number (an LTR isolate) and the label, free text shown as entered (see ValueText). */
+export interface ValueParts {
+  readonly number: string;
+  readonly label: string | null;
+}
+
+/** True for a percentage label that only names the sign ('%', 'percent', 'percentage'; trimmed, any case). */
+function isBarePercentLabel(label: string): boolean {
+  return PERCENT_UNITS.has(label.trim().toLowerCase());
+}
+
 /**
- * The formatted number of a known value (no state label). Null when the value is not a number.
- * The UNIT decides before the currency (F-DG4-122): the value gap is `{unit: "ratio", currency: "SAR"}` because it sits
- * in its currency's block, and it is a ratio, shown as a percentage ("100 %"), never as money ("SAR 1.00").
- * A `ratio` and a percentage unit are both fractions × 100 (F-DG4-122, F-DG4-125): 1 → "100 %", 0.12 → "12 %".
+ * A KPI-derived value, formatted from `kpiUnit.kind` exactly as the KPI pages' `formatKpiValue` does, then the label
+ * as display text (ADR-0037 N5 item 1; D-124 items 2 and 3). The label never decides the scaling:
+ *  - percentage: the fraction × 100 with '%'. A label that is only the sign adds nothing ('12 %'); a label starting
+ *    with '%' replaces the bare sign ('12' + '% of users'); any other label follows the sign ('12 %' + 'of users').
+ *  - currency with a currency: money, without the label (money names its currency).
+ *  - ratio, count, duration, score, other (and currency without a currency): a decimal, then the label if set.
  */
-export function formatValue(v: Pick<DashboardValue, "value" | "unit" | "currency">, locale: Locale): string | null {
+function formatKpiParts(
+  value: string,
+  kpiUnit: DashboardKpiUnit,
+  currency: string | null,
+  locale: Locale,
+): ValueParts | null {
+  const label = kpiUnit.label?.trim() || null;
+  if (kpiUnit.kind === "percentage" && label && label.startsWith("%")) {
+    const n = formatDecimal(times100(value), locale, { maxFractionDigits: 2 });
+    return n === null ? null : { number: n, label };
+  }
+  const number = formatKpiValue(value, kpiUnit.kind, currency, locale);
+  if (number === null) return null;
+  if (kpiUnit.kind === "currency" && currency) return { number, label: null };
+  if (kpiUnit.kind === "percentage" && label && isBarePercentLabel(label)) return { number, label: null };
+  return { number, label };
+}
+
+/**
+ * The formatted parts of a known value (no state label). Null when the value is not a number.
+ *  - A KPI-derived value (`kpiUnit` non-null) is formatted from its unit KIND, as the KPI pages do (ADR-0037 N5): a
+ *    `ratio` KPI of 1.5 is '1.5', never '150 %'; a percentage labelled '% of users' is '12 % of users'.
+ *  - Otherwise the earlier rules hold. The UNIT decides before the currency (F-DG4-122): the value gap is
+ *    `{unit: "ratio", currency: "SAR", kpiUnit: null}`, a computed ratio shown as a percentage ("100 %"), never as money.
+ *    A percentage unit is a fraction × 100 too (F-DG4-125): it covers a value sent without `kpiUnit`.
+ */
+export function formatValueParts(v: FormattableValue, locale: Locale): ValueParts | null {
   if (v.value === null) return null;
+  if (v.kpiUnit) return formatKpiParts(v.value, v.kpiUnit, v.currency, locale);
+  const only = (number: string | null): ValueParts | null => (number === null ? null : { number, label: null });
   if (v.unit === "ratio" || isPercentUnit(v.unit))
-    return formatPercent(v.value, locale, { fraction: true, maxFractionDigits: 2 });
-  if (v.currency) return formatMoney(v.value, v.currency, locale);
-  if (v.unit && COUNT_UNITS.has(v.unit)) return formatDecimal(v.value, locale, { maxFractionDigits: 0 });
+    return only(formatPercent(v.value, locale, { fraction: true, maxFractionDigits: 2 }));
+  if (v.currency) return only(formatMoney(v.value, v.currency, locale));
+  if (v.unit && COUNT_UNITS.has(v.unit)) return only(formatDecimal(v.value, locale, { maxFractionDigits: 0 }));
   const n = formatDecimal(v.value, locale, { maxFractionDigits: 4 });
-  return n === null ? null : v.unit ? `${n} ${v.unit}` : n;
+  return n === null ? null : { number: n, label: v.unit || null };
+}
+
+/** The formatted text of a known value: the number, then a space and the label when there is one. */
+export function formatValue(v: FormattableValue, locale: Locale): string | null {
+  const parts = formatValueParts(v, locale);
+  return parts === null ? null : parts.label ? `${parts.number} ${parts.label}` : parts.number;
+}
+
+/**
+ * The number in an LTR isolate. With a label, the number and the label sit together in ONE auto-direction isolate whose
+ * direction comes from the label (the number's own isolate is skipped when the direction is resolved): a Latin label
+ * reads '12 % of users' left to right in both languages, and an Arabic label stays right to left after the number.
+ */
+function ValueText({ parts }: { parts: ValueParts }) {
+  if (!parts.label) return <bdi dir="ltr">{parts.number}</bdi>;
+  return (
+    <bdi data-value-text="">
+      <bdi dir="ltr">{parts.number}</bdi> <span data-unit-label="">{parts.label}</span>
+    </bdi>
+  );
 }
 
 /**
@@ -145,24 +217,20 @@ export function ValueView({ value, strong = false }: { value: DashboardValue | n
     );
   }
   const reason = value.reasonKey ? keyText(t, "reason", value.reasonKey) : "";
-  const number = formatValue(value, locale);
+  const parts = formatValueParts(value, locale);
   const Num = ({ children }: { children: ReactNode }) =>
     strong ? <strong className="amount">{children}</strong> : <span className="amount">{children}</span>;
   switch (value.state) {
     case "value":
       return (
         <span data-value-state="value" data-value={value.value ?? ""}>
-          <Num>
-            <bdi dir="ltr">{number}</bdi>
-          </Num>
+          <Num>{parts ? <ValueText parts={parts} /> : null}</Num>
         </span>
       );
     case "zero":
       return (
         <span data-value-state="zero" data-value={value.value ?? "0"}>
-          <Num>
-            <bdi dir="ltr">{number ?? "0"}</bdi>
-          </Num>{" "}
+          <Num>{parts ? <ValueText parts={parts} /> : <bdi dir="ltr">0</bdi>}</Num>{" "}
           <span className="lifecycle-chip">{t("dashboards.state.zero")}</span>
         </span>
       );
@@ -172,9 +240,9 @@ export function ValueView({ value, strong = false }: { value: DashboardValue | n
           <span className="status-chip status-chip--stale status-chip--wrap">
             <Icon name="clock" /> <span>{t("dashboards.state.stale")}</span>
           </span>{" "}
-          {number ? (
+          {parts ? (
             <span className="muted">
-              {t("dashboards.state.lastKnown")}: <bdi dir="ltr">{number}</bdi>
+              {t("dashboards.state.lastKnown")}: <ValueText parts={parts} />
             </span>
           ) : null}
           {reason ? <span className="block small muted">{reason}</span> : null}
@@ -554,8 +622,22 @@ export function ValueRagLines({
             <ValueView
               value={
                 l.gapRatio === null
-                  ? { state: "unknown", value: null, unit: "ratio", currency: l.currency, reasonKey: l.reasonKey }
-                  : { state: "value", value: l.gapRatio, unit: "ratio", currency: l.currency, reasonKey: null }
+                  ? {
+                      state: "unknown",
+                      value: null,
+                      unit: "ratio",
+                      currency: l.currency,
+                      reasonKey: l.reasonKey,
+                      kpiUnit: null,
+                    }
+                  : {
+                      state: "value",
+                      value: l.gapRatio,
+                      unit: "ratio",
+                      currency: l.currency,
+                      reasonKey: null,
+                      kpiUnit: null,
+                    }
               }
             />{" "}
             <RagStatusChip status={l.status} />

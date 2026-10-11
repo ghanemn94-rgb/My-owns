@@ -18,16 +18,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** The API's own KPI value object (R3-7): a weighted_ratio 12 / 100 with an accepted actual. */
+/**
+ * The API's own KPI value object (R3-7): a weighted_ratio 12 / 100 with an accepted actual. Since ADR-0037 N5
+ * (T-DG4-FE-R7) it also carries `kpiUnit`, the KPI's unit kind and label, which decides the format.
+ */
 const API_PERCENTAGE: DashboardValue = {
   state: "value",
   value: "0.12",
   unit: "percentage",
   currency: null,
   reasonKey: null,
+  kpiUnit: { kind: "percentage", label: null },
 };
-/** The same KPI with the unit label "%" (unit = unit_label ?? unit_kind). */
-const API_PERCENT_SIGN: DashboardValue = { ...API_PERCENTAGE, unit: "%" };
+/** The same KPI with the unit label "%" (unit = unit_label ?? unit_kind; kpiUnit.label "%"). */
+const API_PERCENT_SIGN: DashboardValue = { ...API_PERCENTAGE, unit: "%", kpiUnit: { kind: "percentage", label: "%" } };
 /** A Stale actual of the same KPI keeps its last value, labelled Stale (areas.ts kpiActualValue). */
 const API_STALE: DashboardValue = { ...API_PERCENTAGE, state: "stale", value: "0.12", reasonKey: "kpi.stale" };
 
