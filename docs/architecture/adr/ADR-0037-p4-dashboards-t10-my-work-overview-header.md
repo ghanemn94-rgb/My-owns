@@ -349,3 +349,109 @@ The schema is unchanged: `drilldownHref` was already `[string, "null"]`. A drill
 **N2 note (2026-10-11, orchestrator, at the T-DG4-KBE-R5 merge; D-118).** As built, item 3 holds with one narrowing: a gross line carries the value-state drill-down (`value.planned` or `value.validated`) **when no `revenue_uplift` or `avoided_cost` line enters that state and currency**. Only then does that drill-down's sum equal the gross line, so the K1 item 4 invariant holds. Otherwise it is `null`, as item 3 says. The contract description of `FinanceValueLine.drilldownHref` states the same.
 
 **Codes and keys.** None is added or renamed. The API sends no label key for a Finance line, and the web keys are FE-R4's.
+
+## Amendment (2026-10-11, T-DG4-ARCH-R5): one basis for the value headlines (F-DG4-123, D-119)
+
+Source: finding F-DG4-123 (domain-reviewer, DG4 round 2, check DOM-R2-07) and the orchestrator's decision D-119, which extends D-117. The rule for the totals is ADR-0030 amendment N3. Nothing above is removed. Where this amendment differs from §3 (the Value row), §5, §8, §9 (the `benefits` element), A2, K1 items 3 and 5, or N2, this amendment wins. **It supersedes N2 item 2, item 3 and the N2 note, and ADR-0030 N1 item 5** as far as they keep the value headlines on five classes.
+
+### N3. The value headlines use the profit-and-cash basis
+
+**The gap.** After D-117, `gross` and `net` sum three classes, but the value headlines still summed all five financial classes. In the reviewer's synthetic world (planned `revenue_uplift` 300, `margin_uplift` 70, `cash_saving` 20, `avoided_cost` 45 SAR), 'Planned value' showed 435 directly above 'Gross … SAR 90.00'. This was so on T10, the Executive Overview, the workspace header and the Finance dashboard. The value gap and the Value RAG were computed on the same mixed basis. This goes against:
+- M0172: "Keep revenue uplift separate from profit or margin benefit. Keep avoided cost separate from cash savings … Show gross benefits, implementation cost and net value separately";
+- B0145, whose roaming example lists "Incremental roaming revenue, margin improvement, … avoided care cost" as separate benefits.
+
+**Decided (D-119), exactly:**
+
+1. **The profit-and-cash basis.** 'Planned value', 'Forecast value', 'Submitted value', 'Validated value', the value-gap ratio and the Value RAG use the profit-and-cash basis. Per currency, they sum only `margin_uplift`, `cash_saving` and `working_capital_release`. This is the basis of the D-117 gross (ADR-0030 N1 item 1). It applies on T10 (`getTransformationDashboard`, `getWorkstreamDashboard`), the Executive Overview (`getExecutiveOverview`, including the Value status of each `transformations[]` row), the workspace header (`getWorkspaceHeader`, `benefits`) and the Finance dashboard (`getFinanceDashboard`, `headlines`). Every other rule of a value sum is unchanged: counted once, monetised, the overlap hold of validated and sustained lines, the §3/§4 windows, currencies never converted, and an `unknown` line makes its sum `unknown`.
+2. **Two bases of their own.** `revenue_uplift` (basis `top_line`) and `avoided_cost` (basis `non_cash`) are shown as headlines of their own in every state the screen shows for the profit-and-cash headline. On T10, the Overview and the Finance dashboard these are planned, forecast, submitted and validated. On the header they are planned and validated. Each is labelled with its basis. They are never added into a profit-and-cash figure, there is no gap ratio or RAG on them, and no unlabelled sum crosses bases. An `unknown` revenue or avoided-cost line makes only its own headline `unknown`.
+3. **Every headline drills to records that sum to it.** A value-state headline of basis *b* carries the `getDashboardDrilldown` href of its metric with the same filters, as follows:
+   - **`profit_and_cash`:** **no `valueClass`.** Its meaning changes: without `valueClass`, a value-state drill-down (all seven metrics) now sums the three profit-and-cash classes, no longer five. The `value.gap` drill-down lists only profit-and-cash planned and validated lines.
+   - **`top_line`:** `valueClass=revenue_uplift` (the K1 drill-down, unchanged).
+   - **`non_cash`:** `valueClass=avoided_cost` (the K1 drill-down, unchanged).
+
+   The K1 item 4 invariant therefore holds for every headline. Per currency, the decimal sum of the items equals the headline value, or both are `unknown`.
+
+   **The Finance `gross` line now always drills.** It is the profit-and-cash sum of its state and currency, so its `drilldownHref` is always the value-state drill-down without `valueClass` (`value.planned` or `value.validated`, same filters). This replaces N2 item 3 and the N2 note. The `net` line keeps `null` (K1 item 5: a derived difference; its inputs are the gross line and `value.investment`).
+
+   **The header** carries the same headlines, with their hrefs (contract below). Each header figure is the T10 headline of the same basis, state and currency.
+4. **Unknown, Stale, n/a and known zero stay distinct.** The Value currencies are those of the counted, monetised benefits of the five financial classes, as before. For each such currency:
+   - **`not_applicable`** with reason `dashboard.value.no_profit_and_cash_benefit` ('nothing planned on this basis'): there is no counted, monetised `margin_uplift`, `cash_saving` or `working_capital_release` benefit in that currency. This applies to all four profit-and-cash state headlines, the gap and the currency's Value status. It is never 0 and never green. A transformation whose only financial benefits are revenue uplift or avoided cost shows exactly this.
+   - **`zero`:** such a benefit exists but has no eligible line in the state's window (a known zero, unchanged). The gap is then `not_applicable` with `dashboard.value.nothing_planned` when planned is zero (unchanged).
+   - **`unknown`:** an eligible line of the basis has no amount (unchanged).
+   - **No financial benefit at all:** one `value.validated` headline, basis `profit_and_cash`, `not_applicable` with `dashboard.value.no_financial_benefit` (unchanged).
+   - **Top-line and non-cash headlines** are emitted for a currency only when a counted, monetised benefit of that class exists in it. A class that is not there is omitted, not shown as 0.
+   - **The Value RAG.** When every currency's status is `not_applicable` and each has the reason `dashboard.value.no_profit_and_cash_benefit`, the Value RAG is `not_applicable` with rule key `dashboard.rag.value.no_profit_and_cash_benefit`. Otherwise the §3 rule is unchanged (`dashboard.rag.value.validated_gap`, else `dashboard.rag.value.nothing_due`). `validated_gap`'s `ruleParams` gain `headlineBasis: "profit_and_cash"`.
+5. **Labels name the basis, in EN and AR.** The API sends new label keys, one per basis and state (the code table below), and the member `headlineBasis` on every value headline. The old keys `dashboard.headline.value_planned`, `…_forecast`, `…_submitted`, `…_validated` and `…_gap` are no longer sent once KBE-R6 lands. The web keeps them until then. The Arabic texts are proposed by ARCH-R5 for FE-R5, and FE-R5 owns them (provisional Arabic, as every Arabic UI string).
+6. **Not changed:**
+   - the per-class Finance lines and their K1 hrefs;
+   - the Finance validation rules (ADR-0030 §4);
+   - `gross`, `net` and implementation cost (ADR-0030 N1);
+   - `value.investment`;
+   - the filters and scope (§6);
+   - the DG3 business-case totals (`kpi/totals.ts`, ADR-0024 §3). They still report gross benefits over every financial line, split by value basis (`grossBenefitsByValueBasis`), and warn `business_case.revenue_and_margin`. ADR-0030 N3 item 6 explains why the two bases differ on purpose.
+
+**Example (the reviewer's DOM-GROSS world, one SAR currency, no cost lines, all values planned to date):**
+
+| Headline (`headlineBasis`) | Value | Drill-down |
+|---|---|---|
+| Planned value (`profit_and_cash`) | **90.0000** (70 + 20 + 0) | `value.planned`, no `valueClass`: items margin 70 + cash 20 = 90 |
+| Planned revenue uplift (`top_line`) | 300.0000 | `value.planned`, `valueClass=revenue_uplift`: 300 |
+| Planned avoided cost (`non_cash`) | 45.0000 | `value.planned`, `valueClass=avoided_cost`: 45 |
+| Finance `gross` planned | 90.0000, equal to the first row | the first row's drill-down |
+| Workspace header `benefits.planned` (SAR) | 90.0000 | in `benefits.headlines` with the first row's href |
+
+With nothing validated, 'Validated value' is `zero` and the gap ratio is 1, so the Value RAG is Red. If the 70 and the 20 are removed, every profit-and-cash headline and the gap become `not_applicable` (`dashboard.value.no_profit_and_cash_benefit`), and the Value RAG becomes `not_applicable` (`dashboard.rag.value.no_profit_and_cash_benefit`). Revenue 300 and avoided cost 45 are still shown on their own.
+
+**Contract (OpenAPI 1.3.0-p4, additive):**
+- **`HeadlineBasis`:** a new schema, enum `profit_and_cash`, `top_line`, `non_cash`.
+- **`DashboardHeadline.headlineBasis`:** a `HeadlineBasis` or null. It is non-null on the value-state metrics and on `value.gap` (`profit_and_cash`), and null on `value.investment` and every non-value metric.
+- **`DashboardDrilldown.headlineBasis`:** a `HeadlineBasis` or null, the basis of the classes the drill-down sums:
+  - `profit_and_cash` for a value-state metric without `valueClass`, with `valueClass` `margin_uplift`, `cash_saving` or `working_capital_release`, and for `value.gap`;
+  - `top_line` with `revenue_uplift`;
+  - `non_cash` with `avoided_cost`;
+  - null with `non_financial_valued` and for every other metric.
+- **`WorkspaceHeader.benefits.headlines`:** an array of `DashboardHeadline`. It holds the planned and validated value headlines of the three bases per currency, with the T10 labels, bases and hrefs.
+- **Meaning changes, stated in their descriptions:**
+  - `DashboardHeadline` (value metrics);
+  - `WorkspaceHeader.benefits.planned` and `.validated` (now profit-and-cash);
+  - `DrilldownValueClassQuery` and `DashboardDrilldown` (without `valueClass`: the profit-and-cash basis);
+  - `FinanceDashboard.headlines`;
+  - `FinanceValueLine.drilldownHref` (gross always drills).
+
+The new members are declared but not yet `required`, so the contract test passes against the as-built API. They are listed in `apps/api/test/support/p4-pending-arch-r5.ts`. KBE-R6 emits them and empties that list. Then the solution-architect adds them to `required` in the same change that accepts KBE-R6, before the DG4 candidate freezes. The shared zod mirrors declare them `.optional()` until then.
+
+**Owners.**
+- KBE-R6: `reporting/dashboards/areas.ts`, `engine.ts`, `drilldown.ts`, `finance.ts` and `reporting/workspace-header.ts`.
+- FE-R5: labels, EN/AR texts and screens.
+
+**Codes and keys (proposed; English exact, Arabic proposed for FE-R5, provisional):**
+
+| Code or key | Kind | Decision | English text (exact) |
+|---|---|---|---|
+| `dashboard.headline.value_planned_profit_and_cash` | label key | **new** | Planned value (profit and cash) |
+| `dashboard.headline.value_forecast_profit_and_cash` | label key | **new** | Forecast value (profit and cash) |
+| `dashboard.headline.value_submitted_profit_and_cash` | label key | **new** | Submitted value (profit and cash) |
+| `dashboard.headline.value_validated_profit_and_cash` | label key | **new** | Validated value (profit and cash) |
+| `dashboard.headline.value_gap_profit_and_cash` | label key | **new** | Value gap (profit and cash) |
+| `dashboard.headline.value_planned_top_line` | label key | **new** | Planned revenue uplift (top line; not in profit and cash) |
+| `dashboard.headline.value_forecast_top_line` | label key | **new** | Forecast revenue uplift (top line; not in profit and cash) |
+| `dashboard.headline.value_submitted_top_line` | label key | **new** | Submitted revenue uplift (top line; not in profit and cash) |
+| `dashboard.headline.value_validated_top_line` | label key | **new** | Validated revenue uplift (top line; not in profit and cash) |
+| `dashboard.headline.value_planned_non_cash` | label key | **new** | Planned avoided cost (non-cash; not in profit and cash) |
+| `dashboard.headline.value_forecast_non_cash` | label key | **new** | Forecast avoided cost (non-cash; not in profit and cash) |
+| `dashboard.headline.value_submitted_non_cash` | label key | **new** | Submitted avoided cost (non-cash; not in profit and cash) |
+| `dashboard.headline.value_validated_non_cash` | label key | **new** | Validated avoided cost (non-cash; not in profit and cash) |
+| `dashboard.value.no_profit_and_cash_benefit` | reason key | **new** | Not applicable: nothing is planned on this basis (no margin uplift, cash saving or working-capital release benefit). |
+| `dashboard.rag.value.no_profit_and_cash_benefit` | rule key | **new** | Value: not applicable; there is no margin uplift, cash saving or working-capital release benefit. |
+| `dashboard.value.sum_planned_profit_and_cash` | rule key | **new** | Planned value (profit and cash) = the sum of the planned margin uplift, cash saving and working-capital release values in the period. |
+| `dashboard.value.sum_forecast_profit_and_cash` | rule key | **new** | Forecast value (profit and cash) = the sum of the forecast margin uplift, cash saving and working-capital release values in the period. |
+| `dashboard.value.sum_submitted_profit_and_cash` | rule key | **new** | Submitted value (profit and cash) = the sum of the margin uplift, cash saving and working-capital release values submitted for Finance validation in the period. |
+| `dashboard.value.sum_validated_profit_and_cash` | rule key | **new** | Validated value (profit and cash) = the sum of the Finance-validated margin uplift, cash saving and working-capital release values in the period. |
+| `dashboard.value.sum_measured_profit_and_cash` | rule key | **new** | Measured value (profit and cash) = the sum of the measured margin uplift, cash saving and working-capital release values in the period. |
+| `dashboard.value.sum_rejected_profit_and_cash` | rule key | **new** | Rejected value (profit and cash) = the sum of the margin uplift, cash saving and working-capital release values Finance rejected in the period. |
+| `dashboard.value.sum_sustained_profit_and_cash` | rule key | **new** | Sustained value (profit and cash) = the sum of the sustained margin uplift, cash saving and working-capital release values in the period. |
+| `dashboard.rag.value.validated_gap` | rule key | **text changed** (key unchanged) | Value: validated value against the value planned to date, on the profit-and-cash basis (margin uplift, cash saving and working-capital release). |
+| `dashboard.value.gap_ratio` | rule key | **text changed** (key unchanged) | Value gap (profit and cash) = (planned due to date - validated) / planned due to date, over margin uplift, cash saving and working-capital release. |
+| `dashboard.headline.value_planned`, `…_forecast`, `…_submitted`, `…_validated`, `…_gap` | label key | **retired** once KBE-R6 lands (no longer sent) | (A2 texts; kept by the web until then) |
+
+The value-state drill-down's rule key is `dashboard.value.sum_<state>_profit_and_cash` without `valueClass` and `dashboard.value.sum_<state>` (K2, unchanged) with it.

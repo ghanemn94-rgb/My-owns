@@ -74,6 +74,22 @@ export const FINANCE_VALUE_CLASSES = [
 export type FinanceValueClass = (typeof FINANCE_VALUE_CLASSES)[number];
 export const financeValueClass = z.enum(FINANCE_VALUE_CLASSES);
 
+/**
+ * OpenAPI `HeadlineBasis` (ADR-0030 and ADR-0037 amendment N3; D-119; M0172): the basis of a value headline.
+ * profit_and_cash = margin_uplift + cash_saving + working_capital_release (the basis of the Finance gross); top_line =
+ * revenue_uplift; non_cash = avoided_cost. Bases are never summed into each other.
+ */
+export const HEADLINE_BASES = ["profit_and_cash", "top_line", "non_cash"] as const;
+export type HeadlineBasis = (typeof HEADLINE_BASES)[number];
+export const headlineBasis = z.enum(HEADLINE_BASES);
+
+/** The Finance classes of each headline basis (ADR-0037 amendment N3 items 1-2); non_financial_valued is in none. */
+export const HEADLINE_BASIS_CLASSES: Readonly<Record<HeadlineBasis, readonly FinanceValueClass[]>> = Object.freeze({
+  profit_and_cash: ["margin_uplift", "cash_saving", "working_capital_release"],
+  top_line: ["revenue_uplift"],
+  non_cash: ["avoided_cost"],
+});
+
 /** OpenAPI `DashboardValue.state` (ADR-0037 §5): value and zero are known; unknown and not_applicable carry no value. */
 export const DASHBOARD_VALUE_STATES = ["value", "zero", "unknown", "stale", "not_applicable"] as const;
 export type DashboardValueState = (typeof DASHBOARD_VALUE_STATES)[number];
@@ -111,13 +127,17 @@ export const dashboardRag = z.strictObject({
 });
 export type DashboardRag = z.infer<typeof dashboardRag>;
 
-/** OpenAPI `DashboardHeadline`. */
+/**
+ * OpenAPI `DashboardHeadline`. `headlineBasis` (ADR-0037 amendment N3) is optional only while it is pending in
+ * apps/api/test/support/p4-pending-arch-r5.ts; it becomes required when the API emits it (T-DG4-KBE-R6).
+ */
 export const dashboardHeadline = z.strictObject({
   metric: dashboardMetric,
   labelKey: z.string(),
   value: dashboardValue,
   period: dashboardPeriod.nullable(),
   drilldownHref: z.string(),
+  headlineBasis: headlineBasis.nullable().optional(),
 });
 export type DashboardHeadline = z.infer<typeof dashboardHeadline>;
 
@@ -267,6 +287,8 @@ export const dashboardDrilldown = z.strictObject({
   items: z.array(drilldownItem),
   evidence: z.array(drilldownEvidence),
   nextCursor: z.string().nullable(),
+  /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
+  headlineBasis: headlineBasis.nullable().optional(),
 });
 export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
 
@@ -531,6 +553,8 @@ export const workspaceHeader = z.strictObject({
     validated: z.array(currencyValue),
     benefitCount: z.number().int().min(0),
     nonFinancialCount: z.number().int().min(0),
+    /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
+    headlines: z.array(dashboardHeadline).optional(),
   }),
   keyDecisions: z.strictObject({ items: z.array(dashboardItem).max(5), overdueCount: z.number().int().min(0) }),
   nextActions: z.strictObject({
