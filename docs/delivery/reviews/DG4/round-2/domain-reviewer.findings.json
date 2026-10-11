@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-122",
+      "stage_id": "DG4",
+      "requirement": "REQ-PB-062",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "T10 Value area, Executive Overview and Finance dashboard show the 'Value gap' ratio as a SAR amount ('SAR 1.00' for a 100 % gap) in EN and AR",
+      "reproduction": "Real stack (with-stack.sh, synthetic dev seed, clone at 93a7dd7). dom-gross.mjs creates one transformation with four financial benefits planned for 2026-01..06: revenue_uplift 300, margin_uplift 70, cash_saving 20 and avoided_cost 45 SAR. Nothing is validated. Open /transformations/{id}/dashboard (T10), /executive-overview?tr={id} and /dashboards/finance?tr={id} in English and Arabic. GET /api/v1/dashboards/finance returns the headline value.gap = {state:'value', value:'1', unit:'ratio', currency:'SAR'} (engine.ts line 608: knownValue(c.gapRatio, 'ratio', c.currency)). The web's formatValue (apps/web/src/pages/dashboards/ui.tsx lines 105-121) tests `v.currency` BEFORE `v.unit === 'ratio'`, so every value with a currency is formatted as money.",
+      "expected": "The gap is defined in the product's own text as a ratio: 'Value gap = (planned due to date - validated) / planned due to date' (dashboard__value__gap_ratio). The Value area's RAG uses it as a ratio (amber 0.05, red 0.15). So it must render as a percentage (here '100 %'; a 25 % gap as '25 %'), never as a money amount (master prompt §7 units: % vs pp vs amount, and REQ-S20-005 'percentage points … currency/decimal precision'; REQ-PB-062 / REQ-S13-003 headline figures; CLAUDE.md 'Decimal arithmetic for money and rates').",
+      "actual": "EN: 'Value gap SAR 1.00'. AR: 'فجوة القيمة 1.00 ر.س.'. This is shown on the T10 Value area, the Executive Overview and the Finance dashboard headlines (screens en/ar-t10-value-area.png, en/ar-finance-dashboard-gross.png, en/ar-executive-overview-gross.png; dom-gross-run3.log innerText). A real gap of 25 % would read 'SAR 0.25', a figure that executives and Finance would take for a money shortfall. The RAG status is correct (Red), and the API value is correct (ratio 1). Only the rendered figure has the wrong unit. The defect predates this round: ui.tsx is not in the a91d82c..93a7dd7 repair diff, and I missed it in round 1. Fix: in formatValue, test unit 'ratio' (and 'percentage') before currency, or have the API send currency null on a ratio value. Then add a web unit test for a ratio carrying a currency.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/value-gap-ratio-as-currency.txt",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-finance.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-t10-value-area.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-t10-value-area.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-finance-dashboard-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-finance-dashboard-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-executive-overview-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-executive-overview-gross.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-10-11T05:40:00Z", "status": "OPEN", "note": "Raised by domain-reviewer in DG4 round 2 (T-DG4-REV-DOM-R2). High and mandatory (calculation accuracy as presented): an executive headline shows a ratio as a money amount, in EN and AR, on three dashboards. The API value and the RAG are correct, and the fix is local to formatValue (or to the API's currency on ratio values). A regression test is needed." }
+      ]
+    },
+    {
+      "id": "F-DG4-123",
+      "stage_id": "DG4",
+      "requirement": "REQ-S08-009",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "T10 Value area, Executive Overview, workspace header and Finance dashboard 'Planned value' / 'Validated value' headlines still add revenue uplift to margin uplift and avoided cost to cash saving (435 beside a gross of 90)",
+      "reproduction": "Same synthetic world as F-DG4-122 (dom-gross.mjs on the real stack; zz-domain-r2.test.ts DOM-GROSS in-process): revenue_uplift 300, margin_uplift 70, cash_saving 20, avoided_cost 45 SAR planned. GET /transformations/{id}/dashboard, /api/v1/overview, /transformations/{id}/summary and /api/v1/dashboards/finance, then open the same screens in EN and AR.",
+      "expected": "M0172: 'Keep revenue uplift separate from profit or margin benefit. Keep avoided cost separate from cash savings.' The product's own rule since D-117 (ADR-0030 N1) is that the margin earned on revenue belongs in margin_uplift, so adding revenue_uplift to margin_uplift double counts it, as in the B0145 roaming example ('Incremental roaming revenue, margin improvement … avoided care cost' are separate benefits). A rule that fits: each money headline uses one compatible basis. Either 'Planned value' and 'Validated value' (and the value gap) use the same profit-and-cash basis as gross (margin_uplift + cash_saving + working_capital_release), with revenue uplift (top line) and avoided cost (non-cash) as headlines or lines of their own, or the headline is replaced by per-class figures, each drilling to its records. Either way, no single SAR headline adds top line to profit or non-cash to cash, and no unlabelled sum does. REQ-S13-003's drill invariant can hold per class (the K1 class drill-downs exist).",
+      "actual": "value.planned = 435 SAR (= 300 + 70 + 20 + 45) on the T10 Value area, the Executive Overview, the workspace header (benefits.planned) and the Finance dashboard headlines. On the Finance dashboard it sits directly above 'Gross (profit and cash …) SAR 90.00'. The label 'Planned value' carries no basis. ADR-0030 N1 item 5 and ADR-0037 N2 item 2 keep these headlines on five classes on purpose, so this is a design decision that D-117 did not cover, not an implementation slip. The value gap ratio (F-DG4-122) is computed on the same mixed basis. Nothing is wrong per class and validated totals are not inflated by unvalidated values, so I rate it Medium and not mandatory, as F-DG4-121 was. It is the same M0172 defect on the remaining headline surfaces.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-t10.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-finance.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-overview.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-finance-dashboard-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-finance-dashboard-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-t10-value-area.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-t10-value-area.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-workspace-header-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-workspace-header-gross.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-2/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-10-11T05:40:00Z", "status": "OPEN", "note": "Raised by domain-reviewer in DG4 round 2 (T-DG4-REV-DOM-R2) as asked by the assignment (the T10 headlines not covered by D-117). Medium, not mandatory. The fix first needs an ADR-0037/ADR-0030 decision on the headline basis (solution-architect), then kpi-benefits-engineer (engine) and frontend-ux-engineer (labels, EN/AR). The DG3 business-case totals are a separate surface; see check DOM-R2-07." }
+      ]
+    },
+    {
+      "id": "F-DG4-124",
+      "stage_id": "DG4",
+      "requirement": "REQ-DLV-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "stages.json at the round-2 freeze commit records DG4 REVIEWING -> REVIEWING, so validate.mjs --historical --stage DG3/DG2/DG1 fails",
+      "reproduction": "Repository at HEAD 1b8c158 (the round-2 freeze commit): node tools/gates/validate.mjs --historical --stage DG3 (and DG2, DG1). The same commands in a clone at source commit 93a7dd7 pass.",
+      "expected": "The assignment requires that '--historical --stage DG3 must pass, and so must DG2 and DG1'. The gate state machine (REQ-DLV-015; tools/gates/lib/rules.mjs TRANSITIONS) allows REVIEWING -> FIXING | VERIFYING | BLOCKED only. Between round 1 and round 2 the DG4 history should pass through FIXING, as DG3's did (REVIEWING, FIXING, REVIEWING …).",
+      "actual": "Each run exits 1 with 'FAIL gate DGx (historical) (1 problem) - stages.json: DG4 illegal transition REVIEWING -> REVIEWING'. The DG4 history is [PLANNED, BUILDING, REVIEWING, REVIEWING]. The freeze commit appended a second REVIEWING entry (2026-10-11T04:43:11Z) without the FIXING entry for the round-1 repairs. At 93a7dd7 all four validators pass, including --register DG4. stages.json is excluded from the candidate manifest, so the candidate itself is unaffected, but the gate cannot validate until the record is corrected. Owner: delivery-orchestrator. The assignment asks for an implementer role, but CLAUDE.md forbids implementers to edit stages.json, and findings.schema.json allows this owner.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/validators.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-2/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-10-11T05:40:00Z", "status": "OPEN", "note": "Raised by domain-reviewer in DG4 round 2 (T-DG4-REV-DOM-R2). Medium, not mandatory: a delivery-record defect outside the candidate. But it makes an assignment-mandated check fail, so my check DOM-R2-01 is FAIL. The owner is the orchestrator, the only role that writes stages.json." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 3f51b79d (source 93a7dd7), on the real stack in EN and AR. My round-1 expected text offered two options: the template's Arabic texts, OR 'the English source under a provisional-Arabic label, as the forums page does (governanceP4.arProvisional)'. D-117 took the second, and it is delivered. In Arabic, the T11 page shows the notice #decision-rights-ar-provisional: 'تُعرض تسميات الأعمدة يوصي، يعتمد، يُستشار، يُبلَّغ، مستوى الخدمة المتفق عليه للقرار (SLA) بنصّها الإنجليزي المصدر كما وردت في دليل التحوّل (B0099)؛ الترجمة العربية لهذه التسميات مؤقتة ولم تتوفر بعد.' (dom-gross-run3.log ar.T11.provisional-notice PASS). The column headers are named in Arabic, and the bracket fix of D-118 is visible ('(SLA)' with no doubled bracket). Every Recommend/Approve/Consult/Inform/SLA source label is marked lang=en dir=ltr (ar.T11.english-labels-marked PASS, 16 or more cells), so it reads LTR and a screen reader pronounces it in English. The Arabic working-days line ('أيام العمل: 5') stays under the SLA (ar.T11.arabic-sla-days PASS). English shows no notice (en.T11.no-ar-notice PASS). dom-ui.mjs, re-run unchanged except for this expectation, is 38/38 PASS. Residual, not worth a finding: the template's own Arabic texts (for example '5 أيام عمل') are still not shown, because carrying them needs a contract change that D-117 rejected. The notice discloses this honestly, as the forums page does, and it fits ADR-0026 'Arabic is provisional'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-ui.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-decision-rights-T11-notice.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-decision-rights-T11-notice.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-decision-rights-T11.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-forums-five-layers.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 3f51b79d. DOM-GROSS re-run in-process (zz-domain-r2.test.ts, full integration project) and on the real stack (dom-gross.mjs). Lines: revenue_uplift 300, margin_uplift 70, cash_saving 20, avoided_cost 45. GET benefit-totals gives gross.planned = 90 and net.planned = 90 (cost 0), not 435. The Finance dashboard gives gross/planned/SAR = 90 with drilldownHref null, as the ADR-0037 N2 note requires when revenue or avoided-cost lines enter the state, and net/planned 90. The class lines are unchanged and each still drills down. The benefits page (EN 'Gross benefit (profit and cash)' + 'Margin uplift, cash saving and working capital release only.'; AR 'إجمالي المنفعة (الربح والنقد)') shows gross 90, net 90, and revenue 300 / avoided 45 on rows marked data-not-summed, labelled 'Top line … not in gross or net' and 'Non-cash … not in gross or net'. The Finance dashboard has the same labels in EN and AR (all PASS in dom-gross-run3.log). Is the rule right against M0172 and B0145? Yes. M0172 requires revenue to stay apart from profit/margin and avoided cost apart from cash, and requires gross, implementation cost and net to be shown separately. A gross on a profit-and-cash basis (margin, cash saving, working capital release), with revenue (top line, whose margin belongs in margin_uplift) and avoided cost (non-cash) shown beside it and never summed, meets each clause. It reproduces the B0145 roaming example's separate 'Incremental roaming revenue', 'margin improvement' and 'avoided care cost' benefits, with no double counting of the margin on that revenue. Net = gross − implementation cost, with each cost line once (the a10 REQ-S08-011 test still shows a 1 M cost reducing net by exactly 1 M). The repair diff weakened nothing else: validated totals, the overlap hold, the exclusions, currencies and n/a are untouched (DOM-CURRENCY: SAR 100 and USD 7 in separate blocks; DOM-NA: a CX benefit is n/a and leaves the currencies unchanged). Two residuals I judge not worth a finding, both labelled honestly on screen. (1) working_capital_release (balance-sheet cash) is summed with P&L margin; the label 'profit and cash' names this, and M0172 does not forbid it. (2) A transformation that records only revenue_uplift shows gross 0 and net −cost (DOM-GROSS-ONLYREV: gross known 0.0000). That is the correct consequence of the rule, provided Benefit Owners record the margin on revenue as margin_uplift, which the labels tell them. What D-117 did not cover, the five-class 'Planned value'/'Validated value' headlines on T10, the Overview, the header and the Finance dashboard, is raised separately as F-DG4-123. That surface is outside F-DG4-121's scope (gross and net), which is closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/zz-domain-r2.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-finance.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-benefits-totals-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-benefits-totals-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-finance-dashboard-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-finance-dashboard-gross.png"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 2,
+  "candidate_id": "sha256:3f51b79d671ebf6d220c5bb4b104916ca4eddac30266dd74c32e89ed37ccea4b",
+  "source_commit": "93a7dd7936a35977dfa790c1113c437dda103bcb",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-DOM-R2-domain-reviewer-20261011T044356Z-6c2556d6",
+    "session_id": "6c2556d6-e657-4e70-83dd-7cfa2cc45c25"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG4 implementation, test, register row, ADR or repair in the reviewed candidate, including the round-1 repairs T-DG4-ARCH-R4, T-DG4-KBE-R5, T-DG4-BE-R5, T-DG4-FE-R4 and T-DG4-AN-R1 and the D-118 orchestrator edits. I formed this verdict from my own runs in a complete (non-shallow) disposable clone of source commit 93a7dd7 under $TMPDIR. I reused my round-1 probes. dom-api.mjs is byte-identical. In dom-ui.mjs only the Arabic T11 expectation changed, to the D-117 design. zz-domain-r2.test.ts now expects gross 90 under D-117 and checks currencies on the class lines. dom-gross.mjs is new. I read the repair diff, D-117/D-118, ADR-0030 N1, ADR-0037 N2 and the handbacks only to understand the change. I did not open any other reviewer's round-2 record or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-2/domain-reviewer.md",
+  "requirements_checked": ["REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044", "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011", "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025", "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+  "checks_run": [
+    {
+      "id": "DOM-R2-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and its relation to source_commit. Recompute the candidate ID in the repository and in a complete disposable clone of 93a7dd7, before and after the runs.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-2/domain-reviewer.md; git rev-parse HEAD; git merge-base --is-ancestor 93a7dd7 HEAD; git diff --name-only 93a7dd7 HEAD; git clone /home/user/My-owns $TMPDIR/review-dom && git checkout 93a7dd7; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG4 (repo and clone)",
+      "environment": "Repository /home/user/My-owns at HEAD 1b8c158; clone $TMPDIR/review-dom at 93a7dd7936a35977dfa790c1113c437dda103bcb; Node 24.21.0.",
+      "expected": "Assignment sha256 77f4d871…; candidate sha256:3f51b79d…, 1455 files, in both the repository and a non-shallow clone of 93a7dd7.",
+      "actual": "The assignment hash matches (77f4d8711c69…0a5). HEAD is 1b8c158, the round-2 freeze commit. It descends from 93a7dd7 (is-ancestor exit 0) and changes only delivery metadata: the three round-2 assignments, the candidate manifest and stages.json, all excluded from the manifest. The repository gives sha256:3f51b79d671ebf6d220c5bb4b104916ca4eddac30266dd74c32e89ed37ccea4b with 1455 files at the start and again after the runs. The clone is non-shallow (shallow=false). One recomputation in the clone, taken during the integration run, gave c39e35d3… with 1456 files. That was expected: my probe zz-domain-r2.test.ts was then copied into tests/qa/integration (hygiene.log records it). After integ.sh removed the probe and I removed rv/, git status in the clone was clean and the clone gave 3f51b79d… with 1455 files (candidate.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/candidate.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/hygiene.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-01-validators",
+      "procedure": "Run the validators the assignment requires (register DG4; historical DG3, DG2 and DG1) in the repository at HEAD, then again in the clone at the source commit to locate the cause.",
+      "command": "node tools/gates/validate.mjs --register DG4; node tools/gates/validate.mjs --historical --stage DG3; … --stage DG2; … --stage DG1 (repo at 1b8c158, then the clone at 93a7dd7)",
+      "environment": "Node 24.21.0. Repository at HEAD 1b8c158 and disposable clone at 93a7dd7.",
+      "expected": "All four exit 0 (assignment: 'node tools/gates/validate.mjs --historical --stage DG3 must pass, and so must DG2 and DG1').",
+      "actual": "At HEAD 1b8c158: --register DG4 gives 'PASS register rules at DG4' (exit 0). --historical --stage DG3, DG2 and DG1 each give exit 1: 'FAIL gate DGx (historical) (1 problem) - stages.json: DG4 illegal transition REVIEWING -> REVIEWING'. The DG4 history at HEAD is [PLANNED, BUILDING, REVIEWING, REVIEWING]. TRANSITIONS (rules.mjs:18-26) allow REVIEWING -> FIXING | VERIFYING | BLOCKED only, and the round-1 repairs were never recorded as FIXING. In the clone at 93a7dd7, before the freeze commit, all four pass (exit 0). So the cause is the freeze commit's stages.json entry, outside the candidate. Raised as F-DG4-124 (Medium; owner delivery-orchestrator). The check is FAIL because a mandated validator does not pass at HEAD.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-02-build-unit",
+      "procedure": "Typecheck, build, lint and the unit projects on Node 22, then on Node 24, in the disposable clone. Vitest uses --configLoader runner because node_modules is read-only in the confined sandbox (QA-A's finding).",
+      "command": "bash docs/delivery/test-evidence/DG4/domain/round-2/checks.sh (pnpm -r typecheck; pnpm -r build; pnpm lint; npx vitest run --configLoader runner --project unit-node --project unit-web && npx vitest run --configLoader runner --project unit-formula-nocodegen)",
+      "environment": "Clone at 93a7dd7. node_modules copied with cp -a from the repository; pnpm-lock.yaml byte-identical. Node 22.22.2, then Node 24.21.0.",
+      "expected": "Every step exits 0 on both Node versions; no failed test.",
+      "actual": "On Node 22 and on Node 24: typecheck exit 0, build exit 0, lint exit 0 (eslint --max-warnings=0). Unit: 145 files / 2782 tests passed. No-codegen: 3 files, 259 passed and 2 skipped, exit 0. The 2 skips are the two fuzz.test.ts cases marked it.skipIf(NOCODEGEN) (lines 600 and 833); by design they do not run in the no-codegen process. The word 'fail' appears 14 times in the Node 24 log, all inside passing test names (✓ lines). There is no failure, timeout or error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/checks.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-2/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/build-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/build-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/lint-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/lint-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/test-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/test-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/node22-version.txt",
+        "docs/delivery/test-evidence/DG4/domain/round-2/node24-version.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-03-integration-and-acceptance-suites",
+      "procedure": "Run the full integration project (backend suites plus the QA acceptance suites A01-A14) on a disposable PostgreSQL created by tests/qa/support/with-pg.sh, together with my in-process probe zz-domain-r2.test.ts, which is copied into the clone only. Then re-run my probe file alone after correcting its stale DOM-CURRENCY expectation.",
+      "command": "QA_PG_PORT=26410 bash docs/delivery/test-evidence/DG4/domain/round-2/integ.sh (npx vitest run --configLoader runner --project integration); then INTEG_FILTER=tests/qa/integration/zz-domain-r2.test.ts QA_PG_PORT=26420 bash …/integ.sh",
+      "environment": "Clone at 93a7dd7, Node 24.21.0, PostgreSQL 16 (disposable), ports 26410 and 26420 (my range). The other two reviewers were running at the same time.",
+      "expected": "Every candidate suite passes, including the acceptance suites. DOM-GROSS gives gross = net = 90.",
+      "actual": "Run 1 (integration-run-1.log): 206 files, 1957 tests. 1956 passed, 1 failed, exit 1. Every candidate and acceptance suite passed: 205 files / 1953 candidate tests, plus 3 of my 4 probe tests. The one failure is MY probe DOM-CURRENCY. Its round-1 expectation (SAR gross = 100) assumed revenue_uplift is summed into gross. Under D-117 that benefit (financialBody's default class revenue_uplift) is correctly outside gross, so the SAR gross is 0. The probe's own log shows the blocks were separate ([['SAR','0'],['USD','0']]), which is the property under test. I changed that assertion to the revenue_uplift planned line per currency and re-ran the probe file alone. Run 2 (integration-run-2-probe-only.log): 4/4 passed, exit 0, 'DOM-CURRENCY revenue_uplift planned SAR=100 USD=7'. DOM-GROSS: lines 300/70/20/45, gross.planned = 90, net.planned = 90. The T10 Value area value.planned is 435 and the Finance gross/planned is 90 with no href (see F-DG4-123). DOM-GROSS-ONLYREV: with revenue only, gross and net are known 0.0000. DOM-NA: a CX benefit adds 1 to nonFinancialCount and leaves currencies unchanged. No hook timeout, test timeout or skipped test appears; the two 'skipped' matches are inside passing test names (A09 '…holiday skipped', REQ-S12-011 '…mapped owner is skipped'). This is REQ-DLV-036's review-time run on the frozen candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/integ.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-2-probe-only.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/zz-domain-r2.test.ts"
+      ]
+    },
+    {
+      "id": "DOM-R2-04-source-templates-registers-status",
+      "procedure": "On the real stack (with-stack.sh: PostgreSQL 26401, API with built web 26402, dev seed), run dom-api.mjs with the playbook as oracle: T11 (B0099), T12 (B0101), the five forum layers (B0093), the seven indicators (B0109-B0115), the six phases (B0021), G5/G6 (B0023) and the T10 areas (B0095), with no-data never green; the T13, T15 and T16 refusals; the status separation and closure guard; the workspace header; the Overview areas; ADM 403 on a gate decision.",
+      "command": "bash …/with-stack.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG4/domain/round-2/run-probes.sh (dom-api.mjs)",
+      "environment": "Disposable stack from the clone at 93a7dd7 (61 migrations applied, synthetic dev seed), Node 24.21.0, AUTH_MODE=dev.",
+      "expected": "Every assertion PASS.",
+      "actual": "49/49 PASS, exit 0 (dom-api.log). T11: the template equals B0099 verbatim, with SLA types working_days 5 / next_steerco_or_urgent / working_days 10 / release_plan, and 4 rows copied per transformation. T12 equals B0101, with one A per deliverable; X is refused (422 raci.invalid_value), two A are refused (422 raci.accountable_count), A/R is accepted, and edits are isolated. The five layers match B0093 with their cadence labels, and arProvisional is flagged. The seven indicators match B0109-B0115 by name, with training and proficiency kept apart. The six phases match B0021. G5 and G6 match B0023. The T10 areas match B0095, no-data areas are never green, and headlines carry explicit unknown/zero/n/a states. T13: 'Hostile' is refused (400), interventions outside the list are refused, impact must be H/M/L, and there are seven columns. T15: probability on an Issue or Assumption gives 422 raid.probability_not_applicable, a Risk without probability gives 422 raid.probability_required, and there are nine columns. T16: each of the seven ask elements (title, why now, options, recommendation, owner, required date, impact of delay) is required, and there are nine columns. Status: delivery, value, BAU and closure are separate fields. Closure without validated value gives 422; closure by SP is refused; PATCH to closed gives 422. The header's eight elements show Unknown where data is missing. The Overview has six areas in T10 order. ADM gets 403 on a gate decision. The first attempt (stack-run-0) never ran the probes: my relative script path failed after with-stack.sh changed directory (exit 127, nothing executed). stack-run-1 is the real run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-api.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-api.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/with-stack.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-2/run-probes.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-2/stack-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/stack-run-0-relative-path-exit127.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-05-ui-en-ar",
+      "procedure": "With pre-installed Chromium (/opt/pw-browsers), sign in as dev.lead and render the P4 screens in English (LTR) and Arabic (RTL): forums, T11, T12, T13, indicators, T15, T16, the T10 dashboard, the Executive Overview, the workspace header, closure, G5, G6, My Work, traceability and About. Assert visible text against the i18n catalogues and the playbook, take a screenshot per claim and language, and record any request outside the app origin.",
+      "command": "run-probes.sh (dom-ui.mjs) inside the same stack as DOM-R2-04",
+      "environment": "Same disposable stack; Chromium 1194 headless; viewport 1366x900; timezone Asia/Riyadh.",
+      "expected": "Every assertion PASS in EN and AR; the provisional wordmark is shown; there is no certification claim and no foreign request.",
+      "actual": "38/38 PASS, exit 0 (dom-ui.log). dir is rtl/ltr as expected. The header shows the 'Provisional' / 'مؤقت' wordmark marker. The forum layers render. T11 shows its four rows; in AR it now expects the D-117 design (English source labels, Arabic working-days line). T12 shows its six deliverables; T13, the indicators, T15 and T16 render. On an empty transformation, T10 and the header show Unknown, not green. Closure shows no 'successful' label. G5 and G6 render. About carries the method disclaimer (not an official PMI standard, not certified). No page makes a request outside the app origin. Screenshots are under screens/ (en-* and ar-*).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-ui.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-ui.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-forums-five-layers.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-forums-five-layers.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-raci-T12.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-raci-T12.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-adoption-indicators.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-adoption-indicators.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-raid-T15.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-raid-T15.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-executive-decisions-T16.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-executive-decisions-T16.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-transformation-dashboard-T10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-transformation-dashboard-T10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-closure-status.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-closure-status.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-about.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-about.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-06-round1-findings-verification",
+      "procedure": "Re-test F-DG4-120 and F-DG4-121 adversarially on the real stack (dom-gross.mjs: API plus EN/AR UI of the benefits totals, the Finance dashboard and T11) and in-process (DOM-GROSS). Judge D-117's gross rule against M0172 and B0145.",
+      "command": "PROBES=dom-gross LOGSUFFIX=-run3 bash …/with-stack.sh bash …/run-probes.sh",
+      "environment": "A fresh disposable stack per run, from the clone at 93a7dd7; Chromium headless; Node 24.21.0.",
+      "expected": "Gross and net 90 (not 435), with revenue 300 and avoided cost 45 beside them and not summed, and the basis labelled in EN and AR. The Arabic T11 page shows the provisional notice, with the English labels marked as English.",
+      "actual": "Run 3: 14/14 PASS, exit 0 (dom-gross-run3.log); details in domain-reviewer.verifications.json. Both findings are CLOSED_VERIFIED. Two earlier runs failed because of bugs in my own probe, not in the product. Run 1 crashed in my j() helper on an undefined T10 area lookup, after its first 3 API assertions had passed (exit 1; dom-gross-run1-probe-bug.log). Run 2 passed 10/12. Its 2 FAILs were my T11 step waiting 30 s for '#p4-decision-rights', a selector that does not exist. The page itself had rendered all four rows, as its error screenshots in screens/run2-selector-bug/ show. Run 3 waits for 'main#main table tbody tr' and passes. Judgment: the D-117 rule (gross = margin + cash saving + working capital release; revenue uplift and avoided cost shown beside gross and never summed; net = gross − implementation cost) fits M0172 and B0145.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run1-probe-bug.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/stack-run-3-gross.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/stack-run-2-gross.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-decision-rights-T11-notice.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-decision-rights-T11-notice.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-benefits-totals-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-benefits-totals-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/run2-selector-bug/en-decision-rights-T11-notice-error.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/run2-selector-bug/ar-decision-rights-T11-notice-error.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-07-value-headlines-and-dashboards",
+      "procedure": "For the same synthetic world, read the headline money figures outside gross/net: the T10 Value area, the Executive Overview (/api/v1/overview), the workspace header (/summary) and the Finance dashboard headlines. Render them in EN and AR. Judge them against M0172 as the assignment asks. Also read the DG3 business-case totals rule (kpi/totals.ts) for the same question.",
+      "command": "dom-gross.mjs (API reads written to gross-t10.json, gross-overview.json and gross-finance.json; screenshots *-t10-value-area, *-executive-overview-gross, *-workspace-header-gross, *-finance-dashboard-gross); reading apps/api/src/modules/kpi/totals.ts lines 1-20 and apps/web/src/pages/dashboards/ui.tsx lines 105-121",
+      "environment": "Stack run 3 (clone at 93a7dd7).",
+      "expected": "No headline adds top-line revenue to margin or non-cash to cash. Every figure renders in its own unit (a ratio as %, money in its currency). Zero, Unknown and n/a are distinct.",
+      "actual": "Two defects. (1) F-DG4-122 (High, mandatory): the value.gap headline is a ratio (API unit 'ratio', value 1), but the web renders it as money, 'Value gap SAR 1.00' / 'فجوة القيمة 1.00 ر.س.', on T10, the Overview and the Finance dashboard. formatValue tests currency before unit. (2) F-DG4-123 (Medium): value.planned = 435 = 300 + 70 + 20 + 45 on T10, the Overview, the header (benefits.planned) and the Finance headlines. On the Finance dashboard it sits directly above 'Gross (profit and cash …) SAR 90.00', against M0172. Correct behaviour on these screens: known zero shows a 'Known zero' chip, Unknown and n/a are distinct, the forecast and submitted headlines are separate, and the Value RAG is Red with gap ratio 1 (the policy is amber 0.05, red 0.15). The DG3 business-case totals (kpi/totals.ts) also sum all financial bases into gross. But they report gross by value basis (grossBenefitsByValueBasis), and a case that holds both revenue and margin uplift lines gets the warning business_case.revenue_and_margin. That is a DG3-approved planning artefact, which flags the double-count risk explicitly, so I record it as an observation and not a finding. Its basis now differs from the D-117 benefit gross, and the solution-architect may want to align the two when deciding F-DG4-123.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/value-gap-ratio-as-currency.txt",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-t10.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-overview.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/gross-finance.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-t10-value-area.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-t10-value-area.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-executive-overview-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-executive-overview-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-workspace-header-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-workspace-header-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-finance-dashboard-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-finance-dashboard-gross.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-08-repair-diff-regressions",
+      "procedure": "Read the whole repair diff a91d82c..93a7dd7 (source, tests, migration 0061, ADR-0030 N1, ADR-0037 N2, i18n and register rows) for any weakening of other behaviour.",
+      "command": "git diff a91d82c..93a7dd7 -- apps packages tests docs/architecture docs/api docs/delivery/requirements.csv",
+      "environment": "Repository at HEAD 1b8c158.",
+      "expected": "Repairs are confined to their findings; no rule is weakened.",
+      "actual": "Benefits: GROSS_TOTAL_CLASSES and the Finance gross lines follow N1/N2, and validated totals, overlap hold, exclusions and currencies are unchanged. The tests that moved from revenue_uplift to margin_uplift (totals.test.ts, a10 REQ-S08-011) still assert the same property: one count, and cost subtracted once (1 M, not 2 M). Corrections: an amendment or reversal steps the ORIGINAL validation's version under the same advisory lock, with its own audit event. Migration 0061 allows only that version step, on an approved validation that already has a correction, with every other column unchanged. Both records stay visible and the original's decision and amount are never edited. Authorization: the 403s (SoD submitter, baseline owner, overlap resolver owner, valuation proposer, not-assignee, requirePermissionSomewhere) now carry denials, so exactly one authorization.denied is audited; the responses are unchanged. Gates: updateGate, submitGate and decideGate re-check grants at commit time, and request-start refusals are unchanged. A decision on a Draft gate is still 409 gate.submission_superseded with nothing written (QA-B observation; see DOM-R2-09). Web: T11 notice, gross labels, and moves of renderMessage and useTraceSelection only (byte-equal code). Register: the AN-R1 notes cite QA-D's a01/a02-a08 tests, which removes two disclosed partials. No weakening found.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-09-operating-logic-and-observations",
+      "procedure": "Source review of operating rules against the playbook and master prompt, unchanged since round 1 and re-checked on this candidate: the T10 area rules, escalation once to the next authority, the closure guard, BAU acceptance, change-request preservation, the Modular G3 waiver (D-110, ADR-0021 W1-W7), and the register partial disclosures. Judge QA-C O-2 and QA-B 409/422.",
+      "command": "Reading apps/api/src/modules/reporting/dashboards/areas.ts; apps/api/src/modules/workflows/gates.ts decideGate; requirements.csv notes of the 137 rows; the acceptance suites A03-A14 green in DOM-R2-03",
+      "environment": "Clone at 93a7dd7.",
+      "expected": "Rules match their sources, and the partial disclosures are honest and acceptable.",
+      "actual": "T10 RAG comes from the KPI trajectory and the validated-value gap, never from completion (B0095). Forecast, submitted and scenario values are never counted as validated. Finance validation is FIN-only with SoD, and the amendment and reversal chain is preserved (now version-stepped). Escalation goes once to the next authority, with routing errors visible. Closure is refused while value is pending unless a transition decision exists. BAU acceptance is by the receiving owner only and creates the recurring reviews once. G5 requires risk closure and a scale scope, and scaling outside that scope is refused. G6 requires ownership transfer. The Modular waiver covers missing links only and is refused when revoked or expired. All of these are exercised by the green acceptance suites (A03-A14) in DOM-R2-03. QA-C O-2: a transformation stays 'draft' until explicit activation while G1-G6 progress (dom-api STATUS observation: status=draft, phase=diagnose). The playbook defines phases and gates, not a record lifecycle, so this does not contradict the source; the phase and gate state carry the progression. Acceptable. QA-B: deciding a Draft gate answers 409 gate.submission_superseded ('There is no pending submission to decide') and writes nothing. REQ-S04-010 requires only rejection, and the decideGate contract defines 409. This is DG2-approved behaviour, which I accept as an observation. Register partials (PB-065, PB-066, PB-075, S04-014, S07-005, S07-007, S07-015, S08-015, S13-003, S15-008, S20-011): each is plainly disclosed and each clause is proven by an executed test on the same engine. They are acceptable. Note: REQ-S13-003's drill invariant is honoured for the five-class value.* headlines; F-DG4-123 questions their basis, not their drill-down.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-2/dom-api.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-10-hygiene",
+      "procedure": "Run the no-CDN script. Search shipped strings and sources for affirmative certification or official-standard claims (negated disclaimers excluded). List the #0078FF occurrences and the provisional brand strings. List DG0-DG7 references in product code.",
+      "command": "node scripts/check-no-cdn.mjs; grep -rniE 'official (PMI|Mobily)|certified|PMI standard' apps/web/src/i18n apps/api/src apps/web/src/pages | grep -viE '<negations>'; grep -rn 0078FF apps/web/src packages/design-tokens/src; grep -rnE 'DG[0-7]' apps/*/src packages/*/src (non-test, non-comment)",
+      "environment": "Clone at 93a7dd7; Node 24.21.0.",
+      "expected": "no-cdn PASS; no affirmative claim; #0078FF only as a provisional token or in provisional text; no product logic depends on DG records.",
+      "actual": "'PASS no-cdn: scanned apps, packages' (exit 0). The claim grep exits 1, so no affirmative claim was found. #0078FF appears only in tokens.json (provisional: true; 'NOT verified or official Mobily colours'), index.ts comments and the provisional brandBody (EN/AR). The wordmark marker is 'Provisional' / 'مؤقت'. DG references in product code: the gate engine note 'Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7', plus identifier and comment names (DG2_DEPENDENCY_TYPES, '// DG2 evidence register'), none of which reads delivery records. Product G6 cannot imply DG7. Provisional Arabic is labelled on the forums, T10 areas, indicators and, now, T11.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/hygiene.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-11-environmental-residuals",
+      "procedure": "Assignment: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049) residuals are recorded as PASS on the offline/config surface. Check whether any of my 137 requirements depends on them.",
+      "command": "Compare the 137-id list with REQ-DLV-042, REQ-DLV-025 and the Keycloak rows.",
+      "environment": "Assignment file and requirements.csv at HEAD 1b8c158.",
+      "expected": "None of my requirements needs a live registry, live CI or Keycloak.",
+      "actual": "REQ-DLV-042 and REQ-DLV-025 are not in my list. All my P4 behaviour ran with AUTH_MODE=dev, offline, on disposable PostgreSQL, with no network. The residuals stay as recorded in D-049, D-057 and D-058. None of my checks claims a pass on their behalf.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-2/env.txt"
+      ]
+    }
+  ],
+  "findings": ["F-DG4-122", "F-DG4-123", "F-DG4-124"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/domain/round-2/candidate.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/validators.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-1.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/integration-run-2-probe-only.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/dom-api.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/dom-ui.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/dom-gross-run3.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/value-gap-ratio-as-currency.txt",
+    "docs/delivery/test-evidence/DG4/domain/round-2/hygiene.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/env.txt",
+    "docs/delivery/test-evidence/DG4/domain/round-2/test-node22.log",
+    "docs/delivery/test-evidence/DG4/domain/round-2/test-node24.log"
+  ],
+  "reviewed_at": "2026-10-11T05:45:00Z",
+  "summary": "FAIL. Both of my round-1 findings verify CLOSED_VERIFIED on candidate 3f51b79d (1455 files, recomputed on a complete clone of 93a7dd7). F-DG4-121: gross and net are 90, not 435, with revenue uplift and avoided cost shown beside gross and labelled in EN/AR. The D-117 rule fits M0172 and B0145. F-DG4-120: the Arabic T11 page shows the provisional notice, and the English labels are marked lang=en. The build, lint and typecheck are clean on Node 22 and 24, and the unit tests give 2782 passed plus 259 passed and 2 skipped by design. The integration project ran 1957 tests: all 1953 candidate tests pass, including every acceptance suite. The one failure was my own stale probe, which passed after I corrected it and re-ran it alone. The source fidelity probes pass: API 49/49, UI 38/38, gross probe 14/14. Three new findings make this round FAIL. F-DG4-122 (High, mandatory): the 'Value gap' ratio is rendered as a SAR amount ('SAR 1.00' for 100 %) on T10, the Executive Overview and the Finance dashboard, in EN and AR. F-DG4-123 (Medium): the five-class 'Planned value'/'Validated value' headlines still add revenue to margin and avoided cost to cash (435 beside a gross of 90), against M0172. F-DG4-124 (Medium, owner orchestrator): stages.json at the freeze commit records REVIEWING -> REVIEWING, so the mandated --historical validators fail at HEAD; they pass at 93a7dd7. Judged and acceptable: QA-C O-2, QA-B's 409, the register partial disclosures, and the DG3 business-case totals (a per-basis breakdown with a revenue-and-margin warning)."
+}
