@@ -18,7 +18,8 @@ async function main(): Promise<void> {
   }
   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
   const db = createDb(pool);
-  const boss = createBoss(config.databaseUrl!);
+  // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
+  const boss = createBoss(config.databaseUrl!, { superviseIntervalSeconds: config.worker.superviseIntervalSeconds });
   let stopping = false;
   // After shutdown begins, pg-boss's in-flight maintenance ticks can fail against its closed pool; that is not an error.
   boss.on("error", (err) => {
@@ -26,7 +27,14 @@ async function main(): Promise<void> {
   });
   await boss.start();
   const worker = await startWorker({ db, boss, timeZone: config.defaultTimezone });
-  console.log(JSON.stringify({ level: "info", msg: "mth-worker started", timeZone: config.defaultTimezone }));
+  console.log(
+    JSON.stringify({
+      level: "info",
+      msg: "mth-worker started",
+      timeZone: config.defaultTimezone,
+      superviseIntervalSeconds: config.worker.superviseIntervalSeconds,
+    }),
+  );
 
   const shutdown = async (signal: string) => {
     stopping = true;

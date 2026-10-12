@@ -9,7 +9,7 @@
 //  - Error messages name the variable, never the value (secrets must not reach logs).
 import { readFileSync } from "node:fs";
 import { z } from "zod";
-import { AUTH_MODES, ENV_VARS, type EnvVarName } from "./index.ts";
+import { AUTH_MODES, ENV_VARS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
 
 export type Service = "api" | "worker" | "db-cli";
 
@@ -47,6 +47,8 @@ export interface AppConfig {
   readonly rateLimit: { readonly perMinute: number; readonly authPerMinute: number };
   readonly logLevel: (typeof LOG_LEVELS)[number];
   readonly trustProxy: readonly string[];
+  /** Worker-only settings (F-DG4-128). Always present; defaulted when unset. */
+  readonly worker: { readonly superviseIntervalSeconds: number };
 }
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -156,6 +158,10 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
   const perMinute = field("RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
   const authPerMinute = field("AUTH_RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
   const logLevel = field("LOG_LEVEL", z.enum(LOG_LEVELS));
+  const superviseIntervalSeconds = field(
+    "WORKER_SUPERVISE_INTERVAL_SECONDS",
+    z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
+  );
   const trustProxy = (raw.TRUST_PROXY ?? "")
     .split(",")
     .map((s) => s.trim())
@@ -225,6 +231,7 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     rateLimit: { perMinute: perMinute!, authPerMinute: authPerMinute! },
     logLevel: logLevel!,
     trustProxy,
+    worker: { superviseIntervalSeconds: superviseIntervalSeconds! },
   });
 }
 

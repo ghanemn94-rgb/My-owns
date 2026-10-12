@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ConfigError, isLoopbackHost, loadConfig, secureOriginAllowed } from "./index.ts";
+import { ConfigError, isLoopbackHost, loadConfig, secureOriginAllowed, SUPERVISE_INTERVAL_SECONDS } from "./index.ts";
 
 const base = {
   NODE_ENV: "test",
@@ -32,6 +32,39 @@ describe("loadConfig", () => {
     expect(c.productName).toBe("Mobily Transformation Hub");
     expect(c.oidc).toBeNull();
     expect(c.appBaseUrl?.origin).toBe("http://localhost:3000");
+  });
+
+  describe("WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence)", () => {
+    const worker = { NODE_ENV: "test", DATABASE_URL: base.DATABASE_URL };
+
+    it("defaults to the 60 s cadence pg-boss documents when unset or empty", () => {
+      expect(SUPERVISE_INTERVAL_SECONDS).toEqual({ min: 1, max: 600, default: 60 });
+      expect(loadConfig("worker", worker).worker).toEqual({ superviseIntervalSeconds: 60 });
+      expect(loadConfig("worker", { ...worker, WORKER_SUPERVISE_INTERVAL_SECONDS: "" }).worker).toEqual({
+        superviseIntervalSeconds: 60,
+      });
+    });
+
+    it.each([
+      ["1", 1],
+      ["17", 17],
+      ["600", 600],
+    ])("accepts %s (inside 1-600)", (value, expected) => {
+      const c = loadConfig("worker", { ...worker, WORKER_SUPERVISE_INTERVAL_SECONDS: value });
+      expect(c.worker.superviseIntervalSeconds).toBe(expected);
+      expect(Number.isFinite(c.worker.superviseIntervalSeconds)).toBe(true);
+    });
+
+    it.each(["0", "-5", "601", "86400", "1.5", "NaN", "abc", "Infinity"])(
+      "refuses %s, naming the variable",
+      (value) => {
+        const problems = problemsOf(() =>
+          loadConfig("worker", { ...worker, WORKER_SUPERVISE_INTERVAL_SECONDS: value }),
+        );
+        expect(problems).toHaveLength(1);
+        expect(problems[0]).toMatch(/^WORKER_SUPERVISE_INTERVAL_SECONDS is invalid/);
+      },
+    );
   });
 
   it("refuses AUTH_MODE=dev with NODE_ENV=production (ADR-0005)", () => {

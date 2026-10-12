@@ -134,6 +134,15 @@ export const ENV_VARS = {
     default: "info",
     usedBy: ["api", "worker"],
   },
+  WORKER_SUPERVISE_INTERVAL_SECONDS: {
+    description:
+      "Worker pg-boss supervision cadence in seconds: expiry of jobs held by a dead worker, queue monitoring and " +
+      "maintenance (F-DG4-128). Integer 1-600; 60 is the cadence pg-boss documents",
+    required: false,
+    secret: false,
+    default: "60",
+    usedBy: ["worker"],
+  },
   TRUST_PROXY: {
     description: "Comma-separated reverse-proxy addresses whose X-Forwarded-* headers are trusted",
     required: false,
@@ -148,6 +157,15 @@ export type EnvVarName = keyof typeof ENV_VARS;
 /** Allowed AUTH_MODE values; `dev` must be rejected at startup when NODE_ENV=production (ADR-0005). */
 export const AUTH_MODES = ["oidc", "dev"] as const;
 export type AuthMode = (typeof AUTH_MODES)[number];
+
+/**
+ * The worker's pg-boss supervision cadence (F-DG4-128, D-131). pg-boss 11.0.0 gives `superviseIntervalSeconds` no
+ * default, so an unset value runs supervision every 1 ms (setInterval(NaN)). The worker therefore always passes a
+ * value in this range. The minimum is pg-boss's own floor for its other intervals (1 s; the restart tests use it). The
+ * maximum, 10 minutes, bounds how long a job held by a dead worker can stay active past its expiry before a supervision
+ * pass fails it for retry (REQ-S16-005), and matches pg-boss's longest scheduler interval (clockMonitorIntervalSeconds).
+ */
+export const SUPERVISE_INTERVAL_SECONDS = { min: 1, max: 600, default: 60 } as const;
 
 // Validated loader over the catalogue above (T-DG1-BE).
 export {
