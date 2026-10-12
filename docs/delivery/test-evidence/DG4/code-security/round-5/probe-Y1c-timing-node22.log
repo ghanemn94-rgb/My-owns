@@ -1,0 +1,49 @@
+# probe: session-bound.test.tsx (unchanged copy) + probes/sec-dg4-r5-y1c-timing.append.tsx (ebc531711e70b1f2), probe clone e29a735ddcfe164dc11a08c9fda95a57b591d502, node v22.22.2, -t 'SEC-DG4-R5', 2026-10-12T05:01:56Z
+## Y1C_HOLD='GET .*/transformations/[^/]+$' Y1C_HOLD_MS=2200
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 2 (Y1c asserts exactly 2)
+   ✓ SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/transformations/[^/]+$ answered 2200 ms late: count of /me after the POST  4401ms
+      Tests  1 passed | 34 skipped (35)
+# exit_status: 0
+## Y1C_HOLD='GET .*/summary' Y1C_HOLD_MS=2200
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /me | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 3 (Y1c asserts exactly 2)
+   × SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/summary answered 2200 ms late: count of /me after the POST 3844ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+    697|     console.log(`[SEC-R5 Y1c-timing] requests after POST: ${afterPost.…
+    698|     console.log(`[SEC-R5 Y1c-timing] /me after POST = ${afterPost.filt…
+      Tests  1 failed | 34 skipped (35)
+# exit_status: 1
+## Y1C_HOLD='GET .*/audit' Y1C_HOLD_MS=2200
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 3 (Y1c asserts exactly 2)
+   × SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/audit answered 2200 ms late: count of /me after the POST 3952ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+    697|     console.log(`[SEC-R5 Y1c-timing] requests after POST: ${afterPost.…
+    698|     console.log(`[SEC-R5 Y1c-timing] /me after POST = ${afterPost.filt…
+      Tests  1 failed | 34 skipped (35)
+# exit_status: 1
+## Y1C_HOLD='GET .*/decisions' Y1C_HOLD_MS=2200
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 2 (Y1c asserts exactly 2)
+   ✓ SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/decisions answered 2200 ms late: count of /me after the POST  3905ms
+      Tests  1 passed | 34 skipped (35)
+# exit_status: 0
+## Y1C_HOLD='GET .*/me$' Y1C_HOLD_MS=2200
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 2 (Y1c asserts exactly 2)
+   ✓ SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/me$ answered 2200 ms late: count of /me after the POST  5857ms
+      Tests  1 passed | 34 skipped (35)
+# exit_status: 0
+## Y1C_HOLD='POST .*' Y1C_HOLD_MS=2200
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 3 (Y1c asserts exactly 2)
+   × SEC-DG4-R5 Y1c timing reproduction > Y1c with POST .* answered 2200 ms late: count of /me after the POST 5635ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+    697|     console.log(`[SEC-R5 Y1c-timing] requests after POST: ${afterPost.…
+    698|     console.log(`[SEC-R5 Y1c-timing] /me after POST = ${afterPost.filt…
+      Tests  1 failed | 34 skipped (35)
+# exit_status: 1

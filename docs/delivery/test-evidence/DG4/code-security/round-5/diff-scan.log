@@ -1,0 +1,130 @@
+== D0 freeze commit vs source commit (delivery metadata only expected)
+ .../DG4/round-5/code-security-reviewer.md          |  142 +
+ .../assignments/DG4/round-5/domain-reviewer.md     |  163 +
+ .../assignments/DG4/round-5/qa-verifier.md         |  137 +
+ .../candidates/DG4/69b7412a0a360135.manifest.json  | 7378 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 7842 insertions(+), 5 deletions(-)
+== D1 P4 diff size (apps, packages)
+ 784 files changed, 224204 insertions(+), 1630 deletions(-)
+== D2 migrations added/modified/deleted in P4 (only A expected; 0001-0027 untouched)
+     34 A
+(none modified or deleted)
+== D3 migration numbering contiguous
+0001..0061 contiguous check done
+== D4 secret-like strings added in P4 (product, migrations, configs)
+(end D4)
+== D5 public CDN / remote URLs added in P4 product code
+      2 https://example.invalid
+      2 http://x
+      1 https://idp.example.invalid
+      1 https://evil.example
+== D6 dynamic code in P4 product code (eval, new Function, Function(, vm., child_process)
++    for (const expression of ["eval(1)", "constructor.constructor('return process')()", "process.exit(1)"]) {
++  expect([vm.status, vm.body.status]).toEqual([201, "proposed"]);
++  const D = `${M}/${vm.body.id}/decision`;
++import { spawn, type ChildProcess } from "node:child_process";
++import { spawn, type ChildProcess } from "node:child_process";
++import { spawn, type ChildProcess } from "node:child_process";
++import { spawn, type ChildProcess } from "node:child_process";
++import { spawn, type ChildProcess } from "node:child_process";
+(end D6)
+== D7 raw SQL interpolation risk: sql.raw / sql.lit / sql.id with non-literal args in P4 product code
+(end D7)
+== D8 innerHTML / dangerouslySetInnerHTML in P4 web code
++    expect(container.innerHTML).not.toMatch(/success|green|rag|chip|badge|warning/i);
++    expect(document.body.innerHTML).not.toContain(HIDDEN);
+(end D8)
+== D9 float arithmetic on money in P4 server code (parseFloat / Number(...amount|value|share|rate))
+(end D9)
+== D10 p4-pending lists (all must be empty)
+apps/api/test/support/p4-pending-arch-01.ts 0
+apps/api/test/support/p4-pending-arch-02.ts 0
+apps/api/test/support/p4-pending-arch-03.ts 0
+apps/api/test/support/p4-pending-arch-04.ts 0
+apps/api/test/support/p4-pending-arch-05.ts 0
+apps/api/test/support/p4-pending-arch-06.ts 0
+apps/api/test/support/p4-pending-arch-07.ts 0
+apps/api/test/support/p4-pending-arch-08.ts 0
+apps/api/test/support/p4-pending-arch-r1.ts 0
+apps/api/test/support/p4-pending-arch-r2.ts 0
+apps/api/test/support/p4-pending-arch-r3.ts 0
+apps/api/test/support/p4-pending-arch-r5.ts 0
+apps/api/test/support/p4-pending-arch-r6.ts 0
+apps/api/test/support/p4-pending-arch-r7.ts 0
+apps/api/test/support/p4-pending-be-a.ts 0
+apps/api/test/support/p4-pending-be-b.ts 0
+apps/api/test/support/p4-pending-be-c.ts 0
+apps/api/test/support/p4-pending-be-d.ts 0
+apps/api/test/support/p4-pending-be-d2.ts 0
+apps/api/test/support/p4-pending-be-e.ts 0
+apps/api/test/support/p4-pending-be-f.ts 0
+apps/api/test/support/p4-pending-be-f2.ts 0
+apps/api/test/support/p4-pending-be-g.ts 0
+apps/api/test/support/p4-pending-be-h.ts 0
+apps/api/test/support/p4-pending-be-h2.ts 0
+apps/api/test/support/p4-pending-be-i.ts 0
+apps/api/test/support/p4-pending-be-i2.ts 0
+apps/api/test/support/p4-pending-be-j.ts 0
+apps/api/test/support/p4-pending-be-k.ts 0
+apps/api/test/support/p4-pending-be-k2.ts 0
+apps/api/test/support/p4-pending-be-l.ts 0
+apps/api/test/support/p4-pending-be-l2.ts 0
+apps/api/test/support/p4-pending-be-m.ts 0
+apps/api/test/support/p4-pending-be-m2.ts 0
+apps/api/test/support/p4-pending-be-m3.ts 0
+apps/api/test/support/p4-pending-kbe-b.ts 0
+apps/api/test/support/p4-pending-kbe-c.ts 0
+apps/api/test/support/p4-pending-kbe-d.ts 0
+apps/api/test/support/p4-pending-kbe-d2.ts 0
+apps/api/test/support/p4-pending-kbe-e.ts 0
+apps/api/test/support/p4-pending-kbe-f.ts 0
+apps/api/test/support/p4-pending-kbe-g.ts 0
+apps/api/test/support/p4-pending-kbe-g2.ts 0
+== D11 OpenAPI operation count
+operations 652
+== D12 sql.raw / sql.lit anywhere in apps/*/src (full tree)
+apps/api/src/modules/transformations/routes.ts:131:      const op = sort.dir === "desc" ? sql.raw("<") : sql.raw(">");
+== D13 repair diff ccc37c9..3e3a06e: migrations (none expected)
+== D14 repair diff: files by area
+      8 apps/web
+    365 docs/delivery
+== D15 repair diff: unsafe sinks / float / remote URLs / sql.raw added (expect none in product code)
+(end D15)
+== D16 migrations 0028-0061: every CREATE TABLE has an append-only or guard attachment or is listed
+  0028_p4_calendar_jobs_work_items.sql tables=6 guard-refs=7
+  0029_p4_groups_role_mapping_delegation.sql tables=4 guard-refs=8
+  0030_p4_decision_rights_raci.sql tables=7 guard-refs=8
+  0031_p4_approvals_permissions.sql tables=4 guard-refs=11
+  0032_p4_slice_i_c_reserved.sql tables=0 guard-refs=0
+  0033_p4_kpi_dictionary_versions.sql tables=4 guard-refs=13
+  0034_p4_kpi_trajectories_actuals.sql tables=6 guard-refs=18
+  0035_p4_kpi_calculation_runs_quality.sql tables=4 guard-refs=10
+  0036_p4_kpi_permissions_backfill.sql tables=0 guard-refs=0
+  0037_p4_benefit_register.sql tables=9 guard-refs=22
+  0038_p4_benefit_measurement_validation.sql tables=6 guard-refs=22
+  0039_p4_benefit_value_views.sql tables=0 guard-refs=0
+  0040_p4_benefit_permissions.sql tables=0 guard-refs=0
+  0041_p4_raid_actions_corrective.sql tables=4 guard-refs=11
+  0042_p4_budget_schedule.sql tables=2 guard-refs=6
+  0043_p4_raid_permissions.sql tables=0 guard-refs=0
+  0044_p4_forums_meetings.sql tables=10 guard-refs=28
+  0045_p4_t16_escalation.sql tables=3 guard-refs=13
+  0046_p4_governance_permissions.sql tables=0 guard-refs=0
+  0047_p4_adoption.sql tables=12 guard-refs=35
+  0048_p4_sustainment.sql tables=12 guard-refs=41
+  0049_p4_adoption_sustainment_permissions.sql tables=0 guard-refs=0
+  0050_p4_sustainment_schedules.sql tables=0 guard-refs=0
+  0051_p4_phases_gates_g5_g6_exceptions.sql tables=10 guard-refs=26
+  0052_p4_change_control.sql tables=4 guard-refs=8
+  0053_p4_gates_change_permissions.sql tables=0 guard-refs=0
+  0054_p4_gate_exception_expiry_schedule.sql tables=0 guard-refs=0
+  0055_p4_traceability_modular_structure.sql tables=6 guard-refs=11
+  0056_p4_dashboards_t10.sql tables=2 guard-refs=1
+  0057_p4_dashboards_traceability_permissions.sql tables=0 guard-refs=0
+  0058_p4_approval_reminder_kinds.sql tables=0 guard-refs=0
+  0059_p4_enable_g5_g6.sql tables=0 guard-refs=0
+  0060_p4_governance_schedules_weekly_cadence.sql tables=0 guard-refs=0
+  0061_p4_finance_validation_correction_step.sql tables=0 guard-refs=1
+== D17 DELETE/TRUNCATE grants to mth_app in 0028-0061
+(end D17)

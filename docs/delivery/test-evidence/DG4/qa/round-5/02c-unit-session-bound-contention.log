@@ -1,0 +1,282 @@
+# qa-verifier DG4 R5: session-bound.test.tsx alone, pinned to ONE CPU (taskset -c 0) with 3 busy loops on the same CPU, to reproduce the CPU contention of a full parallel pnpm test run.
+# candidate = $TMPDIR/rv (3e3a06e content); control = $TMPDIR/rv-ccc (round-4 source ccc37c9). apps/web/src/auth, api and test are identical in both (git diff ccc37c9..3e3a06e empty).
+$ [rv run 1] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx  (+3 busy loops on cpu 0; 2026-10-12T06:15:50Z)
+ 06:15:50 up 1 day, 12:15,  0 user,  load average: 12.52, 13.60, 13.50
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m$TMPDIR/rv[39m
+
+ [31m❯[39m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx [2m([22m[2m34 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 34190[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 3363[2mms[22m[39m
+[31m   [31m×[31m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record[39m[33m 4334[2mms[22m[39m
+[31m     → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 1034[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 576[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 1275[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 1699[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1661[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1200[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 409[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 836[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 752[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 609[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 657[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 379[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 1039[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c: the same create under one identity still lands on the created record [33m 827[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 669[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 410[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 796[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 956[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1069[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1060[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 468[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 611[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 525[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 594[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 683[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 342[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mnavigate, setQueryData and run act while the generation is current, and do nothing after it moved[32m 15[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mthe same identity re-probed does not move the generation (a same-identity action keeps its effects)[32m 0[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mscans the app's source files[32m 0[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22museNavigate is imported only by the session-bound module and the three session transitions (justified)[32m 16[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe query cache is written and the router navigated only through a session-bound action[32m 79[2mms[22m[39m
+   [33m[2m✓[22m[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page [33m 5242[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx[2m > [22mF-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record
+[31m[1mAssertionError[22m: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 3[39m
+
+[36m [2m❯[22m src/auth/session-bound.test.tsx:[2m280:38[22m[39m
+    [90m278| [39m      // Bounded: the create's own permission refresh (F-DG1-210) and …
+    [90m279| [39m      const afterPost = s.requests.slice(s.requests.findIndex((r) => r…
+    [90m280| [39m      [34mexpect[39m(afterPost[33m.[39m[34mfilter[39m(isMe))[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m281| [39m    })[33m;[39m
+    [90m282| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m33 passed[39m[22m[90m (34)[39m
+[2m   Start at [22m 06:15:54
+[2m   Duration [22m 48.51s[2m (transform 6.79s, setup 663ms, collect 9.17s, tests 34.19s, environment 2.77s, prepare 530ms)[22m
+
+EXIT 1
+$ [rv run 2] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx  (+3 busy loops on cpu 0; 2026-10-12T06:16:44Z)
+ 06:16:44 up 1 day, 12:15,  0 user,  load average: 13.07, 13.60, 13.50
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m$TMPDIR/rv[39m
+
+ [31m❯[39m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx [2m([22m[2m34 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 34652[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 2570[2mms[22m[39m
+[31m   [31m×[31m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record[39m[33m 4677[2mms[22m[39m
+[31m     → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 728[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 370[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 1389[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 1722[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1756[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1059[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 425[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 962[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 754[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 543[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 738[2mms[22m[39m
+   [32m✓[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token[32m 300[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 985[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c: the same create under one identity still lands on the created record [33m 986[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 756[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 493[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 834[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 990[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1037[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1162[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 511[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 568[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 558[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 458[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 759[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 354[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mnavigate, setQueryData and run act while the generation is current, and do nothing after it moved[32m 10[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mthe same identity re-probed does not move the generation (a same-identity action keeps its effects)[32m 1[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mscans the app's source files[32m 1[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22museNavigate is imported only by the session-bound module and the three session transitions (justified)[32m 24[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe query cache is written and the router navigated only through a session-bound action[32m 95[2mms[22m[39m
+   [33m[2m✓[22m[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page [33m 6064[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx[2m > [22mF-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record
+[31m[1mAssertionError[22m: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 3[39m
+
+[36m [2m❯[22m src/auth/session-bound.test.tsx:[2m280:38[22m[39m
+    [90m278| [39m      // Bounded: the create's own permission refresh (F-DG1-210) and …
+    [90m279| [39m      const afterPost = s.requests.slice(s.requests.findIndex((r) => r…
+    [90m280| [39m      [34mexpect[39m(afterPost[33m.[39m[34mfilter[39m(isMe))[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m281| [39m    })[33m;[39m
+    [90m282| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m33 passed[39m[22m[90m (34)[39m
+[2m   Start at [22m 06:16:48
+[2m   Duration [22m 47.71s[2m (transform 5.99s, setup 690ms, collect 8.51s, tests 34.65s, environment 2.32s, prepare 453ms)[22m
+
+EXIT 1
+$ [rv-ccc run 1] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx  (+3 busy loops on cpu 0; 2026-10-12T06:17:36Z)
+ 06:17:36 up 1 day, 12:16,  0 user,  load average: 13.58, 13.60, 13.51
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m$TMPDIR/rv-ccc[39m
+
+ [31m❯[39m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx [2m([22m[2m34 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 35842[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 3292[2mms[22m[39m
+[31m   [31m×[31m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record[39m[33m 3812[2mms[22m[39m
+[31m     → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 688[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 400[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 1238[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 1672[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1837[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1271[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 438[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 1287[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 645[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 677[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 701[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 399[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 1134[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c: the same create under one identity still lands on the created record [33m 939[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 716[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 514[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 932[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 1017[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1346[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1231[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 352[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 538[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 864[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 714[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 907[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 467[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mnavigate, setQueryData and run act while the generation is current, and do nothing after it moved[32m 19[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mthe same identity re-probed does not move the generation (a same-identity action keeps its effects)[32m 1[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mscans the app's source files[32m 1[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22museNavigate is imported only by the session-bound module and the three session transitions (justified)[32m 17[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe query cache is written and the router navigated only through a session-bound action[32m 87[2mms[22m[39m
+   [33m[2m✓[22m[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page [33m 5665[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx[2m > [22mF-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record
+[31m[1mAssertionError[22m: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 3[39m
+
+[36m [2m❯[22m src/auth/session-bound.test.tsx:[2m280:38[22m[39m
+    [90m278| [39m      // Bounded: the create's own permission refresh (F-DG1-210) and …
+    [90m279| [39m      const afterPost = s.requests.slice(s.requests.findIndex((r) => r…
+    [90m280| [39m      [34mexpect[39m(afterPost[33m.[39m[34mfilter[39m(isMe))[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m281| [39m    })[33m;[39m
+    [90m282| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m33 passed[39m[22m[90m (34)[39m
+[2m   Start at [22m 06:17:40
+[2m   Duration [22m 48.88s[2m (transform 6.29s, setup 672ms, collect 8.65s, tests 35.84s, environment 2.30s, prepare 471ms)[22m
+
+EXIT 1
+$ [rv-ccc run 2] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx  (+3 busy loops on cpu 0; 2026-10-12T06:18:30Z)
+ 06:18:30 up 1 day, 12:17,  0 user,  load average: 15.08, 13.97, 13.64
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m$TMPDIR/rv-ccc[39m
+
+ [31m❯[39m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx [2m([22m[2m34 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 37292[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 3241[2mms[22m[39m
+[31m   [31m×[31m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record[39m[33m 4838[2mms[22m[39m
+[31m     → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 723[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 543[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 1186[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 1344[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1793[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1401[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 493[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 903[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 723[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 584[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 833[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (en)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 705[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name [33m 1392[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c: the same create under one identity still lands on the created record [33m 911[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mY1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code [33m 708[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22mrouter state left in history (Back/Forward) never shows A's created record to B [33m 428[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's [33m 945[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22man organization create whose identity changes between its awaits: B is not navigated to A's new organization [33m 960[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22ma user create whose identity changes between its awaits: B is not navigated to A's new user [33m 1431[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: the organization and user creates under one identity still navigate to the new record [33m 1465[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar)[2m > [22msanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates [33m 404[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer [33m 608[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state [33m 685[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mN0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header [33m 498[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mbounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept [33m 782[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG2-570 the header and the data of ONE identity on in-app navigation (ar)[2m > [22mwrites neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token [33m 477[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mnavigate, setQueryData and run act while the generation is current, and do nothing after it moved[32m 14[2mms[22m[39m
+   [32m✓[39m auth/sessionBound.ts: effects of a previous session generation are dropped[2m > [22mthe same identity re-probed does not move the generation (a same-identity action keeps its effects)[32m 0[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mscans the app's source files[32m 1[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22museNavigate is imported only by the session-bound module and the three session transitions (justified)[32m 15[2mms[22m[39m
+   [32m✓[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe query cache is written and the router navigated only through a session-bound action[32m 55[2mms[22m[39m
+   [33m[2m✓[22m[39m the convention: no raw navigate or cache write in app code (T-DG2-FE15)[2m > [22mthe ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page [33m 6199[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-bound.test.tsx[2m > [22mF-DG2-530/580 no effect of A's action after a further await once the tab is B's (en)[2m > [22mY1c: the same create under one identity still lands on the created record
+[31m[1mAssertionError[22m: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 3[39m
+
+[36m [2m❯[22m src/auth/session-bound.test.tsx:[2m280:38[22m[39m
+    [90m278| [39m      // Bounded: the create's own permission refresh (F-DG1-210) and …
+    [90m279| [39m      const afterPost = s.requests.slice(s.requests.findIndex((r) => r…
+    [90m280| [39m      [34mexpect[39m(afterPost[33m.[39m[34mfilter[39m(isMe))[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m281| [39m    })[33m;[39m
+    [90m282| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m33 passed[39m[22m[90m (34)[39m
+[2m   Start at [22m 06:18:34
+[2m   Duration [22m 50.68s[2m (transform 6.28s, setup 606ms, collect 8.58s, tests 37.29s, environment 2.46s, prepare 497ms)[22m
+
+EXIT 1

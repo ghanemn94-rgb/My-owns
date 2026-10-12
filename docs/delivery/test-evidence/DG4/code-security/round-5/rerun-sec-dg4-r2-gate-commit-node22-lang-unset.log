@@ -1,0 +1,43 @@
+# probe sec-dg4-r2-gate-commit.test.ts; node v22.22.2; commit e29a735ddcfe164dc11a08c9fda95a57b591d502; LANG unset; 57666feb6ba1ba0dc81640770ea844351b43abe7242ba081af240f40ba79e4e6; started 2026-10-12T04:42:31Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.0uQTlj/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv4rn5r3_9f7f8552 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C1 decideGate by a delegate: control 201; delegation revoked in the window -> 403, nothing decided
+[probe-C] C1 control (delegate for SP) -> 201  ; audit [["decision.create","01a12e6b-d6b1-7069-a587-eaa5ce95906c","Synthetic: pilot results justify scaling to BU a1 only."],["gate_decision.create","01a12e6b-d6b1-7069-a587-eaa5ce95906c","Synthetic: pilot results justify scaling to BU a1 only."],["gate_decision_scale_scope.create","01a12e6b-d6b1-7069-a587-eaa5ce95906c",null],["gate_decision_condition.create","01a12e6b-d6b1-7069-a587-eaa5ce95906c",null],["gate_submission.decide","01a12e6b-d6b1-7069-a587-eaa5ce95906c",null],["gate_instance.decide","01a12e6b-d6b1-7069-a587-eaa5ce95906c","Synthetic: pilot results justify scaling to BU a1 only."],["transformation.phase_advance","01a12e6b-d6b1-7069-a587-eaa5ce95906c","Product gate G5 approved (decision 01a12e6b-d75b-74d7-bf39-1b8082310d70)"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C1 decideGate by a delegate: control 201; delegation revoked in the window -> 403, nothing decided
+[probe-C] C1 delegation revoked in window -> 403 gate.not_approver ; audit [["authorization.denied","01a12e6b-da10-771d-8f21-2c27a32a9081","POST /api/v1/transformations/:transformationId/gates/:gateCode/decision requires gate.decide"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C2 decideGate by a delegate: the delegator's SP role revoked in the window -> 403
+[probe-C] C2 delegator SP role revoked in window -> 403 gate.not_approver ; audit [["authorization.denied","01a12e6b-dd0c-72da-88c3-838b4449bdbf","POST /api/v1/transformations/:transformationId/gates/:gateCode/decision requires gate.decide"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C3 decideGate: the Sponsor's user disabled in the window -> 401, nothing decided, no audit row
+[probe-C] C3 user disabled in window -> 401 unauthenticated ; audit []
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C4 submitGate: TL role revoked, read remains (AUD) -> 403 naming gate.submit; nothing written
+[probe-C] C4 submitGate TL revoked, AUD remains -> 403 forbidden ; audit [["authorization.denied","01a12e6b-e09a-779c-b207-336c4072ab9b","POST /api/v1/transformations/:transformationId/gates/:gateCode/submissions requires gate.submit"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C5 updateGate: TO role revoked, read remains (AUD) -> 403 naming gate.configure; unchanged
+[probe-C] C5 updateGate TO revoked, AUD remains -> 403 forbidden ; audit [["authorization.denied","01a12e6b-e8ab-74ce-a5f7-8922f5207701","PATCH /api/v1/transformations/:transformationId/gates/:gateCode requires gate.configure"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts > SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C6 outsider (TO of org B): 404 on all three at request start, one denial each naming transformation.read
+[probe-C] C6 outsider -> 404 not_found / 404 not_found / 404 not_found; audit [[["authorization.denied","01a12e6b-eb60-747d-908b-15b3763f4f29","POST /api/v1/transformations/:transformationId/gates/:gateCode/decision requires transformation.read"]],[["authorization.denied","01a12e6b-eb60-747d-908b-15b3763f4f29","POST /api/v1/transformations/:transformationId/gates/:gateCode/submissions requires transformation.read"]],[["authorization.denied","01a12e6b-eb60-747d-908b-15b3763f4f29","PATCH /api/v1/transformations/:transformationId/gates/:gateCode requires transformation.read"]]]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-gate-commit.test.ts (6 tests) 7549ms
+   ✓ SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C1 decideGate by a delegate: control 201; delegation revoked in the window -> 403, nothing decided  1943ms
+   ✓ SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C2 decideGate by a delegate: the delegator's SP role revoked in the window -> 403  891ms
+   ✓ SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C3 decideGate: the Sponsor's user disabled in the window -> 401, nothing decided, no audit row  658ms
+   ✓ SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C4 submitGate: TL role revoked, read remains (AUD) -> 403 naming gate.submit; nothing written  1797ms
+   ✓ SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C5 updateGate: TO role revoked, read remains (AUD) -> 403 naming gate.configure; unchanged  508ms
+   ✓ SEC-DG4-R2 probe C: gate operations re-check authorization at commit time > C6 outsider (TO of org B): 404 on all three at request start, one denial each naming transformation.read  535ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  04:42:37
+   Duration  29.94s (transform 6.30s, setup 0ms, collect 14.14s, tests 7.55s, environment 0ms, prepare 147ms)
+
+# exit_status: 0  finished: 2026-10-12T04:43:11Z
