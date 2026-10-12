@@ -317,8 +317,14 @@ for (const lang of ["en", "ar"] as const) {
             headers: { "Content-Type": "application/problem+json" },
           },
         );
-      server.fetchMock.mockImplementationOnce(async () => forbidden());
-      server.fetchMock.mockImplementationOnce(async () => forbidden());
+      // T-DG4-FE-R9 (F-DG4-106/145, D-129): the 403 answers the two requests below by their URL, not "the next two
+      // fetch calls". A GET sent more than SESSION_RECHECK_MS after the last /me revalidates /me first (D-077 item 3),
+      // and on a slow machine that /me would otherwise have taken the first scripted 403. Every other request (that /me
+      // included) keeps the scripted server's answer.
+      const scripted = server.fetchMock.getMockImplementation()!;
+      server.fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === "/api/v1/organizations" ? forbidden() : scripted(input, init),
+      );
       const outcomes = await Promise.allSettled([
         apiRequest("/api/v1/organizations"),
         apiRequest("/api/v1/organizations", { method: "POST", body: {} }),

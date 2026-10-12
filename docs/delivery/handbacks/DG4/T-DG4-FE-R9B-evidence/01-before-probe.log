@@ -1,0 +1,26 @@
+=== BEFORE (spec c6ffe3f + probe) Y1C_HOLD='default detail GET'
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 3 (Y1c asserts exactly 2)
+   × SEC-DG4-R5 Y1c timing reproduction > Y1c with the detail GET answered 2200 ms late: count of /me after the POST 3267ms
+     → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/zz-r9b-before-probe.test.tsx > SEC-DG4-R5 Y1c timing reproduction > Y1c with the detail GET answered 2200 ms late: count of /me after the POST
+AssertionError: expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+    697|     console.log(`[SEC-R5 Y1c-timing] requests after POST: ${afterPost.…
+    698|     console.log(`[SEC-R5 Y1c-timing] /me after POST = ${afterPost.filt…
+      Tests  1 failed | 34 skipped (35)
+exit=1
+=== BEFORE (spec c6ffe3f + probe) Y1C_HOLD='GET .*/summary'
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10
+[SEC-R5 Y1c-timing] /me after POST = 2 (Y1c asserts exactly 2)
+ ✓  unit-web  src/auth/zz-r9b-before-probe.test.tsx (35 tests | 34 skipped) 1559ms
+   ✓ SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/summary answered 2200 ms late: count of /me after the POST  1557ms
+      Tests  1 passed | 34 skipped (35)
+exit=0
+=== BEFORE (spec c6ffe3f + probe) Y1C_HOLD='GET .*/audit'
+[SEC-R5 Y1c-timing] requests after POST: POST /transformations | GET /me | GET /me | GET /transformations/01920000-0000-7000-9000-0000000003a1 | GET /transformations/01920000-0000-7000-9000-0000000003a1/summary | GET /transformations/01920000-0000-7000-9000-0000000003a1/audit?limit=10 | GET /decisions?transformationId=01920000-0000-7000-9000-0000000003a1&kind=design&limit=100
+[SEC-R5 Y1c-timing] /me after POST = 2 (Y1c asserts exactly 2)
+ ✓  unit-web  src/auth/zz-r9b-before-probe.test.tsx (35 tests | 34 skipped) 1617ms
+   ✓ SEC-DG4-R5 Y1c timing reproduction > Y1c with GET .*/audit answered 2200 ms late: count of /me after the POST  1616ms
+      Tests  1 passed | 34 skipped (35)
+exit=0

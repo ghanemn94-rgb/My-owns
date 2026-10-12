@@ -423,6 +423,11 @@ for (const lang of ["en", "ar"] as const) {
 
     it("the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh", async () => {
       const s = server(lang);
+      // T-DG4-FE-R9B (F-DG4-106/145, D-129): Date.now is held still from the start, so "all fresh" below holds however
+      // slowly the machine renders (the 15 s page staleTime and the 2 s identity window are crossed only by the step
+      // that moves the clock 20 s ahead), never by elapsed wall-clock time.
+      const t0 = Date.now();
+      const clock = vi.spyOn(Date, "now").mockReturnValue(t0);
       const { queryClient } = renderApp("/transformations", { i18n: createI18n(lang) });
       queryClient.setDefaultOptions({ queries: { ...QUERY_DEFAULTS, retry: false } });
       await screen.findByText("TR-A-SECRET");
@@ -435,7 +440,7 @@ for (const lang of ["en", "ar"] as const) {
       await wait(100);
       expect(s.requests.slice(from)).toEqual([]);
       // Stale: three focus events in a row and a reconnect share ONE /me, which goes first.
-      vi.spyOn(Date, "now").mockReturnValue(Date.now() + 20_000);
+      clock.mockReturnValue(t0 + 20_000);
       from = s.requests.length;
       await act(async () => {
         focusManager.setFocused(false);
