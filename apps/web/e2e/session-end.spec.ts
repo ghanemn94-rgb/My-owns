@@ -279,7 +279,16 @@ test("a 403 is not a session end: a refused change keeps the user signed in wher
   const lang = langOf(info);
   const watched = watch(page);
   await signIn(page, lang, "dev.lead");
+  // F-DG4-147: the app's boot GET /me is sent after the `load` event. Under load it could follow the re-login below and
+  // adopt the NEW session's CSRF token, so the change would be accepted (200) and this test would check nothing. Wait
+  // for that /me's answer, and for the signed-in shell it renders (the token is stored with the same answer), so the
+  // tab holds the previous session's token when the other sign-in happens: the order D-073 is about.
+  const bootMe = page.waitForResponse(
+    (r) => r.request().method() === "GET" && new URL(r.url()).pathname === "/api/v1/me",
+  );
   await page.goto("/about");
+  expect((await bootMe).status()).toBe(200);
+  await expect(page.getByRole("button", { name: tr(lang, "auth.signOut"), exact: true })).toBeVisible();
   // A sign-in in another tab of the same browser replaces the session cookie, so this tab's CSRF token no longer
   // matches: the real API refuses the next change with 403 `csrf` (not 401: the browser still has a valid session).
   const relogin = await page.context().request.post("/api/v1/auth/dev-login", {

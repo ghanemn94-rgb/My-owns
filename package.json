@@ -16,7 +16,7 @@
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen",
+    "test": "s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s",
     "test:integration": "vitest run --project integration",
     "e2e": "playwright test",
     "openapi:lint": "node scripts/openapi-lint.mjs docs/api/openapi.yaml",
