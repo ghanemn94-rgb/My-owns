@@ -1,0 +1,253 @@
+$ [env LANG=C.UTF-8 LC_ALL=C.UTF-8] QA_E2E_PG_PORT=26660 QA_E2E_API_PORT=26665 MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test apps/web/e2e/p2-journeys.spec.ts apps/web/e2e/p4-dashboards.spec.ts e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a20-bilingual-shell.spec.ts e2e/dg4-qa-r4.spec.ts --workers=1 --reporter=list  (node v24.21.0, dg4-qa-r4.spec.ts sha256 2b8e3a49b4e88f49, 2026-10-12T00:28:33Z)
+ 00:28:33 up 1 day,  6:27,  0 user,  load average: 2.12, 1.85, 1.81
+port-policy: PostgreSQL listening on port 26660 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applying 0028_p4_calendar_jobs_work_items.sql
+mth-db migrate: applying 0029_p4_groups_role_mapping_delegation.sql
+mth-db migrate: applying 0030_p4_decision_rights_raci.sql
+mth-db migrate: applying 0031_p4_approvals_permissions.sql
+mth-db migrate: applying 0032_p4_slice_i_c_reserved.sql
+mth-db migrate: applying 0033_p4_kpi_dictionary_versions.sql
+mth-db migrate: applying 0034_p4_kpi_trajectories_actuals.sql
+mth-db migrate: applying 0035_p4_kpi_calculation_runs_quality.sql
+mth-db migrate: applying 0036_p4_kpi_permissions_backfill.sql
+mth-db migrate: applying 0037_p4_benefit_register.sql
+mth-db migrate: applying 0038_p4_benefit_measurement_validation.sql
+mth-db migrate: applying 0039_p4_benefit_value_views.sql
+mth-db migrate: applying 0040_p4_benefit_permissions.sql
+mth-db migrate: applying 0041_p4_raid_actions_corrective.sql
+mth-db migrate: applying 0042_p4_budget_schedule.sql
+mth-db migrate: applying 0043_p4_raid_permissions.sql
+mth-db migrate: applying 0044_p4_forums_meetings.sql
+mth-db migrate: applying 0045_p4_t16_escalation.sql
+mth-db migrate: applying 0046_p4_governance_permissions.sql
+mth-db migrate: applying 0047_p4_adoption.sql
+mth-db migrate: applying 0048_p4_sustainment.sql
+mth-db migrate: applying 0049_p4_adoption_sustainment_permissions.sql
+mth-db migrate: applying 0050_p4_sustainment_schedules.sql
+mth-db migrate: applying 0051_p4_phases_gates_g5_g6_exceptions.sql
+mth-db migrate: applying 0052_p4_change_control.sql
+mth-db migrate: applying 0053_p4_gates_change_permissions.sql
+mth-db migrate: applying 0054_p4_gate_exception_expiry_schedule.sql
+mth-db migrate: applying 0055_p4_traceability_modular_structure.sql
+mth-db migrate: applying 0056_p4_dashboards_t10.sql
+mth-db migrate: applying 0057_p4_dashboards_traceability_permissions.sql
+mth-db migrate: applying 0058_p4_approval_reminder_kinds.sql
+mth-db migrate: applying 0059_p4_enable_g5_g6.sql
+mth-db migrate: applying 0060_p4_governance_schedules_weekly_cadence.sql
+mth-db migrate: applying 0061_p4_finance_validation_correction_step.sql
+mth-db migrate: applied 61 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26665 (attempt 1)
+API:     http://localhost:26665
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 60 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (4.4s)
+  ✓   2 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (9.0s)
+  ✓   3 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (6.8s)
+  ✓   4 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (5.5s)
+  ✓   5 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (7.6s)
+  ✓   6 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (9.4s)
+  ✓   7 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (7.4s)
+  ✓   8 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (6.9s)
+  ✓   9 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (23.1s)
+  ✓  10 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (8.2s)
+  ✓  11 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (7.8s)
+  ✓  12 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (16.6s)
+  ✓  13 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:63:1 › 1. Workspace header: eight elements, Unknown where missing; one click opens the RAID register filtered to it (5.1s)
+  ✓  14 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:105:1 › 2. Transformation dashboard: six T10 areas from persisted data; drill-down; zero is distinct from Unknown (4.5s)
+  ✓  15 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:134:1 › 3. Executive Overview: readable transformations, business-unit and owner chips, window and as-of date (4.5s)
+  ✓  16 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:170:1 › 4. Finance and adoption dashboards: non-financial is n/a, never 0; the People & adoption area (5.2s)
+  ✓  17 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:199:1 › 4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs (1.5s)
+  ✓  18 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:250:1 › 5. My Work: the six sections with totals and the upcoming deadlines; the personal dashboard (4.6s)
+  ✓  19 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:268:1 › 6. 390 px wide and 200 % text: no page-level horizontal scroll (12.8s)
+  ✓  20 [chromium-en] › e2e/a03-modular-entry.spec.ts:120:1 › A03 1. Modular entry at Design: baseline and outcome links flagged as blocking; G2 inherited, nothing approved (3.2s)
+  ✓  21 [chromium-en] › e2e/a03-modular-entry.spec.ts:142:1 › A03 2. G3 submission is refused on screen with gate.modular_links_missing listing both links; G3 stays unsubmitted (3.8s)
+  ✓  22 [chromium-en] › e2e/a04-kpi-update.spec.ts:291:1 › REQ-S07-017: the KPI owner updates the KPI in four keyboard-only steps; the confirmation lists the dashboards and 'Finance review pending' (5.9s)
+  ✓  23 [chromium-en] › e2e/a08-a09-gates-decisions.spec.ts:198:1 › A08 REQ-S04-012, REQ-PB-015: the gate page lists every missing mandatory item and blocks submission; the API refuses it with 422 listing the same items (3.4s)
+  ✓  24 [chromium-en] › e2e/a08-a09-gates-decisions.spec.ts:236:1 › A09 REQ-PB-081, REQ-S10-012: the T16 log shows the nine columns in the page language and the ask with its why-now and impact of delay (2.7s)
+  ✓  25 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (2.0s)
+  ✓  26 [chromium-en] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (967ms)
+QA-CHECK-FAIL R4-t10-na-line-not-unknown [REQ-S13-003] {"naStates":["unknown"],"naText":"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable"}
+QA-CHECK-FAIL R4-t10-na-line-says-na [REQ-S13-003] {"naText":"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable"}
+QA-CHECK-FAIL R4-overview-na-line-not-unknown [REQ-S13-003] {"naStates":["unknown"],"naText":"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable"}
+QA-CHECK-FAIL R4-overview-na-line-says-na [REQ-S13-003] {"naText":"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable"}
+  ✓  27 [chromium-en] › e2e/dg4-qa-r4.spec.ts:168:1 › R4 AUD: per-basis Value RAG lines, Portfolio on its basis, currency-exact drill-downs, API outcomes (T10 and Overview) (17.4s)
+  ✓  28 [chromium-en] › e2e/dg4-qa-r4.spec.ts:372:1 › S1+S2+S3 the read-only auditor on every P4 screen: renders, lang/dir, axe, no writes; 390 px; 200 % text (2.8m)
+  ✓  29 [chromium-en] › e2e/dg4-qa-r4.spec.ts:437:1 › S2+S3 the transformation lead on every P4 screen: 390 px and 200 % text have no page-level horizontal scroll (1.1m)
+  ✘  30 [chromium-en] › e2e/dg4-qa-r4.spec.ts:470:1 › Z every recorded check passed (5ms)
+  ✓  31 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (3.9s)
+  ✓  32 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (8.4s)
+  ✓  33 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (6.1s)
+  ✓  34 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (5.4s)
+  ✓  35 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (6.9s)
+  ✓  36 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (8.1s)
+  ✓  37 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (6.8s)
+  ✓  38 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (5.5s)
+  ✓  39 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (21.7s)
+  ✓  40 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (7.7s)
+  ✓  41 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (6.4s)
+  ✓  42 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (16.1s)
+  ✓  43 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:63:1 › 1. Workspace header: eight elements, Unknown where missing; one click opens the RAID register filtered to it (5.0s)
+  ✓  44 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:105:1 › 2. Transformation dashboard: six T10 areas from persisted data; drill-down; zero is distinct from Unknown (4.3s)
+  ✓  45 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:134:1 › 3. Executive Overview: readable transformations, business-unit and owner chips, window and as-of date (6.1s)
+  ✓  46 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:170:1 › 4. Finance and adoption dashboards: non-financial is n/a, never 0; the People & adoption area (6.1s)
+  ✘  47 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:199:1 › 4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs (9.4s)
+  -  48 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:250:1 › 5. My Work: the six sections with totals and the upcoming deadlines; the personal dashboard
+  -  49 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:268:1 › 6. 390 px wide and 200 % text: no page-level horizontal scroll
+  ✓  50 [chromium-ar] › e2e/a03-modular-entry.spec.ts:120:1 › A03 1. Modular entry at Design: baseline and outcome links flagged as blocking; G2 inherited, nothing approved (3.3s)
+  ✓  51 [chromium-ar] › e2e/a03-modular-entry.spec.ts:142:1 › A03 2. G3 submission is refused on screen with gate.modular_links_missing listing both links; G3 stays unsubmitted (3.8s)
+  ✓  52 [chromium-ar] › e2e/a04-kpi-update.spec.ts:291:1 › REQ-S07-017: the KPI owner updates the KPI in four keyboard-only steps; the confirmation lists the dashboards and 'Finance review pending' (7.2s)
+  ✓  53 [chromium-ar] › e2e/a08-a09-gates-decisions.spec.ts:198:1 › A08 REQ-S04-012, REQ-PB-015: the gate page lists every missing mandatory item and blocks submission; the API refuses it with 422 listing the same items (4.4s)
+  ✓  54 [chromium-ar] › e2e/a08-a09-gates-decisions.spec.ts:236:1 › A09 REQ-PB-081, REQ-S10-012: the T16 log shows the nine columns in the page language and the ask with its why-now and impact of delay (3.0s)
+  ✓  55 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:117:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (2.0s)
+  ✓  56 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:182:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (954ms)
+QA-CHECK-FAIL R4-t10-na-line-not-unknown [REQ-S13-003] {"naStates":["unknown"],"naText":"غير نقدية SAR · فجوة القيمة: غير معروف لا ينطبق: لا يوجد شيء مخطط حتى تاريخه. لا ينطبق"}
+QA-CHECK-FAIL R4-overview-na-line-not-unknown [REQ-S13-003] {"naStates":["unknown"],"naText":"غير نقدية SAR · فجوة القيمة: غير معروف لا ينطبق: لا يوجد شيء مخطط حتى تاريخه. لا ينطبق"}
+  ✓  57 [chromium-ar] › e2e/dg4-qa-r4.spec.ts:168:1 › R4 AUD: per-basis Value RAG lines, Portfolio on its basis, currency-exact drill-downs, API outcomes (T10 and Overview) (16.4s)
+  ✓  58 [chromium-ar] › e2e/dg4-qa-r4.spec.ts:372:1 › S1+S2+S3 the read-only auditor on every P4 screen: renders, lang/dir, axe, no writes; 390 px; 200 % text (2.7m)
+  ✓  59 [chromium-ar] › e2e/dg4-qa-r4.spec.ts:437:1 › S2+S3 the transformation lead on every P4 screen: 390 px and 200 % text have no page-level horizontal scroll (1.1m)
+  ✘  60 [chromium-ar] › e2e/dg4-qa-r4.spec.ts:470:1 › Z every recorded check passed (5ms)
+
+
+  1) [chromium-en] › e2e/dg4-qa-r4.spec.ts:470:1 › Z every recorded check passed ───────────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 6[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "R4-t10-na-line-not-unknown [REQ-S13-003] {\"naStates\":[\"unknown\"],\"naText\":\"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable\"}",[39m
+    [31m+   "R4-t10-na-line-says-na [REQ-S13-003] {\"naText\":\"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable\"}",[39m
+    [31m+   "R4-overview-na-line-not-unknown [REQ-S13-003] {\"naStates\":[\"unknown\"],\"naText\":\"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable\"}",[39m
+    [31m+   "R4-overview-na-line-says-na [REQ-S13-003] {\"naText\":\"Non-cash SAR · Value gap: Unknown Not applicable: nothing is planned to date. Not applicable\"}",[39m
+    [31m+ ][39m
+
+      460 | test("Z every recorded check passed", async () => {
+      461 |   const failed = checks.filter((c) => !c.pass);
+    > 462 |   expect(failed.map((c) => `${c.id} [${c.req}] ${c.detail.slice(0, 300)}`)).toEqual([]);
+          |                                                                             ^
+      463 | });
+      464 |
+        at $TMPDIR/rv2/e2e/dg4-qa-r4.spec.ts:462:77
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg4-qa-r4-Z-every-recorded-check-passed-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg4-qa-r4-Z-every-recorded-check-passed-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:199:1 › 4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[data-net-inputs=\'planned-SAR\']')
+    Expected substring: [32m"الصافي = الإجمالي (الربح والنقد) − تكلفة التنفيذ. تفصيل مدخلاته:"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-net-inputs=\'planned-SAR\']')[22m
+
+
+      261 |   for (const l of netLines) {
+      262 |     const cell = page.locator(`[data-net-inputs='${l.state}-${l.currency}']`);
+    > 263 |     await expect(cell).toContainText(tr(lang, "dashboards.finance.netFormula"));
+          |                        ^
+      264 |   }
+      265 |   await to.close();
+      266 | });
+        at $TMPDIR/rv2/apps/web/e2e/p4-dashboards.spec.ts:263:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p4-dashboards-5116f-a-net-line-links-its-inputs-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p4-dashboards-5116f-a-net-line-links-its-inputs-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p4-dashboards-5116f-a-net-line-links-its-inputs-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p4-dashboards-5116f-a-net-line-links-its-inputs-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-ar] › e2e/dg4-qa-r4.spec.ts:470:1 › Z every recorded check passed ───────────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 4[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "R4-t10-na-line-not-unknown [REQ-S13-003] {\"naStates\":[\"unknown\"],\"naText\":\"غير نقدية SAR · فجوة القيمة: غير معروف لا ينطبق: لا يوجد شيء مخطط حتى تاريخه. لا ينطبق\"}",[39m
+    [31m+   "R4-overview-na-line-not-unknown [REQ-S13-003] {\"naStates\":[\"unknown\"],\"naText\":\"غير نقدية SAR · فجوة القيمة: غير معروف لا ينطبق: لا يوجد شيء مخطط حتى تاريخه. لا ينطبق\"}",[39m
+    [31m+ ][39m
+
+      460 | test("Z every recorded check passed", async () => {
+      461 |   const failed = checks.filter((c) => !c.pass);
+    > 462 |   expect(failed.map((c) => `${c.id} [${c.req}] ${c.detail.slice(0, 300)}`)).toEqual([]);
+          |                                                                             ^
+      463 | });
+      464 |
+        at $TMPDIR/rv2/e2e/dg4-qa-r4.spec.ts:462:77
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-dg4-qa-r4-Z-every-recorded-check-passed-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-dg4-qa-r4-Z-every-recorded-check-passed-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium-en] › e2e/dg4-qa-r4.spec.ts:470:1 › Z every recorded check passed ────────────────────
+    [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:199:1 › 4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs 
+    [chromium-ar] › e2e/dg4-qa-r4.spec.ts:470:1 › Z every recorded check passed ────────────────────
+  2 did not run
+  55 passed (14.0m)
+---- api.log (tail)
+EXIT 1
+2026-10-12T00:42:41Z
+ 00:42:41 up 1 day,  6:41,  0 user,  load average: 1.36, 1.69, 1.81

@@ -1,0 +1,41 @@
+# probe sec-dg4-r2-slice-b-ids.test.ts; node v22.22.2; commit afba46fc97ac21b2342f19252433984198020bc0; LANG unset; 622ab803f83d3f1fe558ed401627e23989be7f87f8aef49299e769d77fec2dfb; started 2026-10-11T22:10:00Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.WNBR8U/claude-0/probe
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv4dmcat_a058e20d (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E1 createBenefit malformed (AUD) -> 400 validation; audit []
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E2 createBenefit unknown (AUD) -> 403 forbidden; audit []
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E3 createBenefit existing (AUD) -> 403 forbidden; audit [["authorization.denied","01a12d04-72e8-7205-951e-a3616651d575","01a12d04-7227-704d-88bd-acc83c4fdf7e","01a12d04-7331-74d6-9a2a-17fdf145dbdf"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E4 createBenefit existing (outsider) -> 403 forbidden; audit [["authorization.denied","01a12d04-763f-77d9-8c78-d96428a05e36","01a12d04-7227-704d-88bd-acc83c4fdf7e","01a12d04-7331-74d6-9a2a-17fdf145dbdf"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E1 decideFV malformed (AUD) -> 400 validation; audit []
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E2 decideFV unknown (AUD) -> 403 forbidden; audit []
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E3 decideFV existing (AUD) -> 403 forbidden; audit [["authorization.denied","01a12d04-72e8-7205-951e-a3616651d575","01a12d04-7227-704d-88bd-acc83c4fdf7e","01a12d04-7331-74d6-9a2a-17fdf145dbdf"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts > SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation
+[probe-E] E4 decideFV existing (outsider) -> 403 forbidden; audit [["authorization.denied","01a12d04-763f-77d9-8c78-d96428a05e36","01a12d04-7227-704d-88bd-acc83c4fdf7e","01a12d04-7331-74d6-9a2a-17fdf145dbdf"]]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-slice-b-ids.test.ts (1 test) 3677ms
+   ✓ SEC-DG4-R2 probe E: the slice B denial lookup discloses nothing and fails closed > E1-E5 createBenefit and decideFinanceValidation  1414ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:10:04
+   Duration  26.58s (transform 7.01s, setup 0ms, collect 15.87s, tests 3.68s, environment 0ms, prepare 177ms)
+
+# exit_status: 0  finished: 2026-10-11T22:10:34Z
