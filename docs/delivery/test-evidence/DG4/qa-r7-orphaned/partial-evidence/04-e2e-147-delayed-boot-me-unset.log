@@ -1,0 +1,482 @@
+$ [env -u LANG -u LC_ALL -u LC_CTYPE] QA_E2E_PG_PORT=26640 QA_E2E_API_PORT=26645 MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts --grep a 403 is not a session end --repeat-each=3 --workers=1 --reporter=list  (node v24.21.0, extra specs:, 2026-10-12T21:12:26Z)
+ 21:12:26 up 2 days,  3:11,  0 user,  load average: 26.97, 20.12, 11.18
+port-policy: PostgreSQL listening on port 26640 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applying 0028_p4_calendar_jobs_work_items.sql
+mth-db migrate: applying 0029_p4_groups_role_mapping_delegation.sql
+mth-db migrate: applying 0030_p4_decision_rights_raci.sql
+mth-db migrate: applying 0031_p4_approvals_permissions.sql
+mth-db migrate: applying 0032_p4_slice_i_c_reserved.sql
+mth-db migrate: applying 0033_p4_kpi_dictionary_versions.sql
+mth-db migrate: applying 0034_p4_kpi_trajectories_actuals.sql
+mth-db migrate: applying 0035_p4_kpi_calculation_runs_quality.sql
+mth-db migrate: applying 0036_p4_kpi_permissions_backfill.sql
+mth-db migrate: applying 0037_p4_benefit_register.sql
+mth-db migrate: applying 0038_p4_benefit_measurement_validation.sql
+mth-db migrate: applying 0039_p4_benefit_value_views.sql
+mth-db migrate: applying 0040_p4_benefit_permissions.sql
+mth-db migrate: applying 0041_p4_raid_actions_corrective.sql
+mth-db migrate: applying 0042_p4_budget_schedule.sql
+mth-db migrate: applying 0043_p4_raid_permissions.sql
+mth-db migrate: applying 0044_p4_forums_meetings.sql
+mth-db migrate: applying 0045_p4_t16_escalation.sql
+mth-db migrate: applying 0046_p4_governance_permissions.sql
+mth-db migrate: applying 0047_p4_adoption.sql
+mth-db migrate: applying 0048_p4_sustainment.sql
+mth-db migrate: applying 0049_p4_adoption_sustainment_permissions.sql
+mth-db migrate: applying 0050_p4_sustainment_schedules.sql
+mth-db migrate: applying 0051_p4_phases_gates_g5_g6_exceptions.sql
+mth-db migrate: applying 0052_p4_change_control.sql
+mth-db migrate: applying 0053_p4_gates_change_permissions.sql
+mth-db migrate: applying 0054_p4_gate_exception_expiry_schedule.sql
+mth-db migrate: applying 0055_p4_traceability_modular_structure.sql
+mth-db migrate: applying 0056_p4_dashboards_t10.sql
+mth-db migrate: applying 0057_p4_dashboards_traceability_permissions.sql
+mth-db migrate: applying 0058_p4_approval_reminder_kinds.sql
+mth-db migrate: applying 0059_p4_enable_g5_g6.sql
+mth-db migrate: applying 0060_p4_governance_schedules_weekly_cadence.sql
+mth-db migrate: applying 0061_p4_finance_validation_correction_step.sql
+mth-db migrate: applied 61 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26645 (attempt 1)
+API:     http://localhost:26645
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 24 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (13.0s)
+  ✓   2 [chromium-en] › apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (15.8s)
+  ✘   3 [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (5.9s)
+  ✘   4 [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (9.4s)
+  ✓   5 [chromium-en] › apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (15.4s)
+  ✓   6 [chromium-en] › apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (17.7s)
+  ✘   7 [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (6.1s)
+  ✘   8 [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (8.8s)
+  ✓   9 [chromium-en] › apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (15.2s)
+  ✓  10 [chromium-en] › apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (15.6s)
+  ✘  11 [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (6.0s)
+  ✘  12 [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (8.7s)
+  ✓  13 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (14.6s)
+  ✓  14 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (16.5s)
+  ✘  15 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (5.9s)
+  ✘  16 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (9.3s)
+  ✓  17 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (15.4s)
+  ✓  18 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (15.1s)
+  ✘  19 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (6.2s)
+  ✘  20 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (8.5s)
+  ✓  21 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (14.5s)
+  ✓  22 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (17.4s)
+  ✘  23 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (5.8s)
+  ✘  24 [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (9.2s)
+
+
+  1) [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat2/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat2/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-en-repeat2/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat2/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat2/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-en-repeat2/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat2/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat2/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--7ada0-er-signed-in-where-they-are-chromium-ar-repeat2/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m403[39m
+    Received: [31m200[39m
+
+      298 |     })
+      299 |     .click();
+    > 300 |   expect((await refused).status()).toBe(403);
+          |                                    ^
+      301 |   // T-DG2-FE11, behaviour (a): the language the user chose stays on screen, and the "not saved" notice says so in
+      302 |   // exactly that language (never the previous one), inside one polite live region whose lang is that language.
+      303 |   const notice = page.getByTestId("language-not-saved");
+        at $TMPDIR/rv3/apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:300:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat2/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat2/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-zz-qa-r7-147--da579-er-signed-in-where-they-are-chromium-ar-repeat2/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12 failed
+    [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-en] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+    [chromium-ar] › apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are 
+  12 passed (5.4m)
+---- api.log (tail)
+EXIT 1
+2026-10-12T21:18:18Z
+ 21:18:18 up 2 days,  3:17,  0 user,  load average: 28.78, 26.87, 17.15

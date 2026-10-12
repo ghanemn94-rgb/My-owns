@@ -1,0 +1,49 @@
+$ QA_PG_PORT=26600 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts apps/worker/test/integration/supervise-cadence.test.ts  (probe sha256 381ecfa2a8c7d476, node v24.21.0, 2026-10-12T21:31:00Z)
+ 21:31:00 up 2 days,  3:30,  0 user,  load average: 25.51, 25.95, 22.36
+port-policy: PostgreSQL listening on port 26600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5ro20e_8dacc9c2 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning 5558ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS 3913ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts) 2397ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts) 2403ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts) 2141ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts) 3195ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s 342ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence 363ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts [ tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts ]
+Error: Cannot find package 'pg' imported from '$TMPDIR/rv4/tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts'
+ ❯ tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts:15:1
+     13| import { spawn } from "node:child_process";
+     14| import { fileURLToPath } from "node:url";
+     15| import pg from "pg";
+       | ^
+     16| import { afterAll, beforeAll, describe, expect, it } from "vitest";
+     17| import { workerEnv, type WorkerEnv } from "../../../apps/worker/test/s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+Caused by: Error: Failed to load url pg (resolved id: pg). Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.1.11_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:26050:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  9 passed (9)
+   Start at  21:31:05
+   Duration  31.19s (transform 566ms, setup 0ms, collect 957ms, tests 23.93s, environment 0ms, prepare 115ms)
+
+EXIT 1
+2026-10-12T21:31:39Z
+ 21:31:39 up 2 days,  3:30,  0 user,  load average: 26.58, 26.21, 22.59

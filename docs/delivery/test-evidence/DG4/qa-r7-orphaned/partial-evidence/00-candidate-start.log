@@ -1,0 +1,28 @@
+$ date; uptime
+2026-10-12T20:58:23Z
+ 20:58:23 up 2 days,  2:57,  0 user,  load average: 1.09, 1.02, 1.41
+$ git rev-parse HEAD (clone of /home/user/My-owns)
+ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7
+$ git rev-parse --is-shallow-repository
+false
+$ git rev-parse dab4562
+dab4562c71ab4f0a8e5b89b32ad93a0861539598
+$ git merge-base --is-ancestor dab4562 HEAD; echo $?
+0
+$ git diff --stat dab4562 HEAD
+ .../DG4/round-7/code-security-reviewer.md          |  148 +
+ .../assignments/DG4/round-7/domain-reviewer.md     |  176 +
+ .../assignments/DG4/round-7/qa-verifier.md         |  146 +
+ .../candidates/DG4/baa6ff4da306402c.manifest.json  | 7393 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   27 +-
+ 5 files changed, 7885 insertions(+), 5 deletions(-)
+$ git status --short | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG4
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527","files":1475}
+EXIT 0
+$ jq candidate_id/files docs/delivery/candidates/DG4/baa6ff4da306402c.manifest.json
+sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527 0 dab4562c71ab4f0a8e5b89b32ad93a0861539598
+$ (in the original working tree) node tools/gates/candidate.mjs --stage DG4
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527","files":1475}
+manifest entries: 1475

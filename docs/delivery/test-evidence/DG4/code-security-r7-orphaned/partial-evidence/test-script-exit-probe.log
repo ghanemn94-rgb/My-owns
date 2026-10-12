@@ -1,0 +1,16 @@
+# root 'test' script exit-status probe (code-security-reviewer DG4 round 7). Disposable dir $TMPDIR/scriptprobe: the candidate's package.json (packageManager/engines/pnpm keys removed so pnpm runs outside the workspace) and a stub node_modules/.bin/vitest that logs its argv and exits 1 for the projects in FAILS. pnpm 10.33.0, /bin/sh -> dash.
+# script: s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+FAILS=[] exit=0 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-node] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-web] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-formula-nocodegen] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-node unit-web] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-node unit-formula-nocodegen] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-web unit-formula-nocodegen] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+FAILS=[unit-node unit-web unit-formula-nocodegen] exit=1 calls=3: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+# extra CLI arguments (pnpm appends them to the script, i.e. after 'exit $s'):
+pnpm test --reporter=verbose apps/web/src/x.test.tsx FAILS=[] exit=0 calls: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+pnpm test --reporter=verbose apps/web/src/x.test.tsx FAILS=[unit-web] exit=1 calls: run --project unit-node|run --project unit-web|run --project unit-formula-nocodegen|
+# same script under bash (if a user sets script-shell=bash):
+bash: line 1: exit: too many arguments
+bash, all pass, extra arg -> exit 1

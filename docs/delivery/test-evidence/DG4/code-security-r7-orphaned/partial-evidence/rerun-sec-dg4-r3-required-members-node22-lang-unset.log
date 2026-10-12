@@ -1,0 +1,22 @@
+# probe sec-dg4-r3-required-members.test.ts; node v22.22.2; commit ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7; LANG unset; 7d6619e09b8f78ebea591508fb493b18794b0521205a779fff3ccb9713f84f2f; load 9.50 7.43 4.35; started 2026-10-12T21:06:00Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.trvoOe/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5qrxsg_7d9feeb9 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-required-members.test.ts > SEC-DG4-R3 probe RM: required members enforced > openapi required lists contain the three members
+[probe-RM] DashboardHeadline.required=["metric","labelKey","value","period","drilldownHref","headlineBasis"] DashboardDrilldown.required=["metric","appliedFilters","value","period","calculation","items","evidence","nextCursor","headlineBasis","currency"] WorkspaceHeader.benefits.required=["state","planned","validated","benefitCount","nonFinancialCount","headlines"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-required-members.test.ts > SEC-DG4-R3 probe RM: required members enforced > live responses are valid; each with the member deleted is rejected by ajv and by zod
+[probe-RM] {"headline_ajv":{"ok":false,"errors":"data must have required property 'headlineBasis'"},"drill_ajv":{"ok":false,"errors":"data must have required property 'headlineBasis'"},"header_ajv":{"ok":false,"errors":"data/benefits must have required property 'headlines'"},"headline_zod":false,"drill_zod":false,"header_zod":false,"bad_basis_ajv":false}
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-required-members.test.ts (2 tests) 2873ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  21:06:06
+   Duration  29.41s (transform 7.06s, setup 0ms, collect 17.74s, tests 2.87s, environment 0ms, prepare 185ms)
+
+# exit_status: 0  finished: 2026-10-12T21:06:40Z

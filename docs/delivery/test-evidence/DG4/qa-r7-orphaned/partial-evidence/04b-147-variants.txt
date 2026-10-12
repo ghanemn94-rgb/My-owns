@@ -1,0 +1,7 @@
+apps/web/e2e/zz-qa-r7-147-fixed-1500.spec.ts sha256 9b452c4e980e23f5
+apps/web/e2e/zz-qa-r7-147-fixed-4000.spec.ts sha256 7dfb20fdd918e4ee
+apps/web/e2e/zz-qa-r7-147-old-1500.spec.ts sha256 81785ed553b41f6d
+apps/web/e2e/zz-qa-r7-147-old-4000.spec.ts sha256 f1c28ed4ea6cad67
+281a282
+>   await page.route("**/api/v1/me", async (route) => { if (route.request().method() === "GET") await new Promise((r) => setTimeout(r, 4000)); await route.continue(); }, { times: 1 }); // qa-r7 F-DG4-147 probe: the next GET /me (the boot /me of /about) is forwarded 4000 ms late
+variants removed from the copy

@@ -1,0 +1,16 @@
+=== WITH the injected apps/api/src/qa-r7-fail.test.ts
+ 21:33:40 up 2 days,  3:32,  0 user,  load average: 23.97, 25.45, 22.77
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-node apps/api/src/architecture.test.ts
+ ✓  unit-node  apps/api/src/architecture.test.ts (138 tests) 25195ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  16466ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  307ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  1524ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  5661ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  462ms
+      Tests  138 passed (138)
+EXIT 0
+=== WITHOUT it (candidate tree)
+ 21:34:09 up 2 days,  3:33,  0 user,  load average: 23.00, 25.05, 22.72
+      Tests  138 passed (138)
+EXIT 0
+injected file removed

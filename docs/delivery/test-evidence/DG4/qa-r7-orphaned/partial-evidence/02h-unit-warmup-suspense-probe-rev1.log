@@ -1,0 +1,48 @@
+=== CANDIDATE setup.ts (warm-up active) (probe sha256 74458f191f902b4e; setup.ts sha256 973076c20758f092)
+ 21:09:30 up 2 days,  3:08,  0 user,  load average: 23.51, 15.46, 8.15
+$ MTH_UNIT_WEB_WARMUP_REPORT=1 TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/app/qa-r7-warmup-suspense.test.tsx apps/web/src/test/harness-config.test.ts --reporter=verbose
+[unit-web warm-up] 9653 ms src/test/harness-config.test.ts
+ ✓  unit-web  src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > raises Testing Library's async-utility timeout from the 1000 ms default 3ms
+ ✓  unit-web  src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > keeps the per-test timeout at least 2x above the async-utility timeout 0ms
+ ✓  unit-web  src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > F-DG4-148: warms every page module that router.tsx loads lazily, without changing the async-utility wait 9ms
+[unit-web warm-up] 804 ms src/app/qa-r7-warmup-suspense.test.tsx
+ ✓  unit-web  src/app/qa-r7-warmup-suspense.test.tsx > qa-r7 F-DG4-148: the warm-up leaves React.lazy / Suspense / the shared fallback exercised > S3: the warmed set includes the transformations list page module 1ms
+ ✓  unit-web  src/app/qa-r7-warmup-suspense.test.tsx > qa-r7 F-DG4-148: the warm-up leaves React.lazy / Suspense / the shared fallback exercised > S1: the first render of a page in this file goes through Suspense (fallback rendered), then the page 898ms
+ ✓  unit-web  src/app/qa-r7-warmup-suspense.test.tsx > qa-r7 F-DG4-148: the warm-up leaves React.lazy / Suspense / the shared fallback exercised > S2 (control): a second render of the same page renders at once, without the fallback 47ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+ReferenceError: window is not defined
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+     Errors  1 error
+EXIT 1
+--- setup.ts with the warm-up removed
+--- $TMPDIR/setup.ts.orig	2026-10-12 21:09:30.812270498 +0000
++++ apps/web/test/setup.ts	2026-10-12 21:09:48.587511225 +0000
+@@ -36,7 +36,7 @@
+ 
+ beforeAll(async (suite) => {
+   const started = performance.now();
+-  await Promise.all(Object.values(PAGE_MODULES).map((load) => load()));
++  void PAGE_MODULES; // qa-r7: warm-up removed
+   if (process.env["MTH_UNIT_WEB_WARMUP_REPORT"] === "1") {
+     process.stderr.write(`[unit-web warm-up] ${Math.round(performance.now() - started)} ms ${suite.name}\n`);
+   }
+=== setup.ts WITHOUT the warm-up (control) (probe sha256 74458f191f902b4e; setup.ts sha256 38aa6128fb28569b)
+ 21:09:48 up 2 days,  3:09,  0 user,  load average: 24.05, 16.09, 8.51
+$ MTH_UNIT_WEB_WARMUP_REPORT=1 TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/app/qa-r7-warmup-suspense.test.tsx apps/web/src/test/harness-config.test.ts --reporter=verbose
+[unit-web warm-up] 0 ms src/test/harness-config.test.ts
+ ✓  unit-web  src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > raises Testing Library's async-utility timeout from the 1000 ms default 6ms
+ ✓  unit-web  src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > keeps the per-test timeout at least 2x above the async-utility timeout 1ms
+ ✓  unit-web  src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > F-DG4-148: warms every page module that router.tsx loads lazily, without changing the async-utility wait 1ms
+[unit-web warm-up] 0 ms src/app/qa-r7-warmup-suspense.test.tsx
+ ✓  unit-web  src/app/qa-r7-warmup-suspense.test.tsx > qa-r7 F-DG4-148: the warm-up leaves React.lazy / Suspense / the shared fallback exercised > S3: the warmed set includes the transformations list page module 3ms
+ ✓  unit-web  src/app/qa-r7-warmup-suspense.test.tsx > qa-r7 F-DG4-148: the warm-up leaves React.lazy / Suspense / the shared fallback exercised > S1: the first render of a page in this file goes through Suspense (fallback rendered), then the page 943ms
+ ✓  unit-web  src/app/qa-r7-warmup-suspense.test.tsx > qa-r7 F-DG4-148: the warm-up leaves React.lazy / Suspense / the shared fallback exercised > S2 (control): a second render of the same page renders at once, without the fallback 36ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+ReferenceError: window is not defined
+ReferenceError: window is not defined
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+     Errors  2 errors
+EXIT 1
+setup.ts restored (identical to the candidate); probe removed from the copy

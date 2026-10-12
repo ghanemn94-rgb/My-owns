@@ -1,0 +1,68 @@
+# command: pnpm exec vitest run --configLoader runner --reporter=verbose --project unit-web apps/web/src/auth/session-wait.test.tsx apps/web/src/test/harness-config.test.ts ; then --project unit-node packages/config/src/load.test.ts
+# confined repository tree (read-only node_modules) at ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7; node v24.21.0; load 27.57 27.21 18.61; started 2026-10-12T21:20:38Z
+## default loader first (expected to fail in the confined tree, QA-A's finding):
+}
+
+
+
+# default-loader exit_status: 1
+## --configLoader runner:
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ✓ |unit-web| src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > raises Testing Library's async-utility timeout from the 1000 ms default 17ms
+ ✓ |unit-web| src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > keeps the per-test timeout at least 2x above the async-utility timeout 0ms
+ ✓ |unit-web| src/test/harness-config.test.ts > unit-web harness (F-DG2-220) > F-DG4-148: warms every page module that router.tsx loads lazily, without changing the async-utility wait 44ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held 2094ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 1228ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held 1233ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 1489ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending) 57ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight) 51ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  21:20:43
+   Duration  29.56s (transform 624.54s, setup 1.39s, collect 15.78s, tests 24.61s, environment 4.80s, prepare 1.35s)
+
+# exit_status: 0
+
+ RUN  v3.2.4 /home/user/My-owns
+
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > applies catalogue defaults (Asia/Riyadh, SAR, session limits, rate limits) 50ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > defaults to the 60 s cadence pg-boss documents when unset or empty 7ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > accepts 1 (inside 1-600) 4ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > accepts 17 (inside 1-600) 3ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > accepts 600 (inside 1-600) 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses 0, naming the variable 9ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses -5, naming the variable 3ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses 601, naming the variable 4ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses 86400, naming the variable 4ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses 1.5, naming the variable 4ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses NaN, naming the variable 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses abc, naming the variable 10ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > WORKER_SUPERVISE_INTERVAL_SECONDS (F-DG4-128: pg-boss gives supervision no default cadence) > refuses Infinity, naming the variable 4ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > refuses AUTH_MODE=dev with NODE_ENV=production (ADR-0005) 3ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > requires OIDC settings when AUTH_MODE=oidc for the api 3ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > refuses a plain-http origin http://hub.example.internal at startup 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > refuses a plain-http origin http://10.0.0.5:3000 at startup 3ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > refuses a plain-http origin http://hub.localhost.example.com at startup 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > accepts https://hub.example.internal (https, or plain http only on a loopback host) 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > accepts http://localhost:3000 (https, or plain http only on a loopback host) 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > accepts http://127.0.0.1:3000 (https, or plain http only on a loopback host) 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > accepts http://[::1]:3000 (https, or plain http only on a loopback host) 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > leaves non-production environments unchanged (http allowed) 2ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > APP_BASE_URL in production (F-DG1-112: Secure + __Host- session cookies cannot be silently lost) > exposes the same rule for the API session setup (defence in depth) 0ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > requires https issuers in production 3ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > reports missing required variables per service without echoing values 4ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > reads secrets from *_FILE and refuses both forms at once 8ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > validates time zone, currency, base URL shape and numeric ranges 6ms
+ ✓ |unit-node| packages/config/src/load.test.ts > loadConfig > parses TRUST_PROXY as a list 3ms
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  21:21:17
+   Duration  1.73s (transform 329ms, setup 0ms, collect 294ms, tests 157ms, environment 0ms, prepare 598ms)
+
+# exit_status: 0  finished: 2026-10-12T21:21:19Z
+# note (appended 2026-10-12T21:21:41Z): the default-loader exit 1 above is Vitest's startup error 'failed to load config from /home/user/My-owns/vitest.config.ts ... Error: EROFS: read-only file system, open '/home/user/My-owns/node_modules/.vite-temp/vitest.config.ts.timestamp-....mjs'' (re-run separately to read the message; the tail above only shows the closing brace). That is the read-only node_modules of the confined tree, not a test failure.

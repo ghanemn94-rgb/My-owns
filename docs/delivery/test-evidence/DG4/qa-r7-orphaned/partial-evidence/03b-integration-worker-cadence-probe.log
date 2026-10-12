@@ -1,0 +1,40 @@
+$ QA_PG_PORT=26600 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts apps/worker/test/integration/supervise-cadence.test.ts  (probe sha256 02bdb4179ea9f406, node v24.21.0, 2026-10-12T21:32:03Z)
+ 21:32:03 up 2 days,  3:31,  0 user,  load average: 25.17, 25.93, 22.59
+port-policy: PostgreSQL listening on port 26600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5rpejv_d5961f03 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R1 shipped default (variable absent): one 60 000 ms supervision timer, no TimeoutNaNWarning, small idle DB cost
+qa-r7 R1 idle transactions in 8 s: 209
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R1 shipped default (variable absent): one 60 000 ms supervision timer, no TimeoutNaNWarning, small idle DB cost 11011ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R2 .env.example shape: WORKER_SUPERVISE_INTERVAL_SECONDS present but empty means the 60 s default 3388ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R3 boundary 1 is accepted and honoured 3100ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R3 boundary 600 is accepted and honoured 3348ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R4 "-5" is refused at start-up: exit 78, the variable named, the value not echoed 1192ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R4 "601" is refused at start-up: exit 78, the variable named, the value not echoed 2533ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R4 "   " is refused at start-up: exit 78, the variable named, the value not echoed 1551ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r7-worker-cadence.test.ts > qa-r7 F-DG4-128: the BUILT worker (dist/main.js) supervises on a bounded cadence > R4 "NaN" is refused at start-up: exit 78, the variable named, the value not echoed 1996ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning 3694ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS 4156ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts) 3234ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts) 1619ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts) 2299ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts) 2752ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s 321ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence 470ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss 2ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  21:32:08
+   Duration  60.46s (transform 985ms, setup 0ms, collect 1.45s, tests 54.30s, environment 0ms, prepare 145ms)
+
+EXIT 0
+2026-10-12T21:33:13Z
+ 21:33:13 up 2 days,  3:32,  0 user,  load average: 24.91, 25.77, 22.78

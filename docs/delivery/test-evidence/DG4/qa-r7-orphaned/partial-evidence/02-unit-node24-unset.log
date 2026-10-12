@@ -1,0 +1,264 @@
+$ [env -u LANG -u LC_ALL -u LC_CTYPE] TZ=UTC CI=1 PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test  (node v24.21.0, 2026-10-12T21:46:18Z)
+ 21:46:18 up 2 days,  3:45,  0 user,  load average: 20.19, 21.95, 22.11
+
+> mobily-transformation-hub@0.1.0 test $TMPDIR/rv
+> s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m$TMPDIR/rv[39m
+
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/kpi/kpi.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 7184[2mms[22m[39m
+   [33m[2m✓[22m[39m kpi module (P2)[2m > [22mregisters exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B, the P4 KBE-C and the ARCH-R1 operations, and reports them [33m 316[2mms[22m[39m
+   [33m[2m✓[22m[39m kpi module (P2)[2m > [22mits declared boundary holds, and a planted bypass or undeclared dependency would be caught [33m 6714[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m)[22m[33m 40616[2mms[22m[39m
+   [33m[2m✓[22m[39m fuzz: no uncaught exception, no code execution[2m > [22m10 000 random byte strings (0–255, up to 80 bytes) [33m 7804[2mms[22m[39m
+   [33m[2m✓[22m[39m fuzz: no uncaught exception, no code execution[2m > [22m10 000 random UTF-16 strings including astral code points and lone surrogates [33m 7135[2mms[22m[39m
+   [33m[2m✓[22m[39m fuzz: no uncaught exception, no code execution[2m > [22m20 000 random strings over the grammar alphabet reach parser, type checker and evaluator [33m 19054[2mms[22m[39m
+   [33m[2m✓[22m[39m source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)[2m > [22mevery file of the engine's import closure gets the engine-source lint rules (eslint.config.js) [33m 5128[2mms[22m[39m
+   [33m[2m✓[22m[39m source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6)[2m > [22mESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source [33m 1154[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/workflows/workflows.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 6592[2mms[22m[39m
+   [33m[2m✓[22m[39m workflows module (P2)[2m > [22mits declared boundary holds, and an undeclared dependency would be caught [33m 6426[2mms[22m[39m
+ [31m❯[39m [30m[45m unit-node [49m[39m apps/api/src/architecture.test.ts [2m([22m[2m138 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 56572[2mms[22m[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mhas only mapped module directories, and every P1/P2 module has a public index.ts[32m 12[2mms[22m[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mthe P2 modules methodology and evidence each have their own test suite (p2-work-split §2)[32m 1[2mms[22m[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mthe P3 module portfolio has its own test suite and exactly the ADR-0021 §1 dependencies (p3-work-split §2)[32m 5[2mms[22m[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mthe P4 modules exist, each with its own test suite, and only governance imports workflows (p4-plan §2)[32m 1[2mms[22m[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mworkflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)[32m 0[2mms[22m[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mthe six §16 business modules all exist, each with its own test suite (A12; D-048)[32m 55[2mms[22m[39m
+[31m   [31m×[31m API module boundaries (ADR-0002)[2m > [22mevery import respects dependsOn, public surfaces and allowed packages[39m[33m 35252[2mms[22m[39m
+[31m     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+   [32m✓[39m API module boundaries (ADR-0002)[2m > [22mthe declared module graph is acyclic, and audit/access depend on no business module[32m 8[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mA static deep import is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mA2 type-only deep import is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mB dynamic import, literal is a violation[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mB2 dynamic import, template literal is a violation[32m 4[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mC re-export is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mD createRequire is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mD2 node:module itself is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mD3 createRequire via namespace is a violation[32m 18[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mE computed import() is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mE2 computed import() via variable is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF require literal is a violation[32m 4[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF2 require computed is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mG import-equals require is a violation[32m 10[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mH import type() is a violation[32m 5[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mI composition root is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mJ undeclared module (via its index) is a violation[32m 45[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mK unknown package is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL getBuiltinModule + computed member is a violation[32m 24[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL2 computed member of process is a violation[32m 19[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL3 loader name as a string key is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL4 process aliased is a violation[32m 23[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL5 process destructured is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL6 computed member of globalThis is a violation[32m 6[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mL7 globalThis.process is a violation[32m 4[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM new Function dynamic import is a violation[32m 11[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM2 Function() call is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM3 Function aliased is a violation[32m 15[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM4 globalThis.Function is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM5 eval is a violation[32m 115[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM6 AsyncFunction via .constructor is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM7 ['constructor'] member is a violation[32m 12[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN1 AsyncFunction via aliased .constructor is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN2 constructor destructured is a violation[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN3 Reflect.construct of .constructor is a violation[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN4 getPrototypeOf(...).constructor aliased is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN5 generator constructor, shorthand destructuring is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN6 destructuring assignment with a string key is a violation[32m 22[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN7 computed constructor key in a binding pattern is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mN8 constructor key as a string value is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM8 node:vm is a violation[32m 4[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mM9 worker_threads is a violation[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP1 constructed key f["constr" + "uctor"] is a violation (round-4 lint: 'missed')[32m 8[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP2 Reflect.get(fn, "constructor") is a violation (round-4 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP3 Reflect.get with a constructed key is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP4 constructed key held in a variable is a violation (round-4 lint: 'missed')[32m 13[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP5 template-literal key is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP6 optional-chain constructed key is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP7 constructed key in a destructuring pattern is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP8 descriptors: the constructor without its name is a violation (round-4 lint: 'missed')[32m 18[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP9 own property names, then a variable key is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP10 __proto__ is a violation (round-4 lint: 'missed')[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP11 loader name as a string handed to a helper is a violation (round-4 lint: 'missed')[32m 12[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP12 process.binding is a violation (round-4 lint: 'missed')[32m 7[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP13 node:inspector (in-process evaluation) is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP14 node:child_process is a violation (round-4 lint: 'missed')[32m 9[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP15 look-alike member o.eval (was an allowed form) is a violation (round-4 lint: 'missed')[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP16 constructor as an object key, fed to a keyed reader (was an allowed form) is a violation (round-4 lint: 'missed')[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed')[32m 18[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mX6 node:process default import .dlopen is a violation (round-4 lint: 'missed')[32m 18[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mX7 node:process default import .binding is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mX8 node:process named import dlopen is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mA1 node:sqlite loadExtension is a violation (round-4 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mR1 node:test in-process run is a violation (round-4 lint: 'missed')[32m 9[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mR2 process.execve is a violation (round-4 lint: 'missed')[32m 13[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP17 module.constructor is a violation (round-4 lint: 'caught')[32m 4[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP18 aliased AsyncFunction constructor (F-DG1-121 N1) is a violation (round-4 lint: 'caught')[32m 4[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mP19 new Function (F-DG1-117 M) is a violation (round-4 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mS1 crypto.setEngine (named import) is a violation (round-9 lint: 'missed')[32m 25[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mS2 crypto.setEngine (namespace import) is a violation (round-9 lint: 'missed')[32m 93[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mS3 crypto["setEngine"] (string key) is a violation (round-9 lint: 'missed')[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD1 process.kill(self, SIGUSR1) starts the inspector (F-DG1-129 N1) is a violation (default-deny; round-8 lint: 'missed')[32m 40[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD2 process._debugProcess(self) (F-DG1-129 N2 / F-DG1-213 D2) is a violation (default-deny; round-8 lint: 'missed')[32m 44[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD3 process._kill is a violation (default-deny; round-8 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD4 F-DG1-213 D1 full route as module source is a violation (default-deny; round-8 lint: 'missed')[32m 26[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD5 process.execve is a violation (default-deny; round-8 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD6 process.binding is a violation (default-deny; round-8 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD7 process.dlopen is a violation (default-deny; round-8 lint: 'caught')[32m 18[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD8 process.abort is a violation (default-deny; round-8 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD9 optional-chained process?.kill is a violation (default-deny; round-8 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD10 node:inspector is a violation (default-deny; round-8 lint: 'caught')[32m 28[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD11 node:inspector/promises is a violation (default-deny; round-8 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD12 node:sqlite is a violation (default-deny; round-8 lint: 'caught')[32m 23[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD13 node:test is a violation (default-deny; round-8 lint: 'caught')[32m 135[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD14 node:vm is a violation (default-deny; round-8 lint: 'caught')[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD15 node:worker_threads is a violation (default-deny; round-8 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD16 node:wasi is a violation (default-deny; round-8 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD17 node:v8 is a violation (default-deny; round-8 lint: 'missed')[32m 120[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD18 node:http is a violation (default-deny; round-8 lint: 'missed')[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD19 node:net is a violation (default-deny; round-8 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mDD20 a built-in a later Node version might add is a violation (default-deny; round-8 lint: 'missed')[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mdefault-deny keeps the allow-listed built-ins and process members clean (D-055 positive controls)[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: E1 Object.values(ns).find by fn.name is a violation (round-11 lint: 'missed')[32m 54[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: E2 new Map(Object.entries(ns)).get(built key) is a violation (round-11 lint: 'missed')[32m 40[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: E3 Object.entries(ns).find by regex over keys is a violation (round-11 lint: 'missed')[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: E4 for-of over Object.entries(default binding) is a violation (round-11 lint: 'missed')[32m 34[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: E5 dynamic import() then enumerate is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N1 namespace import is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N2 default import is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N3 default + named import is a violation (round-11 lint: 'missed')[32m 22[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N4 named default import is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N5 export star is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N6 export star as is a violation (round-11 lint: 'missed')[32m 10[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N7 re-export default is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N8 import-equals require is a violation (round-11 lint: 'missed')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N9 dynamic import() literal is a violation (round-11 lint: 'missed')[32m 42[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-132/133 rule 5: N10 require() literal is a violation (round-11 lint: 'caught')[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-130/132: named node:crypto imports and their members stay allowed (positive control)[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-133: enumerating a PLAIN object stays allowed (identity/routes.ts, access/rules.ts idiom)[32m 13[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mrule 5 applies only to node:crypto: namespace/default imports of other allow-listed built-ins stay allowed[32m 1[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mallowed forms stay clean (public index of a declared dependency, shared packages, own files)[32m 26[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22ma module's own test may read the module map and the lint, but its runtime files may not[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mT-DG4-BE-R3 (ADR-0032 amendment G1): governance may import raid; raid may never import governance (a cycle)[32m 3[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22ma scaffold may not reach a business module it does not declare (reporting -> workflows)[32m 2[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file[32m 76[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end[32m 237[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations[32m 22[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed[32m 55[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules[32m 109[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-135: zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed[32m 34[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-143: test-only packages (ajv, ajv-formats, yaml) are violations in module source, allowed only in *.test.ts[32m 56[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked[32m 34[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing[32m 7[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end[32m 60[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mF-DG1-217: a planted .d.ts in a module directory is walked and linted end to end without throwing[32m 5[2mms[22m[39m
+   [32m✓[39m the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124)[2m > [22mscanSource reports what it saw (paths resolve relative to the planted file)[32m 1[2mms[22m[39m
+   [33m[2m✓[22m[39m package dependency direction (ADR-0002 rule 5)[2m > [22mpackages/db imports only @mth/config and @mth/shared [33m 1558[2mms[22m[39m
+   [32m✓[39m package dependency direction (ADR-0002 rule 5)[2m > [22mpackages/config imports only @mth/shared[32m 61[2mms[22m[39m
+   [33m[2m✓[22m[39m package dependency direction (ADR-0002 rule 5)[2m > [22mpackages/shared imports no workspace package [33m 5812[2mms[22m[39m
+   [33m[2m✓[22m[39m package dependency direction (ADR-0002 rule 5)[2m > [22mapps/web never imports @mth/db or @mth/config (browser bundle, no secrets) [33m 10857[2mms[22m[39m
+   [33m[2m✓[22m[39m package dependency direction (ADR-0002 rule 5)[2m > [22mapps/worker imports no API code [33m 644[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/reporting/reporting.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 4143[2mms[22m[39m
+   [33m[2m✓[22m[39m reporting module (P1 scaffold, D-048)[2m > [22mits declared boundary holds, and a planted bypass or undeclared dependency would be caught [33m 4038[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/server.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4496[2mms[22m[39m
+   [33m[2m✓[22m[39m route registration[2m > [22mdeclares access on every /api route and on the health endpoints [33m 3040[2mms[22m[39m
+   [33m[2m✓[22m[39m route registration[2m > [22mregisters dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely [33m 1015[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/property.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 4031[2mms[22m[39m
+   [33m[2m✓[22m[39m measures[2m > [22mhigher- and lower-is-better shortfalls are exact negatives; deviation follows the sign [33m 398[2mms[22m[39m
+   [33m[2m✓[22m[39m measures[2m > [22mband: within ⇔ L ≤ a ≤ U, the shortfall is never negative, and equals the distance to the band [33m 414[2mms[22m[39m
+   [33m[2m✓[22m[39m RAG[2m > [22mhigher-is-better: a lower actual never gives a better RAG (monotonic), relative and absolute [33m 368[2mms[22m[39m
+   [33m[2m✓[22m[39m RAG[2m > [22mrelative mode is scale-invariant: scaling actual and expected by k > 0 keeps the RAG [33m 343[2mms[22m[39m
+   [33m[2m✓[22m[39m changes[2m > [22mpp = (x₁ − x₀) × 100 exactly, and relative × |x₀| = x₁ − x₀ (to precision 80) [33m 856[2mms[22m[39m
+   [33m[2m✓[22m[39m cumulative and roll-ups[2m > [22mcumulative YTD of a flow equals the exact sum of its period values; removing any period makes it Unknown [33m 434[2mms[22m[39m
+   [33m[2m✓[22m[39m storage rounding[2m > [22mrounds once half-up: |stored − exact| ≤ 0.0000005 and the record is honest [33m 809[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/adoption/measures.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 1154[2mms[22m[39m
+   [33m[2m✓[22m[39m properties (seeded)[2m > [22mnever 0 for an empty denominator: Unknown with value null exactly when the denominator is 0 [33m 300[2mms[22m[39m
+   [33m[2m✓[22m[39m properties (seeded)[2m > [22maggregation is the weighted ratio: equal to the measure over the concatenated groups for training [33m 405[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/evidence/evidence.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 3041[2mms[22m[39m
+   [33m[2m✓[22m[39m evidence module (P2)[2m > [22mits declared boundary holds [33m 2546[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/reporting/dashboards/areas.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 2491[2mms[22m[39m
+   [33m[2m✓[22m[39m combine (ADR-0037 §3 precedence)[2m > [22mproperty: Unknown or Stale inputs never combine to green, and the result is one of the inputs' ranks (2000 seeded sets) [33m 1106[2mms[22m[39m
+   [33m[2m✓[22m[39m Value (validated benefit gap)[2m > [22mproperty: the per-benefit decimal sums equal the headline per currency (the drill-down invariant; 300 seeded sets) [33m 639[2mms[22m[39m
+   [33m[2m✓[22m[39m Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, D-119)[2m > [22mproperty: per currency and basis, the decimal sum of the basis's contributing lines equals its headline (300 seeded sets) [33m 384[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/methodology/methodology.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 607[2mms[22m[39m
+   [33m[2m✓[22m[39m methodology module (P2)[2m > [22mits declared boundary holds, and an undeclared dependency would be caught [33m 584[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/config/src/load.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 134[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/scoring.test.ts [2m([22m[2m36 tests[22m[2m)[22m[33m 2736[2mms[22m[39m
+   [33m[2m✓[22m[39m property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation[2m > [22mstored value, 2-digit display and 0–100 view all match for 3125 combinations [33m 2399[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/schemas/schemas.test.ts [2m([22m[2m69 tests[22m[2m)[22m[33m 1165[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/platform.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 619[2mms[22m[39m
+   [33m[2m✓[22m[39m invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231)[2m > [22ma deeply nested body is scanned without recursion (no stack overflow) [33m 547[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/value.test.ts [2m([22m[2m29 tests[22m[2m)[22m[33m 999[2mms[22m[39m
+   [33m[2m✓[22m[39m sumDecimals: exact, never a float[2m > [22mproperty: equals the exact BigInt sum for 500 random sets of money values [33m 355[2mms[22m[39m
+   [33m[2m✓[22m[39m totalValuePools (ADR-0019 §5)[2m > [22mproperty: per-currency totals equal the exact BigInt sums and do not depend on order [33m 393[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/media-types.test.ts [2m([22m[2m57 tests[22m[2m)[22m[32m 288[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/formula/formula.test.ts [2m([22m[2m140 tests[22m[2m)[22m[32m 115[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/in-flight.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 405[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/a05.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 127[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m tests/qa/unit/a05-calc-units.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/incomplete-body.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 202[2mms[22m[39m
+(node:7411) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 145[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/request-encoding.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 418[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/rag.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 717[2mms[22m[39m
+   [33m[2m✓[22m[39m F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG is the worst of them (N4 item 1)[2m > [22mproperty: the RAG is combine(every basis line), each line is its own basis's exact gap, never a cross-basis sum (500 seeded sets) [33m 524[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/kpi/formulas.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/time/working-days.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/purity.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/schemas/roadmap.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/benefits/register-rules.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 58[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/sustainment/sustainment.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 107[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/db/src/seed.test.ts [2m([22m[2m34 tests[22m[2m)[22m[33m 329[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/schedule/critical-path.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/portfolio/budget.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/health.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/kpi/rules.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/connection-hygiene.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 213[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/governance/governance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/transformations/thesis.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/design-tokens/src/tokens.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/adoption/form-schema.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/schemas/missing-links.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/benefits/totals.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 138[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/formula-binding.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/periods.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/adoption/adoption.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 135[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/kpi/totals.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/access/rules.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/tasks/tasks.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/benefits/d2-rules.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/types.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/raid/raid.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 100[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/change.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/benefits/benefits.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 250[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/transformations/exclusions.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/measures.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/schemas/corrective.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/admin/branding.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 409[2mms[22m[39m
+   [33m[2m✓[22m[39m GET /api/v1/branding/tokens (REQ-S15-002)[2m > [22mreturns the seven seeded tokens with their values and provenance=provisional, valid against the contract [33m 393[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/trajectory.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/workflows/g4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/advisory-locks.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 287[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/kpi/p3-gate-facts.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/reporting/dashboards/finance.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/aggregate.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 99[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/kpi/status.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/raid/corrective.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/request-encoding.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/schedule/working-day-slip.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 78[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/portfolio/capacity.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/portfolio/sequencing.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/transformations/good-outcome.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/reporting/dashboards/k1-value-class.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/portfolio/schedule.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m packages/shared/src/governance/recurrence.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/identity/oidc-claims.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 55[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/portfolio/readiness-transform.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/workflows/t08-cycle-problem.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m [30m[45m unit-node [49m[39m app
