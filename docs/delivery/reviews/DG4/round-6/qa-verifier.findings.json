@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-146",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "No web unit test pins the F-DG2-570 rule that a page GET waits for the identity check (GET /me) in flight: a mutant that drops the wait passes all 1340 unit-web tests",
+      "reproduction": "In a disposable copy of the candidate (offline install, pnpm -r build), change apps/web/src/api/client.ts apiRequest so that a page GET no longer waits: replace '    if (pendingCheck) await pendingCheck;\\n    if (probesIdle) await probesIdle;' with '    void probesIdle;' (mutant M4). Then run 'TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web'. Result: 68 files / 1340 tests pass, EXIT 0 (02e-unit-web-mutants-full.log). The three session files alone also pass under M4: 80/80 on the candidate's versions (02d) and 78/78 on the pre-repair versions from 3e3a06e (02g). So the gap pre-dates the FE-R9B repair. My test docs/delivery/test-evidence/DG4/qa/tests/round-6/unit/qa-r6-session-wait.test.tsx holds the /me answer. It has two cases: H1, an in-app navigation after B signed in elsewhere; and H2, a refetch after SESSION_RECHECK_MS. It asserts that no page GET is sent while /me is unanswered. It passes 4/4 (en/ar) on the candidate and fails 4/4 under M4 (02f-unit-held-me-test.log).",
+      "expected": "Every stated identity rule of F-DG2-570 / D-077 in client.ts is protected by a test that fails when the rule is broken. That includes 'Every GET sent while a check or any other GET /me is in flight waits for it', the rule that keeps B's page data from rendering under A's header before /me has answered. For example, a test that holds the /me answer and asserts that no page GET is sent until it is answered, as my qa-r6-session-wait.test.tsx does.",
+      "actual": "The product implements the wait: my held-/me test passes on the candidate, and on the real stack my probe dg4-qa-r6-session-window.spec.ts (W1, W3) sees /me first and one /me per navigation, in en and ar. But no candidate test notices when the wait is removed. The existing tests answer /me immediately, and they assert the order in which requests are sent, not that page GETs wait for the answer. A regression of this rule would therefore pass pnpm test. The other identity rules are guarded: mutants M1 (window ignored), M2 (window never crossed), M3 (no navigation confirmation) and M5 (no generation check) are each killed by the repaired session tests. M6/M6b are equivalent, because TanStack Query dedupes concurrent /me fetches. This is a test-coverage gap with no product defect, hence Low.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-6/02d-unit-session-mutants.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02e-unit-web-mutants-full.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02f-unit-held-me-test.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02g-unit-m4-pre-repair-tests.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/scripts/mutants.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-6/scripts/mutants-2.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-6/scripts/run-wait-test.sh",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-6/unit/qa-r6-session-wait.test.tsx",
+        "apps/web/src/api/client.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T16:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 6 (T-DG4-REV-QA-R6) on candidate sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536, from the adversarial mutation check of F-DG4-145's repair. Non-blocking: the product behaviour is correct; the gap is in the tests and pre-dates the repair."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-147",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "apps/web/e2e/session-end.spec.ts 'a 403 is not a session end' races the SPA's boot GET /me: under load the tab picks up the new session's CSRF token and the expected 403 is a 200",
+      "reproduction": "Run the full candidate e2e suite on the real stack (e2e/support/qa-stack.sh, --workers=1, locale unset) under load. In this review the load was 9-30, with the three reviews running at once. chromium-ar > session-end.spec.ts:299 'a 403 is not a session end: a refused change keeps the user signed in where they are' fails at line 299: 'Expected: 403, Received: 200' (04-e2e-full-unset.log, failure 13). The Playwright trace of the failure shows this order. First, page.goto('/about') (waitUntil 'load') returns at 13:55:45.200Z. Second, the test's re-login through the context's request API, POST /api/v1/auth/dev-login, runs at .202-.234Z (204). Third, the SPA's boot GET /me is sent at .257Z, after both, and receives the NEW session's CSRF token. Finally, PUT /api/v1/me/preferences is answered 200 instead of 403 csrf. The same test passed in the C.UTF-8 full run and in the solo re-run, in both projects (04-e2e-solo-failed-unset.log).",
+      "expected": "The test asserts the D-073/T-DG2-FE11 behaviour (a 403 is never a session end) deterministically. For example, it waits for the app's boot GET /me response after page.goto('/about') before the re-login, so the tab still holds the previous session's CSRF token when the change is sent.",
+      "actual": "The test only awaits the 'load' event. The SPA sends its boot /me after that, so under load the /me can follow the re-login. The product then behaves correctly: it adopts the cookie's current session and its CSRF token, and the change is accepted. So the test fails for reasons unrelated to the behaviour it checks. This is a pre-existing DG2 test race (the spec is unchanged since round 5) and not a product defect. It turns a required e2e check red intermittently under the review machine's normal load.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-6/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-6/04-e2e-full-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-6/04-e2e-solo-failed-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-6/RUN-NOTES.md",
+        "apps/web/e2e/session-end.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T16:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 6 (T-DG4-REV-QA-R6) on candidate sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536. Non-blocking: a test-determinism defect in a DG2 e2e spec; the product behaviour is correct and the test passes in the C.UTF-8 full run and solo."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-148",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-008",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "pnpm test is not reproducible at the load the three concurrent reviews create: first renders of page modules miss unit-web's 5 s wait, and architecture.test.ts misses its 30 s timeout, at load >= 13",
+      "reproduction": "In a complete clone of the candidate (offline install, pnpm -r build), run pnpm test (TZ=UTC CI=1) on Node 22 and 24, with the locale unset and with C.UTF-8. At load 20-30, all four runs exit 1 (4, 8, 2 and 1 failures; 02-unit-{node22,node24}-{unset,C}.log). With the 1-min load held at 13-15 by unpinned busy loops (median 13.9; 02-unit-load-held-samples.log), the Node 22 runs exit 1 with 4 and 1 failures, and the Node 24 runs exit 0 (02-unit-*-load13-15.log). Every failure is one of two kinds. (a) A Testing Library 'Unable to find role=…' after the 5 s asyncUtilTimeout (F-DG2-220). This hits fe-e.test.tsx Funding decisions (en), prioritization.test.tsx ranked table (en), p2-blank-forms.test.tsx gate submission note (en) and P1 edit (en), raid.test.tsx T15 register (en) and action register (en/ar), and sustain.test.tsx handover checklist (en). (b) apps/api/src/architecture.test.ts 'Test timed out in 30000ms'. Each failing web test is the first render of its page module in its file. The en describe runs first; for raid action register it is the first render of the /actions route. The same first-render wait also fails session-bound.test.tsx Y1c (en) in 2 of 3 pinned runs (taskset -c 0 plus 3 busy loops; 02c). At load 17-20, the six files run alone still fail 4 times (02b). At load 3-9, all four pnpm test runs exit 0 (02-unit-*-lowload.log).",
+      "expected": "A required check is reproducible on the review machine at the load that the delivery process itself creates, with three reviews running concurrently (D-111/D-112/D-115 record the same pressure for the e2e journeys). Possible remedies: warm or prebundle the lazily loaded page modules in the unit-web setup; give a file's first render a budget that matches the contention; run unit-web with fewer workers under load; or state the load envelope in which pnpm test is a valid gate check.",
+      "actual": "The product is unaffected: every failing test passes at low load, and the failures are waits for a first render that is slow under CPU contention. But pnpm test exits 1 in 6 of the 8 runs at load >= 13. Because pnpm test chains its projects with &&, unit-formula-nocodegen does not run at all in those 6 runs. These tests are unchanged since round 5. In round 5 the same load band showed only the F-DG4-145 failure, and the difference is plausibly the composition of the load: my held band was pure CPU busy loops. This is a test-harness reproducibility defect, not an acceptance-criterion failure, hence Low.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-unset-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-C-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-load-held-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02b-unit-failed-files-alone.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02c-unit-session-bound-contention.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-unset-lowload.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/RUN-NOTES.md",
+        "apps/web/vitest.config.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T16:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 6 (T-DG4-REV-QA-R6) on candidate sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536, from the F-DG4-145 contention runs. Non-blocking: a test-harness reproducibility defect; the product behaviour is correct and pnpm test passes 4/4 at load 3-9. The architecture.test.ts part concerns an API test (solution-architect / backend scope)."
+        }
+      ]
+    }
+  ]
+}

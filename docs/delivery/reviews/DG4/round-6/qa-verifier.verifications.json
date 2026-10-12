@@ -1,0 +1,31 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-145",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536 (source 1e0dc5d). The defect was that session-bound.test.tsx Y1c counted GET /me with real timers against the 2 s SESSION_RECHECK_MS window, so it failed whenever the steps took longer than 2 s. It is fixed. (1) The round-5 contention runs, repeated. In 8 full pnpm test runs (Node 22/24 x locale unset/C.UTF-8), session-bound, session-identity and session-generation passed 80/80 every time: 4 runs at load 20-30, and 4 runs with the 1-min load held at 13-15 (median 13.9, 203 samples). In round 5, 4/4 runs at load 13-15 failed Y1c (en) on the count. Those 8 runs do contain other, unrelated first-render timeouts, raised separately as F-DG4-148 and explained in RUN-NOTES.md. (2) The round-5 pinned reproduction, repeated (taskset -c 0 plus 3 busy loops). The pre-repair file (3e3a06e, same product code) fails the count 2/2 ('length of 2 but got 3'). On the candidate, the count assertion never fails: 2 of 3 whole-file runs stop earlier, at Y1c (en)'s 5 s wait for the 'created' notice (the generic first-render budget of F-DG4-148), and 1 passes 36/36. (3) An isolated variant experiment, pinned and Y1c cases only. The candidate passes 6/6 in 2/2 runs. The same file with its controlled clock NOT installed fails the count and the new window case in 2/2 runs, and the pre-repair file fails the count in 2/2. So the controlled Date.now clock is what makes the count deterministic. (4) The protected guarantees still fail when broken (mutants of apps/web/src/api/client.ts). M1, window ignored: Y1c gets 5 /me instead of 2, and N1, bounded and X6 fail. M2, window never crossed: the new Y1c window case and the bounded test fail. M3, no navigation identity confirmation: both Y1c cases, N0 and bounded fail. M5, no generation check: six F-DG2-530 tests fail. M6/M6b, no join of the check in flight: equivalent, because TanStack Query dedupes concurrent /me fetches. M4, a page GET does not wait for the check in flight, survives the whole unit-web suite, both before and after the repair; it is raised separately as F-DG4-146, with a test that kills it. (5) The repair diff (git diff 3e3a06e..1e0dc5d) is tests only and weakens no assertion of F-DG2-530/570/580 or D-077. Y1c keeps 'exactly 2 /me after the POST' and adds four assertions: the first request after the 201 is GET /me; the session generation is unchanged; the header shows User A; and no /me follows the record's first page GET. The new window case asserts exactly one revalidation, sent before the GETs after the window. session-generation only holds Date.now still, and the 'nothing when all is fresh' assertion is unchanged. session-identity answers the two scripted 403s by URL, and its assertions (403/403, no reset, phase active, the page and the cached /me kept) are unchanged. On the real stack, my probe dg4-qa-r6-session-window.spec.ts passes 14/14 checks per language in both locale settings. W1: /me is sent first and once per in-app navigation. W2: no /me is sent while idle. W3: after another sign-in in the same browser, the next navigation shows the new identity's header, /me precedes the page GETs, and the old name is gone.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-unset-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-C-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-unset-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-C-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-load-held-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02-unit-node24-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02c-unit-session-bound-contention.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02c3-unit-pinned-y1c-variants.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02d-unit-session-mutants.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02e-unit-web-mutants-full.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02f-unit-held-me-test.log",
+        "docs/delivery/test-evidence/DG4/qa/round-6/results/e2e-session-rev3-unset/dg4-qa-r6-session-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-6/results/e2e-session-rev3-cutf8/dg4-qa-r6-session-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-6/e2e/dg4-qa-r6-session-window.spec.ts",
+        "docs/delivery/test-evidence/DG4/qa/round-6/RUN-NOTES.md",
+        "apps/web/src/auth/session-bound.test.tsx"
+      ]
+    }
+  ]
+}
