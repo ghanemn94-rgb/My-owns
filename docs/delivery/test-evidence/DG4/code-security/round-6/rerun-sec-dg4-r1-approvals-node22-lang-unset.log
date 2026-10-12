@@ -1,0 +1,54 @@
+# probe sec-dg4-r1-approvals.test.ts; node v22.22.2; commit 0e499f2eba44bc4f2036ae17ddc242edb3ac399d; LANG unset; 2bd220748a68ba0d38507d4c5a3b66d46ab25718d368f162a871da39c4798297; load 29.55 29.63 24.21; started 2026-10-12T12:56:33Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.s8HDvn/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv59aia3_9f30d6c8 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A2 SoD through delegation: the requester cannot decide on behalf of the assignee who delegated to them
+[probe-A] A2 delegation bo->bo2 201 
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A2 SoD through delegation: the requester cannot decide on behalf of the assignee who delegated to them
+[probe-A] A2 approval assignee 01a13030-6605-776f-a26a-c368673c8d5d (bo 01a13030-6605-776f-a26a-c368673c8d5d), requester 01a13030-662f-755e-ba95-55a1ad6c9f96 (bo2 01a13030-662f-755e-ba95-55a1ad6c9f96)
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A2 SoD through delegation: the requester cannot decide on behalf of the assignee who delegated to them
+[probe-A] A2 requester decides on behalf of assignee -> 403 approval.sod_requester audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A2 SoD through delegation: the requester cannot decide on behalf of the assignee who delegated to them
+[probe-A] A2 requester decides directly -> 403 approval.sod_requester
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A1 SoD through a group: the requester in the assignee group gets 403 approval.sod_requester; the other member decides
+[probe-A] A1 requester (group member) decides -> 403 approval.sod_requester audit=["authorization.denied"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A1 SoD through a group: the requester in the assignee group gets 403 approval.sod_requester; the other member decides
+[probe-A] A1 other member decides -> 200 approved
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A3 two concurrent approvals at If-Match 1: exactly one 200 and one decision row
+[probe-A] A3 concurrent approve -> [[200,"approved"],[409,"version_conflict"]]; decision rows 1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A4 approve and withdraw at the same time: one wins; the end state is consistent
+[probe-A] A4 decide 409 version_conflict, withdraw 200 withdrawn; final withdrawn v2; decision rows 0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A5 delegation loops: a three-person loop is 422; a concurrent A<->B pair gives exactly one 201
+[probe-A] A5 C->A after A->B, B->C -> 422 delegation.loop
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A5 delegation loops: a three-person loop is 422; a concurrent A<->B pair gives exactly one 201
+[probe-A] A5 concurrent X->Y and Y->X -> [[422,"delegation.loop"],[201,"active"]]; rows 1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts > SEC-DG4-R1 probe A: approval separation of duties and races > A6 the subject moved to version 2: deciding version 1 is 409 approval.stale_version; nothing written
+[probe-A] A6 stale -> 409 approval.stale_version requested 1 current 2
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r1-approvals.test.ts (6 tests) 6649ms
+   ✓ SEC-DG4-R1 probe A: approval separation of duties and races > A2 SoD through delegation: the requester cannot decide on behalf of the assignee who delegated to them  831ms
+   ✓ SEC-DG4-R1 probe A: approval separation of duties and races > A1 SoD through a group: the requester in the assignee group gets 403 approval.sod_requester; the other member decides  1245ms
+   ✓ SEC-DG4-R1 probe A: approval separation of duties and races > A4 approve and withdraw at the same time: one wins; the end state is consistent  308ms
+   ✓ SEC-DG4-R1 probe A: approval separation of duties and races > A5 delegation loops: a three-person loop is 422; a concurrent A<->B pair gives exactly one 201  456ms
+   ✓ SEC-DG4-R1 probe A: approval separation of duties and races > A6 the subject moved to version 2: deciding version 1 is 409 approval.stale_version; nothing written  404ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  12:56:39
+   Duration  44.72s (transform 8.92s, setup 0ms, collect 25.80s, tests 6.65s, environment 0ms, prepare 358ms)
+
+# exit_status: 0  finished: 2026-10-12T12:57:30Z

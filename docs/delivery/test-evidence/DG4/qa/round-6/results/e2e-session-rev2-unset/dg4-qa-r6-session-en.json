@@ -1,0 +1,86 @@
+[
+  {
+    "id": "W0-nav-areas",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "[\"/executive-overview\",\"/transformations\",\"/playbook\",\"/strategy-kpis\",\"/target-operating-model\",\"/initiatives-roadmaps\",\"/governance\",\"/risks-actions\",\"/benefits-finance\",\"/change-adoption\",\"/evidence-reports\",\"/bau-improvement\"]"
+  },
+  {
+    "id": "W1-0-me-first /executive-overview",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "[\"GET /api/v1/me\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/reporting-periods?limit=100\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units?limit=100\",\"GET /api/v1/transformations?organizationId=01920000-0000-7000-9000-000000000001&sort=code%3Aasc&limit=100\",\"GET /api/v1/overview?organizationId=01920000-0000-7000-9000-000000000001\"]"
+  },
+  {
+    "id": "W1-0-no-page-get-before-me /executive-overview",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "{\"firstPage\":1,\"head\":[\"GET /api/v1/me\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/reporting-periods?limit=100\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units?limit=100\",\"GET /api/v1/transformations?organizationId=01920000-0000-7000-9000-000000000001&sort=code%3Aasc&limit=100\",\"GET /api/v1/overview?organizationId=01920000-0000-7000-9000-000000000001\"]}"
+  },
+  {
+    "id": "W1-0-one-me-per-navigation /executive-overview",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "{\"meCount\":1,\"sent\":[\"GET /api/v1/me\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/reporting-periods?limit=100\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units?limit=100\",\"GET /api/v1/transformations?organizationId=01920000-0000-7000-9000-000000000001&sort=code%3Aasc&limit=100\",\"GET /api/v1/overview?organizationId=01920000-0000-7000-9000-000000000001\"]}"
+  },
+  {
+    "id": "W1-1-me-first /transformations",
+    "req": "REQ-S16-030",
+    "pass": false,
+    "detail": "[]"
+  },
+  {
+    "id": "W1-1-no-page-get-before-me /transformations",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "{\"firstPage\":-1,\"head\":[]}"
+  },
+  {
+    "id": "W1-1-one-me-per-navigation /transformations",
+    "req": "REQ-S16-030",
+    "pass": false,
+    "detail": "{\"meCount\":0,\"sent\":[]}"
+  },
+  {
+    "id": "W2-idle-sends-no-me",
+    "req": "REQ-S16-030",
+    "pass": false,
+    "detail": "[\"GET /api/v1/me\",\"GET /api/v1/transformations?sort=updatedAt%3Adesc&limit=25\"]"
+  },
+  {
+    "id": "W3-relogin-204",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "204"
+  },
+  {
+    "id": "W3-two-identities",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "{\"leadName\":\"Synthetic Transformation Lead\",\"officeName\":\"Synthetic Transformation Office\"}"
+  },
+  {
+    "id": "W3-me-before-page-get",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "[\"GET /api/v1/me\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/reporting-periods?limit=100\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units?limit=100\",\"GET /api/v1/transformations?organizationId=01920000-0000-7000-9000-000000000001&sort=code%3Aasc&limit=100\",\"GET /api/v1/overview?organizationId=01920000-0000-7000-9000-000000000001\"]"
+  },
+  {
+    "id": "W3-header-is-new-identity",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "{\"header\":\"Synthetic Transformation Office\",\"officeName\":\"Synthetic Transformation Office\"}"
+  },
+  {
+    "id": "W3-old-name-not-shown",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "{\"leadName\":\"Synthetic Transformation Lead\"}"
+  },
+  {
+    "id": "W3-one-me",
+    "req": "REQ-S16-030",
+    "pass": true,
+    "detail": "[\"GET /api/v1/me\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/reporting-periods?limit=100\",\"GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units?limit=100\",\"GET /api/v1/transformations?organizationId=01920000-0000-7000-9000-000000000001&sort=code%3Aasc&limit=100\",\"GET /api/v1/overview?organizationId=01920000-0000-7000-9000-000000000001\"]"
+  }
+]

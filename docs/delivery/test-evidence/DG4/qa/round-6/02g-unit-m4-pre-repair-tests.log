@@ -1,0 +1,23 @@
+=== the three session test files at 3e3a06e (pre-repair), client.ts with mutant M4
+apps/web/src/auth/session-bound.test.tsx sha256 6fd94285eb086b73 (git show 3e3a06e:apps/web/src/auth/session-bound.test.tsx)
+apps/web/src/auth/session-identity.test.tsx sha256 43f583a71401830c (git show 3e3a06e:apps/web/src/auth/session-identity.test.tsx)
+apps/web/src/auth/session-generation.test.tsx sha256 2e2cbcb88f48d74c (git show 3e3a06e:apps/web/src/auth/session-generation.test.tsx)
+--- $TMPDIR/client.ts.orig4	2026-10-12 13:14:19.474387102 +0000
++++ apps/web/src/api/client.ts	2026-10-12 13:14:19.616823979 +0000
+@@ -380,8 +380,7 @@
+   } else if (method === "GET") {
+     // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+     if (recheckDue()) void startSessionCheck();
+-    if (pendingCheck) await pendingCheck;
+-    if (probesIdle) await probesIdle;
++    void probesIdle;
+     // The identity changed (or the session ended) while this GET waited: it belongs to the previous identity's screen,
+     // which has been reset. It is never sent.
+     if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+ 13:14:19 up 1 day, 19:13,  0 user,  load average: 20.00, 22.88, 24.51
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx
+ Test Files  3 passed (3)
+      Tests  78 passed (78)
+EXIT 0
+ 13:15:09 up 1 day, 19:14,  0 user,  load average: 23.60, 23.46, 24.62
+client.ts and the three test files restored to the candidate

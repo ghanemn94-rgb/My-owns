@@ -1,0 +1,42 @@
+### HEAD 0e499f2eba44bc4f2036ae17ddc242edb3ac399d
+### node scripts/check-no-cdn.mjs
+PASS no-cdn: scanned apps, packages
+### exit=0
+### affirmative certification / official-standard claims in shipped code and i18n (negations excluded)
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+packages/design-tokens/dist/tokens.json:2:    "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+### grep exit=0 (1 = no affirmative claim found)
+### #0078FF occurrences (non-test)
+apps/web/src/i18n/en/common.json
+apps/web/src/i18n/ar/common.json
+apps/api/src/modules/admin/branding.ts
+packages/shared/src/schemas/branding.ts
+packages/design-tokens/src/tokens.json
+packages/design-tokens/src/index.ts
+### tokens.json provisional flags
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+3:  "provisional": true,
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+9:      "provisional": true
+11:    "surface.page": { "value": "#F5F8FC", "purpose": "Page background", "provisional": true },
+### provisional wordmark strings
+apps/web/src/i18n/en/common.json:4:    "provisional": "Provisional",
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:128:    "brandTitle": "Provisional branding",
+apps/web/src/i18n/ar/common.json:4:    "provisional": "مؤقت",
+### N3/FE-R5 new Arabic labelled provisional on screen
+227:    "arProvisional": "التسميات العربية مؤقتة. المصدر:",
+491:    "arProvisional": "تسميات الأساس العربية مؤقتة إلى أن يؤكدها مراجع لغوي عربي.",
+### DG0-DG7 references in product code (non-test)
+apps/api/src/modules/identity/routes.ts:39: * source has no computed member with a non-literal key (F-DG1-124), and own entries never reach the prototype chain.
+apps/api/src/modules/identity/routes.ts:72:   * Validated-session subjects for the global rate limiter's key (F-DG1-142). The composition root shares one instance
+apps/api/src/modules/identity/routes.ts:84:  // Defence in depth for F-DG1-112 (the loader already refuses this): never issue non-Secure, non-__Host- session
+apps/api/src/modules/identity/routes.ts:109:  // Pre-session login cookie (F-DG1-103): binds the OIDC state to the browser that started the login. SameSite=Lax
+apps/api/src/modules/identity/routes.ts:122:   * (T-DG2-BE18, F-DG2-440). Null when the session is not valid (revoked, logged out, idle or absolute expiry, user
+apps/api/src/modules/identity/routes.ts:198:        // F-DG2-231 / F-DG2-260: a User-Agent with U+0000 or a lone surrogate is not stored. Neither can arrive over HTTP
+apps/api/src/modules/identity/routes.ts:293:          // T-DG2-BE18 (F-DG2-441): discovery (a remote call to the IdP) runs BEFORE any transaction is opened; the
+apps/api/src/modules/identity/routes.ts:307:    // F-DG2-231 / F-DG2-260: a value with U+0000 or a lone surrogate fails here and redirects with invalid_request (the
+apps/api/src/modules/identity/routes.ts:364:          // F-DG2-231 / F-DG2-260: an issuer or subject with U+0000 or a lone surrogate (or empty, or too long for its
+apps/api/src/modules/identity/routes.ts:378:          // F-DG2-260 (defence in depth behind identityClaimsStorable): a claim value the database refuses (SQLSTATE
+apps/api/src/modules/identity/rate-limit-subjects.ts:1:// Trustworthy rate-limit keys (F-DG1-142, ADR-0007 T-3). The global limiter runs on onRequest, BEFORE the session is
+apps/api/src/modules/identity/oidc.ts:63:   * Starts a login in two steps, so no database transaction is open while the IdP is contacted (T-DG2-BE18,

@@ -1,0 +1,136 @@
+=== MUTANT M4: a page GET does not wait for the identity check in flight (sent before /me answers)
+--- $TMPDIR/client.ts.orig2	2026-10-12 12:40:21.060419268 +0000
++++ apps/web/src/api/client.ts	2026-10-12 12:40:21.162990153 +0000
+@@ -380,8 +380,7 @@
+   } else if (method === "GET") {
+     // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+     if (recheckDue()) void startSessionCheck();
+-    if (pendingCheck) await pendingCheck;
+-    if (probesIdle) await probesIdle;
++    void probesIdle;
+     // The identity changed (or the session ended) while this GET waited: it belongs to the previous identity's screen,
+     // which has been reset. It is never sent.
+     if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+ 12:40:21 up 1 day, 18:39,  0 user,  load average: 28.75, 22.92, 12.72
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  5892ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  4612ms
+   ✓ sign-in (dev form), 'en' → 'ar' > an invalid user name: the inline message follows the switch  2181ms
+   ✓ sign-in (dev form), 'en' → 'ar' > a refused sign-in: the server's problem follows the switch  331ms
+   ✓ sign-in (dev form), 'ar' → 'en' > an invalid user name: the inline message follows the switch  863ms
+   ✓ sign-in (dev form), 'ar' → 'en' > a refused sign-in: the server's problem follows the switch  971ms
+   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  6913ms
+   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  4417ms
+   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  2672ms
+   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  5057ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation note's 'required' follows the switch  5020ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation choice's 'required' follows the switch  4445ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the archive reason's 'too short' follows the switch  5120ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation note's 'required' follows the switch  4829ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation choice's 'required' follows the switch  3199ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the archive reason's 'too short' follows the switch  2739ms
+   ✓ gate dialogs, 'en' → 'ar' > the submission note's field error follows the switch  890ms
+   ✓ gate dialogs, 'en' → 'ar' > the decision rationale's field error follows the switch  1409ms
+   ✓ gate dialogs, 'ar' → 'en' > the submission note's field error follows the switch  1716ms
+   ✓ gate dialogs, 'ar' → 'en' > the decision rationale's field error follows the switch  2162ms
+   ✓ North Star statement, 'en' → 'ar' > the statement's field error follows the switch  1803ms
+   ✓ North Star statement, 'ar' → 'en' > the statement's field error follows the switch  1379ms
+   ✓ evidence dialogs, 'en' → 'ar' > upload without a file: 'required' follows the switch  4159ms
+   ✓ evidence dialogs, 'en' → 'ar' > a link without a record type or record: both 'required' messages follow the switch  1709ms
+   ✓ evidence dialogs, 'ar' → 'en' > upload without a file: 'required' follows the switch  2730ms
+   ✓ evidence dialogs, 'ar' → 'en' > a link without a record type or record: both 'required' messages follow the switch  2449ms
+   ✓ schedule network panel (en) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  3121ms
+   ✓ schedule network panel (en) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  2253ms
+   ✓ schedule network panel (ar) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  1618ms
+   ✓ schedule network panel (ar) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  3077ms
+   ✓ dependencies (en) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  3670ms
+   ✓ dependencies (ar) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  2243ms
+   ✓ a refused language save, 'en' → other ('403 csrf') > keeps ar on screen and says, in ar, that it was not saved  983ms
+   ✓ a refused language save, 'ar' → other ('403 csrf') > keeps en on screen and says, in en, that it was not saved  648ms
+   ✓ a refused language save, 'en' → other ('403 forbidden') > keeps ar on screen and says, in ar, that it was not saved  2588ms
+   ✓ a refused language save, 'ar' → other ('503') > keeps en on screen and says, in en, that it was not saved  1103ms
+ Test Files  68 passed (68)
+      Tests  1340 passed (1340)
+EXIT 0
+ 12:53:57 up 1 day, 18:53,  0 user,  load average: 29.29, 29.75, 23.24
+=== MUTANT M6b: one /me per page GET after the window: no join of the check in flight, and no /me restarts the window
+--- $TMPDIR/client.ts.orig2	2026-10-12 12:40:21.060419268 +0000
++++ apps/web/src/api/client.ts	2026-10-12 12:53:57.380651004 +0000
+@@ -293,8 +293,7 @@
+ }
+ 
+ function startSessionCheck(): Promise<void> {
+-  if (pendingCheck) return pendingCheck;
+-  lastMeAt = Date.now(); // bounded even when the check fails (offline): no /me per request
++  void 0;
+   const run = Promise.all([...checkRunners].map((r) => r()))
+     .then(
+       () => undefined,
+@@ -376,7 +375,7 @@
+   const sentGeneration = sessionGeneration;
+   const changed = () => sessionGeneration !== sentGeneration;
+   if (options.sessionProbe) {
+-    lastMeAt = Date.now();
++    void 0;
+   } else if (method === "GET") {
+     // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+     if (recheckDue()) void startSessionCheck();
+@@ -440,7 +439,7 @@
+     throw error;
+   }
+   if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+-  if (options.sessionProbe) lastMeAt = Date.now();
++  void 0;
+   return { data: parsed as T, status: response.status, etag: response.headers.get("ETag") };
+ }
+ 
+ 12:53:57 up 1 day, 18:53,  0 user,  load average: 29.29, 29.75, 23.24
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web
+   ✓ sign-in (dev form), 'en' → 'ar' > an invalid user name: the inline message follows the switch  1146ms
+   ✓ sign-in (dev form), 'en' → 'ar' > a refused sign-in: the server's problem follows the switch  596ms
+   ✓ sign-in (dev form), 'ar' → 'en' > an invalid user name: the inline message follows the switch  497ms
+   ✓ sign-in (dev form), 'ar' → 'en' > a refused sign-in: the server's problem follows the switch  823ms
+   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  7844ms
+   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  5454ms
+   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  5176ms
+   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  5298ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation note's 'required' follows the switch  3664ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation choice's 'required' follows the switch  5183ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the archive reason's 'too short' follows the switch  4678ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation note's 'required' follows the switch  5988ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation choice's 'required' follows the switch  4364ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the archive reason's 'too short' follows the switch  4333ms
+   ✓ gate dialogs, 'en' → 'ar' > the submission note's field error follows the switch  3532ms
+   ✓ gate dialogs, 'en' → 'ar' > the decision rationale's field error follows the switch  2082ms
+   ✓ gate dialogs, 'ar' → 'en' > the submission note's field error follows the switch  1452ms
+   ✓ gate dialogs, 'ar' → 'en' > the decision rationale's field error follows the switch  2918ms
+   ✓ North Star statement, 'en' → 'ar' > the statement's field error follows the switch  2950ms
+   ✓ North Star statement, 'ar' → 'en' > the statement's field error follows the switch  1992ms
+   ✓ evidence dialogs, 'en' → 'ar' > upload without a file: 'required' follows the switch  2864ms
+   ✓ evidence dialogs, 'en' → 'ar' > a link without a record type or record: both 'required' messages follow the switch  3267ms
+   ✓ evidence dialogs, 'ar' → 'en' > upload without a file: 'required' follows the switch  3559ms
+   ✓ evidence dialogs, 'ar' → 'en' > a link without a record type or record: both 'required' messages follow the switch  3882ms
+ ❯  unit-web  src/pages/raid/raid.test.tsx (18 tests | 1 failed) 57826ms
+   × RAID and actions screens (en) > action register: source, follow-up date and overdue flag; edit sends If-Match 9494ms
+     → Unable to find role="link" and name "Synthetic call the vendor"
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  4984ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  6182ms
+   ✓ schedule network panel (en) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  3238ms
+   ✓ schedule network panel (en) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  4709ms
+   ✓ schedule network panel (ar) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  1010ms
+   ✓ schedule network panel (ar) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  4527ms
+   ✓ dependencies (en) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  1576ms
+   ✓ dependencies (ar) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  1824ms
+   ✓ a refused language save, 'en' → other ('403 csrf') > keeps ar on screen and says, in ar, that it was not saved  2349ms
+   ✓ a refused language save, 'ar' → other ('403 csrf') > keeps en on screen and says, in en, that it was not saved  1495ms
+   ✓ a refused language save, 'en' → other ('403 forbidden') > keeps ar on screen and says, in ar, that it was not saved  978ms
+   ✓ a refused language save, 'ar' → other ('503') > keeps en on screen and says, in en, that it was not saved  1914ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/raid/raid.test.tsx:236:31
+ Test Files  1 failed | 67 passed (68)
+      Tests  1 failed | 1339 passed (1340)
+EXIT 1
+ 13:07:40 up 1 day, 19:06,  0 user,  load average: 25.04, 26.96, 25.95
+client.ts restored (identical to the candidate)

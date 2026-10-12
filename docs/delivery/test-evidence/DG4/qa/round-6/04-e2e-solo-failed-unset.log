@@ -1,0 +1,254 @@
+$ [env -u LANG -u LC_ALL -u LC_CTYPE] QA_E2E_PG_PORT=26670 QA_E2E_API_PORT=26675 MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test apps/web/e2e/p2-journeys.spec.ts apps/web/e2e/p3-seams.spec.ts apps/web/e2e/p4-adoption-bau.spec.ts apps/web/e2e/p4-benefits.spec.ts apps/web/e2e/p4-dashboards.spec.ts apps/web/e2e/p4-execution.spec.ts apps/web/e2e/p4-gates-closure.spec.ts apps/web/e2e/p4-raid-governance.spec.ts apps/web/e2e/session-end.spec.ts --workers=1 --reporter=list  (node v24.21.0, extra specs:, 2026-10-12T15:57:27Z)
+ 15:57:27 up 1 day, 21:56,  0 user,  load average: 3.44, 10.56, 12.40
+port-policy: PostgreSQL listening on port 26670 (attempt 1)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+mth-db migrate: applying 0010_p2_record_guards.sql
+mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+mth-db migrate: applying 0012_p2_evidence.sql
+mth-db migrate: applying 0013_p2_direction_charter.sql
+mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+mth-db migrate: applying 0015_p2_diagnose.sql
+mth-db migrate: applying 0016_p2_design_tom.sql
+mth-db migrate: applying 0017_p2_decisions_gates.sql
+mth-db migrate: applying 0018_p2_access_instantiation.sql
+mth-db migrate: applying 0019_evidence_review_separation.sql
+mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+mth-db migrate: applying 0021_p3_prioritization.sql
+mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+mth-db migrate: applying 0023_p3_business_case_formula.sql
+mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+mth-db migrate: applying 0026_p3_enable_g4.sql
+mth-db migrate: applying 0027_p3_calculation_rounding.sql
+mth-db migrate: applying 0028_p4_calendar_jobs_work_items.sql
+mth-db migrate: applying 0029_p4_groups_role_mapping_delegation.sql
+mth-db migrate: applying 0030_p4_decision_rights_raci.sql
+mth-db migrate: applying 0031_p4_approvals_permissions.sql
+mth-db migrate: applying 0032_p4_slice_i_c_reserved.sql
+mth-db migrate: applying 0033_p4_kpi_dictionary_versions.sql
+mth-db migrate: applying 0034_p4_kpi_trajectories_actuals.sql
+mth-db migrate: applying 0035_p4_kpi_calculation_runs_quality.sql
+mth-db migrate: applying 0036_p4_kpi_permissions_backfill.sql
+mth-db migrate: applying 0037_p4_benefit_register.sql
+mth-db migrate: applying 0038_p4_benefit_measurement_validation.sql
+mth-db migrate: applying 0039_p4_benefit_value_views.sql
+mth-db migrate: applying 0040_p4_benefit_permissions.sql
+mth-db migrate: applying 0041_p4_raid_actions_corrective.sql
+mth-db migrate: applying 0042_p4_budget_schedule.sql
+mth-db migrate: applying 0043_p4_raid_permissions.sql
+mth-db migrate: applying 0044_p4_forums_meetings.sql
+mth-db migrate: applying 0045_p4_t16_escalation.sql
+mth-db migrate: applying 0046_p4_governance_permissions.sql
+mth-db migrate: applying 0047_p4_adoption.sql
+mth-db migrate: applying 0048_p4_sustainment.sql
+mth-db migrate: applying 0049_p4_adoption_sustainment_permissions.sql
+mth-db migrate: applying 0050_p4_sustainment_schedules.sql
+mth-db migrate: applying 0051_p4_phases_gates_g5_g6_exceptions.sql
+mth-db migrate: applying 0052_p4_change_control.sql
+mth-db migrate: applying 0053_p4_gates_change_permissions.sql
+mth-db migrate: applying 0054_p4_gate_exception_expiry_schedule.sql
+mth-db migrate: applying 0055_p4_traceability_modular_structure.sql
+mth-db migrate: applying 0056_p4_dashboards_t10.sql
+mth-db migrate: applying 0057_p4_dashboards_traceability_permissions.sql
+mth-db migrate: applying 0058_p4_approval_reminder_kinds.sql
+mth-db migrate: applying 0059_p4_enable_g5_g6.sql
+mth-db migrate: applying 0060_p4_governance_schedules_weekly_cadence.sql
+mth-db migrate: applying 0061_p4_finance_validation_correction_step.sql
+mth-db migrate: applied 61 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26675 (attempt 1)
+API:     http://localhost:26675
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 128 tests using 1 worker
+
+  ✓    1 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (5.8s)
+  ✓    2 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (11.7s)
+  ✓    3 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (7.9s)
+  ✓    4 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (6.9s)
+  ✓    5 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (9.7s)
+  ✓    6 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (10.4s)
+  ✓    7 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (9.1s)
+  ✓    8 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (8.2s)
+  ✓    9 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (29.9s)
+  ✓   10 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor (9.9s)
+  ✓   11 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead (8.9s)
+  ✓   12 [chromium-en] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered (20.9s)
+  ✓   13 [chromium-en] › apps/web/e2e/p3-seams.spec.ts:26:1 › setup: a fresh synthetic transformation for the P3 seam checks (94ms)
+  ✓   14 [chromium-en] › apps/web/e2e/p3-seams.spec.ts:38:1 › P3 pages: bilingual titles, the P3 workspace tabs, axe-clean, no write on visit (17.4s)
+  ✓   15 [chromium-en] › apps/web/e2e/p3-seams.spec.ts:69:1 › Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio and Business cases tabs (5.7s)
+  ✓   16 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:119:1 › 1. T13: a stakeholder group with the closed lists; seven columns; 'Hostile' refused (5.0s)
+  ✓   17 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:176:1 › 2. An intervention with owner and due date appears in the owner's My Work (8.0s)
+  ✓   18 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:213:1 › 3. The seven leading adoption indicators by name (4.0s)
+  ✓   19 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:230:1 › 4. Training 100 % with no observation shows proficiency Unknown; a form observation then counts (9.9s)
+  ✓   20 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:294:1 › 5. A champion's constraint on a T04 design decision is listed on that decision (4.7s)
+  ✓   21 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:328:1 › 6. BAU handover: data access missing is refused; only the receiving owner accepts; one review (18.3s)
+  ✓   22 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:440:1 › 7. Reopen keeps the handover acceptance; a CI item; a published lesson found from another transformation (13.9s)
+  ✓   23 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:508:1 › 8. Auditor read-only views; 390 px and 200 % text without page-level horizontal scroll (17.6s)
+  ✓   24 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:110:1 › 1. The Business Owner creates a benefit and moves it through Plan and Enable; Measure needs an enabler (8.9s)
+  ✓   25 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:171:1 › 2. Allocations: 60 % + 50 % is refused; 60 % + 30 % leaves 10 % unallocated (7.1s)
+  ✓   26 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:209:1 › 3. Register: CX benefit Value (SAR) n/a, never 0; the allocated initiatives are named (3.5s)
+  ✓   27 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:230:1 › 4. Finance validates the baseline (the comparison basis) (4.2s)
+  ✓   28 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:250:1 › 5. The Business Owner submits a measurement with evidence: pending, labelled, validated total unchanged (7.7s)
+  ✓   29 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:288:1 › 6. One Finance queue item; Finance decides the six items and approves; an amendment corrects without editing (24.3s)
+  ✓   30 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:422:1 › 7. A scenario value is labelled with its kind and stays out of every total (4.8s)
+  ✓   31 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:454:1 › 8. Auditor read-only; register and benefit page at 390 px and 200 % text; the other benefit screens (21.9s)
+  ✓   32 [chromium-en] › apps/web/e2e/p4-benefits.spec.ts:511:1 › 9. Plan-value edit: If-Match from the real read; a stale edit is the 409 conflict and never overwrites (6.0s)
+  ✓   33 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:64:1 › 1. Workspace header: eight elements, Unknown where missing; one click opens the RAID register filtered to it (6.6s)
+  ✓   34 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:106:1 › 2. Transformation dashboard: six T10 areas from persisted data; drill-down; zero is distinct from Unknown (6.3s)
+  ✓   35 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:135:1 › 3. Executive Overview: readable transformations, business-unit and owner chips, window and as-of date (6.5s)
+  ✓   36 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:189:1 › 4. Finance and adoption dashboards: non-financial is n/a, never 0; the People & adoption area (7.4s)
+  ✓   37 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:218:1 › 4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs (4.7s)
+  ✓   38 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:277:1 › 5. My Work: the six sections with totals and the upcoming deadlines; the personal dashboard (6.4s)
+  ✓   39 [chromium-en] › apps/web/e2e/p4-dashboards.spec.ts:295:1 › 6. 390 px wide and 200 % text: no page-level horizontal scroll (17.6s)
+  ✓   40 [chromium-en] › apps/web/e2e/p4-execution.spec.ts:119:1 › 1. Budget lines: decimal totals per currency, Unknown with its reason, translated refusals, If-Match and the stale-edit 409 (15.3s)
+  ✓   41 [chromium-en] › apps/web/e2e/p4-execution.spec.ts:227:1 › 2. Schedule network: no critical claim with a missing duration; recording it computes the §8 critical path; execution slip (13.8s)
+  ✓   42 [chromium-en] › apps/web/e2e/p4-execution.spec.ts:285:1 › 2b. Change a duration (T-DG4-FE-R3, ADR-0031 S1): If-Match is getInitiativeSchedule's real ETag; a concurrent change is a 409 that re-reads and never overwrites (6.3s)
+  ✓   43 [chromium-en] › apps/web/e2e/p4-execution.spec.ts:344:1 › 3. Auditor: read-only panels; 390 px wide and 200 % text without page-level horizontal scroll (12.2s)
+  ✓   44 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:161:1 › 1. G5: missing items listed; the Lead requests an exception; the Sponsor accepts it and it covers (11.5s)
+  ✓   45 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:213:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines (7.8s)
+  ✓   46 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:261:1 › 3. the Sponsor records a criterion review: the gate is Under review; unreviewed rows read 'Not reviewed' (6.2s)
+  ✓   47 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:293:1 › 4. G5 approval needs the scale scope; approved with one item; the Sponsor revokes an exception (8.0s)
+  ✓   48 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:350:1 › 5. G6 lists 'Ownership transfer' as missing and cannot be submitted (4.0s)
+  ✓   49 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:368:1 › 6. Modular G3: a G2 waiver is refused (DG3); a G3 links waiver is recorded, used at submission, and its revoke refuses approval (15.5s)
+  ✓   50 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:485:1 › 7. closure: four statuses side by side and the label; closing is refused with a translated reason (4.2s)
+  ✓   51 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:513:1 › 8. transition decision: submitted, returned, round 2 after an edit; a non-requester's withdrawal is refused (10.8s)
+  ✓   52 [chromium-en] › apps/web/e2e/p4-gates-closure.spec.ts:610:1 › 9. the auditor sees read-only views; 390 px wide and 200 % text without page-level horizontal scroll (21.2s)
+  ✓   53 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:76:1 › 1. RAID (T15): a Risk and a Dependency logged in the UI; the Dependency needs 'To' and is the T08 row (5.5s)
+  ✓   54 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:143:1 › 2. Actions: an action on the Risk is listed with source, follow-up date and the overdue flag (4.9s)
+  ✓   55 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:191:1 › 3. Corrective actions: a Value Review case with owner and follow-up date; rules labelled Default (6.6s)
+  ✓   56 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:236:1 › 4. Forums: five layers verbatim; a series changed to fortnightly only after 'future meetings only' (7.0s)
+  ✓   57 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:290:1 › 5. Meeting workspace: an incomplete executive ask is refused, then published to T16 and decided in session (17.8s)
+  ✓   58 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:414:1 › 6. T16 log, escalation rules and the auditor's read-only views (10.4s)
+  ✓   59 [chromium-en] › apps/web/e2e/p4-raid-governance.spec.ts:467:1 › 7. 390 px wide and 200 % text: no page-level horizontal scroll (10.3s)
+  ✓   60 [chromium-en] › apps/web/e2e/session-end.spec.ts:156:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (6.3s)
+  ✓   61 [chromium-en] › apps/web/e2e/session-end.spec.ts:187:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in (6.9s)
+  ✓   62 [chromium-en] › apps/web/e2e/session-end.spec.ts:266:1 › after a session end, another browser context from the same IP can still sign in (no 429) (8.7s)
+  ✓   63 [chromium-en] › apps/web/e2e/session-end.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (6.7s)
+  ✓   64 [chromium-en] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records (6.9s)
+  ✓   65 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:42:1 › lead creates an End-to-End transformation; the workspace tabs lead to the P2 screens (5.1s)
+  ✓   66 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:83:1 › Diagnose: six T01 dimensions with Unknown; value pools labelled Unquantified with a partial total (10.8s)
+  ✓   67 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:168:1 › Charter: create, save a second version, compare versions; the 3-5 top-outcomes warning (7.3s)
+  ✓   68 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:248:1 › Define: North Star, the good outcome test with reasons, and a required T02 target date (7.8s)
+  ✓   69 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:332:1 › Design: ten canvas boxes, the per-dimension view; workshop mode converts an unresolved item into T04 (9.3s)
+  ✓   70 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:414:1 › Evidence: note, filename reference and file upload; a link; review by another person (10.5s)
+  ✓   71 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:608:1 › Gates: G1 shows unverified evidence and offers no submission while incomplete; once complete it is submitted (9.0s)
+  ✓   72 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:675:1 › Gates: the approver's decision — 409 when the submission was superseded, then approval with a rationale (7.3s)
+Internal error: step id not found: fixture@272
+  ✘   73 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided (32.1s)
+  -   74 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1031:1 › Design → G3: the target state is complete and G3 is decided by the Sponsor
+  -   75 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1084:1 › Team: the six governance roles with their B0018 accountability; the lead assigns a Workstream Lead
+  -   76 [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:1157:1 › read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered
+  ✓   77 [chromium-ar] › apps/web/e2e/p3-seams.spec.ts:26:1 › setup: a fresh synthetic transformation for the P3 seam checks (198ms)
+  ✓   78 [chromium-ar] › apps/web/e2e/p3-seams.spec.ts:38:1 › P3 pages: bilingual titles, the P3 workspace tabs, axe-clean, no write on visit (16.9s)
+  ✓   79 [chromium-ar] › apps/web/e2e/p3-seams.spec.ts:69:1 › Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio and Business cases tabs (5.7s)
+  ✓   80 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:119:1 › 1. T13: a stakeholder group with the closed lists; seven columns; 'Hostile' refused (5.3s)
+  ✓   81 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:176:1 › 2. An intervention with owner and due date appears in the owner's My Work (8.2s)
+  ✓   82 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:213:1 › 3. The seven leading adoption indicators by name (4.2s)
+  ✓   83 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:230:1 › 4. Training 100 % with no observation shows proficiency Unknown; a form observation then counts (9.4s)
+  ✓   84 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:294:1 › 5. A champion's constraint on a T04 design decision is listed on that decision (4.9s)
+  ✓   85 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:328:1 › 6. BAU handover: data access missing is refused; only the receiving owner accepts; one review (17.7s)
+  ✓   86 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:440:1 › 7. Reopen keeps the handover acceptance; a CI item; a published lesson found from another transformation (12.9s)
+  ✓   87 [chromium-ar] › apps/web/e2e/p4-adoption-bau.spec.ts:508:1 › 8. Auditor read-only views; 390 px and 200 % text without page-level horizontal scroll (17.7s)
+  ✓   88 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:110:1 › 1. The Business Owner creates a benefit and moves it through Plan and Enable; Measure needs an enabler (9.4s)
+  ✓   89 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:171:1 › 2. Allocations: 60 % + 50 % is refused; 60 % + 30 % leaves 10 % unallocated (7.0s)
+  ✓   90 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:209:1 › 3. Register: CX benefit Value (SAR) n/a, never 0; the allocated initiatives are named (4.4s)
+  ✓   91 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:230:1 › 4. Finance validates the baseline (the comparison basis) (4.7s)
+  ✓   92 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:250:1 › 5. The Business Owner submits a measurement with evidence: pending, labelled, validated total unchanged (7.9s)
+  ✓   93 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:288:1 › 6. One Finance queue item; Finance decides the six items and approves; an amendment corrects without editing (25.3s)
+  ✓   94 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:422:1 › 7. A scenario value is labelled with its kind and stays out of every total (4.9s)
+  ✓   95 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:454:1 › 8. Auditor read-only; register and benefit page at 390 px and 200 % text; the other benefit screens (21.9s)
+  ✓   96 [chromium-ar] › apps/web/e2e/p4-benefits.spec.ts:511:1 › 9. Plan-value edit: If-Match from the real read; a stale edit is the 409 conflict and never overwrites (6.5s)
+  ✓   97 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:64:1 › 1. Workspace header: eight elements, Unknown where missing; one click opens the RAID register filtered to it (7.2s)
+  ✓   98 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:106:1 › 2. Transformation dashboard: six T10 areas from persisted data; drill-down; zero is distinct from Unknown (6.3s)
+  ✓   99 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:135:1 › 3. Executive Overview: readable transformations, business-unit and owner chips, window and as-of date (7.9s)
+  ✓  100 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:189:1 › 4. Finance and adoption dashboards: non-financial is n/a, never 0; the People & adoption area (8.1s)
+  ✓  101 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:218:1 › 4b. Finance class lines drill by valueClass; the drill-down rule is translated; a net line links its inputs (5.1s)
+  ✓  102 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:277:1 › 5. My Work: the six sections with totals and the upcoming deadlines; the personal dashboard (7.1s)
+  ✓  103 [chromium-ar] › apps/web/e2e/p4-dashboards.spec.ts:295:1 › 6. 390 px wide and 200 % text: no page-level horizontal scroll (18.1s)
+  ✓  104 [chromium-ar] › apps/web/e2e/p4-execution.spec.ts:119:1 › 1. Budget lines: decimal totals per currency, Unknown with its reason, translated refusals, If-Match and the stale-edit 409 (14.7s)
+  ✓  105 [chromium-ar] › apps/web/e2e/p4-execution.spec.ts:227:1 › 2. Schedule network: no critical claim with a missing duration; recording it computes the §8 critical path; execution slip (13.5s)
+  ✓  106 [chromium-ar] › apps/web/e2e/p4-execution.spec.ts:285:1 › 2b. Change a duration (T-DG4-FE-R3, ADR-0031 S1): If-Match is getInitiativeSchedule's real ETag; a concurrent change is a 409 that re-reads and never overwrites (6.0s)
+  ✓  107 [chromium-ar] › apps/web/e2e/p4-execution.spec.ts:344:1 › 3. Auditor: read-only panels; 390 px wide and 200 % text without page-level horizontal scroll (11.9s)
+  ✓  108 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:161:1 › 1. G5: missing items listed; the Lead requests an exception; the Sponsor accepts it and it covers (10.9s)
+  ✓  109 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:213:1 › 2. the Lead submits G5 with exceptions; the submission records the exception lines (7.3s)
+  ✓  110 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:261:1 › 3. the Sponsor records a criterion review: the gate is Under review; unreviewed rows read 'Not reviewed' (5.1s)
+  ✓  111 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:293:1 › 4. G5 approval needs the scale scope; approved with one item; the Sponsor revokes an exception (6.4s)
+  ✓  112 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:350:1 › 5. G6 lists 'Ownership transfer' as missing and cannot be submitted (3.0s)
+  ✓  113 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:368:1 › 6. Modular G3: a G2 waiver is refused (DG3); a G3 links waiver is recorded, used at submission, and its revoke refuses approval (11.7s)
+  ✓  114 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:485:1 › 7. closure: four statuses side by side and the label; closing is refused with a translated reason (3.4s)
+  ✓  115 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:513:1 › 8. transition decision: submitted, returned, round 2 after an edit; a non-requester's withdrawal is refused (9.1s)
+  ✓  116 [chromium-ar] › apps/web/e2e/p4-gates-closure.spec.ts:610:1 › 9. the auditor sees read-only views; 390 px wide and 200 % text without page-level horizontal scroll (16.0s)
+  ✓  117 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:76:1 › 1. RAID (T15): a Risk and a Dependency logged in the UI; the Dependency needs 'To' and is the T08 row (4.7s)
+  ✓  118 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:143:1 › 2. Actions: an action on the Risk is listed with source, follow-up date and the overdue flag (4.4s)
+  ✓  119 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:191:1 › 3. Corrective actions: a Value Review case with owner and follow-up date; rules labelled Default (6.0s)
+  ✓  120 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:236:1 › 4. Forums: five layers verbatim; a series changed to fortnightly only after 'future meetings only' (5.7s)
+  ✓  121 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:290:1 › 5. Meeting workspace: an incomplete executive ask is refused, then published to T16 and decided in session (14.8s)
+  ✓  122 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:414:1 › 6. T16 log, escalation rules and the auditor's read-only views (8.3s)
+  ✓  123 [chromium-ar] › apps/web/e2e/p4-raid-governance.spec.ts:467:1 › 7. 390 px wide and 200 % text: no page-level horizontal scroll (7.7s)
+  ✓  124 [chromium-ar] › apps/web/e2e/session-end.spec.ts:156:1 › signed out in another tab, then an in-app link: one landing on sign-in with the message (5.5s)
+  ✓  125 [chromium-ar] › apps/web/e2e/session-end.spec.ts:187:1 › access withdrawn while the Upload dialog is open: the upload is refused, the dialog closes, one landing on sign-in (6.2s)
+  ✓  126 [chromium-ar] › apps/web/e2e/session-end.spec.ts:266:1 › after a session end, another browser context from the same IP can still sign in (no 429) (8.2s)
+  ✓  127 [chromium-ar] › apps/web/e2e/session-end.spec.ts:299:1 › a 403 is not a session end: a refused change keeps the user signed in where they are (6.0s)
+  ✓  128 [chromium-ar] › apps/web/e2e/session-end.spec.ts:407:1 › a session end on the sign-in page: the next user to sign in in the tab never sees the previous user's records (6.6s)
+
+
+  1) [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.reload: Target page, context or browser has been closed
+
+      870 |   // 7. G2 readiness is complete through native workflows; submitted by the lead, decided by the Sponsor.
+      871 |   await submitAndApproveGate(page, browser, lang, "G2", "p2-26-g2");
+    > 872 |   await page.reload();
+          |              ^
+      873 |   await expect(page.locator("main#main .page-header__subtitle")).toContainText(
+      874 |     tr(lang, "transformations.phase.design"),
+      875 |   );
+        at $TMPDIR/rv3/apps/web/e2e/p2-journeys.spec.ts:872:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-D-9305a-se-the-thesis-G2-is-decided-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-D-9305a-se-the-thesis-G2-is-decided-chromium-ar/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-D-9305a-se-the-thesis-G2-is-decided-chromium-ar/test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-p2-journeys-D-9305a-se-the-thesis-G2-is-decided-chromium-ar/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-p2-journeys-D-9305a-se-the-thesis-G2-is-decided-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-p2-journeys-D-9305a-se-the-thesis-G2-is-decided-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-ar] › apps/web/e2e/p2-journeys.spec.ts:828:1 › Define → G2: activate a KPI, pass the good outcome test, add a guardrail, compose the thesis; G2 is decided 
+  3 did not run
+  124 passed (20.1m)
+---- api.log (tail)
+EXIT 1
+2026-10-12T16:17:42Z
+ 16:17:42 up 1 day, 22:16,  0 user,  load average: 2.46, 5.64, 8.14

@@ -1,0 +1,114 @@
+# probe sec-dg4-r4-outcome-scope.test.ts; node v22.22.2; commit 0e499f2eba44bc4f2036ae17ddc242edb3ac399d; LANG unset; e94e9922803632332acf201b12f28412f87fbcc22c8ba8706fd8357fec479344; load 34.98 29.68 18.66; started 2026-10-12T12:45:49Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.s8HDvn/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv58wpzy_72ca9de5 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts
+[probe-OS] statuses o1=draft o2=draft archive o3 -> 200 archived
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > control: AUD sees the T1 and T2 draft outcomes (the probe detects a leak); the archived one is hidden
+[probe-OS control] T1 outcomes items=["01a13026-76d9-7344-8cde-1481888f4a3b","01a13026-7853-7506-99cc-b3725a6cf662"] T2 items=2 drill(all) items=2 ids={"o1":"01a13026-76d9-7344-8cde-1481888f4a3b","k1":"01a13026-7853-7506-99cc-b3725a6cf662","o2":"01a13026-78c6-71c8-8587-743790c0b692","k2":"01a13026-7918-73de-946f-a307d7689fae","o3":"01a13026-7938-74fb-a469-4f2381a9414e","k3":"01a13026-7975-73a4-84d3-02509fe13472","archived":"200"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] T1 dashboard -> 200  leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] T2 dashboard -> 404 not_found leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] overview none -> 200  leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] overview T1 -> 200  leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] overview T2 -> 404 not_found leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] overview T1+T2 -> 404 not_found leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] my work -> 200  leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] T1 summary -> 200 TX2FEB06 leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.area none -> 200  leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.area T1 -> 200  leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.area T2 -> 404 not_found leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.area subject=T2 kpi -> 422 dashboard.metric_subject_mismatch leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.area subject=T2 outcome -> 422 dashboard.metric_subject_mismatch leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.kpi_status T2 -> 404 not_found leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.kpi_status subject=T2 kpi -> 404 not_found leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404
+[probe-OS TL1] outcomes.kpi_status subject=T2 outcome -> 422 dashboard.metric_subject_mismatch leaked=[]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/transformations/<id>/dashboard -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/transformations/<id>/dashboard -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/overview?organizationId=<id> -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/overview?organizationId=<id>&transformationId=<id> -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/dashboard-drilldown?metric=outcomes.area&organizationId=<id>&limit=100 -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/dashboard-drilldown?metric=outcomes.kpi_status&organizationId=<id>&subjectId=<id>&limit=100 -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS ADM] /api/v1/me/work -> 200  leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/transformations/<id>/dashboard -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/transformations/<id>/dashboard -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/overview?organizationId=<id> -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/overview?organizationId=<id>&transformationId=<id> -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/dashboard-drilldown?metric=outcomes.area&organizationId=<id>&limit=100 -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/dashboard-drilldown?metric=outcomes.kpi_status&organizationId=<id>&subjectId=<id>&limit=100 -> 404 not_found leaked=0
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts > SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > ADM-only and OUT: nothing of either transformation's outcomes
+[probe-OS OUT] /api/v1/me/work -> 200  leaked=0
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-outcome-scope.test.ts (3 tests) 5500ms
+   ✓ SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > control: AUD sees the T1 and T2 draft outcomes (the probe detects a leak); the archived one is hidden  345ms
+   ✓ SEC-DG4-R4 probe OS: non-archived outcomes stay in scope > TL1: T1 dashboard, overview, outcome drill-downs and My Work disclose nothing of T2; T2 reads are 404  1055ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  12:45:56
+   Duration  35.99s (transform 6.22s, setup 0ms, collect 18.51s, tests 5.50s, environment 2ms, prepare 229ms)
+
+# exit_status: 0  finished: 2026-10-12T12:46:38Z

@@ -1,0 +1,751 @@
+# probe sec-dg4-r5-filter-scope.test.ts; node v22.22.2; commit 0e499f2eba44bc4f2036ae17ddc242edb3ac399d; LANG unset; 95a2127be821fd28056745fc92f46742c1e843136a5d525b4c4fd18df6c5cc89; load 29.55 26.31 15.96; started 2026-10-12T12:43:33Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.s8HDvn/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv58ttg0_b92cb422 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > control: AUD's unit list narrows by phase and status (the probe can tell T1 from T2), and the reads filter rows
+[probe-FS control] a1 all=t1,t2 design=t2 active=t2 diagnose+draft=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > control: AUD's unit list narrows by phase and status (the probe can tell T1 from T2), and the reads filter rows
+[probe-FS control] AUD /api/v1/overview ids=T1,T2 phase=design -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > control: AUD's unit list narrows by phase and status (the probe can tell T1 from T2), and the reads filter rows
+[probe-FS control] AUD /api/v1/dashboards/finance ids=T1,T2 phase=design -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > control: AUD's unit list narrows by phase and status (the probe can tell T1 from T2), and the reads filter rows
+[probe-FS control] AUD /api/v1/dashboards/adoption ids=T1,T2 phase=design -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL1 bu=a1 phase=- status=- list=t1 /api/v1/overview -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL1 bu=a1 phase=- status=- list=t1 /api/v1/dashboards/finance -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL1 bu=a1 phase=- status=- list=t1 /api/v1/dashboards/adoption -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL1 bu=a1 phase=diagnose status=draft list=t1 /api/v1/overview -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL1 bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/finance -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL1 bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/adoption -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=- status=- list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=- status=- list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=- status=- list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=design status=- list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=design status=- list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=design status=- list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=- status=active list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=- status=active list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL2 bu=a1 phase=- status=active list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL3 bu=a2 phase=- status=- list=t3 /api/v1/overview -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL3 bu=a2 phase=- status=- list=t3 /api/v1/dashboards/finance -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL3 bu=a2 phase=- status=- list=t3 /api/v1/dashboards/adoption -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL3 bu=a2 phase=diagnose status=draft list=t3 /api/v1/overview -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL3 bu=a2 phase=diagnose status=draft list=t3 /api/v1/dashboards/finance -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] TL3 bu=a2 phase=diagnose status=draft list=t3 /api/v1/dashboards/adoption -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] FIN1 bu=a1 phase=- status=- list=t1 /api/v1/overview -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] FIN1 bu=a1 phase=- status=- list=t1 /api/v1/dashboards/finance -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] FIN1 bu=a1 phase=- status=- list=t1 /api/v1/dashboards/adoption -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] FIN1 bu=a1 phase=diagnose status=draft list=t1 /api/v1/overview -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] FIN1 bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/finance -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] FIN1 bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/adoption -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=- status=- list=t1,t2 /api/v1/overview -> 200 rows=t1,t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=- status=- list=t1,t2 /api/v1/dashboards/finance -> 200 rows=t1,t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=- status=- list=t1,t2 /api/v1/dashboards/adoption -> 200 rows=t1,t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=design status=- list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=design status=- list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=design status=- list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=- status=active list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=- status=active list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=- status=active list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=diagnose status=draft list=t1 /api/v1/overview -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/finance -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/adoption -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a2 phase=- status=- list=t3 /api/v1/overview -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a2 phase=- status=- list=t3 /api/v1/dashboards/finance -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a2 phase=- status=- list=t3 /api/v1/dashboards/adoption -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a2 phase=diagnose status=draft list=t3 /api/v1/overview -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a2 phase=diagnose status=draft list=t3 /api/v1/dashboards/finance -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] office bu=a2 phase=diagnose status=draft list=t3 /api/v1/dashboards/adoption -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=- status=- list=t1,t2 /api/v1/overview -> 200 rows=t1,t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=- status=- list=t1,t2 /api/v1/dashboards/finance -> 200 rows=t1,t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=- status=- list=t1,t2 /api/v1/dashboards/adoption -> 200 rows=t1,t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=design status=- list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=design status=- list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=design status=- list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=- status=active list=t2 /api/v1/overview -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=- status=active list=t2 /api/v1/dashboards/finance -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=- status=active list=t2 /api/v1/dashboards/adoption -> 200 rows=t2
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=diagnose status=draft list=t1 /api/v1/overview -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/finance -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a1 phase=diagnose status=draft list=t1 /api/v1/dashboards/adoption -> 200 rows=t1
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a2 phase=- status=- list=t3 /api/v1/overview -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a2 phase=- status=- list=t3 /api/v1/dashboards/finance -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a2 phase=- status=- list=t3 /api/v1/dashboards/adoption -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a2 phase=diagnose status=draft list=t3 /api/v1/overview -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a2 phase=diagnose status=draft list=t3 /api/v1/dashboards/finance -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list
+[probe-FS lists] AUD bu=a2 phase=diagnose status=draft list=t3 /api/v1/dashboards/adoption -> 200 rows=t3
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t2 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t2 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,t3 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL1 ids=t1,<other> phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL2 ids=t1,t2 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] TL3 ids=t3,t1 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] FIN1 ids=t1,t2 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] leadA1 ids=t3 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] OUT ids=t1 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=- status=- /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=- status=- /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=- status=- /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=design status=active /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=design status=active /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=design status=active /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=diagnose status=draft /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=diagnose status=draft /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=diagnose status=draft /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=realize status=closed /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=realize status=closed /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status
+[probe-FS forged] ADM ids=t1 phase=realize status=closed /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > the 404 for an unreadable id cannot be told apart from an unknown id (no existence oracle via phase/status)
+[probe-FS oracle] /api/v1/overview phase=design status=active T2 -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"} | unknown -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > the 404 for an unreadable id cannot be told apart from an unknown id (no existence oracle via phase/status)
+[probe-FS oracle] /api/v1/overview phase=diagnose status=draft T2 -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"} | unknown -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > the 404 for an unreadable id cannot be told apart from an unknown id (no existence oracle via phase/status)
+[probe-FS oracle] /api/v1/dashboards/finance phase=design status=active T2 -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"} | unknown -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > the 404 for an unreadable id cannot be told apart from an unknown id (no existence oracle via phase/status)
+[probe-FS oracle] /api/v1/dashboards/finance phase=diagnose status=draft T2 -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"} | unknown -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > the 404 for an unreadable id cannot be told apart from an unknown id (no existence oracle via phase/status)
+[probe-FS oracle] /api/v1/dashboards/adoption phase=design status=active T2 -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"} | unknown -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > the 404 for an unreadable id cannot be told apart from an unknown id (no existence oracle via phase/status)
+[probe-FS oracle] /api/v1/dashboards/adoption phase=diagnose status=draft T2 -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"} | unknown -> 404 {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found"}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=- status=- /api/v1/overview -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=- status=- /api/v1/dashboards/finance -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=- status=- /api/v1/dashboards/adoption -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=design status=- /api/v1/overview -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=design status=- /api/v1/dashboards/finance -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=design status=- /api/v1/dashboards/adoption -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=- status=draft /api/v1/overview -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=- status=draft /api/v1/dashboards/finance -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL1 phase=- status=draft /api/v1/dashboards/adoption -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=- status=- /api/v1/overview -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=- status=- /api/v1/dashboards/finance -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=- status=- /api/v1/dashboards/adoption -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=design status=- /api/v1/overview -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=design status=- /api/v1/dashboards/finance -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=design status=- /api/v1/dashboards/adoption -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=- status=draft /api/v1/overview -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=- status=draft /api/v1/dashboards/finance -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL2 phase=- status=draft /api/v1/dashboards/adoption -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=- status=- /api/v1/overview -> 200 rows=t3 want=t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=- status=- /api/v1/dashboards/finance -> 200 rows=t3 want=t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=- status=- /api/v1/dashboards/adoption -> 200 rows=t3 want=t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=design status=- /api/v1/overview -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=design status=- /api/v1/dashboards/finance -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=design status=- /api/v1/dashboards/adoption -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=- status=draft /api/v1/overview -> 200 rows=t3 want=t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=- status=draft /api/v1/dashboards/finance -> 200 rows=t3 want=t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] TL3 phase=- status=draft /api/v1/dashboards/adoption -> 200 rows=t3 want=t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=- status=- /api/v1/overview -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=- status=- /api/v1/dashboards/finance -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=- status=- /api/v1/dashboards/adoption -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=design status=- /api/v1/overview -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=design status=- /api/v1/dashboards/finance -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=design status=- /api/v1/dashboards/adoption -> 200 rows= want= leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=- status=draft /api/v1/overview -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=- status=draft /api/v1/dashboards/finance -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] FIN1 phase=- status=draft /api/v1/dashboards/adoption -> 200 rows=t1 want=t1 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=- status=- /api/v1/overview -> 200 rows=t1,t2,t3 want=t1,t2,t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=- status=- /api/v1/dashboards/finance -> 200 rows=t1,t2,t3 want=t1,t2,t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=- status=- /api/v1/dashboards/adoption -> 200 rows=t1,t2,t3 want=t1,t2,t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=design status=- /api/v1/overview -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=design status=- /api/v1/dashboards/finance -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=design status=- /api/v1/dashboards/adoption -> 200 rows=t2 want=t2 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=- status=draft /api/v1/overview -> 200 rows=t1,t3 want=t1,t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=- status=draft /api/v1/dashboards/finance -> 200 rows=t1,t3 want=t1,t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] AUD phase=- status=draft /api/v1/dashboards/adoption -> 200 rows=t1,t3 want=t1,t3 leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] ADM /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] ADM /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] ADM /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] OUT /api/v1/overview -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] OUT /api/v1/dashboards/finance -> 404 not_found leaked=
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts > SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status
+[probe-FS org] OUT /api/v1/dashboards/adoption -> 404 not_found leaked=
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r5-filter-scope.test.ts (5 tests) 11170ms
+   ✓ SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > every caller: each id its unit list offers is accepted by all three reads, and the rows stay within the list  3401ms
+   ✓ SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > forged id lists: any unreadable, foreign-org or unknown id is 404 on every read, whatever the phase/status  1370ms
+   ✓ SEC-DG4-R5 probe FS: client-built transformation ids on the org-wide reads stay server-scoped > no filter / phase-status only: org-wide rows equal the caller's readable set narrowed by phase and status  1357ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  12:43:41
+   Duration  45.71s (transform 7.87s, setup 0ms, collect 22.33s, tests 11.17s, environment 8ms, prepare 281ms)
+
+# exit_status: 0  finished: 2026-10-12T12:44:32Z

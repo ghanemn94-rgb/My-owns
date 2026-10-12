@@ -1,0 +1,94 @@
+variant B diff:
+--- $TMPDIR/sbA.tsx	2026-10-12 14:30:14.801514906 +0000
++++ $TMPDIR/sbB.tsx	2026-10-12 14:30:14.818175588 +0000
+@@ -67,7 +67,6 @@
+   localStorage.clear();
+   document.documentElement.lang = "en";
+   document.documentElement.dir = "ltr";
+-  installClock();
+ });
+ afterEach(() => {
+   cleanup();
+$ [variant A run 1] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx -t Y1c --reporter=verbose  (+3 busy loops on cpu 0; file sha256 bf91cc63576251e4; 2026-10-12T14:30:16Z)
+ 14:30:16 up 1 day, 20:29,  0 user,  load average: 2.72, 3.23, 6.85
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record 5931ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1112ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 751ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record 1718ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 2863ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 1420ms
+      Tests  6 passed | 30 skipped (36)
+EXIT 0
+ 14:30:48 up 1 day, 20:30,  0 user,  load average: 4.63, 3.64, 6.87
+$ [variant B run 1] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx -t Y1c --reporter=verbose  (+3 busy loops on cpu 0; file sha256 cc3cb54fb298a34c; 2026-10-12T14:31:56Z)
+ 14:31:56 up 1 day, 20:31,  0 user,  load average: 5.22, 4.06, 6.78
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record 5498ms
+   → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1311ms
+   → expected false to be true // Object.is equality
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 859ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record 1088ms
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1107ms
+   → expected false to be true // Object.is equality
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 599ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window
+      Tests  3 failed | 3 passed | 30 skipped (36)
+EXIT 1
+ 14:32:23 up 1 day, 20:31,  0 user,  load average: 5.82, 4.29, 6.79
+$ [variant C run 1] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx -t Y1c --reporter=verbose  (+3 busy loops on cpu 0; file sha256 6fd94285eb086b73; 2026-10-12T14:33:36Z)
+ 14:33:36 up 1 day, 20:32,  0 user,  load average: 4.92, 4.37, 6.62
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record 5721ms
+   → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 941ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record 1111ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 756ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record
+      Tests  1 failed | 3 passed | 30 skipped (34)
+EXIT 1
+ 14:34:01 up 1 day, 20:33,  0 user,  load average: 4.73, 4.37, 6.56
+$ [variant A run 2] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx -t Y1c --reporter=verbose  (+3 busy loops on cpu 0; file sha256 bf91cc63576251e4; 2026-10-12T14:35:16Z)
+ 14:35:16 up 1 day, 20:34,  0 user,  load average: 3.49, 4.06, 6.28
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record 5015ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1205ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 699ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record 854ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1134ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 620ms
+      Tests  6 passed | 30 skipped (36)
+EXIT 0
+ 14:35:42 up 1 day, 20:34,  0 user,  load average: 3.89, 4.11, 6.23
+$ [variant B run 2] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx -t Y1c --reporter=verbose  (+3 busy loops on cpu 0; file sha256 cc3cb54fb298a34c; 2026-10-12T14:36:56Z)
+ 14:36:56 up 1 day, 20:36,  0 user,  load average: 3.43, 3.92, 6.00
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record 5828ms
+   → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1462ms
+   → expected false to be true // Object.is equality
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 871ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record 1074ms
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window 1076ms
+   → expected false to be true // Object.is equality
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 667ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window
+      Tests  3 failed | 3 passed | 30 skipped (36)
+EXIT 1
+ 14:37:24 up 1 day, 20:36,  0 user,  load average: 3.69, 3.94, 5.95
+$ [variant C run 2] taskset -c 0 env TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx -t Y1c --reporter=verbose  (+3 busy loops on cpu 0; file sha256 6fd94285eb086b73; 2026-10-12T14:38:36Z)
+ 14:38:36 up 1 day, 20:37,  0 user,  load average: 3.20, 3.73, 5.72
+ ×  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record 5514ms
+   → expected [ { method: 'GET', …(3) }, …(2) ] to have a length of 2 but got 3
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 783ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record 1091ms
+ ✓  unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code 749ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-bound.test.tsx > F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record
+      Tests  1 failed | 3 passed | 30 skipped (34)
+EXIT 1
+ 14:39:01 up 1 day, 20:38,  0 user,  load average: 4.19, 3.91, 5.73
+copy restored to the candidate file

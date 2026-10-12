@@ -1,0 +1,24 @@
+mth-db migrate: applied 61 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+worker: (node:82) TimeoutNaNWarning: NaN is not a number.
+Timeout duration was set to 1.
+    at new Timeout (node:internal/timers:238:17)
+    at setInterval (node:timers:169:19)
+    at Boss.start (/var/tmp/mth-run.M6qR7j/claude-0/review-dom/node_modules/.pnpm/pg-boss@11.0.0/node_modules/pg-boss/src/boss.js:46:33)
+    at PgBoss.start (/var/tmp/mth-run.M6qR7j/claude-0/review-dom/node_modules/.pnpm/pg-boss@11.0.0/node_modules/pg-boss/src/index.js:127:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (file:///var/tmp/mth-run.M6qR7j/claude-0/review-dom/apps/worker/dist/main.js:28:5)
+worker pid: 82
+[worker running] db mth transactions in 20 s: 126835 (6341/s); worker CPU ticks (utime+stime, 1/100 s) in 20 s: 1175
+[worker running] distinct active worker statements sampled 1/s:
+      1  UPDATE pgboss.queue SET monitor_on = now() WHERE name IN('sustainment.review_scan') AND E
+      1  UPDATE pgboss.queue SET monitor_on = now() WHERE name IN('sustainment.control_check_scan'
+      1  UPDATE pgboss.queue SET maintain_on = now() WHERE name IN('governance.blocker_escalation'
+      1  SELECT q.name, q.policy, q.retry_limit as "retryLimit", q.retry_delay as "retryDelay", q.
+[worker SIGSTOPped (baseline)] db mth transactions in 20 s: 1090 (54/s); worker CPU ticks (utime+stime, 1/100 s) in 20 s: 0
+[worker SIGSTOPped (baseline)] distinct active worker statements sampled 1/s:
+worker application_name connections: 6
+### stack command exit=0
+### worker log errors:
+0
