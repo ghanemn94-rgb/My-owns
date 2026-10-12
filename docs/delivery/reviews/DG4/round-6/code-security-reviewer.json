@@ -1,0 +1,505 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 6,
+  "candidate_id": "sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536",
+  "source_commit": "1e0dc5d80729fda797940f82da632cad01b393f4",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R6-code-security-reviewer-20261012T122502Z-2573804d",
+    "session_id": "2573804d-af74-4d2c-add7-8aaa96f32897"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 2573804d (task T-DG4-REV-SEC-R6). I authored no implementation in the DG4 scope.\n\nAuthorship of the reviewed scope:\n- The round-6 repair T-DG4-FE-R9B (935d33d, merged in 3d3b0da; salvaged from the killed FE-R9 WIP 41b586c) is by frontend-ux-engineer. D-130 records no orchestrator edit.\n- The rest of P4 is by the implementer roles listed, plus the QA acceptance tests (qa-verifier) and the orchestrator's recorded test-kit and wording edits.\n\nMy only writes are review evidence under docs/delivery/test-evidence/DG4/code-security/round-6/ and my own round-6 review files. Every execution ran in disposable clones under $TMPDIR (rv for the harness, probe for the web probes and repeated unit runs, probe2 for the database probes and static scans), each database probe with its own disposable PostgreSQL cluster. Two exceptions, both read-only uses of the confined tree: the --configLoader runner check, and the validate/candidate commands.\n\nI formed my verdict before reading any other reviewer's round-6 record, and I have not read them. HEAD moved during my run, from 0e499f2 to 99b387c. That commit is the domain reviewer's auto-committed run: review records, run evidence and domain test evidence only, with no change under apps, packages, docs/api, tools, e2e or tests. I did not open its files."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-6/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R6-00-candidate",
+      "procedure": "Verify the assignment hash, the starting revision and the candidate ID.\n- Assignment sha256.\n- git rev-parse HEAD.\n- Recompute the candidate ID in a complete clone at the freeze commit, and in the repository at the start and again at the end.\n- Confirm that the freeze commit's product tree equals the source commit's.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-6/code-security-reviewer.md; git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG4; git diff --quiet 1e0dc5d 0e499f2 -- apps packages docs/api pnpm-lock.yaml package.json tools e2e tests",
+      "environment": "Node 24.21.0. Repository HEAD 0e499f2 at the start (the freeze commit) and 99b387c at the end. Complete clone $TMPDIR/rv at 0e499f2.",
+      "expected": "sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536, 1472 files, everywhere.",
+      "actual": "The assignment sha256 04e4c476…6cf6c355 matches.\n\nHEAD was 0e499f2 at the start. That is the freeze commit; it differs from source 1e0dc5d only in delivery metadata (diff-scan.log D0: three assignments, the manifest and stages.json). The product tree is identical (git diff --quiet exit 0).\n\ncandidate.mjs gives sha256:f966fe57…e536 with 1472 files:\n- in the repository at 0e499f2, at the start;\n- in the complete clone at 0e499f2 (candidate-id.log, exit 0);\n- in the repository at 99b387c, at the end (candidate-id-repo-final.log, exit 0).\nHEAD moved to 99b387c during my run: the domain reviewer's auto-commit, delivery records only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/candidate-id-repo-final.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-01-build",
+      "procedure": "Install offline from a private copy of the local pnpm store, then build every workspace package.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile (again, so the built bins link)",
+      "environment": "Node 22.22.2, pnpm 10.33.0, clone $TMPDIR/rv at 0e499f2 (checks.sh).",
+      "expected": "Exit 0.",
+      "actual": "install1 exit 0, build exit 0, install2 exit 0.\n\ninstall1 prints two 'WARN Failed to create bin … mth-db … @mth/db/dist/cli.js' lines. The bin target is a build output that does not exist before the build. install2, after the build, links it without any warning. The same happened in rounds 1-5.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/checks.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-02-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv.",
+      "expected": "Exit 0.",
+      "actual": "Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-03-lint",
+      "procedure": "ESLint over the repository with --max-warnings=0.",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv.",
+      "expected": "Exit 0, no warning.",
+      "actual": "Exit 0, no warning.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-04-openapi-lint",
+      "procedure": "Lint the OpenAPI contract and count its operations. Check the Problem.params addition (D-114).",
+      "command": "pnpm openapi:lint; diff-scan.sh D11; python3 (yaml) read of components.schemas.Problem",
+      "environment": "Node 22.22.2, clones $TMPDIR/rv and $TMPDIR/probe2.",
+      "expected": "Exit 0 with 652 operations. Problem.params is optional and not in required.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0. D11 also counts 652.\n\ndocs/api did not change since round 5 (git diff 3e3a06e..1e0dc5d -- docs/api is empty). Problem.required is [type, title, status, code, requestId], so params is not required. params is an object of scalar values, documented as sent only with gate.modular_waiver_revoked and gate.modular_waiver_expired and absent from every other problem (problem-params.log). The addition is additive.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/problem-params.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-05-no-cdn-secrets-injection-sinks",
+      "procedure": "Run the no-CDN check. Scan the P4 diff (d3e6fe6..1e0dc5d) and the repair diff (3e3a06e..1e0dc5d) for these:\n- secrets;\n- remote URLs;\n- dynamic code;\n- sql.raw and sql.lit;\n- innerHTML and dangerouslySetInnerHTML;\n- float arithmetic on money.",
+      "command": "pnpm check:no-cdn; bash diff-scan.sh (D4-D9, D12, D15)",
+      "environment": "Node 22.22.2, clones $TMPDIR/rv and $TMPDIR/probe2 (git and grep only).",
+      "expected": "No CDN, no secret and no unsafe sink in product code.",
+      "actual": "check:no-cdn exits 0.\n- D4 (secrets): nothing.\n- D5 (remote URLs): only test hosts (example.invalid, idp.example.invalid, evil.example, http://x), all in tests.\n- D6 (dynamic code): only test lines. These are the formula fuzz inputs ('eval(1)' as a refused expression), a variable named vm, and node:child_process in the worker restart tests.\n- D7 (sql.raw / sql.lit in P4): nothing. D12 (full tree): only the pre-P4 literal sql.raw('<' | '>') at transformations/routes.ts:131, chosen from a fixed enum, so not injectable.\n- D8 (innerHTML): only test assertions.\n- D9 (float on money): nothing.\n- D15 (repair diff): nothing.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/no-cdn.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.sh"
+      ]
+    },
+    {
+      "id": "SEC-R6-06-format",
+      "procedure": "Prettier check over the repository.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv.",
+      "expected": "Exit 0.",
+      "actual": "Exit 0: all matched files use Prettier code style.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-07-unit-node22",
+      "procedure": "Run the full unit suite on Node 22, `pnpm test` = unit-node + unit-web, then unit-formula-nocodegen. Run it in the harness (under the concurrent-review load), and repeat it under load and again at a lower load. For every failure, re-run the failing spec alone and discriminate a timeout from a defect.",
+      "command": "pnpm test --reporter=verbose (checks.sh unit-node22; unit-repeat.sh runs 1 and 3; unit-repeat-b.sh run 5)",
+      "environment": "Node 22.22.2. Clone $TMPDIR/rv (harness) and clone $TMPDIR/probe (repeats; git status clean after each), both at 0e499f2. LANG and LC_ALL unset, LC_CTYPE=C.UTF-8 (the sandbox default). Load average 9-34 on 4 CPUs: three concurrent reviews plus my own integration and database probe runs.",
+      "expected": "At least one full run exits 0. Every failure in any run is explained, and none is a product defect.",
+      "actual": "Run 5 (unit-repeat-5.log, load 9-11): exit 0. 152 files and 2917/2917 tests pass. The formula no-codegen project passes 259, with 2 skipped. The 2 skips are by design: they are the fuzz.test.ts source-scan tests, which run in unit-node and are skipped in the NOCODEGEN project, as in rounds 1-5.\n\nThree loaded runs exit 1, so the no-codegen project did not run in them (the root script chains it with &&):\n- the harness run (unit-node22.log, load 25-33, 1408 s instead of about 4 min): 3 failed / 2914 passed;\n- repeat 1 (load 15-32): 6 failed / 2911 passed;\n- repeat 3 (load 20-23): 2 failed / 2915 passed.\n\nEvery failure is one of two kinds:\n(a) A first-render findBy that misses the harness's 5 s asyncUtilTimeout: raid.test.tsx:236, g1-agreements.test.tsx:129, p2-blank-forms.test.tsx:146, prioritization.test.tsx:112/144 and traceability ('Assign initiative'). Each is the first test of a describe, where the lazy page chunk is transformed.\n(b) architecture.test.ts at its 30 s test timeout, plus one vitest RPC 'Timeout calling onTaskUpdate' unhandled error in the harness run and in repeat 1.\n\nNone of them is the F-DG4-106 test: Y1c passed 6/6 in every run.\n\nWhy these are timeouts and not defects:\n- Re-run alone at load about 23 (unit-failed-specs-alone.log), architecture passes 138/138. The (a) specs still miss 5 s for their first test.\n- With a scratch config that only lengthens the wait (asyncUtilTimeout 25 s, testTimeout 60 s; probe clone only, reverted), all 90 tests of raid, prioritization and p2-blank-forms pass. The failing tests took 8.5-15.2 s. The unchanged control at the same load fails the same 4 (unit-timeout-discriminator.log).\n- They pass in the clean runs 5 and 6.\nThe pages render, only slowly under 5-8× CPU oversubscription. These specs did not change since round 5, and I raise no finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-5.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-failed-specs-alone.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-timeout-discriminator.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-1.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-08-unit-node24",
+      "procedure": "As SEC-R6-07, on Node 24.",
+      "command": "pnpm test --reporter=verbose (checks.sh unit-node24; unit-repeat.sh runs 2 and 4; unit-repeat-b.sh run 6)",
+      "environment": "Node 24.21.0. Clones $TMPDIR/rv and $TMPDIR/probe at 0e499f2. LANG and LC_ALL unset. Load 11-33.",
+      "expected": "At least one full run exits 0. Every failure in any run is explained.",
+      "actual": "Run 6 (unit-repeat-6.log, load 9-12): exit 0. 2917/2917 pass, and no-codegen passes 259 with the same 2 by-design skips.\n\nThree loaded runs exit 1, so the no-codegen project did not run in them:\n- the harness run (unit-node24.log, load 22-33): 4 failed / 2913 passed. The failures are architecture at 30 s, raid action register (en and ar), and p2-blank-forms 'gate submission note' (en). There is also one onTaskUpdate RPC timeout.\n- repeat 2 (load 20-32): 3 failed / 2914 passed. The failures are raid, prioritization and p2-blank-forms.\n- repeat 4 (load 19-21): 1 failed / 2916 passed, raid.\n\nThese are the same first-render timeouts as in SEC-R6-07: same lines, and the same discrimination. Alone on Node 24 at load about 23, architecture passes 138/138 and p2-blank-forms passes 52/52; raid and prioritization still miss 5 s for their first test.\n\nY1c passed 6/6 in every run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-6.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-failed-specs-alone.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-1.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-08b-unit-configloader-runner",
+      "procedure": "On the confined tree, where node_modules is read-only, run the three repaired specs with Vitest's --configLoader runner (QA-A's finding: the default loader cannot write its bundle there).",
+      "command": "pnpm exec vitest run --configLoader runner --project unit-web apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx",
+      "environment": "Node 22.22.2, confined repository tree at 0e499f2, read-only node_modules. Load about 30.",
+      "expected": "Exit 0.",
+      "actual": "3 files and 80/80 tests pass, exit 0, in 78.5 s. The --configLoader runner flag is needed only because node_modules is read-only. The disposable clones use the default loader.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-configloader-runner.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-09-integration-lang-unset",
+      "procedure": "Run the full integration suite on a disposable PostgreSQL 16 cluster with LANG, LC_ALL and LC_CTYPE unset. The suite includes contract.test.ts and migrations 0001→0061.",
+      "command": "( unset LANG LC_ALL LC_CTYPE; bash with-pg.sh 26331 pnpm test:integration --reporter=verbose )",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv. Cluster SQL_ASCII, collate C, port 26331, deleted afterwards. Load 11-25.",
+      "expected": "Every file and every test pass, with 0 skipped.",
+      "actual": "208 files and 1975/1975 tests pass, exit 0. 0 failed, 0 skipped, 0 hook timeouts, no error line (log-scan-2.txt). contract.test.ts passes 45, media-types 21, catalogue 20 and migrate 7 (suite-counts.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/with-pg.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-2.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-10-integration-lang-c-utf8",
+      "procedure": "The same suite with LANG=C.UTF-8.",
+      "command": "( unset LC_ALL LC_CTYPE; export LANG=C.UTF-8; bash with-pg.sh 26332 pnpm test:integration --reporter=verbose )",
+      "environment": "Node 24.21.0, clone $TMPDIR/rv. Cluster UTF8, collate C.UTF-8, port 26332, deleted afterwards. Load 3-13.",
+      "expected": "Every file and every test pass, with 0 skipped.",
+      "actual": "208 files and 1975/1975 tests pass, exit 0. 0 failed, 0 skipped, 0 hook timeouts, no error line. After the run, git status in the clone is clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-2.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-11-validate-historical-register-pipeline",
+      "procedure": "Run the gate validator for the approved gates (historical), the DG4 register rules and the pipeline.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3 | DG2 | DG1; --register DG4; --pipeline",
+      "environment": "Node 22.22.2, repository tree (read-only).",
+      "expected": "PASS, exit 0, for each.",
+      "actual": "'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)' and 'PASS register rules at DG4', each exit 0.\n\nThe harness's own --pipeline step was cut off: checks.sh reached its 2 h background limit while it ran. validate-pipeline.log therefore holds only its header and my note, and no result. I re-ran the step alone: 'PASS pipeline (active stage: DG4 REVIEWING)', exit 0 (validate-pipeline-rerun.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/validate-pipeline-rerun.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-12-repair-diff-regressions",
+      "procedure": "Read the repair diff git diff 3e3a06e..1e0dc5d in full. Check that it changes tests only, and that it weakens no assertion of F-DG2-530/570/580 or D-077.",
+      "command": "git diff --stat 3e3a06e..1e0dc5d -- apps packages docs/api tools e2e tests package.json pnpm-lock.yaml; git diff 3e3a06e..1e0dc5d -- apps",
+      "environment": "Repository and clone $TMPDIR/probe2 (read-only).",
+      "expected": "Only the three session test files change, with no weakened assertion, no skip and no raised timeout.",
+      "actual": "Scope: the only files outside docs/delivery are apps/web/src/auth/session-bound.test.tsx (+66/-7), session-generation.test.tsx (+6/-1) and session-identity.test.tsx (+8/-2), 80 insertions and 10 deletions in total. Nothing changed under apps/api, apps/worker, packages, docs/api, tools, the lockfile or package.json, and there is no migration (D13/D14).\n\nsession-bound.test.tsx:\n- installClock() in beforeEach spies Date.now with a value that only advanceClock moves. vi.restoreAllMocks in afterEach removes it.\n- client.ts measures the window only with Date.now (lines 150, 292, 297, 379, 443).\n- The previous advanceClock ('real now + ms') is replaced by a cumulative one. Its four callers (+5 s, +16 s, +3 s, +3 s) each call it once.\n- Y1c keeps toHaveLength(2) and adds checks: the generation is unchanged, the header shows A, sent[1] is GET /me, the first page GET is the created record, and no /me follows it.\n- The new window-crossing case uses a non-holding hold predicate. The predicate is evaluated when fetch is called, before the scripted server records the request, so crossedAt is that GET's index. The case asserts 2 /me before the crossing, more than one page GET after it, the first request after it is /me, and exactly one /me.\n\nsession-identity.test.tsx: two mockImplementationOnce(forbidden) become a URL-routed 403 for /api/v1/organizations. Everything else, the /me included, falls through to the scripted server. The assertion is unchanged: [403, 403], with no reset, phase active and the cache kept.\n\nsession-generation.test.tsx: Date.now is held at t0 from the start, and the stale step moves the same spy to t0 + 20 s.\n\nNo test is skipped, and testTimeout is still 20_000.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log",
+        "apps/web/src/auth/session-bound.test.tsx",
+        "apps/web/src/auth/session-identity.test.tsx",
+        "apps/web/src/auth/session-generation.test.tsx",
+        "apps/web/src/api/client.ts"
+      ]
+    },
+    {
+      "id": "SEC-R6-13-f-dg4-106-verification",
+      "procedure": "Verify F-DG4-106 adversarially, in three parts.\n(A) Append my round-5 probe, unchanged, to the new spec. Run it with every round-5 hold (detail, summary, audit, decisions, /me, POST) at 2200 ms and at 4500 ms.\n(B) Mutate api/client.ts in the probe clone so the product sends a /me it must not (M1), or omits a required one (M3), plus the equivalent mutants M2 and M4.\n(C) Run the full pnpm test 8 times under the concurrent load (see SEC-R6-07/08).",
+      "command": "bash probe-y1c.sh; bash probe-y1c-m4.sh; unit-repeat.sh; unit-repeat-b.sh",
+      "environment": "Node 22.22.2 for A and B. Disposable probe clone $TMPDIR/probe at 0e499f2; each mutation was reverted, and git status was clean afterwards. Load 10-30.",
+      "expected": "(A) Exactly 2 /me in every case. (B) M1 and M3 fail Y1c; unmutated passes. (C) Y1c never fails.",
+      "actual": "(A) 12/12 cases give '/me after POST = 2' and pass, each exit 0. In round 5, the summary and audit holds gave 3 and failed (round-5/probe-Y1c-timing-node22.log).\n\n(B)\n- M0, unmutated: 6/6 pass.\n- M1, window ignored: 4 failed / 2 passed, exit 1. Y1c and the window-crossing case fail in EN and AR. The 2 passing tests are the 'not visible to the creator' cases, which count no /me.\n- M3, never revalidate: the 2 window-crossing cases fail, exit 1.\n- M2 and M4 (stamps and single flight removed) pass 6/6. The runner is queryClient.fetchQuery(keys.me), which joins an in-flight /me (App.tsx:110-112), so the wire behaviour is identical. These are equivalent mutants, not a test gap.\n\n(C) Y1c and the window-crossing case pass 48/48 across 8 full runs, including at load 34.\n\nF-DG4-106 is CLOSED_VERIFIED (verifications sidecar). The 6 probe-log failure lines are exactly the mutation runs M1 (4) and M3 (2), by design.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-y1c.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-y1c-m4.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-m4-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probes/sec-dg4-r5-y1c-timing.append.tsx",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-b.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat.summary.txt",
+        "docs/delivery/reviews/DG4/round-6/code-security-reviewer.verifications.json"
+      ]
+    },
+    {
+      "id": "SEC-R6-14-p4-authorization-sweep",
+      "procedure": "Re-run, unchanged, my round-2 sweep probe S. Over every P4 mutation route it checks these, as AUD, ADM-only and an outsider:\n- server-side authorization;\n- 401, 403 or 404 per D-111/D-112;\n- If-Match 428/409, including the version-0 ETag \"0\" reads (D-109);\n- one audit event per success and one authorization.denied per refusal;\n- no write on refusal.",
+      "command": "bash rerun-prior-probes.sh (run-probe.sh round-2/probes/sec-dg4-r2-sweep.test.ts)",
+      "environment": "Node 22.22.2, LANG unset, probe clone $TMPDIR/probe2 at 0e499f2, one disposable PostgreSQL per probe (ports 26350-26364).",
+      "expected": "Every test passes.",
+      "actual": "766/766 pass, exit 0, 0 skipped. AUD gets 403 on every P4 write, and ADM-only sees nothing transformation-scoped. The outsider gets 403 on dispensation writes and 404 on reporting/modular writes: the two known differences (D-111, D-112).\n\nThe API code is byte-identical to round 5, and the result equals round 5's.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-prior-probes.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/run-probe.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-prior-probes.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-15-cross-transformation-idor-and-read-scope",
+      "procedure": "Re-run, unchanged, the probes for cross-transformation IDOR (by path and by body), drill-down scope, outcome scope, currency, and the round-5 org-filter scope probe FS. Together they cover the dashboard, drill-down, My Work, traceability and orphan reads, the business-unit, phase and status filters, and forged ids.",
+      "command": "bash rerun-prior-probes.sh",
+      "environment": "As SEC-R6-14.",
+      "expected": "Every test passes. An unreadable id is 404, identical to an unknown one.",
+      "actual": "All pass, each exit 0 with 0 skipped:\n- idor 204/204;\n- body-idor 2/2;\n- drill-scope 163/163;\n- outcome-scope 3/3;\n- currency 151/151;\n- gross-currency 2/2;\n- filter-scope FS 5/5 (63 list→read requests in scope; 120 forged-id requests get 404; identical 404 bodies for unreadable and unknown ids).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r1-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r1-body-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r3-drill-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r4-outcome-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r4-currency-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r3-gross-currency-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r5-filter-scope-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-16-approvals-sod-delegation-handover-finance",
+      "procedure": "Re-run, unchanged, my probes for business approvals, separation of duties, Finance, gate commit-time, slice-B ids and required members, and tally the product's own suites. These cover:\n- self-approval;\n- a non-approver;\n- a stale version (409);\n- resubmit or withdraw by a non-requester (approval.not_requester);\n- the delegation loop guard and the escalation timer;\n- Finance-only validation, and no in-place edit of a validated value;\n- acceptance of a handover by the receiving owner only.",
+      "command": "bash rerun-prior-probes.sh; bash suite-counts.sh",
+      "environment": "As SEC-R6-14. The suite counts come from both integration logs.",
+      "expected": "Every probe and every suite passes, with 0 skipped.",
+      "actual": "Probes, each exit 0 with 0 skipped: approvals 6/6, sod-denials 4/4, finance 10/10, gate-commit 6/6, slice-b-ids 1/1, required-members r3 2/2 and r4 2/2.\n\nProduct suites, in both runs and with 0 failed or skipped:\n- approvals 17, delegations 13, handovers 11;\n- slice-b-denials 7, gate-commit-time 9, corrections 6;\n- decision-sla-escalation 5, a09-decision-escalation 17, escalation-rules 6, blocker-escalation 4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r1-approvals-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r2-sod-denials-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r2-finance-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r2-gate-commit-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r2-slice-b-ids-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r3-required-members-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-sec-dg4-r4-required-members-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-17-commit-time-contract-module-graph-worker",
+      "procedure": "Check the following:\n- the commit-time re-check scanner over every P4 write route, compared with round 5;\n- the p4-pending lists;\n- the API module graph (cycles; governance→raid allowed, raid never →governance);\n- the web import graph;\n- worker isolation from API code;\n- the production wiring through server.ts (unchanged API);\n- the contract and media-type suites.",
+      "command": "bash static-scans.sh (commit-scan6.py, module-cycles.mjs, web-cycles.mjs, worker grep, diff-scan.sh D10)",
+      "environment": "Node 22.22.2, probe clone $TMPDIR/probe2 at 0e499f2 (read-only use).",
+      "expected": "No new residual, no module cycle, raid does not import governance, the worker imports no API code, and every p4-pending list is empty.",
+      "actual": "commit-scan: 232 write routes and 33 residuals. The residual list is identical to round 5's (commit-time-scan-vs-r5.log, diff exit 0). I read each of the 33 manually in rounds 1-2: each reaches openWrite(…, {atCommit: true}). The repair touches no API file.\n\nOther checks:\n- p4-pending: all 43 lists hold 0 entries.\n- Module graph: 0 cycles. governance → raid is present; raid → access, audit, platform, tasks and transformations, with no governance.\n- Web graph: 202 files and 1 cycle, the pre-DG4 admin UsersPage ↔ AssignmentsPage (last touched in DG2, outside P4), as in rounds 1-5.\n- Worker: 0 imports of API code. Its deps are @mth/config, db and shared, kysely, pg, pg-boss and zod.\n- contract.test.ts (45) and media-types.test.ts (21) pass in both integration runs.\n- architecture.test.ts passes 138/138 in the clean runs and alone.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/static-scans.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/commit-time-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/commit-time-scan-vs-r5.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/p4-source-files.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probes/commit-scan6.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probes/module-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/web-cycles.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probes/web-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/worker-isolation.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R6-18-decimals-migrations-exactly-once",
+      "procedure": "Check the following:\n- decimals: no float on money (D9; catalogue 'no floating point');\n- migrations: added only, contiguous, guard attachments, no DELETE/TRUNCATE grant (D2, D3, D16, D17);\n- exactly-once: the suites for jobs, the queue, corrective cases, escalations, interventions, reviews and restarts, plus the D-102 parity tests.",
+      "command": "bash diff-scan.sh; bash suite-counts.sh",
+      "environment": "Probe clone $TMPDIR/probe2 (git and grep), plus both integration logs.",
+      "expected": "No float, only added and contiguous migrations, guards attached, and every exactly-once suite passing.",
+      "actual": "Decimals: D9 finds nothing, and catalogue.test.ts (20, including 'no floating point') passes in both runs.\n\nMigrations: 34 added in P4 (0028-0061), none modified or deleted, 0001..0061 contiguous. The repair adds none. Every table-creating migration attaches guards (D16), and there is no DELETE or TRUNCATE grant to mth_app (D17). migrate.test.ts passes 7 per run. The assignment says 0028-0060; the tree's latest migration is 0061 (added in DG4 round 2), and I covered 0028-0061.\n\nExactly-once, passing in each run:\n- restart 1, kpi-period-open-restart 1, a13-job-idempotency 5, benefits-queue 2;\n- raid-corrective 10, corrective-cases 15, corrective-rules 5;\n- sustainment-scans 5, adoption-below-trajectory 14.\nThe D-102 parity tests: 8 per run with the 'parity|same rows' grep (7 with 'parity' alone), as in round 5.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/suite-counts.sh"
+      ]
+    },
+    {
+      "id": "SEC-R6-19-requirement-acceptance",
+      "procedure": "For each of the 52 assigned requirements, look up every vitest file named in its register evidence in this round's clean logs: the unit runs 5 (Node 22) and 6 (Node 24), and both integration runs. Count passed, failed and skipped. Re-judge the partial-coverage notes.",
+      "command": "python3 req-acceptance.py unit-repeat-5.log unit-repeat-6.log integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "Python 3, this round's logs, repository requirements.csv.",
+      "expected": "Every cited file is found and passing.",
+      "actual": "All 52 rows are IMPLEMENTED, final DG4, and byte-identical to round 5: requirements.csv did not change since e29a735. Every cited vitest file is found and passing, with 'files with a failure: 0' and 0 'NOT FOUND'. The 20 Playwright entries are listed as 'e2e: not run here' (QA's e2e run), as in rounds 1-5.\n\nThe rows and the API are unchanged since round 5, so my round-1 to round-5 judgement of the partial-coverage notes stands. Each of them is an acceptable, disclosed scope statement. REQ-S13-001 is backed by a04 (8/8 per run), drill-scope (163), outcome-scope (3) and filter-scope FS (5).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/req-acceptance.py"
+      ]
+    },
+    {
+      "id": "SEC-R6-20-environment-residuals",
+      "procedure": "Check the environmental residuals on their offline/config surface: the live registry (REQ-DLV-042 AC-1, D-057), the live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "command": "bash env-residuals.sh",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv (read-only use), no network.",
+      "expected": "PASS on the offline/config surface, with the residual noted.",
+      "actual": "Registry: the offline frozen install exits 0. P4 changes only packages/shared/package.json (its export map) and no dependency. pnpm deps:verify needs the live registry and is not run here (residual D-057).\n\nCI: check-ci-needs.mjs reports OK: 5 jobs, delivery-gates first, every other job depending on it. Its 46 node tests pass. ci.yml runs pnpm test (l.66) and pnpm test:integration (l.101). The live CI run is the residual D-058.\n\nKeycloak: 37 passing oidc lines (fake IdP) in each integration run. The real Keycloak is the residual D-049.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/env-residuals.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/env-residuals.sh"
+      ]
+    },
+    {
+      "id": "SEC-R6-21-evidence-honesty-log-scan",
+      "procedure": "Scan every cited log for totals, failed and skipped tests, hook timeouts and error-like lines, and explain each one (DG2 round-10 audit condition 1).",
+      "command": "bash log-scan.sh <logs> > log-scan-1.txt / log-scan-2.txt",
+      "environment": "Bash and grep over this round's evidence.",
+      "expected": "Every failure, skip and error is disclosed and explained.",
+      "actual": "log-scan-2.txt covers integration, build, typecheck, lint, openapi, no-cdn, format, install and all 15 probe logs. It shows 0 failed, 0 skipped, 0 hook timeouts and no error line.\n\nlog-scan-1.txt, the unit and web-probe logs:\n- unit-node22, unit-node24 and repeats 1-4: failures and exit 1 under load. Each is explained in SEC-R6-07/08: first-render findBy over 5 s, architecture at 30 s, and the 'Unhandled Error: [vitest-worker]: Timeout calling onTaskUpdate' RPC timeout in three runs, all at load 20-34. Each ends with 'ELIFECYCLE Test failed', the pnpm exit of the same run.\n- Repeats 5 and 6: clean. Their 2 '↓' lines are the by-design NOCODEGEN skips.\n- unit-failed-specs-alone: 6 FAIL lines, the first-render timeouts at load 23. unit-timeout-discriminator: 4 failed lines, in the unchanged control by design; the longer-wait run passes 90/90.\n- probe-Y1c-node22: 6 failed lines, exactly the mutation runs M1 (4) and M3 (2), by design. Its '36 skipped' lines are the -t filter selecting one test.\n\nProcess notes:\n- Stopping the repeats: at about 13:13Z I tried to stop unit-repeat.sh with pkill to spare the integration runs. It did not work: the runner is in another sandbox process namespace, and pkill hit only my own shell (exit 143). Runs 3 and 4 therefore completed and are valid full runs. unit-repeat.summary.txt holds my wrong 'stopped' note followed by a CORRECTION line.\n- The harness: checks.sh was stopped at its 2 h background limit during its final --pipeline step. That step was re-run alone (SEC-R6-11).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-1.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-2.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R6-22-unit-load-timeout-discriminator",
+      "procedure": "Discriminate a slow render from a missing render for the specs that still failed alone under load. In the probe clone only, lengthen asyncUtilTimeout from 5 s to 25 s and testTimeout from 20 s to 60 s, run raid, prioritization and p2-blank-forms, then revert and run the unchanged control at the same load.",
+      "command": "bash unit-timeout-discriminator.sh; bash unit-failed-specs-alone.sh",
+      "environment": "Node 22.22.2 (discriminator); Node 22 and 24 (alone). Probe clone $TMPDIR/probe; git status clean afterwards. Load about 23.",
+      "expected": "With the longer wait the tests pass, which shows slowness rather than a defect.",
+      "actual": "Longer wait: 3 files and 90/90 tests pass. The previously failing tests take 8.5 s (p2 gate submission note), 14.4 s (prioritization ranked table), 5.9 s (scorecard) and 15.2 s (raid action register).\n\nControl, unchanged config: the same 4 fail at 5.3-9.6 s with 'Unable to find …'.\n\nAlone on Node 22: g1-agreements 10/10, traceability 32/32 and architecture 138/138 pass. raid (1), prioritization (2) and p2-blank-forms (1) fail by timeout.\nAlone on Node 24: g1, traceability, p2 52/52 and architecture pass. raid (1) and prioritization (1) fail by timeout.\n\nConclusion: at 5-8× CPU oversubscription, the first render of a page in a test file can exceed the harness's 5 s wait (F-DG2-220 headroom). This is an environment limit of the concurrent review, not a product or test-logic defect. All of these pass in clean runs 5 and 6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-timeout-discriminator.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-timeout-discriminator.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-failed-specs-alone.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-failed-specs-alone.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG4/round-6/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG4/round-6/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/candidate-id-repo-final.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-m4-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-5.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-6.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat.summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/unit-timeout-discriminator.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/rerun-prior-probes.summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/diff-scan.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/commit-time-scan.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/suite-counts.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/requirement-acceptance.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/env-residuals.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-1.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-2.txt"
+  ],
+  "reviewed_at": "2026-10-12T14:40:00Z",
+  "summary": "Verdict PASS on candidate f966fe57 (source 1e0dc5d, freeze 0e499f2), with no new finding. F-DG4-106 is CLOSED_VERIFIED.\n\nThe repair T-DG4-FE-R9B changes only three web session test files. It weakens no assertion of F-DG2-530/570/580 or D-077: Y1c keeps its exact count of 2 and gains order checks, and the new case asserts exactly one revalidation, sent first, after the 2 s window.\n\nMy round-5 reproduction, unchanged, now passes 12/12 holds, including the summary and audit holds that failed in round 5. Mutating client.ts so that it sends a forbidden /me (M1), or omits a required one (M3), makes the tests fail. Y1c passed 48/48 across 8 full pnpm test runs at load 9-34.\n\nEvery required check ran:\n- typecheck, build, lint, openapi:lint (652 operations), no-cdn and format: exit 0;\n- pnpm test: clean on Node 22 and Node 24 (2917/2917, plus 259 passed with the 2 by-design NOCODEGEN skips);\n- integration: 1975/1975 with LANG unset (SQL_ASCII, Node 22) and with C.UTF-8 (UTF8, Node 24), contract and migrations 0001→0061 included;\n- validate --historical DG3, DG2 and DG1, --register DG4 and --pipeline: PASS.\n\nThe loaded unit runs (load 20-34) failed only on first-render timeouts in unchanged specs and on the architecture test's 30 s limit. A longer-wait discriminator proved them slow renders, not defects. All are disclosed.\n\nAll 15 earlier probes pass unchanged: sweep 766, idor 204, drill-scope 163, currency 151, filter-scope 5, approvals, SoD, Finance, gate commit-time, slice B, required members and outcome scope.\n\nThe commit-time scan (identical residual list to round 5), module graph (raid never imports governance), worker isolation, p4-pending lists, decimals, migrations and exactly-once suites all pass. The live registry, live CI and Keycloak are noted as residuals, PASS on their offline surface."
+}

@@ -1,0 +1,36 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-106",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536 (source 1e0dc5d, freeze 0e499f2), in disposable clones under $TMPDIR. The repair, T-DG4-FE-R9B, changes only apps/web/src/auth/session-bound.test.tsx, session-identity.test.tsx and session-generation.test.tsx. No product file, API, contract or migration changed (git diff 3e3a06e..1e0dc5d; diff-scan.log D13-D15).\n\n(1) My round-5 reproduction, unchanged. probes/sec-dg4-r5-y1c-timing.append.tsx (byte copy of the round-5 file) was appended to the NEW session-bound.test.tsx and run with every hold I used in round 5: detail GET, summary, audit, decisions, /me and POST. Each hold ran at 2200 ms and again at 4500 ms. In round 5, the summary and audit holds gave 3 /me and failed. Now all 12 cases give exactly 2 /me after the POST and pass, each with exit 0 (probe-Y1c-node22.log, Part A). The reason is that Date.now is controlled for the whole file (installClock in beforeEach, restored by vi.restoreAllMocks in afterEach), so slow answers can no longer cross SESSION_RECHECK_MS.\n\n(2) The test still catches a /me the product must not send. I mutated apps/web/src/api/client.ts in the probe clone only, and reverted it afterwards (git status clean).\n- M1: recheckDue ignores the window (Date.now() - lastMeAt >= 0), so every page GET revalidates. 4 of the 6 Y1c tests fail: both Y1c and both window-crossing cases, in EN and AR.\n- M3: the product never revalidates after the window. The 2 window-crossing cases fail (EN and AR), because isMe(after[0]) is false. A missing revalidation is caught too.\n- Unmutated (M0): 6/6 pass.\n- M2 (no single flight and no lastMeAt stamp in startSessionCheck) and M4 (also no sessionProbe stamp and no markSessionActive stamp) still pass 6/6. These are equivalent mutants on the wire: the session check runner is queryClient.fetchQuery on keys.me (App.tsx:110-112, 'It joins a /me already in flight'), so concurrent revalidations still put one /me on the wire. This is not a weakness of the test (probe-Y1c-m4-node22.log).\n\n(3) The full pnpm test, 8 times, under the concurrent-review load (Node 22 and Node 24 alternately, load 9-34). Y1c and the new window-crossing case passed 48/48 (6 per run).\n- 6 of the 8 runs were at load 20-34 and exited 1. Each time the failure was elsewhere: a first-render findBy that missed the 5 s wait in raid, prioritization, p2-blank-forms, g1-agreements and traceability, or architecture.test.ts at its 30 s limit, plus one vitest RPC 'onTaskUpdate' timeout.\n- Runs 5 (Node 22) and 6 (Node 24), at load about 11, passed cleanly: 2917/2917, plus 259 passed and the 2 by-design NOCODEGEN skips.\n- The other failures are not F-DG4-106. Run alone with the unchanged config at load about 23, the same specs still miss the 5 s wait. With a longer wait (scratch config: asyncUtilTimeout 25 s) they pass 90/90 (unit-timeout-discriminator.log). The pages render, only slowly. architecture.test.ts passes alone, 138/138 on both Nodes.\n\n(4) The repair weakens nothing.\n- Y1c keeps its exact count of 2. It adds order assertions: the first request after the 201 is /me, the detail GET is the first page GET, and no /me follows it. It also checks the session generation and the user name.\n- No assertion of F-DG2-530/570/580 or D-077 was removed. advanceClock is now cumulative, and its 4 callers each call it once.\n- session-identity scripts its 403 by URL instead of by call order, and still asserts [403, 403] with no reset.\n- session-generation holds Date.now from the start and moves it by +20 s explicitly.\n- No test is skipped and no timeout is raised (apps/web/vitest.config.ts testTimeout is still 20_000).\n- With --configLoader runner on the confined tree (read-only node_modules), the three changed specs pass 80/80 at load about 30 (unit-configloader-runner.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-y1c.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-y1c-m4.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-m4-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probes/sec-dg4-r5-y1c-timing.append.tsx",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-5.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat-6.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-repeat.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-failed-specs-alone.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-timeout-discriminator.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/unit-configloader-runner.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/log-scan-1.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-5/probe-Y1c-timing-node22.log",
+        "apps/web/src/auth/session-bound.test.tsx",
+        "apps/web/src/auth/session-identity.test.tsx",
+        "apps/web/src/auth/session-generation.test.tsx",
+        "apps/web/src/api/client.ts",
+        "apps/web/src/app/App.tsx"
+      ]
+    }
+  ]
+}
