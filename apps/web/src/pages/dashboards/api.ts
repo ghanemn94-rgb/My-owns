@@ -223,14 +223,29 @@ export function useDashboardPeriods(orgId: string | undefined) {
 /**
  * The readable transformations of one business unit (DG1 `listTransformations`, server-side unit filter), for the
  * business-unit chip: the dashboard contract has no unit parameter, so the chip narrows by these ids (at most 50).
+ * F-DG4-144: the dashboard's phase and status chips narrow this list too (`listTransformations` takes `phase` and
+ * `status` with the dashboards' meaning: `current_phase` and `status`, archived excluded), so narrowing by phase or
+ * status can bring a large unit within the 50-transformation limit.
  */
-export function useBusinessUnitTransformations(orgId: string, businessUnitId: string) {
+export function useBusinessUnitTransformations(
+  orgId: string,
+  businessUnitId: string,
+  narrow: { readonly phase: string; readonly status: string } = { phase: "", status: "" },
+) {
+  const { phase, status } = narrow;
   return useQuery({
-    queryKey: p4Keys.dashboard("unit-transformations", { orgId, businessUnitId }),
+    queryKey: p4Keys.dashboard("unit-transformations", { orgId, businessUnitId, phase, status }),
     queryFn: ({ signal }) =>
       api.get<{ items: { id: string }[]; nextCursor: string | null }>(
         "/api/v1/transformations",
-        { organizationId: orgId, businessUnitId, sort: "code:asc", limit: 51 },
+        {
+          organizationId: orgId,
+          businessUnitId,
+          ...(phase ? { phase } : {}),
+          ...(status ? { status } : {}),
+          sort: "code:asc",
+          limit: 51,
+        },
         signal,
       ),
     enabled: Boolean(orgId && businessUnitId),

@@ -546,7 +546,8 @@ export interface ValueRagLine {
 /**
  * The per-basis lines of a `dashboard.rag.value.validated_gap` RAG (`ruleParams.lines`, N4 item 1), or null when the
  * RAG has none. `ruleParams` is a free object in the contract, so every line is checked: a line without a known basis,
- * a currency or a known status is dropped, never guessed. A missing gap ratio stays null (shown as Unknown, never 0).
+ * a currency or a known status is dropped, never guessed. A missing gap ratio stays null, never 0; the line's status
+ * decides how it reads (`valueRagLineValue`).
  */
 export function valueRagLines(rag: DashboardRag): ValueRagLine[] | null {
   if (rag.ruleKey !== "dashboard.rag.value.validated_gap") return null;
@@ -573,6 +574,31 @@ export function valueRagLines(rag: DashboardRag): ValueRagLine[] | null {
     });
   }
   return lines.length > 0 ? lines : null;
+}
+
+/**
+ * The value shown for one Value RAG line, decided by the line's `status` (F-DG4-143; ADR-0037 amendment N4 items 1
+ * and 4). The API gives a null `gapRatio` both for `not_applicable` (nothing planned to date) and for `unknown` (a
+ * line of the basis has no amount), so the ratio alone cannot tell them apart:
+ * - `not_applicable` reads Not applicable, with its reason, and never shows a number;
+ * - `unknown` reads Unknown, with its reason;
+ * - `stale` reads Stale, with the last known ratio when there is one;
+ * - green, amber and red show the ratio; without one (a malformed line) the value is Unknown, never 0 or a guess.
+ */
+export function valueRagLineValue(line: ValueRagLine): DashboardValue {
+  const base = { unit: "ratio", currency: line.currency, kpiUnit: null } as const;
+  switch (line.status) {
+    case "not_applicable":
+      return { ...base, state: "not_applicable", value: null, reasonKey: line.reasonKey };
+    case "unknown":
+      return { ...base, state: "unknown", value: null, reasonKey: line.reasonKey };
+    case "stale":
+      return { ...base, state: "stale", value: line.gapRatio, reasonKey: line.reasonKey };
+    default:
+      return line.gapRatio === null
+        ? { ...base, state: "unknown", value: null, reasonKey: line.reasonKey }
+        : { ...base, state: "value", value: line.gapRatio, reasonKey: null };
+  }
 }
 
 /**
@@ -605,47 +631,29 @@ export function ValueRagLines({
       </p>
       {/* A wrapping list, not a table: in a narrow area card every line's status stays visible without scrolling. */}
       <ul className="plain-list" aria-labelledby={captionId}>
-        {lines.map((l, n) => (
-          <li
-            key={`${l.headlineBasis}-${l.currency}-${n}`}
-            data-rag-line-basis={l.headlineBasis}
-            data-rag-line-currency={l.currency}
-            data-rag-line-status={l.status}
-            {...(l.status === rag.status ? { "data-worst": "true" } : {})}
-          >
-            <BasisChip basis={l.headlineBasis} />{" "}
-            <bdi dir="ltr" className="code">
-              {l.currency}
-            </bdi>
-            {" · "}
-            <span className="visually-hidden">{t("dashboards.basis.ragLineGap")}: </span>
-            <ValueView
-              value={
-                l.gapRatio === null
-                  ? {
-                      state: "unknown",
-                      value: null,
-                      unit: "ratio",
-                      currency: l.currency,
-                      reasonKey: l.reasonKey,
-                      kpiUnit: null,
-                    }
-                  : {
-                      state: "value",
-                      value: l.gapRatio,
-                      unit: "ratio",
-                      currency: l.currency,
-                      reasonKey: null,
-                      kpiUnit: null,
-                    }
-              }
-            />{" "}
-            <RagStatusChip status={l.status} />
-            {l.reasonKey && l.gapRatio !== null ? (
-              <span className="block small muted">{keyText(t, "reason", l.reasonKey)}</span>
-            ) : null}
-          </li>
-        ))}
+        {lines.map((l, n) => {
+          const value = valueRagLineValue(l);
+          return (
+            <li
+              key={`${l.headlineBasis}-${l.currency}-${n}`}
+              data-rag-line-basis={l.headlineBasis}
+              data-rag-line-currency={l.currency}
+              data-rag-line-status={l.status}
+              {...(l.status === rag.status ? { "data-worst": "true" } : {})}
+            >
+              <BasisChip basis={l.headlineBasis} />{" "}
+              <bdi dir="ltr" className="code">
+                {l.currency}
+              </bdi>
+              {" · "}
+              <span className="visually-hidden">{t("dashboards.basis.ragLineGap")}: </span>
+              <ValueView value={value} /> <RagStatusChip status={l.status} />
+              {l.reasonKey && value.state === "value" ? (
+                <span className="block small muted">{keyText(t, "reason", l.reasonKey)}</span>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
       {provisionalNote && locale === "ar" ? (
         <p className="small muted" data-provisional="basis">
@@ -1148,18 +1156,34 @@ export function useFilterState(): [FilterState, (key: keyof FilterState, value: 
   return [state, set, clear];
 }
 
+/** Why the business-unit chip sends no request (`useOrgQuery`). */
+export type BlockedFilterReason = "none" | "none_matching" | "too_many";
+
 /**
  * The organization-wide query of a filter state. The contract has no business-unit parameter, so the business-unit
  * chip narrows by the transformations of that unit the caller may read (repeated `transformationId`, at most 50).
- * `blocked` says why no request is sent (no readable transformation in the unit, or more than 50).
+ * `blocked` says why no request is sent:
+ * - `none`: the caller can read no transformation in the unit;
+ * - `none_matching`: the unit has readable transformations, but none matches the transformation, phase or status chips;
+ * - `too_many`: more than 50 remain.
+ * F-DG4-144: the phase and status chips narrow the unit's list before the limit is applied, and the transformation
+ * chip is intersected with the unit through the caller's full readable list (`businessUnitId`), so every remedy the
+ * `too_many` note names can lift the block.
  */
 export function useOrgQuery(state: FilterState): {
   query: DashboardQuery;
-  blocked: "none" | "too_many" | null;
+  blocked: BlockedFilterReason | null;
   loading: boolean;
 } {
   const me = useMe();
-  const bu = useBusinessUnitTransformations(me.organization.id, state.bu);
+  const narrowed = Boolean(state.phase || state.status);
+  // The unit's readable list without phase and status (its first 51), which also tells `none` from `none_matching`.
+  const unitAll = useBusinessUnitTransformations(me.organization.id, state.bu);
+  const unitNarrowed = useBusinessUnitTransformations(me.organization.id, narrowed ? state.bu : "", {
+    phase: state.phase,
+    status: state.status,
+  });
+  const readable = useReadableTransformations(me.organization.id, Boolean(state.bu) && state.tr.length > 0);
   const base: DashboardQuery = {
     organizationId: me.organization.id,
     ...(state.owner ? { ownerUserId: state.owner } : {}),
@@ -1175,11 +1199,24 @@ export function useOrgQuery(state: FilterState): {
       blocked: null,
       loading: false,
     };
-  if (bu.isPending) return { query: base, blocked: null, loading: true };
-  const unitIds = (bu.data?.items ?? []).map((x) => x.id);
-  const ids = state.tr.length > 0 ? unitIds.filter((x) => state.tr.includes(x)) : unitIds;
-  if (ids.length === 0) return { query: base, blocked: "none", loading: false };
-  if (ids.length > MAX_TRANSFORMATION_FILTER || (state.tr.length === 0 && bu.data?.nextCursor))
+  if (unitAll.isPending) return { query: base, blocked: null, loading: true };
+  if ((unitAll.data?.items ?? []).length === 0) return { query: base, blocked: "none", loading: false };
+  if (state.tr.length > 0) {
+    // The chosen transformations of the unit (at most 50 by construction); the server applies phase and status.
+    if (readable.isPending) return { query: base, blocked: null, loading: true };
+    // If the full list cannot be read, the unit's first page is the fallback (never "all" of the organization).
+    const inUnit = readable.isError
+      ? (unitAll.data?.items ?? []).map((r) => r.id)
+      : (readable.data ?? []).filter((r) => r.businessUnitId === state.bu).map((r) => r.id);
+    const ids = state.tr.filter((x) => inUnit.includes(x));
+    if (ids.length === 0) return { query: base, blocked: "none_matching", loading: false };
+    return { query: { ...base, transformationId: ids }, blocked: null, loading: false };
+  }
+  const unit = narrowed ? unitNarrowed : unitAll;
+  if (unit.isPending) return { query: base, blocked: null, loading: true };
+  const ids = (unit.data?.items ?? []).map((x) => x.id);
+  if (ids.length === 0) return { query: base, blocked: "none_matching", loading: false };
+  if (ids.length > MAX_TRANSFORMATION_FILTER || unit.data?.nextCursor)
     return { query: base, blocked: "too_many", loading: false };
   return { query: { ...base, transformationId: ids }, blocked: null, loading: false };
 }
@@ -1461,7 +1498,7 @@ export function GeneratedNote({ at, timezone, onRefresh }: { at: string; timezon
 }
 
 /** The message shown instead of a request when the business-unit filter cannot be applied. */
-export function BlockedFilterNote({ reason }: { reason: "none" | "too_many" }) {
+export function BlockedFilterNote({ reason }: { reason: BlockedFilterReason }) {
   const { t } = useTranslation();
   return (
     <p className="banner banner--info" role="note" data-filter-blocked={reason}>

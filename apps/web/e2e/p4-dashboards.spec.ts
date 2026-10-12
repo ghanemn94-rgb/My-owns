@@ -8,7 +8,8 @@
 //  2. Transformation dashboard (REQ-PB-062, REQ-S13-003): the six Template 10 areas from persisted data; Outcomes is
 //     Unknown without a KPI; a headline opens the drill-down with a known zero (labelled) distinct from Unknown/n/a.
 //  3. Executive Overview (REQ-S03-009, REQ-S13-001/002): the organization's readable transformations, the filter chips
-//     (business unit, owner) narrow the request, the window and as-of date are shown.
+//     (business unit, owner) narrow the request, the window and as-of date are shown. The business-unit chip uses a
+//     unit of the test's own, so the count other specs leave in SYN_RETAIL never matters (D-127).
 //  4. Finance and adoption dashboards (REQ-S13-001): headlines, non-financial benefits n/a (never 0), the People &
 //     adoption area.
 //  5. My Work (REQ-S03-008): the six sections with totals and the upcoming deadlines; the personal dashboard.
@@ -144,8 +145,30 @@ test("2. Transformation dashboard: six T10 areas from persisted data; drill-down
 
 test("3. Executive Overview: readable transformations, business-unit and owner chips, window and as-of date", async ({
   browser,
+  playwright,
 }, info) => {
   const lang = langOf(info);
+  // D-127 (F-DG4-144 side effect): the business-unit chip is checked on a unit of this test's own, with one
+  // transformation, so it never depends on how many transformations other specs leave in SYN_RETAIL (the chip takes at
+  // most 50). The unit is created by the technical admin, its transformation by the transformation office.
+  const admin = await apiSession(playwright, "dev.admin");
+  const orgId = (await admin.call<{ organization: { id: string } }>("GET", "/api/v1/me")).organization.id;
+  const unitId = (
+    await admin.call<{ id: string }>("POST", `/api/v1/organizations/${orgId}/business-units`, {
+      code: `SYN-DASH-${lang}-${stamp}`.toUpperCase(),
+      nameEn: `Synthetic dashboards unit ${lang} ${stamp}`,
+      nameAr: `وحدة لوحات اصطناعية ${lang} ${stamp}`,
+    })
+  ).id;
+  const tidU = (
+    await (
+      await apiSession(playwright, "dev.office")
+    ).call<{ id: string }>("POST", "/api/v1/transformations", {
+      businessUnitId: unitId,
+      name: `Synthetic P4 dashboards unit ${lang.toUpperCase()} ${stamp}`,
+      mode: "end_to_end",
+    })
+  ).id;
   const to = await asUser(browser, lang, "dev.office");
   const page = to.page;
   const overviewRequests: string[] = [];
@@ -160,10 +183,12 @@ test("3. Executive Overview: readable transformations, business-unit and owner c
   await shot(page, lang, "p4dash-05-executive-overview");
   await expectAccessible(page, lang, "p4dash-overview");
   // Business-unit chip: the request carries that unit's readable transformations (the contract has no unit param).
-  await page.locator("[data-filter='bu']").selectOption(SYN_RETAIL);
+  await page.locator("[data-filter='bu']").selectOption(unitId);
   await expect(page.locator("[data-chip='bu']")).toBeVisible();
-  await expect.poll(() => overviewRequests.some((u) => u.includes(`transformationId=${tidA}`))).toBe(true);
-  await expect(page.locator(`[data-row='${tidA}']`)).toBeVisible();
+  await expect.poll(() => overviewRequests.some((u) => u.includes(`transformationId=${tidU}`))).toBe(true);
+  await expect(page.locator(`[data-row='${tidU}']`)).toBeVisible();
+  // The other unit's transformation is not requested.
+  expect(overviewRequests.filter((u) => u.includes("transformationId=")).some((u) => u.includes(tidA))).toBe(false);
   // Owner chip: me.
   const owner = page.locator("[data-filter='owner']");
   await owner.selectOption({ index: 1 });
@@ -257,6 +282,19 @@ test("4b. Finance class lines drill by valueClass; the drill-down rule is transl
     await shot(page, lang, "p4dash-07b-finance-class-drilldown");
     await expectAccessible(page, lang, "p4dash-finance-class-drilldown");
     await page.keyboard.press("Escape");
+  }
+  // The gross / net table is organization-wide too: with several currencies (p4-value-rag-lines.spec.ts adds USD, as
+  // qa's F-DG4-143 world does) its rows exceed the first page. Show 100 rows per page so every net line is present.
+  if (netLines.length > 0) {
+    // The table's rows: gross, net, and revenue uplift and avoided cost (planned, validated) beside gross.
+    const tableRows = fd.lines.filter(
+      (l) =>
+        l.valueClass === "gross" ||
+        l.valueClass === "net" ||
+        (["revenue_uplift", "avoided_cost"].includes(l.valueClass) && ["planned", "validated"].includes(l.state)),
+    );
+    expect(tableRows.length, "the gross and net table fits one page of 100").toBeLessThanOrEqual(100);
+    await page.locator("#finance-net").getByLabel(tr(lang, "common.table.pageSize")).selectOption("100");
   }
   for (const l of netLines) {
     const cell = page.locator(`[data-net-inputs='${l.state}-${l.currency}']`);
