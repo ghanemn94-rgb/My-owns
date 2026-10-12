@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-145",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "session-bound.test.tsx 'Y1c (en)' counts GET /me with real timers against the 2 s recheck window, so pnpm test fails deterministically under CPU contention",
+      "reproduction": "In a complete clone of the candidate (offline install, pnpm -r build), run pnpm test (TZ=UTC CI=1) while the machine is under load (this review: load average 13-15, three reviews at once): all four runs (Node 22 and 24, locale unset and C.UTF-8) exit 1 with one failure, apps/web/src/auth/session-bound.test.tsx > 'F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record': 'expected [...] to have a length of 2 but got 3' at line 280 (the GET /me requests after the create). Because pnpm test chains 'vitest run unit-node unit-web && vitest run unit-formula-nocodegen', the nocodegen project then does not run at all. Deterministic reproduction without global load: run the file alone pinned to one CPU with three busy loops on the same CPU (taskset -c 0; log 02c): it fails 2/2 on this candidate and 2/2 on the round-4 source ccc37c9 (apps/web/src/auth, src/api and src/test are identical in both). Alone without contention it passes 3/3, and the four pnpm test runs pass at load 1.5-5.",
+      "expected": "A required check (pnpm test) is deterministic on the review machine: the test asserts what F-DG2-530/570/580 and D-077 require (no effect of A's action lands under B; at most one identity confirmation per navigation, plus the create's own permission refresh) independently of wall-clock speed, e.g. with fake timers around SESSION_RECHECK_MS or by asserting the requests that must and must not happen rather than an exact count that depends on elapsed time.",
+      "actual": "The test asserts exactly 2 GET /me after the POST, using real timers. The product (apps/web/src/api/client.ts, SESSION_RECHECK_MS = 2_000; D-077 item 3) correctly sends one more /me before a page GET issued more than 2 s after the last /me. Under CPU contention the test's steps take longer than 2 s (3.35 s in the failing run), so the product's third /me is correct behaviour and the exact count fails. This is a pre-existing DG2 test defect, not a regression of the DG4 repair and not a product defect. D-118 recorded one such failure in BE-R5's run ('passed alone and on re-run'). In this round it failed 4/4 full runs under the concurrent-review load, which turns the required unit check red for reasons unrelated to the candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-5/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/02-unit-node24-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/02b-unit-session-bound-alone.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/02c-unit-session-bound-contention.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/02-unit-node24-unset-rerun.log",
+        "apps/web/src/auth/session-bound.test.tsx",
+        "apps/web/src/api/client.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-5/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T07:47:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 5 (T-DG4-REV-QA-R5) on candidate sha256:69b7412a0a360135863a80a5ee32ee947aff0d7f05615589cf6457e054cf0e86. Non-blocking: a test-determinism defect in a DG2 test; the product behaviour it exercises is correct, and the four pnpm test runs pass at lower load."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:69b7412a0a360135863a80a5ee32ee947aff0d7f05615589cf6457e054cf0e86 (source 3e3a06e), on the real stack (qa-stack.sh, no mocks), as the read-only auditor, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8 (4 runs: probes-unset, probes-cutf8, r5-rev2-cutf8, r5-rev2-unset; plus the solo C.UTF-8 run). (1) My round-4 world, re-run (dg4-qa-r5.spec.ts R4 test; the world is unchanged from round 4): SAR margin 70, SAR revenue 300 and USD revenue 11 planned 2026-H1; SAR avoided cost 45 planned only in 2099; nothing validated. On T10 and on the Executive Overview (?tr=<id>) the lines are SAR/profit_and_cash/red, SAR/top_line/red, SAR/non_cash/not_applicable and USD/top_line/red, and the area is Red. The non-cash line now reads 'Non-cash SAR · Value gap: Not applicable (n/a) Not applicable: nothing is planned to date. Not applicable' (ar: 'غير نقدية SAR · فجوة القيمة: لا ينطبق لا ينطبق: لا يوجد شيء مخطط حتى تاريخه. لا ينطبق'), with exactly one data-value-state = 'not_applicable', its reason, no digit and no green; the valued lines read '100 %'. The round-4 checks R4-*-na-line-not-unknown, which failed in round 4, now pass, as do my new R5-*-na-line-state-na / -reason / -no-number. (2) A REAL unknown line (new world U): SAR margin 70 planned 2026-H1, and SAR avoided cost planned 2026-H1 with a KPI value but no amount (POST plan-values {kpiValue} only). The API sends the non-cash line {gapRatio null, status unknown, reasonKey benefit.value_amount_missing}; T10 and the Overview render 'Non-cash SAR · Value gap: Unknown Unknown: a value amount is missing. Unknown' (ar: 'غير معروف … مبلغ قيمة مفقود'), data-value-state = 'unknown', never 'Not applicable', never a digit, never green; the profit-and-cash line reads 100 % Red and the area is Red (red outranks unknown in the ADR-0037 §3 precedence). axe 0 serious/critical, 390 px and 200 % without page-level overflow, on all four screens and in both languages. The code (valueRagLineValue) maps by status: not_applicable -> n/a with reason, unknown -> Unknown with reason, stale -> Stale with the last ratio, a colour status without a ratio -> Unknown (never 0). Residual, not a finding: the stale branch is unreachable from the current API (valueGapStatus never returns stale), so it is covered only by the web unit test valueRagLineState.test.tsx; that is acceptable because it can only make the screen more conservative.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-5/04-e2e-probes-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/dg4-qa-r5-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/dg4-qa-r5-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/04-e2e-r5-rev2-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-r5-rev2-cutf8/dg4-qa-r5-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/04-e2e-r5-rev2-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-r5-rev2-unset/dg4-qa-r5-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-cutf8/dg4-qa-r5-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/en/R4-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/ar/R4-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/en/R4-aud-overview.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/ar/R4-aud-overview.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/en/U-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/ar/U-aud-overview.png",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-5/e2e/dg4-qa-r5.spec.ts",
+        "apps/web/src/pages/dashboards/ui.tsx"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-144",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:69b7412a0a360135863a80a5ee32ee947aff0d7f05615589cf6457e054cf0e86 on the real stack, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8. (1) My round-4 probe dg4-qa-r4-bu-limit.spec.ts, re-run UNCHANGED: passes in en and ar in both locale settings (it failed by design in round 4). After phase 'realize' and status 'closed' the too_many note is gone (afterStatus_noteVisible false) and the note's text now reads 'Narrow the filter by phase or status until 50 or fewer remain, choose transformations with the transformation filter, or open the transformations' own dashboards.' (2) Every remedy the note names, on ALL THREE dashboards that share useOrgQuery (Executive Overview, Finance, adoption), through the UI chips, as dev.office, in a unit of the probe's own with 54 transformations (51 Diagnose, 3 entering at Design; 2 moved draft -> active through PATCH) - dg4-qa-r5-bu-remedies.spec.ts, 77 recorded checks per language, 0 failed in each of the 4 language x locale runs: B0 the unit chip alone shows exactly the catalogue too_many text and sends no request carrying the unit; B1 phase = Design lifts the block and the dashboard request carries EXACTLY the 3 Design ids (and phase=design); B2 status = active lifts it and carries exactly the 2 active ids; B3 a narrowing that matches nothing shows the new none_matching note (catalogue text), never too_many, and sends nothing; B6 phase = Diagnose (51 remain) keeps too_many - the limit is not bypassed; B4 the transformation chip offers a transformation beyond the unit's first 51 by code (TR-0105 of 54) and the request carries exactly that id; B5 the chip with a transformation of ANOTHER unit under this unit's chip shows none_matching and that transformation is never requested; B7 the transformation's own dashboard renders; B8 regression: phase without the unit chip still sends an organization-wide request without transformationId. axe 0 serious/critical at every step. The server semantics match: listTransformations filters current_phase and status and excludes archived, as the dashboard scope does. Residuals, not findings: (a) if the unit's transformation list itself fails to load, the note says 'You cannot read any transformation in this business unit' rather than an error - unchanged from before the repair, where an empty or failed list gave the same 'none'; (b) the owner chip does not narrow the unit's list before the limit, and the note correctly does not name it as a remedy.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-5/04-e2e-probes-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/04-e2e-probes-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/dg4-qa-r5-bu-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/dg4-qa-r5-bu-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-cutf8/dg4-qa-r5-bu-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-cutf8/dg4-qa-r5-bu-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/dg4-qa-r4-bu-limit-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/dg4-qa-r4-bu-limit-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-cutf8/dg4-qa-r4-bu-limit-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-cutf8/dg4-qa-r4-bu-limit-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/en/R5-overview-B0-too-many.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/ar/R5-finance-B1-phase-design.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/en/R5-adoption-B4-transformation-chip.png",
+        "docs/delivery/test-evidence/DG4/qa/round-5/results/e2e-probes-unset/screens/ar/R5-overview-B3-none-matching.png",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-5/e2e/dg4-qa-r5-bu-remedies.spec.ts",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4-bu-limit.spec.ts",
+        "apps/web/src/pages/dashboards/ui.tsx",
+        "apps/web/src/pages/dashboards/api.ts"
+      ]
+    }
+  ]
+}
