@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-128",
+      "stage_id": "DG4",
+      "requirement": "REQ-S16-005",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The shipped worker runs pg-boss supervision in a 1 ms loop (superviseIntervalSeconds unset → NaN): about 6,300 database transactions per second and about 0.6 CPU core while idle",
+      "reproduction": "1) In a disposable clone of the DG4 candidate (source 1e0dc5d), build and start the stack with the real worker: WORKER=1 bash docs/delivery/test-evidence/DG4/domain/round-6/with-stack-trace.sh bash docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.sh (disposable PostgreSQL, synthetic dev seed, no other activity). 2) The worker prints at start-up 'TimeoutNaNWarning: NaN is not a number. Timeout duration was set to 1.' With --trace-warnings the stack is setInterval ← Boss.start (pg-boss@11.0.0 src/boss.js:46) ← PgBoss.start ← apps/worker/dist/main.js main. 3) measure-supervise.sh waits 15 s, then samples pg_stat_database (db mth) and the worker's /proc CPU ticks over 20 s, then SIGSTOPs the worker and samples 20 s again as the baseline. Cause: apps/worker/src/main.ts calls createBoss(config.databaseUrl!) with no options. apps/worker/src/queues/platform.ts createBoss passes supervise: true and passes superviseIntervalSeconds only when a caller gives it. pg-boss 11.0.0 src/attorney.js gives defaults to maintenanceIntervalSeconds, monitorIntervalSeconds and queueCacheIntervalSeconds, but never to superviseIntervalSeconds. So Boss.start calls setInterval(onSupervise, undefined * 1000 = NaN), and Node runs it every 1 ms. The #maintaining guard only stops overlap, so supervision passes run back to back. 4) Control (measure-supervise-control60.log): the same run with only 'superviseIntervalSeconds: 60' added to the built worker's PgBoss options, in the disposable clone only and reverted afterwards.",
+      "expected": "The production worker's queue supervision runs on a bounded, configured or documented cadence (pg-boss documents 60 s), so an idle worker places negligible load on PostgreSQL and the CPU. REQ-S16-005 asks for a durable database-backed worker and scheduler; nothing in the sources or ADR-0008 calls for continuous supervision.",
+      "actual": "Shipped configuration, idle: 126,835 database transactions in 20 s (6,341/s) and 1,175 worker CPU ticks in 20 s (about 0.59 core). The active worker statements sampled are pg-boss supervision: 'UPDATE pgboss.queue SET monitor_on = now() WHERE name IN(...)', 'UPDATE pgboss.queue SET maintain_on = now() ...' and the getQueues SELECT. With the worker SIGSTOPped: 1,090 in 20 s (54/s) and 0 ticks. Control with superviseIntervalSeconds: 60: 333 in 20 s (16/s) and 13 ticks, and the TimeoutNaNWarning disappears. Functional results are unaffected: every job ran, integration 1985/1985 and A13 (REQ-S16-005: exactly once after a mid-job kill) pass, because the integration tests pass superviseIntervalSeconds: 1 explicitly (apps/worker/test/integration/restart.test.ts:133, kpi-period-open-restart.test.ts:294) and never run the production default. DG4 did not introduce the defect: the pre-DG4 worker (475f549^ apps/worker/src/queues.ts) had the same options with pg-boss 11.0.0. It sits in REQ-S16-005, whose final gate is DG4. My own round-4 and round-5 records dismissed this warning as not DG4 behaviour; that assessment was wrong. A hypothesis I have not proven: every disposable stack and e2e run that starts a worker adds about 0.6 core of busy load, which may add to the load timeouts recorded in D-111, D-112 and D-115. Severity Medium, not mandatory: there is no data-integrity, calculation, access-control or portability effect, but it is a material operational defect (continuous database churn and CPU use in production). Suggested repair, the owner's choice: pass an explicit superviseIntervalSeconds, from configuration or the documented 60 s default, in createBoss or main.ts, and add a test that the production createBoss options give a finite supervise interval.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise-control60.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/with-stack-trace.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/stack-run-2.log",
+        "apps/worker/src/main.ts",
+        "apps/worker/src/queues/platform.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG4/round-6/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T14:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG4 round 6 (T-DG4-REV-DOM-R6) on candidate f966fe57. Measured with a control run; the domain reviewer considers it non-blocking for the DG4 gate but asks for repair."
+        }
+      ]
+    }
+  ]
+}

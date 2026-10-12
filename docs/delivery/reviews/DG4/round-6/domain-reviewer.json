@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 6,
+  "candidate_id": "sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536",
+  "source_commit": "1e0dc5d80729fda797940f82da632cad01b393f4",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-DOM-R6-domain-reviewer-20261012T122442Z-7f1f2846",
+    "session_id": "7f1f2846-b3bf-4ecc-8bf6-927e361f7a4c"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG4 implementation, test, register row, ADR or repair in the reviewed candidate, including T-DG4-FE-R9 and T-DG4-FE-R9B. I formed this verdict from my own runs before reading any other reviewer's round-6 record. I did not open any of them. The runs used a complete (non-shallow) disposable clone of 0e499f2 (source 1e0dc5d) under $TMPDIR, on disposable PostgreSQL clusters, and the clone was removed at the end. My round-5 probes (dom-api, dom-ui, dom-gross4, dom-pct, dom-kpiunit, dom-r5b and the in-process zz-domain probe) were re-run with only round-label and path changes. The diffs are confined to header comments and one synthetic grant reason string. measure-supervise.sh and with-stack-trace.sh are new this round. All data is SYNTHETIC. No in-product Finance validation or G1-G6 decision made here approves anything real, and none of them relates to DG0-DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-6/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044",
+    "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068",
+    "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079",
+    "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003",
+    "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008",
+    "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005",
+    "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015",
+    "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011",
+    "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003",
+    "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016",
+    "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008",
+    "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002",
+    "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025",
+    "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R6-00-candidate",
+      "procedure": "Verify the assignment hash, HEAD and its relation to source_commit. Recompute the candidate ID in the repository and in a complete disposable clone, before and after the runs.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-6/domain-reviewer.md; git rev-parse HEAD; git merge-base --is-ancestor 1e0dc5d HEAD; git diff --name-only 1e0dc5d HEAD; node tools/gates/candidate.mjs --stage DG4; git clone /home/user/My-owns $TMPDIR/review-dom && git checkout 0e499f2; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG4 (in the clone, before and after the runs)",
+      "environment": "Repository /home/user/My-owns at HEAD 0e499f2; clone $TMPDIR/review-dom at 0e499f2eba44bc4f2036ae17ddc242edb3ac399d, with node_modules copied by cp -a and pnpm-lock.yaml byte-identical; Node 24.21.0.",
+      "expected": "Assignment sha256 f5b95e9f…; candidate sha256:f966fe57…, 1472 files, in the repository and in a non-shallow clone, also after the runs.",
+      "actual": "The assignment hash matches (f5b95e9fd32c…7cc60). HEAD is 0e499f2, the round-6 freeze commit, and descends from 1e0dc5d (is-ancestor exit 0). The freeze changes only the 3 round-6 assignments, the candidate manifest and stages.json, all excluded from the manifest. The repository and the clone (shallow=false) both give sha256:f966fe5728e260b87544093d27faccb379195391894fafab6f567952f6bfe536 with 1472 files. After the runs I removed my rv/ probe copies and reverted the one control patch to the built worker dist (see DOM-R6-10; cmp identical). The clone then had a clean git status and gave the same id and 1472 files again.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/candidate.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/env.txt"
+      ]
+    },
+    {
+      "id": "DOM-R6-01-validators",
+      "procedure": "Run the register validator for DG4 and the historical validators for DG3, DG2 and DG1 in the repository.",
+      "command": "node tools/gates/validate.mjs --register DG4; node tools/gates/validate.mjs --historical --stage DG3; node tools/gates/validate.mjs --historical --stage DG2; node tools/gates/validate.mjs --historical --stage DG1",
+      "environment": "Repository /home/user/My-owns at 0e499f2; Node 24.21.0.",
+      "expected": "All four exit 0 with PASS.",
+      "actual": "'PASS register rules at DG4', 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)' and 'PASS gate DG1 (historical)', each exit 0. The register has 137 DG4 rows, all IMPLEMENTED, and they equal my assigned list exactly. requirements.csv is unchanged between 3e3a06e and 1e0dc5d (0 diff lines).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/validators-exit-codes.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/validate__register_DG4.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/validate__historical___stage_DG3.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/validate__historical___stage_DG2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/validate__historical___stage_DG1.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-02-build-unit",
+      "procedure": "In the clone, run typecheck, build, lint and the unit projects on Node 22 and then on Node 24, using Vitest's --configLoader runner because node_modules is read-only in the confined sandbox (QA-A's finding). Re-run every failure: first with its 4 failing web files together plus architecture.test.ts (twice), then each file alone (twice). Run the formula-nocodegen project separately on Node 22, because the chained command skipped it after the unit failure.",
+      "command": "bash docs/delivery/test-evidence/DG4/domain/round-6/checks.sh (pnpm -r typecheck; pnpm -r build; pnpm lint; npx vitest run --configLoader runner --project unit-node --project unit-web && npx vitest run --configLoader runner --project unit-formula-nocodegen); Node 22 re-runs: npx vitest run --configLoader runner --project unit-web <the 4 files> + --project unit-node apps/api/src/architecture.test.ts (x2); --project unit-web src/pages/raid/raid.test.tsx alone (x2); p2-blank-forms, g1-agreements, traceability each alone (x2); --project unit-formula-nocodegen",
+      "environment": "Clone $TMPDIR/review-dom; Node 22.22.2 (/opt/node22/bin) and Node 24.21.0; load average 17-34 (three concurrent reviews).",
+      "expected": "Typecheck, build and lint exit 0 on both versions. The unit projects pass, and every failure is explained by load and passes when re-run alone.",
+      "actual": "Typecheck, build and lint exit 0 on Node 22 and Node 24. Their only 'warn'-like lines are Vite's chunk-size advice and the lint command text '--max-warnings=0'.\n\nNode 24: unit 152 files and 2917/2917 passed, then formula-nocodegen 259 passed and 2 skipped, exit 0. The 2 skips are the by-design NOCODEGEN cases of fuzz.test.ts, the same as in rounds 4-5. The log also has npm 'Unknown project config' warnings and one Fastify FSTDEP022 deprecation warning; neither is a failure.\n\nNode 22, full run at load ~30: exit 1, 5 failed and 2912 passed (2917), in 5 of 152 files.\n- apps/api/src/architecture.test.ts › 'every import respects dependsOn…': a 30 s test timeout, plus a Vitest '[vitest-worker]: Timeout calling onTaskUpdate' RPC error.\n- p2-blank-forms.test.tsx › 'gate submission note (en) whitespace-only': findByRole 'Submit for decision' not found within the default timeout.\n- g1-agreements.test.tsx › 'approving G1 needs the three labelled confirmations': 'Record decision' not found.\n- raid.test.tsx › 'action register: source, follow-up date and overdue flag': link 'Synthetic call the vendor' not found.\n- traceability.test.tsx › 'workstreams list WS-nn codes': 'Assign initiative' not found.\nThe chained formula-nocodegen project therefore did not run in that command.\n\nThe re-runs, all on Node 22:\n- The 4 web files together plus architecture.test.ts, at load ~20. Run 1: web 2 failed / 110 passed (raid, p2-blank-forms), architecture 138/138. Run 2: web 1 failed / 111 passed (raid), architecture 138/138.\n- raid.test.tsx alone: 18/18 twice.\n- p2-blank-forms (52), g1-agreements (10) and traceability (32), each alone: all passed, twice.\n- formula-nocodegen: 259 passed and 2 skipped (by design), exit 0.\n\nAll five are timing failures under the concurrent-review load. None of these files changed in the repair diff, and Node 24 passed all five in its full run. raid.test.tsx is the same load flake I disclosed in round 5, and architecture.test.ts's load timeout is the one disclosed in rounds 4-5. I raise no finding for them.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/checks.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/typecheck-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/typecheck-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/build-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/build-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/lint-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/lint-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node24.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-failures-rerun-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-failures-rerun-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-raid-alone-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-raid-alone-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-web-alone-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-web-alone-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/test-node22-formula-nocodegen.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-03-integration-acceptance-and-in-process-probe",
+      "procedure": "Run the full integration project: the backend suites, the QA acceptance suites A01-A14 and my in-process probe zz-domain-r6.test.ts (my round-4/5 probe R4-1…R4-8, unchanged except its file name). The probe is copied into the clone only, and removed after the run.",
+      "command": "QA_PG_PORT=26410 bash docs/delivery/test-evidence/DG4/domain/round-6/integ.sh (MTH_PORT_POOL 26411-26499; tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration)",
+      "environment": "Clone $TMPDIR/review-dom; Node 24.21.0; disposable PostgreSQL 16 created by the candidate's with-pg.sh on port 26410.",
+      "expected": "Every integration test passes, the probe included.",
+      "actual": "209 files and 1985/1985 tests passed, exit 0. zz-domain-r6.test.ts passed 10/10. Afterwards the probe file was gone from the clone.\nEvery error-like line in the log is explained:\n- test names that contain 'error' or 'fail';\n- the stdout of passing fault-injection tests: BE17 db-econnreset, which injects a database ECONNRESET and asserts the 500 and its log; BE18 Q7 idp_unavailable; and F-DG2-412's aborted or stalled bodies;\n- three npm 'Unknown project config' warnings.\nNo test failed, was skipped or timed out.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/integ.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/zz-domain-r6.test.ts",
+        "docs/delivery/test-evidence/DG4/domain/round-6/integration-full-run-1.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-04-source-templates-registers-status",
+      "procedure": "Re-run dom-api.mjs on the real stack. It covers: T10's six areas and their RAG rules; T11, and T12 with one accountable person per deliverable; the T13, T14, T15 and T16 columns and closed lists; the five forum layers; the seven adoption indicators; G5 and G6; status separation; closure refused while value is pending; authorization. Separately, compare the seeded T10 and forum-layer source texts in the migrations with the playbook tables, word for word.",
+      "command": "WORKER=1 PROBES='dom-r5b dom-api dom-ui dom-gross4 dom-pct' bash docs/delivery/test-evidence/DG4/domain/round-6/with-stack.sh bash …/round-6/run-probes.sh (stack-run-1); read packages/db/migrations/0056_p4_dashboards_t10.sql and 0044_p4_forums_meetings.sql next to docs/source/playbook.md B0093 and B0095",
+      "environment": "Disposable stack: PostgreSQL 16 on 127.0.0.1:26401; the API serving the built web on :26402 with AUTH_MODE=dev and the synthetic dev seed; the real worker; Node 24.21.0.",
+      "expected": "Every assertion passes, and the seeded source texts equal the playbook.",
+      "actual": "dom-api: 49/49 PASS, exit 0, with the same assertion ids as round 5.\n- T11 equals B0099.\n- T12 equals B0101: one A per deliverable, and a missing or second A is refused.\n- The five layers and their cadence text equal B0093.\n- The seven indicators are available by name (B0109-B0115).\n- T13 refuses 'Hostile' and has seven columns.\n- T14 has ten columns, and pending value is excluded from the validated total.\n- T15 has nine columns, and Probability is n/a except for a Risk.\n- T16 has nine columns, and its ask has seven elements, including 'why now'.\n- A no-data T10 area is never green.\n- Closure without validated value gets 422, and ADM gets 403.\nThe log's single 'error|exception' match is the B0115 indicator name 'Exception / workaround rate', asserted present.\nThe direct read confirms the source texts. t10_area_definition seeds the six B0095 areas with 'What to show' and 'RAG logic' word for word, for example 'RAG based on target trajectory, not activity completion' and 'Red if executive decision overdue', each with its own rule and an Arabic text flagged ar_provisional. forum_template seeds the five B0093 layers with cadence, purpose, participants and outputs word for word, for example 'Rapid Response / Sprint', 'Daily / 2-3x week'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-api.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-api.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/with-stack.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/run-probes.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/stack-run-1.log",
+        "packages/db/migrations/0056_p4_dashboards_t10.sql",
+        "packages/db/migrations/0044_p4_forums_meetings.sql"
+      ]
+    },
+    {
+      "id": "DOM-R6-05-ui-en-ar",
+      "procedure": "Re-run dom-ui.mjs in EN (LTR) and AR (RTL) on the real built web: the T10 dashboard, the registers (T11-T16), forums, adoption indicators, G5 and G6, closure, My Work, traceability, the dashboards hub, the Executive Overview and workspace header, the provisional wordmark and the no-certification text. Then inspect screenshots by eye.",
+      "command": "same stack run as DOM-R6-04 (dom-ui); screenshots in docs/delivery/test-evidence/DG4/domain/round-6/screens/",
+      "environment": "Same disposable stack; Chromium from PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers.",
+      "expected": "Every assertion passes in both languages. The screens show distinct Zero, Unknown and n/a, separate statuses, and a provisional wordmark.",
+      "actual": "dom-ui: 38/38 PASS, exit 0, with the same ids as round 5. The only 'error'-like match is the asserted indicator name. The six probes saved 57 EN and 57 AR screenshots.\nI viewed ar-transformation-dashboard-T10.png. It is RTL and shows the six areas with their RAG rules in Arabic, labelled 'التسميات العربية مؤقتة'. A known zero reads 'صفر معروف', next to 'لا ينطبق' (n/a) and 'غير معروف' (Unknown), and 'حدود افتراضية' marks the default thresholds. The wordmark carries 'مؤقت'.\nI also viewed en-closure-status.png. Delivery, validated value, BAU acceptance and closure are four separate statuses. 'G6 approval alone closes nothing', and value pending Finance validation needs an approved transition decision. The transition decision is labelled a business approval that 'never approves an engineering delivery gate'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-ui.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-ui.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-transformation-dashboard-T10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-transformation-dashboard-T10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-closure-status.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-closure-status.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-executive-overview.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-executive-overview.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-workspace-header.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-workspace-header.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-forums-five-layers.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-forums-five-layers.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-gate-G5.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-gate-G5.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-gate-G6.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-gate-G6.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-adoption-indicators.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-adoption-indicators.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-about.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-about.png"
+      ]
+    },
+    {
+      "id": "DOM-R6-06-value-basis-and-kpi-units-real-stack",
+      "procedure": "Re-run dom-gross4 and dom-pct in the combined stack run. Run dom-kpiunit alone on a fresh stack, because in round 5 the worker backlog from the earlier probes failed it in the combined run. These probes are regressions for F-DG4-122/123/125/126/127 and D-124.",
+      "command": "dom-gross4 and dom-pct in stack-run-1; WORKER=1 PROBES='dom-kpiunit' bash …/round-6/with-stack-trace.sh bash …/round-6/run-probes.sh (stack-run-2, fresh stack; identical to with-stack.sh except 'node --trace-warnings' for the worker)",
+      "environment": "Disposable stacks as in DOM-R6-04, each with the real worker.",
+      "expected": "Every assertion passes, with the same ids as round 5.",
+      "actual": "dom-gross4: 131/131 PASS. It covers:\n- 90/300/45 on T10, the Overview, Finance and the header, and never 435;\n- drill sums equal the headlines;\n- red RAG lines at '100 %';\n- the profit-and-cash headlines are n/a with their reason;\n- 25 %, -20 % and 12.5 % gaps render correctly;\n- the AR provisional basis note.\ndom-pct: 4/4 PASS ('12 %').\ndom-kpiunit, run alone on a fresh stack: 51/51 PASS, exit 0, in EN and AR: '12 %', '12 % of users' and '1.5' on T10, its drill-downs, the Overview and the adoption dashboard.\nEvery id matches round 5, and the worker logs have 0 error-level lines. Both worker logs print the start-up 'TimeoutNaNWarning'. In rounds 4-5 I called it not DG4 behaviour; this round I traced it, and it is a real defect (F-DG4-128, DOM-R6-10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-gross4.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-gross4.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-pct.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-pct.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-kpiunit.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-kpiunit.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/stack-run-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/with-stack-trace.sh"
+      ]
+    },
+    {
+      "id": "DOM-R6-07-F-DG4-143-144-regressions",
+      "procedure": "Re-run dom-r5b.mjs, my round-5 probe for F-DG4-143 and F-DG4-144, on the real stack in EN and AR. World C covers the Value RAG lines by status (n/a, unknown, valued). World U is a business unit with 53 transformations, plus an empty unit, on the Executive Overview, Finance and adoption dashboards.",
+      "command": "dom-r5b in stack-run-1 (first probe of the run)",
+      "environment": "Same disposable stack as DOM-R6-04.",
+      "expected": "57/57, the same ids as round 5.",
+      "actual": "57/57 PASS, exit 0, with the same ids as round-5 run 2. An n/a Value RAG line reads 'Not applicable' / 'لا ينطبق' with its reason and never 'Unknown'. An unknown line reads 'Unknown' / 'غير معروف'. With 53 transformations, narrowing by status or phase lifts the 50 limit, and 'none_matching' and 'none' stay distinct on all three dashboards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-r5b.mjs",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-r5b.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-r5-C-t10-na-line.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-r5-C-t10-na-line.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/en-r5-U-overview-b-active.png",
+        "docs/delivery/test-evidence/DG4/domain/round-6/screens/ar-r5-U-overview-b-active.png"
+      ]
+    },
+    {
+      "id": "DOM-R6-08-repair-diff",
+      "procedure": "Inspect the whole repair diff 3e3a06e..1e0dc5d (T-DG4-FE-R9B, D-129, D-130). Confirm that it changes tests only and weakens no assertion of F-DG2-530/570/580 or D-077.",
+      "command": "git diff --stat 3e3a06e..1e0dc5d -- apps packages tests e2e db docs/architecture scripts tools .github; git diff --numstat 3e3a06e..1e0dc5d -- apps/web/src/auth/; git diff 3e3a06e..1e0dc5d -- apps/web/src/auth/; read D-129, D-130 and the FE-R9B handback",
+      "environment": "Repository at 0e499f2.",
+      "expected": "Only the three session test files change in the code areas. Every earlier assertion is kept or strengthened, and the product is unchanged.",
+      "actual": "In apps, packages, tests, e2e, db, docs/architecture, scripts, tools and .github, only three files change: session-bound.test.tsx (+66/-7), session-generation.test.tsx (+6/-1) and session-identity.test.tsx (+8/-2). No product, API, contract, migration or register change.\n\nsession-bound.test.tsx:\n- The per-call advanceClock spy is replaced by a file-wide controlled Date.now clock.\n- Y1c keeps afterPost.filter(isMe).toHaveLength(2). It adds new checks: the same session generation and user; 'GET /api/v1/me' as the first request after the 201; the first page GET is the created record; and no /me after it.\n- A new Y1c case crosses SESSION_RECHECK_MS at the record's detail GET. It asserts 2 /me before the crossing, and after it more than one page GET, a /me first and exactly one /me. That is D-077 item 3 asserted directly.\n\nsession-generation.test.tsx holds Date.now still from the start and moves it 20 s only at the existing step. Its assertions are unchanged.\n\nsession-identity.test.tsx answers 403 by URL ('/api/v1/organizations') instead of 'the next two fetch calls', so a revalidation /me can no longer take a scripted 403. Its assertions are unchanged: [403,403], no reset, the phase active, the path, the secret visible, and /me cached.\n\nNothing is weakened. The F-DG2-530/570/580 bounds are now asserted more strictly and independently of wall-clock speed. The changed files passed on both Node versions in the full unit runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "apps/web/src/auth/session-bound.test.tsx",
+        "apps/web/src/auth/session-identity.test.tsx",
+        "apps/web/src/auth/session-generation.test.tsx",
+        "docs/delivery/handbacks/DG4/T-DG4-FE-R9B-frontend-ux-engineer.md",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "DOM-R6-09-operating-logic-observations-and-disclosures",
+      "procedure": "Confirm the assignment's operating-logic list through the integration and acceptance suites, my API probes and my in-process probe. The list covers: calculations, benefits, Finance validation, benefit types, SLAs, escalation, the blocker rule, meetings, corrective actions, status separation, BAU, after-closure behaviour, G5 and G6, waivers, the Modular G3 waiver, change requests, dashboards and traceability. Judge QA-C O-2 and QA-B against the sources, and judge the register's partial-coverage disclosures.",
+      "command": "integration run as DOM-R6-03; dom-api as DOM-R6-04; python3 read of requirements.csv (137 DG4 rows, acceptance and notes); git diff 3e3a06e..1e0dc5d -- docs/delivery/requirements.csv (empty)",
+      "environment": "As DOM-R6-03 and DOM-R6-04.",
+      "expected": "The rules match their sources, and the observations and partial disclosures are acceptable.",
+      "actual": "The A01-A14 acceptance and backend suites pass 1985/1985. No API, worker, shared or DB module changed since round 5. The rules hold:\n- RAG comes from the KPI trajectory, never from completion; a KPI with actuals but no trajectory stays Unknown (B0095, M0247).\n- Forecast, submitted, upside and scenario values never count as validated.\n- Finance validation is FIN-only, and an amendment keeps the chain.\n- A non-financial benefit is n/a.\n- Allocations over 100 % are refused, and links over 110 %.\n- Escalation happens once, to the next authority, in working days on the calendar (B0099 SLAs).\n- The blocker rule (N=2) creates exactly one T16 ask, also on a re-run (B0102 'Escalate decisions, not status').\n- Quorum is enforced, and published minutes are immutable.\n- There is one corrective case per source.\n- Closure is refused while value is pending unless a transition decision exists.\n- BAU acceptance is by the receiver only, and it creates the recurring reviews once.\n- After closure, the areas, KPI actuals and CI backlog continue, and reopening keeps the originals.\n- G5 requires risk closure and the scale scope; G6 requires ownership transfer.\n- Waivers carry an expiry and a compensating action.\n- The Modular G3 waiver (D-110, ADR-0021 W1-W7) covers missing links only, and approval is refused when it is revoked or expired.\n- A change request keeps its originals.\n\nQA-C O-2 (a transformation stays draft through G1-G6 until it is activated) is acceptable. The playbook defines phases and gates (B0010-B0016), not a record lifecycle. The DG1-approved explicit transition draft->active is the activation, and phase and gate progress are shown separately (the screenshots show 'Draft – not submitted' next to the phase).\n\nQA-B (409 on approving a Draft gate) is the DG2-approved state-conflict contract. REQ-S04-010 only requires a rejection, so the code is not a source deviation.\n\nThe register's partial disclosures (PB-065, PB-066, PB-075, S04-010, S04-014, S07-005, S07-007, S07-015, S08-006, S08-015, S13-003, S15-008, S20-011) are byte-unchanged since round 5, honest and acceptable. REQ-S16-005's acceptance (A13: exactly once after a mid-job kill) passes. Its production idle-load defect is reported separately as F-DG4-128 and does not falsify that acceptance text.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/integration-full-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-api.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/dom-r5b.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "DOM-R6-10-worker-supervise-interval",
+      "procedure": "Trace the worker's start-up 'TimeoutNaNWarning' and measure its effect. Start a fresh disposable stack with the real worker under node --trace-warnings and wait 15 s. Sample pg_stat_database (db mth) transactions and the worker's /proc CPU ticks over 20 s with the worker running, then over 20 s with it SIGSTOPped as the baseline. Then a control run: the same, with only 'superviseIntervalSeconds: 60' added to the built worker's PgBoss options in the disposable clone, reverted afterwards (cmp identical). Read apps/worker/src/main.ts, queues/platform.ts and pg-boss 11.0.0's attorney.js and boss.js.",
+      "command": "WORKER=1 bash docs/delivery/test-evidence/DG4/domain/round-6/with-stack-trace.sh bash …/round-6/measure-supervise.sh; the same with the control patch (measure-supervise-control60.log); git grep -A12 'new PgBoss' 475f549^ -- apps/worker/src",
+      "environment": "Disposable stacks (PG 26401, API 26402, synthetic dev seed, the real worker, no probe activity); Node 24.21.0; pg-boss 11.0.0 as pinned in the lockfile; load average ~13-17.",
+      "expected": "The measurement and the control run exit 0 and show where the idle load comes from. Any defect is recorded as a finding.",
+      "actual": "Both runs exit 0, so this probe PASSES. What it measured is a defect, raised as F-DG4-128 (Medium, not mandatory, REQ-S16-005, owner backend-workflow-engineer).\n\nThe trace: setInterval ← Boss.start (pg-boss src/boss.js:46) ← PgBoss.start ← apps/worker/dist/main.js. main.ts calls createBoss(config.databaseUrl!) with no options. createBoss sets supervise: true and passes superviseIntervalSeconds only when a caller gives it. pg-boss 11.0.0 defaults the maintenance, monitor and queueCache intervals, but not the supervise interval. The result is NaN, which Node turns into 1 ms, and supervision passes run back to back.\n\nThe measurements, each over 20 s:\n- shipped worker, idle: 126,835 transactions (6,341/s) and 1,175 CPU ticks (about 0.59 core). The sampled statements are pg-boss's 'UPDATE pgboss.queue SET monitor_on/maintain_on = now() …' and its getQueues SELECT;\n- worker SIGSTOPped: 1,090 (54/s) and 0 ticks;\n- control (60 s interval): 333 (16/s) and 13 ticks, and the warning is gone.\n\nThe functional behaviour is correct, and the integration tests never use this default (they set superviseIntervalSeconds: 1). The configuration predates DG4 (475f549^), but REQ-S16-005's final gate is DG4. I judge it non-blocking for DG4, because nothing is lost, miscalculated or exposed, but it should be repaired: in production it is continuous database churn and CPU use. My round-4 and round-5 records dismissed this warning; that was an error, corrected here.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-005"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise-control60.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/with-stack-trace.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/stack-run-2.log",
+        "apps/worker/src/main.ts",
+        "apps/worker/src/queues/platform.ts"
+      ]
+    },
+    {
+      "id": "DOM-R6-11-hygiene",
+      "procedure": "Check: no CDN; no certification claim; #0078FF only as a provisional token; the provisional wordmark; the provisional Arabic labels; DG references in product code.",
+      "command": "bash docs/delivery/test-evidence/DG4/domain/round-6/hygiene.sh",
+      "environment": "Clone $TMPDIR/review-dom at 0e499f2; Node 24.21.0.",
+      "expected": "no-cdn PASS, no affirmative claim, #0078FF only as a provisional token, and product logic independent of the DG records.",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.\nThe claim grep exits 0, but its only hits are tokens.json's $comment and its built copy: 'They are NOT verified or official Mobily colours; #0078FF is a provisional brand token'. That is a negation my filter does not exclude, so no affirmative claim exists.\n#0078FF appears only in the tokens (provisional: true), the branding schema and module, and the provisional brand text. The wordmark is 'Provisional' / 'مؤقت', visible in my EN and AR screenshots. The Arabic labels carry 'التسميات العربية مؤقتة' and 'تسميات الأساس العربية مؤقتة …' on screen.\nThe DG references in product code are finding and task ids in comments only. This matches round 5; the repair touches no product file.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/hygiene.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-6/hygiene.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-12-environmental-residuals",
+      "procedure": "Confirm that no requirement of mine depends on a live registry, live CI or Keycloak, and note the residuals.",
+      "environment": "Offline sandbox; AUTH_MODE=dev; disposable PostgreSQL.",
+      "expected": "PASS on the offline/config surface, with the residuals noted.",
+      "actual": "REQ-DLV-042 and REQ-DLV-025 are not in my list. All my P4 checks ran offline, with AUTH_MODE=dev on disposable PostgreSQL. The residuals stay as D-049 (Keycloak), D-057 (live registry) and D-058 (live CI) record them, and no check of mine claims a pass on their behalf.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-6/env.txt"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG4-128"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/domain/round-6/env.txt",
+    "docs/delivery/test-evidence/DG4/domain/round-6/candidate.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/validators-exit-codes.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/test-node22.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/test-node24.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/integration-full-run-1.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/stack-run-1.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/stack-run-2.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/dom-r5b.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/dom-api.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/dom-ui.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/dom-gross4.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/dom-kpiunit.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise-control60.log",
+    "docs/delivery/test-evidence/DG4/domain/round-6/hygiene.log",
+    "docs/delivery/reviews/DG4/round-6/domain-reviewer.findings.json"
+  ],
+  "reviewed_at": "2026-10-12T14:25:00Z",
+  "summary": "PASS, with one new non-blocking finding. Candidate f966fe57 (1472 files) was verified in a complete clone, before and after the runs. The FE-R9B repair changes three session tests only and weakens nothing: Y1c keeps its 2-/me bound and adds stricter order checks, and a new case asserts D-077 item 3 directly. Validators PASS (register DG4; historical DG3, DG2, DG1). Node 24: unit 2917/2917, plus formula 259 with 2 by-design skips. Node 22: 5 load failures (architecture 30 s timeout; four web findBy timeouts) at load ~30, each passing alone twice, disclosed. Integration 1985/1985, my in-process probe included. Real-stack probes, the same ids as round 5: dom-api 49/49, dom-ui 38/38 (57 EN + 57 AR screenshots), dom-gross4 131/131, dom-pct 4/4, dom-kpiunit 51/51, dom-r5b 57/57. The T10 areas and forum layers are seeded word for word from B0095 and B0093. New: F-DG4-128 (Medium, not mandatory, REQ-S16-005). The shipped worker leaves pg-boss's superviseIntervalSeconds unset, so supervision runs every 1 ms: about 6,300 database transactions/s and 0.6 core while idle, against 16/s with a 60 s interval. It predates DG4, and my earlier rounds dismissed its warning wrongly."
+}
