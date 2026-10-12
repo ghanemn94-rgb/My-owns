@@ -1,0 +1,125 @@
+mutant M4 applied; diff vs candidate:
+383,384c383
+<     if (pendingCheck) await pendingCheck;
+<     if (probesIdle) await probesIdle;
+---
+>     void probesIdle;
+--- uptime:  16:57:24 up 1 day, 22:56,  0 user,  load average: 1.33, 1.44, 1.73
+--- command: npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/home/user/wt/dg4-fe-r10[39m
+
+ [31m❯[39m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 2755[2mms[22m[39m
+[31m   [31m×[31m F-DG4-146 page GETs wait for the identity check in flight (en)[2m > [22mW1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held[39m[33m 780[2mms[22m[39m
+[31m     → expected [ …(2) ] to deeply equal [][39m
+[31m   [31m×[31m F-DG4-146 page GETs wait for the identity check in flight (en)[2m > [22mW2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first[39m[33m 665[2mms[22m[39m
+[31m     → expected [ Array(1) ] to deeply equal [][39m
+[31m   [31m×[31m F-DG4-146 page GETs wait for the identity check in flight (ar)[2m > [22mW1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held[39m[33m 592[2mms[22m[39m
+[31m     → expected [ …(2) ] to deeply equal [][39m
+[31m   [31m×[31m F-DG4-146 page GETs wait for the identity check in flight (ar)[2m > [22mW2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first[39m[33m 610[2mms[22m[39m
+[31m     → expected [ Array(1) ] to deeply equal [][39m
+[31m   [31m×[31m F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done[2m > [22mW3: a GET waits for a GET /me probe in flight (no identity check pending)[39m[32m 54[2mms[22m[39m
+[31m     → expected [ Array(1) ] to deeply equal [][39m
+[31m   [31m×[31m F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done[2m > [22mW4: a GET waits for a pending identity check (no GET /me probe in flight)[39m[32m 54[2mms[22m[39m
+[31m     → expected [ Array(1) ] to deeply equal [][39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx[2m > [22mF-DG4-146 page GETs wait for the identity check in flight (en)[2m > [22mW1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx[2m > [22mF-DG4-146 page GETs wait for the identity check in flight (ar)[2m > [22mW1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held
+[31m[1mAssertionError[22m: expected [ …(2) ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "GET /api/v1/organizations/01920000-0000-7000-9000-000000000001/business-units?limit=100",[39m
+[31m+   "GET /api/v1/transformations?sort=updatedAt%3Adesc&limit=25",[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/auth/session-wait.test.tsx:[2m130:70[22m[39m
+    [90m128| [39m      [35mconst[39m whileHeld [33m=[39m s[33m.[39mrequests[33m.[39m[34mslice[39m([35mfrom[39m)[33m;[39m
+    [90m129| [39m      [34mexpect[39m(whileHeld[33m.[39m[34mfilter[39m(isMe)[33m.[39mlength)[33m.[39m[34mtoBeGreaterThanOrEqual[39m([34m1[39m)[33m;[39m
+    [90m130| [39m      expect(whileHeld.filter((r) => !isMe(r)).map(describeRequest)).t…
+    [90m   | [39m                                                                     [31m^[39m
+    [90m131| [39m      [34mexpect[39m(screen[33m.[39m[34mqueryByText[39m([32m"TR-B-OWN"[39m))[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m132| [39m      [34mexpect[39m([34mheader[39m())[33m.[39m[34mtoBe[39m([32m"Synthetic User A"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx[2m > [22mF-DG4-146 page GETs wait for the identity check in flight (en)[2m > [22mW2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx[2m > [22mF-DG4-146 page GETs wait for the identity check in flight (ar)[2m > [22mW2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+[31m[1mAssertionError[22m: expected [ Array(1) ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "GET /api/v1/transformations?sort=updatedAt%3Adesc&limit=25",[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/auth/session-wait.test.tsx:[2m154:70[22m[39m
+    [90m152| [39m      [35mconst[39m whileHeld [33m=[39m s[33m.[39mrequests[33m.[39m[34mslice[39m([35mfrom[39m)[33m;[39m
+    [90m153| [39m      [34mexpect[39m(whileHeld[33m.[39m[34mfilter[39m(isMe))[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m154| [39m      expect(whileHeld.filter((r) => !isMe(r)).map(describeRequest)).t…
+    [90m   | [39m                                                                     [31m^[39m
+    [90m155| [39m      s[33m.[39m[34mreleaseMe[39m()[33m;[39m
+    [90m156| [39m      [35mawait[39m [34mwait[39m([34m300[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx[2m > [22mF-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done[2m > [22mW3: a GET waits for a GET /me probe in flight (no identity check pending)
+[31m[1mAssertionError[22m: expected [ Array(1) ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "GET /api/v1/transformations?limit=1",[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/auth/session-wait.test.tsx:[2m174:43[22m[39m
+    [90m172| [39m    [35mconst[39m [35mget[39m [33m=[39m [34mapiRequest[39m([32m"/api/v1/transformations?limit=1"[39m)[33m;[39m
+    [90m173| [39m    [35mawait[39m [34mwait[39m([34m50[39m)[33m;[39m
+    [90m174| [39m    [34mexpect[39m(requests[33m.[39m[34mmap[39m(describeRequest))[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   | [39m                                          [31m^[39m
+    [90m175| [39m    probe[33m.[39m[34mresolve[39m()[33m;[39m
+    [90m176| [39m    [35mawait[39m probing[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m unit-web [49m[39m src/auth/session-wait.test.tsx[2m > [22mF-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done[2m > [22mW4: a GET waits for a pending identity check (no GET /me probe in flight)
+[31m[1mAssertionError[22m: expected [ Array(1) ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "GET /api/v1/transformations?limit=1",[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/auth/session-wait.test.tsx:[2m191:43[22m[39m
+    [90m189| [39m    [35mconst[39m [35mget[39m [33m=[39m [34mapiRequest[39m([32m"/api/v1/transformations?limit=1"[39m)[33m;[39m
+    [90m190| [39m    [35mawait[39m [34mwait[39m([34m50[39m)[33m;[39m
+    [90m191| [39m    [34mexpect[39m(requests[33m.[39m[34mmap[39m(describeRequest))[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   | [39m                                          [31m^[39m
+    [90m192| [39m    check[33m.[39m[34mresolve[39m()[33m;[39m
+    [90m193| [39m    [35mawait[39m checking[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m   Start at [22m 16:57:25
+[2m   Duration [22m 5.94s[2m (transform 1.47s, setup 110ms, collect 2.24s, tests 2.76s, environment 474ms, prepare 118ms)[22m
+
+vitest exit=1
+restored apps/web/src/api/client.ts sha256=67f5702b91c4dccf21057aee37092bbbc9ee4b608613aa04de14ba6c4ed0371f
