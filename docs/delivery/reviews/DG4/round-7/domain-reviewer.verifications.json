@@ -1,0 +1,29 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-128",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527 (source dab4562, HEAD 7294d6b), in a complete disposable clone under $TMPDIR, on disposable PostgreSQL 16 clusters, with synthetic data only. The repair T-DG4-BE-R6 is in apps/worker/src/main.ts, apps/worker/src/queues/platform.ts, packages/config/src/{index,load}.ts and .env.example. It adds one new integration test and a preload probe; no API contract or migration changed (repair-diff.log).\n\n(1) My round-6 reproduction, re-run with only path and label changes, on the real built worker with the shipped defaults (WORKER_SUPERVISE_INTERVAL_SECONDS unset), under node --trace-warnings. Idle: 335 db transactions in 20 s (16/s) and 13 worker CPU ticks, against 6,341/s and 1,175 ticks in round 6. Baseline with the worker SIGSTOPped: 61 (3/s), 0 ticks. That equals my round-6 60 s control (16/s, 13 ticks). The worker logs 'mth-worker started ... superviseIntervalSeconds:60', and its log has 0 'Warning' lines (no TimeoutNaNWarning). The same holds in stack-run-2 (traced worker, dom-kpiunit 51/51: KPI jobs are still processed at the 60 s cadence) and in stack-run-1 (0 worker errors).\n\n(2) Out-of-range and non-numeric values, on the built dist entry point. The worker refuses to start with exit 78, names the variable and never logs 'started' for each of: ' ', 0, 601, -5, 1.5, abc, NaN, Infinity and 60s. It also refuses abc and 0 in a clean NODE_ENV=production environment. Unset and empty values give 60. The values 1, 17, 60 and 600 are honoured. The lenient coercions '1e2' (100), '0x3C' (60) and ' 60 ' (60) give in-range integers; they are harmless and are not a defect. The 'NODE_ENV=production, unset' line's exit 78 is explained in worker-config-production.log: my stack harness exports AUTH_MODE=dev, which production refuses. In a clean environment the unset value passes config and fails only at the deliberately unreachable database.\n\n(3) A13 still passes: a13-job-idempotency.test.ts 5/5, including 'kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once'. The full integration project passes 1994/1994 (round 6's 1985 plus the 9 new supervise-cadence tests).\n\n(4) The new test detects the defect. In the clone only, I removed the 'superviseIntervalSeconds,' line from createBoss's PgBoss options, which re-introduces F-DG4-128. supervise-cadence.test.ts then failed 4/9, with a TimeoutNaNWarning seen and the supervise delay [NaN] instead of [60000]. After the revert it passes 9/9 and git diff is empty.\n\nResidual, as disclosed in D-132 and not a defect: Compose does not pass WORKER_SUPERVISE_INTERVAL_SECONDS, so Compose uses the 60 s default. Its operations documentation is left to DG7.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-7/measure-supervise.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-7/measure-supervise.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/measure-supervise-worker.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/with-stack-trace.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-7/with-stack.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-7/worker-config-refusal.sh",
+        "docs/delivery/test-evidence/DG4/domain/round-7/worker-config-refusal.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/worker-config-production.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/mutation-supervise-cadence.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/integration-full-run-1.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/stack-run-2.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/stack-run-2-worker.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/repair-diff.log",
+        "docs/delivery/test-evidence/DG4/domain/round-6/measure-supervise.log",
+        "apps/worker/src/queues/platform.ts",
+        "apps/worker/src/main.ts",
+        "packages/config/src/load.ts"
+      ]
+    }
+  ]
+}
