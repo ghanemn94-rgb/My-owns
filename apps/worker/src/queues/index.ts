@@ -22,6 +22,7 @@ import type { QueueSpec } from "./spec.ts";
 
 export {
   createBoss,
+  superviseIntervalSecondsOf,
   OUTBOX_RELAY,
   PURGE_CRON,
   QUEUES,

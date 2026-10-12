@@ -1,0 +1,162 @@
+# T-DG4-BE-R6: the new test run against the ORIGINAL source (HEAD 8e2375c versions of: apps/worker/src/main.ts apps/worker/src/queues/platform.ts apps/worker/src/queues/index.ts packages/config/src/index.ts packages/config/src/load.ts); new test files kept
+Mon Oct 12 17:02:42 UTC 2026
+port-policy: PostgreSQL listening on port 26160 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg4-be-r6
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5i2yt7_8a50e899 (server_encoding UTF8); applied 61 migrations to a fresh database
+(node:141) TimeoutNaNWarning: NaN is not a number.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |integration| apps/worker/test/integration/supervise-cadence.test.ts (9 tests | 9 failed) 26889ms
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning 3413ms
+     → expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS 4495ms
+     → expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts) 3948ms
+     → expected +0 to be 78 // Object.is equality
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts) 4262ms
+     → expected +0 to be 78 // Object.is equality
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts) 3907ms
+     → expected +0 to be 78 // Object.is equality
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts) 4474ms
+     → expected +0 to be 78 // Object.is equality
+   × createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s 324ms
+     → expected [ NaN ] to deeply equal [ 60000 ]
+   × createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence 27ms
+     → Cannot read properties of undefined (reading 'superviseIntervalSeconds')
+   × createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss 1ms
+     → (0 , superviseIntervalSecondsOf) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning
+AssertionError: expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- TimeoutNaNWarning[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":60000,"pgBossSupervise":false}[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":"NaN","pgBossSupervise":true}[39m
+[31m+ (node:204) TimeoutNaNWarning: NaN is not a number.[39m
+[31m+ Timeout duration was set to 1.[39m
+[31m+ (Use `node --trace-warnings ...` to show where the warning was created)[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":30000,"pgBossSupervise":false}[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":600000,"pgBossSupervise":false}[39m
+[31m+[39m
+
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:82:28
+     80|   it("with the shipped defaults: pg-boss supervision every 60 s, every…
+     81|     const run = await runMain({});
+     82|     expect(run.stderr).not.toContain("TimeoutNaNWarning");
+       |                            ^
+     83|     expect(run.stderr).not.toMatch(/NaN is not a number/);
+     84|     const supervise = run.intervals.filter((i) => i.pgBossSupervise);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS
+AssertionError: expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- TimeoutNaNWarning[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":60000,"pgBossSupervise":false}[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":"NaN","pgBossSupervise":true}[39m
+[31m+ (node:217) TimeoutNaNWarning: NaN is not a number.[39m
+[31m+ Timeout duration was set to 1.[39m
+[31m+ (Use `node --trace-warnings ...` to show where the warning was created)[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":30000,"pgBossSupervise":false}[39m
+[31m+ MTH_INTERVAL_PROBE {"ms":600000,"pgBossSupervise":false}[39m
+[31m+[39m
+
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:98:28
+     96|   it("honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS", async (…
+     97|     const run = await runMain({ WORKER_SUPERVISE_INTERVAL_SECONDS: "17…
+     98|     expect(run.stderr).not.toContain("TimeoutNaNWarning");
+       |                            ^
+     99|     expect(run.intervals.filter((i) => i.pgBossSupervise)).toEqual([{ …
+    100|     expect(run.stdout).toContain('"superviseIntervalSeconds":17');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts)
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts)
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts)
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts)
+AssertionError: expected +0 to be 78 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 78[39m
+[31m+ 0[39m
+
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:108:24
+    106|     async (value) => {
+    107|       const run = await runMain({ WORKER_SUPERVISE_INTERVAL_SECONDS: v…
+    108|       expect(run.code).toBe(78);
+       |                        ^
+    109|       expect(run.stderr).toContain("WORKER_SUPERVISE_INTERVAL_SECONDS …
+    110|       expect(run.intervals.filter((i) => i.pgBossSupervise)).toEqual([…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s
+AssertionError: expected [ NaN ] to deeply equal [ 60000 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   60000,[39m
+[31m+   NaN,[39m
+[2m  ][22m
+
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:151:70
+    149|       createBoss(env.appUrl, { schedule: false, applicationName: "cade…
+    150|     );
+    151|     expect(delays.filter((d) => d.pgBossSupervise).map((d) => d.ms)).t…
+       |                                                                      ^
+    152|     expect(delays.every((d) => typeof d.ms === "number" && Number.isFi…
+    153|     expect(warnings.filter((w) => w.startsWith("TimeoutNaNWarning"))).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence
+TypeError: Cannot read properties of undefined (reading 'superviseIntervalSeconds')
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:158:26
+    156|   it("the worker's loaded configuration (the main.ts call) gives the c…
+    157|     const config = loadConfig("worker", { NODE_ENV: "test", DATABASE_U…
+    158|     expect(config.worker.superviseIntervalSeconds).toBe(60);
+       |                          ^
+    159|     const { delays, warnings } = await startRecorded(() =>
+    160|       createBoss(config.databaseUrl!, {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss
+TypeError: (0 , superviseIntervalSecondsOf) is not a function
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:171:12
+    169| 
+    170|   it("refuses a cadence that is not an integer from 1 to 600 instead o…
+    171|     expect(superviseIntervalSecondsOf(undefined)).toBe(60);
+       |            ^
+    172|     expect(superviseIntervalSecondsOf(1)).toBe(1);
+    173|     expect(superviseIntervalSecondsOf(600)).toBe(600);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  17:02:44
+   Duration  30.23s (transform 487ms, setup 0ms, collect 766ms, tests 26.89s, environment 0ms, prepare 79ms)
+
+exit=1

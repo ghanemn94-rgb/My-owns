@@ -1,0 +1,31 @@
+# T-DG4-BE-R6 BEFORE the fix: HEAD 8e2375cafc25ab1e77d33a55c89426633db4f39b, worker source unmodified (git diff apps/worker packages/config: 0 lines)
+Mon Oct 12 16:58:55 UTC 2026
+v24.21.0
+mth-db migrate: applied 61 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+worker: (node:132) TimeoutNaNWarning: NaN is not a number.
+Timeout duration was set to 1.
+    at new Timeout (node:internal/timers:238:17)
+    at setInterval (node:timers:169:19)
+    at Boss.start (/home/user/wt/dg4-be-r6/node_modules/.pnpm/pg-boss@11.0.0/node_modules/pg-boss/src/boss.js:46:33)
+    at PgBoss.start (/home/user/wt/dg4-be-r6/node_modules/.pnpm/pg-boss@11.0.0/node_modules/pg-boss/src/index.js:127:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (file:///home/user/wt/dg4-be-r6/apps/worker/dist/main.js:28:5)
+{"level":"info","msg":"job schedules registered","scheduled":["approval.escalation_scan","delegation.expiry_sweep","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_series_generate","kpi.reporting_period_open","sustainment.control_check_scan","sustainment.review_scan"],"unscheduled":[],"unhandled":[]}
+{"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh"}
+worker pid: 132
+[worker running] db mth transactions in 20 s: 188362 (9418/s); worker CPU ticks (utime+stime, 1/100 s) in 20 s: 1631
+[worker running] distinct active worker statements sampled 1/s:
+      2  UPDATE pgboss.queue SET maintain_on = now() WHERE name IN('ops.failed') AND EXTRACT( EPOC
+      2  UPDATE pgboss.queue SET maintain_on = now() WHERE name IN('governance.meeting_series_gene
+      1  UPDATE pgboss.queue SET monitor_on = now() WHERE name IN('benefits.value_decided') AND EX
+      1  UPDATE pgboss.queue SET monitor_on = now() WHERE name IN('benefits.finance_queue') AND EX
+      1  UPDATE pgboss.queue SET maintain_on = now() WHERE name IN('sustainment.control_check_scan
+[worker SIGSTOPped (baseline)] db mth transactions in 20 s: 3236 (161/s); worker CPU ticks (utime+stime, 1/100 s) in 20 s: 0
+[worker SIGSTOPped (baseline)] distinct active worker statements sampled 1/s:
+worker application_name connections: 6
+### stack command exit=0
+### worker log errors:
+0
+exit=0

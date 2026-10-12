@@ -1,6 +1,7 @@
 // Platform queues and pg-boss setup (ADR-0008; moved from src/queues.ts by T-DG4-BE-A, p4-work-split §I+C.1). The queue schema itself is installed by `mth-db migrate` (migration 0006, as mth_owner);
 // the worker starts pg-boss with migrate=false, so it fails fast unless the expected schema version is installed, and
 // it only runs DML as mth_app (queues are non-partitioned rows in pgboss.queue).
+import { SUPERVISE_INTERVAL_SECONDS } from "@mth/config";
 import { connectionWithSessionOptions } from "@mth/db";
 import PgBoss from "pg-boss";
 
@@ -43,17 +44,43 @@ export const PURGE_CRON = "*/15 * * * *";
 /** Days a failed job is kept in pg-boss (execution history for the failure-queue views). */
 const FAILED_RETENTION_SECONDS = 60 * 60 * 24 * 30;
 
+/**
+ * The supervision cadence createBoss passes to pg-boss (F-DG4-128, D-131). pg-boss 11.0.0 gives
+ * `superviseIntervalSeconds` NO default: unset, Boss.start runs setInterval(onSupervise, NaN), which Node turns into
+ * a 1 ms loop (TimeoutNaNWarning) of back-to-back supervision passes. So the value is always explicit: the caller's
+ * (the worker passes WORKER_SUPERVISE_INTERVAL_SECONDS from @mth/config; tests shorten it to 1 s) or the documented
+ * 60 s. Anything that is not an integer in SUPERVISE_INTERVAL_SECONDS' range (1-600) is refused, never passed on.
+ */
+export function superviseIntervalSecondsOf(value: number | undefined): number {
+  const seconds = value ?? SUPERVISE_INTERVAL_SECONDS.default;
+  if (
+    !Number.isInteger(seconds) ||
+    seconds < SUPERVISE_INTERVAL_SECONDS.min ||
+    seconds > SUPERVISE_INTERVAL_SECONDS.max
+  ) {
+    throw new RangeError(
+      `superviseIntervalSeconds must be an integer from ${SUPERVISE_INTERVAL_SECONDS.min} to ${SUPERVISE_INTERVAL_SECONDS.max}`,
+    );
+  }
+  return seconds;
+}
+
 export function createBoss(
   databaseUrl: string,
   options: {
     applicationName?: string;
     schedule?: boolean;
     supervise?: boolean;
-    /** P4 (T-DG4-BE-A): supervision cadence in seconds (pg-boss defaults when omitted; tests shorten them). */
+    /**
+     * Supervision cadence in seconds (F-DG4-128): defaults to SUPERVISE_INTERVAL_SECONDS.default (60), never left to
+     * pg-boss, which has no default for it. The worker passes its configured value; tests shorten it.
+     */
     superviseIntervalSeconds?: number;
+    /** Per-queue monitoring cadence; pg-boss's own default (60 s) applies when omitted. Tests shorten it. */
     monitorIntervalSeconds?: number;
   } = {},
 ): PgBoss {
+  const superviseIntervalSeconds = superviseIntervalSecondsOf(options.superviseIntervalSeconds);
   const { connectionString, options: pgOptions } = connectionWithSessionOptions(databaseUrl, "-c TimeZone=UTC");
   const url = new URL(connectionString);
   if (pgOptions) url.searchParams.set("options", pgOptions);
@@ -63,9 +90,7 @@ export function createBoss(
     migrate: false, // the schema is owned by `mth-db migrate` (ADR-0003); fail fast when it is missing or outdated
     schedule: options.schedule ?? true,
     supervise: options.supervise ?? true,
-    ...(options.superviseIntervalSeconds !== undefined
-      ? { superviseIntervalSeconds: options.superviseIntervalSeconds }
-      : {}),
+    superviseIntervalSeconds,
     ...(options.monitorIntervalSeconds !== undefined ? { monitorIntervalSeconds: options.monitorIntervalSeconds } : {}),
     max: 5,
   });
