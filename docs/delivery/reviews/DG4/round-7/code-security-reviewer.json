@@ -1,0 +1,500 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 7,
+  "candidate_id": "sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527",
+  "source_commit": "dab4562c71ab4f0a8e5b89b32ad93a0861539598",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R7B-code-security-reviewer-20261012T215118Z-a2827401",
+    "session_id": "a2827401-64f7-48b5-a059-2bbcf515132c"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session a2827401 (task T-DG4-REV-SEC-R7B, a re-run of the killed T-DG4-REV-SEC-R7). I authored no implementation in the DG4 scope.\n\nAuthorship of the reviewed scope:\n- The round-7 repairs are T-DG4-BE-R6 (backend-workflow-engineer, F-DG4-128) and T-DG4-FE-R10 (frontend-ux-engineer, F-DG4-146/147/148).\n- D-132 records their integration with no orchestrator edit.\n- The rest of P4 is by the implementer roles listed, plus qa-verifier's promoted tests.\n\nMy only writes are review evidence under docs/delivery/test-evidence/DG4/code-security/round-7/ and this record. I did not read or cite the orphaned first-run material in code-security-r7-orphaned/; all evidence here was produced afresh in this session.\n\nEvery execution ran in disposable clones under $TMPDIR: rv (harness), probe2 (probes, scans, repeats), asm (runtime assembly) and mut (mutations). Each used its own throwaway PostgreSQL clusters, and asm and mut were deleted afterwards. The exception is the read-only --configLoader runner check, which ran on the confined tree with read-only node_modules.\n\nI formed my verdict before reading any other reviewer's round-7 record, and I have not read them. HEAD moved during my run from 7294d6b to 0dd91fc, the domain reviewer's auto-committed run (docs/delivery only)."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-7/code-security-reviewer-rerun.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R7-00-candidate",
+      "procedure": "Verify the assignment hash, the starting revision and the candidate ID:\n- the assignment sha256;\n- git rev-parse HEAD, and that the freeze commit differs from the source only in delivery records;\n- the candidate ID recomputed in a complete clone and in the repository, at the start and at the end.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-7/code-security-reviewer-rerun.md; git rev-parse HEAD; git diff --name-only dab4562..HEAD | grep -v '^docs/delivery/'; git diff --quiet dab4562 ea5e262 -- apps packages docs/api pnpm-lock.yaml package.json tools e2e tests; node tools/gates/candidate.mjs --stage DG4",
+      "environment": "Node 24.21.0. Repository HEAD 7294d6b at the start and 0dd91fc at the end. Complete (non-shallow) clone $TMPDIR/rv at the freeze commit ea5e262.",
+      "expected": "sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527, 1475 files, everywhere",
+      "actual": "The assignment sha256 1716580d…7c05 matches. The clone is not shallow.\n\nRevisions:\n- HEAD was 7294d6b at the start. dab4562..7294d6b changes 0 files outside docs/delivery (the freeze, assignments and orphan-evidence commits).\n- In the clone, ea5e262 has the same product tree as dab4562 (git diff --quiet exit 0; diff-scan.log D0 lists only assignments, the manifest and stages.json).\n\ncandidate.mjs gives sha256:baa6ff4d…b31ab527 with 1475 files:\n- in the clone at ea5e262 (candidate-id.log, exit 0);\n- in the repository at 0dd91fc, at the end (candidate-id-repo-final.log, exit 0).\n\nHEAD moved during my run: 0dd91fc is the domain reviewer's auto-committed run, with 0 files outside docs/delivery. I did not read its review files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/candidate-id-repo-final.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-01-build",
+      "procedure": "Build the candidate:\n- an offline frozen-lockfile install from a private copy of the local pnpm store;\n- then pnpm -r build;\n- then a re-install, to link the built bins.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, pnpm 10.33.0, clone $TMPDIR/rv at ea5e262 (checks.sh)",
+      "expected": "exit 0",
+      "actual": "install1 exit 0, build exit 0, install2 exit 0.\n\nDisclosed:\n- install1 prints two 'WARN Failed to create bin … mth-db … dist/cli.js'. That is expected before the build, because the bin's target does not exist yet; install2, after the build, links it.\n- The web build prints Vite's chunk-size advisory ('Adjust chunk size limit …'). It is a warning, not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-02-typecheck",
+      "procedure": "pnpm -r typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv",
+      "expected": "exit 0",
+      "actual": "Exit 0, with no errors or warnings in the log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-03-lint",
+      "procedure": "pnpm lint (eslint . --max-warnings=0)",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv",
+      "expected": "exit 0, zero warnings",
+      "actual": "Exit 0. With --max-warnings=0, any warning would have failed the run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-04-openapi-lint-and-problem-params",
+      "procedure": "Lint the OpenAPI contract and count its operations. Check that the Problem.params addition (D-114) is additive, and find every API source line that sets params on a problem.",
+      "command": "pnpm openapi:lint; diff-scan.sh D11; python3 (yaml) read of components.schemas.Problem; grep over apps/api/src",
+      "environment": "Node 22.22.2, clones $TMPDIR/rv and $TMPDIR/probe2",
+      "expected": "PASS with 652 operations; params optional and set only for the two gate.modular_waiver_* codes",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0. D11 also counts 652. docs/api is unchanged since round 6 (git diff 1e0dc5d..dab4562 -- docs/api is empty).\n\nProblem.params:\n- Problem.required is [type, title, status, code, requestId], so params is not required.\n- params is an object of scalars, documented as sent only with gate.modular_waiver_revoked and gate.modular_waiver_expired.\n- problem.ts:64 serializes params only when it is set.\n- The only problem builder that sets it is gates.ts:1505-1522 (the Modular waiver refusals, params.date).\n- kpi-status.ts:186 is the KPI status explanation's params, not a problem.\n\nThe addition is additive, and every other problem response is unchanged (problem-params.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/problem-params.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-05-no-cdn-secrets-injection-sinks",
+      "procedure": "Run pnpm check:no-cdn. Scan the P4 diff d3e6fe6..dab4562 (diff-scan.sh) for:\n- secret-like strings (D4) and remote URLs (D5);\n- dynamic code (D6) and raw SQL (D7, D12);\n- innerHTML (D8) and float arithmetic on money (D9);\n- unsafe sinks in the repair diff (D15).",
+      "command": "pnpm check:no-cdn; bash diff-scan.sh",
+      "environment": "Node 22.22.2, clones $TMPDIR/rv and $TMPDIR/probe2 (git and grep only)",
+      "expected": "no-cdn PASS; no secret, CDN, eval, raw-SQL interpolation, innerHTML or money-float in P4 product code",
+      "actual": "no-cdn: 'PASS no-cdn: scanned apps, packages', exit 0.\n\nDiff scan:\n- D4 secrets: none.\n- D5 remote URLs: only test placeholders (example.invalid, idp.example.invalid, evil.example, http://x).\n- D6: test inputs ('eval(1)', constructor.constructor) that the formula tests feed in to show they are refused; node:child_process in test files only; 'vm' is a test variable name.\n- D7: none.\n- D8: two test assertions that read innerHTML.\n- D9: none.\n- D12: one sql.raw, in transformations/routes.ts:131. It picks between two literal operators ('<' or '>') from a validated sort direction, is DG1 code and is not injectable.\n- D15 (repair diff): none.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/no-cdn.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-06-format",
+      "procedure": "pnpm format:check",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv",
+      "expected": "exit 0",
+      "actual": "'All matched files use Prettier code style!', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-07-unit-node22",
+      "procedure": "Run the root pnpm test on Node 22. It runs unit-node, unit-web and unit-formula-nocodegen as three vitest invocations.\n\nIt is run WITHOUT extra arguments: under the new script, pnpm appends extra arguments to 'exit $s', where dash ignores them, so they never reach vitest (SEC-R7-13).\n\nThe harness run exited 1. I re-ran the whole script once (unit-repeat.sh run 1), and the failing spec alone 5 times (SEC-R7-22).",
+      "command": "pnpm test (checks.sh unit-node22; unit-repeat.sh 1 /opt/node22/bin)",
+      "environment": "Node 22.22.2. Harness in clone $TMPDIR/rv; repeat in clone $TMPDIR/probe2 (git status clean afterwards). LANG and LC_ALL unset, LC_CTYPE=C.UTF-8 (the sandbox default). Load 9-25 in the harness run, about 16 in the repeat. The other two reviewers ran at the same time.",
+      "expected": "exit 0 in all three projects; any failure explained",
+      "actual": "Repeat (unit-repeat-1.log): exit 0, at load about 16.\n- unit-node: 84 files, 1589/1589.\n- unit-web: 69 files, 1347/1347.\n- unit-formula-nocodegen: 259 passed and 2 skipped. The 2 skips are by design: the fuzz.test.ts source-scan tests run in unit-node and are skipped in the NOCODEGEN project, as in rounds 1-6.\n\nHarness run (unit-node22.log): exit 1. Load was 23-27 by the time unit-web ran, with all three reviews running.\n- unit-node 1589/1589, and no-codegen 259 with the same 2 skips.\n- unit-web had 2 failures out of 1347: raid.test.tsx 'action register: source, follow-up date and overdue flag; edit sends If-Match', en (8380 ms) and ar (5841 ms).\n- Both fail at raid.test.tsx:236 with 'TestingLibraryElementError: Unable to find role=\"link\" and name \"Synthetic call the vendor\"'. That is the 5 s asyncUtilTimeout of a findByRole expiring; it is not a test or hook timeout.\n- That run also shows the new script working: after the unit-web failure, the no-codegen project still ran, and the script exited 1 (ELIFECYCLE).\n\nWhy this is load, not a defect (SEC-R7-22):\n- Alone, the spec passes 18/18 in 5 of 5 runs on Node 22 and 5 of 5 on Node 24, at load 24-29.\n- Alone, this test takes 2.8-6.1 s, so its first findBy has little headroom under the full suite's contention.\n- The spec is unchanged since round 6. The F-DG4-148 warm-up is in effect, and unlike round 6 the spec no longer fails when run alone.\n\nAlso disclosed: the unit-web stderr has 14 React 'Encountered two children with the same key' warnings, in kpiUnit.test.tsx and percentKpi.test.tsx (passing tests). Round 6's clean run had the same 14. They come from the test fixtures (percentKpi.test.tsx:86-88 gives two items the same KPI_ID; kpiUnit.test.tsx:219 adds f1 to an area that already holds it), not from the product.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat-1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R7-08-unit-node24",
+      "procedure": "Run the root pnpm test on Node 24, without extra arguments.",
+      "command": "pnpm test (checks.sh unit-node24)",
+      "environment": "Node 24.21.0, clone $TMPDIR/rv, LANG and LC_ALL unset, load 23-25",
+      "expected": "exit 0",
+      "actual": "Exit 0 (unit-node24.log):\n- unit-node: 84 files, 1589/1589.\n- unit-web: 69 files, 1347/1347.\n- no-codegen: 259 passed, with the 2 by-design skips.\n\nThe totals reconcile with round 6. Unit tests went from 2917 to 2936; the 19 added are the config load.test.ts cases, session-wait.test.tsx (6) and the new harness-config case. Files went from 152 to 153.\n\nDisclosed:\n- the same 14 fixture duplicate-key warnings as in SEC-R7-07;\n- one FastifyWarning FSTDEP022 (deprecated router-options access) on stderr, which is a deprecation notice from Fastify, not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-08b-unit-configloader-runner",
+      "procedure": "Run the round-7 unit tests on the confined repository tree, whose node_modules is read-only, with Vitest's --configLoader runner (QA-A's finding):\n- session-wait.test.tsx and harness-config.test.ts (unit-web);\n- packages/config load.test.ts (unit-node).",
+      "command": "pnpm exec vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx apps/web/src/test/harness-config.test.ts; pnpm exec vitest run --configLoader runner --project unit-node packages/config/src/load.test.ts",
+      "environment": "Node 22.22.2, confined repository tree (product tree == dab4562), read-only node_modules ('touch node_modules/.x' gives Read-only file system), load about 27",
+      "expected": "all pass",
+      "actual": "unit-web: 2 files, 9/9 (harness-config 3, session-wait 6: W1/W2 en and ar, W3, W4), exit 0.\n\nunit-node: load.test.ts 29/29, exit 0.\n\n--configLoader runner was needed and was used.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-configloader-runner.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-09-integration-lang-unset",
+      "procedure": "Run the full integration suite on a disposable PostgreSQL 16, with LANG, LC_ALL and LC_CTYPE unset. initdb is given no locale, so the cluster is SQL_ASCII with collate C. The suite includes contract.test.ts and migrate.test.ts (0001→0061).",
+      "command": "( unset LANG LC_ALL LC_CTYPE; bash with-pg.sh 26331 pnpm test:integration --reporter=verbose )",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv, port 26331, cluster deleted afterwards, load 13-24",
+      "expected": "all pass",
+      "actual": "209 files, 1984/1984, exit 0. No failed, skipped or hook-timeout lines.\n\nThat is round 6's 1975 plus the 9 tests of supervise-cadence.test.ts.\n\nDisclosed: one 'unhandled error … ECONNRESET' line. It is the output of the passing BE17 db-econnreset test, which injects connection resets on purpose and asserts a 500 problem.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-10-integration-lang-c-utf8",
+      "procedure": "Run the full integration suite again with LANG=C.UTF-8 (cluster UTF8, collate C.UTF-8).",
+      "command": "( unset LC_ALL LC_CTYPE; export LANG=C.UTF-8; bash with-pg.sh 26332 pnpm test:integration --reporter=verbose )",
+      "environment": "Node 24.21.0, clone $TMPDIR/rv, port 26332, cluster deleted afterwards, load 13-16",
+      "expected": "all pass",
+      "actual": "209 files, 1984/1984, exit 0. No failed, skipped or hook-timeout lines.\n\nThe same BE17 ECONNRESET line appears as in run 1 (by design).\n\ngit status in the clone was clean after both runs (summary.txt).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R7-11-validate-historical-register",
+      "procedure": "Run the validator historically on the approved gates DG3, DG2 and DG1, and on the DG4 register.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3 | DG2 | DG1; node tools/gates/validate.mjs --register DG4",
+      "environment": "Node 22.22.2, repository tree (read-only), HEAD 0dd91fc",
+      "expected": "PASS, exit 0 each",
+      "actual": "'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)' and 'PASS register rules at DG4', each exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/validate-register-DG4.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-12-repair-diff-worker-config-and-probe",
+      "procedure": "Review the repair diff 1e0dc5d..dab4562 as code.\n\nWorker configuration (BE-R6, F-DG4-128):\n- WORKER_SUPERVISE_INTERVAL_SECONDS: parsing, range and failure mode, in packages/config, main.ts and createBoss/superviseIntervalSecondsOf;\n- probe loadConfig directly with edge inputs (config-edge-probe.log).\n\nThe preload probe apps/worker/test/interval-probe.mjs must not ship:\n- it must be absent from apps/worker/dist after pnpm -r build;\n- it must be absent from the runtime tree that deploy/scripts/assemble-runtime.sh (the Dockerfile's own step) builds from a disposable copy.\n\nAlso check that no other createBoss caller relies on pg-boss's missing default.",
+      "command": "git diff 1e0dc5d..dab4562 -- packages/config apps/worker .env.example; node --conditions=@mth/source zz-cfgprobe.mjs (temporary, removed); grep -rl interval-probe apps/worker/dist; bash deploy/scripts/assemble-runtime.sh --store-dir $TMPDIR/pstore/v10 $TMPDIR/asm $TMPDIR/asm-out",
+      "environment": "Node 22.22.2. Clone $TMPDIR/probe2 at ea5e262. The runtime assembly ran in a disposable copy, $TMPDIR/asm, deleted afterwards.",
+      "expected": "an integer 1-600 or a refusal naming the variable; exit 78 at start-up; the probe not in the build or the runtime tree",
+      "actual": "Parsing:\n- packages/config/src/load.ts:161 uses the same field() and zod pattern as PORT: z.coerce.number().int().min(1).max(600).\n- Empty or unset gives 60. NAME_FILE is honoured (17 from a file).\n- 0, -1, 601, 1.5, NaN, Infinity, 60abc, 9007199254740993 and whitespace-only are refused with 'WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (…)'. The message names the variable, never the value.\n- Observation, not a defect: lenient spellings such as '0x3c' (60), '1e1' (10), '6e2' (600), ' 60 ' and '1.0' are accepted. They always resolve to an integer from 1 to 600, exactly as PORT and the rate limits behave.\n- Like every catalogue variable, the API also validates it, so an invalid value refuses API start-up too. That is consistent with the existing catalogue.\n\nFailure mode and wiring:\n- superviseIntervalSecondsOf (platform.ts:54) throws a RangeError for anything else, so createBoss never passes NaN to pg-boss.\n- pg-boss 11.0.0 boss.js:46 is setInterval(…, superviseIntervalSeconds * 1000), which confirms the no-default NaN defect.\n- main.ts:22 passes the loaded value. The other createBoss callers are test helpers with supervise:false, or restart tests that pass 1.\n\nThe probe does not ship:\n- apps/worker/tsconfig.build.json includes only src. 0 files in apps/worker/dist name interval-probe or MTH_INTERVAL_PROBE.\n- assemble-runtime exit 0, 'OK 128 packages'. apps/worker in the runtime tree holds only dist, node_modules and package.json, and 0 files name interval-probe, MTH_INTERVAL_PROBE or supervise-cadence. The shipped platform.js does contain superviseIntervalSecondsOf.\n- .dockerignore excludes dist, and the image builds from source.\n\nThe probe itself only wraps setInterval and reports the delay unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/config-edge-probe.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/worker-probe-not-shipped.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/worker-runtime-assembly.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-13-root-test-script-and-harness-changes",
+      "procedure": "Check the root test script and the harness changes.\n\nThe root script (FE-R10) must still exit non-zero on any failure:\n- execute the EXACT package.json script string with /bin/sh (dash, what pnpm uses here) and a stub vitest first on PATH;\n- try all 8 pass/fail combinations of the three projects;\n- also try an appended argument, as 'pnpm test <arg>' produces;\n- confirm with the real harness run (SEC-R7-07).\n\nThe harness changes:\n- the unit-web setup.ts warm-up;\n- the session-end.spec.ts boot-/me wait;\n- the new session-wait test;\n- whether CI passes arguments to pnpm test.",
+      "command": "bash test-script-exit.sh $TMPDIR/probe2; git diff 1e0dc5d..dab4562 -- package.json apps/web/test/setup.ts apps/web/src/test/harness-config.test.ts apps/web/e2e/session-end.spec.ts apps/web/src/auth/session-wait.test.tsx; grep -rn 'pnpm test' deploy/ci .github",
+      "environment": "bash and dash, clone $TMPDIR/probe2 at ea5e262",
+      "expected": "rc 0 only when all three pass; all three always run; no test weakened",
+      "actual": "The script exits correctly (test-script-exit.log, part A PASS):\n- rc is 0 only when all three projects pass, and 1 in each of the 7 failing combinations;\n- all 3 invocations run every time.\n- With an appended '--reporter=verbose', dash ignores the extra argument to 'exit $s'. The rc still follows the projects (0, then 1), but the argument never reaches vitest. Under bash, 'exit: too many arguments' would still give 1. So it fails closed.\n- CI runs a bare 'pnpm test' (ci.yml:66), so the dropped argument has no effect on the gate. I record it as an observation, not a defect.\n- The real harness run (unit-node22.log) confirms it: unit-web failed, no-codegen still ran, and the script exited 1.\n\nNothing is weakened:\n- setup.ts only imports the page modules (glob src/pages/**, *.test.tsx excluded) in a beforeAll with its own 60 s budget. It does not call lazyPage's load(), so Suspense still runs.\n- asyncUtilTimeout stays 5000, and harness-config.test.ts asserts that.\n- RouteFallback.test.tsx drives lazyPage with its own controlled promises, so the cache does not affect it. No test mocks a page module.\n- session-end.spec.ts only adds a wait for the boot /me (200) and the signed-in shell before the re-login, which makes the 403 csrf case meaningful.\n- session-wait.test.tsx is additive.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/test-script-exit.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/test-script-exit.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/env-residuals.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-14-supervise-cadence-mutations",
+      "procedure": "Check that supervise-cadence.test.ts catches a regression of F-DG4-128. Apply each mutation, run the test file on a disposable PostgreSQL, then restore with git checkout:\n- M0: control, no mutation;\n- M1: createBoss stops passing superviseIntervalSeconds;\n- M2: main.ts calls createBoss(url) without the configured value;\n- M3: the loader drops .max(600).",
+      "command": "bash cadence-mutations.sh",
+      "environment": "Node 22.22.2, LANG unset, disposable clone $TMPDIR/mut at ea5e262 (deleted afterwards), ports 26380-26383",
+      "expected": "M0 passes; M1, M2 and M3 each fail at least one test",
+      "actual": "- M0: 9/9 pass.\n- M1: 4 failed. The shipped-defaults, configured-value, createBoss-no-options and loaded-configuration tests fail, because pg-boss gets NaN.\n- M2: 1 failed ('honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS').\n- M3: 1 failed ('refuses …=601 at start-up (exit 78 …)').\n\ngit status was clean afterwards. The mutation runs exit 1 by design, with exactly the failures listed.\n\nIn both integration runs the suite passes 9/9. The only 'TimeoutNaNWarning' text in either log is the test's own title.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutations.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutations.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutation-M0-control.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutation-M1-createBoss-drops-cadence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutation-M2-main-ignores-config.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutation-M3-loader-unbounded.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-15-p4-authorization-sweep",
+      "procedure": "Re-run the round-2 generated sweep probe S UNCHANGED against this candidate. It covers every P4 operation:\n- AUD: 403 on every P4 write, each with exactly one authorization.denied;\n- ADM-only and outsider: every write refused, with no transformation-scoped disclosure on any P4 read;\n- a scope-limited user: no read discloses another transformation;\n- a table checksum identical before and after.",
+      "command": "bash rerun-prior-probes.sh (run-probe.sh round-2/probes/sec-dg4-r2-sweep.test.ts)",
+      "environment": "Node 22.22.2, LANG unset, probe clone $TMPDIR/probe2 at ea5e262, one disposable PostgreSQL per probe (ports 26350-26364)",
+      "expected": "all pass",
+      "actual": "sec-dg4-r2-sweep: 766/766, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-prior-probes.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/run-probe.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-sweep.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R7-16-cross-transformation-idor-and-read-scope",
+      "procedure": "Re-run UNCHANGED:\n- the round-1 IDOR probes: foreign ids in paths and bodies through an empty transformation, with a checksum of foreign rows;\n- the round-3 drill-down scope probe;\n- the round-4 outcome-scope and currency probes;\n- the round-5 dashboard filter-scope probe.\n\nTogether they cover the dashboard, drill-down, workspace header, KPI outcomes, the Finance and adoption reads, and the server-side scope of client-built transformation lists (ADR-0037 §6).",
+      "command": "bash rerun-prior-probes.sh",
+      "environment": "As SEC-R7-15",
+      "expected": "all pass",
+      "actual": "All exit 0:\n- r1-idor 204/204;\n- r1-body-idor 2/2;\n- r3-drill-scope 163/163;\n- r4-outcome-scope 3/3;\n- r4-currency 151/151;\n- r5-filter-scope 5/5;\n- r3-gross-currency 2/2.\n\nNo foreign record changed, and no read disclosed another transformation's ids. An unreadable id is 404. The two known outsider-status differences (D-111, D-112) are unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-body-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r3-drill-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r4-outcome-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r4-currency-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r5-filter-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r3-gross-currency-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-prior-probes.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R7-17-approvals-sod-delegation-finance-handover",
+      "procedure": "Re-run UNCHANGED:\n- round-1 approvals: SoD through a group and through delegation, concurrent approve, approve against withdraw, the delegation loop guard, a stale version;\n- round-2 finance: concurrent Finance decisions, stale amend and reverse, never editing a validated value in place, exact decimals, migration 0061;\n- round-2 gate-commit: commit-time re-checks;\n- round-2 sod-denials and slice-b-ids;\n- round-3 and round-4 required-members.\n\nNEW this round, probe H (sec-dg4-r7-handover-race.test.ts):\n- H1: four concurrent receiving-owner acceptances;\n- H2: accept against return (3 rounds);\n- H3: two concurrent returns;\n- H4: two concurrent creates for the same area and cycle.\n\nI also read handovers.ts acceptHandover (683-735) and ADR-0034 §SoD.",
+      "command": "bash rerun-prior-probes.sh; bash run-probe.sh probes/sec-dg4-r7-handover-race.test.ts 26370 probe-H-handover-race-node22-lang-unset",
+      "environment": "Node 22.22.2, LANG unset, probe clone $TMPDIR/probe2, one disposable PostgreSQL per probe",
+      "expected": "all pass; exactly one winner per race; never a 500",
+      "actual": "Re-runs, all exit 0:\n- r1-approvals 6/6;\n- r2-finance 10/10;\n- r2-gate-commit 6/6;\n- r2-sod-denials 4/4;\n- r2-slice-b-ids 1/1;\n- r3-required-members 2/2;\n- r4-required-members 2/2.\n\nProbe H, 4/4, exit 0:\n- H1: one 200 and three 409 version_conflict; one bau_handover.accept event, one sustainment_review, and the area version 1→2 (bau).\n- H2: accept wins twice and return wins once. Each time the loser gets 409 and the end state is consistent: accepted with one review and no return event, or returned with no review and no accept event.\n- H3: one 200 and one 409.\n- H4: one 201 and one 409 bau_handover.exists; one row.\n\nThe code: acceptHandover checks that the caller is the receiving owner before the version (403 bau_handover.not_receiving_owner). It runs under a row lock in one transaction with If-Match, audits the handover and the area, and does no remote I/O.\n\nThat the handover's preparer may also be its receiving owner, if they hold both permissions, is a documented decision (ADR-0034 line 180: no SoD beyond this is required by the slice G sources), not a defect.\n\nThe integration suites approvals 17, delegations 13, handovers 11, corrections 6 and slice-b-denials 7 pass in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probes/sec-dg4-r7-handover-race.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probe-H-handover-race-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-approvals-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-finance-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-gate-commit-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sod-denials-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-slice-b-ids-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r3-required-members-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r4-required-members-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-18-commit-time-contract-module-graph-worker",
+      "procedure": "Check the following:\n- the commit-time re-check scanner over every P4 write route, compared with round 6;\n- the p4-pending lists;\n- the API module graph: no cycles, governance→raid allowed, raid never →governance;\n- the web import graph;\n- worker isolation from API code;\n- the contract and media-type suites.",
+      "command": "bash static-scans.sh (commit-scan6.py, module-cycles.mjs, web-cycles.mjs, worker grep, diff-scan.sh D10)",
+      "environment": "Node 22.22.2, probe clone $TMPDIR/probe2 at ea5e262 (read-only use)",
+      "expected": "residuals unchanged; all p4-pending lists empty; 0 API cycles; worker imports no API code",
+      "actual": "commit-scan: 232 write routes and 33 residuals, identical to round 6 (commit-time-scan-vs-r6.log, diff exit 0). I read each of the 33 manually in rounds 1-2: each reaches openWrite(…, {atCommit: true}). The repairs touch no API file.\n\nOther checks:\n- p4-pending: all 43 lists hold 0 entries.\n- Module graph: 0 value-import cycles. governance → raid is present; raid → access, audit, platform, tasks and transformations, with no governance.\n- Web graph: 202 files and 1 cycle, the pre-DG4 admin UsersPage ↔ AssignmentsPage (outside P4), as in rounds 1-6.\n- Worker: 0 imports of API code. Its deps are @mth/config, db and shared, kysely, pg, pg-boss and zod.\n- contract.test.ts (45) and media-types.test.ts (21) pass in both integration runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/static-scans.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan-vs-r6.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/p4-source-files.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/web-cycles.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/worker-isolation.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probes/commit-scan6.py",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probes/module-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probes/web-cycles.mjs",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-19-decimals-migrations-exactly-once",
+      "procedure": "Check the following:\n- decimals: no float on money (D9; the catalogue's 'no floating point' test);\n- migrations: added only, contiguous, guard attachments, no DELETE or TRUNCATE grant (D2, D3, D16, D17);\n- exactly-once: the suites for jobs, the queue, corrective cases, escalations, interventions, reviews and restarts, plus the D-102 parity tests.",
+      "command": "bash diff-scan.sh; bash suite-counts.sh",
+      "environment": "Probe clone $TMPDIR/probe2 (git and grep), plus both integration logs",
+      "expected": "no money float; 0028-0061 added only and contiguous; the exactly-once suites pass in both runs",
+      "actual": "Decimals: D9 finds nothing. catalogue.test.ts (20, including 'no floating point') passes in both runs, and r2-finance F5 holds exact decimals end to end.\n\nMigrations:\n- 34 added in P4 (0028-0061), none modified or deleted, 0001..0061 contiguous. The repairs add none (D13).\n- The assignment says 0028-0060, but the tree's latest migration is 0061 (0061_p4_finance_validation_correction_step.sql, T-DG4-KBE-R5). I covered 0028-0061.\n- Every table-creating migration attaches guards (D16), and there is no DELETE or TRUNCATE grant to mth_app (D17).\n- migrate.test.ts passes 7 per run.\n\nExactly-once, passing in each run:\n- restart 1, kpi-period-open-restart 1, a13-job-idempotency 5, benefits-queue 2;\n- raid-corrective 10, corrective-cases 15, corrective-rules 5;\n- decision-sla-escalation 5, blocker-escalation 4, escalation-rules 6, a09-decision-escalation 17;\n- sustainment-scans 5, adoption-below-trajectory 14, supervise-cadence 9.\nD-102 parity: 7 per run. Failed 0, skipped 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-20-requirement-acceptance",
+      "procedure": "For each of the 52 assigned requirements, look up every vitest evidence file named in its register row in THIS round's logs: unit Node 24, the Node 22 repeat, and integration runs 1 and 2. Playwright specs are QA's e2e run and are listed, not run here. Judge each row's disclosed partial-coverage notes.",
+      "command": "python3 req-acceptance.py unit-node24.log unit-repeat-1.log integration-run1-lang-unset.log integration-run2-lang-c-utf8.log",
+      "environment": "Python 3, this round's logs, repository requirements.csv",
+      "expected": "every vitest evidence file found and passing; files with a failure = 0",
+      "actual": "Every named vitest file was found and passes in this round's logs. 'files with a failure: 0', and none 'NOT FOUND'.\n\n20 evidence entries are Playwright specs, listed as 'e2e: not run here' (QA's run).\n\nThe security-relevant acceptance clauses are exercised directly by SEC-R7-15 to SEC-R7-19:\n- authorization and SoD (REQ-S10-003, REQ-S04-*, REQ-S03-*);\n- handover acceptance (REQ-S11-005, REQ-PB-083);\n- exactly-once jobs and supervision (REQ-S16-005);\n- scope (REQ-S12-*, REQ-S13-001).\n\nThe partial-coverage disclosures in the notes are unchanged from round 6, and I judged them acceptable there.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/req-acceptance.py"
+      ]
+    },
+    {
+      "id": "SEC-R7-21-environment-residuals",
+      "procedure": "Check each environmental residual on its offline or config surface.\n\nLive registry (REQ-DLV-042 AC-1, D-057):\n- the offline frozen install;\n- that P4 changes no dependency.\n\nLive CI (REQ-DLV-025 A24, D-058):\n- check-ci-needs and its 46 tests;\n- that ci.yml runs pnpm test and test:integration.\n\nKeycloak (D-049): the oidc tests against the fake IdP in both runs.",
+      "command": "bash env-residuals.sh",
+      "environment": "Node 22.22.2, clone $TMPDIR/rv (read-only use), no network",
+      "expected": "PASS on the offline surface; the live residuals noted",
+      "actual": "Registry:\n- The offline frozen install exits 0.\n- P4 changes only the root package.json test script and the packages/shared './time' export map. 0 pnpm-lock.yaml lines changed.\n- pnpm deps:verify needs the live registry and is not run (residual D-057).\n\nCI:\n- check-ci-needs: OK, 5 jobs, delivery-gates first.\n- Its tests: 46/46, exit 0.\n- ci.yml:66 runs a bare 'pnpm test', and :101 runs test:integration.\n- Live CI is the D-058 residual.\n\nKeycloak: 37 passing oidc test lines in each integration run, against the fake IdP. A live Keycloak is the D-049 residual.\n\nPASS on the offline surface, as the assignment directs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/env-residuals.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/env-residuals.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-22-unit-load-timeout-reruns",
+      "procedure": "As the assignment requires for a timeout, re-run the spec that failed in the Node 22 harness run (apps/web/src/pages/raid/raid.test.tsx) ALONE:\n- 5 times on Node 22 and 5 times on Node 24;\n- with DEBUG_PRINT_LIMIT=300000, so that a failure would print the whole DOM;\n- while the other reviewers ran.",
+      "command": "bash raid-alone.sh a",
+      "environment": "Probe clone $TMPDIR/probe2 at ea5e262, Node 22.22.2 and 24.21.0, load 24-29",
+      "expected": "the spec passes alone; the harness failure is shown to be load-induced",
+      "actual": "10 of 10 runs pass 18/18, exit 0: 5 on Node 22 and 5 on Node 24, at load 24.5-28.7.\n\nThe failing test ('action register … edit sends If-Match') takes 2.8-6.1 s alone. In the harness run, under the full suite at load 23-27, it took 8.4 s (en) and 5.8 s (ar), and its first findByRole crossed the 5 s asyncUtilTimeout.\n\nThe page renders correctly: the same test passes in every other run of this round (unit-node24, unit-repeat-1, the 10 runs alone).\n\nThis is the CPU-contention limit already recorded in D-111, D-112 and D-115, and in my round 6. It is not a product or test-logic defect, and I raise no finding. Both the failing run and the passing runs are reported in SEC-R7-07.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a-1-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a-1-v24.21.0.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a-5-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a-5-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-23-evidence-honesty-log-scan",
+      "procedure": "Honesty scan of every log I cite (DG2 round-10 audit condition 1): per log, the Vitest totals, failed and skipped lines, hook timeouts, FAIL lines and error-like lines. Then a targeted scan of the five main logs for unhandled errors, RPC timeouts, Error: lines and warnings.",
+      "command": "bash log-scan.sh <all cited logs> > log-scan.txt; grep counts over the main logs",
+      "environment": "Bash and grep over this round's evidence",
+      "expected": "every failure, skip, timeout or error line disclosed and explained",
+      "actual": "Every non-zero exit is in a log listed here, and each is explained:\n- unit-node22.log: exit 1, 2 failed (raid action register, en and ar). These are findBy waits under load; see SEC-R7-07 and SEC-R7-22. There are no hook timeouts and no RPC timeouts.\n- cadence-mutation-M1/M2/M3: exit 1 by design, with 4, 1 and 1 failures that are exactly the expected kills (SEC-R7-14).\n\nThe other logs:\n- Every other log exits 0 with 0 failed lines.\n- Skipped lines: none, other than the 2 by-design no-codegen skips in the unit logs.\n- Hook timeouts: 0.\n- Unhandled: 0 in the unit logs. In each integration log, the one hit is the BE17 ECONNRESET injection test (by design).\n- Error: lines: only the 2 raid TestingLibraryElementErrors.\n- Warnings: one Fastify FSTDEP022 deprecation per unit log. The 14 fixture duplicate-key React warnings per unit log come from passing tests (SEC-R7-07).\n- ELIFECYCLE: once, in unit-node22.log, from the exit 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/log-scan.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/log-scan.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/code-security/round-7/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/candidate-id-repo-final.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node24.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat-1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run1-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run2-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-prior-probes.summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/probe-H-handover-race-node22-lang-unset.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/probes/sec-dg4-r7-handover-race.test.ts",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutations.summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/test-script-exit.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/worker-runtime-assembly.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/config-edge-probe.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/requirement-acceptance.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-7/log-scan.txt"
+  ],
+  "reviewed_at": "2026-10-12T23:55:00Z",
+  "summary": "Verdict PASS on candidate baa6ff4d (source dab4562, freeze ea5e262), with no new finding. I had no open finding to verify.\n\nThe round-6 repairs:\n- BE-R6 (F-DG4-128) is sound. WORKER_SUPERVISE_INTERVAL_SECONDS is always an integer from 1 to 600, or start-up is refused with exit 78 by a message that names the variable. createBoss never hands pg-boss NaN. The new cadence test kills all three mutations I tried.\n- The interval preload probe is in neither the worker build nor the assembled runtime tree.\n- FE-R10's split root test script exits 1 on any failure in each of the 8 combinations, and always runs all three projects. An argument appended to 'pnpm test' is dropped, which is fail-closed and has no effect on CI (an observation).\n- The unit-web warm-up and the session-end wait weaken no test.\n\nFull review:\n- Build, typecheck, lint, OpenAPI (652 operations), no-cdn, format and the historical validators for DG3, DG2 and DG1 all exit 0.\n- Unit, Node 24: 2936 + 259/2 skipped, exit 0. Unit, Node 22: the harness run had 2 load timeouts (raid action register, en and ar), disclosed and explained; the spec passes 10/10 alone, and the full repeat exits 0.\n- Integration: 1984/1984 with LANG unset and with LANG=C.UTF-8.\n- All 15 earlier probes pass unchanged: the sweep 766, IDOR 204, drill scope 163, approvals, Finance, gate commit-time, SoD denials and the scope probes.\n- A new handover race probe passes 4/4, with exactly one winner per race and never a 500.\n- Commit-time residuals are identical to round 6; there are 0 API module cycles and the worker is isolated; migrations 0028-0061 are added only and contiguous."
+}
