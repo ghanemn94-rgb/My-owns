@@ -47,10 +47,27 @@ import {
 } from "../test/fixtures.tsx";
 import { beginSessionGuard, bindToSession } from "./sessionBound.ts";
 
+/**
+ * The test's clock (T-DG4-FE-R9, F-DG4-106/145, D-129): `Date.now` is controlled for every test of this file, so the
+ * identity recheck window (SESSION_RECHECK_MS, which api/client.ts measures with Date.now) is crossed only where a test
+ * says so (`advanceClock`), never by how slowly the machine runs the steps. A request count that follows from the
+ * window is then the same on an idle and on a loaded machine. Real timers keep running for Testing Library and React.
+ */
+let clockNow = 0;
+function installClock() {
+  clockNow = Date.now();
+  vi.spyOn(Date, "now").mockImplementation(() => clockNow);
+}
+/** Moves the controlled clock `ms` ahead (Date.now only). */
+function advanceClock(ms: number) {
+  clockNow += ms;
+}
+
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.lang = "en";
   document.documentElement.dir = "ltr";
+  installClock();
 });
 afterEach(() => {
   cleanup();
@@ -216,12 +233,6 @@ function observeMixedIdentity(bOnly: () => boolean) {
   };
 }
 
-/** Moves the clock `ms` ahead (Date.now only: real timers keep running for Testing Library and React). */
-function advanceClock(ms: number) {
-  const realNow = Date.now.bind(Date);
-  vi.spyOn(Date, "now").mockImplementation(() => realNow() + ms);
-}
-
 async function submitCreate(T: (typeof TEXT)[Lang]) {
   const unit = (await screen.findByLabelText(startsWith(T.transformations.field.businessUnit))) as HTMLSelectElement;
   fireEvent.change(unit, { target: { value: BU_ID } });
@@ -271,13 +282,61 @@ for (const lang of ["en", "ar"] as const) {
       const s = server(lang);
       const { router } = renderApp("/transformations/new", { i18n: createI18n(lang) });
       await screen.findByText("Synthetic User A");
+      const generation = getSessionGeneration();
       await submitCreate(T);
       await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_TR_ID}`));
       expect(await screen.findByText(T.transformations.created)).toBeTruthy();
       expect((await screen.findAllByText("A-CREATED-SECRET-NAME")).length).toBeGreaterThan(0);
-      // Bounded: the create's own permission refresh (F-DG1-210) and the navigation's identity confirmation (F-DG2-570).
+      expect(getSessionGeneration()).toBe(generation); // one identity throughout: nothing reset
+      expect(document.querySelector(".user-box__name")?.textContent?.trim()).toBe("Synthetic User A");
+      // Bounded (F-DG4-106/145, D-129): the controlled clock does not move, so no page GET is sent after the 2 s window
+      // however slowly the machine runs, and the /me after the create are exactly what the design gives:
       const afterPost = s.requests.slice(s.requests.findIndex((r) => r.method === "POST"));
+      const sent = summary(afterPost);
+      //  - the create's own permission refresh (F-DG1-210), the first request after the 201;
+      expect(sent[1]).toBe("GET /api/v1/me");
+      //  - the navigation's identity confirmation (F-DG2-570), and nothing more;
       expect(afterPost.filter(isMe)).toHaveLength(2);
+      //  - both before any page data of the created record, and no revalidation after it (none was due).
+      const firstPage = afterPost.findIndex((r) => r.method === "GET" && !isMe(r));
+      expect(sent[firstPage]).toBe(`GET /api/v1/transformations/${NEW_TR_ID}`);
+      expect(afterPost.slice(firstPage).filter(isMe)).toEqual([]);
+    });
+
+    it("Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window", async () => {
+      const s = server(lang);
+      // A slow machine, made deterministic: the controlled clock moves past SESSION_RECHECK_MS at the moment the created
+      // record's detail GET is sent. The record's other page GETs are sent once its answer has rendered, i.e. after it.
+      let crossedAt = -1;
+      s.hold((url, method) => {
+        if (crossedAt < 0 && method === "GET" && url === `/api/v1/transformations/${NEW_TR_ID}`) {
+          crossedAt = s.requests.length; // the index this GET is recorded at
+          advanceClock(SESSION_RECHECK_MS + 1);
+        }
+        return false; // nothing is held
+      });
+      const { router } = renderApp("/transformations/new", { i18n: createI18n(lang) });
+      await screen.findByText("Synthetic User A");
+      const generation = getSessionGeneration();
+      await submitCreate(T);
+      await waitFor(() => expect(router.state.location.pathname).toBe(`/transformations/${NEW_TR_ID}`));
+      expect(await screen.findByText(T.transformations.created)).toBeTruthy();
+      expect((await screen.findAllByText("A-CREATED-SECRET-NAME")).length).toBeGreaterThan(0);
+      await waitFor(() => expect(s.requests.some((r) => r.url.startsWith("/api/v1/decisions?"))).toBe(true));
+      await wait(100);
+      expect(getSessionGeneration()).toBe(generation);
+      expect(document.querySelector(".user-box__name")?.textContent?.trim()).toBe("Synthetic User A");
+      const postAt = s.requests.findIndex((r) => r.method === "POST");
+      expect(crossedAt).toBeGreaterThan(postAt);
+      const before = s.requests.slice(postAt, crossedAt + 1);
+      const after = s.requests.slice(crossedAt + 1);
+      // Inside the window: the create's permission refresh and the navigation's identity confirmation, as in Y1c.
+      expect(before.filter(isMe)).toHaveLength(2);
+      // After it: page GETs of the created record were sent, and the identity was revalidated FIRST, ONCE for all of
+      // them (D-077 item 3: at most one revalidation per window while the page is making requests).
+      expect(after.filter((r) => !isMe(r)).length).toBeGreaterThan(1);
+      expect(isMe(after[0]!)).toBe(true);
+      expect(after.filter(isMe)).toHaveLength(1);
     });
 
     it("Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code", async () => {
