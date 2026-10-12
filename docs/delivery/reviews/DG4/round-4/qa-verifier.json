@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 4,
+  "candidate_id": "sha256:5ff36f6e74af1853096e057ba6deee19df8ae44f9f06a7f3d2e184d1160e0f98",
+  "source_commit": "ccc37c9f8b0aa40a35848e07f47e13cee2db1106",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-QA-R4-qa-verifier-20261011T215821Z-b8f9b3b7",
+    "session_id": "b8f9b3b7-8d8d-4d70-869e-8d6154a3d212"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG4 scope. The executable QA acceptance suites under tests/qa and e2e in the candidate are QA-authored tests, not implementation, and they have not changed since round 3. In this round I wrote only the following, all outside the frozen candidate: three test files under docs/delivery/test-evidence/DG4/qa/tests/round-4/, the evidence under docs/delivery/test-evidence/DG4/qa/round-4/, this record, its narrative and its findings sidecar. Every result comes from my own runs in two disposable copies of afba46f under $TMPDIR, both removed at the end. afba46f is the freeze commit, with the candidate tree of source ccc37c9. I formed my verdict without reading any other reviewer's round-4 record or evidence. I saw only the subject lines and file names of their auto-commits (e1c5184, 6854a07)."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-4/qa-verifier.md",
+  "requirements_checked": ["REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044", "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011", "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025", "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+  "checks_run": [
+    {
+      "id": "QA-R4-00-candidate",
+      "environment": "repo /home/user/My-owns (HEAD afba46f at the start, 6854a07 at the end); complete clone $TMPDIR/rv @afba46f; node v24.21.0",
+      "procedure": "Confirm the frozen candidate on a complete (non-shallow) clone and on the working tree, at the start and at the end of the review.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG4",
+      "expected": "sha256:5ff36f6e74af1853096e057ba6deee19df8ae44f9f06a7f3d2e184d1160e0f98, 1469 files, everywhere",
+      "actual": "The same ID and 1469 files on the main working tree at the start and the end, and on the clone at the start and the end. The clone's end check ran after the install, the build and all runs, with my copied test files removed. HEAD moved from afba46f to 6854a07 during the run. The two new commits (e1c5184, 6854a07) only add the other reviewers' auto-committed run evidence, and the candidate ID is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/00-install.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/env.txt"
+      ]
+    },
+    {
+      "id": "QA-R4-01-static",
+      "environment": "clone $TMPDIR/rv @afba46f; node v24.21.0; pnpm 10.33.0; offline install from a copy of the local store",
+      "procedure": "Run the seven static checks of the assignment.",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast (scripts/run-static.sh)",
+      "expected": "All exit 0",
+      "actual": "All seven exit 0. openapi:lint prints 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations'. The build log carries Vite's advisory 'chunks larger than 500 kB', a warning and not an error (as in rounds 2 and 3). The install log's 4 'WARN Failed to create bin … mth-db' lines are expected before the build creates packages/db/dist/cli.js.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/01-pnpm-check-contrast.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/scripts/run-static.sh"
+      ]
+    },
+    {
+      "id": "QA-R4-02-unit",
+      "environment": "clone $TMPDIR/rv; Node 22.22.2 and 24.21.0; locale unset (env -u LANG -u LC_ALL -u LC_CTYPE) and LANG=LC_ALL=C.UTF-8; TZ=UTC CI=1",
+      "procedure": "pnpm test on both Node versions in both locale settings (4 runs).",
+      "command": "pnpm test (scripts/run-unit.sh)",
+      "expected": "All four exit 0 with no failed test",
+      "actual": "All four exit 0, each with 150 files / 2885 tests passed (unit-node and unit-web), plus 3 files / 259 passed and 2 skipped (unit-formula-nocodegen). The 2 skips are by design: it.skipIf(NOCODEGEN) in packages/shared/src/formula/fuzz.test.ts. No failed test and no error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/02-unit-node24-C.log"
+      ]
+    },
+    {
+      "id": "QA-R4-03-integration-x2",
+      "environment": "clone $TMPDIR/rv; node v24.21.0; disposable PostgreSQL 16.13 (tests/qa/support/with-pg.sh), ports 26510 and 26530",
+      "procedure": "The integration project twice on a fresh disposable database each time: migrations 0001→0061 and contract.test.ts included. Evaluate every p4-pending list at runtime.",
+      "command": "QA_PG_PORT=<p> MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose; node pending.mjs apps/api/test/support",
+      "expected": "Both runs exit 0 with no failed test; 652 operations covered; every p4-pending list empty",
+      "actual": "Run 1: 208 files / 1975 tests passed, EXIT 0. Run 2: 208 / 1975, EXIT 0, 1329 s. Each run's global setup reports 'applied 61 migrations to a fresh database'. contract.test.ts passes in both runs, and openapi:lint counts 652 operations. All 47 exported p4-pending arrays were evaluated at runtime and hold 0 entries in total. Neither log has a failed, skipped or timed-out test: every 'fail'/'error' match is a title of a passing test. The +15 against round 3 (1960) are the new tests: KBE-R7's (1966 by its count; value-basis-n4 among them) and KBE-R8's 9 in kpi-unit-outcomes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-001", "REQ-S13-003", "REQ-PB-062"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-pending-lists.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-4/scripts/run-integration.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-4/scripts/run-chain.sh"
+      ]
+    },
+    {
+      "id": "QA-R4-03b-tests-qa-alone",
+      "environment": "clone $TMPDIR/rv; disposable PostgreSQL, port 26550",
+      "procedure": "Run the candidate's tests/qa acceptance integration suites on their own, and re-read each against its row's clause (the suites are unchanged since round 3: git diff 925f0bc..ccc37c9 -- tests/qa e2e is empty).",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa",
+      "expected": "Exit 0 with every test passing",
+      "actual": "15 files / 172 tests passed, EXIT 0. Per file: a01 2, a02-a08 1, a03 12, a04-a05-a10-partials 4, a04-kpi-propagation 8, a05 17, a08 31, a09 17, a10 16, a11-adoption 12, a11-bau-sustain 17, a11-value-closure 11, a12 14, a13 5, a14 5. There is no changed test to re-judge. The KBE-R7 and KBE-R8 handbacks confirm that no QA file was edited.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-tests-qa-candidate-only.log"
+      ]
+    },
+    {
+      "id": "QA-R4-04-dlv036",
+      "environment": "clone $TMPDIR/rv (integration, PostgreSQL port 26570) and $TMPDIR/rv2 (e2e, real stack)",
+      "procedure": "REQ-DLV-036: the A04, A09, A10 and A11 executable tests on this frozen candidate, with counts per suite.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration <the 7 A04/A09/A10/A11 files>; qa-stack.sh npx playwright test e2e/a04-kpi-update.spec.ts e2e/a08-a09-gates-decisions.spec.ts (within the full and solo runs)",
+      "expected": "Every A04/A09/A10/A11 test passes",
+      "actual": "Integration, 7 files / 85 tests, EXIT 0: A04 a04-kpi-propagation 8 and a04-a05-a10-partials 4; A09 a09-decision-escalation 17; A10 a10-benefit-integrity 16; A11 a11-adoption 12, a11-value-closure 11 and a11-bau-sustain 17. e2e, in chromium-en and chromium-ar: a04-kpi-update 1+1 and a08-a09-gates-decisions 2+2 (A08 and A09) passed in the full locale-unset run, in the stopped C.UTF-8 run, and in the C.UTF-8 solo run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-036"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-dlv036-a04-a09-a10-a11.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-acceptance-r4-and-failed-cutf8-summary.txt"
+      ]
+    },
+    {
+      "id": "QA-R4-05-repair-probes-api",
+      "environment": "clone $TMPDIR/rv; disposable PostgreSQL (ports 26510, 26580); my probe copied into tests/qa/integration only to run, then removed; every response validated against docs/api/openapi.yaml by the QA call",
+      "procedure": "My independent integration probe of F-DG4-126/127/105 and N5 (dg4-qa-r4-value-basis.test.ts), run twice. <br>• Q1: margin 70 planned and Finance-validated 70, revenue uplift 300 unvalidated, avoided cost due only in 2099. <br>• Q2: an unknown top-line gap. <br>• Q3: a 3-currency world, every value headline and Finance line followed through its href. <br>• Q4: negatives. <br>• Q5: Portfolio decimals and currency. <br>• Q6: kpiUnit null on non-KPI values.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r4-value-basis.test.ts",
+      "expected": "5/5 tests pass, as described in the probe's header",
+      "actual": "5/5 passed in both runs (try1 = the first run, run2), EXIT 0. <br>• Q1: the Value RAG is Red with rule dashboard.rag.value.validated_gap on T10 and the Overview, and Red in the Overview and Finance rows. ruleParams.lines = [SAR profit_and_cash 0 green, SAR top_line 1 red, SAR non_cash null not_applicable dashboard.value.nothing_planned]. The non-cash gap headline is not_applicable with currency null. The validated 70 is shown on the profit-and-cash basis only. <br>• Q2: green profit-and-cash plus unknown top line gives the RAG unknown, never green. <br>• Q3: more than 30 hrefs followed (T10, Overview, Finance headlines and lines, header). Each names its currency, the drill-down echoes it, every item is in it, its value equals the figure, and the items sum to the figure. The only exception is the ADR's known-zero gross line. <br>• Q4: currency=sar/SARX/S1R gives 400. outcomes.area, portfolio.initiatives, decisions.overdue and dependencies.open with a currency give 422 dashboard.currency_not_applicable. value.planned and value.gap without a currency give multiple_currencies. A SAR subject with currency=USD gives n/a USD with no item. A cursor minted with SAR is refused with USD. A user without a grant gets 403/404 with no figure. <br>• Q5: SAR 35.25 (50 % of 70.5), labelled profit_and_cash; the USD benefit is never added. <br>• Q6: every money, gap and count value has kpiUnit null.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-003", "REQ-PB-062", "REQ-PB-063", "REQ-S03-009", "REQ-S08-009", "REQ-S08-011", "REQ-S13-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-r4-probes-try1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-r4-probes-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/integration/dg4-qa-r4-value-basis.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R4-06-e2e-full",
+      "environment": "clone $TMPDIR/rv2 (built afba46f tree); e2e/support/qa-stack.sh: disposable PostgreSQL, 61 migrations, seed-dev, built API serving the built SPA; @playwright/test 1.56.1, Chromium from /opt/pw-browsers; --workers=1; chromium-en and chromium-ar; load average 13-16 during the full runs (three reviews at once)",
+      "procedure": "All 30 spec files (apps/web/e2e and e2e/, with my round-4 spec) on the real stack, in both projects, with the locale unset and with C.UTF-8. Re-run each failing spec alone and report both runs.",
+      "command": "[env -u LANG -u LC_ALL -u LC_CTYPE | env LANG=C.UTF-8 LC_ALL=C.UTF-8] QA_E2E_PG_PORT=<p> QA_E2E_API_PORT=<a> MTH_PORT_POOL=26500-26699 e2e/support/qa-stack.sh npx playwright test <specs> --workers=1 --reporter=list (scripts/run-e2e.sh, run-e2e-chain.sh)",
+      "expected": "Every DG4 journey and acceptance spec passes in both projects in both locale settings; any timeout or failure is explained and re-run alone",
+      "actual": "Every product failure is explained, and every one passed when re-run alone. <br>(1) Full, locale unset: 348 passed, 7 failed, 13 did not run, EXIT 1. <br>&nbsp;&nbsp;• 30 s test timeouts: p2 'Define → G2' en and ar (31.4 s and 31.8 s; a DG2 journey, D-111/112/115), p4-adoption-bau 6 en, and p4-benefits 8 en (followed by a truncated trace zip written at the timeout). <br>&nbsp;&nbsp;• p4-dashboards 3 in ar: its 5 s poll for an Overview request after the business-unit chip. By then the suite had left more than 50 transformations in SYN_RETAIL, so the product's documented 50-transformation block (too_many) sends no request. This is test-data volume, and the mechanism is reproduced by my BU-limit probe (see F-DG4-144). <br>&nbsp;&nbsp;• My Z en and ar: by design, on the F-DG4-143 checks. <br>&nbsp;&nbsp;• The 13 'did not run' are the serial followers of those tests. <br>(2) Full, C.UTF-8: STOPPED by my shell's 2-hour background limit at test 365 of 368, inside the ar half of my own spec; there is no EXIT line. Up to the stop: 354 passed and 3 failed: p2 'Define → G2' en (timeout), p4-dashboards 3 ar (as above) and my Z en (F-DG4-143). 7 did not run. <br>(3) Solo, locale unset (p2-journeys, p4-adoption-bau, p4-benefits, p4-dashboards): 72/72 passed. 'Define → G2' took 24.6 s and 22.8 s. <br>(4) Solo, C.UTF-8 (all of e2e/ incl. my spec, p2-journeys, p4-dashboards): 55 passed, 3 failed, 2 did not run. <br>&nbsp;&nbsp;• My Z en and ar: F-DG4-143. <br>&nbsp;&nbsp;• p4-dashboards 4b ar: the SAR net line sat on page 2 of the paginated gross/net table, because my R4 world's USD rows ran earlier in that stack. The spec only enlarges the class table. This is test-data volume. <br>(5) Solo, C.UTF-8, p4-dashboards: 14/14 passed. <br>p4-kpi-unit (3+3), p4-percentage-kpi (2+2) and p4-value-headlines (2+2) passed in both full runs. The trace shows 137/137 rows with an evidence test in this round's logs, and every full-run failure resolved by a solo pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-062", "REQ-S03-009", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S07-017"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-cutf8-STOPPED-by-2h-background-limit.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-cutf8-STOPPED-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-failed-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-acceptance-r4-and-failed-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-acceptance-r4-and-failed-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-p4-dashboards-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/06-requirement-trace.txt"
+      ]
+    },
+    {
+      "id": "QA-R4-07-repairs-on-stack",
+      "environment": "the real stack (qa-stack.sh) in $TMPDIR/rv2; chromium-en and chromium-ar; the read-only auditor dev.auditor; my spec e2e/dg4-qa-r4.spec.ts (copied in to run, then removed)",
+      "procedure": "F-DG4-125/126/127/105 and D-124 as acceptance behaviour on the integrated stack, not against mocks. <br>• The world, built through the API: SAR margin 70, SAR revenue 300 and USD revenue 11 planned in 2026-H1; SAR avoided cost 45 only in 2099. <br>• Three completed initiatives are a DB fixture inserted with their audit event, as the candidate's insertInitiative does; allocations go through the API. <br>• An outcome and a KPI created through the API. <br>• Checked on T10 and the Overview: the RAG lines, the Portfolio column and values, the USD and SAR drill-downs, the gap '100 %', and the outcome listed. Plus axe, 390 px and 200 % text. <br>• Also the candidate's p4-kpi-unit and p4-percentage-kpi specs.",
+      "command": "qa-stack.sh npx playwright test e2e/dg4-qa-r4.spec.ts apps/web/e2e/p4-kpi-unit.spec.ts apps/web/e2e/p4-percentage-kpi.spec.ts (within the runs of QA-R4-06)",
+      "expected": "The repairs hold in EN and AR. RAG lines per basis and currency, area Red. Portfolio 70 (never 370) labelled profit_and_cash, n/a and Unknown with their reasons, INI-1 first. USD 11 and SAR 70 drill-downs show their currency and only their records. The gap reads '100 %'. The API-created outcome is listed, Unknown. KPI values read '12 %', '12 % of users' and '1.5' (never '150 %'). axe 0 serious/critical. No page-level horizontal scroll.",
+      "actual": "Each run recorded 40 R4 checks per language, and 34 hold in every run. <br>• The 4 RAG lines are SAR/profit_and_cash/red, SAR/top_line/red, SAR/non_cash/not_applicable and USD/top_line/red; the area is Red, each red line reads '100 %'. <br>• Portfolio: the column 'Planned value allocated (profit and cash)', INI-1 first at 70 with a basis chip, 370 nowhere, INI-2 n/a with its reason, INI-3 Unknown. <br>• The USD top-line drill shows currency USD, 11, one item and no SAR. The SAR profit-and-cash drill shows SAR, 70, one item. <br>• The gap reads '100 %'. The outcome created through the API is listed, Unknown, not green. <br>• axe is clean on the pages and the drill dialogs. There is no overflow at 390 px or at 200 % text. <br>• p4-kpi-unit (3+3) and p4-percentage-kpi (2+2) passed in both full runs. They assert '12 %', '12 % of users' and '1.5' (never '150 %'), the T10 Outcomes area listing an API-created outcome, and the drill-downs and the adoption dashboard. <br>The 6 checks that fail: R4-t10/overview-na-line-not-unknown (en and ar) and R4-t10/overview-na-line-says-na (en; in ar the reason text contains the n/a label, so that one holds). They fail because the not_applicable non-cash line's value is rendered as 'Unknown'. That is a NEW defect of the round-3 repair's UI (ValueRagLines), raised as F-DG4-143 (Medium, non-blocking: the RAG, the line's status chip and its reason are right, and it is never shown as 0 or green). My spec's Z test fails by design on exactly these checks. Every other part of the repairs holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-003", "REQ-PB-062", "REQ-PB-063", "REQ-S03-009", "REQ-PB-076", "REQ-S08-009"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4.spec.ts",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/dg4-qa-r4-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/dg4-qa-r4-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-full-unset/dg4-qa-r4-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-full-unset/dg4-qa-r4-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/en/R4-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/ar/R4-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/en/R4-aud-drill-USD-top_line.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/ar/R4-aud-drill-USD-top_line.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-try3-r4-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-try1-r4-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-try2-r4-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R4-08-aud-390-200-axe-sweep",
+      "environment": "the real stack in $TMPDIR/rv2; chromium-en and chromium-ar; dev.auditor and dev.lead",
+      "procedure": "The round-3 sweep, unchanged, over every P4 route without a record id, plus the seeded forum and the G5/G6 gate pages. <br>• S1, as AUD: renders, lang/dir, axe 0 serious/critical, no write request. <br>• S2: 390 px, as AUD and as the lead. <br>• S3: 200 % text, as AUD and as the lead.",
+      "command": "qa-stack.sh npx playwright test e2e/dg4-qa-r4.spec.ts (S1+S2+S3 tests)",
+      "expected": "Every sweep check passes in both languages",
+      "actual": "In the complete C.UTF-8 solo run, 514 checks per language were recorded. Every S1/S2/S3 check passed in en and in ar, including 'S1-aud-sends-no-writes'; the only failing checks are the F-DG4-143 ones of QA-R4-07. In the full locale-unset run, en had one more failure: S2-lead-/dashboards/rag-policy-390px, 'no-h1' within 20 s at a load average of about 15 (the open() bound). It passed in the stopped C.UTF-8 run's en sweep and in the solo run, in en and ar. The ar sweep of the stopped C.UTF-8 run did not finish (QA-R4-06); the solo run covers it.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-001", "REQ-PB-062"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/dg4-qa-r4-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/dg4-qa-r4-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-full-cutf8-STOPPED/dg4-qa-r4-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/en/R4-aud-t10-390px.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/ar/R4-aud-t10-200pct.png"
+      ]
+    },
+    {
+      "id": "QA-R4-09-bu-limit-probe",
+      "environment": "clone $TMPDIR/rv; real stack (qa-stack.sh, ports 26680/26685); chromium-en and chromium-ar; dev.lead (API) and dev.office (UI)",
+      "procedure": "Explain the p4-dashboards 3 ar failure, and test literally the remedy the product's 'too_many' note gives. <br>• Bring SYN_RETAIL to 51 transformations through the API. <br>• On /executive-overview, choose the business-unit chip, then phase 'realize' and status 'closed'. Revision 2: try 1 used 'diagnose'/'draft', which all of them have, so it was not conclusive.",
+      "command": "qa-stack.sh npx playwright test e2e/dg4-qa-r4-bu-limit.spec.ts --workers=1",
+      "expected": "The note appears at 51 (the documented limit); narrowing by phase or status, as the note advises, lifts it",
+      "actual": "EXIT 1 by design, in both tries and in both languages. The assertion that fails is afterStatus_noteVisible === false. <br>• The note appears at 51, which confirms the mechanism behind the p4-dashboards 3 failures in the full runs. <br>• After phase 'realize' and status 'closed' the note stays, and 0 overview requests are sent. <br>• useOrgQuery decides 'too_many' from the unit's list alone, so the advised remedy cannot work. Raised as F-DG4-144 (Low). <br>The block itself is the documented ADR-0037 §4 limit, and I do not count it as a defect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-probe-bu-limit-try1-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-probe-bu-limit-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-bu-limit-unset/dg4-qa-r4-bu-limit-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-bu-limit-unset/dg4-qa-r4-bu-limit-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4-bu-limit.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R4-10-repair-diff-regression",
+      "environment": "repo, git diff 925f0bc..ccc37c9",
+      "procedure": "Re-inspect the whole repair diff for regressions, and judge each KBE-R7 and KBE-R8 re-baselined test (the handbacks' old → new tables) against its clause.",
+      "command": "git diff 925f0bc..ccc37c9 -- apps packages docs/api; the KBE-R7 §2.3 and KBE-R8 §4 tables",
+      "expected": "No weakened behaviour. Every re-baseline still asserts its clause literally, or a stricter one.",
+      "actual": "Product changes: dashboard-facts.ts, reporting dashboards (areas, engine, drilldown, filters, finance), the shared schemas, openapi.yaml, and the web ui.tsx/DashboardsPage/i18n. <br>Findings in the diff: <br>• loadOutcomeRows reads status <> 'archived' (D-124 item 1). KBE-R8's kpi-unit-outcomes test asserts that an archived outcome is hidden, and no test relied on draft outcomes being hidden. <br>• The percentage formatting change applies only to KPI-derived values and to the 'percent'/'%' units. A grep of the reporting emitters shows no non-KPI value with a percent unit, so nothing already scaled is now multiplied by 100. <br>• The currency filter of the value-state drill-downs follows N4 item 3. The value.investment drill-down with a currency that has no line answers a known zero, which is the ADR's text and not a defect. <br>• The gap lines include not_applicable lines, which take no part in the combination (combine rank 0). The web's ValueRagLines renders them as Unknown: F-DG4-143. <br>Re-baselines: <br>• The KBE-R7 changes (variant A/B, the per-currency RAG now red, the unknown margin line now red under the §3 precedence red > unknown, the value.gap+revenue_uplift 200, multiple_currencies without currency) each follow N4 exactly. Each still asserts its clause, now stricter: assertDrillInvariant also checks gaps, the currency echo and each item's currency. <br>• The KBE-R8 changes only add kpiUnit to pinned literals; no assertion was dropped. <br>• One stale header comment: p4-percentage-kpi.spec.ts says the Outcomes area lists only 'active' outcomes, which D-124 item 1 changed. It is a comment only, so not a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/handbacks/DG4/T-DG4-KBE-R7-kpi-benefits-engineer.md",
+        "docs/delivery/handbacks/DG4/T-DG4-KBE-R8-kpi-benefits-engineer.md",
+        "docs/delivery/handbacks/DG4/T-DG4-FE-R6-frontend-ux-engineer.md",
+        "docs/delivery/handbacks/DG4/T-DG4-FE-R7-frontend-ux-engineer.md",
+        "docs/architecture/adr/ADR-0037-p4-dashboards-t10-my-work-overview-header.md"
+      ]
+    },
+    {
+      "id": "QA-R4-11-validate",
+      "environment": "main repo /home/user/My-owns @afba46f; node v24.21.0",
+      "procedure": "The register, the pipeline, and the historical DG3, DG2 and DG1 gates.",
+      "command": "node tools/gates/validate.mjs --register DG4 | --pipeline | --historical --stage DG3 | DG2 | DG1",
+      "expected": "All PASS, exit 0",
+      "actual": "'PASS register rules at DG4'; 'PASS pipeline (active stage: DG4 REVIEWING)'; 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)'. All exit 0. The environmental residuals stay as assigned and are not BLOCKED: live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/05-validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/05-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/05-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/05-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/05-validate-historical-stage-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R4-12-requirement-trace",
+      "environment": "docs/delivery/requirements.csv at afba46f; this round's logs",
+      "procedure": "For each of the 137 DG4-final rows, look up every evidence test file in this round's unit, integration and e2e logs (scripts/trace.py). Judge each row's partial-coverage disclosure in its notes.",
+      "command": "python3 scripts/trace.py /home/user/My-owns docs/delivery/test-evidence/DG4/qa/round-4",
+      "expected": "137/137 rows IMPLEMENTED with at least one evidence test in the logs, no failure left unresolved, and every partial disclosure acceptable",
+      "actual": "137/137 rows have at least one evidence test in this round's logs. No evidence test is missing. Every full-run failure has a passing solo re-run of the same file. All rows are IMPLEMENTED. <br>The partial disclosures are unchanged since round 3 and still acceptable: <br>• REQ-PB-065, REQ-S04-014, REQ-S07-015 (D-114): API integration plus stubbed web tests. <br>• REQ-PB-066 and REQ-S15-008: the server clock cannot be injected, so the calendar-API and DB-boundary proofs stand in. <br>The clauses I probed beyond the suites (F-DG4-126/127/105, D-124) hold, except the n/a rendering in F-DG4-143.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/06-requirement-trace.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-4/scripts/trace.py"
+      ]
+    }
+  ],
+  "findings": ["F-DG4-143", "F-DG4-144"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/qa/round-4/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG4/qa/round-4/env.txt",
+    "docs/delivery/test-evidence/DG4/qa/round-4/00-candidate-start.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-run1.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-run2.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-dlv036-a04-a09-a10-a11.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-unset.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-acceptance-r4-and-failed-cutf8.log",
+    "docs/delivery/test-evidence/DG4/qa/round-4/06-requirement-trace.txt",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4.spec.ts",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4-bu-limit.spec.ts",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-4/integration/dg4-qa-r4-value-basis.test.ts",
+    "docs/delivery/reviews/DG4/round-4/qa-verifier.findings.json"
+  ],
+  "reviewed_at": "2026-10-12T00:55:00Z",
+  "summary": "PASS with two new non-blocking findings: F-DG4-143 (Medium) and F-DG4-144 (Low). The round-3 repairs hold as acceptance behaviour on the integrated stack, in EN and AR. <br>• F-DG4-126: the Value RAG is Red for margin 70 validated beside 300 of unvalidated revenue uplift, with one line per basis and currency. <br>• F-DG4-127: the Portfolio value is on the profit-and-cash basis (70/90, never 370/435), labelled. <br>• F-DG4-105: every value href names its currency and drills to exactly that figure. <br>• F-DG4-125 and D-124: '12 %', '12 % of users', '1.5', the gap '100 %', and API-created outcomes in T10. <br>Every check ran: static 7/7; unit 4×(2885 + 259, plus 2 skips by design); integration 1975×2, tests/qa 172, DLV-036 85; e2e in both projects and both locale settings. Every full-run failure is explained (30 s timeouts under load, and test-data volume) and passed when re-run alone. The C.UTF-8 full run was stopped by the shell's 2-hour limit at test 365 of 368, and its tail was re-run alone. <br>New: <br>• F-DG4-143 (Medium): a not_applicable Value RAG line renders 'Unknown'. <br>• F-DG4-144 (Low): the business-unit filter's 'too_many' note advises a remedy (phase/status) that cannot lift the block.",
+  "narrative": "docs/delivery/reviews/DG4/round-4/qa-verifier.md"
+}

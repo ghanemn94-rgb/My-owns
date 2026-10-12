@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-143",
+      "stage_id": "DG4",
+      "requirement": "REQ-S13-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A Value RAG line whose basis has nothing due (status not_applicable) is shown as 'Unknown' on T10 and the Executive Overview, in EN and AR",
+      "reproduction": "On the real stack (e2e/support/qa-stack.sh), through the API: one transformation with SAR margin uplift 70, SAR revenue uplift 300 and USD revenue uplift 11 planned 2026-01..06, and SAR avoided cost 45 planned only 2099-01..06 (nothing due on the non-cash basis); nothing validated. As the read-only auditor, open /transformations/<id>/dashboard and /executive-overview?tr=<id>, section[data-area='value'], 'Value gap by basis and currency'. The API sends the correct line (ruleParams.lines: {currency SAR, headlineBasis non_cash, gapRatio null, status not_applicable, reasonKey dashboard.value.nothing_planned}; my integration probe Q1 asserts it). The screen renders that line as 'Non-cash SAR · Value gap: [?] Unknown  Not applicable: nothing is planned to date.  [Not applicable]' (ar: 'غير نقدية SAR · فجوة القيمة: غير معروف لا ينطبق: لا يوجد شيء مخطط حتى تاريخه. لا ينطبق'), with data-value-state='unknown'. Cause: apps/web/src/pages/dashboards/ui.tsx ValueRagLines builds the line's value as {state: 'unknown'} whenever gapRatio is null (line 624), whatever the line's status. The API gives a null ratio for not_applicable (planned to date = 0) as well as for unknown. No web test covers a not_applicable line: n4Value.test.tsx and dashboardFixtures.ts have none. Reproduced in 4 runs (try 3, the full locale-unset run, the stopped C.UTF-8 full run in en, and the C.UTF-8 solo run), in both projects each time it ran.",
+      "expected": "ADR-0037 amendment N4 item 1: a basis's gap has the §3 states, 'not_applicable dashboard.value.nothing_planned when planned to date is zero, and unknown when a line of the basis has no amount'. Item 4: Unknown, Stale, n/a and known zero stay distinct, and each is not_applicable only with the reasons named. REQ-S13-003 (M0244): 'distinguish zero, unknown and not applicable'. The line's value reads 'Not applicable (n/a)' (data-value-state='not_applicable'), as the non-cash gap headline beside it does. 'Unknown' is shown only for a line with status unknown (a missing amount).",
+      "actual": "The not_applicable line's value reads 'Unknown' (data-value-state='unknown'), next to a reason and a status chip that both say 'Not applicable'. The same screen therefore shows one gap both as Unknown and as n/a. It is never shown as 0 or green, and the area's RAG is correct (red; the n/a line takes no part).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-solo-acceptance-r4-and-failed-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/dg4-qa-r4-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/dg4-qa-r4-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/en/R4-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/ar/R4-aud-t10.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-solo-acceptance-r4-and-failed-cutf8/screens/en/R4-aud-overview.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/03-integration-r4-probes-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4.spec.ts",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/integration/dg4-qa-r4-value-basis.test.ts",
+        "apps/web/src/pages/dashboards/ui.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T00:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 4 (T-DG4-REV-QA-R4) on candidate sha256:5ff36f6e74af1853096e057ba6deee19df8ae44f9f06a7f3d2e184d1160e0f98, reproduced on the real stack in chromium-en and chromium-ar."
+        }
+      ]
+    },
+    {
+      "id": "F-DG4-144",
+      "stage_id": "DG4",
+      "requirement": "REQ-S13-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The business-unit filter's 'more than 50 transformations' note advises narrowing by phase or status, which can never lift the block",
+      "reproduction": "On the real stack, give SYN_RETAIL 51 transformations (the lead creates them through the API). As dev.office, open /executive-overview, then choose the business-unit chip SYN_RETAIL: the note [data-filter-blocked='too_many'] says 'This business unit has more than 50 transformations you can read; a dashboard takes at most 50. Narrow the filter by phase or status, or open the transformations' own dashboards.' Then choose phase 'realize' and status 'closed', which no transformation of the unit has, as the note advises. Probe docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4-bu-limit.spec.ts, revision 2, EN and AR.",
+      "expected": "Narrowing as advised lifts the block. Or, if the design does not let phase and status narrow the unit's transformations, the note does not offer them as the remedy and names one that works (e.g. the transformation chip, or opening the transformations' own dashboards).",
+      "actual": "After phase 'realize' and status 'closed' the too_many note is still shown, and no overview request is sent (0 requests with transformationId); the URL is /executive-overview?bu=…&phase=realize&status=closed. The same holds in AR. Cause: useOrgQuery (apps/web/src/pages/dashboards/ui.tsx) decides 'too_many' from the unit's transformation list alone (limit 51 and nextCursor), before phase and status are considered, so they cannot change the outcome. The same hook serves the Finance and adoption dashboards. Side effect seen in this review: p4-dashboards.spec.ts test 3 fails in chromium-ar in a full suite run, because the suite leaves more than 50 transformations in SYN_RETAIL. It passes alone. That is a test-data-volume fragility, not a defect of its own.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-probe-bu-limit-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-bu-limit-unset/dg4-qa-r4-bu-limit-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-bu-limit-unset/dg4-qa-r4-bu-limit-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-4/results/e2e-bu-limit-unset/screens/en/R4-bu-limit-after-phase-status.png",
+        "docs/delivery/test-evidence/DG4/qa/round-4/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/e2e/dg4-qa-r4-bu-limit.spec.ts",
+        "apps/web/src/pages/dashboards/ui.tsx",
+        "apps/web/src/i18n/en/dashboards.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG4/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-12T00:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG4 review round 4 (T-DG4-REV-QA-R4) on candidate sha256:5ff36f6e74af1853096e057ba6deee19df8ae44f9f06a7f3d2e184d1160e0f98; found while explaining the p4-dashboards test 3 failures of the full runs."
+        }
+      ]
+    }
+  ]
+}
