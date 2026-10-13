@@ -31,10 +31,10 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
-- **DG5 is PLANNED.**
+- **DG5 (P5 "Configuration automation and outputs") is BUILDING** (78 DG5-final requirements; D-141).
 - **Next action:**
-  1. Start DG5 (P5): read-only discovery of its requirements (`final_gate` = DG5) and the master prompt's P5 scope.
-  2. Then the P5 plan and work split, following the protocol.
+  1. Collect `T-DG5-ARCH-00` (the P5 plan, `docs/architecture/p5-plan.md`).
+  2. Run the slice architecture tasks, then the implementer waves.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
