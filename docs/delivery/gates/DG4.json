@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
   "stage_id": "DG4",
-  "decision": "BLOCKED",
-  "candidate_id": "sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c",
-  "source_commit": "f2ae7170630456a772e1ceac90ab6d96b68e3f5c",
-  "manifest_path": "docs/delivery/candidates/DG4/18c18fe4eda7cbc1.manifest.json",
+  "decision": "APPROVED",
+  "candidate_id": "sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6",
+  "source_commit": "e70ac02f63cd1f42487cfa4dae73f68e933da015",
+  "manifest_path": "docs/delivery/candidates/DG4/f38274cb6d50c498.manifest.json",
   "previous_gate": "DG3",
   "reviews": {
-    "domain-reviewer": "docs/delivery/reviews/DG4/round-9/domain-reviewer.json",
-    "code-security-reviewer": "docs/delivery/reviews/DG4/round-9/code-security-reviewer.json",
-    "qa-verifier": "docs/delivery/reviews/DG4/round-9/qa-verifier.json"
+    "domain-reviewer": "docs/delivery/reviews/DG4/round-10/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG4/round-10/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG4/round-10/qa-verifier.json"
   },
-  "release_audit": "docs/delivery/reviews/DG4/round-9/release-auditor.json",
+  "release_audit": "docs/delivery/reviews/DG4/round-10/release-auditor.json",
   "requirements": {
     "final_gate_ids": [
       "REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044",
@@ -29,98 +29,96 @@
       "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025",
       "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"
     ],
-    "notes": "All 137 register rows with final_gate DG4 are IMPLEMENTED, match the assignment list exactly, and cite 1150 evidence paths, all of which exist. qa-verifier checked all 137. Each one is also in domain-reviewer's list (137) or code-security-reviewer's (52). Partly covered clauses are disclosed in the register notes (REQ-PB-066, REQ-S15-008, REQ-PB-065, REQ-S04-014, REQ-S07-015, REQ-S04-010, REQ-S08-006). The new Low finding F-DG4-160 concerns user-facing guidance for REQ-S04-008 (G6 Sustain), not its implemented behaviour."
+    "notes": "All 137 register rows with final_gate DG4 are IMPLEMENTED and match the assignment list exactly. They cite 1150 evidence paths, all of which exist. qa-verifier checked all 137, and each one is also in domain-reviewer's list (137) or code-security-reviewer's (52). validate --register DG4 PASS. Partly covered clauses are disclosed in the register notes (REQ-PB-065, REQ-PB-066, REQ-S04-010, REQ-S04-014, REQ-S07-015, REQ-S08-006, REQ-S15-008, REQ-S20-011) and were judged acceptable. Documented environmental residuals, with their offline surfaces verified: the live-registry install effect (REQ-DLV-042 AC-1, D-057), the live GitHub-Actions run (REQ-DLV-025 A24, D-058) and Keycloak (D-049). None is a DG4-final row."
   },
   "tests": [
     {
-      "name": "Complete-clone check and candidate recomputation (clone at f2ae717 and at the freeze 01ad2e1, repository --ref f2ae717, working tree); post-freeze diff meta-only; decisions.md untouched (B1)",
-      "command": "git rev-parse --is-shallow-repository; git fsck; node tools/gates/candidate.mjs --stage DG4 [--ref f2ae7170630456a772e1ceac90ab6d96b68e3f5c]",
+      "name": "Complete-clone check and candidate recomputation (clone --ref e70ac02, clone working tree at HEAD, repository working tree); post-freeze diff meta-only; decisions.md untouched since the freeze",
+      "command": "git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG4 [--ref e70ac02f63cd1f42487cfa4dae73f68e933da015]",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/01-clone-identity-validators.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/01-clone-identity-validators.log"]
     },
     {
       "name": "Previous gate DG3 and gates DG2, DG1 historical; DG4 register rules",
       "command": "node tools/gates/validate.mjs --historical --stage DG3 / DG2 / DG1; node tools/gates/validate.mjs --register DG4",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/01-clone-identity-validators.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/01-clone-identity-validators.log", "docs/delivery/test-evidence/DG4/audit/round-10/06-requirements.log"]
     },
     {
-      "name": "Round-9 specialist provenance and independence; D-082 across all DG4 review runs (rounds 1-9)",
-      "command": "python3 over docs/delivery/runs/DG4/*/meta.json and sandbox.json",
+      "name": "Round-10 specialist provenance and independence (three distinct, successful, sandboxed runs); D-082 across all DG4 review and audit runs (rounds 1-10)",
+      "command": "python3 docs/delivery/test-evidence/DG4/audit/round-10/scripts/prov.py",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/02-provenance.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/02-provenance.log"]
     },
     {
-      "name": "24 DG4 findings: 23 CLOSED_VERIFIED by non-owners in round 9 with ancestor full fix revisions; F-DG4-148 ACCEPTED_OBSERVATION (auditor concurs); 0 unresolved Critical/High or mandatory",
-      "command": "python3 findings check against round-9 sidecars, run metas and git ancestry",
+      "name": "Three round-10 PASS verdicts on f38274cb with no BLOCKED check; round-10 scope (the 9-file diff re-run, the rest carried forward and labelled) adequate",
+      "command": "read the three round-10 records",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/03-findings.log", "docs/delivery/reviews/DG4/round-9/release-auditor.verifications.json"]
+      "evidence": ["docs/delivery/reviews/DG4/round-10/domain-reviewer.json", "docs/delivery/reviews/DG4/round-10/code-security-reviewer.json", "docs/delivery/reviews/DG4/round-10/qa-verifier.json"]
     },
     {
-      "name": "D-136 history rewrite, write-once and frozen_at (B3, B4)",
-      "command": "git diff backup/pre-dg4-writeonce-repair-72c0e653a3 a445b24; 360 SHA-map pairs; checkWriteOnce(DG4); stages.json vs manifests",
+      "name": "25 DG4 findings: 23 CLOSED_VERIFIED by non-owners with ancestor full fix revisions; F-DG4-160 verified CLOSED by its reporter (release-auditor); F-DG4-148 ACCEPTED_OBSERVATION (qa-verifier and release-auditor); 0 unresolved Critical/High or mandatory",
+      "command": "python3 docs/delivery/test-evidence/DG4/audit/round-10/scripts/findings.py; reproduction, unit pins and mutants of F-DG4-160",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/04-d136-rewrite-writeonce-frozenat.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/03-findings.log", "docs/delivery/test-evidence/DG4/audit/round-10/13-f-dg4-160-reproduction-and-sweep.log", "docs/delivery/test-evidence/DG4/audit/round-10/09-fe-r11-mutants.log", "docs/delivery/reviews/DG4/round-10/release-auditor.verifications.json"]
     },
     {
-      "name": "Incidents: salvages, killed review runs, D-124 repairs, F-DG4-104/124 correction, confirmation-round scope",
-      "command": "python3 salvage chain check; git grep at f2ae717; git diff product tree vs rounds 7/8",
+      "name": "BE-R7: narrowed A08 G6 delivery fingerprint keeps REQ-S04-008's intent (same set as g5-g6, guards kept, no product writer to docs/delivery); a08 31/31; recording it as a decision acceptable (D-124 precedent)",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/a08-gate-controls.test.ts; static greps",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/05-incidents-salvage.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/10-a08-integration.log", "docs/delivery/test-evidence/DG4/audit/round-10/10b-be-r7-intent-static.log"]
     },
     {
-      "name": "Requirements coverage, register evidence and residuals",
-      "command": "python3 over requirements.csv and the round-9 records",
+      "name": "pnpm test inside the load envelope, auditor's own run (Node 24, locale unset) and qa's r2 series recomputed",
+      "command": "env -u LANG -u LC_ALL pnpm test in a complete clone at e70ac02, load sampled every 15 s",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/06-requirements.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/07-unit-summary.txt", "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-load-samples.log", "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-node24-unset.log"]
     },
     {
-      "name": "pnpm test inside the load envelope, auditor's own reproduction (Node 24 locale unset; Node 22 C.UTF-8)",
-      "command": "TZ=UTC CI=1 pnpm test in a complete clone at f2ae717, load sampled every 15 s",
+      "name": "D-136 history rewrite, write-once and frozen_at (rounds 1-10)",
+      "command": "checkWriteOnce(DG4); git diff backup/pre-dg4-writeonce-repair-72c0e653a3 a445b24; 360 SHA-map pairs; stages.json review_rounds vs manifests",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/07-unit-summary.txt", "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-load-samples.log", "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-node24-unset.log", "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-node22-C.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/04-d136-writeonce-frozenat.log"]
     },
     {
-      "name": "Evidence honesty: all cited paths exist; every round-9 log hit disclosed",
-      "command": "python3 scans of the round-9 records, sidecars and logs",
+      "name": "Incidents: salvages kept with completing runs, killed review runs re-run, D-124 repairs present, product diff since round 9 limited to FE-R11/BE-R7",
+      "command": "salvage and run-meta checks; git diff f2ae717 e70ac02",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/08-evidence-honesty-scan.log", "docs/delivery/test-evidence/DG4/audit/round-9/09-cited-evidence-existence.txt"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/05-incidents-salvage.log"]
     },
     {
-      "name": "Decisions D-088 to D-136 and the orchestrator's merge edits",
-      "command": "python3 over decisions.md; git show of the D-118 and D-121 edit commits",
+      "name": "Decisions D-088 to D-139 recorded with rationale (D-088 to D-136 unchanged since round 9; D-137 to D-139 judged)",
+      "command": "git show e70ac02:docs/delivery/decisions.md; git diff f2ae717 e70ac02 -- docs/delivery/decisions.md",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/10-decisions-D088-D136.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/11-decisions-D088-D139.log"]
     },
     {
-      "name": "Product gates G1-G6 separate from engineering gates DG0-DG7; no certification or official claims",
-      "command": "git grep at f2ae717",
+      "name": "Evidence honesty: all 220 cited paths exist; every round-10 log hit disclosed and explained",
+      "command": "python3 docs/delivery/test-evidence/DG4/audit/round-10/scripts/honesty.py",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/11-product-vs-engineering-gates.log"]
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/08-evidence-honesty-scan.log"]
     },
     {
-      "name": "User-facing text matches delivered capability: transformations form.statusHint says G6 is 'available in a later release' (F-DG4-160)",
-      "command": "git grep 'later release' and transformations.form.statusHint at f2ae717",
-      "result": "FAIL",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/12-new-finding-stale-g6-hint.log", "docs/delivery/reviews/DG4/round-9/release-auditor.findings.json"]
+      "name": "Product gates G1-G6 separate from engineering gates DG0-DG7; no certification or official claims; G5/G6 decisions in the evidence synthetic",
+      "command": "grep at e70ac02",
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/12-product-vs-engineering-gates.log"]
     },
     {
-      "name": "Stage validation of DG4",
+      "name": "Stage validation of DG4: only the three problems that stem from this in-flight audit run (its meta.json, its listing in review_rounds, the import of its F-DG4-160 verification)",
       "command": "node tools/gates/validate.mjs --stage DG4",
-      "result": "FAIL",
-      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-9/13-validate-stage-DG4.log"]
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG4/audit/round-10/14-validate-stage-DG4.log", "docs/delivery/test-evidence/DG4/audit/round-10/14a-validate-stage-DG4-draft-records.log"]
     }
   ],
-  "blocking_conditions": [
-    "B1 Unresolved finding F-DG4-160 (Low, not mandatory; raised by the release-auditor in round 9, owner frontend-ux-engineer). apps/web/src/i18n/en/transformations.json:88 and ar/transformations.json:88, form.statusHint, rendered on the transformation edit page (TransformationEditPage.tsx:274) and pinned by transformations.test.tsx:315-321, tell the user that the G6 (Sustain) business approval needed to close a transformation 'is available in a later release'. DG4 delivers G6 and governed closure (REQ-S04-008, REQ-PB-021, REQ-S03-003 IMPLEMENTED; route transformations/:id/closure; e2e p4-gates-closure.spec.ts). A remaining Low observation must be accepted by a specialist reviewer and by the release-auditor. No specialist has seen it, so it is neither repaired and verified nor accepted. The auditor cannot accept it alone, and cannot substitute for a specialist. To resolve it, either: (a) the frontend-ux-engineer rewords the hint in EN and AR to point to the Closure page and the G6 approval and updates the pinned assertions, then a specialist reviewer verifies the fix on a new candidate and the release-auditor audits it; or (b) a specialist reviewer (domain-reviewer or qa-verifier) records PASS -> ACCEPTED_OBSERVATION for F-DG4-160 with a rationale, and the release-auditor concurs. The orchestrator first imports release-auditor.findings.json (the id F-DG4-160 is proposed; it may be renumbered)."
-  ],
+  "blocking_conditions": [],
   "accepted_observations": ["F-DG4-148"],
-  "decided_at": "2026-10-13T10:45:00Z",
+  "decided_at": "2026-10-13T18:30:00Z",
   "decided_by": "release-auditor",
   "invocation_reference": {
     "kind": "claude-code-cli-session",
-    "run_id": "DG4-T-DG4-AUDIT-R9-release-auditor-20261013T102138Z-7b5f734c",
-    "session_id": "7b5f734c-c736-4247-9ee8-6cdc603241f7"
+    "run_id": "DG4-T-DG4-AUDIT-R10-release-auditor-20261013T180247Z-82e59b30",
+    "session_id": "82e59b30-6e03-40dc-800d-86b2673c0273"
   },
-  "notes": "DG4 is an engineering delivery gate only. It grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. Product G6 never implies DG7. The G5/G6 decisions in the evidence are synthetic demo decisions by synthetic dev users.\n\nThe round-8 blockers B1-B4 are resolved and independently verified:\n- B1: candidate integrity; decisions.md is untouched since the f2ae717 freeze.\n- B2: 23 closures re-verified in round 9 and imported, with full fix_revisions that are ancestors.\n- B3: the D-136 rewrite restored exactly the 33 write-once files; 360/360 pairs are identical otherwise; checkWriteOnce DG4 reports 0.\n- B4: frozen_at equals the manifests in rounds 1-9.\n\nEvery other audit condition holds, as listed in tests. F-DG4-148 is accepted as an observation by qa-verifier (the reporter) and by the release-auditor, with the environment.md limitation 6 load envelope. Its owner is delivery-orchestrator, which also owns correcting the two rounded figures in that text (D-135).\n\nThe single blocking condition is the new Low finding F-DG4-160. No majority, score or deadline changes that: the auditor cannot accept a finding that no specialist has accepted."
+  "notes": "DG4 is an engineering delivery gate only. It grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. Product G6 never implies DG7. The G5/G6 decisions in the evidence are synthetic demo decisions by synthetic users.\n\nThe round-9 blocker, F-DG4-160 (Low, not mandatory), was repaired by T-DG4-FE-R11 (fix 30f2b17). Its reporter, the release-auditor, verified it closed on this candidate (release-auditor.verifications.json). The orchestrator must import that sidecar (import-findings.mjs --stage DG4 --round 10) and list this record in round 10's review_rounds. Until then, validate --stage DG4 reports exactly the three problems recorded in AUD-R10-15, all of which stem from this in-flight run.\n\nF-DG4-148 is accepted as an observation by qa-verifier (its reporter) and by the release-auditor. It rests on the environment.md limitation 6 load envelope. Owner: delivery-orchestrator, which also owns correcting the two rounded historical load figures in that text (D-135).\n\nEvery other audit condition holds, as listed in tests. No majority, score or deadline was used: each condition was checked on its own evidence."
 }
