@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 10,
+  "candidate_id": "sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6",
+  "source_commit": "e70ac02f63cd1f42487cfa4dae73f68e933da015",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-QA-R10-qa-verifier-20261013T163806Z-9cc4696b",
+    "session_id": "9cc4696b-ee20-4031-a461-49bbd09d93b2"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG4 scope. The diff under review was written by frontend-ux-engineer (T-DG4-FE-R11: four i18n catalogues, two web unit tests, two e2e specs) and backend-workflow-engineer (T-DG4-BE-R7: tests/qa/integration/a08-gate-controls.test.ts). That a08 file was originally authored by QA-B (an earlier qa-verifier task) before the freeze; the round-10 change to it is BE-R7's, not mine. D-137 to D-139 are the delivery-orchestrator's. This round I wrote only evidence under docs/delivery/test-evidence/DG4/qa/round-10/, one probe spec under docs/delivery/test-evidence/DG4/qa/tests/round-10/ (outside the candidate) and these review files. Every build, test and mutant ran in a disposable clone under $TMPDIR, now removed. I formed my verdict without reading the other reviewers' round-10 records or runs; the two run-record commits that landed during my run (39e0f8f, be91689) were checked only for their paths."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-10/qa-verifier.md",
+  "requirements_checked": ["REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044", "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011", "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025", "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+  "checks_run": [
+    {
+      "id": "QA-R10-00-candidate",
+      "procedure": "Confirm the frozen candidate on a complete (not shallow) clone, at the freeze commit and at the source commit, and on the repository working tree, at the start and at the end of the review. Confirm that HEAD differs from the source only by the freeze commit and by records outside the candidate.",
+      "command": "git clone /home/user/My-owns $TMPDIR/review-dg4r10 && git checkout 01a801e && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG4; git checkout e70ac02 && node tools/gates/candidate.mjs --stage DG4; (working tree) node tools/gates/candidate.mjs --stage DG4",
+      "environment": "Complete clone $TMPDIR/review-dg4r10 (01a801e and e70ac02) and its copy $TMPDIR/review-dg4r10-mut; Node 24.21.0; repository working tree at HEAD 01a801e (start) and be91689 (end).",
+      "expected": "sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6, 1475 files, every time; the clone is not shallow and stays clean.",
+      "actual": "Run this round. At the start (16:39Z: clone at 01a801e, clone at e70ac02, working tree at HEAD 01a801e) and at the end (17:56Z: both clones and the working tree), candidate.mjs printed candidate_id sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6, files 1475, EXIT 0 every time. The clone is not shallow ('false'), and both copies have an empty git status at the end. The manifest f38274cb6d50c498.manifest.json carries the same candidate_id, source_commit e70ac02f..., and 1475 entries. The freeze commit 01a801e adds only the 3 round-10 assignments, the manifest and stages.json. HEAD moved during my run to be91689 through two run-record commits of the other reviewers (39e0f8f code-security, be91689 domain): 16 files, all under docs/delivery, 0 outside. I checked only their paths. The candidate ID was unchanged afterwards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/00-candidate.log",
+        "docs/delivery/candidates/DG4/f38274cb6d50c498.manifest.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/RUN-NOTES.md"
+      ]
+    },
+    {
+      "id": "QA-R10-01-diff-nine-files",
+      "procedure": "Show that the product diff from round 9's source f2ae717 to e70ac02 (excluding docs/delivery) is exactly the nine FE-R11 and BE-R7 files. Compare the round-9 and round-10 manifests path by path, and compare the product tree with round 7's dab4562, whose evidence is carried forward.",
+      "command": "git diff --stat|--name-status f2ae7170630456a772e1ceac90ab6d96b68e3f5c..e70ac02f63cd1f42487cfa4dae73f68e933da015 -- . ':!docs/delivery'; python3 manifest delta 18c18fe4eda7cbc1 vs f38274cb6d50c498; git diff --name-only dab4562 e70ac02 -- . ':!docs/delivery'",
+      "environment": "Clone $TMPDIR/review-dg4r10; Python 3.",
+      "expected": "Exactly 9 files, all M: apps/web/src/i18n/{en,ar}/{transformations,nav}.json, app.test.tsx, transformations.test.tsx, journeys.spec.ts, p3-seams.spec.ts and tests/qa/integration/a08-gate-controls.test.ts. No product source, API, schema, migration or OpenAPI file.",
+      "actual": "Run this round. The diff has exactly these 9 files, all M, with 159 insertions and 35 deletions. The manifests both have 1475 entries and differ in 10 paths: these 9 and docs/delivery/decisions.md (D-137 to D-139). dab4562 (round 7) to e70ac02 gives the same 9 files, and dab4562 to f2ae717 gives 0. So everything outside these 9 files is byte-identical to the code I reviewed in full in round 7 and confirmed in round 9.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-diff.log",
+        "docs/delivery/candidates/DG4/f38274cb6d50c498.manifest.json",
+        "docs/delivery/candidates/DG4/18c18fe4eda7cbc1.manifest.json"
+      ]
+    },
+    {
+      "id": "QA-R10-02-unit-envelope",
+      "procedure": "pnpm test on Node 22 and Node 24, each with the locale unset and with C.UTF-8, run sequentially. The 1-minute load is sampled every 15 s. The gate check is a series in which no sample exceeds 8.",
+      "command": "bash docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-unit-envelope.sh -r1; ... -r2  (each run: [env -u LANG -u LC_ALL -u LC_CTYPE | env LANG=C.UTF-8 LC_ALL=C.UTF-8] TZ=UTC CI=1 PATH=<node22|node24>:$PATH pnpm test); python3 -I scripts/summarise-envelope.py",
+      "environment": "$TMPDIR/review-dg4r10 (01a801e = e70ac02 + freeze records) after an offline install and pnpm -r build; Node 22.22.2 and 24.21.0; 4 cores. pnpm test ran unchanged. The clone's node_modules is writable, so --configLoader runner was not needed.",
+      "expected": "Inside the envelope (every sample <= 8), all 4 runs EXIT 0 with unit-node 1589, unit-web 1358 (1347 in round 9 + the 11 new FE-R11 tests) and unit-formula-nocodegen 259 + 2 skipped by design.",
+      "actual": "Run this round. SERIES r1, 16:41-17:08Z: OUTSIDE THE ENVELOPE, so NOT the gate check. All 4 runs EXIT 0 with the expected counts, but 80 of 108 samples were above 8 (min 3.65, median 9.17, max 11.82). Part of the cause is mine: my validator runs overlapped it from 16:45Z to 16:59Z. In r1, architecture.test.ts took 31.8 s as a whole file (138 tests) at a load of about 11; that is the file total, the 30 s limit applies to each test, and no test timed out. SERIES r2, 17:08-17:24Z, INSIDE THE ENVELOPE, with nothing else of mine running: 64 samples, 5.10-6.91 (median 5.92), 0 above 8, max gap 16 s. All 4 runs EXIT 0: node22-unset (load 5.10-6.43), node22-C (5.30-6.91), node24-unset (5.69-6.65) and node24-C (5.12-6.69). Every one of the 8 runs reports unit-node 84 files / 1589 passed, unit-web 69 files / 1358 passed and unit-formula-nocodegen 259 passed + 2 skipped. The 2 skips are by design (it.skipIf(NOCODEGEN) in fuzz.test.ts). The strict scan finds 0 x/FAIL lines, 0 'timed out', 0 failed summaries and 0 top-level errors in all 8 logs. The coarse 'fail/timeout lines' of my summariser are passing (✓) tests whose names contain 'failed'. Disclosed: each log has 14 stderr warnings, React 'Encountered two children with the same key', from passing tests in kpiUnit.test.tsx and percentKpi.test.tsx. They are fixture artefacts, unchanged since round 6. r2 margins: architecture.test.ts as a whole file 10.1-14.2 s; the RAID 'action register' test 1.3-2.1 s against its 5 s.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-envelope-samples-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-envelope-samples-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node22-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node22-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node24-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node24-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node22-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node22-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node24-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-node24-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-unit-envelope.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-unit-one.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/summarise-envelope.py",
+        "docs/delivery/test-evidence/DG4/qa/round-10/00-install.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-r-build.log"
+      ]
+    },
+    {
+      "id": "QA-R10-03-fe-r11-unit-tests-assert-clauses",
+      "procedure": "Read the FE-R11 diff of the catalogues and of app.test.tsx and transformations.test.tsx. Check that the tests pin the new status hint and the planned-area texts literally in both languages, and that the planned-area render tests check what the text claims. Run the two files verbosely. Then run a mutant: restore the four i18n files to f2ae717 (the stale texts). The tests must fail.",
+      "command": "git diff f2ae717..e70ac02 -- apps/web/src; npx vitest run --project unit-web --reporter=verbose apps/web/src/app/app.test.tsx apps/web/src/pages/transformations/transformations.test.tsx; git checkout f2ae717 -- apps/web/src/i18n/{en,ar}/{nav,transformations}.json; (same run); git checkout e70ac02 -- apps/web/src/i18n",
+      "environment": "$TMPDIR/review-dg4r10-mut (a copy of the built clone); Node 24.21.0.",
+      "expected": "The tests pin STATUS_HINT and PLANNED_TEXT with toBe/getByText in en and ar, with negative checks for 'later release'/'إصدار لاحق'/'not available yet'/'غير متاح بعد'. The rendered tests check dir ltr/rtl, the h3 heading and every sub-entry's href. Baseline 49/49 passes. The stale-text mutant fails the new and updated tests.",
+      "actual": "Run this round. The diff does what the handback says. transformations.test.tsx pins STATUS_HINT.en and .ar with toBe. It adds not.toMatch(/later release|not available|available in/i) and not.toMatch(/إصدار لاحق|غير متاح|سيتاح/), and it checks that the hint contains the Closure tab label (closureP4.tab, «الإغلاق») and the closeDescription's G6 wording. The rendered edit-page tests (en LTR, ar RTL) assert the literal hint on screen and the select options ['active','on_hold']. app.test.tsx pins plannedBody, entry.portfolioPlanned and willContain literally in en and ar, with not.toMatch(/not available yet|will contain|غير متاح بعد|سيتضمنه/i). For each of the 4 planned areas in both locales it renders the page and checks the h1, the dir, the body, the h3, and that each NAV_SUBPAGES entry of the area without requiresAny is a link with the right href inside the area's nav list, plus the Dashboards link. It renders /benefits-finance in both locales. Baseline: 2 files, 49/49 passed, EXIT 0, with all 11 new tests listed by name. Mutant: 14 of 49 tests failed: the status-hint catalogue test, the 2 rendered edit-page tests, the pin test, the 8 planned-area render tests and the 2 partial-area tests. EXIT(MUTANT) 1 is by design, because the mutant is killed. Restored, the status is empty. No product code changed: only the four catalogues and the tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/02e-unit-fe-r11-targeted-and-mutant.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-diff.log",
+        "apps/web/src/app/app.test.tsx",
+        "apps/web/src/pages/transformations/transformations.test.tsx"
+      ]
+    },
+    {
+      "id": "QA-R10-04-be-r7-a08-fingerprint",
+      "procedure": "Review BE-R7's diff of tests/qa/integration/a08-gate-controls.test.ts. Check that the G6 test still asserts that the fingerprint covers stages.json, findings.json, requirements.csv and a gates/DGx.json, and that the before and after fingerprints are equal. Measure the scope. Run independent non-vacuity mutants on a scratch copy of the six records. Check that no product code can write under docs/delivery.",
+      "command": "git diff f2ae717..e70ac02 -- tests/qa; CLONE=$TMPDIR/review-dg4r10-mut bash docs/delivery/test-evidence/DG4/qa/round-10/scripts/a08-mutants.sh (with-pg.sh npx vitest run --configLoader runner --project integration <scratch copy>, MUTANT=none|stages|requirements|findings-removed|new-gate-DG7|new-review|candidates); python3 scope measurement; grep docs/delivery and fs writes in apps/*/src packages/*/src",
+      "environment": "$TMPDIR/review-dg4r10-mut; disposable PostgreSQL 16.13 (port 26620, pool 26600-26699); Node 24.21.0. The direct vitest call used --configLoader runner, as QA-A's finding requires.",
+      "expected": "deliveryFingerprint covers DELIVERY_RECORDS (gates, stages.json, findings.json, reviews, decisions.md, requirements.csv), the same set as g5-g6.test.ts, and lists a missing path as 'missing'. The four non-vacuity assertions stay. Mutants that touch a gate record are killed; a write outside the set passes, by design. Product code never writes under docs/delivery.",
+      "actual": "Run this round. The diff narrows deliveryFingerprint to DELIVERY_RECORDS, identical to g5-g6.test.ts:302-309. A missing entry is recorded as 'missing', never skipped. Lines 827-830 still assert arrayContaining(['stages.json','findings.json','requirements.csv']) and some /^gates\\/DG\\d\\.json$/, and line 848 asserts that the fingerprint is equal after the decision and handleGateDecided. Nothing was removed or skipped, and no timeout was raised. Scope at the clone: 535 files and 9.96 MB (gates 5, reviews 526, plus 4 files), against 4,975 files and 345.75 MB for the old form, which matches D-138 and D-139. Valid mutant run (06-a08-mutants.log, whole file, scratch paths unique to the run): none passes 31/31 (EXIT 0). stages, requirements, findings-removed, new-gate-DG7 and new-review each fail exactly the G6 test (1 ×, the other tests ✓), EXIT 1. Those exits are by design: the mutants are killed. candidates passes 31/31 (EXIT 0), also by design, because candidates/ is outside DELIVERY_RECORDS. Two earlier attempts are disclosed and not used. Attempt 1 ran with -t, which skipped the sequential earlier tests, so even the control got 422 gate.out_of_sequence: my harness error. Attempt 2 overlapped attempt 1, which I had failed to stop, on the same scratch paths. The valid log's per-mutant head -30 cut the summary lines of the failing mutants, and the counts are in the note appended to it. Product code: the only docs/delivery mentions in apps/*/src and packages/*/src are 4 comments in packages/db/src/schema.ts, and no API or worker code writes files. So a product G6 approval cannot write any file there, and narrowing the check to the gate-state records loses nothing that REQ-S04-008's acceptance ('product G6 approval changes no engineering DG record') covers. In the full integration run the a08 file passed 31/31, and tests/qa alone ran the G6 test in 263 ms.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/06-a08-mutants.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/06-a08-mutants-attempt1-filtered-INVALID.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/06-a08-mutants-attempt2-overlapped-INVALID.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/06b-product-writes-docs-delivery.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/06c-fingerprint-scope.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/a08-mutants.sh",
+        "tests/qa/integration/a08-gate-controls.test.ts",
+        "apps/api/test/integration/workflows/g5-g6.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R10-05-integration-full",
+      "procedure": "Run the full integration suite once on a disposable PostgreSQL, exactly as the assignment names it, inside the load envelope. Count the migrations and the p4-pending lists.",
+      "command": "bash docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-integration.sh run1 26510  (= QA_PG_PORT=26510 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh pnpm test:integration); node --experimental-strip-types scripts/pending-lists.mjs <43 p4-pending-*.ts>",
+      "environment": "$TMPDIR/review-dg4r10; disposable PostgreSQL 16.13 (UTF8, C collation) on port 26510; Node 24.21.0; load sampled every 15 s.",
+      "expected": "209 files and 1984 tests passed, EXIT 0, inside the envelope; migrations 0001 to 0061; contract.test.ts passes against 652 operations; every p4-pending list is empty.",
+      "actual": "Run this round, once, as this round's scope requires. The focus section's 'twice' is overridden, and the second run is carried forward from round 7 on identical code outside the 9 files. Result: 17:24-17:44Z, Test Files 209 passed (209), Tests 1984 passed (1984), Duration 1149 s, EXIT 0. Load: 77 samples, 1.86-6.25, 0 above 8. a08-gate-controls 31 tests passed, g5-g6 13 passed, contract.test.ts 45 passed (openapi:lint counts 652 operations). Migrations: 61 files, 0001_identity_access to 0061_p4_finance_validation_correction_step (the assignment says 0060; the candidate ships 0061, and the e2e stack applies 61). p4-pending: 43 files, 47 arrays, 0 entries. Disclosed: 32 lines match error/timeout, and every one is the stdout or the name of a passing error-path test (connection-hygiene 408 requestTimeout, request-io F-DG2-412 R6a-R6e and db-econnreset, BE18 idp_unavailable, routing.role_unmapped, bounded checkout and idle-in-transaction).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/04-integration-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/04-integration-run1-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/04-pending-lists.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-integration.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/pending-lists.mjs"
+      ]
+    },
+    {
+      "id": "QA-R10-06-tests-qa-and-dlv036",
+      "procedure": "Run tests/qa on its own on a disposable PostgreSQL (verbose), and count the tests per file for REQ-DLV-036 (the A04, A09, A10 and A11 executable tests on this frozen candidate). Run the root acceptance e2e specs (e2e/) on the real stack in chromium-en and chromium-ar, in both locale settings.",
+      "command": "QA_PG_PORT=26540 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose tests/qa; CLONE=... scripts/run-e2e-root.sh <unset|cutf8> 26560 26561 root e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a20-bilingual-shell.spec.ts",
+      "environment": "$TMPDIR/review-dg4r10 (tests/qa) and $TMPDIR/review-dg4r10-mut (e2e/support/qa-stack.sh: disposable PostgreSQL, 61 migrations, seed-dev, built API serving the built SPA, AUTH_MODE=dev); Node 24.21.0; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers; --workers=1.",
+      "expected": "tests/qa 15 files / 172 tests; REQ-DLV-036 85 tests (A04 8+4, A09 17, A10 16, A11 12+17+11); e2e/ 14 passed in each setting.",
+      "actual": "Run this round. tests/qa: Test Files 15 passed, Tests 172 passed, EXIT 0, 89 s. Per file: a01 2, a02-a08 1, a03 12, a04-a05-a10-partials 4, a04-kpi-propagation 8, a05 17, a08 31, a09 17, a10 16, a11-adoption 12, a11-bau-sustain 17, a11-value-closure 11, a12 14, a13 5, a14 5. REQ-DLV-036 on this candidate: A04 8+4, A09 17, A10 16, A11 12+17+11 = 85, all passed, the same as round 7. Root acceptance specs: 14 passed in each setting (unset 53.1 s, C.UTF-8 52.4 s), EXIT 0, at a load of at most 1.68, both languages: A03 x2, A04 REQ-S07-017 keyboard update, A08 REQ-S04-012/REQ-PB-015, A09 REQ-PB-081/REQ-S10-012, A20 x2. Disclosed: my first e2e/ attempt passed 'e2e/' as a Playwright filter. The testDir is the repository root, so it also matched old QA probe specs under docs/delivery/test-evidence, which failed to import their helpers ('Cannot find module', EXIT 1). That was my harness error (05-e2e-root-*-filter-INVALID.log), and it was re-run with the 4 files named.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/04b-integration-tests-qa-only.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/04c-dlv036-counts.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-root-unset-filter-INVALID.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-root-cutf8-filter-INVALID.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-e2e-root.sh"
+      ]
+    },
+    {
+      "id": "QA-R10-07-e2e-changed-specs-axe",
+      "procedure": "Run the two e2e specs FE-R11 changed, journeys.spec.ts and p3-seams.spec.ts, on the real stack with --workers=1, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8, with axe. Read the changed assertions.",
+      "command": "CLONE=$TMPDIR/review-dg4r10-mut bash docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-e2e.sh <unset|cutf8> 26530 26531 changed apps/web/e2e/journeys.spec.ts apps/web/e2e/p3-seams.spec.ts  (= apps/web/e2e/support/with-stack.sh npx playwright test ... --workers=1 --reporter=list)",
+      "environment": "$TMPDIR/review-dg4r10-mut; with-stack.sh (disposable PostgreSQL, 61 migrations, seed-dev synthetic users, built API serving the built SPA, AUTH_MODE=dev) on PG 26530 and API 26531; Node 24.21.0; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers.",
+      "expected": "24 passed in each setting (journeys 9 + p3-seams 3, per language); the edit test asserts the new hint (Closure page / «الإغلاق», G6 (Sustain) / G6 (الاستدامة), no 'later release' / 'إصدار لاحق'); the planned-area and partial-area steps assert the new texts; axe reports 0 serious or critical issues.",
+      "actual": "Run this round. Unset: 24 passed (2.3 min), EXIT 0. C.UTF-8: 24 passed (2.0 min), EXIT 0. No failure, flaky test or retry in either. Load: unset 2.20-6.25 and C.UTF-8 2.58-5.11, 0 samples above 8. Both ran while the integration run was finishing. The changed assertions are as expected. The edit test (journeys:401) checks the hint text: visible, contains / does not contain, an 08a screenshot and axe 'edit-status-hint'. The shell test checks the h3 willContain and the RAID nav link, plus axe 'planned-area'. p3-seams checks '#entry-planned + p' toHaveText(portfolioPlanned) and the h3. axe summaries: journeys 19 pages and p3-seams 11 pages per language and setting, 0 violations of any impact, so 0 serious or critical. That includes en/ar edit-status-hint, planned-area, p3-area-benefits and p3-area-initiatives. Disclosed: each log has 3 'npm warn Unknown project config' lines (npm reading the pnpm .npmrc), which have no effect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-unset-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-cutf8-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/axe-summary-changed-unset.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/axe-summary-changed-unset.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/axe-summary-p3-seams-changed-unset.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/axe-summary-p3-seams-changed-unset.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/axe-summary-changed-cutf8.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/axe-summary-changed-cutf8.json",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/journey-08a-edit-status-hint.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/journey-08a-edit-status-hint.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-e2e.sh"
+      ]
+    },
+    {
+      "id": "QA-R10-08-f-dg4-160-reproduction-and-probe",
+      "procedure": "Re-run F-DG4-160's reproduction from the round-9 audit (12-new-finding-stale-g6-hint.log) on this candidate. Then run my own probe spec on the real stack, chromium-en and chromium-ar, both locale settings. P1: the edit page shows the corrected hint, with no stale phrase and no 'closed' option; the Closure page it points to opens; axe; 200 % text and 390 px. P2: on each of the 4 planned areas the body and h3 are shown, and every sub-entry the text says is listed under the area is a nav link that opens a page linking into the matching workspace tab of a transformation, which opens a working screen; the Dashboards link opens; axe; 200 % and 390 px. P3: the 6 partial areas show the corrected portfolioPlanned text.",
+      "command": "grep statusHint / stale phrases / render site / pin / route (09-f-dg4-160-reproduction.log); cp docs/delivery/test-evidence/DG4/qa/tests/round-10/e2e/zz-qa-r10-fe-r11.spec.ts apps/web/e2e/ && CLONE=... scripts/run-e2e.sh <unset|cutf8> 26550 26551 probe apps/web/e2e/zz-qa-r10-fe-r11.spec.ts; rm the copy",
+      "environment": "$TMPDIR/review-dg4r10-mut with with-stack.sh (PG 26550, API 26551); probe revision 2, sha256 0fef744f...; the copy was removed afterwards and the clone status is empty; Node 24.21.0; Chromium from /opt/pw-browsers.",
+      "expected": "The reproduction no longer reproduces: neither catalogue contains 'later release' or 'إصدار لاحق', the old sentence is pinned nowhere, and the hint names the Closure page and G6 (Sustain). The probe passes 6/6 in each setting.",
+      "actual": "Run this round. Reproduction: en and ar statusHint (line 88) now read '... A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.' and '... يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.' The stale-phrase grep exits 1 (no match), and the old sentence appears nowhere in apps/, packages/, tests/ or e2e/. It still renders at TransformationEditPage.tsx:274. The route transformations/:id/closure exists (router.tsx:402), with the tab 'Closure' / «الإغلاق». F-DG4-160 does not reproduce on this candidate. I write no verification entry: its reporter, the release-auditor, verifies it. Probe revision 2: unset 6 passed (57.9 s) and C.UTF-8 6 passed (58.8 s), EXIT 0, at a load of at most 2.80. P1 passes in both languages: the exact hint, no stale phrase, no 'closed' option, the Closure page h1 'Closure and transition decisions', axe clean, 200 % overflow <= 1 px and 390 px overflow <= 1 px. P2: every sub-entry opens its screen in en and ar, for example /risks-actions/raid -> /transformations/<id>/raid 'RAID log (T15)', /change-adoption/adoption -> 'Stakeholder & Adoption Plan', /bau-improvement/lessons -> 'Lessons learned', /playbook/phases -> 'Phases and guided steps', and /dashboards -> 'Dashboards'. P3: all 6 partial areas show the new text. Disclosed: revision 1 (05-e2e-probe-rev1-unset.log, 6/6 EXIT 0) checked the sub-entries too weakly, because those pages carry the area label as h1, as the placeholder does. It is kept, and revision 2 is the check. I viewed the screenshots of the ar edit page at 390 px and the en Risks and Actions page: the text is complete, the direction is correct, and nothing is clipped.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/09-f-dg4-160-reproduction.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/12-new-finding-stale-g6-hint.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-10/e2e/zz-qa-r10-fe-r11.spec.ts",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-rev1-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/qa-r10-edit-hint.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/qa-r10-edit-hint.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/qa-r10-edit-hint-200pct.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/qa-r10-edit-hint-390px.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/qa-r10-closure-page.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/en/qa-r10-planned-risks.png",
+        "docs/delivery/test-evidence/DG4/qa/round-10/screenshots/ar/qa-r10-planned-risks-390px.png"
+      ]
+    },
+    {
+      "id": "QA-R10-09-d137-d138-d139-judgement",
+      "procedure": "Judge D-137, D-138 and D-139 against the evidence. Run my own sweep of the web catalogues for availability claims ('later release', 'later stage', 'not available yet', 'in this release', 'planned for', 'إصدار لاحق', 'غير متاح بعد', 'سيتاح', 'قيد البناء', ...) and compare it with FE-R11's sweep table (handback §3). Check the kept strings' reachability claims (submission_enabled migrations, no gate_definition writes in the API, laterStage unused, P4_PLANNED_ROUTES empty). Check D-138's cause figures and D-139's pre-freeze counts against my own runs.",
+      "command": "grep -rniE '<phrases>' apps/web/src/i18n; grep submission_enabled packages/db/migrations; grep gate_definition writes apps/api/src; grep laterStage; grep P4_PLANNED_ROUTES; sed criteria.ts evaluateGate; python3 scope measurement",
+      "environment": "Clone $TMPDIR/review-dg4r10; the handbacks T-DG4-FE-R11-frontend-ux-engineer.md and T-DG4-BE-R7-backend-workflow-engineer.md; decisions.md D-137 to D-139.",
+      "expected": "Each decision matches the evidence. No string left in the web misstates a feature delivered in DG4.",
+      "actual": "Run this round. D-137 is ACCURATE, and the decision to repair rather than accept is sound. My sweep finds the same corrected strings, and every kept string in the handback table checks out: gates.notEnabled/notEnabledBody and problems.gate_not_enabled are unreachable, because 0011, 0024, 0026 and 0059 enable G1-G6, 0059 aborts unless G5 and G6 are enabled, and apps/api/src has no gate_definition insert or update. transformations.workspace.laterStage has no render site. P4_PLANNED_ROUTES is empty (comments only), so nav.p4.beingBuilt* never renders. admin.plannedSections and access__scope_type_reserved are true for DG4. My sweep also lists strings the table does not name individually: dashboards.json 'Rule/Reason not listed in this release.' (the 'other' fallbacks for an unknown rule or reason code), gates.json and problems.json gate__criterion_not_evaluable ('cannot be evaluated in this release'), and define.json noEvaluator. Each is the fail-closed text for a code or criterion the release has no label or evaluator for (criteria.ts evaluateGate: a criterion without an evaluator 'can never be complete'). None claims that a delivered DG4 feature is missing, so they fall in the handback's row 12 class, and this is not a finding. A naming nit, not a defect: D-137 calls two keys 'nav.portfolioPlanned' and 'transformations.laterStage', while the real keys are nav.entry.portfolioPlanned and transformations.workspace.laterStage. The handback uses the real keys. D-138 is ACCURATE. The old scope is 4,975 files and 345.75 MB at this clone (D-138: 4,947 and 342 MB at 55e13f3, less evidence). The new scope is 535 files and 9.96 MB, exactly BE-R7's figure. The cold-cache mechanism is disclosed as inferred, not reproduced. The narrowing is acceptable because product code cannot write under docs/delivery (QA-R10-04), and the remaining set is the DG gate state. D-139 is ACCURATE where I can check it. The product diff is exactly FE-R11 and BE-R7 (QA-R10-01). Integration 1984/1984 reproduces (QA-R10-05). The unit counts 1589/1358/259+2 reproduce (QA-R10-02). The root acceptance specs 14/14 reproduce (QA-R10-06). I did not re-run the full 350-test e2e, which is carried forward (QA-R10-12). The handback file-name correction (BE-R7 written under -frontend-ux-engineer, committed as -backend-workflow-engineer) is disclosed in D-139, and the file says so itself.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/03-sweep.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/06c-fingerprint-scope.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-10/06b-product-writes-docs-delivery.log",
+        "docs/delivery/decisions.md",
+        "docs/delivery/handbacks/DG4/T-DG4-FE-R11-frontend-ux-engineer.md",
+        "docs/delivery/handbacks/DG4/T-DG4-BE-R7-backend-workflow-engineer.md",
+        "docs/delivery/reviews/DG4/round-9/release-auditor.findings.json"
+      ]
+    },
+    {
+      "id": "QA-R10-10-static",
+      "procedure": "Static checks on the frozen candidate.",
+      "command": "bash docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-static.sh  (pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast)",
+      "environment": "$TMPDIR/review-dg4r10 (01a801e), Node 24.21.0, pnpm 10.33.0, after an offline install from a copy of the pre-installed store.",
+      "expected": "All 7 EXIT 0.",
+      "actual": "Run this round, and all 7 exit 0. build: the only warning is Vite's advisory 'chunks larger than 500 kB'. typecheck is clean. lint: eslint --max-warnings=0 passes. openapi:lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations'. no-cdn: 'PASS no-cdn: scanned apps, packages'. format:check: 'All matched files use Prettier code style!'. contrast: 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'. Those 3 fail by design, because the UI never uses them. The build ran before the unit series, and the other six ran at 17:54-17:55Z.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-check-contrast.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/run-static.sh"
+      ]
+    },
+    {
+      "id": "QA-R10-11-validate-and-register",
+      "procedure": "Run the gate validators in the working tree and in the clone, and confirm the register: the 137 assigned ids equal the DG4-final rows, all are IMPLEMENTED, every evidence path exists, and the CSV is unchanged since round 7.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3 | --historical --stage DG2 | --historical --stage DG1 | --register DG4 | --pipeline; python3 -I docs/delivery/test-evidence/DG4/qa/round-10/scripts/req-check.py $TMPDIR/review-dg4r10 docs/delivery/assignments/DG4/round-10/qa-verifier.md",
+      "environment": "Repository working tree (HEAD 01a801e at run time) and clone $TMPDIR/review-dg4r10 at 01a801e; Node 24.21.0; Python 3.",
+      "expected": "5/5 PASS in both places; 137 = 137, IMPLEMENTED 137, 0 missing evidence paths.",
+      "actual": "Run this round. In both places: 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)', 'PASS register rules at DG4' and 'PASS pipeline (active stage: DG4 REVIEWING)', all 10 EXIT 0. Register: 137 assigned ids, all unique; 137 DG4-final rows; the sets are equal; IMPLEMENTED 137; 1150 evidence paths, 0 missing in the candidate. requirements.csv has 0 diff lines from f2ae717 and from round 7's dab4562, and no row's notes mention FE-R11, BE-R7 or F-DG4-160. My round-7 literal-acceptance trace therefore stands: 137/137, with the disclosed partial clauses of REQ-PB-065, REQ-S04-014, REQ-S07-015, REQ-PB-066, REQ-S15-008 and REQ-S20-011 judged acceptable. For the one row this round's diff touches, REQ-S04-008 ('G6 submission without an accepted BAU handover is rejected; product G6 approval changes no engineering DG record'), I re-ran the evidence this round: a08 31/31 and g5-g6 13/13 in the integration run, plus the A08 mutants.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-historical-stage-DG1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-clone.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/07-register-confirmation.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-10/scripts/req-check.py",
+        "docs/delivery/test-evidence/DG4/qa/round-7/06-requirement-trace.txt"
+      ]
+    },
+    {
+      "id": "QA-R10-12-carry-forward-full-e2e-aud-390-200",
+      "procedure": "Carry forward the full product e2e (all apps/web/e2e specs, both settings), the AUD read-only pass, 390 px and 200 % text on all P4 screens, and the second full integration run from round 7 on identical code. These were not re-run this round.",
+      "command": "Not re-run this round. Round 7: scripts/run-e2e.sh <unset|cutf8> ... full; scripts/run-probes.sh; scripts/run-integration.sh run2",
+      "environment": "Round 7, candidate baa6ff4d (dab4562). Its product tree differs from e70ac02 only in the 9 FE-R11/BE-R7 files (QA-R10-01). PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers.",
+      "expected": "Round-7 evidence on identical code, with every non-pass disclosed there; the changed files' own checks re-run this round.",
+      "actual": "NOT RE-RUN THIS ROUND, by this round's scope: review of the 9-file diff, with the rest carried forward. Everything they touch was re-run this round: both changed specs (QA-R10-07), the root acceptance specs (QA-R10-06), my probe covering 390 px, 200 % and axe on the changed screens (QA-R10-08), and integration once (QA-R10-05). The round-7 evidence on identical code: integration run 2 had 209 files / 1984 tests, EXIT 0. The full e2e unset run counted 364 tests: 349 passed, 5 failed and 10 did not run, EXIT 1. All 5 failures are 30 s timeouts at load 9-30, and the 10 are their serial followers. The C.UTF-8 re-run counted 364: 360 passed and 1 failed (p2 'Define -> G2' en, 32.1 s timeout), with 3 not run, EXIT 1. The solo re-runs were unset 68/68 and C.UTF-8 24/24, EXIT 0. 'Define -> G2' is a DG2 journey that no DG4 row cites (D-111, D-112, D-115). Probes: 22/22 per setting. dg4-qa-r5-checks: 546 per language, 0 failed (axe 65, 390 px 122, 200 % 122, AUD 178, including S1-aud-sends-no-writes). No axe serious or critical issue in any run. D-139 reports the orchestrator's own pre-freeze full e2e as 350/350 in each setting on 474d82a. I did not run that, and I cite it only as context.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/RUN-NOTES.md",
+        "docs/delivery/reviews/DG4/round-7/qa-verifier.json"
+      ]
+    },
+    {
+      "id": "QA-R10-13-environmental-residuals",
+      "procedure": "Record the assigned environmental residuals as PASS on the offline and configuration surface, and note them.",
+      "command": "pnpm check:no-cdn; pnpm -r build; node tools/gates/validate.mjs --pipeline",
+      "environment": "$TMPDIR/review-dg4r10 and the repository working tree; the sandbox has no network.",
+      "expected": "The offline surface passes; the residuals are noted.",
+      "actual": "Run this round on the offline surface: no-cdn PASS, build EXIT 0, pipeline PASS. The residuals are noted as assigned. The live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049) cannot be reached from this sandbox, and none of them is a DG4-final row. All e2e this round ran with AUTH_MODE=dev on the real stack.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-10/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/08-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-10/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/qa/round-10/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG4/qa/round-10/env.txt",
+    "docs/delivery/test-evidence/DG4/qa/round-10/00-candidate.log",
+    "docs/delivery/test-evidence/DG4/qa/round-10/01-diff.log",
+    "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-envelope-summary.txt",
+    "docs/delivery/test-evidence/DG4/qa/round-10/04-integration-run1.log",
+    "docs/delivery/test-evidence/DG4/qa/round-10/06-a08-mutants.log",
+    "docs/delivery/test-evidence/DG4/qa/round-10/09-f-dg4-160-reproduction.log",
+    "docs/delivery/test-evidence/DG4/qa/tests/round-10/e2e/zz-qa-r10-fe-r11.spec.ts"
+  ],
+  "reviewed_at": "2026-10-13T18:05:00Z",
+  "summary": "PASS. No new finding. Candidate sha256:f38274cb... (1475 files) is verified on a complete clone, at the freeze 01a801e and at the source e70ac02, at the start and at the end. The product diff from f2ae717 is exactly the 9 FE-R11 and BE-R7 files. FE-R11: the new status hint and the planned-area texts are pinned literally in EN and AR; a stale-text mutant fails 14 of 49 tests; F-DG4-160's reproduction no longer reproduces; and my probe shows on the real stack that what the texts claim is true (the Closure page opens, and every listed sub-entry opens its workspace screen), with axe, 390 px and 200 % clean. BE-R7: the narrowed A08 G6 fingerprint keeps its non-vacuity assertions, and my mutants on stages, requirements, findings, a new gates/DG7.json and a new review are each killed. No product code can write under docs/delivery. Unit series r2 ran inside the envelope (max 6.91): 4/4 EXIT 0, 1589/1358/259+2 skipped. r1 was outside the envelope and is disclosed. Integration ran once: 209 files / 1984 tests, EXIT 0 (max load 6.25). tests/qa 172/172; REQ-DLV-036 85/85; changed e2e specs 24/24 and root acceptance specs 14/14 in both locale settings; axe 0 issues. Static 7/7 and validators 10/10 pass. D-137, D-138 and D-139 are accurate. The full e2e, the AUD pass and the second integration run are carried forward from round 7 on identical code. No product gate (G1-G6) was decided, and product G6 never implies DG7.",
+  "narrative": "docs/delivery/reviews/DG4/round-10/qa-verifier.md"
+}
