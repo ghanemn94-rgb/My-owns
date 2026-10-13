@@ -1,0 +1,14 @@
+# 07 auditor reproduction of pnpm test inside the D-134 envelope (release-auditor, T-DG4-AUDIT-R8)
+Clone: $TMPDIR/c, complete (not shallow), checked out at 8553323d (candidate recomputed there: sha256:8014e5ce...3804, 1475 files; 01-clone-identity-validators.log).
+Install: pnpm install --offline --frozen-lockfile from a private copy of the local store: EXIT 0 (07-install.log; the 4 'Failed to create bin ... mth-db' warnings precede the build, as in the reviewers' logs).
+Build: pnpm -r build EXIT 0 (Vite chunk-size advisory only); second install EXIT 0 (07-build.log).
+No other agent ran heavy work: the three round-8 specialist runs had finished (08:04Z, 08:15Z, 08:19Z) before my runs started (08:32Z).
+Load sampled every 15 s (07-unit-samples.log):
+  node24-unset (TZ=UTC CI=1, LANG/LC_* unset): 08:32:16-08:35:39Z, n=14, 1-min load 1.38-4.62, 0 samples above 8
+    unit-node 1589/1589, unit-web 1347/1347, unit-formula-nocodegen 259 passed + 2 skipped (by design); EXIT 0
+    architecture.test.ts 10681 ms (limit 30 s); raid 'action register' en 1541 ms / ar 1148 ms (findBy wait 5 s)
+  node22-C (Node 22.22.2, LANG=LC_ALL=C.UTF-8, TZ=UTC CI=1): 08:35:39-08:39:16Z, n=15, 1-min load 3.55-5.02, 0 samples above 8
+    unit-node 1589/1589, unit-web 1347/1347, unit-formula-nocodegen 259 passed + 2 skipped (by design); EXIT 0
+    architecture.test.ts 11589 ms; raid 'action register' en 1576 ms / ar 1094 ms
+Disclosed: each log has 14 React 'Encountered two children with the same key' stderr warnings from passing kpiUnit/percentKpi fixture tests (as qa disclosed, identical in rounds 6-8), and 7 lines matching 'failed' that are names of passing tests ('a failed read shows ...'). No FAIL line, no 'timed out' line.
+Clone tracked tree after the runs: clean (07-clone-status.txt is empty).

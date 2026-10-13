@@ -1,0 +1,68 @@
+# 08 product G1-G6 vs engineering DG0-DG7 at 8553323 (2026-10-13T08:31:10Z)
+## DG[0-7] in product i18n / user-facing strings (apps/web/src/i18n, apps/*/src/**/*.json)
+8553323:apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+8553323:apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+8553323:apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+8553323:apps/web/src/i18n/index.ts:23:// P3 (DG3) namespaces: one per page area, each owned by its FE task (p3-work-split §4).
+8553323:apps/web/src/i18n/index.ts:49:// P4 slices I and C namespaces (T-DG4-FE-A).
+8553323:apps/web/src/i18n/index.ts:64:// P4 slice A namespace (T-DG4-FE-B): the KPI engine screens (pages/kpi).
+8553323:apps/web/src/i18n/index.ts:77:// P4 slice J namespace (T-DG4-FE-G): dashboards, Executive Overview, workspace header, My Work sections.
+8553323:apps/web/src/i18n/index.ts:80:// P4 slice E execution panels on the initiative page (T-DG4-FE-D2): budget lines, execution, schedule network.
+8553323:apps/web/src/i18n/index.ts:83:// P4 slice G closure namespace (T-DG4-FE-F): status model, closure and transition decisions (pages/closure).
+8553323:apps/web/src/i18n/index.ts:86:// P4 slice H change control and phase workspace namespaces (T-DG4-FE-F2): pages/change-requests, pages/phases.
+(end)
+## DG[0-7] in product source, non-comment lines
+8553323:apps/api/src/modules/kpi/gate-facts.ts:102:      hasSource: hasText(b.source), // F-DG2-150: a blank source is not a source
+8553323:apps/api/src/modules/organization/routes.ts:164:        await ensureDefaultCalendar(tx, id, principal.userId, audit.requestId); // ADR-0025 §1 (T-DG4-BE-A)
+8553323:apps/api/src/modules/organization/routes.ts:286:          await lockBusinessUnitHierarchy(tx, organizationId); // F-DG1-140: depth check vs a concurrent move
+8553323:apps/api/src/modules/platform/db-errors.ts:2704:    case "22021": // character_not_in_repertoire (U+0000 in text; F-DG2-231)
+8553323:apps/api/src/modules/platform/db-errors.ts:2705:    case "22P05": // untranslatable_character (a character the server encoding cannot hold; F-DG2-231)
+8553323:apps/api/src/modules/workflows/gates.ts:780:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+8553323:apps/web/README.md:33:would be cleaner; it is requested in the T-DG1-FE handback.
+8553323:apps/web/src/api/client.ts:150:  lastMeAt = Date.now(); // F-DG2-570: the identity was just confirmed
+8553323:apps/web/src/api/client.ts:201:  nextSessionGeneration(); // F-DG2-530: nothing sent under the ended session is returned to a caller any more
+8553323:apps/web/src/api/queries.ts:62:  if (isSessionChangedError(error)) return false; // F-DG2-530: the answer belongs to a previous identity
+8553323:apps/web/src/components/LanguageSwitch.tsx:76:    const action = begin(); // F-DG2-530: the save and its notice belong to this session generation
+8553323:apps/web/src/components/LanguageSwitch.tsx:85:      if (action.stale(err)) return; // F-DG2-530: silent, the session state was already reset
+8553323:apps/web/src/components/ReasonDialog.tsx:54:    const action = beginSessionGuard(); // F-DG2-530: the dialog's error display belongs to this session generation
+8553323:apps/web/src/components/ReasonDialog.tsx:61:        return; // F-DG2-530: silent, the session state was already reset
+8553323:apps/web/src/components/RecordForm.tsx:353:      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
+8553323:apps/web/src/components/RecordForm.tsx:361:          if (action.stale(ge)) return; // F-DG2-530: silent, the session state was already reset
+8553323:apps/web/src/components/RowActions.tsx:41:            const action = beginSessionGuard(); // F-DG2-530: every effect below belongs to this session generation
+8553323:apps/web/src/components/RowActions.tsx:123:    const action = beginSessionGuard(); // F-DG2-530: every effect below belongs to this session generation
+8553323:apps/web/src/components/RowActions.tsx:136:      if (action.stale(e)) return; // F-DG2-530: silent, the session state was already reset
+8553323:apps/web/src/components/useVersionedSave.ts:63:      if (action.stale(e)) return { outcome: "session-changed" }; // F-DG2-530: silent, the session state was already reset
+(end)
+## G6/DG7 statements in product strings
+8553323:apps/web/src/i18n/en/benefitsP4.json:388:    "labelNote": "a Finance decision recorded in this product. It is not an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/changeRequestsP4.json:5:  "businessApproval": "A change request is decided in a business approval inside the product, routed by the decision rights (T11). Engineering delivery gates are never involved.",
+8553323:apps/web/src/i18n/en/closureP4.json:94:    "businessApproval": "a transition decision is decided through a business approval inside the product (Sponsor or the configured authority; never the requester). It never approves an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/gates.json:282:    "businessApproval": "a decision on an exception is a business approval inside the product by the gate's configured approver. It never approves an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/governanceP4.json:24:  "businessDecisionBody": "recording an Outcome is a business decision of the decision owner, or of the owner's active delegate, inside this product. It is not an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/kpiP4.json:207:    "requestApprovalNote": "A business approval inside the product, decided by the mapped approver. It is not an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/kpiP4.json:270:    "approveNote": "A business approval inside the product: once approved, this trajectory sets the expected values. You cannot approve a trajectory you created. It is not an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/sustainP4.json:183:    "acceptanceNote": "accepting this handover is the receiving owner's in-product business decision. It is not an engineering delivery gate.",
+(end)
+## G6 approval and closure separation (ADR/i18n)
+8553323:apps/web/src/i18n/en/closureP4.json:4:  "intro": "Delivery, adoption, validated value and closure are four separate statuses. Closure is a governed action: G6 approval alone closes nothing, and value still pending Finance validation needs an approved transition decision.",
+8553323:apps/web/src/i18n/en/closureP4.json:94:    "businessApproval": "a transition decision is decided through a business approval inside the product (Sponsor or the configured authority; never the requester). It never approves an engineering delivery gate.",
+8553323:apps/web/src/i18n/en/gates.json:282:    "businessApproval": "a decision on an exception is a business approval inside the product by the gate's configured approver. It never approves an engineering delivery gate.",
+## G6 test: approval changes no docs/delivery file (BE-K test)
+8553323:apps/api/test/integration/workflows/g5-g6.test.ts
+8553323:apps/api/src/modules/sustainment/closure.ts:19:// engineering gates DG0-DG7 (product G6 never implies DG7).
+8553323:apps/api/src/modules/workflows/gates.ts:10:// delivery gates DG0-DG7, and no product gate implies one (G6 never implies DG7). The API never approves by itself:
+8553323:apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+8553323:apps/api/test/integration/contract/p4-exercises-be-j.ts:234: * decisions; this approves nothing, and never implies DG7.
+8553323:apps/api/test/integration/workflows/g5-g6.test.ts:298: * assertion's intent is unchanged (product G6 never implies DG7, M0412). `runs/**` (live agent transcripts that the
+## dev seed synthetic marking for G5/G6 decisions
+8553323:packages/db/seeds/dev/synthetic-dev-users.json
+(end)
+## certification / official claims in product strings
+8553323:apps/api/src/modules/admin/branding.test.ts:58:    // No response claims official Mobily brand compliance.
+8553323:apps/web/src/components/Wordmark.tsx:1:// Provisional TEXT wordmark (REQ-S15-006, ADR-0009 §5). No official Mobily logo has been supplied, so the header
+8553323:apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+8553323:apps/web/src/i18n/en/common.json:129:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+8553323:apps/web/src/i18n/en/common.json:132:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+8553323:packages/db/migrations/0011_p2_methodology_catalogue.sql:248:FROM (SELECT '{"schema": "mth.methodology/1", "source": "docs/source/playbook.md", "sourceTitle": "Business Transformation Playbook", "sourceVersion": "1.0", "phases": 6, "gates": 6, "templates": 16, "tomDimensions": 10, "provenance": "Practical synthesis inspired by PMI, Brightline and BRM, with custom extensions. Not an official PMI standard."}'::jsonb AS definition) d;
+8553323:packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+(end)

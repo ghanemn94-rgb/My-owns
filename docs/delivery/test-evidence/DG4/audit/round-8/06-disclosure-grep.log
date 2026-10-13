@@ -1,0 +1,531 @@
+# 06 evidence-honesty grep over every round-8 reviewer log (domain, code-security, qa)  (2026-10-13T08:30:05Z)
+# pattern (case-insensitive): exit[ =:]*[1-9] | non-zero | \bfail | \berror | timed out | timeout | \bskip | ENOENT | unbound | killed
+== docs/delivery/test-evidence/DG4/code-security/round-8/build.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id-repo.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/format-check.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/identity.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/install1.log hits=5
+4:Lockfile is up to date, resolution step is skipped
+26: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/api/node_module
+9: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/packages/db/dist/cli.
+25: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/worker/node_
+10: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/packages/db/dist/
+== docs/delivery/test-evidence/DG4/code-security/round-8/install2.log hits=1
+4:Lockfile is up to date, resolution step is skipped
+== docs/delivery/test-evidence/DG4/code-security/round-8/lint.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log hits=23
+32:# exit_status: 1  load: 23.34 25.62 23.83  finished: 2026-10-12T22:21:24Z
+3:02-unit-load-held-samples.log: start[] end[]  failed-tests=0
+4:02-unit-node22-C-clean.log: start[3.67, 3.74, 4.91] end[4.16, 4.10, 4.83] EXIT 0 failed-tests=0
+5:02-unit-node22-C-load13-15.log: start[16.17, 15.93, 16.39] end[12.12, 14.10, 15.43] EXIT 0 failed-tests=0
+6:02-unit-node22-C.log: start[24.19, 26.10, 23.90] end[22.71, 23.89, 24.12] EXIT 1 failed-tests=1
+7:02-unit-node22-unset-clean.log: start[2.12, 3.25, 5.09] end[3.67, 3.74, 4.91] EXIT 0 failed-tests=0
+8:02-unit-node22-unset-load13-15.log: start[15.49, 13.60, 17.20] end[16.17, 15.93, 16.39] EXIT 1 failed-tests=2
+9:02-unit-node22-unset.log: start[7.70, 10.08, 15.39] end[24.19, 26.10, 23.90] EXIT 1 failed-tests=1
+10:02-unit-node24-C-clean.log: start[4.34, 4.34, 4.79] end[4.07, 4.43, 4.75] EXIT 0 failed-tests=0
+11:02-unit-node24-C-load13-15.log: start[11.61, 13.46, 14.48] end[13.20, 13.95, 14.29] EXIT 0 failed-tests=0
+12:02-unit-node24-C.log: start[16.52, 19.92, 22.14] end[10.90, 14.39, 18.82] EXIT 0 failed-tests=0
+13:02-unit-node24-unset-clean.log: start[4.16, 4.10, 4.83] end[4.34, 4.34, 4.79] EXIT 0 failed-tests=0
+14:02-unit-node24-unset-load13-15.log: start[12.12, 14.10, 15.43] end[11.61, 13.46, 14.48] EXIT 0 failed-tests=0
+15:02-unit-node24-unset.log: start[22.71, 23.89, 24.12] end[16.52, 19.92, 22.14] EXIT 1 failed-tests=1
+16:02-unit-samples-clean.log: start[] end[]  failed-tests=0
+64:566:      if (f.severity !== "Low" || f.mandatory_violation) errors.push(`${where}: only Low, non-mandatory findings may be accepted as observations`);
+65:582:      if (!roles.includes(AUDITOR)) errors.push(`${where}: no release-auditor sidecar accepts it`);
+66:583:      if (!roles.some((r) => REQUIRED_REVIEWERS.includes(r))) errors.push(`${where}: no specialist reviewer sidecar accepts it`);
+67:585:      if (gate && !gate.accepted_observations.includes(f.id)) errors.push(`${where}: not listed in the gate's accepted_observations`);
+24:| 1. Contended (`02-unit-{nv}-{loc}.log`), 21:59–23:03Z. My e2e and harness `pnpm test` runs plus the other two reviews were running. | 7.7 → 22–30 | **3 of 4** | node22-unset and node22-C: `raid.test.tsx` "acti
+25:| 2. Held at 13–15 (`*-load13-15.log`; same controller as round 6). The controller added busy loops, and my C.UTF-8 e2e run was also running. 208 samples: median 14.39, p10–p90 12.40–16.82. | median 15.52 (12.40
+26:| 3. Low load (`*-clean.log`), with no other job of mine and the other reviews finished. | 2.1–5.5 | 0 of 4 | All EXIT 0: unit-node 1589, unit-web 1347, no-codegen 259 + 2 skipped. |
+22:| Series | Load (1-min) | Runs exiting 1 | Failures |
+== docs/delivery/test-evidence/DG4/code-security/round-8/log-scan.txt hits=22
+19:## every warn/error/fail line:
+2:build.log exit=0 fail=0 err=0 warn=1 skip=0 timeout=0
+3:candidate-id-repo.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+4:candidate-id.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+5:format-check.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+6:identity.log exit= fail=0 err=0 warn=0 skip=0 timeout=0
+7:install1.log exit=0 fail=4 err=0 warn=4 skip=1 timeout=0
+22:install1.log:10: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/p
+23:install1.log:25: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/a
+24:install1.log:26: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps
+21:install1.log:9: WARN  Failed to create bin at /var/tmp/mth-run.sBj9ay/claude-0/review-r8/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.sBj9ay/claude-0/review-r8/packa
+8:install2.log exit=0 fail=0 err=0 warn=0 skip=1 timeout=0
+9:lint.log exit=0 fail=0 err=0 warn=1 skip=0 timeout=0
+10:load-envelope-crosscheck.log exit=0 fail=14 err=0 warn=0 skip=1 timeout=2
+11:no-cdn.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+12:openapi-lint.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+13:typecheck.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+14:validate-historical-DG1.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+15:validate-historical-DG2.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+16:validate-historical-DG3.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+17:validate-pipeline.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+18:validate-register-DG4.log exit=0 fail=0 err=0 warn=0 skip=0 timeout=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/no-cdn.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/openapi-lint.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/summary.txt hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/typecheck.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG1.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG2.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG3.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/validate-pipeline.log hits=0
+== docs/delivery/test-evidence/DG4/code-security/round-8/validate-register-DG4.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/candidate-and-diff.log hits=1
+31:7a26174 evidence: keep the three killed DG4 round-7 review runs and their partial evidence for provenance only (D-084 precedent)
+== docs/delivery/test-evidence/DG4/domain/round-8/envelope-figures.log hits=2
+5:domain r7 Node22 unit failures (DOM-R7-02 actual): load ~28; both passed alone (architecture 3 of 4 alone runs at load 27/13/13; raid 18/18 x2)
+4:qa r7 contended failing held run (QA-R7-03 actual): median 15.52, range 12.40-17.65; series 1 failures 3/4 (F-DG4-148 history: load 22-30)
+== docs/delivery/test-evidence/DG4/domain/round-8/format.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/hygiene.log hits=1
+37:apps/api/src/modules/identity/routes.ts:307:    // F-DG2-231 / F-DG2-260: a value with U+0000 or a lone surrogate fails here and redirects with invalid_request (the
+== docs/delivery/test-evidence/DG4/domain/round-8/lint.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/no-cdn.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/node-version.txt hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/openapi-lint.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/source-seed-static.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/static-driver.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/typecheck.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/validators-clone.log hits=0
+== docs/delivery/test-evidence/DG4/domain/round-8/validators-worktree.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-end.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-start.log hits=12
+125:docs/delivery/test-evidence/DG4/code-security-r7-orphaned/partial-evidence/unit-timeout-discriminator.log
+126:docs/delivery/test-evidence/DG4/code-security-r7-orphaned/partial-evidence/unit-timeout-discriminator.sh
+141:docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutation-M3-loader-unbounded.log
+455:docs/delivery/test-evidence/DG4/qa-r7-orphaned/partial-evidence/02i-unit-fail-propagation.log
+468:docs/delivery/test-evidence/DG4/qa-r7-orphaned/partial-evidence/results/e2e-147-contention-unset/ar-repeat7-error-context.md
+469:docs/delivery/test-evidence/DG4/qa-r7-orphaned/partial-evidence/results/e2e-147-contention-unset/ar-repeat7-test-failed-1.png
+471:docs/delivery/test-evidence/DG4/qa-r7-orphaned/partial-evidence/scripts/fail-propagation.sh
+536:docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-killed-by-bg-limit.log
+545:docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-cutf8-summary.txt
+546:docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-cutf8.log
+547:docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-unset-summary.txt
+548:docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-unset.log
+== docs/delivery/test-evidence/DG4/qa/round-8/00-install.log hits=5
+3:Lockfile is up to date, resolution step is skipped
+25: WARN  Failed to create bin at $TMPDIR/rev/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/rev/apps/api/node_modules/@mth/db/dist/cli.js'
+9: WARN  Failed to create bin at $TMPDIR/rev/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/rev/packages/db/dist/cli.js'
+26: WARN  Failed to create bin at $TMPDIR/rev/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/rev/apps/worker/node_modules/@mth/db/dist/cli.js'
+10: WARN  Failed to create bin at $TMPDIR/rev/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/rev/packages/db/dist/cli.js'
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-contrast.log hits=9
+41:PASS     6.83:1  min 4.5  text       feedback.error.fg #A11B1B on feedback.error.bg #FDECEC  (error banner)
+42:PASS     7.81:1  min 4.5  text       feedback.error.fg #A11B1B on surface.card #FFFFFF  (field error message)
+51:PASS     7.81:1  min 4.5  text       text.inverse #FFFFFF on feedback.error.fg #A11B1B  (destructive action button (archive, revoke))
+48:PASS    13.72:1  min 4.5  text       text.primary #142438 on feedback.error.bg #FDECEC  (body text inside error banners)
+63:PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented
+58:Prohibited combinations (must fail; never used by the UI):
+61:fails    1.27:1  min 3.0  ui         border.default #DCE5EF on surface.card #FFFFFF  (decorative divider only; control boundaries use border.control)
+60:fails    3.84:1  min 4.5  text       brand.primary #0078FF on surface.page #F5F8FC  (about 3.84:1; body-size links use action.primary)
+59:fails    4.09:1  min 4.5  text       text.inverse #FFFFFF on brand.primary #0078FF  (white small text on #0078FF is about 4.09:1; action buttons use action.primary instead)
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-no-cdn.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-format-check.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-lint.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-openapi-lint.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-r-build.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-r-typecheck.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r1.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r2.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt hits=9
+5:  02-unit-node22-C-r1.log: 07:26:35-07:30:21 UTC, load during run 3.82-6.01 (n=15); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-key s
+11:  02-unit-node22-C-r2.log: 07:41:20-07:45:05 UTC, load during run 3.78-5.20 (n=15); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-key 
+4:  02-unit-node22-unset-r1.log: 07:22:48-07:26:35 UTC, load during run 0.68-5.21 (n=16); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-k
+10:  02-unit-node22-unset-r2.log: 07:37:34-07:41:20 UTC, load during run 2.74-5.28 (n=16); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-
+7:  02-unit-node24-C-r1.log: 07:33:51-07:37:16 UTC, load during run 3.85-5.15 (n=13); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-key s
+13:  02-unit-node24-C-r2.log: 07:48:33-07:51:59 UTC, load during run 4.06-5.56 (n=14); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-key 
+6:  02-unit-node24-unset-r1.log: 07:30:21-07:33:51 UTC, load during run 4.24-5.92 (n=14); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-k
+12:  02-unit-node24-unset-r2.log: 07:45:05-07:48:33 UTC, load during run 4.56-5.85 (n=13); 1589 passed (1589) | 1347 passed (1347) | 259 passed | 2 skipped (261); EXIT 0; FAIL lines 0; timed-out lines 0; React duplicate-
+15:Margins inside the envelope (the two F-DG4-148 failure classes):
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r1.log hits=38
+712:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+99: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+97: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+74: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+65: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+706: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 5803[2mms[22m[39m
+504:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 862[2mms[22m[39m
+516:   [33m[2m✓[22m[39m Calendar, jobs and groups (ar)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 348[2mms[22m[39m
+513:   [33m[2m✓[22m[39m Calendar, jobs and groups (en)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 387[2mms[22m[39m
+194:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 441[2mms[22m[39m
+193:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 348[2mms[22m[39m
+191:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 481[2mms[22m[39m
+187:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 492[2mms[22m[39m
+185:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 483[2mms[22m[39m
+184:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 609[2mms[22m[39m
+162:   [33m[2m✓[22m[39m Finance validation note and archive reason (en)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 310[2mms[22m[39m
+201:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 541[2mms[22m[39m
+497:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 453[2mms[22m[39m
+338:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3249[2mms[22m[39m
+336:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3397[2mms[22m[39m
+263:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 626[2mms[22m[39m
+173:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 462[2mms[22m[39m
+248:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3182[2mms[22m[39m
+243:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3165[2mms[22m[39m
+262:   [33m[2m✓[22m[39m gate dialogs, 'ar' → 'en'[2m > [22mthe decision rationale's field error follows the switch [33m 452[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r2.log hits=39
+701:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+89: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+81: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+79: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+59: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+695: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 5592[2mms[22m[39m
+495:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 997[2mms[22m[39m
+507:   [33m[2m✓[22m[39m Calendar, jobs and groups (ar)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 392[2mms[22m[39m
+504:   [33m[2m✓[22m[39m Calendar, jobs and groups (en)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 367[2mms[22m[39m
+193:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 497[2mms[22m[39m
+192:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 387[2mms[22m[39m
+191:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 501[2mms[22m[39m
+187:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 507[2mms[22m[39m
+185:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 612[2mms[22m[39m
+184:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 550[2mms[22m[39m
+168:   [33m[2m✓[22m[39m Finance validation note and archive reason (ar)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 356[2mms[22m[39m
+161:   [33m[2m✓[22m[39m Finance validation note and archive reason (en)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 329[2mms[22m[39m
+200:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 532[2mms[22m[39m
+462:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 452[2mms[22m[39m
+315:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3191[2mms[22m[39m
+313:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3348[2mms[22m[39m
+235:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 623[2mms[22m[39m
+173:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 409[2mms[22m[39m
+257:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3129[2mms[22m[39m
+253:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3126[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r1.log hits=39
+724:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+92: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+78: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+67: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+82: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+718: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 5369[2mms[22m[39m
+537:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 858[2mms[22m[39m
+382:   [33m[2m✓[22m[39m Calendar, jobs and groups (ar)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 330[2mms[22m[39m
+379:   [33m[2m✓[22m[39m Calendar, jobs and groups (en)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 369[2mms[22m[39m
+178:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 441[2mms[22m[39m
+177:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 349[2mms[22m[39m
+176:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 463[2mms[22m[39m
+170:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 591[2mms[22m[39m
+168:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 729[2mms[22m[39m
+167:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 649[2mms[22m[39m
+323:   [33m[2m✓[22m[39m Finance validation note and archive reason (ar)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 320[2mms[22m[39m
+315:   [33m[2m✓[22m[39m Finance validation note and archive reason (en)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 311[2mms[22m[39m
+185:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 515[2mms[22m[39m
+476:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 495[2mms[22m[39m
+671:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3196[2mms[22m[39m
+669:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3260[2mms[22m[39m
+348:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 604[2mms[22m[39m
+326:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 394[2mms[22m[39m
+695:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3154[2mms[22m[39m
+690:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3191[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r2.log hits=39
+704:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+102: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+94: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+91: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+65: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+698: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 6267[2mms[22m[39m
+472:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 830[2mms[22m[39m
+515:   [33m[2m✓[22m[39m Calendar, jobs and groups (ar)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 311[2mms[22m[39m
+512:   [33m[2m✓[22m[39m Calendar, jobs and groups (en)[2m > [22mcalendar: a technical administrator adds a holiday; a range error is caught before sending [33m 312[2mms[22m[39m
+190:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 396[2mms[22m[39m
+189:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 421[2mms[22m[39m
+188:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 490[2mms[22m[39m
+183:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 479[2mms[22m[39m
+181:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 508[2mms[22m[39m
+180:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 585[2mms[22m[39m
+162:   [33m[2m✓[22m[39m Finance validation note and archive reason (en)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 321[2mms[22m[39m
+198:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 495[2mms[22m[39m
+487:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 523[2mms[22m[39m
+273:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3195[2mms[22m[39m
+271:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3265[2mms[22m[39m
+237:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 574[2mms[22m[39m
+169:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 385[2mms[22m[39m
+250:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3196[2mms[22m[39m
+246:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3216[2mms[22m[39m
+236:   [33m[2m✓[22m[39m gate dialogs, 'ar' → 'en'[2m > [22mthe decision rationale's field error follows the switch [33m 330[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r1.log hits=33
+620:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+88: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+96: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+78: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+58: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+614: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 5356[2mms[22m[39m
+411:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 808[2mms[22m[39m
+173:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 342[2mms[22m[39m
+172:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 339[2mms[22m[39m
+171:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 492[2mms[22m[39m
+167:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 599[2mms[22m[39m
+165:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 511[2mms[22m[39m
+164:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 549[2mms[22m[39m
+180:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 559[2mms[22m[39m
+416:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 440[2mms[22m[39m
+239:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3268[2mms[22m[39m
+238:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3213[2mms[22m[39m
+196:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 644[2mms[22m[39m
+154:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 406[2mms[22m[39m
+229:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3120[2mms[22m[39m
+226:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3176[2mms[22m[39m
+195:   [33m[2m✓[22m[39m gate dialogs, 'en' → 'ar'[2m > [22mthe submission note's field error follows the switch [33m 556[2mms[22m[39m
+382:   [33m[2m✓[22m[39m governance screens (en)[2m > [22mescalations: a routing error is a visible row; a rule without a stored row is labelled Default [33m 403[2mms[22m[39m
+187:   [33m[2m✓[22m[39m journey step editor, 'ar' → 'en'[2m > [22ma field error on a step follows the switch [33m 497[2mms[22m[39m
+188:   [33m[2m✓[22m[39m journey step editor, 'ar' → 'en'[2m > [22mthe form-level "Step N:" error follows the switch (prefix and message) [33m 531[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r2.log hits=33
+626:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+89: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+99: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+92: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+63: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+620: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 6030[2mms[22m[39m
+406:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 898[2mms[22m[39m
+169:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 489[2mms[22m[39m
+168:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 386[2mms[22m[39m
+167:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 553[2mms[22m[39m
+163:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 512[2mms[22m[39m
+161:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 440[2mms[22m[39m
+160:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 472[2mms[22m[39m
+176:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 568[2mms[22m[39m
+420:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 467[2mms[22m[39m
+255:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3173[2mms[22m[39m
+253:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3212[2mms[22m[39m
+206:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 553[2mms[22m[39m
+150:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 384[2mms[22m[39m
+217:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3131[2mms[22m[39m
+215:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3137[2mms[22m[39m
+205:   [33m[2m✓[22m[39m gate dialogs, 'en' → 'ar'[2m > [22mthe submission note's field error follows the switch [33m 512[2mms[22m[39m
+378:   [33m[2m✓[22m[39m governance screens (en)[2m > [22mescalations: a routing error is a visible row; a rule without a stored row is labelled Default [33m 397[2mms[22m[39m
+199:   [33m[2m✓[22m[39m journey step editor, 'ar' → 'en'[2m > [22ma field error on a step follows the switch [33m 446[2mms[22m[39m
+200:   [33m[2m✓[22m[39m journey step editor, 'ar' → 'en'[2m > [22mthe form-level "Step N:" error follows the switch (prefix and message) [33m 516[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r1.log hits=36
+652:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+92: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+98: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+88: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+54: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+646: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 5526[2mms[22m[39m
+445:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 870[2mms[22m[39m
+183:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 341[2mms[22m[39m
+182:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 344[2mms[22m[39m
+180:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 486[2mms[22m[39m
+177:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 519[2mms[22m[39m
+175:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 536[2mms[22m[39m
+174:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 525[2mms[22m[39m
+157:   [33m[2m✓[22m[39m Finance validation note and archive reason (en)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 303[2mms[22m[39m
+190:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 548[2mms[22m[39m
+492:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 501[2mms[22m[39m
+279:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3209[2mms[22m[39m
+277:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3211[2mms[22m[39m
+209:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 578[2mms[22m[39m
+164:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 401[2mms[22m[39m
+247:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3118[2mms[22m[39m
+244:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3176[2mms[22m[39m
+208:   [33m[2m✓[22m[39m gate dialogs, 'en' → 'ar'[2m > [22mthe decision rationale's field error follows the switch [33m 321[2mms[22m[39m
+207:   [33m[2m✓[22m[39m gate dialogs, 'en' → 'ar'[2m > [22mthe submission note's field error follows the switch [33m 553[2mms[22m[39m
+417:   [33m[2m✓[22m[39m governance screens (en)[2m > [22mescalations: a routing error is a visible row; a rule without a stored row is labelled Default [33m 431[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r2.log hits=35
+658:[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (261)[39m
+94: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4-meetings.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+99: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors-p4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+82: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/db-errors.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+60: [32m✓[39m [30m[45m unit-node [49m[39m apps/api/src/modules/platform/framework-errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+652: [32m✓[39m [30m[46m unit-formula-nocodegen [49m[39m packages/shared/src/formula/fuzz.test.ts [2m([22m[2m111 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 5544[2mms[22m[39m
+442:   [33m[2m✓[22m[39m BAU and improvement screens (en)[2m > [22ma failed check links to its recovery action; an unknown review signal is Unknown, never on track [33m 847[2mms[22m[39m
+182:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar) [33m 374[2mms[22m[39m
+181:   [33m[2m✓[22m[39m Charter[2m > [22medit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en) [33m 406[2mms[22m[39m
+180:   [33m[2m✓[22m[39m Charter[2m > [22mscope pre-check: an empty Out of scope reads as failing (EN and AR) [33m 489[2mms[22m[39m
+176:   [33m[2m✓[22m[39m Define[2m > [22mshows the good outcome test per outcome with pass / fail / unknown and localized reasons [33m 485[2mms[22m[39m
+174:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('ar') [33m 495[2mms[22m[39m
+173:   [33m[2m✓[22m[39m Diagnose[2m > [22ma whitespace-only T01 value is an inline blank error and sends nothing ('en') [33m 513[2mms[22m[39m
+154:   [33m[2m✓[22m[39m Finance validation note and archive reason (en)[2m > [22mreason: a server 400 validation.blank on /reason is the field message, not a generic error [33m 320[2mms[22m[39m
+189:   [33m[2m✓[22m[39m Gates (business approval)[2m > [22mshows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match [33m 550[2mms[22m[39m
+498:   [33m[2m✓[22m[39m Governance (en)[2m > [22mrole mapping: an unmapped governance role shows the visible routing error [33m 471[2mms[22m[39m
+280:   [33m[2m✓[22m[39m KPI update periods (ar)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3140[2mms[22m[39m
+279:   [33m[2m✓[22m[39m KPI update periods (en)[2m > [22mno open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice [33m 3217[2mms[22m[39m
+236:   [33m[2m✓[22m[39m North Star statement, 'en' → 'ar'[2m > [22mthe statement's field error follows the switch [33m 623[2mms[22m[39m
+163:   [33m[2m✓[22m[39m P1 transformation edit: server validation.blank on /name (en)[2m > [22mis the localized field message, not only a generic failure [33m 402[2mms[22m[39m
+249:   [33m[2m✓[22m[39m execution panel (ar)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3153[2mms[22m[39m
+246:   [33m[2m✓[22m[39m execution panel (en)[2m > [22man answer outside the contract is the panel's error state; the rest of the initiative page still renders [33m 3161[2mms[22m[39m
+235:   [33m[2m✓[22m[39m gate dialogs, 'en' → 'ar'[2m > [22mthe decision rationale's field error follows the switch [33m 316[2mms[22m[39m
+234:   [33m[2m✓[22m[39m gate dialogs, 'en' → 'ar'[2m > [22mthe submission note's field error follows the switch [33m 560[2mms[22m[39m
+416:   [33m[2m✓[22m[39m governance screens (en)[2m > [22mescalations: a routing error is a visible row; a rule without a stored row is labelled Default [33m 460[2mms[22m[39m
+== docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG1.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG2.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG3.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/05-validate-pipeline.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/05-validate-register-DG4.log hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/06-register-confirmation.txt hits=0
+== docs/delivery/test-evidence/DG4/qa/round-8/RUN-NOTES.md hits=4
+10:   - A first launch at 07:21Z ran no test: a script bug passed an empty suffix argument (`$3: unbound variable`). Its empty samples file was removed, the script fixed, and the series relaunched as `-r1`.
+27:  - The same 14 lines appear in round 6 (`02-unit-node24-unset-lowload.log`) and round 7 (`02-unit-node24-unset-clean.log`) on identical code. No test fails because of them.
+20:- **Each run:** unit-node 1589/1589, unit-web 1347/1347, unit-formula-nocodegen 259 passed + 2 skipped. The 2 skips are by design (`it.skipIf(NOCODEGEN)` in `fuzz.test.ts`).
+28:- There are no FAIL lines and no timeouts.
+== docs/delivery/test-evidence/DG4/qa/round-8/env.txt hits=0
+
+## exit lines in every round-8 log (exit/EXIT/rc)
+docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log:02-unit-node22-C.log: start[24.19, 26.10, 23.90] end[22.71, 23.89, 24.12] EXIT 1 failed-tests=1
+docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log:02-unit-node22-unset-load13-15.log: start[15.49, 13.60, 17.20] end[16.17, 15.93, 16.39] EXIT 1 failed-tests=2
+docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log:02-unit-node22-unset.log: start[7.70, 10.08, 15.39] end[24.19, 26.10, 23.90] EXIT 1 failed-tests=1
+docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log:02-unit-node24-unset.log: start[22.71, 23.89, 24.12] end[16.52, 19.92, 22.14] EXIT 1 failed-tests=1
+docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log:# exit_status: 1  load: 23.34 25.62 23.83  finished: 2026-10-12T22:21:24Z
+(end non-zero exit list)
+
+## qa round-8 unit logs: classification of hits, FAIL lines, Tests lines, exit
+-- 02-unit-node22-C-r1.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+162:   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  310ms
+173:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  462ms
+184:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  609ms
+185:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  483ms
+187:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  492ms
+191:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  481ms
+193:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  348ms
+194:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  441ms
+201:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  541ms
+243:   ✓ execution panel (en) > an answer outside the contract is the panel's error state; the rest of the initiative page still renders  3165ms
+248:   ✓ execution panel (ar) > an answer outside the contract is the panel's error state; the rest of the initiative page still renders  3182ms
+250:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  1122ms
+-- 02-unit-node22-C-r2.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+161:   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  329ms
+168:   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  356ms
+173:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  409ms
+184:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  550ms
+185:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  612ms
+187:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  507ms
+191:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  501ms
+192:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  387ms
+193:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  497ms
+200:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  532ms
+223:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  1123ms
+224:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  631ms
+-- 02-unit-node22-unset-r1.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+167:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  649ms
+168:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  729ms
+170:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  591ms
+176:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  463ms
+177:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  349ms
+178:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  441ms
+185:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  515ms
+315:   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  311ms
+323:   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  320ms
+326:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  394ms
+336:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  1136ms
+337:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  683ms
+-- 02-unit-node22-unset-r2.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+102: ✓  unit-node  apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 12ms
+162:   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  321ms
+169:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  385ms
+180:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  585ms
+181:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  508ms
+183:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  479ms
+188:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  490ms
+189:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  421ms
+190:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  396ms
+198:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  495ms
+224:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  1009ms
+225:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  555ms
+-- 02-unit-node24-C-r1.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+154:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  406ms
+164:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  549ms
+165:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  511ms
+167:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  599ms
+171:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  492ms
+172:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  339ms
+173:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  342ms
+180:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  559ms
+185:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  967ms
+186:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  448ms
+187:   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  497ms
+188:   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  531ms
+-- 02-unit-node24-C-r2.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+150:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  384ms
+160:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  472ms
+161:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  440ms
+163:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  512ms
+167:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  553ms
+168:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  386ms
+169:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  489ms
+176:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  568ms
+197:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  998ms
+198:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  448ms
+199:   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  446ms
+200:   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  516ms
+-- 02-unit-node24-unset-r1.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+157:   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  303ms
+164:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  401ms
+174:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  525ms
+175:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  536ms
+177:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  519ms
+180:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  486ms
+182:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  344ms
+183:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  341ms
+190:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  548ms
+197:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  1012ms
+198:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  641ms
+199:   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  575ms
+-- 02-unit-node24-unset-r2.log
+   FAIL/✗/× lines: 0
+   'Tests' summary: 
+   Encountered two children (React key warning): 14
+   exit line: EXIT 0
+   other hit lines (not React key warning, not test names): 
+154:   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  320ms
+163:   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  402ms
+173:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  513ms
+174:   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  495ms
+176:   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  485ms
+180:   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  489ms
+181:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  406ms
+182:   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  374ms
+189:   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  550ms
+224:   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  925ms
+225:   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  593ms
+226:   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  515ms
+
+## architecture.test.ts durations and raid action register durations per log
+02-unit-node22-C-r1.log: 
+02-unit-node22-C-r2.log: 
+02-unit-node22-unset-r1.log: 
+02-unit-node22-unset-r2.log: 
+02-unit-node24-C-r1.log: 
+02-unit-node24-C-r2.log: 
+02-unit-node24-unset-r1.log: 
+02-unit-node24-unset-r2.log: 
+02-unit-node22-C-r1.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node22-C-r2.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node22-unset-r1.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node22-unset-r2.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node24-C-r1.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node24-C-r2.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node24-unset-r1.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+02-unit-node24-unset-r2.log:  Tests 1589 passed (1589)| Tests 1347 passed (1347)| Tests 259 passed | 2 skipped (261)| EXIT 0
+auditor recompute 02-unit-envelope-samples-r1.log: n=58 min=0.68 max=6.01 above8=0
+auditor recompute 02-unit-envelope-samples-r2.log: n=58 min=2.74 max=5.85 above8=0

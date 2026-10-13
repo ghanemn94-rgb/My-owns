@@ -1,0 +1,251 @@
+# 04 incidents: F-DG4-104/124 stages.json fix, salvages, D-124, round-8 scope (2026-10-13T08:29:13Z)
+## git show --stat 546fb4e
+546fb4eb0ecf24766c64dd8cc04fd51c17f3c46d DG4: stages.json records the round-1 FIXING phase the round-2 freeze omitted (F-DG4-104, F-DG4-124); historical DG1-DG3 and --pipeline exit 0
+
+ docs/delivery/stages.json | 5 +++++
+ 1 file changed, 5 insertions(+)
+## diff of stages.json in 546fb4e (DG4 history region)
+commit 546fb4eb0ecf24766c64dd8cc04fd51c17f3c46d
+Author: Claude <noreply@anthropic.com>
+Date:   Sun Oct 11 07:05:34 2026 +0000
+
+    DG4: stages.json records the round-1 FIXING phase the round-2 freeze omitted (F-DG4-104, F-DG4-124); historical DG1-DG3 and --pipeline exit 0
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01BRvdRig4zy9C74ui8P4WXU
+
+diff --git a/docs/delivery/stages.json b/docs/delivery/stages.json
+index ebd1c04..212bb3e 100644
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
+@@ -1515,6 +1515,11 @@
+           "at": "2026-10-10T21:25:25Z",
+           "note": "DG4 frozen for review round 1: candidate 19656b1f (1449 files, source a91d82c). Reviewers domain, code-security and qa-verifier run on the same candidate; then the release-auditor."
+         },
++        {
++          "state": "FIXING",
++          "at": "2026-10-11T00:51:49Z",
++          "note": "Round-1 results on 19656b1f: domain PASS, code-security FAIL, qa PASS; eight findings (F-DG4-100..103, 120, 121, 140, 141) imported and all routed to repair (D-117): ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1. Entry added at 2026-10-11T07:10Z, dated at the D-117 commit f5579e7, because the round-2 freeze omitted it (F-DG4-104, F-DG4-124; D-119)."
++        },
+         {
+           "state": "REVIEWING",
+           "at": "2026-10-11T04:43:11Z",
+## f5579e7 date
+f5579e7af2c793cd6dc5b529c9a88f33f815d785 2026-10-11T00:51:49+00:00 DG4: round-1 findings imported (F-DG4-100..103, 120, 121, 140, 141); D-117 repair decisions; repair assignments ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1
+## DG4 history now
+{'state': 'PLANNED', 'at': '2026-09-28T11:30:00Z'}
+{'state': 'BUILDING', 'at': '2026-10-09T00:33:12Z', 'note': 'DG3 APPROVED and DG4 unblocked (validate --historical --stage DG3 exit 0; --pipeline exit 0). Begin P4 (Execution value and sustainment): 137 DG4-final requirements: full KPI/benefit engines, T10-T16, forums/decisions/RACI/RAID, adoption, corrective actions, core scheduled jobs, BAU handover, continuous improvement and G5-G6. Planning first: solution-architect T-DG4-ARCH-00 produces p4-plan.md (slices, dependency graph, seams, architecture tasks, implementer waves) (D-088).'}
+{'state': 'REVIEWING', 'at': '2026-10-10T21:25:25Z', 'note': 'DG4 frozen for review round 1: candidate 19656b1f (1449 files, source a91d82c). Reviewers domain, code-security and qa-verifier run on the same candidate; then the release-auditor.'}
+{'state': 'FIXING', 'at': '2026-10-11T00:51:49Z', 'note': 'Round-1 results on 19656b1f: domain PASS, code-security FAIL, qa PASS; eight findings (F-DG4-100..103, 120, 121, 140, 141) imported and all routed to repair (D-117): ARCH-R4, KBE-R5, BE-R5, FE-R4, AN-R1. Entry added at 2026-10-11T07:05Z (commit 546fb4e), dated at the D-117 commit f5579e7, because the round-2 freeze omitted it (F-DG4-104, F-DG4-124; D-119).'}
+{'state': 'REVIEWING', 'at': '2026-10-11T04:43:11Z', 'note': 'DG4 re-frozen for review round 2: candidate 3f51b79d (1455 files, source 93a7dd7) after the round-1 repairs (D-117, D-118). Each reviewer verifies its own round-1 findings and runs a full review.'}
+{'state': 'FIXING', 'at': '2026-10-11T08:40:00Z', 'note': 'Round-2 results on 3f51b79d: domain FAIL, code-security FAIL, qa PASS (re-run after the first qa run was killed). All eight round-1 findings CLOSED_VERIFIED. New: F-DG4-122 (High, mandatory), F-DG4-123, F-DG4-124 and F-DG4-104 (the last two fixed in 546fb4e, pending verification). Repairs per D-119: ARCH-R5, then KBE-R6 and FE-R5.'}
+{'state': 'REVIEWING', 'at': '2026-10-11T12:34:28Z', 'note': 'DG4 re-frozen for review round 3: candidate 890faa12 (1459 files, source 925f0bc) after the round-2 repairs (D-119 to D-121). Each reviewer verifies its own round-2 findings and runs a full review.'}
+{'state': 'FIXING', 'at': '2026-10-11T15:24:50Z', 'note': 'Round-3 results on 890faa12: domain FAIL, code-security PASS, qa PASS. All four round-2 findings (F-DG4-104, 122, 123, 124) CLOSED_VERIFIED. New: F-DG4-125 (High, mandatory), F-DG4-126, F-DG4-127, F-DG4-105. Repairs per D-122: ARCH-R6, then KBE-R7 and FE-R6.'}
+{'state': 'REVIEWING', 'at': '2026-10-11T21:53:13Z', 'note': 'DG4 re-frozen for review round 4: candidate 5ff36f6e (1469 files, source ccc37c9) after the round-3 repairs and the D-124 repairs (D-122 to D-126). Each reviewer verifies its own round-3 findings and runs a full review.'}
+{'state': 'FIXING', 'at': '2026-10-12T00:53:01Z', 'note': 'Round-4 results on 5ff36f6e: domain PASS, code-security PASS, qa PASS. F-DG4-105, 125, 126 and 127 CLOSED_VERIFIED. qa raised two non-blocking findings, F-DG4-143 (Medium) and F-DG4-144 (Low); per practice they are repaired, not accepted as observations (D-127): FE-R8.'}
+{'state': 'REVIEWING', 'at': '2026-10-12T04:23:09Z', 'note': 'DG4 re-frozen for review round 5: candidate 69b7412a (1472 files, source 3e3a06e) after the round-4 repairs (D-127, D-128). qa verifies its round-4 findings; every reviewer runs a full review.'}
+{'state': 'FIXING', 'at': '2026-10-12T07:52:44Z', 'note': 'Round-5 results on 69b7412a: domain PASS, code-security PASS, qa PASS. F-DG4-143 and F-DG4-144 CLOSED_VERIFIED. code-security and qa each raised the same Low, test-only finding (F-DG4-106, F-DG4-145): session-bound.test.tsx Y1c counts GET /me with real timers. Repaired, not accepted as an observation (D-129): FE-R9.'}
+{'state': 'REVIEWING', 'at': '2026-10-12T12:19:49Z', 'note': 'DG4 re-frozen for review round 6: candidate f966fe57 (1472 files, source 1e0dc5d) after the round-5 repair (D-129, D-130). code-security and qa verify their round-5 findings; every reviewer runs a full review.'}
+{'state': 'FIXING', 'at': '2026-10-12T16:48:34Z', 'note': "Round-6 results on f966fe57: domain PASS, code-security PASS, qa PASS. F-DG4-106 and F-DG4-145 CLOSED_VERIFIED. New: F-DG4-128 (Medium, the worker's 1 ms pg-boss supervision loop), F-DG4-146, F-DG4-147, F-DG4-148 (Low, test coverage and determinism). Repaired, not accepted as observations (D-131): BE-R6, FE-R10."}
+{'state': 'REVIEWING', 'at': '2026-10-12T20:52:19Z', 'note': 'DG4 re-frozen for review round 7: candidate baa6ff4d (1475 files, source dab4562) after the round-6 repairs (D-131, D-132). domain and qa verify their round-6 findings; every reviewer runs a full review.'}
+{'state': 'FIXING', 'at': '2026-10-13T01:21:02Z', 'note': 'Round-7 results on baa6ff4d (all three first runs killed by a session restart and re-run, D-084): domain PASS, code-security PASS, qa FAIL only because F-DG4-148 (Low) does not verify closed. F-DG4-128, 146 and 147 CLOSED_VERIFIED. No new finding. Next step on F-DG4-148 put to the user (D-133).'}
+{'state': 'REVIEWING', 'at': '2026-10-13T07:06:20Z', 'note': 'DG4 re-frozen for review round 8, a confirmation round (D-134): candidate 8014e5ce (1475 files, source 8553323), product identical to round 7. qa decides the acceptance of F-DG4-148 under the load envelope.'}
+{'state': 'VERIFYING', 'at': '2026-10-13T08:20:24Z', 'note': 'Round 8 on 8014e5ce: domain PASS, code-security PASS, qa PASS, no new finding; qa accepts F-DG4-148 as an observation (D-134). The release-auditor runs on the same candidate (D-135).'}
+## WIP commits from killed runs and their completing runs (ancestor of source 8553323?)
+3821c70 ancestor=yes  WIP T-DG4-BE-H2: partial work of the run killed by the container restart at ~13:27Z (unverified; completed by the B run)
+44fffa1 ancestor=yes  WIP T-DG4-BE-I2: partial work of the run killed by the container restart at ~13:27Z (unverified; completed by the B run)
+3fc73d0 ancestor=yes  WIP T-DG4-BE-G: partial work of the run killed by the container restart at ~13:27Z (unverified; completed by the B run)
+6a07de4 ancestor=yes  WIP T-DG4-KBE-F: partial work of the run killed by the container restart at ~13:27Z (unverified; completed by the B run)
+27c0d2c ancestor=yes  WIP T-DG4-BE-I2B: partial work of the B run that died on a full disk (ENOSPC) at ~14:21Z (unverified; completed by the C run)
+d74d75c ancestor=yes  WIP T-DG4-ARCH-R3: working tree at the container restart of 09:37Z (unverified; salvage per D-103)
+14a8476 ancestor=yes  WIP T-DG4-FE-F2: working tree at the container restart of 09:37Z (unverified; salvage per D-103)
+4e92286 ancestor=yes  WIP T-DG4-FE-G2: working tree at the container restart of 09:37Z (unverified; salvage per D-103)
+ea92e25 ancestor=yes  WIP T-DG4-QA-B: working tree at the container restart of 09:37Z (unverified; salvage per D-103)
+7a4e4f0 ancestor=yes  WIP T-DG4-FE-R3: working tree at the container restart of about 15:59Z (unverified; salvage per D-103)
+41b586c ancestor=yes  WIP T-DG4-FE-R9 (unverified; run killed at 08:51Z by a session restart; salvaged per D-103)
+## branches containing each WIP commit followed by a later commit on that branch (completing run)
+-- 3821c70 children:
+   6755376 T-DG4-BE-H2: assessment forms, invitations, records, training records (completed by T-DG4-BE-H2B over WIP 3821c70)
+-- 44fffa1 children:
+   27c0d2c WIP T-DG4-BE-I2B: partial work of the B run that died on a full disk (ENOSPC) at ~14:21Z (unverified; completed by the C run)
+-- 3fc73d0 children:
+   da0a035 T-DG4-BE-G: T16 executive decision log, Outcome service, decision-SLA escalation, blocker RAG and escalation rules (completed by T-DG4-BE-GB over WIP 3fc73d0)
+-- 6a07de4 children:
+   afce6a6 T-DG4-KBE-F: adoption indicators, metric links, below-trajectory consumer, event fan-out (completed by T-DG4-KBE-FB over WIP 6a07de4; handback and evidence)
+-- 27c0d2c children:
+   d3e2fff T-DG4-BE-I2: controls, control checks, reviews, CI backlog, lessons and the two scans (completed by T-DG4-BE-I2C over WIP 44fffa1 and 27c0d2c)
+-- d74d75c children:
+   006c56c T-DG4-ARCH-R3: P4 architecture repairs round 3 (salvage ARCH-R3B): getInitiativeSchedule, listScaleScopeBusinessUnits, getAssessmentFormVersion, Problem.params, drill-down valueClass, localized message params, lineage wording, code table 186-206
+-- 14a8476 children:
+   8d713c0 T-DG4-FE-F2: completed in salvage run FE-F2B
+-- 4e92286 children:
+   fc65c00 T-DG4-FE-G2: completed in salvage run FE-G2B
+-- ea92e25 children:
+   9ae950f T-DG4-QA-B: acceptance suites A08, A09 and QA-A partial rows (salvage QA-BB)
+-- 7a4e4f0 children:
+   b2043ac T-DG4-FE-R3: adopt ARCH-R3 reads in the web app, G3 submit note, ADR amendment-table translation guard (salvage FE-R3B)
+-- 41b586c children:
+   935d33d T-DG4-FE-R9B: session-bound/identity/generation tests use a controlled Date.now clock; Y1c deterministic under load (F-DG4-106, F-DG4-145)
+
+## completing commits are ancestors of 8553323
+6755376 ancestor
+da0a035 ancestor
+afce6a6 ancestor
+d3e2fff ancestor
+006c56c ancestor
+8d713c0 ancestor
+fc65c00 ancestor
+9ae950f ancestor
+b2043ac ancestor
+935d33d ancestor
+
+## orchestrator edits D-118/D-121 (claimed wording or test-only): name-status and numstat
+-- 1d7c038 Claude | DG4: FinanceValueLine.drilldownHref description matches the as-built gross link rule (orchestrator wording edit at the KBE-R5 merge; D-118)
+1	1	docs/api/openapi.yaml
+-- c35a21e Claude | DG4: corrective-cases test inserts its worker case with a time-ordered uuidv7 id, as the product does (order assertion failed when a random v4 id sorted first; orchestrator test-kit edit, D-118)
+4	1	apps/api/test/integration/raid/corrective-cases.test.ts
+-- 64f86cf Claude | DG4: web dashboard fixtures carry the now-required headlineBasis and benefits.headlines (KBE-R6's verified patch, hunks FE-R5 had not already applied; orchestrator test-fixture edit, D-121)
+8	1	apps/web/src/pages/dashboards/dashboardFixtures.ts
+-- f98f054 Claude | DG4: p4-value-headlines e2e test 2 asserts headlineBasis instead of skipping without it (orchestrator test-kit edit at the KBE-R6/FE-R5 merge, D-121)
+4	3	apps/web/e2e/p4-value-headlines.spec.ts
+-- 25bdcbd Claude | DG4: contract and zod-mirror text no longer call the three ARCH-R5 members 'not yet required' (KBE-R6 handback §5.2; orchestrator wording edit, D-121)
+5	5	docs/api/openapi.yaml
+3	4	packages/shared/src/schemas/dashboards.ts
+-- 1d7c038 diff (wording?)
+diff --git a/docs/api/openapi.yaml b/docs/api/openapi.yaml
+index 6b1a634..965a774 100644
+--- a/docs/api/openapi.yaml
++++ b/docs/api/openapi.yaml
+@@ -28257 +28257 @@ components:
+-        drilldownHref: { type: [string, "null"], description: "On a class line, the drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1). null on a gross line and on a net line (ADR-0037 amendment N2): each is derived, not one drill-down's sum. A gross line is the sum of the margin_uplift, cash_saving and working_capital_release class lines of its state and currency, each with its own drill-down. A net line is that gross minus the value.investment total." }
++        drilldownHref: { type: [string, "null"], description: "On a class line, the drill-down whose decimal sum per currency equals total (ADR-0037 amendment K1). null on a net line, which is derived. A gross line is the sum of the margin_uplift, cash_saving and working_capital_release class lines of its state and currency, each with its own drill-down (ADR-0037 amendment N2); it carries the value-state drill-down only when no revenue_uplift or avoided_cost line enters that state and currency, because only then does that drill-down sum to the gross, and is null otherwise. A net line is that gross minus the value.investment total." }
+-- 25bdcbd diff
+--- a/docs/api/openapi.yaml
++++ b/docs/api/openapi.yaml
+-    `WorkspaceHeader.benefits.headlines`, not yet required until the API emits them (ADR-0037 amendment N3). Meaning
++    `WorkspaceHeader.benefits.headlines` (ADR-0037 amendment N3), required since the API emits them (T-DG4-KBE-R6, D-120). Meaning
+-    operation, status, parameter schema or `required` list changes.
++    operation, status or parameter schema changes; the only `required` list changes add those three members.
+-        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The value basis the headline sums (ADR-0037 amendment N3): non-null on value.planned, value.forecast, value.submitted and value.validated, and profit_and_cash on value.gap; null on value.investment and every non-value metric. Not yet required: pending in p4-pending-arch-r5.ts until the API emits it." }
++        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The value basis the headline sums (ADR-0037 amendment N3): non-null on value.planned, value.forecast, value.submitted and value.validated, and profit_and_cash on value.gap; null on value.investment and every non-value metric." }
+-        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendment N3): profit_and_cash for a value-state metric without valueClass, with valueClass margin_uplift, cash_saving or working_capital_release, and for value.gap; top_line with revenue_uplift; non_cash with avoided_cost; null with non_financial_valued and for every other metric. Not yet required: pending in p4-pending-arch-r5.ts until the API emits it." }
++        headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendment N3): profit_and_cash for a value-state metric without valueClass, with valueClass margin_uplift, cash_saving or working_capital_release, and for value.gap; top_line with revenue_uplift; non_cash with avoided_cost; null with non_financial_valued and for every other metric." }
+-        benefits: { type: object, description: "planned and validated are per currency on the profit-and-cash basis (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), equal to the T10 profit_and_cash headlines; not_applicable (dashboard.value.no_profit_and_cash_benefit) in a currency with no such benefit. headlines carries the planned and validated value headlines of all three bases per currency (profit_and_cash, top_line, non_cash), each with its basis, label key and drill-down; not yet required: pending in p4-pending-arch-r5.ts until the API emits it.", required: [state, planned, validated, benefitCount, nonFinancialCount, headlines], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 }, headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } } } }
++        benefits: { type: object, description: "planned and validated are per currency on the profit-and-cash basis (margin_uplift, cash_saving, working_capital_release; ADR-0037 amendment N3), equal to the T10 profit_and_cash headlines; not_applicable (dashboard.value.no_profit_and_cash_benefit) in a currency with no such benefit. headlines carries the planned and validated value headlines of all three bases per currency (profit_and_cash, top_line, non_cash), each with its basis, label key and drill-down.", required: [state, planned, validated, benefitCount, nonFinancialCount, headlines], additionalProperties: false, properties: { state: { type: string, enum: [known, unknown] }, planned: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, validated: { type: array, items: { $ref: "#/components/schemas/CurrencyValue" } }, benefitCount: { type: integer, minimum: 0 }, nonFinancialCount: { type: integer, minimum: 0 }, headlines: { type: array, items: { $ref: "#/components/schemas/DashboardHeadline" } } } }
+--- a/packages/shared/src/schemas/dashboards.ts
++++ b/packages/shared/src/schemas/dashboards.ts
+- * OpenAPI `DashboardHeadline`. `headlineBasis` (ADR-0037 amendment N3) is optional only while it is pending in
+- * apps/api/test/support/p4-pending-arch-r5.ts; it becomes required when the API emits it (T-DG4-KBE-R6).
++ * OpenAPI `DashboardHeadline`. `headlineBasis` (ADR-0037 amendment N3) is required: the API emits it (T-DG4-KBE-R6, D-120).
+-  /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
++  /** ADR-0037 amendment N3; required since T-DG4-KBE-R6 emits it (D-120). */
+-    /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
++    /** ADR-0037 amendment N3; required since T-DG4-KBE-R6 emits it (D-120). */
+-- f98f054 diff
+--- a/apps/web/e2e/p4-value-headlines.spec.ts
++++ b/apps/web/e2e/p4-value-headlines.spec.ts
+-//     the Executive Overview, the Finance dashboard and the workspace header. Until that API is merged, the test SKIPS
+-//     itself and says why; it never passes on an API without the member.
++//     the Executive Overview, the Finance dashboard and the workspace header. An API without the member fails it
++//     (the conditional skip FE-R5 used before the KBE-R6 merge was removed at integration, D-121).
+-  test.skip(!hasBasis, "the API does not send headlineBasis yet: T-DG4-KBE-R6 (D-119) is not merged in this tree");
++  // KBE-R6 is merged and the contract requires the member, so a missing headlineBasis fails here, never skips (D-121).
++  expect(hasBasis, "the API sends headlineBasis on the value headlines").toBe(true);
+-- c35a21e diff
+--- a/apps/api/test/integration/raid/corrective-cases.test.ts
++++ b/apps/api/test/integration/raid/corrective-cases.test.ts
++import { v7 as uuidv7 } from "uuid";
+-  const id = randomUUID();
++  // Time-ordered like the ids the API and the worker create (uuidv7): lists page by id, so a random v4 id here
++  // made the 'owner filter' order assertion fail whenever it happened to sort before the API-created cases (D-118).
++  const id = uuidv7();
+
+## D-107/D-108 orchestrator edits
+-- 37b1a05 DG4: orchestrator wiring for T-DG4-BE-J (D-107): server.ts wires the transition-decision approval port; sustainment/index.ts exports it and the status-model reads
+5	0	apps/api/src/modules/sustainment/index.ts
+4	1	apps/api/src/server.ts
+-- 44024f7 DG4 orchestrator edit (D-107): kpi-p4/versions.test.ts asserts the D-101 refusal of a direct second KPI activation (BE-L's proposed patch; the activation effects are asserted on the change-request path)
+12	30	apps/api/test/integration/kpi-p4/versions.test.ts
+-- 336e3ae DG4 orchestrator edit (D-108): the two stepKey regex patterns in openapi.yaml use '\.' (as BE-K2 fixed criterionKey); workflows.test.ts lists GET /api/v1/phases as an authenticated global catalogue read
+6	3	apps/api/src/modules/workflows/workflows.test.ts
+2	2	docs/api/openapi.yaml
+--- a/apps/api/src/modules/sustainment/index.ts
++++ b/apps/api/src/modules/sustainment/index.ts
++// T-DG4-BE-J (D-107, orchestrator wiring): the transition-decision approval port, set by the composition root because
++// sustainment may not import workflows, and the status-model reads consumed by slice J and BE-K.
++export { wireTransitionDecisionApprovals } from "./transition-decisions.ts";
++export { valueStatusOf, initiativeStatusModel, transformationStatusModel, bauStateOf } from "./status-model.ts";
++
+--- a/apps/api/src/server.ts
++++ b/apps/api/src/server.ts
+-import { registerSustainmentModule } from "./modules/sustainment/index.ts";
++import { registerSustainmentModule, wireTransitionDecisionApprovals } from "./modules/sustainment/index.ts";
++  // T-DG4-BE-J (D-107): sustainment requests transition-decision approvals through workflows' approval service, passed
++  // in as a port (sustainment cannot import workflows).
++  wireTransitionDecisionApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
+
+## 25bdcbd full diff of dashboards.ts (comment-only check)
+diff --git a/packages/shared/src/schemas/dashboards.ts b/packages/shared/src/schemas/dashboards.ts
+index e272afe..2f372a1 100644
+--- a/packages/shared/src/schemas/dashboards.ts
++++ b/packages/shared/src/schemas/dashboards.ts
+@@ -128,8 +128,7 @@ export const dashboardRag = z.strictObject({
+ export type DashboardRag = z.infer<typeof dashboardRag>;
+ 
+ /**
+- * OpenAPI `DashboardHeadline`. `headlineBasis` (ADR-0037 amendment N3) is optional only while it is pending in
+- * apps/api/test/support/p4-pending-arch-r5.ts; it becomes required when the API emits it (T-DG4-KBE-R6).
++ * OpenAPI `DashboardHeadline`. `headlineBasis` (ADR-0037 amendment N3) is required: the API emits it (T-DG4-KBE-R6, D-120).
+  */
+ export const dashboardHeadline = z.strictObject({
+   metric: dashboardMetric,
+@@ -287,7 +286,7 @@ export const dashboardDrilldown = z.strictObject({
+   items: z.array(drilldownItem),
+   evidence: z.array(drilldownEvidence),
+   nextCursor: z.string().nullable(),
+-  /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
++  /** ADR-0037 amendment N3; required since T-DG4-KBE-R6 emits it (D-120). */
+   headlineBasis: headlineBasis.nullable(),
+ });
+ export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
+@@ -553,7 +552,7 @@ export const workspaceHeader = z.strictObject({
+     validated: z.array(currencyValue),
+     benefitCount: z.number().int().min(0),
+     nonFinancialCount: z.number().int().min(0),
+-    /** ADR-0037 amendment N3; optional only while pending in p4-pending-arch-r5.ts (T-DG4-KBE-R6 emits it). */
++    /** ADR-0037 amendment N3; required since T-DG4-KBE-R6 emits it (D-120). */
+     headlines: z.array(dashboardHeadline),
+   }),
+   keyDecisions: z.strictObject({ items: z.array(dashboardItem).max(5), overdueCount: z.number().int().min(0) }),
+
+## D-124 repairs present in candidate 8553323
+-- item 1: loadOutcomeRows reads non-archived outcomes
+7:8553323:apps/api/src/modules/kpi/dashboard-facts.ts-189-    .where("status", "<>", "archived")
+-- items 2-3: kpiUnit in contract and web formatter
+8553323:apps/web/src/pages/dashboards/DashboardsPage.tsx:1
+8553323:apps/web/src/pages/dashboards/dashboardFixtures.ts:11
+8553323:apps/web/src/pages/dashboards/kpiUnit.test.tsx:19
+8553323:apps/web/src/pages/dashboards/percentKpi.test.tsx:4
+8553323:apps/web/src/pages/dashboards/ui.tsx:18
+8553323:apps/web/src/pages/dashboards/valueRagLineState.test.tsx:3
+8553323:docs/api/openapi.yaml:5
+-- p4-pending-arch-r7 empty
+export const P4_PENDING_ARCH_R7: readonly string[] = [];
+
+export interface PendingMember {
+  /** `<OpenAPI schema>.<member path>`. */
+  readonly member: string;
+  /** The operations whose responses carry it. */
+  readonly operations: readonly string[];
+  /** The zod mirror export that declares it (`@mth/shared/schemas`). */
+  readonly zod: string;
+}
+
+export const P4_PENDING_ARCH_R7_MEMBERS: readonly PendingMember[] = [];
+-- KBE-R8 / FE-R7 merges ancestors
+e504824 ancestor
+7f38e28 ancestor
+
+## round-8 scope: manifest baa6ff4d (round 7) vs 8014e5ce (round 8)
+entries 1475 1475 added [] removed []
+changed ['docs/delivery/decisions.md', 'docs/delivery/environment.md']

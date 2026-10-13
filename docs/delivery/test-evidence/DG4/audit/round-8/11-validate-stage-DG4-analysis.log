@@ -1,0 +1,362 @@
+# 11 analysis of validate --stage DG4 problems not caused by the auditor's in-flight run (2026-10-13T08:45:05Z)
+## A. candidate: decisions.md at 8553323 vs HEAD
+547ed58 2026-10-13T08:23:56+00:00 DG4: round 8 all PASS (confirmation round); F-DG4-148 ACCEPTED_OBSERVATION mirrored from qa's sidecar; VERIFYING; D-135; release-auditor assignment
+ docs/delivery/decisions.md | 1 +
+ 1 file changed, 1 insertion(+)
+decisions.md in manifest: True
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:6f8c254e486f3530df02f69e2524d2ec37f86258a0af43c4d9eb760b1236d42e","files":1475}
+## B. review rounds frozen_at/source_commit vs committed manifests
+round 1 stages 2026-10-10T21:25:25Z a91d82cf | manifest 2026-10-10T21:25:25Z a91d82cf
+round 2 stages 2026-10-11T04:43:11Z 93a7dd79 | manifest 2026-10-11T04:43:11Z 93a7dd79
+round 3 stages 2026-10-11T12:34:28Z 925f0bcb | manifest 2026-10-11T12:34:15Z 925f0bcb
+round 4 stages 2026-10-11T21:53:13Z ccc37c9f | manifest 2026-10-11T21:53:01Z ccc37c9f
+round 5 stages 2026-10-12T04:23:09Z 3e3a06e4 | manifest 2026-10-12T04:22:59Z 3e3a06e4
+round 6 stages 2026-10-12T12:19:49Z 1e0dc5d8 | manifest 2026-10-12T12:19:36Z 1e0dc5d8
+round 7 stages 2026-10-12T20:52:19Z dab4562c | manifest 2026-10-12T20:52:03Z dab4562c
+round 8 stages 2026-10-13T07:06:20Z 8553323d | manifest 2026-10-13T07:05:44Z 8553323d
+## C. write-once: commits that removed committed run evidence
+7a26174 2026-10-12T21:50:32+00:00 evidence: keep the three killed DG4 round-7 review runs and their partial evidence for provenance only (D-084 precedent)
+R100	docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json	docs/delivery/test-evidence/DG4/code-security-r7-orphaned/run/meta.json
+R100	docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json	docs/delivery/test-evidence/DG4/code-security-r7-orphaned/run/result.json
+R100	docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json	docs/delivery/test-evidence/DG4/code-security-r7-orphaned/run/sandbox.json
+b05492f 2026-10-11T07:00:20+00:00 evidence: keep the killed DG4 round-2 qa run and its partial evidence for provenance only (D-084 precedent)
+R100	docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json	docs/delivery/test-evidence/DG4/qa-r2-orphaned/run/meta.json
+R100	docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json	docs/delivery/test-evidence/DG4/qa-r2-orphaned/run/result.json
+R100	docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json	docs/delivery/test-evidence/DG4/qa-r2-orphaned/run/sandbox.json
+229d563 2026-10-10T09:39:09+00:00 DG4: W17 runs killed by the container restart at 09:37Z (ARCH-R3, FE-F2, FE-G2, QA-B) kept for provenance only (D-103 salvage)
+R100	docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json	docs/delivery/test-evidence/DG4/arch-r3-orphaned/run/result.json
+R100	docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log	docs/delivery/test-evidence/DG4/arch-r3-orphaned/run/stderr.log
+R100	docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json	docs/delivery/test-evidence/DG4/qa-b-orphaned/run/meta.json
+eda5588 2026-10-09T05:23:17+00:00 DG4 run evidence: T-DG4-KBE-B
+D	docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt
+D	docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json
+D	docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl
+
+## D. findings.json: closed DG4 findings missing verification / full fix_revision
+23 closed; with verification: 0 ; with fix_revision: 0
+DG3 for comparison: 5 with verification 5 with fix_revision 5
+
+## E. full output of node tools/gates/validate.mjs --stage DG4 after writing the auditor record, sidecar and gate record (2026-10-13T08:45:41Z)
+FAIL gate DG4 (current) (156 problems)
+  - candidate: current content hashes to sha256:6f8c254e486f3530df02f69e2524d2ec37f86258a0af43c4d9eb760b1236d42e, approval covers sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804; changed: ~docs/delivery/decisions.md
+  - review release-auditor (docs/delivery/reviews/DG4/round-8/release-auditor.json) invocation: file not found (docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/meta.json)
+  - review rounds: DG4 round 3 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 4 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 5 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 6 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 7 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 8 frozen_at/source_commit differ from its committed manifest
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/settings.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/stderr.log has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/transcript.jsonl.gz has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/settings.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/stderr.log has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/transcript.jsonl.gz has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/settings.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/stderr.log has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/transcript.jsonl.gz has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/settings.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/stderr.log has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/transcript.jsonl.gz has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/sandbox.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/settings.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/transcript.jsonl.gz has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt has a D event in eda5588dc0 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json has a D event in eda5588dc0 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl has a D event in eda5588dc0 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl is missing from the working tree
+  - docs/delivery/reviews/DG4/round-8/release-auditor.verifications.json: release-auditor's record for round-8 is not listed in stages.json review_rounds
+  - finding F-DG4-100 (Medium): findings.json has no verification record
+  - finding F-DG4-100 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-101 (Medium, mandatory): findings.json has no verification record
+  - finding F-DG4-101 (Medium, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-102 (Low): findings.json has no verification record
+  - finding F-DG4-102 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-103 (Low): findings.json has no verification record
+  - finding F-DG4-103 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-120 (Low): findings.json has no verification record
+  - finding F-DG4-120 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-121 (Medium): findings.json has no verification record
+  - finding F-DG4-121 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-140 (Low): findings.json has no verification record
+  - finding F-DG4-140 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-141 (Low): findings.json has no verification record
+  - finding F-DG4-141 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-122 (High, mandatory): findings.json has no verification record
+  - finding F-DG4-122 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-123 (Medium): findings.json has no verification record
+  - finding F-DG4-123 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-124 (Medium): findings.json has no verification record
+  - finding F-DG4-124 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-104 (Medium): findings.json has no verification record
+  - finding F-DG4-104 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-125 (High, mandatory): findings.json has no verification record
+  - finding F-DG4-125 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-126 (Medium): findings.json has no verification record
+  - finding F-DG4-126 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-127 (Medium): findings.json has no verification record
+  - finding F-DG4-127 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-105 (Medium): findings.json has no verification record
+  - finding F-DG4-105 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-143 (Medium): findings.json has no verification record
+  - finding F-DG4-143 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-144 (Low): findings.json has no verification record
+  - finding F-DG4-144 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-106 (Low): findings.json has no verification record
+  - finding F-DG4-106 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-145 (Low): findings.json has no verification record
+  - finding F-DG4-145 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-128 (Medium): findings.json has no verification record
+  - finding F-DG4-128 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-146 (Low): findings.json has no verification record
+  - finding F-DG4-146 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-147 (Low): findings.json has no verification record
+  - finding F-DG4-147 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-148 (Low): no release-auditor sidecar accepts it
+  - finding F-DG4-148 (Low): findings.json accepted_by does not mirror the accepting sidecars (qa-verifier)
+exit=1
+
+## F. final node tools/gates/validate.mjs --stage DG4 after writing the BLOCKED gate record (2026-10-13T08:53:41Z); exit=1
+FAIL gate DG4 (current) (161 problems)
+  - gate DG4: decision is BLOCKED
+  - gate DG4: blocking conditions recorded: B1 Candidate integrity: the repository no longer holds the approved candidate. Commit 547ed58 added D-135 (1 line) to docs/delivery/decisions.md after the round-8 freeze, and decisions.md is a candidate-manifest entry. So the working tree hashes to sha256:6f8c254e486f3530df02f69e2524d2ec37f86258a0af43c4d9eb760b1236d42e, not 8014e5ce…3804, and validate --stage DG4 reports 'changed: ~docs/delivery/decisions.md'. The assignment's statement that D-135 is outside the frozen candidate is wrong for decisions.md. Owner: delivery-orchestrator. The repair is the orchestrator's decision: either restore decisions.md to its 8553323 content and record D-135 outside the candidate until the gate is decided, or re-freeze and run a new round.; B2 findings.json mirror incomplete: all 23 CLOSED_VERIFIED DG4 findings lack the 'verification' object {by_role, invocation_reference, at, result, evidence}, mirrored from the verifying reviewer's sidecar, and a full 40-hex 'fix_revision'. validate --stage DG4 reports 46 problems. The DG3 findings carry both (5/5). The fix commits exist only in the history notes, and each is an ancestor of 8553323 (03-findings.log). Owner: delivery-orchestrator (tools/gates/import-findings.mjs or an equivalent faithful mirror).; B3 Write-once violations (99 problems): committed run evidence under docs/delivery/runs/DG4 was later removed. The killed runs REV-QA-R2 a13ea231 (b05492f), REV-DOM-R7 57f41674, REV-SEC-R7 7f0f304b and REV-QA-R7 c1a3a7a5 (7a26174) and QA-B 86683ff8 (229d563) were moved into test-evidence/DG4/*-orphaned, and KBE-B 4bbdcad7's .pre-config.txt, .pre-snapshot.json and transcript.jsonl were deleted in eda5588. The content is preserved as byte-identical renames, but the validator's append-only rule rejects removal. Owner: delivery-orchestrator. Restore the committed files at their original paths, or obtain a decided tooling change through the proper owner; the auditor cannot waive it.; B4 stages.json review_rounds frozen_at for DG4 rounds 3, 4, 5, 6, 7 and 8 differ from their committed manifests by 10-36 s (for example round 8: 07:06:20Z vs the manifest's 07:05:44Z), so validate --stage DG4 reports 'frozen_at/source_commit differ from its committed manifest' 6 times. The source commits match. Owner: delivery-orchestrator. Align each review_rounds frozen_at with its write-once manifest.
+  - candidate: current content hashes to sha256:6f8c254e486f3530df02f69e2524d2ec37f86258a0af43c4d9eb760b1236d42e, approval covers sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804; changed: ~docs/delivery/decisions.md
+  - review release-auditor (docs/delivery/reviews/DG4/round-8/release-auditor.json): verdict is BLOCKED
+  - review release-auditor (docs/delivery/reviews/DG4/round-8/release-auditor.json): check AUD-R8-12-validate-stage-DG4 is FAIL
+  - review release-auditor (docs/delivery/reviews/DG4/round-8/release-auditor.json) invocation: file not found (docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/meta.json)
+  - gate DG4: test 'Stage validation of DG4 on the repository (HEAD 547ed58): 156 problems, of which 152 are not caused by the auditor's in-flight run (B1 candidate drift from D-135 in decisions.md; B2 findings.json verification/fix_revision missing for 23 closed findings; B3 write-once violations on moved/deleted runs/DG4 files; B4 stages.json frozen_at differs from the manifests for rounds 3-8)' is FAIL
+  - review rounds: DG4 round 3 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 4 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 5 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 6 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 7 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG4 round 8 frozen_at/source_commit differ from its committed manifest
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/settings.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/stderr.log has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/transcript.jsonl.gz has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/settings.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/stderr.log has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/transcript.jsonl.gz has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/settings.json has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/stderr.log has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/transcript.jsonl.gz has a D event in 7a261742f1 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/settings.json has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/stderr.log has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/transcript.jsonl.gz has a D event in b05492f51a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/sandbox.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/settings.json has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/transcript.jsonl.gz has a D event in 229d563ac5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt has a D event in eda5588dc0 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json has a D event in eda5588dc0 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl has a D event in eda5588dc0 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R7-qa-verifier-20261012T205728Z-c1a3a7a5/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R7-code-security-reviewer-20261012T205708Z-7f0f304b/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R2-qa-verifier-20261011T044436Z-a13ea231/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/meta.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/result.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/sandbox.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/sandbox.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/settings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/settings.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/stderr.log is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/transcript.jsonl.gz was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-QA-B-qa-verifier-20261010T084317Z-86683ff8/transcript.jsonl.gz is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG4/DG4-T-DG4-KBE-B-kpi-benefits-engineer-20261009T042803Z-4bbdcad7/transcript.jsonl is missing from the working tree
+  - docs/delivery/reviews/DG4/round-8/release-auditor.verifications.json: release-auditor's record for round-8 is not listed in stages.json review_rounds
+  - finding F-DG4-100 (Medium): findings.json has no verification record
+  - finding F-DG4-100 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-101 (Medium, mandatory): findings.json has no verification record
+  - finding F-DG4-101 (Medium, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-102 (Low): findings.json has no verification record
+  - finding F-DG4-102 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-103 (Low): findings.json has no verification record
+  - finding F-DG4-103 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-120 (Low): findings.json has no verification record
+  - finding F-DG4-120 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-121 (Medium): findings.json has no verification record
+  - finding F-DG4-121 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-140 (Low): findings.json has no verification record
+  - finding F-DG4-140 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-141 (Low): findings.json has no verification record
+  - finding F-DG4-141 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-122 (High, mandatory): findings.json has no verification record
+  - finding F-DG4-122 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-123 (Medium): findings.json has no verification record
+  - finding F-DG4-123 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-124 (Medium): findings.json has no verification record
+  - finding F-DG4-124 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-104 (Medium): findings.json has no verification record
+  - finding F-DG4-104 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-125 (High, mandatory): findings.json has no verification record
+  - finding F-DG4-125 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-126 (Medium): findings.json has no verification record
+  - finding F-DG4-126 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-127 (Medium): findings.json has no verification record
+  - finding F-DG4-127 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-105 (Medium): findings.json has no verification record
+  - finding F-DG4-105 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-143 (Medium): findings.json has no verification record
+  - finding F-DG4-143 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-144 (Low): findings.json has no verification record
+  - finding F-DG4-144 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-106 (Low): findings.json has no verification record
+  - finding F-DG4-106 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-145 (Low): findings.json has no verification record
+  - finding F-DG4-145 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-128 (Medium): findings.json has no verification record
+  - finding F-DG4-128 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-146 (Low): findings.json has no verification record
+  - finding F-DG4-146 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-147 (Low): findings.json has no verification record
+  - finding F-DG4-147 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG4-148 (Low): no release-auditor sidecar accepts it
+  - finding F-DG4-148 (Low): findings.json accepted_by does not mirror the accepting sidecars (qa-verifier)
+classification: 152 B1-B4 (candidate 1, findings fields 46, write-once 99, review-round frozen_at 6); 4 from the in-flight auditor run (meta.json absent, round-8 auditor record not listed, two F-DG4-148 acceptance consequences); 5 echo the BLOCKED decision itself (gate decision, blocking conditions, FAIL test, FAIL check, BLOCKED verdict)
