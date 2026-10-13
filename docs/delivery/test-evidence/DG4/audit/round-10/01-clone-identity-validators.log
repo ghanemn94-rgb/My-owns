@@ -1,0 +1,41 @@
+# 01 clone, identity, previous gates (release-auditor round 10, 2026-10-13T18:19:13Z)
+assignment sha256: 62a7948e7a798a05d8353731722c2cc1799830f08a77dff880f2b1764b9a60e3 (expected 62a7948e7a798a05d8353731722c2cc1799830f08a77dff880f2b1764b9a60e3)
+repo HEAD: e5587b89f47e668c77f51617edae49f1ebb1f718
+$ git clone /home/user/My-owns $TMPDIR/c  (complete clone, not a worktree)
+clone HEAD: e5587b89f47e668c77f51617edae49f1ebb1f718  is-shallow: false
+fsck --connectivity-only: 0 non-dangling problems (dangling objects only)
+local branches in repo: 97; remote branches in clone: 97; tags in clone: dg1-dev-history-d1cb245 
+commits reachable from repo branches: 1704; from clone remotes: 1704 (the repo's own refs/remotes/* upstream refs are not cloned; they hold no DG4 commit: e70ac02, 30f2b17, a445b24, backup ref all present)
+ e70ac02f63cd1f42487cfa4dae73f68e933da015: commit
+ 30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66: commit
+ 5c18961: commit
+ a445b2470bbbf8fbde2e78dcdc2955a94547414b: commit
+ origin/backup/pre-dg4-writeonce-repair-72c0e653a3: commit
+$ node tools/gates/candidate.mjs --stage DG4 --ref e70ac02f63cd1f42487cfa4dae73f68e933da015 (clone)
+{"stage":"DG4","source":"e70ac02f63cd1f42487cfa4dae73f68e933da015","candidate_id":"sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6","files":1475}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG4 (clone working tree at HEAD)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6","files":1475}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG4 (repository working tree)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6","files":1475}
+exit=0
+manifest: sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 e70ac02f63cd1f42487cfa4dae73f68e933da015 2026-10-13T16:37:08Z 1475
+changes e70ac02..HEAD outside test-evidence/runs/reviews round-10:
+docs/delivery/assignments/DG4/round-10/code-security-reviewer.md
+docs/delivery/assignments/DG4/round-10/domain-reviewer.md
+docs/delivery/assignments/DG4/round-10/qa-verifier.md
+docs/delivery/assignments/DG4/round-10/release-auditor.md
+docs/delivery/candidates/DG4/f38274cb6d50c498.manifest.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+decisions.md lines changed since freeze: 0
+$ node tools/gates/validate.mjs --historical --stage DG3
+PASS gate DG3 (historical)
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG2
+PASS gate DG2 (historical)
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+exit=0

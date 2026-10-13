@@ -1,0 +1,64 @@
+# 13 F-DG4-160 reproduction on candidate f38274cb (clone at e70ac02f63cd1f42487cfa4dae73f68e933da015)
+## round-9 reproduction step (1): the statusHint strings now
+apps/web/src/i18n/ar/transformations.json:88:    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.",
+apps/web/src/i18n/en/transformations.json:88:    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.",
+## stale phrase anywhere in apps/ packages/ tests/ e2e/ (excluding node_modules):
+(grep exit 1; 1 = no match)
+## step (2): render site
+274:          hint={t("transformations.form.statusHint")}
+## step (3): closure is delivered and the hint's target exists
+402:      { path: "transformations/:id/closure", element: <ClosurePage /> },
+apps/web/src/i18n/en/closureP4.json:2:  "tab": "Closure",
+apps/web/src/i18n/ar/closureP4.json:2:  "tab": "الإغلاق",
+72:  { id: "closure", path: "/closure", labelKey: "closureP4.tab" },
+## sweep: every remaining 'later release' / 'not available yet' string and where it renders
+apps/web/src/i18n/en/gates.json:45:  "notEnabledBody": "Submission of this gate becomes available in a later release.",
+apps/web/src/i18n/en/admin.json:9:  "plannedSections": "Methodology, forms, workflows, automation and branding settings are planned for later releases.",
+apps/web/src/i18n/en/transformations.json:102:    "laterStage": "Recorded from a later release",
+apps/web/src/i18n/en/nav.json:6:  "plannedBody": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release, so this page shows no data. The scre
+apps/web/src/i18n/en/nav.json:83:    "portfolioPlanned": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release. The dashboards under the Exe
+apps/web/src/i18n/en/problems.json:41:  "access__scope_type_reserved": "This scope type is not available yet.",
+apps/web/src/i18n/ar/gates.json:45:  "notEnabledBody": "سيتاح تقديم هذه البوابة في إصدار لا
+apps/web/src/i18n/ar/transformations.json:102:    "laterStage": "تُسجَّل في إصدار لاحق",
+apps/web/src/i18n/ar/nav.json:6:  "plannedBody": "عرض هذا القسم على مستوى المحفظة كاملة،
+apps/web/src/i18n/ar/nav.json:83:    "portfolioPlanned": "عرض هذا المجال على مستوى المحفظة ك
+apps/web/src/i18n/ar/problems.json:41:  "access__scope_type_reserved": "نوع النطاق هذا غير متاح بع�
+- nav.plannedBody/nav.willContain -> AreaPlaceholderPage (router placeholderRoutes, availability planned): playbook, risks, change, bau; each has NAV_SUBPAGES without requiresAny:
+169:  { id: "raid", area: "risks", path: "/risks-actions/raid", workspaceTab: "raid" },
+170:  { id: "actions", area: "risks", path: "/risks-actions/actions", workspaceTab: "actions" },
+173:    area: "risks",
+187:  { id: "adoptionPlan", area: "change", path: "/change-adoption/adoption", workspaceTab: "adoption" },
+188:  { id: "performanceAreas", area: "bau", path: "/bau-improvement/bau", workspaceTab: "bau" },
+189:  { id: "improvementBacklog", area: "bau", path: "/bau-improvement/improvement", workspaceTab: "improvement" },
+190:  { id: "lessons", area: "bau", path: "/bau-improvement/lessons", workspaceTab: "lessons" },
+191:  { id: "lessonSearch", area: "bau", path: "/lessons", requiresAny: ["lesson.search"] },
+195:  { id: "phaseWorkspace", area: "playbook", path: "/playbook/phases", workspaceTab: "phases" },
+- nav.entry.portfolioPlanned -> AreaEntryPage (partial areas); REQ-S03-007 cross-portfolio view is DG5 SPECIFIED; dashboards (REQ-S13-001) under executive:
+193:  { id: "dashboards", area: "executive", path: "/dashboards" },
+- gates.notEnabled/notEnabledBody render only if !submissionEnabled; all six G1-G6 enabled after migrations (catalogue.test.ts):
+      `SELECT code, submission_enabled FROM gate_definition ORDER BY ordinal`,
+    );
+    expect(rows.map((r) => [r.code, r.submission_enabled])).toEqual([
+      ["G1", true],
+      ["G2", true],
+      ["G3", true],
+      ["G4", true],
+      ["G5", true],
+      ["G6", true],
+18: WHERE code IN ('G5', 'G6')
+23:  IF (SELECT count(*) FROM gate_definition WHERE code IN ('G5', 'G6') AND submission_enabled) <> 2 THEN
+  API writes to gate_definition (non-test): 0
+- transformations.workspace.laterStage render sites: 0
+- admin.plannedSections: named sections are DG5 SPECIFIED:
+   REQ-S01-002 DG5 SPECIFIED
+   REQ-S03-007 DG5 SPECIFIED
+   REQ-S05-002 DG5 SPECIFIED
+   REQ-S06-004 DG5 SPECIFIED
+   REQ-S10-002 DG6 SPECIFIED
+   REQ-S10-015 DG5 SPECIFIED
+   REQ-S12-001 DG5 SPECIFIED
+   REQ-S12-002 DG5 SPECIFIED
+   REQ-S13-001 DG4 IMPLEMENTED
+   REQ-S15-004 DG5 SPECIFIED
+- P4_PLANNED_ROUTES entries (nav.p4.beingBuilt*): 1
+  CORRECTION: that count of 1 is the declaration line's own type annotation '{ path: string; feature: string; owner: string }[]'; entries excluding it: 0 (the array holds comments only)

@@ -1,0 +1,45 @@
+# 04 D-136 checks, complete clone at e70ac02f63cd1f42487cfa4dae73f68e933da015 (2026-10-13T18:12:33Z)
+$ checkWriteOnce(repo, "DG4")
+checkWriteOnce(DG4) errors: 0
+$ git diff --name-status backup/pre-dg4-writeonce-repair-72c0e653a3 a445b2470bbbf8fbde2e78dcdc2955a94547414b
+files: 33; status letters:      33 A 
+equal to restored-paths.txt: NO (33 listed)
+all under docs/delivery/runs/DG4/: 0 outside
+## SHA map: metadata identical per pair; diff of each pair limited to restored paths
+pairs: 360  metadata mismatches: 0  pairs whose diff touches a non-restored path: 0
+## frozen_at: stages.json rounds vs manifests
+ round 1 sha256:19656b1ff2cc5ce1 stages.frozen_at 2026-10-10T21:25:25Z manifest 2026-10-10T21:25:25Z equal True | source a91d82cf6f manifest source a91d82cf6f
+ round 2 sha256:3f51b79d671ebf6d stages.frozen_at 2026-10-11T04:43:11Z manifest 2026-10-11T04:43:11Z equal True | source 93a7dd7936 manifest source 93a7dd7936
+ round 3 sha256:890faa1284e07356 stages.frozen_at 2026-10-11T12:34:15Z manifest 2026-10-11T12:34:15Z equal True | source 925f0bcbea manifest source 925f0bcbea
+ round 4 sha256:5ff36f6e74af1853 stages.frozen_at 2026-10-11T21:53:01Z manifest 2026-10-11T21:53:01Z equal True | source ccc37c9f8b manifest source ccc37c9f8b
+ round 5 sha256:69b7412a0a360135 stages.frozen_at 2026-10-12T04:22:59Z manifest 2026-10-12T04:22:59Z equal True | source 3e3a06e4e7 manifest source 3e3a06e4e7
+ round 6 sha256:f966fe5728e260b8 stages.frozen_at 2026-10-12T12:19:36Z manifest 2026-10-12T12:19:36Z equal True | source 1e0dc5d807 manifest source 1e0dc5d807
+ round 7 sha256:baa6ff4da306402c stages.frozen_at 2026-10-12T20:52:03Z manifest 2026-10-12T20:52:03Z equal True | source dab4562c71 manifest source dab4562c71
+ round 8 sha256:8014e5ceffe1f374 stages.frozen_at 2026-10-13T07:05:44Z manifest 2026-10-13T07:05:44Z equal True | source 8553323d69 manifest source 8553323d69
+ round 9 sha256:18c18fe4eda7cbc1 stages.frozen_at 2026-10-13T09:12:45Z manifest 2026-10-13T09:12:45Z equal True | source f2ae717063 manifest source f2ae717063
+ stage candidate: {"candidate_id": "sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c", "source_commit": "f2ae7170630456a772e1ceac90ab6d96b68e3f5c", "frozen_at": "2026-10-13T09:12:45Z", "manifest_path": "docs/delivery/candidates/DG4/18c18fe4eda7cbc1.manifest.json"}
+
+## CORRECTION: the frozen_at/stages section above read stages.json at e70ac02 (the clone was detached there). Re-run at HEAD e5587b89f47e668c77f51617edae49f1ebb1f718:
+restored-paths.txt has 4 columns (commit mode blob path); comparing its path column with the 33 diff paths: EQUAL
+$ checkWriteOnce(repo, "DG4") at HEAD
+checkWriteOnce(DG4) errors: 0
+ DG4 state: VERIFYING
+ stage candidate: {"candidate_id": "sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6", "source_commit": "e70ac02f63cd1f42487cfa4dae73f68e933da015", "frozen_at": "2026-10-13T16:37:08Z", "manifest_path": "docs/delivery/candidates/DG4/f38274cb6d50c498.manifest.json"}
+ round-10 manifest frozen_at 2026-10-13T16:37:08Z equal to stage candidate: True
+ last 4 history entries:
+   {"state": "VERIFYING", "at": "2026-10-13T10:22:00Z", "note": "Round 9 on 18c18fe4: domain PASS, code-security PASS, qa PASS, no new finding. All 23 closures re-verified on the rewritten history (CLOSED_VERIFIED, imported with their verification objects); qa re-accepts F-DG4-148 (ACCEPTED_OBSERVATION). The release-auditor runs on the same candidate. decisions.md is left untouched until the gate dec
+   {"state": "FIXING", "at": "2026-10-13T10:52:00Z", "note": "The round-9 release-auditor BLOCKED DG4 on one condition: F-DG4-160 (Low, not mandatory), raised by the auditor itself. The transformation edit page's status hint says, in EN and AR, that G6 'is available in a later release', but DG4 delivers G6 and governed closure. B1-B4 of round 8 are confirmed resolved. Repair by frontend-ux-engineer (
+   {"state": "REVIEWING", "at": "2026-10-13T16:37:08Z", "note": "FE-R11 and BE-R7 integrated, pre-freeze on 474d82a green (D-139). DG4 re-frozen for review round 10: candidate f38274cb (1475 files, source e70ac02)."}
+   {"state": "VERIFYING", "at": "2026-10-13T18:04:00Z", "note": "Round 10 on f38274cb: domain PASS, code-security PASS, qa PASS, no new finding; FE-R11 and BE-R7 reviewed. The release-auditor runs on the same candidate and verifies F-DG4-160 as its reporter. decisions.md is untouched until the gate decision."}
+git status lines in clone: 0
+## frozen_at per review round at HEAD (key review_rounds)
+ round 1 sha256:19656b1ff2cc5ce1 frozen_at 2026-10-10T21:25:25Z manifest 2026-10-10T21:25:25Z equal True | source a91d82cf6f = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 2 sha256:3f51b79d671ebf6d frozen_at 2026-10-11T04:43:11Z manifest 2026-10-11T04:43:11Z equal True | source 93a7dd7936 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 3 sha256:890faa1284e07356 frozen_at 2026-10-11T12:34:15Z manifest 2026-10-11T12:34:15Z equal True | source 925f0bcbea = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 4 sha256:5ff36f6e74af1853 frozen_at 2026-10-11T21:53:01Z manifest 2026-10-11T21:53:01Z equal True | source ccc37c9f8b = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 5 sha256:69b7412a0a360135 frozen_at 2026-10-12T04:22:59Z manifest 2026-10-12T04:22:59Z equal True | source 3e3a06e4e7 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 6 sha256:f966fe5728e260b8 frozen_at 2026-10-12T12:19:36Z manifest 2026-10-12T12:19:36Z equal True | source 1e0dc5d807 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 7 sha256:baa6ff4da306402c frozen_at 2026-10-12T20:52:03Z manifest 2026-10-12T20:52:03Z equal True | source dab4562c71 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']
+ round 8 sha256:8014e5ceffe1f374 frozen_at 2026-10-13T07:05:44Z manifest 2026-10-13T07:05:44Z equal True | source 8553323d69 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier', 'release-auditor']
+ round 9 sha256:18c18fe4eda7cbc1 frozen_at 2026-10-13T09:12:45Z manifest 2026-10-13T09:12:45Z equal True | source f2ae717063 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier', 'release-auditor']
+ round 10 sha256:f38274cb6d50c498 frozen_at 2026-10-13T16:37:08Z manifest 2026-10-13T16:37:08Z equal True | source e70ac02f63 = manifest True | records ['code-security-reviewer', 'domain-reviewer', 'qa-verifier']

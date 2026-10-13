@@ -1,0 +1,60 @@
+$ (apps/web) LANG/LC_ALL=unset npx vitest run src/pages/transformations/transformations.test.tsx src/app/app.test.tsx  node v24.21.0  load: 1.00 0.70 1.45 1/128 7  2026-10-13T18:10:05Z
+
+ RUN  v3.2.4 $TMPDIR/u/apps/web
+
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > renders Arabic RTL by default with the provisional wordmark 182ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > switches to English LTR and persists the preference with If-Match 215ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > shows all fourteen areas to an administrator 305ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > shows the created record when the server lets the creator read it 812ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission 333ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found' 239ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation 158ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > after create (F-DG1-004) > treats a 403 for the just-created record the same way 134ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > marks planned areas as planned instead of pretending they work 359ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > 404 without a just-created record: 'Not found' (en) / 'غير موجود' (ar), nothing disclosed 109ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > 403: 'You do not have access' rather than 'Not found' 31ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message 56ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes 149ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout 169ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > governs exactly `closed`, mirroring the API's GOVERNED_TARGET_STATUSES 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > offers only the P1 transitions plus the current status; never `closed` 2ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > the status hint no longer promises a close transition and points to the Closure page and G6 (en and ar) 1ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned 718ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > pins the planned-area texts in en and ar; none says an area is not available yet 1ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option 366ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option 57ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > en: the planned area playbook says what is planned and its delivered screens are under it 156ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated 160ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > en: the planned area risks says what is planned and its delivered screens are under it 178ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name 132ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > en: the planned area change says what is planned and its delivered screens are under it 163ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > en: the planned area bau says what is planned and its delivered screens are under it 254ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > en: a partial area's planned card names the cross-portfolio view and the dashboards 38ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar) 281ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > ar: the planned area playbook says what is planned and its delivered screens are under it 157ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > ar: the planned area risks says what is planned and its delivered screens are under it 182ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > ar: the planned area change says what is planned and its delivered screens are under it 141ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > ar: the planned area bau says what is planned and its delivered screens are under it 144ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > ar: a partial area's planned card names the cross-portfolio view and the dashboards 37ms
+ ✓ |unit-web| src/app/app.test.tsx > bilingual shell > redirects to sign-in when there is no session 23ms
+ ✓ |unit-web| src/app/app.test.tsx > sign-in > shows the development form only when the server has the dev-login route (400 on an empty probe) 40ms
+ ✓ |unit-web| src/app/app.test.tsx > sign-in > hides the development form when the route answers 404 (OIDC mode) 24ms
+ ✓ |unit-web| src/app/app.test.tsx > sign-in > only follows same-origin relative return paths 0ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload 739ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > lists transformations with a sortable code column and removable filter chips 545ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > shows the empty state (not zero rows) when nothing is visible 57ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload 745ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden 454ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > detail shows the workspace header with Unknown for data from later stages 554ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > detail shows the no-permission state for a 404 45ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered) 186ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version 498ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > builds the create payload for both modes 2ms
+ ✓ |unit-web| src/app/app.test.tsx > transformations > sends only changed fields, with null for cleared optional values 0ms
+
+ Test Files  2 passed (2)
+      Tests  49 passed (49)
+   Start at  18:10:06
+   Duration  10.08s (transform 111.81s, setup 336ms, collect 4.11s, tests 13.70s, environment 971ms, prepare 222ms)
+
+EXIT 0  load after: 1.45 0.81 1.47 1/132 159

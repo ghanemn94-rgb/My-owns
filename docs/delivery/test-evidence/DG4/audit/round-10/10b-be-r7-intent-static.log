@@ -1,0 +1,27 @@
+# 10b BE-R7 / REQ-S04-008 intent: static check (clone at e70ac02f63cd1f42487cfa4dae73f68e933da015)
+## a08 DELIVERY_RECORDS vs g5-g6 DELIVERY_RECORDS
+IDENTICAL
+## non-vacuity guards kept in a08 (lines):
+159:function deliveryFingerprint(): Record<string, string> {
+827:    const before = deliveryFingerprint();
+829:    expect(Object.keys(before)).toEqual(expect.arrayContaining(["stages.json", "findings.json", "requirements.csv"]));
+848:    expect(deliveryFingerprint()).toEqual(before);
+911:      expect.arrayContaining(["business_scope_change", "target_state_design", "go_live_scale", "funding_reallocation"]),
+## product code addressing docs/delivery (non-comment):
+0
+## fs writers in runtime product code (api/worker/packages src, non-test):
+packages/design-tokens/src/cli.ts:4:import { mkdirSync, writeFileSync } from "node:fs";
+packages/design-tokens/src/cli.ts:26:  writeFileSync(file, generateTokensCss());
+## fingerprint scope at HEAD of repo: 539 files, 10098984 bytes
+## CORRECTION/addition: the grep above missed the one runtime writer, apps/api/src/modules/evidence/store.ts (FilesystemEvidenceStore), which writes via fs/promises open()/handle.write/rename:
+  private readonly root: string;
+  constructor(root: string) {
+    this.root = resolve(root);
+  }
+
+  private pathOf(key: string): string {
+    if (!KEY.test(key) || key.includes("..")) throw new Error("evidence store: invalid key");
+    const p = resolve(join(this.root, key));
+    if (!p.startsWith(this.root + sep)) throw new Error("evidence store: key escapes the root");
+    return p;
+  root = configured EVIDENCE_STORAGE_PATH (packages/config/src/index.ts:88); any key resolving outside the root is refused (store.ts:107). It writes evidence objects, never a DG record; a deployment pointing EVIDENCE_STORAGE_PATH at docs/delivery/gates would be an operator misconfiguration, and the a08 fingerprint would still detect a gates/ write.

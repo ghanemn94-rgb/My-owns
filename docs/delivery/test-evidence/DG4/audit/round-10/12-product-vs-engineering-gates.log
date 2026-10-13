@@ -1,0 +1,47 @@
+# 12 product vs engineering gates, candidate e70ac02 (e70ac02f63cd1f42487cfa4dae73f68e933da015)
+## DG0-DG7 in web/api user-facing catalogues (apps/web/src/i18n, apps/api problem texts):
+apps/web/src/i18n/index.ts:23:// P3 (DG3) namespaces: one per page area, each owned by its FE task (p3-work-split §4).
+apps/web/src/i18n/index.ts:49:// P4 slices I and C namespaces (T-DG4-FE-A).
+apps/web/src/i18n/index.ts:64:// P4 slice A namespace (T-DG4-FE-B): the KPI engine screens (pages/kpi).
+apps/web/src/i18n/index.ts:77:// P4 slice J namespace (T-DG4-FE-G): dashboards, Executive Overview, workspace header, My Work sections.
+apps/web/src/i18n/index.ts:80:// P4 slice E execution panels on the initiative page (T-DG4-FE-D2): budget lines, execution, schedule network.
+apps/web/src/i18n/index.ts:83:// P4 slice G closure namespace (T-DG4-FE-F): status model, closure and transition decisions (pages/closure).
+apps/web/src/i18n/index.ts:86:// P4 slice H change control and phase workspace namespaces (T-DG4-FE-F2): pages/change-requests, pages/phases.
+apps/web/src/i18n/index.ts:91:// P4 slice K and the RAG policy (T-DG4-FE-G2).
+apps/web/src/i18n/index.ts:245:  // ADR-0038 Q1 (T-DG4-FE-R3): "{{date, businessDate}}" formats a "YYYY-MM-DD" business date for the text's own
+apps/web/src/i18n/problems-slices-hijk.test.ts:1:// Problem translations of slices H, I, C, A, J and K (T-DG4-FE-R1; S-6, S-11). The problem `code` is the i18n key
+apps/web/src/i18n/problems-slices-hijk.test.ts:10:// T-DG4-FE-R3 (ARCH-R3 §6 FE-R3 item 4, §7): the ADR scan reads BOTH table formats, the original `| 4xx | \`code\` |`
+apps/web/src/i18n/glossary.test.ts:1:// Domain terms in the UI catalogues follow the approved DG0 glossary (F-DG1-003, REQ-PB-003).
+apps/web/src/i18n/glossary.test.ts:2:// Source: docs/analysis/glossary.md (T-DG0-AN-01, revised T-DG0-AN-05). The test parses the glossary tables directly,
+apps/web/src/i18n/glossary.test.ts:71:  it("parses the DG0 glossary with distinct Transformation and Initiative terms", () => {
+(count: 14)
+## DG0-DG7 in non-test product source string literals (apps/*/src, packages/*/src), excluding comments:
+apps/api/src/modules/workflows/gates.ts:780:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+packages/config/src/index.ts:140:      "maintenance (F-DG4-128). Integer 1-600; 60 is the cadence pg-boss documents",
+packages/shared/src/schemas/common.ts:58:/** True when `value` contains at least one visible code point (F-DG2-160, F-DG2-180, F-DG2-230); see `VISIBLE_CONTENT`. */
+## certification / official claims in catalogues:
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:129:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provision
+apps/web/src/i18n/en/common.json:132:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+## G6 implies / approves DG7 or engineering release:
+apps/api/src/modules/reporting/workspace-header.ts:24:// Product gates G1-G6 are business approvals inside the product; nothing here reads or writes DG0-DG7.
+apps/api/src/modules/reporting/traceability.ts:18:// - Nothing here is a business approval, and nothing reads or writes the engineering gates DG0-DG7.
+apps/api/src/modules/reporting/modular.ts:21://   and nothing reads or writes the engineering delivery gates DG0-DG7.
+apps/api/src/modules/reporting/my-work.ts:17:// approval, and nothing touches DG0-DG7.
+apps/api/src/modules/reporting/my-work.ts:64:  // Approvals (business approvals inside the product; never DG0-DG7)
+apps/api/src/modules/platform/material-change.ts:6:// business approval (ADR-0026 §4). Nothing here touches the engineering gates DG0-DG7.
+apps/api/src/modules/transformations/routes.ts:66: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+apps/api/src/modules/transformations/phase.ts:4:// delivery gates DG0-DG7.
+apps/api/src/modules/tasks/meeting-action-follow.ts:14:// alone. Nothing here approves anything or touches the engineering delivery gates DG0-DG7.
+apps/api/src/modules/governance/meeting-series.ts:17:// `calendar_not_configured` (Unknown, never a guessed date). Nothing here approves anything or touches DG0-DG7.
+## the changed statusHint/nav strings mention no DG gate: 0 DG hits in added lines
+## synthetic markers in seeded demo G5/G6 decisions:
+0
+## seed files and G5/G6 decisions
+dev-seed.ts
+seed.test.ts
+a08 header: 15:// All data is SYNTHETIC. Every gate decision, exception decision and approval is a synthetic in-product business action
+g5-g6 header: 14:// G1-G4 (and G5 for G6) are staged approved with audited fixtures. All data is SYNTHETIC; every decision here is a demo
+48:const RATIONALE = "Synthetic demo decision; approves nothing real.";
+e2e p4-gates-closure: 2:// (p4-work-split §H H.6, §F+G FG.8). Every record is SYNTHETIC demo data. Every gate, exception, waiver and transition
+3:// decision recorded here is a synthetic, in-product demo business decision that approves nothing real, and no product
