@@ -14,9 +14,9 @@
 //    delivers it (the A04/A13 suites run the full relay + pg-boss path).
 // All data is SYNTHETIC. Every gate decision, exception decision and approval is a synthetic in-product business action
 // by a test person; product gates G1-G6 never imply any engineering gate DG0-DG7 (and this suite asserts that a product
-// G6 approval writes nothing under docs/delivery/).
+// G6 approval writes none of the engineering delivery records under docs/delivery/, see deliveryFingerprint).
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -139,25 +139,34 @@ async function leadAndSponsor(g: NativeGateWorld): Promise<Person> {
 }
 
 /**
- * Recursive listing + SHA-256 of every engineering delivery record under docs/delivery/ of this tree (REQ-S04-008):
- * the DG gate records, reviews, stage state, findings, register, candidates, decisions. Two directories are excluded
- * because the delivery tooling (not the product) may append to them while this suite runs, e.g. a log tee'd by the
- * person running it or an agent runner recording its own invocation: test-evidence/ and runs/. They hold no DG decision.
+ * Recursive listing + SHA-256 of the engineering delivery records under docs/delivery/ of this tree that a product G6
+ * approval could be confused with (REQ-S04-008, M0412: product G6 never implies DG7): the DG gate records, the stage
+ * state, the findings, the reviews, the decisions and the requirement register. This is the same set and the same rule
+ * as DELIVERY_RECORDS in apps/api/test/integration/workflows/g5-g6.test.ts (T-DG4-BE-R3, D-112); a missing path is
+ * listed as missing, never skipped. T-DG4-BE-R7 (D-138) narrowed it from the whole tree: handbacks, assignments,
+ * candidates, runs, test evidence and progress notes are not gate state, and hashing them (342 MB, mostly handback
+ * evidence, read twice) made this test exceed its timeout on a cold disk cache, at a cost growing with every round.
  */
 const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
-const LIVE_EVIDENCE = new Set(["test-evidence", "runs"]);
+const DELIVERY_RECORDS = [
+  "gates",
+  "stages.json",
+  "findings.json",
+  "reviews",
+  "decisions.md",
+  "requirements.csv",
+] as const;
 function deliveryFingerprint(): Record<string, string> {
   const out: Record<string, string> = {};
-  const walk = (dir: string) => {
-    for (const name of readdirSync(dir).sort()) {
-      const p = join(dir, name);
-      if (dir === DELIVERY.replace(/\/$/, "") && LIVE_EVIDENCE.has(name)) continue;
-      const st = statSync(p);
-      if (st.isDirectory()) walk(p);
-      else out[relative(DELIVERY, p)] = createHash("sha256").update(readFileSync(p)).digest("hex");
-    }
+  const add = (p: string) => {
+    if (statSync(p).isDirectory()) for (const name of readdirSync(p).sort()) add(join(p, name));
+    else out[relative(DELIVERY, p)] = createHash("sha256").update(readFileSync(p)).digest("hex");
   };
-  walk(DELIVERY.replace(/\/$/, ""));
+  for (const entry of DELIVERY_RECORDS) {
+    const p = join(DELIVERY, entry);
+    if (existsSync(p)) add(p);
+    else out[entry] = "missing";
+  }
   return out;
 }
 
