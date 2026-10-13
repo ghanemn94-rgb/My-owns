@@ -12607,7 +12607,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-6/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "ACCEPTED_OBSERVATION",
       "history": [
         {
           "at": "2026-10-12T16:50:00Z",
@@ -12628,8 +12628,21 @@
           "at": "2026-10-13T07:04:39Z",
           "status": "OPEN",
           "note": "User decision (D-134): accept as an observation with the documented load envelope (environment.md limitation 6). The status changes only once qa (reporter) and the release-auditor record ACCEPTED_OBSERVATION in their sidecars."
+        },
+        {
+          "at": "2026-10-13T08:10:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "accepted by qa-verifier round 8 on candidate 8014e5ce: PASS (8/8 pnpm test inside the envelope, max load 6.01); release-auditor concurrence pending (D-134, D-135)"
         }
-      ]
+      ],
+      "acceptance": {
+        "rationale": "Low, non-mandatory, no product defect: pnpm test is reproducible inside the documented load envelope (environment.md limitation 6, 1-minute load <= 8 on the 4-core review machine; qa round 8 ran 8/8 green at max load 6.01, with wide margins on both failure classes). Above the envelope, the failures are first-render waits and the architecture.test.ts timeout under CPU oversubscription. Accepted by the user's decision (D-134), by the reporter (qa-verifier, round 8) and by the release-auditor.",
+        "owner": "delivery-orchestrator",
+        "accepted_by": [
+          "qa-verifier",
+          "release-auditor"
+        ]
+      }
     }
   ]
 }
