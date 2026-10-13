@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 8,
+  "candidate_id": "sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804",
+  "source_commit": "8553323d6938d5c5077661070ab9f8df2d8dc969",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8",
+    "session_id": "e31a9fe8-4dce-41cb-9852-7cb20c05d2aa"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG4 scope. The candidate's QA acceptance suites (tests/qa, e2e) are QA-authored tests, unchanged since round 3. The diff from round 7's dab4562 touches only docs/delivery/**. I authored none of the delivery records under review this round (D-133, D-134, environment.md limitation 6, progress.md, findings.json, stages.json); the delivery-orchestrator wrote them. This round I wrote only evidence under docs/delivery/test-evidence/DG4/qa/round-8/ and these review files, and no new test. Every build and test ran in a disposable clone under $TMPDIR. I formed my verdict without reading the other reviewers' or the auditor's round-8 records."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-8/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044",
+    "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068",
+    "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079",
+    "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036",
+    "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011",
+    "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014",
+    "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009",
+    "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017",
+    "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011",
+    "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018",
+    "REQ-S09-007", "REQ-S09-009", "REQ-S09-010",
+    "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012",
+    "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019",
+    "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009",
+    "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016",
+    "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008",
+    "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025",
+    "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R8-00-candidate",
+      "procedure": "Confirm the frozen candidate on a complete (not shallow) clone at the source commit and on the repository working tree, at the start and at the end of the review. Confirm that HEAD differs from the source commit only by the freeze commit.",
+      "command": "git clone /home/user/My-owns $TMPDIR/rev && git -C $TMPDIR/rev checkout 8553323 && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG4",
+      "environment": "Complete clone $TMPDIR/rev at 8553323, Node 24.21.0; repository working tree at HEAD 78fe975.",
+      "expected": "sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804, 1475 files, every time; the clone is not shallow and stays clean.",
+      "actual": "Run this round. At the start (07:19Z) and at the end (08:00Z), on the clone and on the working tree: candidate_id sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804, files 1475, EXIT 0. The clone is not shallow ('false'), and its git status is empty at both points. The manifest docs/delivery/candidates/DG4/8014e5ceffe1f374.manifest.json carries the same candidate_id, source_commit 8553323d..., and 1475 entries. One line of the start log reads 'files 0': my helper read a non-existent key ('files'; the key is 'entries'), and the log appends the correction. The repository HEAD is 78fe975, the freeze commit. Its diff from 8553323 is exactly the 3 round-8 assignments, the manifest and stages.json, all of which the candidate hash excludes or which sit outside the product. No commit landed during my run (git log 78fe975..HEAD is empty).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-end.log",
+        "docs/delivery/candidates/DG4/8014e5ceffe1f374.manifest.json"
+      ]
+    },
+    {
+      "id": "QA-R8-01-diff-records-only",
+      "procedure": "Show that the diff from round 7's candidate source dab4562 to 8553323 touches only docs/delivery/**, and that the register is unchanged.",
+      "command": "git diff --name-only dab4562..8553323 -- . ':!docs/delivery' | wc -l; git diff --name-only dab4562..8553323; git diff dab4562..8553323 -- docs/delivery/requirements.csv | wc -l",
+      "environment": "Repository working tree (git objects), HEAD 78fe975.",
+      "expected": "0 files outside docs/delivery/; requirements.csv unchanged.",
+      "actual": "Run this round. The diff outside docs/delivery has 0 files, so the product code, its tests (tests/qa, e2e, apps/*/test), the contract and the migrations are byte-identical to round 7's dab4562 (candidate baa6ff4d). The full diff has 635 files, all under docs/delivery/: decisions.md (D-133, D-134), environment.md (limitation 6, 5 added lines), findings.json, progress.md and stages.json, plus round-7 material committed after dab4562 (assignments 6, reviews 6, runs 18, test-evidence 599, candidates 1). The assignment's list of 'only' the records omits that round-7 review material, but all of it is under docs/delivery/** and excluded from the product. requirements.csv: 0 diff lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/06-register-confirmation.txt"
+      ]
+    },
+    {
+      "id": "QA-R8-02-unit-envelope",
+      "procedure": "F-DG4-148 / D-134. Run pnpm test inside the load envelope before any other heavy work (after the prerequisite install and build): 2 series x Node 22/24 x locale unset/C.UTF-8 = 8 runs, one after another. Sample the 1-minute load every 15 s, and attribute the samples to each run by START/END markers.",
+      "command": "bash docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-envelope.sh -r1; ... -r2  (each run: [env -u LANG -u LC_ALL -u LC_CTYPE | env LANG=C.UTF-8 LC_ALL=C.UTF-8] TZ=UTC CI=1 PATH=<node22|node24>:$PATH pnpm test)",
+      "environment": "$TMPDIR/rev (8553323) after an offline install and pnpm -r build; Node 22.22.2 and 24.21.0; 4 cores. No other job of mine ran; per D-134 domain and code-security run no heavy tests this round. pnpm test ran unchanged (no direct vitest call, so --configLoader runner was not needed).",
+      "expected": "Every run EXIT 0, and every load sample <= 8 for the whole of every run, with no gap above 30 s.",
+      "actual": "Run this round, 07:22-07:52Z. All 8 runs EXIT 0. Each run: unit-node 1589/1589, unit-web 1347/1347, unit-formula-nocodegen 259 passed + 2 skipped. The 2 skips are by design: it.skipIf(NOCODEGEN) in fuzz.test.ts. Series r1: 58 samples, load 0.68-6.01 (median 4.46). Series r2: 58 samples, 2.74-5.85 (median 4.88). 0 samples above 8, max gap 16 s. Per-run bands are in the summary; the highest is 3.82-6.01 (node22-C-r1). Margins on the finding's two classes: architecture.test.ts 10.0-13.2 s against 30 s, and raid 'action register' en/ar 1.1-1.9 s against 5 s. No FAIL line and no 'timed out' line. Disclosed: each log has 14 stderr lines, the React warning 'Encountered two children with the same key', in passing tests of kpiUnit.test.tsx and percentKpi.test.tsx. They are fixture artefacts: kpiUnit's adoption() gives all three indicator rows kpiDefinitionId ID.f1, and percentKpi's area items reuse KPI_ID. The same 14 lines are in round 6 (02-unit-node24-unset-lowload.log) and round 7 (02-unit-node24-unset-clean.log) on identical code, so they are not a product defect and not a failure. Also disclosed: my first launch at 07:21Z ran no test, because a script bug passed an empty suffix ('$3: unbound variable', 4 times). Its empty samples file was removed, and the series was relaunched as r1. The build log's only warning is Vite's advisory 'chunks larger than 500 kB'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-036"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-envelope.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-one.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-8/00-install.log"
+      ]
+    },
+    {
+      "id": "QA-R8-03-envelope-and-decisions-judgement",
+      "procedure": "Judge D-133, D-134 and environment.md limitation 6 against the evidence: the round-6/round-7 qa logs and samples, the orchestrator pre-freeze summaries, and this round's runs.",
+      "command": "grep D-133/D-134 docs/delivery/decisions.md; sed -n 64,68p docs/delivery/environment.md; grep load in test-evidence/DG4/orchestrator/prefreeze-*/extra-summary.txt; head/tail of round-7 02-unit-*.log",
+      "environment": "Repository working tree, HEAD 78fe975 (read-only).",
+      "expected": "The records match the evidence; the envelope is accurate, measurable and sufficient.",
+      "actual": "Run this round. D-133 matches the round-7 records. Its qa account (F-DG4-146/147 CLOSED_VERIFIED; 3/4 runs failing at load 22-30, 1/4 at 13-16, 4/4 passing at low load; integration 1984/1984 twice; tests/qa 172/172; 364 e2e counted per run) agrees with my round-7 record and RUN-NOTES. D-134 correctly states the user's decision, the acceptance mechanics (reporter's and auditor's sidecars, Low and not mandatory) and the round-8 scope. The envelope is ACCURATE in substance. Every recorded failure is at load >= 12.4; every run at <= 9 passes (round-6 low 3-9 4/4, round-7 clean 2.1-5.5 4/4, this round 8/8 at <= 6.01); and the threshold of 8 keeps a margin below the lowest failing band. The round-7 node22-unset contended run started at 7.7 but ended at 24 without in-run samples, so it does not contradict 8. It is SUFFICIENT: measurable (1-min load, sampled <= 30 s, recorded), with a stated procedure for failures above it. Three non-behavioural imprecisions, recorded as observations, not findings. (1) 'The orchestrator's pre-freeze runs passed at load 1.4-2.3 in every round': the pre-freeze summaries record the load only at e2e start and end in rounds 3-7 (1.22-2.33 across all files), never during pnpm test, and rounds 1-2 have none. The unit runs did all pass (unit-unset 0, unit-cutf8 0 in every summary), but their load is not directly recorded. (2) '1/4 at 13-16': the round-7 held band during the failing run was 12.40-17.65 (median 15.52). (3) It does not say in so many words that a failure inside the envelope is a genuine failure, though 'valid gate check' implies it. This round's sampled runs now give the direct evidence that (1) lacked.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/environment.md",
+        "docs/delivery/reviews/DG4/round-7/qa-verifier.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-load-held-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-samples-clean.log",
+        "docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/extra-summary.txt",
+        "docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/extra-summary.txt",
+        "docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt"
+      ]
+    },
+    {
+      "id": "QA-R8-04-static",
+      "procedure": "Run the seven static checks in the disposable clone.",
+      "command": "bash docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-static.sh  (pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast)",
+      "environment": "$TMPDIR/rev (8553323), Node 24.21.0, pnpm 10.33.0, after an offline install from a copy of the pre-installed store.",
+      "expected": "All EXIT 0.",
+      "actual": "Run this round; all 7 EXIT 0. build: its only warning is Vite's advisory 'chunks larger than 500 kB' (not an error). typecheck clean. lint: eslint --max-warnings=0 passes. openapi:lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations'. no-cdn: 'PASS no-cdn: scanned apps, packages'. format:check: 'All matched files use Prettier code style!'. contrast: 50 pairs meet WCAG AA, and 3 prohibited pairs fail as documented (decorative or prohibited, by design). The build ran before the unit series because pnpm test needs it; the other six ran after.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-contrast.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-static.sh"
+      ]
+    },
+    {
+      "id": "QA-R8-05-validate",
+      "procedure": "Run the gate validator: historical DG3, DG2, DG1; register DG4; pipeline.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3 | --historical --stage DG2 | --historical --stage DG1 | --register DG4 | --pipeline",
+      "environment": "Repository working tree, HEAD 78fe975, Node 24.21.0.",
+      "expected": "PASS and EXIT 0 for each.",
+      "actual": "Run this round. 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)', 'PASS register rules at DG4', 'PASS pipeline (active stage: DG4 REVIEWING)'; all EXIT 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/05-validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/05-validate-pipeline.log"
+      ]
+    },
+    {
+      "id": "QA-R8-06-register-confirmation",
+      "procedure": "On the candidate clone, check that the 137 assigned ids equal the register's DG4-final rows, that each is IMPLEMENTED, and that every evidence path in those rows exists.",
+      "command": "python3 -I docs/delivery/test-evidence/DG4/qa/round-8/scripts/req-check.py $TMPDIR/rev docs/delivery/assignments/DG4/round-8/qa-verifier.md",
+      "environment": "$TMPDIR/rev (8553323), Python 3.",
+      "expected": "137 = 137, the same set, all IMPLEMENTED, 0 missing evidence paths.",
+      "actual": "Run this round. 137 assigned ids, unique; 137 DG4-final rows; the sets are equal; status IMPLEMENTED 137; 1150 evidence paths checked, 0 missing in the candidate. requirements.csv is unchanged since dab4562, so my round-7 literal-acceptance trace (137/137, with the disclosed partial clauses REQ-PB-065, REQ-S04-014, REQ-S07-015, REQ-PB-066, REQ-S15-008 and REQ-S20-011 judged acceptable) applies unchanged. That trace was not re-run, because its integration and e2e inputs are round-7 logs on identical code.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/06-register-confirmation.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-8/scripts/req-check.py",
+        "docs/delivery/test-evidence/DG4/qa/round-7/06-requirement-trace.txt"
+      ]
+    },
+    {
+      "id": "QA-R8-07-carry-forward-integration-tests-qa-dlv036",
+      "procedure": "Carry-forward (D-134): integration x2 on a disposable PostgreSQL (migrations 0001-0061, contract.test.ts, pending lists), tests/qa alone, and REQ-DLV-036 (A04, A09, A10, A11).",
+      "command": "Not re-run this round. Round 7: with-pg.sh npx vitest run --configLoader runner --project integration [tests/qa | the 7 A04/A09/A10/A11 files]",
+      "environment": "Round 7, candidate baa6ff4d (dab4562), whose product and test code are byte-identical to this candidate (QA-R8-01).",
+      "expected": "Round-7 results on identical code: all pass.",
+      "actual": "NOT RE-RUN THIS ROUND: D-134 makes round 8 a confirmation round, and the code is byte-identical (QA-R8-01). The round-7 evidence on identical code: integration run1 and run2 each 209 files / 1984 tests, EXIT 0. They covered 61 migrations, 0001-0061 (the assignment says 0060; the candidate ships 0061_p4_finance_validation_correction_step.sql), contract.test.ts 45 cases against 652 operations, and 47 p4-pending arrays, all empty. Each run has 14 error/timeout lines, all stdout of passing error-path tests (408 on stalled bodies, a deliberate ECONNRESET, IdP-unavailable redirects). tests/qa alone: 15 files / 172 tests. REQ-DLV-036: 7 files / 85 tests (A04 8+4, A09 17, A10 16, A11 12+17+11), plus e2e a04-kpi-update 1+1 and a08-a09 2+2 in both full runs. My round-7 integration probes (EXIT 1, 20 passed / 4 failed) failed only on expectations that later decided amendments superseded (ADR-0037 R5/R6, D-119, D-122), not on product defects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-036"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-pending-lists.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-tests-qa-candidate-only.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-dlv036-a04-a09-a10-a11.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-qa-probes-r1-r4.log",
+        "docs/delivery/reviews/DG4/round-7/qa-verifier.json"
+      ]
+    },
+    {
+      "id": "QA-R8-08-carry-forward-e2e-axe-390-200-aud",
+      "procedure": "Carry-forward (D-134): the full e2e runs (apps/web/e2e and e2e/, chromium-en and chromium-ar, locale unset and C.UTF-8, --workers=1, real stack) and the probes (axe serious/critical, 390 px, 200 % text, AUD read-only pass).",
+      "command": "Not re-run this round. Round 7: scripts/run-e2e.sh <unset|cutf8> ... full; scripts/run-probes.sh",
+      "environment": "Round 7, candidate baa6ff4d (dab4562), byte-identical product and test code; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers.",
+      "expected": "Round-7 results on identical code: every test passes, or every non-pass is a disclosed timeout that passes when run alone.",
+      "actual": "NOT RE-RUN THIS ROUND: D-134 confirmation round on byte-identical code, and D-134 keeps e2e out of round 8 so the load stays in the envelope. The round-7 evidence on identical code, with every non-pass disclosed. Unset run: 364 counted, 349 passed, 5 failed, 10 did not run, EXIT 1. All 5 failures are 30 s timeouts (p2 'Define -> G2' en/ar, p4-benefits 8 en, p4-execution 1 en, p4-gates-closure 9 en), at load 9-30, and the 10 that did not run are their serial followers. The first C.UTF-8 run was stopped at test 300 by my tool's 2-hour background limit, not by a test. Its re-run: 364 counted, 360 passed, 1 failed (p2 'Define -> G2' en, 32.1 s timeout), 3 did not run, EXIT 1. Solo re-runs: unset 68/68, C.UTF-8 24/24, EXIT 0. 'Define -> G2' is a DG2 journey that no DG4 row cites (D-111, D-112, D-115). Probes: 22/22 per setting, EXIT 0. dg4-qa-r5-checks: 546 per language, 0 failed (axe 65, 390 px 122, 200 % 122, AUD 178, including S1-aud-sends-no-writes). r5-bu 77, r6-session 14. No axe serious/critical issue in any run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-killed-by-bg-limit.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/RUN-NOTES.md"
+      ]
+    },
+    {
+      "id": "QA-R8-09-environmental-residuals",
+      "procedure": "Record the assigned environmental residuals on the offline/config surface: live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049).",
+      "command": "pnpm check:no-cdn; pnpm -r build; node tools/gates/validate.mjs --pipeline",
+      "environment": "$TMPDIR/rev (8553323) and the repository working tree; the sandbox has no network.",
+      "expected": "The offline surface is green; the residuals are noted, not BLOCKED.",
+      "actual": "Run this round on the offline surface: no-cdn PASS, build EXIT 0, pipeline PASS. Residuals noted as assigned: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049) cannot be reached from this sandbox. None is a DG4-final row. The round-7 e2e ran with AUTH_MODE=dev on the real stack.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/05-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/qa/round-8/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG4/qa/round-8/env.txt",
+    "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt",
+    "docs/delivery/reviews/DG4/round-8/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG4/round-8/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-13T08:10:00Z",
+  "summary": "PASS. Candidate sha256:8014e5ce... (1475 files) is verified on a complete clone at 8553323, at the start and the end. The diff from round 7's dab4562 has 0 files outside docs/delivery/, so the product is byte-identical. F-DG4-148 is accepted as an observation (verifications sidecar, PASS -> ACCEPTED_OBSERVATION, per D-134). pnpm test ran 8 times (2 series x Node 22/24 x locale unset/C.UTF-8) inside the envelope, with the load sampled every 15 s: max 6.01, 0 samples above 8. All 8 runs EXIT 0, with 1589 + 1347 + 259 (2 by-design skips) tests each, and wide margins on both failure classes. The envelope text is accurate in substance and sufficient. Three non-behavioural imprecisions are noted as observations (QA-R8-03). Static 7/7 EXIT 0; validator 5/5 PASS; 137/137 register rows confirmed. Integration, tests/qa, REQ-DLV-036, e2e and the probes are carried forward from round 7 on identical code, explicitly not re-run. No new finding. Acceptance of F-DG4-148 takes effect only with the release-auditor's concurrence. No product gate (G1-G6) was decided, and product G6 never implies DG7.",
+  "narrative": "docs/delivery/reviews/DG4/round-8/qa-verifier.md"
+}

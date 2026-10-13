@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-148",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation by qa-verifier, the reporter, under the user's decision D-134. Candidate sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804 (source 8553323); its product code, tests and contract are byte-identical to round 7's dab4562. RESULT INSIDE THE ENVELOPE: in a complete disposable clone I ran pnpm test (TZ=UTC CI=1) 8 times: 2 series x Node 22/24 x locale unset/C.UTF-8, one after another, with no other heavy job of mine; the other reviewers did not run heavy tests (D-134). The 1-min load was sampled every 15 s (max gap 16 s), 116 samples. Series r1 had a load of 0.68-6.01 (median 4.46) and series r2 2.74-5.85 (median 4.88), with 0 samples above 8. All 8 runs EXIT 0: unit-node 1589/1589, unit-web 1347/1347, no-codegen 259 + 2 by-design skips. No FAIL line and no timeout; the only stderr lines are 14 React duplicate-key warnings per run, from test fixtures, identical in rounds 6 and 7. The two failure classes of the finding have ample margin inside the envelope: architecture.test.ts 10.0-13.2 s against 30 s, and raid 'action register' 1.1-1.9 s against 5 s. ACCURACY OF THE ENVELOPE (environment.md limitation 6): the threshold of 8 is supported on both sides. Every recorded failure is at load >= 12.4 (round-6 held 13-15; round-7 held band 12.40-17.65 during the failing run; contended 22-30). Every run at <= 9 passed (round-6 low load 3-9, 4/4; round-7 clean 2.1-5.5, 4/4; now 8/8 at <= 6.01). The round-7 contended node22-unset run started at 7.7 but rose to 24 by its end, with no in-run samples, so it does not contradict the threshold. Three imprecisions, all non-behavioural, so they are observations, not findings. (1) 'The orchestrator's pre-freeze runs passed at load 1.4-2.3': the pre-freeze evidence records the load only at the e2e start and end points of rounds 3-7 (values 1.22-2.33), never during pnpm test, and rounds 1-2 record none. (2) 'qa saw ... 1/4 at 13-16': the band during that failing run was 12.40-17.65 (median 15.52). (3) The text does not state explicitly that a failure inside the envelope counts as a genuine failure, although 'valid gate check' implies it. SUFFICIENCY: the envelope is measurable (1-min load, sampled <= 30 s, recorded), it is conservative (2x cores, below the lowest failing band of about 12.4), and its procedure (no concurrent heavy phase; disclose and re-run a failure above the envelope) is what this round did. The finding is Low and not mandatory, and the product is unaffected. The harness repairs (split script, warm-up) were verified sound in round 7. Acceptance takes effect only with the release-auditor's concurrence (D-134).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-envelope.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-one.sh",
+        "docs/delivery/environment.md",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-load-held-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-samples-clean.log",
+        "docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/extra-summary.txt"
+      ]
+    }
+  ]
+}
