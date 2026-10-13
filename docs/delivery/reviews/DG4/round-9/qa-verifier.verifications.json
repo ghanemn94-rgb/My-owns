@@ -1,0 +1,134 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae7170630456a772e1ceac90ab6d96b68e3f5c) after the D-136 rewrite, in a complete disposable clone that carries origin/backup/pre-dg4-writeonce-repair-72c0e653a3. (1) fix_revision 12bb5c81b7c25972d8099b792b0b86178586343b is a commit and an ancestor of f2ae717 (git merge-base --is-ancestor); it is the only listed fix commit. (2) The SHA map maps it from old 4baef6520f25fb3c93bf3e0a4e99e1384018cc70, with the same subject, author date and committer date. Old and new commit diffs are byte-identical, both outside docs/delivery (empty in both; the fix is a register change) and in full. The old commit is an ancestor of 93a7dd7, the round-2 source where I verified it (04b-fix-presence.log). (3) The fix is still in the frozen candidate. docs/delivery/requirements.csv has 0 diff lines between 12bb5c81b7 and f2ae717. On the candidate clone, REQ-PB-010 (IMPLEMENTED) cites tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts, and REQ-S03-004 (IMPLEMENTED) cites tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts. Both notes end 'No test gap remains', and every evidence path of the 137 rows exists (06-register-confirmation.txt: 1150 paths, 0 missing). The two tests themselves are unchanged since round 7, where they passed in tests/qa alone and in both integration runs (carried forward; the product tree outside docs/delivery is identical to round 7's dab4562). Earlier verification: docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/06-register-confirmation.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-9/03-rewrite-check.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/scripts/check-fixes.sh",
+        "docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-tests-qa-candidate-only.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision 07b72f32611295d979b3055dc04cdfa830126d2a is a commit and an ancestor of f2ae717; it is the only listed fix commit. (2) It maps from old e2ef6ecd51fbdd1475ad2a46c0e23bfd9210a0d8 (same subject and dates). The product diffs outside docs/delivery are identical, as is the full commit diff (sha256 prefix e9213ec931b69e76 for both); the old commit is an ancestor of the round-2 source 93a7dd7. (3) Still in the candidate: apps/web/e2e/journeys.spec.ts has 0 diff lines from 07b72f3261 to f2ae717. The fix is at lines 414-424: it fills the users-register search with 'Synthetic Transformation Lead', waits for GET /api/v1/users?q=<that name>, then expects the link. The journey passed 9/9 in chromium-en and 9/9 in chromium-ar in my round-7 full e2e runs on identical code (carried forward: e2e not re-run this round, D-136 confirmation round). Earlier verification: docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-summary.txt",
+        "apps/web/e2e/journeys.spec.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision 5f68ba25a2b49d4ed48f066a4c77635847d56249 is a commit and an ancestor of f2ae717; it is the only listed fix commit. (2) It maps from old 3e95af441f17c080f52cde75cc35ed9f3a122a44 (same subject and dates). The product diff outside docs/delivery is identical (sha256 prefix 4c5ea7842494fa3c for both; 8 files under apps/web), as is the full commit diff; the old commit is an ancestor of the round-5 source 3e3a06e, where I verified it. (3) Still in the candidate: ui.tsx, api.ts, the en/ar dashboards.json, valueRagLineState.test.tsx, buFilter.test.tsx and p4-value-rag-lines.spec.ts have 0 diff lines from 5f68ba25a2 to f2ae717. The fix is apps/web/src/pages/dashboards/ui.tsx:251-255: the not_applicable case renders data-value-state='not_applicable' with the dashboards.state.not_applicable label, and line 262 keeps a separate 'unknown' state. Re-run this round: valueRagLineState.test.tsx 8/8 passed in all 8 pnpm test runs (02-unit-node*-r[12].log). My round-5 e2e probe (dg4-qa-r5.spec.ts, en/ar, both locale settings) is carried forward: it passed on this code in rounds 5 and 7. Earlier verification: docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r2.log",
+        "docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-unset-summary.txt",
+        "apps/web/src/pages/dashboards/ui.tsx"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-144",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1)-(2): the same commit as F-DG4-143. fix_revision 5f68ba25a2b49d4ed48f066a4c77635847d56249 is an ancestor of f2ae717 and maps from old 3e95af441f17; old and new product diffs are identical, and the old commit is an ancestor of the round-5 source 3e3a06e. (3) Still in the candidate, with 0 diff lines since the fix in api.ts, ui.tsx and the en/ar dashboards.json. In apps/web/src/pages/dashboards/ui.tsx:1160-1220, BlockedFilterReason none | none_matching | too_many narrows by the phase/status chips before the 50 limit. The too_many text at apps/web/src/i18n/en/dashboards.json:282 names working remedies: 'Narrow the filter by phase or status until 50 or fewer remain, choose transformations with the transformation filter, or open the transformations' own dashboards.' Re-run this round: buFilter.test.tsx 22/22 passed in all 8 pnpm test runs. My round-5 remedies probe (77 checks per language) is carried forward, on identical code. Earlier verification: docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r2.log",
+        "docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json",
+        "apps/web/src/pages/dashboards/ui.tsx",
+        "apps/web/src/i18n/en/dashboards.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-145",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 is a commit and an ancestor of f2ae717. Both listed fix commits, 9d66f671c96264537a90ac636baadb48f0807f9b (session-bound and session-identity tests) and 9b6b3ed17a (session-generation test), are ancestors of fix_revision and of f2ae717. (2) 9d66f671c9 maps from old 41b586cff60e and 9b6b3ed17a from old 935d33d0da51 (same subjects and dates). Old and new product diffs are identical for each, as are the full commit diffs, and both old commits are ancestors of the round-6 source 1e0dc5d. (3) Still in the candidate: the three session test files have 0 diff lines from 9b6b3ed17a to f2ae717. The controlled clock is at apps/web/src/auth/session-bound.test.tsx:51-59, where vi.spyOn(Date, 'now') is driven by clockNow. Re-run this round: session-bound 36/36, session-identity 18/18 and session-generation 26/26 passed in all 8 pnpm test runs. That includes series r1, at load up to 11.67, above the envelope; Y1c's original failure needed load 13-15. The 4 session files passed 86/86 in the baseline of my mutant re-run (02d-unit-f146-mutants.log). My round-6 pinned contention experiment is carried forward, on identical code. Earlier verification: docs/delivery/reviews/DG4/round-6/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02d-unit-f146-mutants.log",
+        "docs/delivery/reviews/DG4/round-6/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-6/02c3-unit-pinned-y1c-variants.log",
+        "apps/web/src/auth/session-bound.test.tsx"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-146",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision c675003488f6d10fbd3b0b914ecf2a740109be5d is a commit and an ancestor of f2ae717; it is the only listed fix commit. (2) It maps from old 044927075178af334151a9323fcabac7889b8da7 (same subject and dates). The product diff outside docs/delivery is identical (sha256 prefix 99506d8ff56cd829; session-end.spec.ts, session-wait.test.tsx, harness-config.test.ts, test/setup.ts, package.json), as is the full commit diff, and the old commit is an ancestor of the round-7 source dab4562. (3) Still in the candidate: session-wait.test.tsx has 0 diff lines from c675003488 to f2ae717 (W1-W4 at lines 115, 140, 168 and 181; the two awaits in apps/web/src/api/client.ts use pendingCheck and probesIdle). RE-RUN THIS ROUND (cheap, inside the envelope), my round-7 mutant probe in the disposable clone. Baseline: 86/86, session-wait alone 6/6, my round-6 test 4/4. M4 (both awaits removed): 6/86 fail (W1 and W2 en/ar, W3, W4), session-wait alone 6/6 fail, my round-6 test 4/4 fail. M4a: W4 fails (1/86). M4b: W3 fails (1/86). These counts are identical to round 7. The EXIT 1 lines in the log are the killed mutants, by design. client.ts was restored and cmp-checked, and the clone's git status is empty. Earlier verification: docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02d-unit-f146-mutants.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/scripts/mutants-146.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02d-unit-f146-mutants.log",
+        "docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json",
+        "apps/web/src/auth/session-wait.test.tsx"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-147",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1)-(2): the same commit as F-DG4-146. fix_revision c675003488f6d10fbd3b0b914ecf2a740109be5d is an ancestor of f2ae717 and maps from old 044927075178; old and new product diffs are identical, and the old commit is an ancestor of dab4562. (3) Still in the candidate: apps/web/e2e/session-end.spec.ts has 0 diff lines from c675003488 to f2ae717. The test 'a 403 is not a session end' (line 278) waits for the boot GET /me at line 286 (page.waitForResponse), and then for the signed-in shell, before the re-login. Not re-run this round, because e2e needs the full stack and the D-136 round is a confirmation round on byte-identical code. Carried forward from round 7: the delayed-boot-/me probes (pre-repair 12/12 fail, by design; the candidate passes 12/12, including at a 4 s delay), contention x10 at load 5-9 and 13-17 (20/20 each), and both full e2e runs. Earlier verification: docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+        "docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-delayed-boot-me-unset-summary.txt",
+        "apps/web/e2e/session-end.spec.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-148",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Re-recorded as an observation by qa-verifier, the reporter, under the user's decision D-134 and environment.md limitation 6, on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae717). The product code is byte-identical to round 8's 5cd1e06 (ex-8553323) and to round 7's dab4562. pnpm test (TZ=UTC CI=1, unchanged script) ran in a complete disposable clone, as two series of 4 runs (Node 22/24 x locale unset/C.UTF-8), with the 1-minute load sampled every 15 s. SERIES r1 (09:19-09:40Z) WAS OUTSIDE THE ENVELOPE and is NOT counted as the gate check: 55 of 81 samples were above 8 (max 11.67, median 8.26), partly because my own git checks overlapped its start. All 4 of its runs still EXIT 0 with no failure; this is disclosed per limitation 6. SERIES r2 (09:41-09:56Z), INSIDE THE ENVELOPE: 58 samples, load 1.28-5.81 (median 4.74), 0 above 8, max gap 15 s. The per-run bands are node22-unset 1.28-5.81, node22-C 4.03-5.27, node24-unset 3.66-5.07 and node24-C 4.14-5.51. All 4 runs EXIT 0: unit-node 1589/1589, unit-web 1347/1347, unit-formula-nocodegen 259 passed + 2 by-design skips (it.skipIf(NOCODEGEN) in fuzz.test.ts). The strict scan shows 0 failed/x lines and 0 timeouts in all 8 logs. The only stderr lines are the 14 React duplicate-key warnings from the kpiUnit/percentKpi fixtures, identical in rounds 6-8. Margins on the finding's two classes, inside the envelope: architecture.test.ts 11.0-11.5 s against 30 s; raid 'action register' 1.2-1.8 s against 5 s. Even at load up to 11.67 (r1) they were 15.9-17.5 s and 1.4-3.9 s. The envelope stays accurate (every recorded failure is at load >= 12.4, and every run at <= 11.67 has passed) and sufficient (measurable, conservative at 2x cores, with a stated re-run procedure, which this round followed). The finding is Low and not mandatory, and the product is unaffected. Acceptance takes effect only with the release-auditor's concurrence (D-134, D-136).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-samples-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-samples-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-unset-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-unset-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-9/scripts/run-unit-envelope.sh",
+        "docs/delivery/test-evidence/DG4/qa/round-9/RUN-NOTES.md",
+        "docs/delivery/environment.md"
+      ]
+    }
+  ]
+}
