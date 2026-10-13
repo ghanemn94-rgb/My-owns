@@ -25,14 +25,10 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is REVIEWING, round 7.** The build is complete (D-088 to D-116).
-  - **Rounds 1–6:** twenty-four findings. Twenty CLOSED_VERIFIED by round 6; F-DG4-128 (the worker's supervision loop) and F-DG4-146 to F-DG4-148 (test coverage and determinism) repaired by BE-R6 and FE-R10 (D-131, D-132).
-  - **Rounds 4, 5 and 6** were all PASS.
-  - **Pre-freeze verification of `caac6da`**, with no agent running: every check exits 0. Product e2e 350/350 in both locale settings, root specs 14/14, unit 1589 + 1347 + 259/2, integration 1984/1984.
-  - **Round 7:** the candidate and manifest are in `stages.json` `review_rounds[6]`; the assignments are in `docs/delivery/assignments/DG4/round-7/`.
-- **Next action:**
-  1. Collect the three round-7 records and import their verifications and findings.
-  2. If all three PASS with no new finding, set VERIFYING and run the release-auditor on the same candidate. Otherwise record FIXING, repair, and re-freeze.
+- **DG4 (P4 "Execution value and sustainment") is FIXING after review round 7; waiting for the user's decision on F-DG4-148.** The build is complete (D-088 to D-116).
+  - **Rounds 1–7:** twenty-four findings, twenty-three CLOSED_VERIFIED. Open: F-DG4-148 (Low, test reproducibility under heavy load; no product defect).
+  - **Round 7** (candidate `sha256:baa6ff4d…`, 1475 files, source `dab4562`; the three first runs were killed by a session restart and re-run): domain PASS, code-security PASS, qa FAIL only on F-DG4-148. No new finding.
+- **Next action:** the user's decision on F-DG4-148 (D-133): accept it as an observation with a documented load envelope, another repair round, or a change to the review procedure. Then the release-auditor (assignment drafted).
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
