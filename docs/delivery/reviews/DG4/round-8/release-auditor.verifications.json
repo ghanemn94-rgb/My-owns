@@ -1,0 +1,24 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-148",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Release-auditor concurs with accepting F-DG4-148 as an observation (D-134, D-135).\n\nWhy acceptance is allowed:\n- The finding is Low, mandatory_violation false. rules.mjs allows ACCEPTED_OBSERVATION only for such findings.\n- The reporter (qa-verifier) accepts it in its own round-8 sidecar, latest entry 'PASS -> ACCEPTED_OBSERVATION'. Its run e31a9fe8 exited 0 with an empty external_config_changed and a matching sandbox.json.\n- findings.json mirrors it: acceptance.accepted_by [qa-verifier, release-auditor], owner delivery-orchestrator, with a rationale.\n\nNo product defect:\n- Both failure classes are timing under CPU oversubscription: a first render missing unit-web's 5 s findBy wait, and architecture.test.ts missing its 30 s timeout.\n- No test, timeout or product file changed for the acceptance. The manifests baa6ff4d and 8014e5ce differ only in decisions.md and environment.md (04-incidents.log).\n\nThe envelope (environment.md limitation 6: 1-min load <= 8, sampled <= 30 s, recorded) is accurate and evidenced:\n- qa round 8: 8/8 pnpm test EXIT 0. 116 samples, max 6.01, 0 above 8. I recomputed the samples (06-disclosure-grep.log).\n- My own reproduction, in a complete clone at 8553323 with no other agent running: Node 24 locale unset (load 1.38-4.62) and Node 22 C.UTF-8 (load 3.55-5.02). Both EXIT 0, 1589 + 1347 + 259 (2 skipped by design). architecture.test.ts took 10.7-11.6 s against 30 s, and the raid action register 1.1-1.6 s against 5 s (07-unit-summary.txt).\n- Every recorded failure is at load >= 12.4. The round-7 held run was 12.40-17.65, and the contended runs 22-30.\n\nTwo figures in the text are rounded, as all three reviewers note: '13-16' was measured 12.40-17.65; 'pre-freeze 1.4-2.3' is 1.22-2.33, taken from e2e start/end points. Neither changes the threshold. D-135 commits to correcting them in DG5's first records change.\n\nCondition carried with the acceptance (code-security's observation 2 and qa's imprecision 3):\n- A pnpm test failure inside the envelope is a genuine failure.\n- The re-run clause covers only the two named timing classes. Any other failure must be explained on its own (the DG2 round-10 evidence-honesty condition).\n\nOwner of the text correction: delivery-orchestrator. The finding's code owner stays frontend-ux-engineer.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/audit/round-8/07-unit-summary.txt",
+        "docs/delivery/test-evidence/DG4/audit/round-8/07-unit-samples.log",
+        "docs/delivery/test-evidence/DG4/audit/round-8/07-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/audit/round-8/07-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/audit/round-8/06-disclosure-grep.log",
+        "docs/delivery/test-evidence/DG4/audit/round-8/03-findings.log",
+        "docs/delivery/test-evidence/DG4/audit/round-8/04-incidents.log",
+        "docs/delivery/reviews/DG4/round-8/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-load-held-samples.log",
+        "docs/delivery/environment.md",
+        "docs/delivery/findings.json"
+      ]
+    }
+  ]
+}
