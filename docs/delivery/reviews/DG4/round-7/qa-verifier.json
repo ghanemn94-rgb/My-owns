@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 7,
+  "candidate_id": "sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527",
+  "source_commit": "dab4562c71ab4f0a8e5b89b32ad93a0861539598",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-QA-R7B-qa-verifier-20261012T215138Z-fcb95a57",
+    "session_id": "fcb95a57-d829-4c2b-95b7-00268dcc6648"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG4 scope. The repairs under review were written by backend-workflow-engineer (T-DG4-BE-R6) and frontend-ux-engineer (T-DG4-FE-R10), not by me. The candidate's QA acceptance suites (tests/qa, e2e) are QA-authored tests, and they are unchanged since round 3 (git diff 1e0dc5d..dab4562 touches only apps/web/e2e/session-end.spec.ts among the e2e specs). This is the re-run of my killed round-7 run; I neither read nor cited its orphaned material (docs/delivery/test-evidence/DG4/qa-r7-orphaned/). In this run I wrote only test probes outside the frozen candidate (docs/delivery/test-evidence/DG4/qa/tests/round-7/), evidence under docs/delivery/test-evidence/DG4/qa/round-7/, and these review files. Every mutant and probe ran in disposable copies under $TMPDIR. I formed my verdict without reading the other reviewers' round-7 records or evidence; the two commits that landed during my run (0dd91fc, 05d2500) carry their auto-committed run evidence, which I did not open."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-7/qa-verifier-rerun.md",
+  "requirements_checked": ["REQ-PB-005", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-020", "REQ-PB-021", "REQ-PB-044", "REQ-PB-058", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-DLV-036", "REQ-S03-001", "REQ-S03-002", "REQ-S03-003", "REQ-S03-004", "REQ-S03-005", "REQ-S03-006", "REQ-S03-008", "REQ-S03-009", "REQ-S03-011", "REQ-S04-001", "REQ-S04-002", "REQ-S04-007", "REQ-S04-008", "REQ-S04-009", "REQ-S04-010", "REQ-S04-012", "REQ-S04-013", "REQ-S04-014", "REQ-S07-001", "REQ-S07-002", "REQ-S07-003", "REQ-S07-004", "REQ-S07-005", "REQ-S07-006", "REQ-S07-007", "REQ-S07-008", "REQ-S07-009", "REQ-S07-010", "REQ-S07-011", "REQ-S07-012", "REQ-S07-013", "REQ-S07-014", "REQ-S07-015", "REQ-S07-017", "REQ-S08-001", "REQ-S08-002", "REQ-S08-003", "REQ-S08-004", "REQ-S08-006", "REQ-S08-008", "REQ-S08-009", "REQ-S08-010", "REQ-S08-011", "REQ-S08-013", "REQ-S08-014", "REQ-S08-015", "REQ-S08-016", "REQ-S08-017", "REQ-S08-018", "REQ-S09-007", "REQ-S09-009", "REQ-S09-010", "REQ-S10-003", "REQ-S10-005", "REQ-S10-006", "REQ-S10-007", "REQ-S10-008", "REQ-S10-009", "REQ-S10-010", "REQ-S10-011", "REQ-S10-012", "REQ-S10-014", "REQ-S10-016", "REQ-S10-017", "REQ-S10-018", "REQ-S10-019", "REQ-S11-001", "REQ-S11-002", "REQ-S11-004", "REQ-S11-005", "REQ-S11-006", "REQ-S11-007", "REQ-S11-008", "REQ-S11-009", "REQ-S12-005", "REQ-S12-006", "REQ-S12-009", "REQ-S12-010", "REQ-S12-011", "REQ-S12-014", "REQ-S12-016", "REQ-S13-001", "REQ-S13-002", "REQ-S13-003", "REQ-S15-008", "REQ-S16-005", "REQ-S16-011", "REQ-S16-014", "REQ-S16-017", "REQ-S16-018", "REQ-S16-019", "REQ-S16-020", "REQ-S16-025", "REQ-S20-003", "REQ-S20-004", "REQ-S20-005", "REQ-S20-008", "REQ-S20-009", "REQ-S20-010", "REQ-S20-011"],
+  "checks_run": [
+    {
+      "id": "QA-R7-00-candidate",
+      "environment": "Complete git clone $TMPDIR/rv at dab4562 (not shallow), Node 24.21.0; plus the repository working tree.",
+      "procedure": "Confirm the frozen candidate on a complete clone and on the working tree, at the start and at the end of the review. Confirm that the repository HEAD differs from the source commit only under docs/delivery/.",
+      "command": "node tools/gates/candidate.mjs --stage DG4",
+      "expected": "sha256:baa6ff4d... with 1475 files, both times.",
+      "actual": "Both times, on the clone and on the working tree: sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527, 1475 files, EXIT 0. At the start the repository HEAD was 7294d6b; git diff dab4562..7294d6b has 0 files outside docs/delivery/. During the run HEAD moved to 05d2500, with only the other reviewers' auto-committed run evidence (0dd91fc, 05d2500, not opened). The clone's git status is clean at the end.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/00-install.log"
+      ]
+    },
+    {
+      "id": "QA-R7-01-static",
+      "environment": "$TMPDIR/rv, Node 24.21.0, offline pnpm install --frozen-lockfile.",
+      "procedure": "Run the seven static checks of the assignment in the disposable clone (scripts/run-static.sh).",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "expected": "All exit 0.",
+      "actual": "All seven exit 0. openapi:lint reports OpenAPI 3.1.1 with 652 operations. The build log carries Vite's advisory 'Some chunks are larger than 500 kB' (a warning, not an error). The install log's two 'WARN Failed to create bin ... mth-db' lines are expected, because the bin target exists only after the build.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-check-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R7-02-unit-lowload",
+      "environment": "$TMPDIR/rv; Node 22.22.2 and 24.21.0; env -u LANG -u LC_ALL -u LC_CTYPE, and LANG=LC_ALL=C.UTF-8; TZ=UTC CI=1; 1-min load 2.1-5.5 (56 samples), no other job of mine running.",
+      "procedure": "Run pnpm test (unchanged) on both Node versions in both locale settings.",
+      "command": "TZ=UTC CI=1 pnpm test",
+      "expected": "All four exit 0.",
+      "actual": "All four exit 0. Each: unit-node 84 files / 1589 tests, unit-web 69 files / 1347 tests, unit-formula-nocodegen 3 files / 259 passed + 2 skipped. The 2 skips are by design (it.skipIf(NOCODEGEN) in packages/shared/src/formula/fuzz.test.ts). All three invocations ran in every run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-unset-clean.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-C-clean.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node24-unset-clean.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node24-C-clean.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-samples-clean.log"
+      ]
+    },
+    {
+      "id": "QA-R7-03-unit-contended-F-DG4-148",
+      "environment": "As QA-R7-02. Series 1: under the concurrent-review load, with my own e2e and harness runs also running; 1-min load from 7.7 rising to 22-30, 21:59-23:03Z. Series 2: load held by the round-6 controller (unpinned busy loops) plus my concurrent C.UTF-8 e2e run; 208 samples, median 14.39, p10-p90 12.40-16.82.",
+      "procedure": "Repeat my round-6 contended pnpm test runs (the F-DG4-148 verification): 4 runs under the concurrent load and 4 at load held at 13-15.",
+      "command": "scripts/run-unit.sh; scripts/run-unit-load-held.sh",
+      "expected": "Per F-DG4-148 and D-131: pnpm test exits 0 at load >= 13 (FE-R10 claims 5/5 at a median load of 14.8-15.6).",
+      "actual": "Series 1: 3 of 4 runs exit 1. node22-unset and node22-C: raid.test.tsx 'RAID and actions screens (en) > action register...' fails with 'Unable to find role=\"link\" and name \"Synthetic call the vendor\"' (6974 ms and 5426 ms against the 5 s wait), the first /actions render in its file. node24-unset: apps/api/src/architecture.test.ts 'every import respects dependsOn...' at 33.4 s against its 30 s timeout. node24-C exits 0. Series 2: node22-unset exits 1 with both classes, architecture.test.ts at 41.1 s ('Test timed out in 30000ms') and raid action register (en) at 5.3 s, while the load during that run was median 15.52 (12.40-17.65). The other three held runs exit 0. Every other test passed in every run: 1589/1347/259 + 2 skipped, minus the named failures. These are the F-DG4-148 failure classes, so the finding is not closed (see qa-verifier.verifications.json). The product is unaffected: all pass at low load (QA-R7-02).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node24-C.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-unset-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node22-C-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node24-unset-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-node24-C-load13-15.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-load-held-samples.log"
+      ]
+    },
+    {
+      "id": "QA-R7-04-F-DG4-148-harness",
+      "environment": "Disposable copy $TMPDIR/rv-mut, Node 24.21.0; the injected test files and the router.tsx mutant were removed or restored afterwards (cmp/ls logged).",
+      "procedure": "Judge the harness changes. H1: my probe that a lazyPage over a warmed module still renders the Suspense fallback first, plus the RouteFallback and harness-config tests. H2: the Suspense fallback mutated to null, with the warm-up active. H3/H4/H5: pnpm test with one deliberately failing test in unit-node, in unit-web, or only under the no-codegen flag. H5b: H5 repeated at low load.",
+      "command": "scripts/verify-148-harness.sh; scripts/verify-148-h5b.sh",
+      "expected": "H1 passes. H2 fails (the fallback is still exercised). H3-H5b each exit 1 with all three invocations run.",
+      "actual": "H1: 16/16 pass. A warmed re-import takes 0.1 ms, and the fallback (role=status, polite, translated) is still rendered first in en and ar. Per-file warm-up times were 1.6-12.0 s at load 24, within the 60 s hook budget. H2: 4 tests fail, my 2 and RouteFallback's 2 'lazyPage shows the fallback until...', so the warm-up does not bypass Suspense. H3: the deliberate unit-node failure gives EXIT 1, and unit-web (1347) and no-codegen (259 + 2 skipped) still ran. H4: the deliberate unit-web failure gives EXIT 1. H5: the deliberate no-codegen-only failure (EvalError) gives EXIT 1. In H3, H4 and H5 (load 24-27) architecture.test.ts also timed out (36.4, 40.8, 34.5 s), which is disclosed as F-DG4-148 evidence. H5b at low load: unit-node 1590 and unit-web 1347 pass, and only the no-codegen test fails, with EXIT 1, so the last invocation alone carries the exit. The split script and the warm-up weaken no test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/02h-unit-f148-harness.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02h2-unit-f148-h5b.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-7/unit/qa-r7-warmup-suspense.test.tsx",
+        "docs/delivery/test-evidence/DG4/qa/round-7/scripts/verify-148-harness.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-05-F-DG4-146-mutants",
+      "environment": "Disposable copy $TMPDIR/rv-mut, Node 24.21.0; client.ts restored and cmp-checked.",
+      "procedure": "Run my round-6 mutant M4 and the split mutants M4a and M4b of apps/web/src/api/client.ts against the candidate's four session test files, session-wait.test.tsx alone, and my round-6 held-/me test.",
+      "command": "scripts/mutants-146.sh",
+      "expected": "Baseline passes; each mutant fails at least one candidate test.",
+      "actual": "Baseline: 86/86, 6/6 and 4/4. M4: 6 failed of 86 (W1/W2 en+ar, W3, W4), session-wait 6/6 failed, my test 4/4 failed. M4a: W4 fails. M4b: W3 fails. My page-level test survives M4a and M4b, which W3 and W4 cover. The three EXIT 1 lines of the mutant runs are by design. All killed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/02d-unit-f146-mutants.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/scripts/mutants-146.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-06-F-DG4-147",
+      "environment": "Disposable copy $TMPDIR/rv3, real stack (e2e/support/qa-stack.sh), chromium-en and chromium-ar, --workers=1, locale unset.",
+      "procedure": "Delayed-boot-/me probes: the pre-repair (1e0dc5d) and the candidate session-end.spec.ts, each with one inserted line that forwards the boot GET /me 1.5 s or 4 s late, --repeat-each=3. Then the candidate's 'a 403 is not a session end' x10 per project at low load and again at held load.",
+      "command": "scripts/run-147.sh; scripts/run-147-held.sh",
+      "expected": "The old spec fails (403 vs 200), the fixed spec passes, and the contention runs pass.",
+      "actual": "Old: 12/12 fail with 'Expected: 403 / Received: 200', by design, reproducing the round-6 race. Fixed: 12/12 pass, including at a 4 s delay. Contention x10: 20/20 at load 5-9, and 20/20 at held load (median 13.7, up to 16.9). The probe run's EXIT 1 is the old variant's designed failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-delayed-boot-me-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-delayed-boot-me-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-contention-x10-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-contention-x10-held-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-held-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/scripts/gen-147-probes.py"
+      ]
+    },
+    {
+      "id": "QA-R7-07-repair-diff",
+      "environment": "Repository, git diff 1e0dc5d..dab4562 outside docs/delivery/ (14 files).",
+      "procedure": "Re-inspect the repair diff for weakened tests or behaviour; judge the warm-up and the split test script.",
+      "command": "git diff 1e0dc5d..dab4562 -- . ':!docs/delivery'",
+      "expected": "No weakened assertion or behaviour; scope as declared; no API contract or migration change.",
+      "actual": "BE-R6: createBoss always passes superviseIntervalSeconds through superviseIntervalSecondsOf (default 60, integer 1-600, otherwise RangeError). loadConfig validates WORKER_SUPERVISE_INTERVAL_SECONDS (z.coerce int 1-600, so an invalid value exits 78 at start-up). .env.example and ENV_VARS gain the variable. supervise-cadence.test.ts starts the real src/main.ts with an interval-probe preload; it passed 9/9 in both integration runs. FE-R10: session-wait.test.tsx is new; session-end.spec.ts only adds the boot-/me and shell waits; the setup.ts warm-up uses import.meta.glob (no lazyPage load(), 5 s wait unchanged, a 60 s hook budget for the warm-up only); harness-config.test.ts gains a guard that every lazy router page is warmed and no test module is. package.json: the test script is 's=0; ... || s=1; ... exit $s', verified by H3-H5b. No assertion was removed or loosened, there is no openapi or migration change, and the migrations stay 0001-0061.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "apps/web/test/setup.ts",
+        "apps/web/src/test/harness-config.test.ts",
+        "apps/web/e2e/session-end.spec.ts",
+        "apps/worker/test/integration/supervise-cadence.test.ts",
+        "apps/worker/src/queues/platform.ts",
+        "packages/config/src/load.ts",
+        "package.json"
+      ]
+    },
+    {
+      "id": "QA-R7-08-integration-x2",
+      "environment": "$TMPDIR/rv, disposable PostgreSQL 16 per run (tests/qa/support/with-pg.sh), ports 26510/26530, Node 24.21.0, vitest --configLoader runner.",
+      "procedure": "Run the integration project twice: migrations from 0001 on a fresh database, contract.test.ts, and every p4-pending list.",
+      "command": "QA_PG_PORT=<port> MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose",
+      "expected": "All pass both times; 652 operations; every p4-pending list empty.",
+      "actual": "Both runs: 209 files / 1984 tests passed, EXIT 0. 61 migrations (0001->0061; the assignment says 0060, but the candidate ships 0061_p4_finance_validation_correction_step.sql, unchanged since round 6). contract.test.ts passed its 45 cases, against openapi with 652 operations. 03-pending-lists.txt: 47 exported p4-pending arrays with 0 entries. Each run has 14 lines matching error/timeout/fail outside passed-test lines. They are the stdout of passing tests that probe error paths by design (408 on stalled bodies, a deliberate DB-side ECONNRESET, IdP-unavailable redirects), the same 14 as in round 6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-run1.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-run2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-pending-lists.txt"
+      ]
+    },
+    {
+      "id": "QA-R7-09-tests-qa-alone",
+      "environment": "As QA-R7-08, port 26550.",
+      "procedure": "Run the candidate's tests/qa suites on their own; read each test against its row's clause.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration tests/qa",
+      "expected": "All pass.",
+      "actual": "15 files / 172 tests passed, EXIT 0. Per file: a01 2, a02-a08 1, a03 12, a04-a05-a10 4, a04 8, a05 17, a08 31, a09 17, a10 16, a11-adoption 12, a11-bau 17, a11-value 11, a12 14, a13 5, a14 5. The suites are unchanged since round 3. Their titles and assertions match their rows' clauses literally, for example a02-a08 '422 invalid-transition naming G5', a09 'REQ-PB-066: 5 working days from a Thursday skip the configured weekend', and REQ-S15-008's period, business date and UTC timestamp.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-tests-qa-candidate-only.log"
+      ]
+    },
+    {
+      "id": "QA-R7-10-dlv036",
+      "environment": "As QA-R7-08 (port 26570), plus the two full e2e runs of QA-R7-11.",
+      "procedure": "REQ-DLV-036: the A04, A09, A10 and A11 executable tests pass on this frozen candidate. Count them per suite.",
+      "command": "with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/{a04-kpi-propagation,a04-a05-a10-partials,a09-decision-escalation,a10-benefit-integrity,a11-adoption,a11-value-closure,a11-bau-sustain}.test.ts",
+      "expected": "All pass.",
+      "actual": "7 files / 85 tests passed, EXIT 0. A04: 8 (kpi-propagation) + 4 (partials). A09: 17. A10: 16. A11: 40 (adoption 12, bau-sustain 17, value-closure 11). e2e: a04-kpi-update 1+1 and a08-a09-gates-decisions 2+2 (en+ar) passed in both full runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-dlv036-a04-a09-a10-a11.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-summary.txt"
+      ]
+    },
+    {
+      "id": "QA-R7-11-e2e-full",
+      "environment": "$TMPDIR/rv2 (tar copy after the build), real stack via e2e/support/qa-stack.sh (disposable PostgreSQL, migrate, synthetic seed, API serving the built SPA, AUTH_MODE=dev), Chromium 1194 from /opt/pw-browsers, --workers=1, chromium-en and chromium-ar; locale unset, then C.UTF-8.",
+      "procedure": "Run all 31 candidate spec files (27 product journeys in apps/web/e2e, plus the 4 acceptance specs in e2e/) in both locale settings and count every test. Re-run every failing spec alone in the same locale setting. axe (expectAccessible: no serious or critical issue) is part of the specs.",
+      "command": "scripts/run-e2e.sh <unset|cutf8> <pg> <api> full; solo: scripts/run-e2e.sh <mode> 26690 26695 solo-failed <specs>",
+      "expected": "All pass, or any failure passes when its spec is run alone.",
+      "actual": "Unset (21:58-23:12Z, load 9-30): 364 counted, 349 passed, 5 failed, 10 did not run, EXIT 1. All 5 failures are 'Test timeout of 30000ms exceeded': p2-journeys 'Define -> G2' (en, ar), p4-benefits 8 (en), p4-execution 1 (en), p4-gates-closure 9 (en). Their secondary lines are interrupted waits (newPage, context.close, 'page.evaluate: Test ended', and the dialog count still 1 at the timeout). The 10 that did not run are their serial followers. The first C.UTF-8 run was stopped at test 300 by my tool's 2-hour background limit, not by a test (292 passed, 2 failed 'Define -> G2' en/ar timeouts, 6 did not run; kept as 04-e2e-full-cutf8-killed-by-bg-limit.log). Its full re-run: 364 counted, 360 passed, 1 failed ('Define -> G2' en, 32.1 s timeout), 3 did not run (its followers), EXIT 1. Solo unset (p2-journeys, p4-benefits, p4-execution, p4-gates-closure): 68/68 passed, EXIT 0. Solo C.UTF-8 (p2-journeys): 24/24 passed, EXIT 0. 'Define -> G2' is a DG2 journey that no DG4 row cites; it runs 22-33 s against 30 s (D-111, D-112, D-115). No axe failure in any run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-killed-by-bg-limit.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-solo-failed-cutf8-summary.txt"
+      ]
+    },
+    {
+      "id": "QA-R7-12-probes-aud-390-200-axe",
+      "environment": "$TMPDIR/rv3, real stack, chromium-en/ar, --workers=1, locale unset and C.UTF-8. My unchanged probes were copied into e2e/ for the run only: round-6 dg4-qa-r6-session-window, round-5 dg4-qa-r5 and dg4-qa-r5-bu-remedies, and round-4 dg4-qa-r4-bu-limit.",
+      "procedure": "Re-run my earlier e2e probes as regression. They cover T10, the Executive Overview and the drill-downs, the per-basis Value RAG lines, the business-unit limit and its remedies, the AUD read-only views, 390 px and 200 % text without page-level overflow on the P4 screens, axe, and the session-window rules on the real stack.",
+      "command": "scripts/run-probes.sh",
+      "expected": "Every recorded check passes in en and ar in both locale settings.",
+      "actual": "22/22 tests in each setting, EXIT 0. dg4-qa-r5-checks: 546 per language, 0 failed (axe 65, 390 px 122, 200 % 122, AUD 178 check ids, including S1-aud-sends-no-writes). r5-bu: 77 per language, 0 failed. r6-session: 14 per language, 0 failed. r4-bu-limit: 51 transformations show the 50-limit note, and narrowing by phase clears it. Screenshots (390 px, 200 %, AUD) are in results/e2e-probes-unset/screens/.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-unset.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-unset-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-cutf8.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-cutf8-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/results/e2e-probes-unset/dg4-qa-r5-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/results/e2e-probes-unset/dg4-qa-r5-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/results/e2e-probes-cutf8/dg4-qa-r5-checks-en.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/results/e2e-probes-cutf8/dg4-qa-r5-checks-ar.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/results/e2e-probes-unset/screens/ar/R4-aud-t10-390px.png",
+        "docs/delivery/test-evidence/DG4/qa/round-7/results/e2e-probes-unset/screens/en/R4-aud-overview-200pct.png"
+      ]
+    },
+    {
+      "id": "QA-R7-13-integration-probes",
+      "environment": "Disposable copy $TMPDIR/rv4, disposable PostgreSQL (port 26590). My probes were copied into tests/qa/integration/ for the run only.",
+      "procedure": "Re-run my earlier integration probes unchanged as regression: round-2 r1-probes, r1-scope-totals and r2-repairs, round-3 r3-headlines, and round-4 r4-value-basis.",
+      "command": "scripts/run-int-probes.sh",
+      "expected": "The current-rule probes pass. Any failure is traced to a product defect or to a superseded expectation.",
+      "actual": "EXIT 1: 20 passed, 4 failed. Passing: r1-probes 7, r1-scope-totals 3, r2-repairs 2, r3-headlines 3, and r4-value-basis 5 (written against the latest value rules, ADR-0037 R6 / D-122). The 4 failures are expectations in my own round-2/3 probes that later decided amendments superseded; none is a product defect. (1) r2 R3 expects the Finance gross planned line's drilldownHref to be null when revenue/avoided lines exist; ADR-0037 R5 (D-119) says 'The Finance gross line now always drills'. (2) r3 P2 expects 'one gap per currency'; R6 (D-122) computes the gap per basis and currency, so 2. (3) r3 P4 expects valueClass=revenue_uplift on value.gap to be 422; R6 item 505 now accepts revenue_uplift and avoided_cost (200). (4) r3 P5 expects the Value RAG 'unknown' with profit-and-cash unknown and top line red; the §3 precedence ('red if any is red') gives red, which is still never green.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-qa-probes-r1-r4.log",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-4/integration/dg4-qa-r4-value-basis.test.ts",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-3/integration/dg4-qa-r3-headlines.test.ts",
+        "docs/delivery/test-evidence/DG4/qa/tests/round-2/integration/dg4-qa-r2-repairs.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R7-14-validate",
+      "environment": "Repository working tree, Node 24.21.0.",
+      "procedure": "Run the gate validator: register DG4, pipeline, and historical DG3, DG2 and DG1.",
+      "command": "node tools/gates/validate.mjs --register DG4 | --pipeline | --historical --stage DG3|DG2|DG1",
+      "expected": "All PASS.",
+      "actual": "PASS register rules at DG4; PASS pipeline (active stage: DG4 REVIEWING); PASS gate DG3 (historical); PASS gate DG2 (historical); PASS gate DG1 (historical). All EXIT 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/05-validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/05-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/05-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/05-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/05-validate-historical-stage-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R7-15-requirement-trace",
+      "environment": "scripts/trace.py over this round's logs (unit: 02-unit-node24-unset-clean.log; integration run1/run2; e2e full unset/cutf8 and the solo runs).",
+      "procedure": "For each of the 137 DG4-final rows, look up every evidence test in this round's logs. A full-run failure counts as resolved only if a solo run of the same file passed. Judge the register notes' partial-coverage disclosures.",
+      "command": "QA_UNIT_LOG=02-unit-node24-unset-clean.log python3 scripts/trace.py /home/user/My-owns .",
+      "expected": "137/137 rows have at least one evidence test that ran, and no unresolved failure.",
+      "actual": "137/137; 0 evidence tests not found. Disclosures judged acceptable, unchanged since round 6 (the register is unchanged): REQ-PB-065, REQ-S04-014 and REQ-S07-015 are proven by API integration and stubbed web tests, not by real-stack e2e (D-114); REQ-PB-066 and REQ-S15-008 cannot set the server clock through the API, so they are proven on the same calendar engine and the business-date boundary; REQ-S20-011 has no root e2e/a11 spec, and its screens are covered by p4-adoption-bau and p4-gates-closure. In each case the clause's behaviour is asserted at the binding layer.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/06-requirement-trace.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-7/scripts/trace.py"
+      ]
+    },
+    {
+      "id": "QA-R7-16-environmental-residuals",
+      "environment": "Offline sandbox (no network); no live registry, CI or Keycloak.",
+      "procedure": "Record the assigned environmental residuals on the offline/config surface.",
+      "expected": "PASS on the offline/config surface with the residual noted; never BLOCKED.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak (D-049) remain environmental residuals as assigned; none is a DG4-final row. The offline surface checked here is green: no-CDN, the build, the validator pipeline, and the AUTH_MODE=dev real stack used by every e2e run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/qa/round-7/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/05-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/env.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/qa/round-7/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG4/qa/round-7/env.txt",
+    "docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG4/round-7/qa-verifier.md",
+    "docs/delivery/test-evidence/DG4/qa/round-7/06-requirement-trace.txt"
+  ],
+  "reviewed_at": "2026-10-13T01:20:00Z",
+  "summary": "FAIL, solely because my round-6 finding F-DG4-148 (Low, non-mandatory) does not verify CLOSED, and the assignment allows PASS only if all three do. F-DG4-146 and F-DG4-147 are CLOSED_VERIFIED. F-DG4-146: mutants M4, M4a and M4b are each killed by session-wait.test.tsx. F-DG4-147: the pre-repair spec fails 12/12 with a delayed boot /me, and the repaired one passes 12/12 and 40/40 under contention. F-DG4-148: the split test script and the warm-up are sound and weaken nothing (H1-H5b). But pnpm test still fails at the load the concurrent reviews create: 3 of 4 runs at load 22-30, and 1 of 4 with the load held at 13-16 (median 15.5 during the failing run), in both of the finding's classes: the architecture.test.ts 30 s timeout and the first-render 5 s wait in raid 'action register' (en). It passes 4/4 at low load. The rest of the review is green on candidate sha256:baa6ff4d...: static 7/7; integration 1984/1984 twice (61 migrations, contract.test.ts, 652 operations, 0 pending); tests/qa 172/172; REQ-DLV-036 85/85; both full e2e runs with all 364 tests counted and every timeout passing solo; probes 546+77+14 checks per language with 0 failed (axe, 390 px, 200 %, AUD); validator 5/5; trace 137/137. No new finding. No product gate (G1-G6) was decided, and product G6 never implies DG7.",
+  "narrative": "docs/delivery/reviews/DG4/round-7/qa-verifier.md"
+}
