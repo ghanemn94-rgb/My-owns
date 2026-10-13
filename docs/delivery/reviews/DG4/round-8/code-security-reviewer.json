@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 8,
+  "candidate_id": "sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804",
+  "source_commit": "8553323d6938d5c5077661070ab9f8df2d8dc969",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620",
+    "session_id": "987e0620-2d7a-450b-a301-610f0cc9c19d"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 987e0620 (task T-DG4-REV-SEC-R8). I authored no implementation in the DG4 scope.\n\nAuthorship of the reviewed scope:\n- P4 is by the implementer roles listed, plus qa-verifier's promoted tests.\n- The round-8 delta (D-133, D-134, environment.md limitation 6, progress, findings and stages) is by the delivery-orchestrator.\n\nMy only writes are evidence under docs/delivery/test-evidence/DG4/code-security/round-8/ and this record. Every build and static check ran in a disposable, complete clone, $TMPDIR/review-r8, with a private copy of the pnpm store. The validators and candidate.mjs ran read-only in the repository tree.\n\nI formed my verdict before reading any other reviewer's round-8 record, and I have not read one. HEAD moved during my run from 78fe975 to 477be30, the qa-verifier's auto-committed round-8 run, which changes docs/delivery only (identity.log). I saw only its commit message and its file list."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-8/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R8-00-candidate-identity",
+      "procedure": "RUN THIS ROUND. Verify the assignment hash, the starting revision and the candidate ID:\n- sha256 of the assignment;\n- git rev-parse HEAD;\n- a complete (non-shallow) clone checked out at the freeze commit 78fe975, then candidate.mjs run there, at the source commit 8553323 and in the repository tree;\n- a comparison of the stored round-8 manifest with round 7's.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-8/code-security-reviewer.md; git clone /home/user/My-owns $TMPDIR/review-r8; git -C $TMPDIR/review-r8 checkout 78fe975; node tools/gates/candidate.mjs --stage DG4 (in the clone at 78fe975 and at 8553323, and in the repo)",
+      "environment": "Node 24.21.0. Repository HEAD 78fe975 at the start and 477be30 at the end. Complete clone $TMPDIR/review-r8 (is-shallow false, 0 status lines).",
+      "expected": "The assignment sha256 is 283bdf35…6914. candidate_id is sha256:8014e5ce…3804 with 1475 files, everywhere. The freeze commit differs from the source commit only in delivery records.",
+      "actual": "The assignment sha256 matches (283bdf357e8a…f26914). HEAD was 78fe975, the freeze commit. Its diff from source 8553323 is 5 files, all under docs/delivery: 3 round-8 assignments, the manifest and stages.json.\n\ncandidate.mjs gives sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804 with 1475 files, exit 0:\n- in the clone at 78fe975 (candidate-id.log);\n- in the clone at 8553323 (identity.log);\n- in the repository tree at 477be30, at the end (candidate-id-repo.log).\n\nThe stored manifest 8014e5ceffe1f374.manifest.json has the same id, source_commit 8553323d…c969 and 1475 entries.\n\nCompared with round 7's manifest baa6ff4d (1475 entries), exactly 2 entries differ: docs/delivery/decisions.md and docs/delivery/environment.md. No entry was added or removed.\n\nHEAD moved during my run to 477be30. That is qa-verifier's auto-committed round-8 run, with 0 files outside docs/delivery, and the candidate ID is unchanged there.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id-repo.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-01-diff-is-records-only",
+      "procedure": "RUN THIS ROUND. Show that the diff from round 7's source commit dab4562 to 8553323 touches only docs/delivery/**, and that the product, test, contract, tooling and lockfile trees are byte-identical.",
+      "command": "git diff --stat dab4562..8553323 -- . ':!docs/delivery'; git diff --name-only dab4562..8553323 | grep -v ^docs/delivery/ | wc -l; git diff --quiet dab4562 8553323 -- apps packages docs/api tests e2e tools pnpm-lock.yaml package.json",
+      "environment": "git 2.x, repository tree (read-only)",
+      "expected": "An empty non-delivery diff, and git diff --quiet exit 0 on the product paths.",
+      "actual": "The diff excluding docs/delivery is empty: 0 lines, exit 0. 0 changed paths fall outside docs/delivery/.\n\ngit diff --quiet over apps, packages, docs/api, tests, e2e, tools, pnpm-lock.yaml and package.json exits 0.\n\nThe 635 changed paths are all delivery records:\n- 599 test-evidence files (round-7 reviewer evidence and orphaned-run provenance);\n- 18 runs;\n- 6 reviews (round 7);\n- 6 assignments (round-7 re-runs);\n- 1 manifest (baa6ff4d);\n- decisions.md, environment.md, findings.json, progress.md and stages.json.\n\nOf these, only decisions.md and environment.md are in the candidate (SEC-R8-00). The assignment's description of the diff ('D-133 and D-134 in decisions.md, limitation 6 in environment.md, progress.md, findings.json and stages.json') lists only the files that changed in content. The rest are the committed round-7 records and evidence, also all under docs/delivery. I note it for precision; it is not a discrepancy that matters.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-02-judge-D133-D134-load-envelope",
+      "procedure": "RUN THIS ROUND. Read D-133, D-134 and environment.md limitation 6 (git diff dab4562..8553323), and check each factual claim against the round-6/7 records and logs:\n- my round-7 record;\n- qa round-7 verifications, RUN-NOTES and its 02-unit-* logs (start/end load lines, held samples, clean samples);\n- the F-DG4-148 entry in findings.json;\n- the orchestrator's pre-freeze evidence (prefreeze-r2…r7);\n- the acceptance rule in tools/gates/lib/rules.mjs.\nThen judge whether the envelope is accurate and whether it weakens any gate check.",
+      "command": "git diff dab4562..8553323 -- docs/delivery/decisions.md docs/delivery/environment.md; bash/grep/awk extraction recorded in load-envelope-crosscheck.log; sed -n 555,595p tools/gates/lib/rules.mjs",
+      "environment": "bash, grep, awk and Node 24.21.0 over the repository tree (read-only)",
+      "expected": "The D-133 and D-134 summaries match the round-7 records. The envelope is set below every load at which a pnpm test failure is in evidence and does not weaken a test. The acceptance can happen only through the tool-enforced route, for a Low, non-mandatory finding.",
+      "actual": "D-133's facts match the evidence:\n- code-security's summary matches my round-7 record (PASS, no new finding; cadence 1-600 or start-up refused; the probe is not shipped; the split script exits 1 on any failure across the 8 combinations, i.e. 1 passing and 7 failing; and the dropped-argument observation).\n- qa's F-DG4-148 numbers match qa's round-7 verification note and RUN-NOTES: 3/4 runs exit 1 in the contended series (boundary loads 7.70→24.19, 24.19→22.71 and 22.71→16.52); 1/4 in the held series (208 samples, median 14.38, p10 12.40, min 7.96 only at the controller's ramp-up); and 4/4 pass in the clean series (56 samples, 2.12-5.48).\n\nD-134: the envelope (1-min load ≤ 8, sampled at least every 30 s for the whole run) sits below every load at which a pnpm test failure is in evidence:\n- the held-series failure ran at 12.40-17.65;\n- my round-7 failure was at 23-27;\n- the round-6 failures were at ≥ 13.\nPasses are in evidence at 2.12-5.48 (qa round 7, sampled) and at 3-9 (the round-6 reproduction in findings.json). So the bound is accurate and conservative.\n\nThe envelope weakens no test. The 5 s asyncUtilTimeout and the 30 s architecture-test timeout are unchanged (qa QA-R7-07; my SEC-R7-13). The required 30 s sampling is stricter than round 7's start/end-only samples.\n\nThe acceptance route is tool-enforced:\n- rules.mjs:566 rejects any ACCEPTED_OBSERVATION that is not Low and non-mandatory;\n- rules.mjs:582-585 require a release-auditor sidecar, a specialist sidecar, the findings.json accepted_by mirror and the gate's accepted_observations list.\nF-DG4-148 is Low, mandatory_violation false and still OPEN in findings.json, so nothing has been accepted early. I write no verifications file this round, as the assignment says.\n\nObservations, not defects, for the next records update:\n(1) environment.md says the orchestrator's pre-freeze runs 'passed at load 1.4–2.3 in every round'. The 12 pre-freeze unit logs carry no load samples; 'load' matches only test names such as load.test.ts. The recorded pre-freeze loads are e2e start/end samples, 1.22-2.33 (r2 starts at 1.22). Every pre-freeze unit run did exit 0 (12/12), so the sentence is a proxy, not a measurement. It has no behavioural effect, because the envelope rests on qa's sampled runs.\n(2) The re-run clause ('a run that fails above the envelope is disclosed, and the check is re-run inside it') must be read with the DG2 round-10 evidence-honesty condition. It legitimately covers the two named timing classes. Any failure of another kind still needs its own explanation. From the security angle, the residual risk (a load-only race masked by a re-run) is bounded: the concurrency, If-Match, exactly-once and handover-race tests live in the integration suite and my probes, which the envelope does not govern, and they passed at load 13-27 in round 7 (SEC-R7-09/10/17).\n\nThe 14 'fail' and 2 'timeout' hits in load-envelope-crosscheck.log are quoted round-7 text and file names, not failures of this check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log",
+        "docs/delivery/decisions.md",
+        "docs/delivery/environment.md",
+        "docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-7/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-load-held-samples.log",
+        "docs/delivery/test-evidence/DG4/qa/round-7/02-unit-samples-clean.log",
+        "docs/delivery/reviews/DG4/round-7/code-security-reviewer.json",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/findings.json"
+      ]
+    },
+    {
+      "id": "SEC-R8-03-install-build",
+      "procedure": "RUN THIS ROUND. Offline frozen install from a private copy of the local pnpm store, then pnpm -r build, then a second install to link bins.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r8 at 78fe975, LANG/LC_ALL unset, load 1.4-3.7",
+      "expected": "All three exit 0.",
+      "actual": "install1 exit 0, build exit 0, install2 exit 0.\n\nDisclosed:\n- install1 prints four 'WARN Failed to create bin … mth-db … dist/cli.js (ENOENT)'. That is expected before the build, because the bin target does not exist yet; install2, after the build, links it with no warning.\n- 'resolution step is skipped' is pnpm's frozen-lockfile notice, not a skipped test.\n- The web build prints Vite's chunk-size advisory ('Adjust chunk size limit …'). It is a warning, not an error, and the same as in round 7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R8-04-typecheck",
+      "procedure": "RUN THIS ROUND. pnpm -r typecheck.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r8",
+      "expected": "Exit 0.",
+      "actual": "Exit 0, with no error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-05-lint",
+      "procedure": "RUN THIS ROUND. pnpm lint (eslint . --max-warnings=0).",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r8",
+      "expected": "Exit 0.",
+      "actual": "Exit 0. With --max-warnings=0, any warning would have failed the run. The only 'warn' hit in the log is that flag.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-06-format",
+      "procedure": "RUN THIS ROUND. pnpm format:check.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r8",
+      "expected": "Exit 0.",
+      "actual": "'All matched files use Prettier code style!', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-07-openapi-lint",
+      "procedure": "RUN THIS ROUND: pnpm openapi:lint. CARRIED FORWARD: the Problem.params (D-114) and p4-pending analysis from SEC-R7-04 and SEC-R7-18 on identical docs/api and source.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r8",
+      "expected": "Exit 0, OpenAPI 3.1.1, 652 operations.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0.\n\nNot re-run this round, because docs/api and the source are byte-identical to round 7 (SEC-R8-01). From round 7:\n- Problem.params is optional and is set only by the Modular waiver refusals (gates.ts:1505-1522), so the addition is additive (SEC-R7-04);\n- all 43 p4-pending lists are empty (SEC-R7-18).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/problem-params.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-08-no-cdn",
+      "procedure": "RUN THIS ROUND: pnpm check:no-cdn. CARRIED FORWARD: the secrets and injection-sink diff scan (SEC-R7-05) on identical code.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r8",
+      "expected": "Exit 0.",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.\n\nNot re-run this round, because the product is byte-identical (SEC-R8-01). The round-7 diff scan found no secret, no remote URL beyond test placeholders, no executable eval sink and one non-injectable sql.raw (SEC-R7-05).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/no-cdn.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.sh"
+      ]
+    },
+    {
+      "id": "SEC-R8-09-validators",
+      "procedure": "RUN THIS ROUND. The gate validators, read-only in the repository tree.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3; … --historical --stage DG2; … --historical --stage DG1; … --register DG4; … --pipeline",
+      "environment": "Node 22.22.2, repository tree /home/user/My-owns (read-only), HEAD 477be30",
+      "expected": "Each prints PASS and exits 0.",
+      "actual": "Each exits 0:\n- 'PASS gate DG3 (historical)';\n- 'PASS gate DG2 (historical)';\n- 'PASS gate DG1 (historical)';\n- 'PASS register rules at DG4';\n- 'PASS pipeline (active stage: DG4 REVIEWING)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R8-10-unit-node22-node24-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. pnpm test on Node 22 and Node 24 (round 7: SEC-R7-07, SEC-R7-08, SEC-R7-08b and SEC-R7-22) on byte-identical code. Not re-run because D-134 and the assignment's load envelope forbid domain and code-security from running pnpm test while qa runs it inside the envelope.",
+      "command": "(round 7) pnpm test, Node 22.22.2 and 24.21.0; vitest --configLoader runner on the confined tree",
+      "environment": "Round-7 environment: clone at ea5e262 (product tree == dab4562 == 8553323 product tree), load 9-29",
+      "expected": "pnpm test passes; any failure is disclosed and explained.",
+      "actual": "Not re-run this round, by design (the D-134 load envelope).\n\nRound-7 results on identical code:\n- Node 24: exit 0 (1589 + 1347 + 259/2 skipped by design) at load 23-25.\n- Node 22 harness run: exit 1 at load 23-27. 2 unit-web failures: raid.test.tsx 'action register' en and ar, a 5 s findByRole wait under load. This is the F-DG4-148 class; its repeat exited 0, and the spec alone passed 10/10 at load 24-29 (SEC-R7-22).\n- --configLoader runner was needed for direct vitest calls with read-only node_modules, and was used (SEC-R7-08b).\n\nThe exit_status recorded here is that of the round-7 passing runs. The failing run is disclosed above. qa owns the round-8 pnpm test runs inside the envelope.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat-1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-configloader-runner.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R8-11-integration-twice-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. The integration suite on a disposable PostgreSQL, once with LANG/LC_ALL unset (Node 22) and once with LANG=C.UTF-8 (Node 24), including contract.test.ts and migrations 0001→0061 (SEC-R7-09 and SEC-R7-10). Not re-run because the assignment forbids code-security from running the integration suite this round (load envelope).",
+      "command": "(round 7) bash with-pg.sh 2633x pnpm test:integration --reporter=verbose",
+      "environment": "Round-7 environment: clone at ea5e262, ports 26331/26332, clusters deleted afterwards",
+      "expected": "Both runs pass every test.",
+      "actual": "Not re-run this round, by design (the assignment's load envelope); the code is byte-identical (SEC-R8-01).\n\nRound 7: 209 files, 1984/1984, exit 0, in both runs. No failed, skipped or hook-timeout lines.\n\nDisclosed: the one 'unhandled error … ECONNRESET' line per run is the passing BE17 db-econnreset test, which injects connection resets on purpose and asserts a 500 problem.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R8-12-authorization-aud-adm-sweep-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. The P4 write sweep: AUD gets 403 on every P4 write, an ADM-only caller sees nothing transformation-scoped, plus commit-time re-check, If-Match and audit (SEC-R7-15). Not re-run because the probes need the integration stack, which the load envelope keeps idle this round.",
+      "command": "(round 7) run-probe.sh sec-dg4-r2-sweep",
+      "environment": "Round-7 environment: probe clone at ea5e262, disposable PostgreSQL",
+      "expected": "Every sweep assertion passes.",
+      "actual": "Not re-run this round; the code is byte-identical (SEC-R8-01). Round 7: sec-dg4-r2-sweep 766/766, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-sweep.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R8-13-idor-and-read-scope-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. Cross-transformation IDOR and ADR-0037 §6 read scope: dashboard, drill-down, My Work, traceability and orphans (SEC-R7-16). The reason is the same as SEC-R8-12.",
+      "command": "(round 7) run-probe.sh sec-dg4-r1-idor, r1-body-idor, r3-drill-scope, r4-outcome-scope, r4-currency, r5-filter-scope, r3-gross-currency",
+      "environment": "Round-7 environment: probe clone at ea5e262, disposable PostgreSQL",
+      "expected": "No foreign record changes or is disclosed, and an unreadable id gives 404.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7, all exit 0:\n- r1-idor 204/204;\n- r1-body-idor 2/2;\n- r3-drill-scope 163/163;\n- r4-outcome-scope 3/3;\n- r4-currency 151/151;\n- r5-filter-scope 5/5;\n- r3-gross-currency 2/2.\n\nThe outsider-status differences of D-111 and D-112 (dispensation 403, reporting/modular 404) are unchanged and known.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r3-drill-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-prior-probes.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R8-14-approvals-sod-finance-handover-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. Business approvals (no self-approval, no non-approver, stale 409, approval.not_requester), delegation and its loop guard, escalation, Finance-only validation with no in-place edit, and receiving-owner-only handover with the race probe H (SEC-R7-17). The reason is the same as SEC-R8-12.",
+      "command": "(round 7) run-probe.sh r1-approvals, r2-finance, r2-gate-commit, r2-sod-denials, r2-slice-b-ids, r3/r4-required-members, sec-dg4-r7-handover-race",
+      "environment": "Round-7 environment: probe clone at ea5e262, disposable PostgreSQL",
+      "expected": "Every probe passes.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7, all exit 0:\n- r1-approvals 6/6;\n- r2-finance 10/10;\n- r2-gate-commit 6/6;\n- r2-sod-denials 4/4;\n- r2-slice-b-ids 1/1;\n- r3 and r4 required-members 2/2 each;\n- handover-race probe H 4/4: one winner, every loser 409, a consistent end state.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probe-H-handover-race-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-approvals-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-finance-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sod-denials-node22-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-15-commit-time-module-graph-worker-web-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. The commit-time authorization scan, the module graph (governance → raid, raid never imports governance), worker isolation (D-102), server.ts wiring, and the web import graph and lazy routes (SEC-R7-18). Not re-run because the source is byte-identical, so the static scans would give the same output.",
+      "command": "(round 7) static-scans.sh: commit-scan6.py, module-cycles.mjs, web-cycles.mjs",
+      "environment": "Round-7 environment: probe clone at ea5e262",
+      "expected": "Every write reaches openWrite atCommit, there are no value-import cycles, and the worker imports no API code.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7:\n- commit-scan: 232 write routes and 33 residuals, each read manually and each reaching openWrite(…, {atCommit: true});\n- 0 API value-import cycles; raid has no governance import;\n- web: 1 pre-DG4 admin cycle, outside P4;\n- the worker has 0 API imports;\n- contract.test.ts (45) and media-types.test.ts (21) pass in both integration runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/web-cycles.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/worker-isolation.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-16-decimals-migrations-exactly-once-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. Decimals end to end, migrations (forward-only, contiguous, row guards, no DELETE/TRUNCATE grant), and exactly-once jobs (advisory locks, unique backstops, runOnce, replay), plus the F-DG4-128 supervise cadence and its mutants (SEC-R7-12, SEC-R7-14 and SEC-R7-19). Not re-run because the code is byte-identical and the integration stack stays idle (load envelope).",
+      "command": "(round 7) diff-scan.sh D9/D13/D16/D17; suite-counts.sh; cadence-mutations.sh",
+      "environment": "Round-7 environment: clones at ea5e262",
+      "expected": "No float in money paths, contiguous forward-only migrations, every exactly-once suite passing, and the cadence mutants killed.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7:\n- D9 finds no float; the 'no floating point' catalogue test passes.\n- Migrations 0001..0061 are contiguous (34 added in P4, 0028-0061, none modified), with guards on every new table and no DELETE or TRUNCATE grant.\n- The exactly-once suites pass in both runs.\n- The cadence mutants M1/M2/M3 are killed: their runs exit 1 by design, with exactly the expected 4, 1 and 1 failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutations.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/config-edge-probe.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-17-requirement-acceptance-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND, plus a check run this round. The 52 assigned requirements' acceptance evidence was traced against round 7's logs (SEC-R7-20). The --register DG4 validator was re-run this round (SEC-R8-09).",
+      "command": "(round 7) python3 req-acceptance.py; (round 8) node tools/gates/validate.mjs --register DG4",
+      "environment": "Round-7 logs; round-8 repository tree",
+      "expected": "Every named test file is found and passes; the register is valid.",
+      "actual": "Not re-run this round, because the trace would read identical test files. Round 7: every named vitest file was found and passes, with 0 failing files and 0 'NOT FOUND'. The 20 Playwright specs are left to QA.\n\nThis round: requirements.csv is unchanged between dab4562 and 8553323 (SEC-R8-01; it is not among the 2 changed manifest entries), and --register DG4 passes. The partial-coverage disclosures in the notes are unchanged, and I judged them acceptable in round 7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-8/validate-register-DG4.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-18-environment-residuals",
+      "procedure": "CARRIED FORWARD (offline surface, SEC-R7-21) plus a check run this round (the offline frozen install in SEC-R8-03). Covers the live registry (D-057), live CI (D-058) and Keycloak (D-049).",
+      "command": "(round 8) pnpm install --offline --frozen-lockfile; (round 7) env-residuals.sh",
+      "environment": "Node 22.22.2, no network",
+      "expected": "PASS on the offline/config surface, with the residuals noted.",
+      "actual": "This round: the offline frozen install exits 0 (SEC-R8-03), and pnpm-lock.yaml is unchanged (SEC-R8-01).\n\nRound 7: check-ci-needs OK, with its tests 46/46. 37 oidc test lines pass against the fake IdP in each integration run.\n\nResiduals, as the assignment directs: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and a live Keycloak (D-049) are not reachable from this sandbox. PASS on the offline surface.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/env-residuals.log"
+      ]
+    },
+    {
+      "id": "SEC-R8-19-evidence-honesty-log-scan",
+      "procedure": "RUN THIS ROUND. Scan every round-8 log for non-zero exits and for fail, error, warn, skip and timeout lines, and explain each hit. Then restate the round-7 disclosures for the logs carried forward.",
+      "command": "bash/grep over docs/delivery/test-evidence/DG4/code-security/round-8/*.log > log-scan.txt",
+      "environment": "bash and grep",
+      "expected": "Every non-zero exit and every warning or error line is explained.",
+      "actual": "Round 8: every check log exits 0. identity.log has no exit line because it is a transcript of git and node commands, each returning normally.\n\nEach hit is explained:\n- build.log: 1 Vite chunk-size advisory (a warning).\n- install1.log: 4 'WARN Failed to create bin … mth-db' lines before the build (expected; install2 links them). Its 'fail' hits are those 4 lines.\n- install1 and install2: 'resolution step is skipped' (pnpm's frozen-lockfile notice).\n- lint.log: the '--max-warnings=0' flag.\n- load-envelope-crosscheck.log: 14 'fail' and 2 'timeout' hits, all quoted round-7 text, file names and counters.\nThere are no other error, failure, skip or timeout lines.\n\nCarried-forward logs (round 7):\n- unit-node22.log: exit 1, 2 raid findBy waits under load (SEC-R8-10);\n- cadence-mutation-M1/M2/M3: exit 1 by design (SEC-R8-16);\n- the BE17 ECONNRESET line per integration run, by design (SEC-R8-11).\nThese are as explained in SEC-R7-23.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-8/log-scan.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/log-scan.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/code-security/round-8/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/identity.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/log-scan.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id-repo.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/install1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/build.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/install2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/typecheck.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/lint.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/openapi-lint.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/no-cdn.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/format-check.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG3.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/validate-register-DG4.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-8/validate-pipeline.log",
+    "docs/delivery/reviews/DG4/round-7/code-security-reviewer.json"
+  ],
+  "reviewed_at": "2026-10-13T08:16:35Z",
+  "summary": "Confirmation round (D-134) on candidate sha256:8014e5ce…3804 (1475 files, source 8553323), verified in a complete clone. The product, tests, contract, tooling and lockfile are byte-identical to round 7's dab4562. The only candidate entries that changed are decisions.md (D-133, D-134) and environment.md (limitation 6).\n\nRun this round, all exit 0: candidate identity, the records-only diff, install, build, typecheck, lint, format, openapi:lint (652 operations), no-cdn, and the validators (--historical DG3/DG2/DG1, --register DG4, --pipeline).\n\nD-133 and D-134 match the round-6/7 evidence. The ≤ 8 load envelope sits below every load at which a pnpm test failure is recorded (≥ 12.4) and weakens no test. The tooling enforces that acceptance is for a Low, non-mandatory finding only, and F-DG4-148 is still OPEN and Low.\n\nTwo observations, neither a defect:\n- environment.md's 'pre-freeze 1.4–2.3' is a proxy from e2e start/end samples;\n- the re-run clause must be read with the evidence-honesty condition.\n\npnpm test, the integration suite, the probes and the authorization, scope, SoD, integrity and migration checks are carried forward from round 7 on identical code, not re-run, per the envelope. No new finding. Verdict PASS."
+}
