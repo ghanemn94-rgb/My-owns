@@ -1,0 +1,119 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-100",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae717, after the D-136 rewrite).\n\n(1) Ancestry. fix_revision 5d6f4802f9f737f9f93f033dc9f48b54d43ab526 ('Merge T-DG4-KBE-R5 into the DG4 integration branch') is a commit and an ancestor of f2ae717. So are both fix commits, 70fcefa172 (KBE-R5) and bff9725eb2 (BE-R5), and both are ancestors of 5d6f4802. It is the first commit on f2ae717's first-parent line that contains both (fix-revision-first-integration.log), as D-136 says.\n\n(2) SHA map. 5d6f4802 maps to old 4d9bbd2, 70fcefa172 to old 655b2a6 and bff9725eb2 to old b262521. Each pair has the same subject and author date. The product diff (git diff <c>^ <c> -- . ':!docs/delivery') hashes the same for old and new: c78713f1b9a8ad23 for KBE-R5 (16 files) and 81050aee4a06ca03 for BE-R5 (5 files).\n\n(3) The fix is in the candidate:\n- register.ts:143, requirePermissionSomewhere throws forbidden().withDenial(denialOf(permission, target));\n- finance-validation.ts:236 and :357, overlaps.ts:437 and valuation-methods.ts:192 attach withDenial(denialOf(FINANCE_VALIDATE, ctx.target));\n- tasks/routes.ts:137 and :160, notAssigneeDenial.\n\nI re-ran my round-2 probe D (sec-dg4-r2-sod-denials.test.ts, unchanged) this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 4/4 passed, exit 0, at load 8.4. Each of the four Finance SoD refusals writes exactly one authorization.denied.\n\nThe 766-call sweep (probe S) was not re-run this round, because of the load envelope. It passed 766/766 in round 7 on byte-identical code (rerun-sec-dg4-r2-sweep-node22-lang-unset.log), and my round-2 verification is in round-2/code-security-reviewer.verifications.json.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-100-probe-D.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/run-probe.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-sod-denials.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+        "apps/api/src/modules/benefits/register.ts",
+        "apps/api/src/modules/tasks/routes.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-101",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 70fcefa172ef522a3dfc9515bfd53e179a9e49b2 (T-DG4-KBE-R5) is a commit and an ancestor of f2ae717 (merge-base --is-ancestor rc=0).\n\n(2) SHA map. 70fcefa172 maps to old 655b2a6, with the same subject and author date. The product diff is identical: c78713f1b9a8ad23 for both, 16 files.\n\n(3) The fix is in the candidate:\n- corrections.ts:193 calls stepOriginal;\n- corrections.ts:202-223 bumps the original finance_validation's version with a version guard (.where('version','=',validation.version); 409 versionConflict otherwise) and writes the finance_validation.corrected audit event (prior and new version);\n- corrections.ts:83 is the lockQueue advisory lock.\nMigration 0061_p4_finance_validation_correction_step.sql has the same blob in the candidate as in the fix commit (efe449a7). Neither corrections.ts nor 0061 changed after 70fcefa172.\n\nI re-ran my round-2 probe F rev2 (sec-dg4-r2-finance.test.ts, unchanged) this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 10/10 passed, exit 0, at load 7.9. F2: another Finance user's stale amend gets 409 and nothing is written. F2a-F2c and G: migration 0061 admits only a version+1 step on an approved, corrected validation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-101-probe-F-rev2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/run-probe.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/with-pg.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-finance.test.ts",
+        "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+        "apps/api/src/modules/benefits/corrections.ts",
+        "packages/db/migrations/0061_p4_finance_validation_correction_step.sql"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-102",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 07b72f32611295d979b3055dc04cdfa830126d2a (T-DG4-FE-R4) is a commit and an ancestor of f2ae717.\n\n(2) SHA map. 07b72f3261 maps to old e2ef6ec, with the same subject and author date. The product diff is identical: e9213ec931b69e76 for both, 25 files.\n\n(3) The fix is in the candidate. The extractions apps/web/src/pages/my-work/messages.ts and apps/web/src/pages/traceability/selection.ts exist, MyWorkSections.tsx:16 imports renderMessage from ../my-work/messages.ts, and no section or panel module imports MyWorkPage or TraceabilityPage.\n\nI re-ran my round-2 probe web-cycles.mjs (unchanged, sha256 a7d492ec…) this round with an absolute root:\n- in the candidate clone: 202 web files and 1 cycle, pages/admin/UsersPage.tsx <-> AssignmentsPage.tsx, which is pre-DG4 DG2 code and was not raised;\n- control, at the remapped round-1 source ebd4a4b (old a91d82c): 3 cycles, including the two P4 cycles MyWorkPage <-> MyWorkSections and TraceabilityPage <-> TracePanels.\nSo the probe still detects the defect, and the candidate does not contain it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-102-web-cycles.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/web-cycles.mjs",
+        "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+        "apps/web/src/pages/my-work/messages.ts",
+        "apps/web/src/pages/traceability/selection.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-103",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision bff9725eb2769df6df885f4fbcc113dd9ddfa7b5 (T-DG4-BE-R5) is a commit and an ancestor of f2ae717.\n\n(2) SHA map. bff9725eb2 maps to old b262521, with the same subject and author date. The product diff is identical: 81050aee4a06ca03 for both, 5 files.\n\n(3) The fix is in the candidate:\n- gates.ts:657-670, writeAtCommit runs refreshPrincipal inside the transaction, then commitTimeDenial; updateGate uses it at :473 and submitGate at :684;\n- gates.ts:921-926, decideGate refreshes the principal and uses commitTimeDenial.\ngates.ts has not changed since bff9725eb2.\n\nI re-ran my round-2 probe C rev2 (sec-dg4-r2-gate-commit.test.ts, unchanged) this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 6/6 passed, exit 0, at load 8.6.\n- C1/C2: revoking a delegation or the delegator's role in the window gives 403 and nothing is decided.\n- C3: a user disabled in the window gives 401 with no audit row.\n- C4/C5: submit and configure with the write role revoked give 403 with the permission named.\n- C6: an outsider gets 404 with one denial.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-103-probe-C-rev2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-gate-commit.test.ts",
+        "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+        "apps/api/src/modules/workflows/gates.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-104",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 276623e3bf96fa2d35aeef795126931d5504d01d is a commit and an ancestor of f2ae717.\n\n(2) SHA map. 276623e3bf maps to old 546fb4e, with the same subject and author date. This is a records-only fix: the product diff is empty for both (e3b0c442…). The full diff, docs/delivery included, is identical for old and new (47a3159c99b8f8d7: stages.json, 5 lines added).\n\n(3) The fix holds in the candidate. DG4's history in stages.json at f2ae717 is PLANNED > BUILDING > (REVIEWING > FIXING) x7 > REVIEWING > VERIFYING, and the stage is REVIEWING again for round 9 at the freeze. There is no consecutive same-state step. This round, validate.mjs --historical --stage DG3, DG2 and DG1, and --pipeline, all exit 0 in the repository tree at the freeze commit 01ad2e1 (validate-*.log). In round 2 all four exited 1.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-pipeline.log",
+        "docs/delivery/reviews/DG4/round-3/code-security-reviewer.verifications.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-105",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 433627332166c48e73a032b095ebefaa29b72169 (T-DG4-KBE-R7) is a commit and an ancestor of f2ae717. 22ef6c7832 (T-DG4-ARCH-R6) is an ancestor of both f2ae717 and 4336273321. The two fix commits are on one line, so the later one already contains both. A branch-tip fix_revision is therefore consistent with D-136; the first first-parent integration commit is merge b77efdc.\n\n(2) SHA map. 4336273321 maps to old e65d6ac, and 22ef6c7832 to old d5b847b. Each pair has the same subject and author date. The product diffs are identical: 3cdecc3f763f6667 (14 files) and 05ca48d97dd54d2e (5 files).\n\n(3) The fix is in the candidate:\n- finance.ts:224-225, every gross line's drilldownHref names its own currency;\n- finance.ts:343-344, hrefOf passes the currency to drilldownHref;\n- drilldown.ts:157 and :271, a request with no currency in a multi-currency scope is not_applicable dashboard.value.multiple_currencies.\nNeither file changed after 4336273321.\n\nI re-ran my round-3 reproduction, probe GC rev 2 (sec-dg4-r3-gross-currency.test.ts, unchanged), this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 2/2 passed, exit 0, at load 8.3. In round 3 it failed by design. The 151-assertion probe GX was not re-run this round (load envelope); it passed 151/151 in round 7 on identical code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-105-probe-GC-rev2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-gross-currency.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r4-currency-node22-lang-unset.log",
+        "docs/delivery/reviews/DG4/round-4/code-security-reviewer.verifications.json",
+        "apps/api/src/modules/reporting/dashboards/finance.ts",
+        "apps/api/src/modules/reporting/dashboards/drilldown.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-106",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 (T-DG4-FE-R9B) is a commit and an ancestor of f2ae717. 9d66f671c9 (salvaged FE-R9 WIP) is an ancestor of both f2ae717 and 9b6b3ed17a. The two are on one line; the first first-parent integration commit is merge ab6e6ad.\n\n(2) SHA map. 9b6b3ed17a maps to old 935d33d, and 9d66f671c9 to old 41b586c. Each pair has the same subject and author date. The product diffs are identical: b5a6c660ac4250d6 (1 file) and 33bb4703fb604b95 (2 files).\n\n(3) The fix is in the candidate. session-bound.test.tsx:57-75 has installClock in beforeEach and vi.restoreAllMocks in afterEach. session-generation.test.tsx:426-469 holds Date.now still.\n\nOne later commit touched the auth tests: c675003 (T-DG4-FE-R10, which was 0449270 before the rewrite; F-DG4-146/147/148). It adds tests and keeps the controlled clock. I verified it in round 7 on the same code.\n\nI re-ran the three fixed spec files this round as one targeted unit-web invocation in the disposable clone: 80/80 passed, exit 0, on both Node 22.22.2 (load 8.1) and Node 24.21.0 (load 9.1).\n\nThe mutation probes (probe-y1c.sh and M1-M4) were not re-run this round. In round 6 they showed the test still kills the mutants; their logs are cited.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-m4-node22.log",
+        "docs/delivery/reviews/DG4/round-6/code-security-reviewer.verifications.json",
+        "apps/web/src/auth/session-bound.test.tsx",
+        "apps/web/src/auth/session-generation.test.tsx"
+      ]
+    }
+  ]
+}

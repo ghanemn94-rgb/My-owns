@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 9,
+  "candidate_id": "sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c",
+  "source_commit": "f2ae7170630456a772e1ceac90ab6d96b68e3f5c",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+    "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 5dbd0d6a (task T-DG4-REV-SEC-R9). I authored no implementation in the DG4 scope.\n\nAuthorship of the reviewed scope:\n- P4 is by the implementer roles listed, plus qa-verifier's promoted tests.\n- The round-9 delta (D-135, D-136, the history rewrite, findings.json, stages.json, progress.md and the two history-rewrite-D-136.* files) is by the delivery-orchestrator, under the user's authorization of the rewrite.\n\nMy only writes are evidence under docs/delivery/test-evidence/DG4/code-security/round-9/, this record and its verifications sidecar. Every build, static check and probe ran in a disposable, complete clone ($TMPDIR/review-r9), with a private copy of the pnpm store and a disposable PostgreSQL per probe. All of these were deleted afterwards. The validators, candidate.mjs and the git checks ran read-only in the repository tree.\n\nI formed my verdict before reading any other reviewer's round-9 record, and I have not read one. HEAD stayed at the freeze commit 01ad2e1 for my whole run."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-9/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R9-00-candidate-identity",
+      "procedure": "RUN THIS ROUND. Verify the assignment hash, the starting revision and the candidate ID:\n- sha256 of the assignment;\n- git rev-parse HEAD;\n- a complete (non-shallow) clone checked out at the freeze commit 01ad2e1, then candidate.mjs run there, at the source commit f2ae717 and in the repository tree;\n- the stored manifest's header.",
+      "command": "sha256sum docs/delivery/assignments/DG4/round-9/code-security-reviewer.md; git rev-parse HEAD; git clone /home/user/My-owns $TMPDIR/review-r9; git -C $TMPDIR/review-r9 checkout 01ad2e1; node tools/gates/candidate.mjs --stage DG4 (in the clone at 01ad2e1 and at f2ae717, and in the repository tree)",
+      "environment": "Node 24.21.0. Repository HEAD 01ad2e1 for the whole run. Complete clone $TMPDIR/review-r9 (is-shallow false, 0 status lines), deleted after the run.",
+      "expected": "The assignment sha256 is 1247670c…958f. candidate_id is sha256:18c18fe4…d76c with 1475 files, everywhere. The freeze commit differs from the source commit only in delivery records.",
+      "actual": "The assignment sha256 matches (1247670c43438e34…ef77958f). HEAD is 01ad2e1, the freeze commit. Its diff from source f2ae717 is 5 files, all under docs/delivery: the 3 round-9 assignments, the manifest 18c18fe4eda7cbc1.manifest.json and stages.json.\n\ncandidate.mjs gives sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c with 1475 files, exit 0, in each place:\n- in the clone at 01ad2e1 (candidate-id.log, identity.log);\n- in the clone at f2ae717 (identity.log);\n- in the repository tree (identity.log, candidate-id-repo.log).\n\nThe stored manifest has the same candidate_id, source_commit f2ae7170…, frozen_at 2026-10-13T09:12:45Z and 1475 entries.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/identity.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/candidate-id-repo.log",
+        "docs/delivery/candidates/DG4/18c18fe4eda7cbc1.manifest.json"
+      ]
+    },
+    {
+      "id": "SEC-R9-01-diff-is-records-only",
+      "procedure": "RUN THIS ROUND. Show that the diff from 5cd1e06 (round 8's source after the rewrite) to f2ae717 touches only docs/delivery/**, that the product, test, contract, tooling and lockfile trees are byte-identical, and that the pre-rewrite round-8 source 8553323 equals f2ae717 outside docs/delivery.",
+      "command": "git diff --stat 5cd1e06..f2ae717 -- . ':!docs/delivery'; git diff --name-only 5cd1e06..f2ae717; git diff --quiet 5cd1e06 f2ae717 -- apps packages docs/api tests e2e tools pnpm-lock.yaml package.json; git diff --stat 8553323 5cd1e06; git diff --quiet 8553323 f2ae717 -- . ':!docs/delivery'",
+      "environment": "git 2.x, repository tree (read-only)",
+      "expected": "An empty non-delivery diff, and git diff --quiet exit 0 on the product paths.",
+      "actual": "The diff 5cd1e06..f2ae717 excluding docs/delivery is empty: 0 lines, exit 0. git diff --quiet over apps, packages, docs/api, tests, e2e, tools, pnpm-lock.yaml and package.json exits 0.\n\nEvery changed path is under docs/delivery:\n- the round-8 assignments, reviews and verifications, including the release-auditor's;\n- the 24 round-8 run files and the round-8 manifest;\n- the round-8 reviewer and audit evidence;\n- gates/DG4.json, decisions.md (D-135, D-136), findings.json, progress.md and stages.json;\n- the two history-rewrite-D-136.* files.\nThe assignment names only the files whose content the orchestrator changed; the rest are the committed round-8 records, also all under docs/delivery.\n\nAcross the rewrite, the old round-8 source 8553323 and the new 5cd1e06 differ in exactly 33 added files, all under docs/delivery/runs/DG4. git diff --quiet 8553323 f2ae717 -- . ':!docs/delivery' exits 0. So the product is byte-identical to round 8's candidate 8014e5ce and round 7's baa6ff4d, which I reviewed in full.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-02-history-rewrite-claim",
+      "procedure": "RUN THIS ROUND. Check the D-136 rewrite claim independently:\n- git diff backup/pre-dg4-writeonce-repair-72c0e653a3 a445b2470b --stat (expect exactly the 33 restored files, all additions);\n- each restored path's blob at the new head, at its old deletion commit's parent, and its absence at the deletion commit, against restored-paths.txt;\n- ALL 360 lines of the SHA map, not only 3: same subject, author name/email/date and committer name/email/date, and git diff <old> <new> lists only restored run paths;\n- 3 verbose spot-checks (round-8 source, round-7 source and the old head);\n- the rewrite starts after the DG3 gate commit bc8f455;\n- no old commit is reachable from f2ae717.\nAlso checkWriteOnce(DG4) from tools/gates/lib/rules.mjs, called directly in throwaway clones of the new head 01ad2e1 and the old head 72c0e65.",
+      "command": "bash docs/delivery/test-evidence/DG4/code-security/round-9/rewrite-check.sh > rewrite-check.log; node -e 'import(rules.mjs).checkWriteOnce(clone, \"DG4\", errors)' in clones at 01ad2e1 and 72c0e65 (checkwriteonce.log)",
+      "environment": "git 2.x, repository tree (read-only, which carries the local backup ref). Node 24.21.0 for checkWriteOnce in throwaway clones $TMPDIR/wo-new and $TMPDIR/wo-old, deleted afterwards.",
+      "expected": "33 additions only, matching restored-paths.txt. All 360 pairs equal in metadata, with diffs limited to restored run files. checkWriteOnce: 0 errors on the new head (and D-136 says 99 on the old head).",
+      "actual": "Every part holds:\n- git diff old-head new-head is 33 files, 3192 insertions, 0 deletions, and every status is A. The path list is identical to restored-paths.txt.\n- For each of the 33 paths, the blob at a445b24 equals the listed blob and equals the blob at <deletion commit>^ in the old history. The path is absent at the deletion commit itself (eda5588: 3, 229d563: 6, b05492f: 6, 7a26174: 18). 0 mismatches.\n- All 360 map pairs: subject, author and committer names, emails and dates are identical, and every git diff old new lists only restored run paths. 0 failures. rev-list --count eda5588^..old-head is 360, which equals the number of map pairs.\n- Spot-checks: 8553323 to 5cd1e06 (D-134) and 72c0e65 to a445b24 (the round-8 audit evidence) each differ by 33 docs/delivery/runs/DG4 files; dab4562 to 8953eec (D-132) by 15, the runs that existed by then. Each has an identical subject, author date and committer date, and the diff outside docs/delivery/runs is empty.\n- bc8f455, the DG3 gate commit, is an ancestor of eda5588^ and of both heads, so DG0-DG3 are untouched.\n- 0 old commits are reachable from f2ae717.\n- checkWriteOnce(DG4): 0 errors at 01ad2e1, and 99 at 72c0e65 (D events, 'removed after it was committed' and 'missing from the working tree' for the 33 files). This matches D-136 exactly.\n\nDisclosed: the first execution of rewrite-check.sh had a bug in my own script. git rev-parse <commit>:<absent-path> echoes its argument before failing, so my 'absent at the deletion commit' test printed 33 false MISMATCH lines. I fixed it to use git cat-file -e and re-ran the whole script. The committed log is from the fixed run, and the fix is visible in rewrite-check.sh line 17. The other results of the first run, 360 pairs with 0 failures and 33 A, were the same.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/rewrite-check.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/rewrite-check.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/checkwriteonce.log",
+        "docs/delivery/test-evidence/DG4/history-rewrite-D-136.shamap.txt",
+        "docs/delivery/test-evidence/DG4/history-rewrite-D-136.restored-paths.txt"
+      ]
+    },
+    {
+      "id": "SEC-R9-03-judge-D136",
+      "procedure": "RUN THIS ROUND. Read D-136 (decisions.md line 7) and check each factual claim against the evidence:\n- B3, the rewrite: SEC-R9-02;\n- B4, frozen_at: stages.json review_rounds[*].frozen_at before (old head, via the backup ref) and after (f2ae717), against every DG4 manifest;\n- the round-8 auditor record listed in round 8's records;\n- B2, the 23 closures back to FIXED_PENDING_VERIFICATION with remapped fix_revisions, F-DG4-148 ACCEPTED_OBSERVATION;\n- the 'first integration commit' rule for multi-commit fixes.\nThen judge whether the decision weakens any gate rule.",
+      "command": "python3 cross-check (d136-b4-b2-check.log); git log/merge-base walk (fix-revision-first-integration.log); git diff --stat a445b24..f2ae717",
+      "environment": "Python 3 and git over the repository tree at HEAD 01ad2e1 (read-only)",
+      "expected": "Every D-136 claim matches the evidence; tools/gates is unchanged; no closure is carried over without re-verification.",
+      "actual": "D-136 is accurate and I judge it sound.\n\nB4: before the rewrite, rounds 3-8 had frozen_at 12:34:28, 21:53:13, 04:23:09, 12:19:49, 20:52:19 and 07:06:20, which is 10-36 s after their manifests. At f2ae717 all 9 rounds and the stage candidate equal their manifests exactly. The edit is to stages.json, not to the write-once manifests.\n\nRecords: round 8's records now list 4 roles, including release-auditor.\n\nB2: findings.json has 23 DG4 findings FIXED_PENDING_VERIFICATION and F-DG4-148 ACCEPTED_OBSERVATION, as stated. Each of my seven carries the remapped full fix_revision and a history note naming the remapped fix commits. For F-DG4-100, 5d6f4802 is the first first-parent commit containing both 70fcefa172 and bff9725eb2. For F-DG4-105 and F-DG4-106, the fix commits are on one line, so the later commit contains both; using it is consistent with the rule.\n\nThe D-136 records commit a445b24..f2ae717 touches only decisions.md, findings.json, progress.md, stages.json and the two history-rewrite files. tools/gates is unchanged: SEC-R9-01 shows git diff --quiet over tools is 0 from 5cd1e06, and SEC-R9-02 shows the rewrite changed only restored runs. So no gate rule was weakened.\n\nThe rewrite repairs a write-once violation by restoring content and changes nothing else. It was authorized by the user, with the D-034 precedent. Old ids stay resolvable through the local backup ref, which a clone carries as origin/backup/…. The committed manifests keep the old source ids, which D-035 tolerates.\n\nObservation, not a defect: the backup ref is local-only. A fresh clone of the remote cannot resolve pre-rewrite ids such as 8553323 that are named in older records and manifests. D-136 discloses this, and D-035 handles it.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/d136-b4-b2-check.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/rewrite-check.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/checkwriteonce.log",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "SEC-R9-04-findings-reverification-B2",
+      "procedure": "RUN THIS ROUND. For F-DG4-100 to F-DG4-106:\n(1) fix_revision and every listed fix commit is a commit and an ancestor of f2ae717 (git merge-base --is-ancestor);\n(2) each remapped commit maps to its old id in the SHA map, with the same subject and author date, and git diff <c>^ <c> -- . ':!docs/delivery' hashes the same for old and new;\n(3) the fix is still present in the candidate (file:line), with the earlier probe or targeted test re-run where cheap: probes D, F rev2, C rev2 and GC rev2, each one targeted file on a disposable PostgreSQL; web-cycles.mjs with a control; and the three fixed session spec files on Node 22 and 24.",
+      "command": "bash findings-reverify-git.sh; git grep -n … f2ae717 (findings-fix-presence.log); bash run-probe.sh <probe> 2630x <log>; node web-cycles.mjs <clone>; pnpm exec vitest run --project unit-web apps/web/src/auth/session-{bound,identity,generation}.test.tsx",
+      "environment": "Repository tree (git, read-only). Disposable clone $TMPDIR/review-r9 at 01ad2e1. Node 22.22.2 with LANG unset for the probes; Node 22.22.2 and 24.21.0 for the unit specs. Disposable PostgreSQL 16 clusters on ports 26301-26304 (SQL_ASCII, C), deleted after each run. Load 7.9-9.1.",
+      "expected": "All three parts hold for all seven findings; every re-run exits 0.",
+      "actual": "All seven re-verify; details are in code-security-reviewer.verifications.json.\n\n(1) Every fix_revision and fix commit is an ancestor of f2ae717 (rc=0).\n\n(2) Every remapped commit is in the map with the same subject and date, and the old and new product diffs hash identically. F-DG4-104 is a records-only fix, so its full diff was compared: 47a3159c… both.\n\n(3) Each fix is present:\n- F-DG4-100: register.ts:143; finance-validation.ts:236 and :357; overlaps.ts:437; valuation-methods.ts:192; tasks/routes.ts:160.\n- F-DG4-101: corrections.ts:193 and 202-223; the 0061 blob is the same as in the fix commit.\n- F-DG4-102: messages.ts and selection.ts.\n- F-DG4-103: gates.ts:657-670 and 921-926.\n- F-DG4-104: the stage history and the validators.\n- F-DG4-105: finance.ts:224-225 and 343-344; drilldown.ts:157 and 271.\n- F-DG4-106: session-bound.test.tsx:57-75.\n\nRe-runs, all exit 0:\n- probe F rev2 10/10;\n- probe D 4/4;\n- probe C rev2 6/6;\n- probe GC rev2 2/2;\n- web-cycles: 1 pre-DG4 cycle; the control at the remapped round-1 source shows the 2 P4 cycles;\n- session specs 80/80 on Node 22 and on Node 24.\n\nThese are targeted single-file runs, which the assignment allows inside the load envelope. vitest ran in the clone, whose node_modules is writable, so --configLoader runner was not needed. The larger probes (S 766, GX 151) and the Y1c mutants were not re-run this round; their round-7 and round-6 logs are cited.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG4/round-9/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/run-probe.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/with-pg.sh",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-100-probe-D.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-101-probe-F-rev2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-102-web-cycles.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-103-probe-C-rev2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-105-probe-GC-rev2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-05-install-build",
+      "procedure": "RUN THIS ROUND. Offline frozen install from a private copy of the local pnpm store, then pnpm -r build, then a second install to link bins.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r9 at 01ad2e1, LANG/LC_ALL unset",
+      "expected": "All three exit 0.",
+      "actual": "install1 exit 0, build exit 0, install2 exit 0.\n\nDisclosed:\n- install1 prints four 'WARN Failed to create bin … mth-db … (ENOENT)'. That is expected before the build, because the bin target dist/cli.js does not exist yet; install2, after the build, links it with no warning.\n- 'resolution step is skipped' is pnpm's frozen-lockfile notice, not a skipped test.\n- The web build prints Vite's chunk-size advisory ('Adjust chunk size limit …'). It is a warning, not an error, and the same as in rounds 7 and 8.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R9-06-typecheck",
+      "procedure": "RUN THIS ROUND. pnpm -r typecheck.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r9",
+      "expected": "Exit 0.",
+      "actual": "Exit 0, with no error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-07-lint",
+      "procedure": "RUN THIS ROUND. pnpm lint (eslint . --max-warnings=0).",
+      "command": "pnpm lint",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r9",
+      "expected": "Exit 0.",
+      "actual": "Exit 0. With --max-warnings=0, any warning would have failed the run. The only 'warn' hit in the log is that flag.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-08-format",
+      "procedure": "RUN THIS ROUND. pnpm format:check.",
+      "command": "pnpm format:check",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r9",
+      "expected": "Exit 0.",
+      "actual": "'All matched files use Prettier code style!', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-09-openapi-lint",
+      "procedure": "RUN THIS ROUND: pnpm openapi:lint. CARRIED FORWARD: the Problem.params (D-114) and p4-pending analysis from SEC-R7-04 and SEC-R7-18, on identical docs/api and source.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r9",
+      "expected": "Exit 0, OpenAPI 3.1.1, 652 operations.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0.\n\nThe Problem.params and p4-pending analysis was not re-run this round, because docs/api and the source are byte-identical to rounds 7 and 8 (SEC-R9-01). From round 7:\n- Problem.params is optional and is set only by the Modular waiver refusals, so the addition is additive;\n- all 43 p4-pending lists are empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/openapi-lint.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/problem-params.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-10-no-cdn",
+      "procedure": "RUN THIS ROUND: pnpm check:no-cdn. CARRIED FORWARD: the secrets and injection-sink diff scan (SEC-R7-05), on identical code.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 22.22.2, clone $TMPDIR/review-r9",
+      "expected": "Exit 0.",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.\n\nThe diff scan was not re-run this round, because the product is byte-identical (SEC-R9-01). In round 7 it found no secret, no remote URL beyond test placeholders, no executable eval sink, and one non-injectable sql.raw.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/no-cdn.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.sh"
+      ]
+    },
+    {
+      "id": "SEC-R9-11-validators",
+      "procedure": "RUN THIS ROUND. The gate validators, read-only in the repository tree.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3; … --historical --stage DG2; … --historical --stage DG1; … --register DG4; … --pipeline",
+      "environment": "Node 22.22.2, repository tree /home/user/My-owns (read-only), HEAD 01ad2e1",
+      "expected": "Each prints PASS and exits 0.",
+      "actual": "Each exits 0:\n- 'PASS gate DG3 (historical)';\n- 'PASS gate DG2 (historical)';\n- 'PASS gate DG1 (historical)';\n- 'PASS register rules at DG4';\n- 'PASS pipeline (active stage: DG4 REVIEWING)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R9-12-unit-node22-node24-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. pnpm test on Node 22 and Node 24 (round 7: SEC-R7-07, SEC-R7-08, SEC-R7-08b and SEC-R7-22) on byte-identical code. The full suite was not re-run because the assignment's load envelope (environment.md limitation 6, D-134) forbids code-security from running pnpm test while qa runs it. The only unit run this round is the targeted F-DG4-106 spec set (SEC-R9-04).",
+      "command": "(round 7) pnpm test, Node 22.22.2 and 24.21.0; vitest --configLoader runner on the confined tree",
+      "environment": "Round-7 environment: clone at old ea5e262, whose product tree equals f2ae717's (SEC-R9-01). Load 9-29.",
+      "expected": "pnpm test passes; any failure is disclosed and explained.",
+      "actual": "The full suite was not re-run this round, by design (the load envelope).\n\nRound-7 results on identical code:\n- Node 24: exit 0 (1589 + 1347 + 259, with 2 skipped by design) at load 23-25.\n- Node 22 harness run: exit 1 at load 23-27, with 2 unit-web failures: raid.test.tsx 'action register' en and ar, a 5 s findByRole wait under load. This is the F-DG4-148 class, which is ACCEPTED_OBSERVATION under D-134. Its repeat exited 0, and the spec alone passed 10/10 (SEC-R7-22).\n- --configLoader runner was needed for direct vitest calls with read-only node_modules, and was used.\n\nThe exit_status recorded here is that of the round-7 passing runs; the failing run is disclosed above. qa owns the round-9 pnpm test runs inside the envelope.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-configloader-runner.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-13-integration-twice-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. The integration suite on a disposable PostgreSQL, once with LANG/LC_ALL unset (Node 22) and once with LANG=C.UTF-8 (Node 24), including contract.test.ts and migrations 0001 to 0061 (SEC-R7-09 and SEC-R7-10). Not re-run because the assignment forbids code-security from running the integration suite this round (load envelope). Only single probe files ran (SEC-R9-04).",
+      "command": "(round 7) bash with-pg.sh 2633x pnpm test:integration --reporter=verbose",
+      "environment": "Round-7 environment: clone at old ea5e262, ports 26331/26332, clusters deleted afterwards",
+      "expected": "Both runs pass every test.",
+      "actual": "Not re-run this round, by design; the code is byte-identical (SEC-R9-01). Round 7: 209 files, 1984/1984, exit 0, in both runs, with no failed, skipped or hook-timeout lines.\n\nDisclosed: each run has one 'unhandled error … ECONNRESET' line. It comes from the passing BE17 db-econnreset test, which injects connection resets on purpose and asserts a 500 problem.\n\nThe assignment says migrations '0028-0060'. The tree has 0061 (F-DG4-101's fix, KBE-R5); it has been part of every round since round 2, and the round-7 runs cover 0001-0061.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/with-pg.sh"
+      ]
+    },
+    {
+      "id": "SEC-R9-14-authorization-aud-adm-sweep-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND, plus targeted re-runs this round. The P4 write sweep: AUD gets 403 on every P4 write and an ADM-only caller sees nothing transformation-scoped, plus the commit-time re-check, If-Match and audit (SEC-R7-15). The 766-call sweep was not re-run because of the load envelope.",
+      "command": "(round 7) run-probe.sh sec-dg4-r2-sweep; (round 9) run-probe.sh sec-dg4-r2-sod-denials, sec-dg4-r2-gate-commit",
+      "environment": "Round-7 probe clone (old ea5e262) and round-9 clone 01ad2e1, disposable PostgreSQL",
+      "expected": "Every sweep assertion passes.",
+      "actual": "The sweep was not re-run this round; the code is byte-identical (SEC-R9-01). Round 7: sec-dg4-r2-sweep 766/766, exit 0.\n\nRun this round: probe D 4/4 (SoD denials audited) and probe C rev2 6/6 (gate commit-time re-check), both exit 0 (SEC-R9-04).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-sweep.test.ts",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-100-probe-D.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-103-probe-C-rev2.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-15-idor-and-read-scope-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND, except one probe. Cross-transformation IDOR and ADR-0037 §6 read scope for the dashboard, drill-down, My Work, traceability and orphans (SEC-R7-16). The reason is the same as SEC-R9-14.",
+      "command": "(round 7) run-probe.sh sec-dg4-r1-idor, r1-body-idor, r3-drill-scope, r4-outcome-scope, r4-currency, r5-filter-scope, r3-gross-currency; (round 9) run-probe.sh sec-dg4-r3-gross-currency",
+      "environment": "Round-7 probe clone (old ea5e262) and round-9 clone 01ad2e1, disposable PostgreSQL",
+      "expected": "No foreign record changes or is disclosed, and an unreadable id gives 404.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7, all exit 0:\n- r1-idor 204/204;\n- r1-body-idor 2/2;\n- r3-drill-scope 163/163;\n- r4-outcome-scope 3/3;\n- r4-currency 151/151;\n- r5-filter-scope 5/5;\n- r3-gross-currency 2/2.\n\nRe-run this round: r3-gross-currency 2/2, exit 0.\n\nThe outsider-status differences of D-111 and D-112 (dispensation writes 403, reporting/modular writes 404) are unchanged and known.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r3-drill-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-prior-probes.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-105-probe-GC-rev2.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-16-approvals-sod-finance-handover-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND, except one probe. Business approvals (no self-approval, no non-approver, stale 409, approval.not_requester), delegation and its loop guard, escalation, Finance-only validation with no in-place edit, and receiving-owner-only handover with the race probe H (SEC-R7-17). The reason is the same as SEC-R9-14.",
+      "command": "(round 7) run-probe.sh r1-approvals, r2-finance, r2-gate-commit, r2-sod-denials, r2-slice-b-ids, r3/r4-required-members, sec-dg4-r7-handover-race; (round 9) run-probe.sh sec-dg4-r2-finance",
+      "environment": "Round-7 probe clone (old ea5e262) and round-9 clone 01ad2e1, disposable PostgreSQL",
+      "expected": "Every probe passes.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7, all exit 0:\n- r1-approvals 6/6;\n- r2-finance 10/10;\n- r2-gate-commit 6/6;\n- r2-sod-denials 4/4;\n- r2-slice-b-ids 1/1;\n- r3 and r4 required-members 2/2 each;\n- handover-race probe H 4/4: one winner, every loser 409, a consistent end state.\n\nRe-run this round, all exit 0 (SEC-R9-04): r2-finance 10/10, which includes the stale correction 409 and the 0061 guard, plus r2-gate-commit 6/6 and r2-sod-denials 4/4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probe-H-handover-race-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-approvals-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-101-probe-F-rev2.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-17-commit-time-module-graph-worker-web-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND, except the web-cycle probe. Covers the commit-time authorization scan, the module graph (governance -> raid, and raid never imports governance), worker isolation (D-102), server.ts wiring, and the web import graph with lazy routes (SEC-R7-18). The static scans were not re-run because the source is byte-identical, so they would give the same output.",
+      "command": "(round 7) static-scans.sh: commit-scan6.py, module-cycles.mjs, web-cycles.mjs; (round 9) web-cycles.mjs on the candidate clone",
+      "environment": "Round-7 probe clone (old ea5e262); round-9 clone 01ad2e1 for web-cycles",
+      "expected": "Every write reaches openWrite atCommit; there are no value-import cycles; the worker imports no API code.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7:\n- commit-scan: 232 write routes and 33 residuals, each read manually and each reaching openWrite(…, {atCommit: true});\n- 0 API value-import cycles, and raid has no governance import;\n- the worker has 0 API imports;\n- contract.test.ts (45) and media-types.test.ts (21) pass in both integration runs.\n\nRe-run this round: web-cycles finds 202 files and 1 cycle, the pre-DG4 admin pair, outside P4 (SEC-R9-04).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/worker-isolation.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-102-web-cycles.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-18-decimals-migrations-exactly-once-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND. Decimals end to end, migrations (forward-only, contiguous, row guards, no DELETE/TRUNCATE grant) and exactly-once jobs (advisory locks 730224-730249, unique backstops, runOnce, replay), plus the F-DG4-128 supervise cadence and its mutants (SEC-R7-12, SEC-R7-14 and SEC-R7-19). Not re-run because the code is byte-identical and the integration stack stays idle (load envelope).",
+      "command": "(round 7) diff-scan.sh D9/D13/D16/D17; suite-counts.sh; cadence-mutations.sh",
+      "environment": "Round-7 environment: clones at old ea5e262",
+      "expected": "No float in money paths, contiguous forward-only migrations, every exactly-once suite passing, and the cadence mutants killed.",
+      "actual": "Not re-run this round; the code is byte-identical. Round 7:\n- D9 finds no float, and the 'no floating point' catalogue test passes.\n- Migrations 0001-0061 are contiguous: 34 were added in P4 (0028-0061) and none modified. Every new table has guards, and there is no DELETE or TRUNCATE grant.\n- The exactly-once suites pass in both runs.\n- The cadence mutants M1, M2 and M3 are killed. Their runs exit 1 by design, with exactly the expected 4, 1 and 1 failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutations.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R9-19-requirement-acceptance-carried-forward",
+      "procedure": "CARRIED FORWARD, NOT RE-RUN THIS ROUND, plus a check run this round. The acceptance evidence for the 52 assigned requirements was traced against round 7's logs (SEC-R7-20). The --register DG4 validator was re-run this round (SEC-R9-11).",
+      "command": "(round 7) python3 req-acceptance.py; (round 9) node tools/gates/validate.mjs --register DG4",
+      "environment": "Round-7 logs; round-9 repository tree",
+      "expected": "Every named test file is found and passes; the register is valid.",
+      "actual": "The trace was not re-run this round, because it would read identical test files. In round 7 every named vitest file was found and passed, with 0 failing files and 0 'NOT FOUND'. The 20 Playwright specs are left to QA.\n\nThis round:\n- requirements.csv is unchanged: git diff --quiet 5cd1e06 f2ae717 holds outside docs/delivery, and the file has no diff from 5cd1e06 (SEC-R9-01 lists the changed files).\n- --register DG4 passes.\n- The partial-coverage disclosures in the notes are unchanged; I judged them acceptable in round 7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-9/identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-20-environment-residuals",
+      "procedure": "CARRIED FORWARD (the offline surface, SEC-R7-21) plus a check run this round (the offline frozen install in SEC-R9-05). Covers the live registry (D-057), live CI (D-058) and Keycloak (D-049).",
+      "command": "(round 9) pnpm install --offline --frozen-lockfile; (round 7) env-residuals.sh",
+      "environment": "Node 22.22.2, no network",
+      "expected": "PASS on the offline/config surface, with the residuals noted.",
+      "actual": "This round: the offline frozen install exits 0 (SEC-R9-05), and pnpm-lock.yaml is unchanged (SEC-R9-01).\n\nRound 7: check-ci-needs OK, with its tests 46/46, and 37 oidc test lines passing against the fake IdP in each integration run.\n\nResiduals, as the assignment directs: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and a live Keycloak (D-049) are not reachable from this sandbox. PASS on the offline surface.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/env-residuals.log"
+      ]
+    },
+    {
+      "id": "SEC-R9-21-evidence-honesty-log-scan",
+      "procedure": "RUN THIS ROUND. Scan every round-9 log for exit lines and for fail, error, warn, skip and timeout lines, and explain each hit. Then restate the round-7 disclosures for the logs carried forward.",
+      "command": "bash/grep over docs/delivery/test-evidence/DG4/code-security/round-9/*.log > log-scan.txt",
+      "environment": "bash and grep",
+      "expected": "Every non-zero exit and every warning or error line is explained.",
+      "actual": "Round 9: every exit line in every log is 0 (exit_status: 0, rc=0 or exit 0). d136-b4-b2-check.log and findings-fix-presence.log have no exit lines; they are transcripts of python and git grep that returned normally.\n\nEach hit is explained:\n- build.log: 1 Vite chunk-size advisory (a warning).\n- install1.log: the 4 'WARN Failed to create bin … mth-db' lines before the build (expected; install2 links them), and pnpm's 'resolution step is skipped' notice. install2.log has that notice only.\n- lint.log: the '--max-warnings=0' flag.\n- checkwriteonce.log: 'errors: 0' at the new head and 'errors: 99' at the OLD head, the control that D-136 describes.\n- rewrite-check.log: 'pairs checked: 360, failures: 0'.\n- findings-fix-presence.log: a code comment in gates.ts:920 containing 'fails'.\nNo test failed, was skipped or timed out in any round-9 run. The first rewrite-check run's script bug is disclosed in SEC-R9-02.\n\nCarried-forward logs (round 7), as explained in SEC-R7-23:\n- unit-node22.log: exit 1, from 2 raid findBy waits under load (SEC-R9-12);\n- cadence-mutation-M1/M2/M3: exit 1 by design (SEC-R9-18);\n- one BE17 ECONNRESET line per integration run, by design (SEC-R9-13).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-9/log-scan.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/log-scan.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/code-security/round-9/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/identity.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/candidate-id-repo.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/rewrite-check.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/rewrite-check.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/checkwriteonce.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/d136-b4-b2-check.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/run-probe.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/with-pg.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-100-probe-D.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-101-probe-F-rev2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-102-web-cycles.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-103-probe-C-rev2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-105-probe-GC-rev2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node22.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node24.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/install1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/build.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/install2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/typecheck.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/lint.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/openapi-lint.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/no-cdn.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/format-check.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG3.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/validate-register-DG4.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/validate-pipeline.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-9/log-scan.txt",
+    "docs/delivery/reviews/DG4/round-9/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG4/round-8/code-security-reviewer.json",
+    "docs/delivery/reviews/DG4/round-7/code-security-reviewer.json"
+  ],
+  "reviewed_at": "2026-10-13T09:40:30Z",
+  "summary": "A confirmation and re-verification round (D-136) on candidate sha256:18c18fe4…d76c (1475 files, source f2ae717, freeze 01ad2e1), verified in a complete clone. The product, tests, contract, tooling and lockfile are byte-identical to round 8's 5cd1e06 (old 8553323) and to round 7's code.\n\nThe D-136 history rewrite checks out independently:\n- exactly 33 added run files, at their original blobs;\n- all 360 SHA-map pairs have identical metadata, and their diffs touch only restored run paths;\n- checkWriteOnce(DG4) gives 0 errors at the new head and 99 at the old one;\n- B4's frozen_at values now equal the manifests.\n\nF-DG4-100 to F-DG4-106 all re-verify:\n- every remapped fix_revision is an ancestor of f2ae717;\n- old and new product diffs are identical;\n- each fix is present at file:line, and 4 DB probes, the web-cycle probe and the session specs on Node 22 and 24 were re-run, all exit 0.\n\nThe validators (historical DG3/DG2/DG1, register DG4, pipeline) and typecheck, build, lint, format, openapi:lint and no-cdn all exit 0.\n\npnpm test, the integration suite and the large probes are carried forward from round 7 on identical code, by the load envelope, and are labelled as such. No new findings."
+}
