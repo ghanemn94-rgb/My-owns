@@ -25,14 +25,16 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is VERIFYING after review round 10.** The build is complete (D-088 to D-116).
-  - **Rounds 1–9:** twenty-four reviewer findings, twenty-three CLOSED_VERIFIED, re-verified in round 9 after the D-136 history rewrite. F-DG4-148 (Low) is ACCEPTED_OBSERVATION (D-134), with the load envelope in `environment.md` limitation 6.
-  - **Round-9 audit:** BLOCKED only on F-DG4-160 (Low, the auditor's own finding): a stale 'later release' G6 hint. It was repaired by T-DG4-FE-R11 together with a sweep of similar strings (D-137, D-138).
-  - **Pre-freeze:** a test-reliability defect in `a08-gate-controls.test.ts` was repaired by T-DG4-BE-R7 (D-138, D-139). The pre-freeze chain on `474d82a` is fully green.
-  - **Round 10** (candidate `f38274cb`, source `e70ac02`): domain, code-security and qa all PASS, with no new finding.
+- **DG4 is APPROVED** (gate `docs/delivery/gates/DG4.json`, candidate `sha256:f38274cb…`, 1475 files, source `e70ac02`; 137/137 DG4-final requirements).
+  - **Gate round 10:** 3× PASS (domain, code-security, qa), plus a release-auditor PASS (`T-DG4-AUDIT-R10`) on the same candidate.
+  - **Findings:** 25 DG4 findings. 24 are CLOSED_VERIFIED by non-owners; F-DG4-148 (Low) is ACCEPTED_OBSERVATION, with the load envelope in `environment.md` limitation 6 (D-134). There are 0 unresolved Critical/High findings and 0 mandatory violations.
+  - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
+  - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
+  - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
+- **DG5 is PLANNED.**
 - **Next action:**
-  1. Run the release-auditor on round 10 (it verifies F-DG4-160 as its reporter). Do not edit `decisions.md` before the gate decision.
-  2. On APPROVED: run the validators, then record D-140 with the first DG5 records change.
+  1. Start DG5 (P5): read-only discovery of its requirements (`final_gate` = DG5) and the master prompt's P5 scope.
+  2. Then the P5 plan and work split, following the protocol.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
