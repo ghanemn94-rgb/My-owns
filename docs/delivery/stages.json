@@ -1449,7 +1449,7 @@
       "id": "DG4",
       "stage": "P4",
       "name": "Execution value and sustainment",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG3"
       ],
@@ -1467,10 +1467,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527",
-        "source_commit": "dab4562c71ab4f0a8e5b89b32ad93a0861539598",
-        "frozen_at": "2026-10-12T20:52:19Z",
-        "manifest_path": "docs/delivery/candidates/DG4/baa6ff4da306402c.manifest.json"
+        "candidate_id": "sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804",
+        "source_commit": "8553323d6938d5c5077661070ab9f8df2d8dc969",
+        "frozen_at": "2026-10-13T07:06:20Z",
+        "manifest_path": "docs/delivery/candidates/DG4/8014e5ceffe1f374.manifest.json"
       },
       "review_rounds": [
         {
@@ -1556,6 +1556,18 @@
             "qa-verifier": "docs/delivery/reviews/DG4/round-7/qa-verifier.json"
           },
           "note": "DG4 gate review round 7 on the repaired candidate baa6ff4d (1475 files, source dab4562; code identical to caac6da). Round 6 (candidate f966fe57): all three PASS; new F-DG4-128 (Medium, worker supervision loop) and F-DG4-146/147/148 (Low, tests), repaired by BE-R6 and FE-R10 (D-131, D-132), no orchestrator edits. Pre-freeze verification, no agent running: unit 1589 + 1347 + 259/2 in both locale settings; integration 1984/1984; product e2e 350/350 in both locale settings; root acceptance e2e 14/14; static checks exit 0."
+        },
+        {
+          "round": 8,
+          "candidate_id": "sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804",
+          "frozen_at": "2026-10-13T07:06:20Z",
+          "source_commit": "8553323d6938d5c5077661070ab9f8df2d8dc969",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG4/round-8/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG4/round-8/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG4/round-8/qa-verifier.json"
+          },
+          "note": "DG4 gate review round 8, a confirmation round (D-134), on candidate 8014e5ce (1475 files, source 8553323). The product code is byte-identical to round 7's dab4562; only delivery records changed (D-133, D-134, environment.md limitation 6). Round 7: domain PASS, code-security PASS, qa FAIL only on F-DG4-148, which the user decided to accept as an observation with a documented load envelope."
         }
       ],
       "gate_record": "docs/delivery/gates/DG4.json",
@@ -1639,6 +1651,11 @@
           "state": "FIXING",
           "at": "2026-10-13T01:21:02Z",
           "note": "Round-7 results on baa6ff4d (all three first runs killed by a session restart and re-run, D-084): domain PASS, code-security PASS, qa FAIL only because F-DG4-148 (Low) does not verify closed. F-DG4-128, 146 and 147 CLOSED_VERIFIED. No new finding. Next step on F-DG4-148 put to the user (D-133)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-13T07:06:20Z",
+          "note": "DG4 re-frozen for review round 8, a confirmation round (D-134): candidate 8014e5ce (1475 files, source 8553323), product identical to round 7. qa decides the acceptance of F-DG4-148 under the load envelope."
         }
       ]
     },
