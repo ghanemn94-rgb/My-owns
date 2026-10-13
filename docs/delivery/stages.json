@@ -1449,7 +1449,7 @@
       "id": "DG4",
       "stage": "P4",
       "name": "Execution value and sustainment",
-      "state": "VERIFYING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG3"
       ],
@@ -1467,10 +1467,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804",
-        "source_commit": "8553323d6938d5c5077661070ab9f8df2d8dc969",
-        "frozen_at": "2026-10-13T07:05:44Z",
-        "manifest_path": "docs/delivery/candidates/DG4/8014e5ceffe1f374.manifest.json"
+        "candidate_id": "sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c",
+        "source_commit": "f2ae7170630456a772e1ceac90ab6d96b68e3f5c",
+        "frozen_at": "2026-10-13T09:12:45Z",
+        "manifest_path": "docs/delivery/candidates/DG4/18c18fe4eda7cbc1.manifest.json"
       },
       "review_rounds": [
         {
@@ -1569,6 +1569,18 @@
             "release-auditor": "docs/delivery/reviews/DG4/round-8/release-auditor.json"
           },
           "note": "DG4 gate review round 8, a confirmation round (D-134), on candidate 8014e5ce (1475 files, source 8553323). The product code is byte-identical to round 7's dab4562; only delivery records changed (D-133, D-134, environment.md limitation 6). Round 7: domain PASS, code-security PASS, qa FAIL only on F-DG4-148, which the user decided to accept as an observation with a documented load envelope."
+        },
+        {
+          "round": 9,
+          "candidate_id": "sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c",
+          "frozen_at": "2026-10-13T09:12:45Z",
+          "source_commit": "f2ae7170630456a772e1ceac90ab6d96b68e3f5c",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG4/round-9/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG4/round-9/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG4/round-9/qa-verifier.json"
+          },
+          "note": "DG4 gate review round 9, a confirmation and re-verification round (D-136), on candidate 18c18fe4 (1475 files, source f2ae717). After the D-136 history rewrite the product code is byte-identical to round 8's (8553323, now 5cd1e06); only delivery records changed (D-135, D-136, findings.json, stages.json, progress.md and the rewrite evidence). Each reviewer re-verifies the findings it closed before; qa re-records the F-DG4-148 acceptance."
         }
       ],
       "gate_record": "docs/delivery/gates/DG4.json",
@@ -1662,6 +1674,16 @@
           "state": "VERIFYING",
           "at": "2026-10-13T08:20:24Z",
           "note": "Round 8 on 8014e5ce: domain PASS, code-security PASS, qa PASS, no new finding; qa accepts F-DG4-148 as an observation (D-134). The release-auditor runs on the same candidate (D-135)."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-13T08:58:00Z",
+          "note": "The round-8 release-auditor BLOCKED DG4 on record defects B1-B4 (D-136): D-135 added after the freeze, the findings.json verification mirror, 33 deleted run files (write-once), frozen_at drift. The user authorized the history rewrite."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-13T09:12:45Z",
+          "note": "History rewritten and B4 corrected (D-136). DG4 re-frozen for review round 9: candidate 18c18fe4 (1475 files, source f2ae717), product identical to round 8. Every closure is re-verified on the rewritten history; qa re-records F-DG4-148."
         }
       ]
     },
