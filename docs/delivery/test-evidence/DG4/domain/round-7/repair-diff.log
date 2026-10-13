@@ -1,0 +1,347 @@
+# domain-reviewer DG4 r7: repair diff 1e0dc5d..dab4562 outside docs/delivery
+ .env.example                                       |   4 +
+ apps/web/e2e/session-end.spec.ts                   |   9 +
+ apps/web/src/auth/session-wait.test.tsx            | 199 +++++++++++++++++++++
+ apps/web/src/test/harness-config.test.ts           |  18 +-
+ apps/web/test/setup.ts                             |  27 ++-
+ apps/worker/src/main.ts                            |  12 +-
+ apps/worker/src/queues/index.ts                    |   1 +
+ apps/worker/src/queues/platform.ts                 |  33 +++-
+ .../test/integration/supervise-cadence.test.ts     | 181 +++++++++++++++++++
+ apps/worker/test/interval-probe.mjs                |  14 ++
+ package.json                                       |   2 +-
+ packages/config/src/index.ts                       |  18 ++
+ packages/config/src/load.test.ts                   |  35 +++-
+ packages/config/src/load.ts                        |   9 +-
+ 14 files changed, 551 insertions(+), 11 deletions(-)
+# numstat (deletions per file)
+4	0	.env.example
+9	0	apps/web/e2e/session-end.spec.ts
+199	0	apps/web/src/auth/session-wait.test.tsx
+17	1	apps/web/src/test/harness-config.test.ts
+26	1	apps/web/test/setup.ts
+10	2	apps/worker/src/main.ts
+1	0	apps/worker/src/queues/index.ts
+29	4	apps/worker/src/queues/platform.ts
+181	0	apps/worker/test/integration/supervise-cadence.test.ts
+14	0	apps/worker/test/interval-probe.mjs
+1	1	package.json
+18	0	packages/config/src/index.ts
+34	1	packages/config/src/load.test.ts
+8	1	packages/config/src/load.ts
+# register/ADR/migration/openapi change in range (expect empty):
+# full diff of product + harness files
+diff --git a/.env.example b/.env.example
+index e6beeb9..a9d83ab 100644
+--- a/.env.example
++++ b/.env.example
+@@ -86,6 +86,10 @@ AUTH_RATE_LIMIT_PER_MINUTE=
+ # optional | default: info | used by: api, worker
+ LOG_LEVEL=
+ 
++# Worker pg-boss supervision cadence in seconds: expiry of jobs held by a dead worker, queue monitoring and maintenance (F-DG4-128). Integer 1-600; 60 is the cadence pg-boss documents
++# optional | default: 60 | used by: worker
++WORKER_SUPERVISE_INTERVAL_SECONDS=
++
+ # Comma-separated reverse-proxy addresses whose X-Forwarded-* headers are trusted
+ # optional | default: (empty) | used by: api
+ TRUST_PROXY=
+diff --git a/apps/web/e2e/session-end.spec.ts b/apps/web/e2e/session-end.spec.ts
+index 7e31557..44bb1f9 100644
+--- a/apps/web/e2e/session-end.spec.ts
++++ b/apps/web/e2e/session-end.spec.ts
+@@ -279,7 +279,16 @@ test("a 403 is not a session end: a refused change keeps the user signed in wher
+   const lang = langOf(info);
+   const watched = watch(page);
+   await signIn(page, lang, "dev.lead");
++  // F-DG4-147: the app's boot GET /me is sent after the `load` event. Under load it could follow the re-login below and
++  // adopt the NEW session's CSRF token, so the change would be accepted (200) and this test would check nothing. Wait
++  // for that /me's answer, and for the signed-in shell it renders (the token is stored with the same answer), so the
++  // tab holds the previous session's token when the other sign-in happens: the order D-073 is about.
++  const bootMe = page.waitForResponse(
++    (r) => r.request().method() === "GET" && new URL(r.url()).pathname === "/api/v1/me",
++  );
+   await page.goto("/about");
++  expect((await bootMe).status()).toBe(200);
++  await expect(page.getByRole("button", { name: tr(lang, "auth.signOut"), exact: true })).toBeVisible();
+   // A sign-in in another tab of the same browser replaces the session cookie, so this tab's CSRF token no longer
+   // matches: the real API refuses the next change with 403 `csrf` (not 401: the browser still has a valid session).
+   const relogin = await page.context().request.post("/api/v1/auth/dev-login", {
+diff --git a/apps/web/src/test/harness-config.test.ts b/apps/web/src/test/harness-config.test.ts
+index 0becacf..8f09492 100644
+--- a/apps/web/src/test/harness-config.test.ts
++++ b/apps/web/src/test/harness-config.test.ts
+@@ -4,7 +4,12 @@
+ // with Testing Library's own message instead of a bare test timeout.
+ import { getConfig } from "@testing-library/react";
+ import { describe, expect, it } from "vitest";
+-import { UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS } from "../../test/setup.ts";
++import {
++  UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS,
++  UNIT_WEB_PAGE_WARMUP_TIMEOUT_MS,
++  UNIT_WEB_WARMED_PAGE_MODULES,
++} from "../../test/setup.ts";
++import routerSource from "../app/router.tsx?raw";
+ 
+ describe("unit-web harness (F-DG2-220)", () => {
+   it("raises Testing Library's async-utility timeout from the 1000 ms default", () => {
+@@ -17,4 +22,15 @@ describe("unit-web harness (F-DG2-220)", () => {
+     const testTimeout = task.timeout;
+     expect(testTimeout).toBeGreaterThanOrEqual(2 * UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS);
+   });
++
++  it("F-DG4-148: warms every page module that router.tsx loads lazily, without changing the async-utility wait", () => {
++    const lazy = [...routerSource.matchAll(/import\("(\.\.\/pages\/[^"]+)"\)/g)].map((m) => m[1]!);
++    expect(lazy.length).toBeGreaterThanOrEqual(80);
++    const warmed = new Set(UNIT_WEB_WARMED_PAGE_MODULES.map((path) => path.replace("../src/pages/", "../pages/")));
++    expect(lazy.filter((specifier) => !warmed.has(specifier))).toEqual([]);
++    expect(UNIT_WEB_WARMED_PAGE_MODULES.filter((path) => path.endsWith(".test.tsx"))).toEqual([]);
++    // The warm-up has its own hook budget; the findBy*/waitFor wait stays the F-DG2-220 value.
++    expect(getConfig().asyncUtilTimeout).toBe(5_000);
++    expect(UNIT_WEB_PAGE_WARMUP_TIMEOUT_MS).toBeGreaterThan(UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS);
++  });
+ });
+diff --git a/apps/web/test/setup.ts b/apps/web/test/setup.ts
+index 00fed16..c547112 100644
+--- a/apps/web/test/setup.ts
++++ b/apps/web/test/setup.ts
+@@ -10,13 +10,38 @@
+ // a wait that really never resolves still fails with Testing Library's own message ("Unable to find ...") rather than
+ // a bare "Test timed out". Explicit per-call `{ timeout }` options and per-test timeouts still take precedence.
+ import { configure } from "@testing-library/react";
+-import { afterAll, afterEach } from "vitest";
++import { afterAll, afterEach, beforeAll } from "vitest";
+ import { assertNoReactWarnings, installReactWarningGuard } from "./react-warning-guard.ts";
+ 
+ export const UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS = 5_000;
+ 
+ configure({ asyncUtilTimeout: UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS });
+ 
++// F-DG4-148 (D-131): the lazily loaded page modules are warmed before a file's first test. app/router.tsx loads every
++// page with a dynamic import() on first use (T-DG4-FE-R2, D-111). In a test, that dynamic import is the first time the
++// file's worker transforms and evaluates the page and its module graph, and it ran INSIDE the first test's 5 s findBy*
++// wait. Under CPU contention (a load of 13 or more on the review machine) that one-off module load alone exceeded the
++// wait, so the first render of a page in a file failed with "Unable to find ..." while every later render passed.
++// The warm-up imports the page modules once per file, before its tests, in a hook with its own budget:
++//  - the files: every non-test module under src/pages, by glob, a superset of the 81 that router.tsx imports lazily
++//    (a page added there later is covered without editing this list);
++//  - it only fills the module cache. It does not call lazyPage's load(), so a render still goes through React.lazy,
++//    Suspense and the shared fallback exactly as before; the import resolves from the cache;
++//  - no assertion wait (UNIT_WEB_ASYNC_UTIL_TIMEOUT_MS) and no test timeout changes. The budget below applies to this
++//    hook alone, so a module that really fails to load still fails the file, with a hook error that names the cause.
++// The budget was sized from measurements (handback T-DG4-FE-R10): MTH_UNIT_WEB_WARMUP_REPORT=1 prints each file's warm-up time.
++export const UNIT_WEB_PAGE_WARMUP_TIMEOUT_MS = 60_000;
++const PAGE_MODULES = import.meta.glob(["../src/pages/**/*.tsx", "!../src/pages/**/*.test.tsx"]);
++export const UNIT_WEB_WARMED_PAGE_MODULES = Object.keys(PAGE_MODULES);
++
++beforeAll(async (suite) => {
++  const started = performance.now();
++  await Promise.all(Object.values(PAGE_MODULES).map((load) => load()));
++  if (process.env["MTH_UNIT_WEB_WARMUP_REPORT"] === "1") {
++    process.stderr.write(`[unit-web warm-up] ${Math.round(performance.now() - started)} ms ${suite.name}\n`);
++  }
++}, UNIT_WEB_PAGE_WARMUP_TIMEOUT_MS);
++
+ // F-DG2-430: a React "Cannot update a component ... while rendering a different component" or act() warning fails the
+ // test that printed it (see test/react-warning-guard.ts for the exact patterns). Other console.error output is
+ // forwarded untouched and never fails a test. This file's afterEach is registered before any test file's hooks, and
+diff --git a/apps/worker/src/main.ts b/apps/worker/src/main.ts
+index 50c6c90..c72de77 100644
+--- a/apps/worker/src/main.ts
++++ b/apps/worker/src/main.ts
+@@ -18,7 +18,8 @@ async function main(): Promise<void> {
+   }
+   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
+   const db = createDb(pool);
+-  const boss = createBoss(config.databaseUrl!);
++  // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
++  const boss = createBoss(config.databaseUrl!, { superviseIntervalSeconds: config.worker.superviseIntervalSeconds });
+   let stopping = false;
+   // After shutdown begins, pg-boss's in-flight maintenance ticks can fail against its closed pool; that is not an error.
+   boss.on("error", (err) => {
+@@ -26,7 +27,14 @@ async function main(): Promise<void> {
+   });
+   await boss.start();
+   const worker = await startWorker({ db, boss, timeZone: config.defaultTimezone });
+-  console.log(JSON.stringify({ level: "info", msg: "mth-worker started", timeZone: config.defaultTimezone }));
++  console.log(
++    JSON.stringify({
++      level: "info",
++      msg: "mth-worker started",
++      timeZone: config.defaultTimezone,
++      superviseIntervalSeconds: config.worker.superviseIntervalSeconds,
++    }),
++  );
+ 
+   const shutdown = async (signal: string) => {
+     stopping = true;
+diff --git a/apps/worker/src/queues/index.ts b/apps/worker/src/queues/index.ts
+index 670b8e8..b9676f7 100644
+--- a/apps/worker/src/queues/index.ts
++++ b/apps/worker/src/queues/index.ts
+@@ -22,6 +22,7 @@ import type { QueueSpec } from "./spec.ts";
+ 
+ export {
+   createBoss,
++  superviseIntervalSecondsOf,
+   OUTBOX_RELAY,
+   PURGE_CRON,
+   QUEUES,
+diff --git a/apps/worker/src/queues/platform.ts b/apps/worker/src/queues/platform.ts
+index cc29ab9..f4b243a 100644
+--- a/apps/worker/src/queues/platform.ts
++++ b/apps/worker/src/queues/platform.ts
+@@ -1,6 +1,7 @@
+ // Platform queues and pg-boss setup (ADR-0008; moved from src/queues.ts by T-DG4-BE-A, p4-work-split §I+C.1). The queue schema itself is installed by `mth-db migrate` (migration 0006, as mth_owner);
+ // the worker starts pg-boss with migrate=false, so it fails fast unless the expected schema version is installed, and
+ // it only runs DML as mth_app (queues are non-partitioned rows in pgboss.queue).
++import { SUPERVISE_INTERVAL_SECONDS } from "@mth/config";
+ import { connectionWithSessionOptions } from "@mth/db";
+ import PgBoss from "pg-boss";
+ 
+@@ -43,17 +44,43 @@ export const PURGE_CRON = "*/15 * * * *";
+ /** Days a failed job is kept in pg-boss (execution history for the failure-queue views). */
+ const FAILED_RETENTION_SECONDS = 60 * 60 * 24 * 30;
+ 
++/**
++ * The supervision cadence createBoss passes to pg-boss (F-DG4-128, D-131). pg-boss 11.0.0 gives
++ * `superviseIntervalSeconds` NO default: unset, Boss.start runs setInterval(onSupervise, NaN), which Node turns into
++ * a 1 ms loop (TimeoutNaNWarning) of back-to-back supervision passes. So the value is always explicit: the caller's
++ * (the worker passes WORKER_SUPERVISE_INTERVAL_SECONDS from @mth/config; tests shorten it to 1 s) or the documented
++ * 60 s. Anything that is not an integer in SUPERVISE_INTERVAL_SECONDS' range (1-600) is refused, never passed on.
++ */
++export function superviseIntervalSecondsOf(value: number | undefined): number {
++  const seconds = value ?? SUPERVISE_INTERVAL_SECONDS.default;
++  if (
++    !Number.isInteger(seconds) ||
++    seconds < SUPERVISE_INTERVAL_SECONDS.min ||
++    seconds > SUPERVISE_INTERVAL_SECONDS.max
++  ) {
++    throw new RangeError(
++      `superviseIntervalSeconds must be an integer from ${SUPERVISE_INTERVAL_SECONDS.min} to ${SUPERVISE_INTERVAL_SECONDS.max}`,
++    );
++  }
++  return seconds;
++}
++
+ export function createBoss(
+   databaseUrl: string,
+   options: {
+     applicationName?: string;
+     schedule?: boolean;
+     supervise?: boolean;
+-    /** P4 (T-DG4-BE-A): supervision cadence in seconds (pg-boss defaults when omitted; tests shorten them). */
++    /**
++     * Supervision cadence in seconds (F-DG4-128): defaults to SUPERVISE_INTERVAL_SECONDS.default (60), never left to
++     * pg-boss, which has no default for it. The worker passes its configured value; tests shorten it.
++     */
+     superviseIntervalSeconds?: number;
++    /** Per-queue monitoring cadence; pg-boss's own default (60 s) applies when omitted. Tests shorten it. */
+     monitorIntervalSeconds?: number;
+   } = {},
+ ): PgBoss {
++  const superviseIntervalSeconds = superviseIntervalSecondsOf(options.superviseIntervalSeconds);
+   const { connectionString, options: pgOptions } = connectionWithSessionOptions(databaseUrl, "-c TimeZone=UTC");
+   const url = new URL(connectionString);
+   if (pgOptions) url.searchParams.set("options", pgOptions);
+@@ -63,9 +90,7 @@ export function createBoss(
+     migrate: false, // the schema is owned by `mth-db migrate` (ADR-0003); fail fast when it is missing or outdated
+     schedule: options.schedule ?? true,
+     supervise: options.supervise ?? true,
+-    ...(options.superviseIntervalSeconds !== undefined
+-      ? { superviseIntervalSeconds: options.superviseIntervalSeconds }
+-      : {}),
++    superviseIntervalSeconds,
+     ...(options.monitorIntervalSeconds !== undefined ? { monitorIntervalSeconds: options.monitorIntervalSeconds } : {}),
+     max: 5,
+   });
+diff --git a/package.json b/package.json
+index a7978db..5e96ed3 100644
+--- a/package.json
++++ b/package.json
+@@ -16,7 +16,7 @@
+     "lint": "eslint . --max-warnings=0",
+     "format": "prettier --write .",
+     "format:check": "prettier --check .",
+-    "test": "vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen",
++    "test": "s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s",
+     "test:integration": "vitest run --project integration",
+     "e2e": "playwright test",
+     "openapi:lint": "node scripts/openapi-lint.mjs docs/api/openapi.yaml",
+diff --git a/packages/config/src/index.ts b/packages/config/src/index.ts
+index 2d75fd7..387fe87 100644
+--- a/packages/config/src/index.ts
++++ b/packages/config/src/index.ts
+@@ -134,6 +134,15 @@ export const ENV_VARS = {
+     default: "info",
+     usedBy: ["api", "worker"],
+   },
++  WORKER_SUPERVISE_INTERVAL_SECONDS: {
++    description:
++      "Worker pg-boss supervision cadence in seconds: expiry of jobs held by a dead worker, queue monitoring and " +
++      "maintenance (F-DG4-128). Integer 1-600; 60 is the cadence pg-boss documents",
++    required: false,
++    secret: false,
++    default: "60",
++    usedBy: ["worker"],
++  },
+   TRUST_PROXY: {
+     description: "Comma-separated reverse-proxy addresses whose X-Forwarded-* headers are trusted",
+     required: false,
+@@ -149,6 +158,15 @@ export type EnvVarName = keyof typeof ENV_VARS;
+ export const AUTH_MODES = ["oidc", "dev"] as const;
+ export type AuthMode = (typeof AUTH_MODES)[number];
+ 
++/**
++ * The worker's pg-boss supervision cadence (F-DG4-128, D-131). pg-boss 11.0.0 gives `superviseIntervalSeconds` no
++ * default, so an unset value runs supervision every 1 ms (setInterval(NaN)). The worker therefore always passes a
++ * value in this range. The minimum is pg-boss's own floor for its other intervals (1 s; the restart tests use it). The
++ * maximum, 10 minutes, bounds how long a job held by a dead worker can stay active past its expiry before a supervision
++ * pass fails it for retry (REQ-S16-005), and matches pg-boss's longest scheduler interval (clockMonitorIntervalSeconds).
++ */
++export const SUPERVISE_INTERVAL_SECONDS = { min: 1, max: 600, default: 60 } as const;
++
+ // Validated loader over the catalogue above (T-DG1-BE).
+ export {
+   ConfigError,
+diff --git a/packages/config/src/load.ts b/packages/config/src/load.ts
+index 86c6da0..cfac6ba 100644
+--- a/packages/config/src/load.ts
++++ b/packages/config/src/load.ts
+@@ -9,7 +9,7 @@
+ //  - Error messages name the variable, never the value (secrets must not reach logs).
+ import { readFileSync } from "node:fs";
+ import { z } from "zod";
+-import { AUTH_MODES, ENV_VARS, type EnvVarName } from "./index.ts";
++import { AUTH_MODES, ENV_VARS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+ 
+ export type Service = "api" | "worker" | "db-cli";
+ 
+@@ -47,6 +47,8 @@ export interface AppConfig {
+   readonly rateLimit: { readonly perMinute: number; readonly authPerMinute: number };
+   readonly logLevel: (typeof LOG_LEVELS)[number];
+   readonly trustProxy: readonly string[];
++  /** Worker-only settings (F-DG4-128). Always present; defaulted when unset. */
++  readonly worker: { readonly superviseIntervalSeconds: number };
+ }
+ 
+ type Env = Readonly<Record<string, string | undefined>>;
+@@ -156,6 +158,10 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig
+   const perMinute = field("RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
+   const authPerMinute = field("AUTH_RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
+   const logLevel = field("LOG_LEVEL", z.enum(LOG_LEVELS));
++  const superviseIntervalSeconds = field(
++    "WORKER_SUPERVISE_INTERVAL_SECONDS",
++    z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
++  );
+   const trustProxy = (raw.TRUST_PROXY ?? "")
+     .split(",")
+     .map((s) => s.trim())
+@@ -225,6 +231,7 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig
+     rateLimit: { perMinute: perMinute!, authPerMinute: authPerMinute! },
+     logLevel: logLevel!,
+     trustProxy,
++    worker: { superviseIntervalSeconds: superviseIntervalSeconds! },
+   });
+ }
+ 

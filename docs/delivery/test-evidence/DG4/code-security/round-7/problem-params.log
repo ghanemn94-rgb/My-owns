@@ -1,0 +1,39 @@
+# Problem schema at ea5e262 (docs/api/openapi.yaml); docs/api diff 1e0dc5d..dab4562: ''
+# required = ['type', 'title', 'status', 'code', 'requestId']
+# params property: {"type": "object", "description": "Values of the placeholders in the translated text of `code`, in the shape of WorkItem.messageParams. Sent only with the codes whose ADR names it (ADR-0038 amendment Q1: gate.modular_waiver_revoked and gate.modular_waiver_expired, params.date as YYYY-MM-DD); absent from every other problem.", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}}
+# API source: places that set params on a problem (expected only the two gate.modular_waiver_* codes):
+apps/api/src/modules/workflows/gates.ts
+# every source line in apps/api/src that sets a problem 'params' (grep -rnE '\bparams\s*[:=]|params\b\s*\}' over problem builders):
+apps/api/src/modules/platform/validation.ts:107:export function assertNoInvalidCharacters(request: { body?: unknown; query?: unknown; params?: unknown }): void {
+apps/api/src/modules/platform/platform.test.ts:258:    const thrown = (r: { body?: unknown; query?: unknown; params?: unknown }) => {
+apps/api/src/modules/platform/platform.test.ts:273:    expect(thrown({ params: { id: "\u0000" } })).toEqual([400, "validation.invalid_character", "/params/id"]);
+apps/api/src/modules/platform/platform.test.ts:274:    expect(thrown({ body: { a: "ok" }, query: { q: "ok" }, params: { id: "ok" } })).toBeNull();
+apps/api/src/modules/platform/problem.ts:23:  readonly params: ProblemDetails["params"];
+apps/api/src/modules/platform/problem.ts:34:    params?: ProblemDetails["params"];
+apps/api/src/modules/platform/problem.ts:45:    this.params = init.params;
+apps/api/src/modules/platform/problem.ts:64:      ...(this.params !== undefined ? { params: this.params } : {}),
+apps/api/src/modules/transformations/register-kit.ts:355:  const checkParent = async (dbx: DbOrTx, transformationId: string, params: ReadonlyMap<string, string>) => {
+apps/api/src/modules/transformations/register-kit.ts:365:  const findRow = async (dbx: DbOrTx, params: ReadonlyMap<string, string>, forUpdate = false) => {
+apps/api/src/modules/transformations/register-kit.ts:470:    params: ReadonlyMap<string, string>,
+apps/api/src/modules/transformations/register-kit.ts:484:  const finishLock = async (tx: Tx, request: FastifyRequest, params: ReadonlyMap<string, string>) => {
+apps/api/src/modules/tasks/tasks.test.ts:70:      message_params: { period: "2026-10" },
+apps/api/src/modules/tasks/service.ts:71:      message_params: params,
+apps/api/src/modules/tasks/service.ts:118:      message_params: params,
+apps/api/src/modules/benefits/register.ts:120:export function parseTransformationParam(params: unknown): string {
+apps/api/src/modules/workflows/gates.ts:1515:    params: { date },
+apps/api/src/modules/kpi/kpi-status.ts:186:        params: { reason },
+apps/api/src/modules/kpi/business-cases.ts:306:export function parseCaseId(params: unknown): string {
+apps/api/src/modules/kpi/benefit-formulas.ts:244:export function parseFormulaId(params: unknown): string {
+# lines naming modular_waiver_ in gates.ts:
+429:    const { transformationId } = parse(tParams, request.params, "params");
+450:    const { transformationId, gateCode } = parse(gParams, request.params, "params");
+471:    const { transformationId, gateCode } = parse(gParams, request.params, "params");
+547:    const { transformationId, gateCode } = parse(gParams, request.params, "params");
+564:    const { transformationId, gateCode, submissionNo } = parse(sParams, request.params, "params");
+607:      const { transformationId, gateCode } = parse(gParams, request.params, "params");
+621:    const { transformationId, gateCode } = parse(gParams, request.params, "params");
+1505: * The 422 of a Modular waiver refusal (ADR-0038 amendment B1, B4) with `params.date`, the same business date `detail`
+1515:    params: { date },
+1519:  modularWaiverRefusal("gate.modular_waiver_revoked", modularWaiverRevokedDetail(date), date);
+1522:  modularWaiverRefusal("gate.modular_waiver_expired", modularWaiverExpiredDetail(date), date);
+# reading: problem.ts:64 adds params only when set; the one problem builder that sets it is gates.ts:1505-1522 (gate.modular_waiver_revoked / gate.modular_waiver_expired, params.date). kpi-status.ts:186 is the KPI status explanation's params (not a problem). The other hits are request path params. Problem.required does not include params: the addition is additive.

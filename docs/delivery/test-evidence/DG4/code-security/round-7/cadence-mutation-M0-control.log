@@ -1,0 +1,25 @@
+# M0-control; node v22.22.2; commit ea5e262; diff applied:
+# load 16.92 16.02 16.43 started 2026-10-12T23:19:00Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.TioKM2/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5viyhw_20453d0e (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts (9 tests) 26418ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning  3642ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS  3635ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts)  1501ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts)  1846ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts)  1919ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts)  1845ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s  333ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence  370ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:19:05
+   Duration  34.92s (transform 547ms, setup 0ms, collect 1.07s, tests 26.42s, environment 0ms, prepare 365ms)
+
+# exit_status: 0

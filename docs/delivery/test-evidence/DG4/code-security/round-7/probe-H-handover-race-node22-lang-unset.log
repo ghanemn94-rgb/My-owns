@@ -1,0 +1,43 @@
+# probe sec-dg4-r7-handover-race.test.ts; node v22.22.2; commit ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7; LANG unset; 859808c517b7bfe3615a6a62f41a25eb59c9cbb12473a3ee32dcff04da60664b; load 22.59 14.59 16.28; started 2026-10-12T22:01:38Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.TioKM2/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5srhdg_84a86531 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H1 four concurrent acceptances: exactly one 200; one accept event; one review; area moved once
+[probe-H] H1 ["409 version_conflict","409 version_conflict","200 HO-01","409 version_conflict"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H1 four concurrent acceptances: exactly one 200; one accept event; one review; area moved once
+[probe-H] H1 audit ["bau_handover.create","bau_handover.evidence_add","bau_handover.submit","bau_handover.accept"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H1 four concurrent acceptances: exactly one 200; one accept event; one review; area moved once
+[probe-H] H1 area version 1 -> 2, status bau
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H2 an acceptance and a return at the same time: exactly one wins; the end state is consistent
+[probe-H] H2.0 accept=200 HO-02 return=409 version_conflict -> accepted, reviews=1, audit=["bau_handover.create","bau_handover.evidence_add","bau_handover.submit","bau_handover.accept"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H2 an acceptance and a return at the same time: exactly one wins; the end state is consistent
+[probe-H] H2.1 accept=409 version_conflict return=200 HO-03 -> returned, reviews=0, audit=["bau_handover.create","bau_handover.evidence_add","bau_handover.submit","bau_handover.return"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H2 an acceptance and a return at the same time: exactly one wins; the end state is consistent
+[probe-H] H2.2 accept=200 HO-04 return=409 version_conflict -> accepted, reviews=1, audit=["bau_handover.create","bau_handover.evidence_add","bau_handover.submit","bau_handover.accept"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H3 two concurrent returns: exactly one 200 and one return event
+[probe-H] H3 ["200 HO-05","409 version_conflict"]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts > SEC-DG4-R7 probe H: BAU handover decision races > H4 two concurrent creates for the same area and cycle: exactly one 201, the other 409 (never 500)
+[probe-H] H4 ["409 bau_handover.exists","201 HO-06"]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r7-handover-race.test.ts (4 tests) 7477ms
+   ✓ SEC-DG4-R7 probe H: BAU handover decision races > H1 four concurrent acceptances: exactly one 200; one accept event; one review; area moved once  1110ms
+   ✓ SEC-DG4-R7 probe H: BAU handover decision races > H2 an acceptance and a return at the same time: exactly one wins; the end state is consistent  2507ms
+   ✓ SEC-DG4-R7 probe H: BAU handover decision races > H3 two concurrent returns: exactly one 200 and one return event  429ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  22:01:44
+   Duration  36.93s (transform 7.43s, setup 0ms, collect 19.31s, tests 7.48s, environment 0ms, prepare 605ms)
+
+# exit_status: 0  finished: 2026-10-12T22:02:26Z

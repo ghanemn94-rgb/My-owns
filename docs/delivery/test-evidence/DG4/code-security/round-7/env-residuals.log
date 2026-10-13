@@ -1,0 +1,39 @@
+# env residuals 2026-10-12T23:46:07Z clone ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7 node v22.22.2
+## registry: offline frozen install (install1.log: # exit_status: 0); manifests/lockfile changed in P4 d3e6fe6..dab4562:
+  package.json
+  packages/shared/package.json
+  (end)
+## registry: pnpm deps:verify needs live registry access (npm view; scripts/verify-dependency-pins.mjs header) and is NOT run here: the live-registry residual D-057. P4 changes no dependency (only the packages/shared export map, above).
+## CI: node deploy/scripts/check-ci-needs.mjs
+OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+  exit=0
+## CI: node --test deploy/scripts/tests/check-ci-needs.test.mjs (tail)
+1..46
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9287.192635
+  exit=0
+## CI: ci.yml runs pnpm test and pnpm test:integration
+  66:      - run: pnpm test
+  101:      - run: pnpm test:integration
+## Keycloak: passing oidc test lines per integration run (fake IdP)
+  integration-run1-lang-unset: 37
+  integration-run2-lang-c-utf8: 37
+## registry: root package.json and packages/shared/package.json diff d3e6fe6..dab4562 (expected: scripts / export map only, no dependency change), and pnpm-lock.yaml diff:
+-    "test": "vitest run --project unit-node --project unit-web && vitest run --project unit-formula-nocodegen",
++    "test": "s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s",
++    },
++    "./time": {
++      "@mth/source": "./src/time/index.ts",
++      "types": "./dist/time/index.d.ts",
++      "default": "./dist/time/index.js"
+  pnpm-lock.yaml changed lines: 0

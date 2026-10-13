@@ -1,0 +1,22 @@
+# probe sec-dg4-r4-required-members.test.ts; node v22.22.2; commit ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7; LANG unset; fc6e40b8c765045f1922f4d557b5e2d20f742762fdc781b4037186c268848bd1; load 24.66 15.45 16.54; started 2026-10-12T22:01:51Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.TioKM2/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5srsxi_61463d7e (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-required-members.test.ts > SEC-DG4-R4 probe RM4: valueBasis, currency, kpiUnit required > openapi required lists contain the members
+[probe-RM4] {"item":["recordType","recordId","code","label","href","rag","dueDate","value","ownerUserId","flags","valueBasis"],"drill":["metric","appliedFilters","value","period","calculation","items","evidence","nextCursor","headlineBasis","currency"],"value":["state","value","unit","currency","reasonKey","kpiUnit"],"kpiUnit":["kind","label"]}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-required-members.test.ts > SEC-DG4-R4 probe RM4: valueBasis, currency, kpiUnit required > live values valid; each member deleted or malformed is rejected by ajv and zod
+[probe-RM4] bad={"item_no_valueBasis":[false,false],"drill_no_currency":[false,false],"drill_lower_currency":[false,false],"value_no_kpiUnit":[false,false],"kpiUnit_bad_kind":[false,false],"kpiUnit_empty_label":[false,false],"kpiUnit_long_label":[false,false],"kpiUnit_extra":[false,false],"kpiUnit_no_label":[false,false],"item_bad_basis":[false,false]} good={"kpiUnit_ok":[true,true],"t10_zod":true} itemValueBasis=profit_and_cash
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r4-required-members.test.ts (2 tests) 4514ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  22:01:59
+   Duration  36.59s (transform 8.13s, setup 0ms, collect 21.04s, tests 4.51s, environment 0ms, prepare 326ms)
+
+# exit_status: 0  finished: 2026-10-12T22:02:40Z

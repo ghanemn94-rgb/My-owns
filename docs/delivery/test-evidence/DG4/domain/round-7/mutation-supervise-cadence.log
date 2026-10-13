@@ -1,0 +1,51 @@
+# domain-reviewer DG4 r7: mutation check of apps/worker/test/integration/supervise-cadence.test.ts (clone only, reverted afterwards)
+# mutant M1: createBoss stops passing superviseIntervalSeconds to pg-boss (the F-DG4-128 defect re-introduced: 'superviseIntervalSeconds,' line removed from the PgBoss options)
+mutated
+ apps/worker/src/queues/platform.ts | 1 -
+ 1 file changed, 1 deletion(-)
+diff --git a/apps/worker/src/queues/platform.ts b/apps/worker/src/queues/platform.ts
+index f4b243a..bbaefae 100644
+--- a/apps/worker/src/queues/platform.ts
++++ b/apps/worker/src/queues/platform.ts
+@@ -90,7 +90,6 @@ export function createBoss(
+     migrate: false, // the schema is owned by `mth-db migrate` (ADR-0003); fail fast when it is missing or outdated
+     schedule: options.schedule ?? true,
+     supervise: options.supervise ?? true,
+-    superviseIntervalSeconds,
+     ...(options.monitorIntervalSeconds !== undefined ? { monitorIntervalSeconds: options.monitorIntervalSeconds } : {}),
+     max: 5,
+   });
+(node:157) TimeoutNaNWarning: NaN is not a number.
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning 3692ms
+     → expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS 4398ms
+     → expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts)  1969ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts)  1395ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts)  1623ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts)  1867ms
+   × createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s 354ms
+     → expected [ NaN ] to deeply equal [ 60000 ]
+   × createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence 379ms
+     → expected [ NaN ] to deeply equal [ 60000 ]
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss 3ms
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning
+AssertionError: expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+[32m- TimeoutNaNWarning[39m
+[31m+ (node:219) TimeoutNaNWarning: NaN is not a number.[39m
+     82|     expect(run.stderr).not.toContain("TimeoutNaNWarning");
+AssertionError: expected 'MTH_INTERVAL_PROBE {"ms":60000,"pgBos…' not to contain 'TimeoutNaNWarning'
+[32m- TimeoutNaNWarning[39m
+[31m+ (node:232) TimeoutNaNWarning: NaN is not a number.[39m
+     98|     expect(run.stderr).not.toContain("TimeoutNaNWarning");
+AssertionError: expected [ NaN ] to deeply equal [ 60000 ]
+    153|     expect(warnings.filter((w) => w.startsWith("TimeoutNaNWarning"))).…
+AssertionError: expected [ NaN ] to deeply equal [ 60000 ]
+    167|     expect(warnings.filter((w) => w.startsWith("TimeoutNaNWarning"))).…
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+## mutant run exit=1
+## reverted; git diff --stat:
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+## reverted run exit=0

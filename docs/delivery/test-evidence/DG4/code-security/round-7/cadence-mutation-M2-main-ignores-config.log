@@ -1,0 +1,67 @@
+# M2-main-ignores-config; node v22.22.2; commit ea5e262; diff applied:
+diff --git a/apps/worker/src/main.ts b/apps/worker/src/main.ts
+index c72de77..541aea4 100644
+--- a/apps/worker/src/main.ts
++++ b/apps/worker/src/main.ts
+@@ -19,7 +19,7 @@ async function main(): Promise<void> {
+   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
+   const db = createDb(pool);
+   // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
+-  const boss = createBoss(config.databaseUrl!, { superviseIntervalSeconds: config.worker.superviseIntervalSeconds });
++  const boss = createBoss(config.databaseUrl!);
+   let stopping = false;
+   // After shutdown begins, pg-boss's in-flight maintenance ticks can fail against its closed pool; that is not an error.
+   boss.on("error", (err) => {
+# load 17.39 16.28 16.47 started 2026-10-12T23:20:39Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.TioKM2/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5vl1q6_4d8135e6 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/supervise-cadence.test.ts (9 tests | 1 failed) 25790ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning  3547ms
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS 3450ms
+     → expected [ Array(1) ] to deeply equal [ Array(1) ]
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts)  1862ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts)  2161ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts)  2048ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts)  2294ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s  316ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence  371ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[32m-     "ms": 17000,[39m
+[31m+     "ms": 60000,[39m
+[2m      "pgBossSupervise": true,[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:99:60
+     97|     const run = await runMain({ WORKER_SUPERVISE_INTERVAL_SECONDS: "17…
+     98|     expect(run.stderr).not.toContain("TimeoutNaNWarning");
+     99|     expect(run.intervals.filter((i) => i.pgBossSupervise)).toEqual([{ …
+       |                                                            ^
+    100|     expect(run.stdout).toContain('"superviseIntervalSeconds":17');
+    101|     expect(run.code).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  23:20:43
+   Duration  34.91s (transform 641ms, setup 0ms, collect 1.10s, tests 25.79s, environment 0ms, prepare 219ms)
+
+# exit_status: 1

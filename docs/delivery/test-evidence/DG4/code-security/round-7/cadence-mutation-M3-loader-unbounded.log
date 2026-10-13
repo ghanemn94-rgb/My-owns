@@ -1,0 +1,62 @@
+# M3-loader-unbounded; node v22.22.2; commit ea5e262; diff applied:
+diff --git a/packages/config/src/load.ts b/packages/config/src/load.ts
+index cfac6ba..0909248 100644
+--- a/packages/config/src/load.ts
++++ b/packages/config/src/load.ts
+@@ -160,7 +160,7 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig
+   const logLevel = field("LOG_LEVEL", z.enum(LOG_LEVELS));
+   const superviseIntervalSeconds = field(
+     "WORKER_SUPERVISE_INTERVAL_SECONDS",
+-    z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
++    z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min),
+   );
+   const trustProxy = (raw.TRUST_PROXY ?? "")
+     .split(",")
+# load 16.25 16.09 16.40 started 2026-10-12T23:21:22Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.TioKM2/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5vlz9c_4fbf3079 (server_encoding UTF8); applied 61 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/supervise-cadence.test.ts (9 tests | 1 failed) 26784ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning  4417ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS  3350ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts)  2419ms
+   × the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts) 1973ms
+     → expected 1 to be 78 // Object.is equality
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts)  1787ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts)  2673ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s  356ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence  379ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > refuses a cadence that is not an integer from 1 to 600 instead of passing it to pg-boss 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/supervise-cadence.test.ts > the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts)
+AssertionError: expected 1 to be 78 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 78[39m
+[31m+ 1[39m
+
+ ❯ apps/worker/test/integration/supervise-cadence.test.ts:108:24
+    106|     async (value) => {
+    107|       const run = await runMain({ WORKER_SUPERVISE_INTERVAL_SECONDS: v…
+    108|       expect(run.code).toBe(78);
+       |                        ^
+    109|       expect(run.stderr).toContain("WORKER_SUPERVISE_INTERVAL_SECONDS …
+    110|       expect(run.intervals.filter((i) => i.pgBossSupervise)).toEqual([…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  23:21:26
+   Duration  35.66s (transform 654ms, setup 0ms, collect 883ms, tests 26.78s, environment 0ms, prepare 123ms)
+
+# exit_status: 1

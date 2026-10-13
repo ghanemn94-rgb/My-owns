@@ -1,0 +1,37 @@
+# worker build output vs the test-only preload probe (apps/worker/test/interval-probe.mjs), clone $TMPDIR/probe2 at ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7, after pnpm -r build
+# files in apps/worker/dist naming interval-probe or MTH_INTERVAL_PROBE (expected 0):
+0
+# apps/worker/dist top-level:
+handlers
+index.d.ts
+index.d.ts.map
+index.js
+index.js.map
+kit.d.ts
+kit.d.ts.map
+kit.js
+kit.js.map
+main.d.ts
+main.d.ts.map
+main.js
+main.js.map
+queues
+relay.d.ts
+relay.d.ts.map
+relay.js
+relay.js.map
+schedules.d.ts
+schedules.d.ts.map
+schedules.js
+schedules.js.map
+worker.d.ts
+worker.d.ts.map
+worker.js
+worker.js.map
+# tsconfig.build include:
+9:  "include": ["src"],
+# assemble-runtime copies for a pkg: package.json, dist, node_modules (deploy/scripts/assemble-runtime.sh:95-97)
+      cp -a "$WS/$p/package.json" "$WS/$p/dist" "$OUT/$p/"
+      # a package without production dependencies (e.g. @mth/design-tokens) has no node_modules after the prune
+      if [ -d "$WS/$p/node_modules" ]; then cp -a "$WS/$p/node_modules" "$OUT/$p/"; fi ;;
+# .dockerignore excludes dist; the image builds from source with pnpm -r build (deploy/docker/Dockerfile:53-59)

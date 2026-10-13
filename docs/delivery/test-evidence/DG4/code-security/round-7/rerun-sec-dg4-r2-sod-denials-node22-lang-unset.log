@@ -1,0 +1,30 @@
+# probe sec-dg4-r2-sod-denials.test.ts; node v22.22.2; commit ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7; LANG unset; c60a306ccf231d6f269f6c9c868855d901ad1aea963f4225555a0e2d0320eac1; load 25.95 23.05 19.75; started 2026-10-12T22:08:02Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.TioKM2/claude-0/probe2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5szpni_fb3641d0 (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-sod-denials.test.ts > SEC-DG4-R2 probe D: the four Finance SoD refusals each write one authorization.denied > D1 finance_validation.sod_submitter
+[probe-D] D1 -> 403 finance_validation.sod_submitter; audit [["authorization.denied","01a13229-2476-716d-9f12-c61bcf720908","POST /api/v1/transformations/:transformationId/finance-validations/:financeValidationId/decision requires finance.validate"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-sod-denials.test.ts > SEC-DG4-R2 probe D: the four Finance SoD refusals each write one authorization.denied > D2 benefit.baseline_validator_is_owner
+[probe-D] D2 -> 403 benefit.baseline_validator_is_owner; audit [["authorization.denied","01a13229-2af8-7749-9d58-ce22ad11dd8c","POST /api/v1/transformations/:transformationId/benefits/:benefitId/baseline-validation requires finance.validate"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-sod-denials.test.ts > SEC-DG4-R2 probe D: the four Finance SoD refusals each write one authorization.denied > D3 benefit_overlap.resolver_is_owner
+[probe-D] D3 -> 403 benefit_overlap.resolver_is_owner; audit [["authorization.denied","01a13229-2b8a-7065-a399-76fed58efeaa","POST /api/v1/transformations/:transformationId/benefit-overlaps/:benefitOverlapId/resolve requires finance.validate"]]
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-sod-denials.test.ts > SEC-DG4-R2 probe D: the four Finance SoD refusals each write one authorization.denied > D4 benefit_valuation_method.decider_is_proposer
+[probe-D] D4 -> 403 benefit_valuation_method.decider_is_proposer; audit [["authorization.denied","01a13229-2d4c-76cd-8a8b-bcd8e7e1cae5","POST /api/v1/transformations/:transformationId/benefit-valuation-methods/:benefitValuationMethodId/decision requires finance.validate"]]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r2-sod-denials.test.ts (4 tests) 5222ms
+   ✓ SEC-DG4-R2 probe D: the four Finance SoD refusals each write one authorization.denied > D1 finance_validation.sod_submitter  1666ms
+   ✓ SEC-DG4-R2 probe D: the four Finance SoD refusals each write one authorization.denied > D3 benefit_overlap.resolver_is_owner  450ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  22:08:08
+   Duration  33.40s (transform 5.95s, setup 0ms, collect 15.86s, tests 5.22s, environment 0ms, prepare 328ms)
+
+# exit_status: 0  finished: 2026-10-12T22:08:47Z

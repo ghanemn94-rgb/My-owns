@@ -1,0 +1,195 @@
+
+=== BASELINE: unmutated candidate client.ts
+--- (a) candidate session tests
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx
+ 22:01:01 up 2 days,  4:00,  0 user,  load average: 17.90, 12.89, 15.82
+ Test Files  4 passed (4)
+      Tests  86 passed (86)
+EXIT 0
+--- (b) candidate session-wait.test.tsx alone
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx
+ 22:02:00 up 2 days,  4:01,  0 user,  load average: 24.29, 15.53, 16.56
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+EXIT 0
+--- (c) my round-6 held-/me test (qa-r6-session-wait.test.tsx, sha256 102298effaffbd11)
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/qa-r6-session-wait.test.tsx
+ 22:02:24 up 2 days,  4:01,  0 user,  load average: 24.91, 16.39, 16.82
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+EXIT 0
+
+=== M4: a page GET waits for neither the identity check nor the /me probe in flight
+--- $TMPDIR/client.ts.orig	2026-10-12 22:01:01.243571402 +0000
++++ apps/web/src/api/client.ts	2026-10-12 22:02:46.888755267 +0000
+@@ -380,8 +380,7 @@
+   } else if (method === "GET") {
+     // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+     if (recheckDue()) void startSessionCheck();
+-    if (pendingCheck) await pendingCheck;
+-    if (probesIdle) await probesIdle;
++    void probesIdle;
+     // The identity changed (or the session ended) while this GET waited: it belongs to the previous identity's screen,
+     // which has been reset. It is never sent.
+     if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+--- (a) candidate session tests
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx
+ 22:02:46 up 2 days,  4:02,  0 user,  load average: 24.53, 16.98, 17.00
+ ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 6 failed) 5909ms
+   × F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held 1035ms
+   × F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 863ms
+   × F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held 1018ms
+   × F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 1087ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending) 54ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight) 73ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held
+AssertionError: expected [ …(2) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:130:70
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:154:70
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:174:43
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:191:43
+ Test Files  1 failed | 3 passed (4)
+      Tests  6 failed | 80 passed (86)
+EXIT 1
+--- (b) candidate session-wait.test.tsx alone
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx
+ 22:03:49 up 2 days,  4:03,  0 user,  load average: 26.86, 19.15, 17.76
+ ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 6 failed) 9015ms
+   × F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held 1177ms
+   × F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 972ms
+   × F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held 724ms
+   × F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 594ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending) 78ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight) 53ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held
+AssertionError: expected [ …(2) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:130:70
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:154:70
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:174:43
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:191:43
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+EXIT 1
+--- (c) my round-6 held-/me test (qa-r6-session-wait.test.tsx, sha256 102298effaffbd11)
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/qa-r6-session-wait.test.tsx
+ 22:04:06 up 2 days,  4:03,  0 user,  load average: 26.29, 19.52, 17.91
+ ❯  unit-web  src/auth/qa-r6-session-wait.test.tsx (4 tests | 4 failed) 10119ms
+   × qa-r6 F-DG2-570 page GETs wait for the identity check in flight (en) > H1: navigation after B signed in elsewhere: no page GET and nothing of B's while /me is held 1097ms
+   × qa-r6 F-DG2-570 page GETs wait for the identity check in flight (en) > H2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 807ms
+   × qa-r6 F-DG2-570 page GETs wait for the identity check in flight (ar) > H1: navigation after B signed in elsewhere: no page GET and nothing of B's while /me is held 877ms
+   × qa-r6 F-DG2-570 page GETs wait for the identity check in flight (ar) > H2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first 950ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/qa-r6-session-wait.test.tsx > qa-r6 F-DG2-570 page GETs wait for the identity check in flight (en) > H1: navigation after B signed in elsewhere: no page GET and nothing of B's while /me is held
+ FAIL   unit-web  src/auth/qa-r6-session-wait.test.tsx > qa-r6 F-DG2-570 page GETs wait for the identity check in flight (ar) > H1: navigation after B signed in elsewhere: no page GET and nothing of B's while /me is held
+AssertionError: expected [ …(2) ] to deeply equal []
+ ❯ src/auth/qa-r6-session-wait.test.tsx:105:84
+ FAIL   unit-web  src/auth/qa-r6-session-wait.test.tsx > qa-r6 F-DG2-570 page GETs wait for the identity check in flight (en) > H2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+ FAIL   unit-web  src/auth/qa-r6-session-wait.test.tsx > qa-r6 F-DG2-570 page GETs wait for the identity check in flight (ar) > H2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/qa-r6-session-wait.test.tsx:128:84
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+EXIT 1
+
+=== M4a: a page GET does not wait for the pending identity check (still waits for a /me probe)
+--- $TMPDIR/client.ts.orig	2026-10-12 22:01:01.243571402 +0000
++++ apps/web/src/api/client.ts	2026-10-12 22:04:26.600761666 +0000
+@@ -380,7 +380,6 @@
+   } else if (method === "GET") {
+     // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+     if (recheckDue()) void startSessionCheck();
+-    if (pendingCheck) await pendingCheck;
+     if (probesIdle) await probesIdle;
+     // The identity changed (or the session ended) while this GET waited: it belongs to the previous identity's screen,
+     // which has been reset. It is never sent.
+--- (a) candidate session tests
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx
+ 22:04:26 up 2 days,  4:03,  0 user,  load average: 27.60, 20.30, 18.20
+ ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 1 failed) 9012ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight) 142ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:191:43
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 85 passed (86)
+EXIT 1
+--- (b) candidate session-wait.test.tsx alone
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx
+ 22:05:19 up 2 days,  4:04,  0 user,  load average: 26.43, 21.12, 18.59
+ ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 1 failed) 10184ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight) 61ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:191:43
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+EXIT 1
+--- (c) my round-6 held-/me test (qa-r6-session-wait.test.tsx, sha256 102298effaffbd11)
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/qa-r6-session-wait.test.tsx
+ 22:05:39 up 2 days,  4:04,  0 user,  load average: 26.57, 21.50, 18.77
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+EXIT 0
+
+=== M4b: a page GET does not wait for a /me probe in flight (still waits for the identity check)
+--- $TMPDIR/client.ts.orig	2026-10-12 22:01:01.243571402 +0000
++++ apps/web/src/api/client.ts	2026-10-12 22:05:59.092794506 +0000
+@@ -381,7 +381,6 @@
+     // F-DG2-570: page data is fetched only under an identity confirmed within SESSION_RECHECK_MS (see above).
+     if (recheckDue()) void startSessionCheck();
+     if (pendingCheck) await pendingCheck;
+-    if (probesIdle) await probesIdle;
+     // The identity changed (or the session ended) while this GET waited: it belongs to the previous identity's screen,
+     // which has been reset. It is never sent.
+     if (changed()) throw new SessionChangedError(sentGeneration, sessionGeneration);
+--- (a) candidate session tests
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx
+ 22:05:59 up 2 days,  4:05,  0 user,  load average: 26.18, 21.73, 18.91
+ ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 1 failed) 13870ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending) 125ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:174:43
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 85 passed (86)
+EXIT 1
+--- (b) candidate session-wait.test.tsx alone
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/session-wait.test.tsx
+ 22:06:54 up 2 days,  4:06,  0 user,  load average: 26.13, 22.50, 19.34
+ ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 1 failed) 10184ms
+   × F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending) 71ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending)
+AssertionError: expected [ Array(1) ] to deeply equal []
+ ❯ src/auth/session-wait.test.tsx:174:43
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+EXIT 1
+--- (c) my round-6 held-/me test (qa-r6-session-wait.test.tsx, sha256 102298effaffbd11)
+$ TZ=UTC CI=1 npx vitest run --configLoader runner --project unit-web apps/web/src/auth/qa-r6-session-wait.test.tsx
+ 22:07:12 up 2 days,  4:06,  0 user,  load average: 24.87, 22.45, 19.39
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+EXIT 0
+client.ts restored (identical to the candidate); my test file removed from the copy

@@ -1,0 +1,29 @@
+# node --conditions=@mth/source apps/worker/zz-cfgprobe.mjs (temporary copy of the script below, removed afterwards) in $TMPDIR/probe2 at ea5e262, node v22.22.2
+#   import { loadConfig, ConfigError } from "@mth/config";
+#   const base = { NODE_ENV: "test", DATABASE_URL: "postgres://u@127.0.0.1:1/db" };
+#   const cases = ["", "60", " 60 ", "0x3c", "1e1", "6e2", "601", "0", "-1", "1.0", "1.5", "  ", "NaN", "Infinity", "9007199254740993", "60abc"];
+#   for (const v of cases) {
+#     try { const c = loadConfig("worker", { ...base, WORKER_SUPERVISE_INTERVAL_SECONDS: v }); console.log(JSON.stringify(v), "->", c.worker.superviseIntervalSeconds); }
+#     catch (e) { console.log(JSON.stringify(v), "-> refused:", e instanceof ConfigError ? (e.problems ?? [e.message]).join(" | ") : String(e)); }
+#   }
+#   try { const c = loadConfig("worker", { ...base, WORKER_SUPERVISE_INTERVAL_SECONDS_FILE: process.argv[2] }); console.log("_FILE (17) ->", c.worker.superviseIntervalSeconds); } catch (e) { console.log("_FILE refused", e.message); }
+#   try { loadConfig("api", { ...base, AUTH_MODE: "dev", WORKER_SUPERVISE_INTERVAL_SECONDS: "abc" }); console.log("api with invalid worker var -> loads"); } catch (e) { console.log("api with invalid worker var -> refused:", (e.problems ?? [e.message]).join(" | ")); }
+"" -> 60
+"60" -> 60
+" 60 " -> 60
+"0x3c" -> 60
+"1e1" -> 10
+"6e2" -> 600
+"601" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Too big: expected number to be <=600)
+"0" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Too small: expected number to be >=1)
+"-1" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Too small: expected number to be >=1)
+"1.0" -> 1
+"1.5" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Invalid input: expected int, received number)
+"  " -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Too small: expected number to be >=1)
+"NaN" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Invalid input: expected number, received NaN)
+"Infinity" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Invalid input: expected number, received number)
+"9007199254740993" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Too big: expected int to be <9007199254740991)
+"60abc" -> refused: WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Invalid input: expected number, received NaN)
+_FILE (17) -> 17
+api with invalid worker var -> refused: APP_BASE_URL is required for api | WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Invalid input: expected number, received NaN)
+# exit_status: 0

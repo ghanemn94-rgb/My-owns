@@ -1,0 +1,17 @@
+# domain-reviewer DG4 r7: explains the 'NODE_ENV=production, unset' exit 78 in worker-config-refusal.log (the stack harness exports AUTH_MODE=dev).
+# clone /var/tmp/mth-run.wHD30K/claude-0/review-dom7 @ 7294d6b, v24.21.0, env -i (clean environment), unreachable DATABASE_URL on purpose
+## env: NODE_ENV=production
+mth-worker failed to start: connect ECONNREFUSED 127.0.0.1:1
+## exit=1
+## env: NODE_ENV=production AUTH_MODE=dev
+Invalid configuration:
+  - AUTH_MODE=dev is refused when NODE_ENV=production
+## exit=78
+## env: NODE_ENV=production WORKER_SUPERVISE_INTERVAL_SECONDS=abc
+Invalid configuration:
+  - WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Invalid input: expected number, received NaN)
+## exit=78
+## env: NODE_ENV=production WORKER_SUPERVISE_INTERVAL_SECONDS=0
+Invalid configuration:
+  - WORKER_SUPERVISE_INTERVAL_SECONDS is invalid (Too small: expected number to be >=1)
+## exit=78

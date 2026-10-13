@@ -1,0 +1,13 @@
+# script: s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+A node=0 web=0 formula=0 -> rc=0 invocations=3 expected_nonzero=0 PASS
+A node=0 web=0 formula=1 -> rc=1 invocations=3 expected_nonzero=1 PASS
+A node=0 web=1 formula=0 -> rc=1 invocations=3 expected_nonzero=1 PASS
+A node=0 web=1 formula=1 -> rc=1 invocations=3 expected_nonzero=1 PASS
+A node=1 web=0 formula=0 -> rc=1 invocations=3 expected_nonzero=1 PASS
+A node=1 web=0 formula=1 -> rc=1 invocations=3 expected_nonzero=1 PASS
+A node=1 web=1 formula=0 -> rc=1 invocations=3 expected_nonzero=1 PASS
+A node=1 web=1 formula=1 -> rc=1 invocations=3 expected_nonzero=1 PASS
+B (appended --reporter=verbose) node=0 -> rc=0; stub received: vitest-stub run --project unit-node|vitest-stub run --project unit-web|vitest-stub run --project unit-formula-nocodegen|
+B (appended --reporter=verbose) node=1 -> rc=1; stub received: vitest-stub run --project unit-node|vitest-stub run --project unit-web|vitest-stub run --project unit-formula-nocodegen|
+# part A overall: PASS
+# exit_status: 0

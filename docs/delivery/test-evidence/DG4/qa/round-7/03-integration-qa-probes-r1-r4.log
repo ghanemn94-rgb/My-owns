@@ -1,0 +1,163 @@
+$ QA_PG_PORT=26590 MTH_PORT_POOL=26500-26699 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --reporter=verbose tests/qa/integration/dg4-qa-r1-probes.test.ts tests/qa/integration/dg4-qa-r1-scope-totals.test.ts tests/qa/integration/dg4-qa-r2-repairs.test.ts tests/qa/integration/dg4-qa-r3-headlines.test.ts tests/qa/integration/dg4-qa-r4-value-basis.test.ts   (node v24.21.0, 2026-10-13T00:03:31Z)
+   probe dg4-qa-r1-probes.test.ts sha256 dcca348b6a3ee0d6 (from docs/delivery/test-evidence/DG4/qa/tests/round-2/integration/dg4-qa-r1-probes.test.ts)
+   probe dg4-qa-r1-scope-totals.test.ts sha256 002acfca7a54bd07 (from docs/delivery/test-evidence/DG4/qa/tests/round-2/integration/dg4-qa-r1-scope-totals.test.ts)
+   probe dg4-qa-r2-repairs.test.ts sha256 c62d1c6b9b3eca5f (from docs/delivery/test-evidence/DG4/qa/tests/round-2/integration/dg4-qa-r2-repairs.test.ts)
+   probe dg4-qa-r3-headlines.test.ts sha256 eb399125d2875b90 (from docs/delivery/test-evidence/DG4/qa/tests/round-3/integration/dg4-qa-r3-headlines.test.ts)
+   probe dg4-qa-r4-value-basis.test.ts sha256 05adbf1c2d308d7f (from docs/delivery/test-evidence/DG4/qa/tests/round-4/integration/dg4-qa-r4-value-basis.test.ts)
+ 00:03:32 up 2 days,  6:02,  0 user,  load average: 4.39, 5.97, 10.16
+port-policy: PostgreSQL listening on port 26590 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv5x45sq_6f806eba (server_encoding UTF8); applied 61 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/dg4-qa-r4-value-basis.test.ts > Q1 F-DG4-126: Red beside a not_applicable (nothing due) line; the n/a line takes no part > margin 70 validated, revenue 300 unvalidated, avoided cost due only in 2099 1149ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r4-value-basis.test.ts > Q2 F-DG4-126: an unknown basis gap makes the Value RAG unknown, never green > margin 70 validated 70 (green) beside a revenue-uplift planned line without an amount 412ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r4-value-basis.test.ts > Q3 F-DG4-105: every value figure with a currency drills to exactly that currency's figure > T10, Overview, Finance (headlines and lines) and the header, followed one by one 3095ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r4-value-basis.test.ts > Q4 F-DG4-105 negatives > 400 / 422 / multiple_currencies / subject in another currency / cursor rebinding / no grant 398ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r4-value-basis.test.ts > Q5 F-DG4-127: the Portfolio value keeps decimals and the transformation's currency > 50 % of margin 70.5 SAR + 100 % of a USD margin 1000: SAR 35.25, never 1035.25 269ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P1 REQ-S08-009/011 under N3: gross drills and sums exactly; bases never summed > gross 95 / net 65; the gross drill-down sums 95; T10 bases 95 / 300 / 45; 440 nowhere 1368ms
+ × |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P2 REQ-S13-003 / F-DG4-123: a non-trivial gap on the profit-and-cash basis only > validated 30 of 90 -> gap 0.666667 on T10, overview and Finance; top line 300/300 never improves it 935ms
+   → T10: one gap per currency: expected 2 to be 1 // Object.is equality
+stdout | tests/qa/integration/dg4-qa-r3-headlines.test.ts > P3 security: value headlines and their drill-downs are scoped > no grant, another organization, and another transformation's BO are refused (403/404), never served the figures
+P3 statuses: nobody 404 /api/v1/transformations/01a13292-b767-7562-9032-491f66ea5bc7 | nobody 404 /api/v1/transformations/01a13292-b767-7562-9032-491f66ea5bc7 | nobody 404 /api/v1/overview?organizationId=01a13292-ae4a-7408-9cfa-ffe5 | nobody 404 /api/v1/dashboards/finance?organizationId=01a13292-ae4a-7408 | nobody 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio | orgB 404 /api/v1/transformations/01a13292-b767-7562-9032-491f66ea5bc7 | orgB 404 /api/v1/transformations/01a13292-b767-7562-9032-491f66ea5bc7 | orgB 404 /api/v1/overview?organizationId=01a13292-ae4a-7408-9cfa-ffe5 | orgB 404 /api/v1/dashboards/finance?organizationId=01a13292-ae4a-7408 | orgB 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio | otherBO 404 /api/v1/transformations/01a13292-b767-7562-9032-491f66ea5bc7 | otherBO 404 /api/v1/transformations/01a13292-b767-7562-9032-491f66ea5bc7 | otherBO 404 /api/v1/overview?organizationId=01a13292-ae4a-7408-9cfa-ffe5 | otherBO 404 /api/v1/dashboards/finance?organizationId=01a13292-ae4a-7408 | otherBO 404 /api/v1/dashboard-drilldown?metric=value.planned&organizatio
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P3 security: value headlines and their drill-downs are scoped > no grant, another organization, and another transformation's BO are refused (403/404), never served the figures 844ms
+ × |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P4 negative: malformed drill-down narrowing is refused > valueClass=gross or a bogus class -> 400; valueClass on value.gap -> 422 value_class_not_applicable 286ms
+   → {"metric":"value.gap","appliedFilters":{"organizationId":"01a13292-ae4a-7408-9cfa-ffe5e2c9961b","transformationIds":["01a13292-bab4-728e-ac6f-aa1ff2f8400e"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-13"},"valu: expected 200 to be 422 // Object.is equality
+ × |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P5 Unknown, never zero or green > a margin line without an amount -> profit_and_cash planned, gap and Finance gross Unknown; top line known; RAG not green 257ms
+   → expected 'red' to be 'unknown' // Object.is equality
+ ✓ |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P6 REQ-S13-002: the period filter changes every basis's headline > Q1: profit_and_cash 70, top_line 300, non_cash 45 (to date 100 / 400 / 50) on T10, overview and Finance 370ms
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-011: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns
+QA-P1 REQ-S16-011 {"Organization":{"table":"organization","inErd":true,"pk":1,"ownerish":["created_by","updated_by"],"statusish":["status"]},"BusinessUnit":{"table":"business_unit","inErd":true,"pk":1,"ownerish":["organization_id","created_by","updated_by"],"statusish":["status"]},"User":{"table":"app_user","inErd":true,"pk":1,"ownerish":["organization_id","created_by","updated_by"],"statusish":["status"]},"Group":{"table":"access_group","inErd":true,"pk":1,"ownerish":["organization_id","owner_user_id","created_by","updated_by"],"statusish":["status"]},"Role":{"table":"role","inErd":true,"pk":1,"ownerish":["created_by","updated_by"],"statusish":[]},"Permission":{"table":"permission","inErd":true,"pk":1,"ownerish":[],"statusish":[]},"ScopedAssignment":{"table":"scoped_assignment","inErd":true,"pk":1,"ownerish":["organization_id","user_id","granted_by","revoked_by","created_by","updated_by"],"statusish":[]},"Delegation":{"table":"delegation","inErd":true,"pk":1,"ownerish":["organization_id","delegator_user_id","delegate_user_id","created_by","updated_by","requested_by_user_id","revoked_by"],"statusish":["status"]}}
+
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-014: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns
+QA-P1 REQ-S16-014 {"KPIDefinition":{"table":"kpi_definition","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","steward_user_id","archived_by","created_by","updated_by"],"statusish":["status"]},"KPIVersion":{"table":"kpi_version","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","activated_by","withdrawn_by","created_by","updated_by"],"statusish":["status"]},"KPIActual":{"table":"kpi_actual","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","submitted_by","decided_by","created_by","updated_by"],"statusish":["status"]},"TargetTrajectory":{"table":"target_trajectory","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","approved_by","created_by","updated_by"],"statusish":["status"]},"CalculationRun":{"table":"calculation_run","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id"],"statusish":["status"]},"DataQualityFinding":{"table":"data_quality_finding","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","resolved_by","created_by","updated_by"],"statusish":["status"]}}
+
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-017: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns
+QA-P1 REQ-S16-017 {"BusinessCase":{"table":"business_case","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","benefit_owner_user_id","initiative_owner_user_id","finance_validator_user_id","baseline_validated_by","archived_by","created_by","updated_by"],"statusish":["baseline_validation_status","status"]},"Scenario":{"table":"benefit_scenario","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","archived_by","created_by","updated_by"],"statusish":["status"]},"Benefit":{"table":"benefit","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","finance_validator_user_id","baseline_validated_by","bau_owner_user_id","archived_by","created_by","updated_by"],"statusish":["financial_statement_line","baseline_validation_status","status_rag","status_rag_note","status"]},"BenefitAllocation":{"table":"benefit_allocation","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","created_by"],"statusish":[]},"BenefitFormulaVersion":{"table":"benefit_formula_version","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","validated_by","created_by","updated_by"],"statusish":["validation_status"]},"BenefitMeasurement":{"table":"benefit_measurement","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","submitted_by","decided_by","created_by","updated_by"],"statusish":["status"]},"FinanceValidation":{"table":"finance_validation","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","assignee_user_id","decided_by","created_by","updated_by"],"statusish":["status"]}}
+
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-018: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns
+QA-P1 REQ-S16-018 {"Risk":{"table":"raid_entry","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","closed_by","created_by","updated_by"],"statusish":["status"]},"Assumption":{"table":"raid_entry","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","closed_by","created_by","updated_by"],"statusish":["status"]},"Issue":{"table":"raid_entry","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","closed_by","created_by","updated_by"],"statusish":["status"]},"Action":{"table":"action_item","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","created_by","updated_by"],"statusish":["status"]},"Decision":{"table":"decision","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","decided_by","created_by","updated_by","decided_on_behalf_of_user_id"],"statusish":["status"]},"ChangeRequest":{"table":"change_request","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","raised_by","submitted_by","created_by","updated_by"],"statusish":["status"]},"Approval":{"table":"approval","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","requested_by","assignee_user_id","escalated_to_user_id","decided_by","created_by","updated_by"],"statusish":["status"]}}
+
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-019: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns
+QA-P1 REQ-S16-019 {"Forum":{"table":"forum","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","secretary_user_id","created_by","updated_by"],"statusish":["status"]},"Meeting":{"table":"meeting","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","chair_user_id","secretary_user_id","cancelled_by","created_by","updated_by"],"statusish":["status"]},"AgendaItem":{"table":"agenda_item","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","presenter_user_id","ask_owner_user_id","published_by","outcome_recorded_by","created_by","updated_by"],"statusish":["status"]},"Attendance":{"table":"meeting_attendance","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","user_id","on_behalf_of_user_id","created_by","updated_by"],"statusish":[]},"Minutes":{"table":"meeting_minutes","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","approved_by","published_by","created_by","updated_by"],"statusish":["status"]},"MeetingActionLink":{"table":"meeting_action_link","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","created_by"],"statusish":[]}}
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-011: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns 32ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-014: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns 17ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-017: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns 19ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-018: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns 20ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-019: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns 16ms
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-020: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns
+QA-P1 REQ-S16-020 {"StakeholderGroup":{"table":"stakeholder_group","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","archived_by","created_by","updated_by"],"statusish":["status"]},"AdoptionIntervention":{"table":"adoption_intervention","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","owner_user_id","completed_by","created_by","updated_by"],"statusish":["status"]},"TrainingRecord":{"table":"training_record","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","participant_user_id","recorded_by","created_by","updated_by"],"statusish":["status"]},"AssessmentRecord":{"table":"assessment_record","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","respondent_user_id","subject_user_id","reviewed_by","withdrawn_by","created_by","updated_by"],"statusish":["status"]},"AdoptionMetricLink":{"table":"adoption_metric_link","inErd":true,"pk":1,"ownerish":["organization_id","transformation_id","removed_by","created_by","updated_by"],"statusish":["status"]}}
+
+stdout | tests/qa/integration/dg4-qa-r1-probes.test.ts > P2 period opening with two KPI owners (REQ-S12-005) > each KPI owner gets exactly one task per KPI they own; nobody else gets one; a re-run creates none
+QA-P2 first={"opened":1,"tasks":3} tasks=[{"kind":"kpi_update_due","assignee_user_id":"185e377d-e4e5-4a83-b829-9ae436f12c75","subject_id":"10291984-a492-4c11-a223-88416c195905","status":"open"},{"kind":"kpi_update_due","assignee_user_id":"107160bd-bb9f-4c87-9f86-c6f260c2c380","subject_id":"b3fc5638-c12d-4508-9087-f34c71042897","status":"open"},{"kind":"kpi_update_due","assignee_user_id":"185e377d-e4e5-4a83-b829-9ae436f12c75","subject_id":"f70d681c-a639-481c-a69b-ef620afc730b","status":"open"}]
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P1 entity groups: ERD and migrations (REQ-S16-011/014/017/018/019/020) > REQ-S16-020: every listed entity is in the ERD, has a table with one primary key, and its owner/status columns 15ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-probes.test.ts > P2 period opening with two KPI owners (REQ-S12-005) > each KPI owner gets exactly one task per KPI they own; nobody else gets one; a re-run creates none 82ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R1 REQ-S08-017 / F-DG4-101: two simultaneous corrections from one view > exactly one 201 and one 409; one amendment row; the original stepped once 547ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R2 migration 0061: only the exact +1 version step of a corrected original passes the trigger > refuses a step with another change, a step of 2, and a step without any correction 213ms
+ × |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R3 REQ-S08-009/011 + F-DG4-121 (D-117): gross over profit and cash classes only, on totals and the Finance dashboard > gross = margin + cash + working capital; revenue and avoided cost apart; net = gross − cost 482ms
+   → expected '/api/v1/dashboard-drilldown?metric=va…' to be null
+stdout | tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/overview: no Y figure in any tile or total
+QA-P3 /api/v1/overview mine={"organizationId":"01a13292-e52e-73c8-b61d-8112137a73cf","businessDate":"2026-10-13","transformationCount":1,"areas":[{"code":"outcomes","ordinal":1,"sourceAreaEn":"Outcomes","areaAr":"النتائج","sourceWhatToShowEn":"Actual vs baseline vs target; trend","whatToShowAr":"الفعلي مقابل خط الأساس مقابل المستهدف؛ الاتجاه","sourceRagLogicEn":"RAG based on target trajectory, not activity completion","ragLogicAr":"حالة RAG وفق مسار المستهدف، لا وفق إنجاز الأنشطة","arProvisional":true,"rag":{"status":"unknown","ruleKey":"dashboard.rag.outcomes.none","ruleParams":{},"policySource":"default"},"headlines":[{"metric":"outcomes.area","labelKey":"dashboard.headline.outcome_kpis","value":{"state":"zero","value":"0","unit":"outcome_kpi","currency":null,"reasonKey":null,"kpiUnit":null},"period":{"start":null,"end":null,"label":null},"headlineBasis":null}],"items":[]},{"code":"value","ordinal":2,"sourceAreaEn":"Value","areaAr":"القيمة","sourceWhatToShowEn":"Realized / forecast benefit; investment","whatToShowAr":"المنفعة المحققة / المتوقعة؛ الاستثمار","sourceRagLogicEn":"RAG based on validated benefit gap","ragLogicAr":"حالة RAG وفق فجوة المنفعة المعتمدة","arProvisional":true,"rag":{"status":"red","rul
+
+stdout | tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/dashboards/finance: no Y figure in any tile or total
+QA-P3 /api/v1/dashboards/finance mine={"organizationId":"01a13292-e52e-73c8-b61d-8112137a73cf","businessDate":"2026-10-13","lines":[{"valueClass":"revenue_uplift","state":"planned","currency":"SAR","total":{"state":"value","value":"1000","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null}},{"valueClass":"revenue_uplift","state":"forecast","currency":"SAR","total":{"state":"zero","value":"0","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null}},{"valueClass":"revenue_uplift","state":"measured","currency":"SAR","total":{"state":"value","value":"700","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null}},{"valueClass":"revenue_uplift","state":"submitted","currency":"SAR","total":{"state":"zero","value":"0","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null}},{"valueClass":"revenue_uplift","state":"validated","currency":"SAR","total":{"state":"value","value":"700","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null}},{"valueClass":"revenue_uplift","state":"rejected","currency":"SAR","total":{"state":"zero","value":"0","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null}},{"valueClass":"revenue_uplift","state":"sustained","currency":"
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/overview: no Y figure in any tile or total 205ms
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/dashboards/finance: no Y figure in any tile or total 56ms
+stdout | tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/dashboards/adoption: no Y figure in any tile or total
+QA-P3 /api/v1/dashboards/adoption mine={"organizationId":"01a13292-e52e-73c8-b61d-8112137a73cf","businessDate":"2026-10-13","area":{"code":"people_adoption","ordinal":6,"sourceAreaEn":"People & adoption","areaAr":"الأفراد والتبني","sourceWhatToShowEn":"Usage/adoption/capability signals","whatToShowAr":"مؤشرات الاستخدام/التبني/القدرات","sourceRagLogicEn":"RAG vs adoption curve","ragLogicAr":"حالة RAG مقابل منحنى التبني","arProvisional":true,"rag":{"status":"unknown","ruleKey":"dashboard.rag.adoption.no_indicators","ruleParams":{},"policySource":"default"},"headlines":[{"metric":"adoption.indicators","labelKey":"dashboard.headline.adoption_indicators","value":{"state":"zero","value":"0","unit":"indicator","currency":null,"reasonKey":null,"kpiUnit":null},"period":{"start":null,"end":null,"label":null},"headlineBasis":null}],"items":[]},"indicators":[],"openInterventionCount":0,"transformations":[{"transformationId":"01a13292-e566-75a4-a2d8-16d80103b10b","code":"TXF2C3F1","name":"Synthetic fixture transformation","areaStatuses":[{"code":"outcomes","status":"unknown"},{"code":"value","status":"red"},{"code":"portfolio","status":"not_applicable"},{"code":"dependencies","status":"green"},{"code":"decisions","status":"green"},{
+
+ ✓ |integration| tests/qa/integration/dg4-qa-r1-scope-totals.test.ts > REQ-S13-001 figures: the X-scoped user's organization dashboards equal the auditor's X-filtered view > /api/v1/dashboards/adoption: no Y figure in any tile or total 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r2-repairs.test.ts > R3 REQ-S08-009/011 + F-DG4-121 (D-117): gross over profit and cash classes only, on totals and the Finance dashboard > gross = margin + cash + working capital; revenue and avoided cost apart; net = gross − cost
+AssertionError: expected '/api/v1/dashboard-drilldown?metric=va…' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"/api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a13292-d191-7096-9440-0485298e6b12&transformationId=01a13292-d675-7578-9d14-7ade569497ea&currency=SAR"
+
+ ❯ tests/qa/integration/dg4-qa-r2-repairs.test.ts:206:37
+    204|     expect(netP.map((l) => canon(l.total.value))).toEqual(["65"]);
+    205|     // Revenue uplift is present in the planned state, so the five-cla…
+    206|     expect(grossP[0].drilldownHref).toBeNull();
+       |                                     ^
+    207|     expect(["revenue_uplift", "margin_uplift", "cash_saving", "avoided…
+    208|       fl(c, "planned").map((l) => canon(l.total.value))[0],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P2 REQ-S13-003 / F-DG4-123: a non-trivial gap on the profit-and-cash basis only > validated 30 of 90 -> gap 0.666667 on T10, overview and Finance; top line 300/300 never improves it
+AssertionError: T10: one gap per currency: expected 2 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:158:101
+    156|       expect(pick(list, "value.gap", "profit_and_cash")?.value, where)…
+    157|       expect(dec(pick(list, "value.validated", "top_line")?.value.valu…
+    158|       expect(list.filter((h) => h.metric === "value.gap").length, `${w…
+       |                                                                                                     ^
+    159|       const vd = pick(list, "value.validated", "profit_and_cash")!;
+    160|       expect((await drillSum(vd.drilldownHref, b.s.auditor, "SAR")).su…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P4 negative: malformed drill-down narrowing is refused > valueClass=gross or a bogus class -> 400; valueClass on value.gap -> 422 value_class_not_applicable
+AssertionError: {"metric":"value.gap","appliedFilters":{"organizationId":"01a13292-ae4a-7408-9cfa-ffe5e2c9961b","transformationIds":["01a13292-bab4-728e-ac6f-aa1ff2f8400e"],"ownerUserId":null,"periodId":null,"periodLabel":null,"phase":null,"status":null,"windowStart":null,"windowEnd":null,"asOf":"2026-10-13"},"valu: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:209:60
+    207|     }
+    208|     const g = await call<Body>(api.app, "GET", `${gap}&valueClass=reve…
+    209|     expect(g.status, JSON.stringify(g.body).slice(0, 300)).toBe(422);
+       |                                                            ^
+    210|     expect(g.body.code).toBe("dashboard.value_class_not_applicable");
+    211|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| tests/qa/integration/dg4-qa-r3-headlines.test.ts > P5 Unknown, never zero or green > a margin line without an amount -> profit_and_cash planned, gap and Finance gross Unknown; top line known; RAG not green
+AssertionError: expected 'red' to be 'unknown' // Object.is equality
+
+Expected: [32m"unknown"[39m
+Received: [31m"red"[39m
+
+ ❯ tests/qa/integration/dg4-qa-r3-headlines.test.ts:230:45
+    228|     expect(pick(vh, "value.gap", "profit_and_cash")!.value).toMatchObj…
+    229|     expect(dec(pick(vh, "value.planned", "top_line")!.value.value)).to…
+    230|     expect(areaOf(t10, "value").rag.status).toBe("unknown");
+       |                                             ^
+    231|     const fd = await get(`/api/v1/dashboards/finance?${q(b)}`, b.s.aud…
+    232|     const gross = (fd.lines as Body[]).find((l) => l.valueClass === "g…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  4 failed | 20 passed (24)
+   Start at  00:03:34
+   Duration  37.00s (transform 4.40s, setup 0ms, collect 18.23s, tests 15.57s, environment 4ms, prepare 106ms)
+
+EXIT 1
+2026-10-13T00:04:16Z
+ 00:04:16 up 2 days,  6:03,  0 user,  load average: 7.36, 6.54, 10.15
+0

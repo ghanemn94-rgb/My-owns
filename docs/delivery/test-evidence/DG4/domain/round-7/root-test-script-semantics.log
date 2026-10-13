@@ -1,0 +1,22 @@
+# domain-reviewer DG4 r7: the shipped root 'test' script, evaluated with vitest replaced by a stub that fails for a chosen project
+# script: s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+## failing project: none
+stub vitest run --project unit-node
+stub vitest run --project unit-web
+stub vitest run --project unit-formula-nocodegen
+## exit=0
+## failing project: unit-node
+stub vitest run --project unit-node
+stub vitest run --project unit-web
+stub vitest run --project unit-formula-nocodegen
+## exit=1
+## failing project: unit-web
+stub vitest run --project unit-node
+stub vitest run --project unit-web
+stub vitest run --project unit-formula-nocodegen
+## exit=1
+## failing project: unit-formula-nocodegen
+stub vitest run --project unit-node
+stub vitest run --project unit-web
+stub vitest run --project unit-formula-nocodegen
+## exit=1
