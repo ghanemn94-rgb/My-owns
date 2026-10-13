@@ -13501,6 +13501,11 @@
           "at": "2026-10-13T10:45:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by release-auditor round 9: PASS"
+        },
+        {
+          "at": "2026-10-13T18:30:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 10: PASS"
         }
       ],
       "acceptance": {
@@ -13515,27 +13520,24 @@
         "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG4-T-DG4-AUDIT-R9-release-auditor-20261013T102138Z-7b5f734c",
-          "session_id": "7b5f734c-c736-4247-9ee8-6cdc603241f7"
+          "run_id": "DG4-T-DG4-AUDIT-R10-release-auditor-20261013T180247Z-82e59b30",
+          "session_id": "82e59b30-6e03-40dc-800d-86b2673c0273"
         },
-        "at": "2026-10-13T10:45:00Z",
+        "at": "2026-10-13T18:30:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-summary.txt",
-          "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-load-samples.log",
-          "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-node24-unset.log",
-          "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-node22-C.log",
-          "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-setup.log",
-          "docs/delivery/test-evidence/DG4/audit/round-9/02-provenance.log",
-          "docs/delivery/test-evidence/DG4/audit/round-9/03-findings.log",
-          "docs/delivery/test-evidence/DG4/audit/round-9/08-evidence-honesty-scan.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-summary.txt",
+          "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-load-samples.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-node24-unset.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-setup.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/03-findings.log",
+          "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-envelope-summary.txt",
+          "docs/delivery/test-evidence/DG4/qa/round-10/02-unit-envelope-samples-r2.log",
           "docs/delivery/reviews/DG4/round-9/qa-verifier.verifications.json",
-          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-summary.txt",
-          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-samples-r2.log",
           "docs/delivery/environment.md",
           "docs/delivery/findings.json"
         ],
-        "note": "The release-auditor concurs, on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae717), with accepting F-DG4-148 as an observation (D-134, D-136).\n\nWhy acceptance is allowed:\n- The finding is Low, mandatory_violation false, which is what rules.mjs requires for ACCEPTED_OBSERVATION.\n- The reporter (qa-verifier) re-recorded 'PASS -> ACCEPTED_OBSERVATION' in its round-9 sidecar as its latest entry for the finding. Its run 5ead60fc exited 0, with an empty external_config_changed and a matching sandbox.json (02-provenance.log).\n- findings.json mirrors it: acceptance.accepted_by [qa-verifier, release-auditor], owner delivery-orchestrator, with a rationale (03-findings.log).\n\nNo product defect:\n- Both failure classes are timing under CPU oversubscription: a first render missing unit-web's 5 s wait, and architecture.test.ts missing its 30 s timeout.\n- The product tree of f2ae717 is byte-identical to round 7's dab4562 and round 8's 8553323/5cd1e06 (0 files differ outside docs/delivery). No test, timeout or product file changed for the acceptance.\n\nThe envelope (environment.md limitation 6: 1-min load <= 8, sampled at least every 30 s and recorded) is accurate and evidenced on this candidate:\n- qa round 9: I recomputed its raw samples myself. Series r2 has 58 samples, max 5.81, 0 above 8, and 4/4 EXIT 0. Series r1 has 81 samples, max 11.67, 55 above 8; it is disclosed and not counted, and it also passed 4/4. A strict scan of all 8 logs gives 0 failure lines; every 'x' hit is a passing test name.\n- My own reproduction, in a complete clone at f2ae717 with no other agent run active: Node 24 with the locale unset (load 1.43-4.91) and Node 22 with C.UTF-8 (load 3.99-5.83). Both EXIT 0, with 1589 + 1347 + 259 (2 skipped by design). architecture.test.ts took 10.5-10.7 s against 30 s, and the raid action register 1.2-2.0 s against 5 s (07-unit-summary.txt).\n- Every recorded failure is at load >= 12.4, and every run at <= 11.67 has passed.\n\nThe conditions of my round-8 concurrence still apply:\n- A pnpm test failure inside the envelope is a genuine failure.\n- The re-run clause covers only the two named timing classes. Any other failure must be explained on its own (the DG2 round-10 evidence-honesty condition).\n- The two rounded figures in environment.md ('13-16', measured 12.40-17.65; 'pre-freeze 1.4-2.3', which is 1.22-2.33) remain for the delivery-orchestrator to correct, as D-135 committed.\n\nOwner of the acceptance and the text correction: delivery-orchestrator. The code owner stays frontend-ux-engineer.\n\nThis concurrence is independent of the gate decision. The gate is BLOCKED for another reason (F-DG4-160), not because of F-DG4-148."
+        "note": "The release-auditor concurs again, on candidate sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 (source e70ac02), with accepting F-DG4-148 as an observation (D-134, D-136; D-139: the acceptance stands).\n\nWhy acceptance is allowed:\n- The finding is Low, with mandatory_violation false.\n- The reporter (qa-verifier) recorded PASS -> ACCEPTED_OBSERVATION in its round-9 sidecar as its latest entry. Run 5ead60fc exited 0, with an empty external_config_changed and a matching sandbox (03-findings.log).\n- findings.json lists accepted_by [qa-verifier, release-auditor], with owner delivery-orchestrator.\n\nNo product defect. Both classes are timing under CPU oversubscription: a unit-web first render missing its 5 s wait, and architecture.test.ts missing its 30 s timeout. The round-10 product change is 9 text/test files, none of them timing-related.\n\nThe envelope (environment.md limitation 6: 1-minute load <= 8, sampled at least every 30 s and recorded) is accurate and evidenced on this candidate:\n- qa round 10, which I recomputed from 02-unit-envelope-samples-r2.log: series r2 has 64 samples, 5.10-6.91, 0 above 8, and 4/4 runs exited 0 with 1589 / 1358 / 259 + 2 skipped. Series r1 (max 11.82, 80/108 above 8) is disclosed and not counted; it also passed 4/4.\n- My own run inside the envelope (07-unit-summary.txt), Node 24 with the locale unset, at load 0.07-4.74 over 14 samples: EXIT 0, 1589 + 1358 + 259 (2 skipped by design), and 0 failure lines on a strict scan.\n\nMy earlier conditions still apply:\n- A pnpm test failure inside the envelope is a genuine failure.\n- The re-run clause covers only the two named timing classes.\n- The two rounded figures in environment.md (observed load '13-16', measured 12.40-17.65; 'pre-freeze 1.4-2.3', which is 1.22-2.33) are still uncorrected. They describe history, not the envelope, which is accurate. Correcting them stays with the delivery-orchestrator, as D-135 committed.\n\nOwner of the acceptance: delivery-orchestrator. Code owner: frontend-ux-engineer."
       }
     },
     {
@@ -13560,7 +13562,7 @@
       "reported_by": "release-auditor",
       "reported_in": "docs/delivery/reviews/DG4/round-9/release-auditor.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-13T10:45:00Z",
@@ -13571,10 +13573,45 @@
           "at": "2026-10-13T11:33:11Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66"
+        },
+        {
+          "at": "2026-10-13T18:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by release-auditor round 10: PASS"
         }
       ],
       "fix_revision": "30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66",
-      "fix_summary": "T-DG4-FE-R11 (D-137): transformations.form.statusHint in EN and AR now says a transformation is closed from its Closure page once the G6 (Sustain) business approval and the closure conditions are met, pinned in both languages (transformations.test.tsx, journeys.spec.ts). The sweep also corrected nav.plannedBody, nav.willContain and nav.entry.portfolioPlanned (only the cross-portfolio view is later, REQ-S03-007 DG5), pinned in app.test.tsx and p3-seams.spec.ts; the other 'later release' strings were kept as unreachable or true, with reasons in the handback."
+      "fix_summary": "T-DG4-FE-R11 (D-137): transformations.form.statusHint in EN and AR now says a transformation is closed from its Closure page once the G6 (Sustain) business approval and the closure conditions are met, pinned in both languages (transformations.test.tsx, journeys.spec.ts). The sweep also corrected nav.plannedBody, nav.willContain and nav.entry.portfolioPlanned (only the cross-portfolio view is later, REQ-S03-007 DG5), pinned in app.test.tsx and p3-seams.spec.ts; the other 'later release' strings were kept as unreachable or true, with reasons in the handback.",
+      "verification": {
+        "by_role": "release-auditor",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-AUDIT-R10-release-auditor-20261013T180247Z-82e59b30",
+          "session_id": "82e59b30-6e03-40dc-800d-86b2673c0273"
+        },
+        "at": "2026-10-13T18:30:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/audit/round-10/13-f-dg4-160-reproduction-and-sweep.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/09-fe-r11-mutants.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/08-fe-r11-unit-unset.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/08-fe-r11-unit-cutf8.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/07-unit-setup.log",
+          "docs/delivery/test-evidence/DG4/audit/round-10/03-findings.log",
+          "docs/delivery/test-evidence/DG4/audit/round-9/12-new-finding-stale-g6-hint.log",
+          "docs/delivery/handbacks/DG4/T-DG4-FE-R11-frontend-ux-engineer.md",
+          "docs/delivery/reviews/DG4/round-10/domain-reviewer.json",
+          "docs/delivery/reviews/DG4/round-10/code-security-reviewer.json",
+          "docs/delivery/reviews/DG4/round-10/qa-verifier.json",
+          "apps/web/src/i18n/en/transformations.json",
+          "apps/web/src/i18n/ar/transformations.json",
+          "apps/web/src/i18n/en/nav.json",
+          "apps/web/src/i18n/ar/nav.json",
+          "apps/web/src/pages/transformations/transformations.test.tsx",
+          "apps/web/src/app/app.test.tsx"
+        ],
+        "note": "Verified by its reporter, the release-auditor (round-9 run 7b5f734c raised it; this is round-10 run 82e59b30). Candidate sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 (1475 files, source e70ac02f63cd1f42487cfa4dae73f68e933da015), recomputed in a complete clone. The owner is frontend-ux-engineer (T-DG4-FE-R11); I authored none of the repair.\n\nFix ancestry. fix_revision 30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66 is a commit (full 40-hex), merged by 5c18961. It is an ancestor of e70ac02 and of this run's starting HEAD e5587b8 (03-findings.log).\n\nMy round-9 reproduction no longer reproduces (13-f-dg4-160-reproduction-and-sweep.log):\n- en/ar transformations.json:88 form.statusHint now reads 'A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.' / '… يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.'\n- The stale sentence is found nowhere in apps/, packages/, tests/ or e2e/ (grep exit 1).\n- It still renders at TransformationEditPage.tsx:274.\n- What it points to exists: route transformations/:id/closure (router.tsx:402) and the workspace tab closureP4.tab 'Closure' / «الإغلاق».\n- The first sentence (the allowed transitions, no 'closed' option) is unchanged and still true.\n\nThe pins are not vacuous (09-fe-r11-mutants.log), checked in a scratch clone and restored clean:\n- Restoring the round-9 transformations.json fails 3 tests: the literal EN/AR pin and the en/ar rendered edit page.\n- Restoring the round-9 nav.json fails 11 tests: the planned-area pins in en and ar.\n- On the candidate, the two files pass 49/49 with the locale unset and with C.UTF-8 (08-fe-r11-unit-*.log).\n\nThe sweep (FE-R11 handback §3) is sound. I checked each kept string myself:\n- gates.notEnabled / notEnabledBody and problems.gate_not_enabled are unreachable. Migrations 0026 and 0059 enable G4-G6 (0059 aborts unless both G5 and G6 are enabled), catalogue.test.ts pins G1-G6 all true, and no API code writes gate_definition.\n- transformations.workspace.laterStage has 0 render sites.\n- nav.p4.beingBuilt* is unreachable: P4_PLANNED_ROUTES has 0 entries.\n- admin.plannedSections is true: every section it names is final gate DG5 or DG6 and SPECIFIED.\n- problems.access__scope_type_reserved is true (REQ-S10-002, DG6).\n\nThe three corrected sweep strings are true for DG4:\n- nav.plannedBody: each of the four planned areas (playbook, risks, change, bau) has delivered sub-screens without a permission requirement in NAV_SUBPAGES.\n- nav.entry.portfolioPlanned: the cross-portfolio view is REQ-S03-007 (DG5, SPECIFIED), and the dashboards are REQ-S13-001 (DG4, IMPLEMENTED).\n- nav.willContain now reads 'What this area covers'.\n\nAll three round-10 specialists checked the repair independently and agree, all PASS on the same candidate:\n- domain: DOM-R10-02 to -04, a real-stack EN/AR probe at 60/60;\n- code-security: SEC-R10-02, no key added or removed and no interpolation surface;\n- qa: QA-R10-03, -07 to -09, with a stale-text mutant failing 14/49, e2e 24/24 in both settings and axe 0.\n\nThe repair is text and tests only: the product diff from f2ae717 is exactly 9 files, with no API, worker, package or migration change."
+      }
     }
   ]
 }
