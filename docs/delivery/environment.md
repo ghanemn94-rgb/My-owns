@@ -61,6 +61,11 @@ Purpose: section 0.1 of the master prompt. This records what the build environme
 3. **Egress proxy CA.** Image builds must accept an optional build-time CA secret. Runtime images must not require public internet (verified in P6/P7).
 4. **No stable provider run IDs.** The runtime exposes an internal agent identifier per invocation. Review records store it as `invocation_reference` together with the transcript path when available. Where no ID is exposed, the record says so explicitly rather than inventing one.
 5. **Permission classifier interruptions.** Shell commands were intermittently refused while the permission classifier was unavailable. Read-only tools were used meanwhile. This doesn't affect product behaviour.
+6. **Unit-test load envelope (F-DG4-148, D-134).** The review machine has 4 cores. `pnpm test` is a valid gate check when the 1-minute load average stays at or below **8** (twice the core count) for the whole run, sampled at least every 30 s and recorded in the evidence.
+   - Above that load, first renders of lazily loaded page modules can miss unit-web's 5 s wait, and `architecture.test.ts` can miss its 30 s timeout, without any product defect. The load the three concurrent reviews create (22–30) is well above it.
+   - A reviewer runs `pnpm test` for the gate when no other heavy test phase is running. It records the load samples. A run that fails above the envelope is disclosed, and the check is re-run inside it.
+   - Evidence: the orchestrator's pre-freeze runs passed at load 1.4–2.3 in every round, and qa round 7 passed 4/4 at low load. qa saw 3/4 runs fail at load 22–30 and 1/4 at 13–16.
+   - The user accepted F-DG4-148 as an observation on this basis (D-134).
 
 ## Changes after P0 start
 
