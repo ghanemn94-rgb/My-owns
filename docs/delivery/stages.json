@@ -1449,7 +1449,7 @@
       "id": "DG4",
       "stage": "P4",
       "name": "Execution value and sustainment",
-      "state": "VERIFYING",
+      "state": "FIXING",
       "depends_on": [
         "DG3"
       ],
@@ -1578,7 +1578,8 @@
           "records": {
             "domain-reviewer": "docs/delivery/reviews/DG4/round-9/domain-reviewer.json",
             "code-security-reviewer": "docs/delivery/reviews/DG4/round-9/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG4/round-9/qa-verifier.json"
+            "qa-verifier": "docs/delivery/reviews/DG4/round-9/qa-verifier.json",
+            "release-auditor": "docs/delivery/reviews/DG4/round-9/release-auditor.json"
           },
           "note": "DG4 gate review round 9, a confirmation and re-verification round (D-136), on candidate 18c18fe4 (1475 files, source f2ae717). After the D-136 history rewrite the product code is byte-identical to round 8's (8553323, now 5cd1e06); only delivery records changed (D-135, D-136, findings.json, stages.json, progress.md and the rewrite evidence). Each reviewer re-verifies the findings it closed before; qa re-records the F-DG4-148 acceptance."
         }
@@ -1689,6 +1690,11 @@
           "state": "VERIFYING",
           "at": "2026-10-13T10:22:00Z",
           "note": "Round 9 on 18c18fe4: domain PASS, code-security PASS, qa PASS, no new finding. All 23 closures re-verified on the rewritten history (CLOSED_VERIFIED, imported with their verification objects); qa re-accepts F-DG4-148 (ACCEPTED_OBSERVATION). The release-auditor runs on the same candidate. decisions.md is left untouched until the gate decision (B1)."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-10-13T10:52:00Z",
+          "note": "The round-9 release-auditor BLOCKED DG4 on one condition: F-DG4-160 (Low, not mandatory), raised by the auditor itself. The transformation edit page's status hint says, in EN and AR, that G6 'is available in a later release', but DG4 delivers G6 and governed closure. B1-B4 of round 8 are confirmed resolved. Repair by frontend-ux-engineer (D-137), then review round 10."
         }
       ]
     },
