@@ -1,0 +1,46 @@
+# identity and records-only diff evidence, 2026-10-13T08:14:53Z, load 0.85 2.45 2.84
+$ sha256sum assignment
+283bdf357e8a56a1d0b3e640147284587661daddf698570fcbf48124eff26914  docs/delivery/assignments/DG4/round-8/code-security-reviewer.md
+$ git rev-parse HEAD (repo, now)
+477be30466b5616603140355cef349187e528817
+$ git log --oneline 78fe975..HEAD
+477be30 run: DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8 (review evidence, auto-committed by run-agent.sh)
+$ git diff --name-only 78fe975..HEAD | grep -v ^docs/delivery/ | wc -l
+0
+$ git -C $TMPDIR/review-r8 rev-parse HEAD; is-shallow; status lines
+78fe975f74b7f0add7110b08aeedda2cb1e80d95
+false
+0
+$ git diff --stat dab4562..8553323 -- . ':!docs/delivery'  (expect empty)
+rc=0 lines=0
+$ git diff --name-only dab4562..8553323 | grep -v ^docs/delivery/ | wc -l
+0
+$ git diff --name-only dab4562..8553323 | cut -d/ -f1-3 | sort | uniq -c
+      6 docs/delivery/assignments
+      1 docs/delivery/candidates
+      1 docs/delivery/decisions.md
+      1 docs/delivery/environment.md
+      1 docs/delivery/findings.json
+      1 docs/delivery/progress.md
+      6 docs/delivery/reviews
+     18 docs/delivery/runs
+      1 docs/delivery/stages.json
+    599 docs/delivery/test-evidence
+$ git diff --name-only 8553323..78fe975
+docs/delivery/assignments/DG4/round-8/code-security-reviewer.md
+docs/delivery/assignments/DG4/round-8/domain-reviewer.md
+docs/delivery/assignments/DG4/round-8/qa-verifier.md
+docs/delivery/candidates/DG4/8014e5ceffe1f374.manifest.json
+docs/delivery/stages.json
+$ git diff --quiet dab4562 8553323 -- apps packages docs/api tests e2e tools pnpm-lock.yaml package.json; echo rc
+rc=0
+$ candidate.mjs at 8553323 in clone
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804","files":1475}
+rc=0
+78fe975f74b7f0add7110b08aeedda2cb1e80d95
+$ manifest diff baa6ff4d (round 7) -> 8014e5ce (round 8)
+r7 sha256:baa6ff4da306402cfefe67b54b03ad05f1bb80776187e9fbad44d3bbb31ab527 dab4562c71ab4f0a8e5b89b32ad93a0861539598 1475
+r8 sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804 8553323d6938d5c5077661070ab9f8df2d8dc969 1475 2026-10-13T07:05:44Z
+changed docs/delivery/decisions.md
+changed docs/delivery/environment.md
+differing entries: 2

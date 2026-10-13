@@ -1,0 +1,12 @@
+(2026-10-13T08:00:35Z) end-of-review candidate check
+$ git -C $TMPDIR/rev rev-parse HEAD
+8553323d6938d5c5077661070ab9f8df2d8dc969
+$ git -C $TMPDIR/rev status --short | wc -l
+0
+$ (cd $TMPDIR/rev && node tools/gates/candidate.mjs --stage DG4)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804","files":1475}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG4 (repository working tree, HEAD 78fe975)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:8014e5ceffe1f374388ff00e59775458601e0a66be40e5dfe32a10c8cd2d3804","files":1475}
+EXIT 0
+$ git log --oneline 78fe975..HEAD

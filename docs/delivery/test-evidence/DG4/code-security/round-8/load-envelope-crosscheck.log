@@ -1,0 +1,98 @@
+# D-133 / D-134 / environment.md limitation 6 cross-check against round-6/7 evidence, 2026-10-13T08:15:08Z
+## qa round-7 pnpm test runs: first/last load line and exit (series 1 contended, series 2 held, series 3 clean)
+02-unit-load-held-samples.log: start[] end[]  failed-tests=0
+02-unit-node22-C-clean.log: start[3.67, 3.74, 4.91] end[4.16, 4.10, 4.83] EXIT 0 failed-tests=0
+02-unit-node22-C-load13-15.log: start[16.17, 15.93, 16.39] end[12.12, 14.10, 15.43] EXIT 0 failed-tests=0
+02-unit-node22-C.log: start[24.19, 26.10, 23.90] end[22.71, 23.89, 24.12] EXIT 1 failed-tests=1
+02-unit-node22-unset-clean.log: start[2.12, 3.25, 5.09] end[3.67, 3.74, 4.91] EXIT 0 failed-tests=0
+02-unit-node22-unset-load13-15.log: start[15.49, 13.60, 17.20] end[16.17, 15.93, 16.39] EXIT 1 failed-tests=2
+02-unit-node22-unset.log: start[7.70, 10.08, 15.39] end[24.19, 26.10, 23.90] EXIT 1 failed-tests=1
+02-unit-node24-C-clean.log: start[4.34, 4.34, 4.79] end[4.07, 4.43, 4.75] EXIT 0 failed-tests=0
+02-unit-node24-C-load13-15.log: start[11.61, 13.46, 14.48] end[13.20, 13.95, 14.29] EXIT 0 failed-tests=0
+02-unit-node24-C.log: start[16.52, 19.92, 22.14] end[10.90, 14.39, 18.82] EXIT 0 failed-tests=0
+02-unit-node24-unset-clean.log: start[4.16, 4.10, 4.83] end[4.34, 4.34, 4.79] EXIT 0 failed-tests=0
+02-unit-node24-unset-load13-15.log: start[12.12, 14.10, 15.43] end[11.61, 13.46, 14.48] EXIT 0 failed-tests=0
+02-unit-node24-unset.log: start[22.71, 23.89, 24.12] end[16.52, 19.92, 22.14] EXIT 1 failed-tests=1
+02-unit-samples-clean.log: start[] end[]  failed-tests=0
+## qa round-7 held-load samples (02-unit-load-held-samples.log): count, min, max of 1-min load
+n=0 min= median= max=
+56
+clean samples n=0 min= max=
+## qa round-7 RUN-NOTES unit table
+| Series | Load (1-min) | Runs exiting 1 | Failures |
+|---|---|---|---|
+| 1. Contended (`02-unit-{nv}-{loc}.log`), 21:59–23:03Z. My e2e and harness `pnpm test` runs plus the other two reviews were running. | 7.7 → 22–30 | **3 of 4** | node22-unset and node22-C: `raid.test.tsx` "action register" (en), with "Unable to find role=link 'Synthetic call the vendor'" after the 5 s wait. node24-unset: `architecture.test.ts` "every import respects dependsOn…" at 33.4 s against its 30 s timeout. node24-C: EXIT 0. |
+| 2. Held at 13–15 (`*-load13-15.log`; same controller as round 6). The controller added busy loops, and my C.UTF-8 e2e run was also running. 208 samples: median 14.39, p10–p90 12.40–16.82. | median 15.52 (12.40–17.65) during node22-unset | **1 of 4** | node22-unset: `architecture.test.ts` at 41.1 s ("Test timed out in 30000ms"), and raid "action register" (en) at 5.3 s. The other three runs: EXIT 0. |
+| 3. Low load (`*-clean.log`), with no other job of mine and the other reviews finished. | 2.1–5.5 | 0 of 4 | All EXIT 0: unit-node 1589, unit-web 1347, no-codegen 259 + 2 skipped. |
+## round-6 finding text (findings.json F-DG4-148 reproduction): low-load clause
+Low false OPEN
+At load 3-9, all four pnpm test runs exit 0 (02-unit-*-lowload.
+## my round-7 unit runs (code-security round 7)
+# node: v22.22.2  commit: ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7  LANG=<unset> LC_ALL=<unset> LC_CTYPE=C.UTF-8  load: 9.24 10.29 15.34  started: 2026-10-12T21:59:38Z
+# exit_status: 1  load: 23.34 25.62 23.83  finished: 2026-10-12T22:21:24Z
+# node: v24.21.0  commit: ea5e262ad3bdec5b6ccd8f8b7faf191947b094d7  LANG=<unset> LC_ALL=<unset> LC_CTYPE=C.UTF-8  load: 23.34 25.62 23.83  started: 2026-10-12T22:21:24Z
+# exit_status: 0  load: 23.64 24.07 24.26  finished: 2026-10-12T22:36:36Z
+## orchestrator pre-freeze load records (environment.md says 'passed at load 1.4-2.3 in every round')
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r2-6c6bbae/e2e-summary.txt:e2e start 02:42:06 load 1.22
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r2-6c6bbae/e2e-summary.txt:e2e end 03:18:06 load 1.55
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/e2e-summary.txt:e2e start 10:44:21 load 1.63
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/e2e-summary.txt:e2e end 11:23:44 load 1.55
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r4-7f38e28/e2e-summary.txt:e2e start 19:56:41 load 1.54
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r4-7f38e28/e2e-summary.txt:e2e end 20:39:04 load 2.00
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r5-e2f998e/e2e-summary.txt:e2e start 02:30:40 load 1.43
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r5-e2f998e/e2e-summary.txt:e2e end 03:11:30 load 1.53
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r6-3d3b0da/e2e-summary.txt:e2e start 10:20:13 load 2.03
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r6-3d3b0da/e2e-summary.txt:e2e end 11:03:21 load 1.71
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/e2e-summary.txt:e2e start 18:55:42 load 1.60
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/e2e-summary.txt:e2e end 19:38:35 load 1.93
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/extra-summary.txt:e2e-cutf8 start 11:23:44 load 1.55
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/extra-summary.txt:e2e end 12:04:04 load 1.64
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r4-7f38e28/extra-summary.txt:e2e-cutf8 start 20:39:04 load 2.00
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r4-7f38e28/extra-summary.txt:e2e end 21:22:14 load 2.33
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r5-e2f998e/extra-summary.txt:e2e-cutf8 start 03:11:30 load 1.53
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r5-e2f998e/extra-summary.txt:e2e end 03:53:38 load 1.61
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r6-3d3b0da/extra-summary.txt:e2e-cutf8 start 11:03:21 load 1.71
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r6-3d3b0da/extra-summary.txt:e2e end 11:48:07 load 2.32
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/extra-summary.txt:e2e-cutf8 start 19:38:35 load 1.93
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/extra-summary.txt:e2e end 20:21:36 load 1.93
+unit logs with a load line:
+12
+prefreeze unit results:
+      6 unit-cutf8 0
+      6 unit-unset 0
+## rules.mjs acceptance precondition
+566:      if (f.severity !== "Low" || f.mandatory_violation) errors.push(`${where}: only Low, non-mandatory findings may be accepted as observations`);
+582:      if (!roles.includes(AUDITOR)) errors.push(`${where}: no release-auditor sidecar accepts it`);
+583:      if (!roles.some((r) => REQUIRED_REVIEWERS.includes(r))) errors.push(`${where}: no specialist reviewer sidecar accepts it`);
+585:      if (gate && !gate.accepted_observations.includes(f.id)) errors.push(`${where}: not listed in the gate's accepted_observations`);
+## orchestrator pre-freeze unit-log load lines (appended 2026-10-13T08:15:17Z)
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r2-6c6bbae/unit-cutf8.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r2-6c6bbae/unit-unset.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/unit-cutf8.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r3-25bdcbd/unit-unset.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r4-7f38e28/unit-cutf8.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r4-7f38e28/unit-unset.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r5-e2f998e/unit-cutf8.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r5-e2f998e/unit-unset.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r6-3d3b0da/unit-cutf8.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r6-3d3b0da/unit-unset.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/unit-cutf8.log: 
+docs/delivery/test-evidence/DG4/orchestrator/prefreeze-r7-caac6da/unit-unset.log: 
+## qa held-sample log format and stats
+23:03:17 load1=8.30 busy_loops=1
+23:03:32 load1=7.96 busy_loops=2
+23:03:47 load1=8.11 busy_loops=3
+n=0 min= median= max=
+clean:
+00:57:14 2.12 3.25 5.09
+00:57:29 2.49 3.27 5.07
+n=56 min=2.12 max=5.48
+## note: the 12 pre-freeze unit logs match 'load' only inside test names (e.g. load.test.ts); they carry no load samples
+      8 load
+      1 load):
+      1 load.test.ts
+      5 loads
+## qa held samples (load1=), all and min
+n=208 min=7.96 p10=12.40 median=14.38 p90=16.76 max=17.75
+samples <= 8.0:
+1
