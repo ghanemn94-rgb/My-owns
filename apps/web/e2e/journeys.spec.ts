@@ -228,7 +228,11 @@ test("shell: navigation, language persistence and My Work (Transformation Office
     page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.risks.label"), exact: true }),
   ).toBeVisible();
   await expect(page.getByText(tr(lang, "nav.plannedBody"), { exact: true })).toBeVisible();
+  // F-DG4-160 sweep (D-137): the text says the area's delivered screens are listed under it in the navigation.
+  await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: tr(lang, "nav.sub.raid"), exact: true })).toBeVisible();
   await shot(page, lang, "03-planned-area");
+  await expectAccessible(page, lang, "planned-area");
   expect(foreign).toEqual([]);
 });
 
@@ -338,6 +342,15 @@ test("edit: a concurrent change gives a 409 conflict with compare and re-apply",
   await signIn(page, lang, "dev.office");
   await page.goto(`/transformations/${createdId}/edit`);
   const name = page.getByLabel(fieldLabel(lang, "transformations.field.name"));
+  // F-DG4-160 (D-137): the Status hint points to the Closure page and the G6 (Sustain) approval (delivered in DG4);
+  // it no longer says that G6 or closure comes in a later release.
+  const statusHint = page.getByText(tr(lang, "transformations.form.statusHint"), { exact: true });
+  await expect(statusHint).toBeVisible();
+  await expect(statusHint).toContainText(lang === "ar" ? "«الإغلاق»" : "Closure page");
+  await expect(statusHint).toContainText(lang === "ar" ? "G6 (الاستدامة)" : "G6 (Sustain)");
+  await expect(statusHint).not.toContainText(lang === "ar" ? "إصدار لاحق" : "later release");
+  await shot(page, lang, "08a-edit-status-hint");
+  await expectAccessible(page, lang, "edit-status-hint");
   await name.fill(`Synthetic ${lang.toUpperCase()} journey (my edit)`);
   // Someone else saves first (same session cookie, through the real API with CSRF + If-Match).
   const me = await (await page.request.get("/api/v1/me")).json();

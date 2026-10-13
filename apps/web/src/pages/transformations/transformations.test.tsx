@@ -56,6 +56,16 @@ const TL_BU_GRANTS = [
   },
 ];
 
+// F-DG4-160 (D-137): the Status field hint of the edit page, pinned literally in both languages.
+const STATUS_HINT = {
+  en:
+    "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
+    "A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure " +
+    "conditions are met.",
+  ar:
+    "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. " +
+    "يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.",
+} as const;
 const meRoute = (me: ReturnType<typeof makeMe>) => route("GET", /\/api\/v1\/me$/, () => ({ status: 200, body: me }));
 const buRoute = route("GET", /\/business-units/, () => ({
   status: 200,
@@ -306,26 +316,36 @@ describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
     for (const s of ["draft", "active", "on_hold"] as TransformationStatus[]) {
       expect(offeredStatusOptions(s), s).not.toContain("closed");
     }
-    // The shared transition table still lists `closed` (G6 arrives in P2+); the web filters it out.
+    // The shared transition table still lists `closed`; the web filters it out, because closure is governed and done
+    // on the Closure page once G6 (Sustain) is approved and the closure conditions are met (DG4).
     expect(TRANSFORMATION_STATUS_TRANSITIONS.active).toContain("closed");
     // Defensive: an already-closed record still renders its own status.
     expect(offeredStatusOptions("closed")[0]).toBe("closed");
   });
 
-  it("the status hint no longer promises a close transition and names the G6 approval (en and ar)", () => {
+  // F-DG4-160 (D-137): G6 (Sustain) and governed closure are delivered in DG4 (route transformations/:id/closure,
+  // ClosurePage). The hint keeps the offered transitions and points to the Closure page; it never says that G6 or
+  // closure is "available in a later release".
+  it("the status hint no longer promises a close transition and points to the Closure page and G6 (en and ar)", () => {
     const en = catalogues.en.transformations.form.statusHint;
     const ar = catalogues.ar.transformations.form.statusHint;
-    expect(en).toBe(
-      "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
-        "Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
-    );
+    expect(en).toBe(STATUS_HINT.en);
+    expect(ar).toBe(STATUS_HINT.ar);
     expect(en).not.toMatch(/or closed/);
     expect(en).not.toMatch(/→ closed/i);
+    expect(en).not.toMatch(/later release|not available|available in/i);
+    expect(en).toContain("Closure page");
+    expect(en).toContain("G6 (Sustain) business approval");
     expect(ar).not.toMatch(/أو مغلق/);
     expect(ar).not.toMatch(/← مغلق/);
+    expect(ar).not.toMatch(/إصدار لاحق|غير متاح|سيتاح/);
     expect(ar).toContain("مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط");
-    expect(ar).toContain("البوابة 6 - الاستدامة");
-    expect(ar).toContain("التحوّل");
+    // The Closure tab's own label (closureP4.tab) and the G6 wording of its close dialog (closureP4.json).
+    expect(ar).toContain(`«${catalogues.ar.closureP4.tab}»`);
+    expect(en).toContain(catalogues.en.closureP4.tab);
+    expect(ar).toContain("اعتماد الأعمال للبوابة G6 (الاستدامة)");
+    expect(catalogues.ar.closureP4.transformation.closeDescription).toContain("اعتماد الأعمال للبوابة G6 (الاستدامة)");
+    expect(catalogues.en.closureP4.transformation.closeDescription).toContain("the G6 (Sustain) business approval");
   });
 
   for (const [locale, title, statusLabel] of [
@@ -347,8 +367,9 @@ describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
       expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(title);
       expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
       expect([...select.options].map((o) => o.value)).toEqual(["active", "on_hold"]);
-      const hint = catalogues[locale].transformations.form.statusHint;
-      expect(screen.getByText(hint)).toBeTruthy();
+      // F-DG4-160: the corrected hint is what the edit page renders, in this locale and direction.
+      expect(catalogues[locale].transformations.form.statusHint).toBe(STATUS_HINT[locale]);
+      expect(screen.getByText(STATUS_HINT[locale])).toBeTruthy();
     });
   }
 });
