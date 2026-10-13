@@ -1,0 +1,128 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified after the D-136 rewrite on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae7170630456a772e1ceac90ab6d96b68e3f5c), in a complete disposable clone. (1) fix_revision 07b72f32611295d979b3055dc04cdfa830126d2a is a commit and an ancestor of f2ae717. So is the listed fix commit 07b72f3261, which is the same commit. (2) In the D-136 SHA map, 07b72f3 maps from old e2ef6ecd51fb, which is reachable from the backup ref. The product diffs (git diff <c>^ <c> -- . ':!docs/delivery') of the old and new commits are byte-identical (hash 10a5f65a7ac54d1a). Subject, author date and committer date are equal. (3) The fix is still present at f2ae717. 435 of its 436 substantive added product lines are still verbatim; the other line was refined later. apps/web/src/pages/decision-rights/DecisionRightsPage.tsx:97 renders the notice #decision-rights-ar-provisional. Line 81 marks each B0099 source label lang=en dir=ltr. apps/web/src/i18n/ar/decisionRights.json:8 holds the Arabic provisional notice. The targeted test governance.test.tsx passed in the unit-web run, 125/125 across 6 files, exit 0. My round-2 verification (real stack, EN and AR screenshots) applies unchanged: the product code is byte-identical to the code I reviewed in full in round 7 (an empty product diff 5cd1e06..f2ae717).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/rewrite-check.log",
+        "docs/delivery/reviews/DG4/round-2/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-decision-rights-T11-notice.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-decision-rights-T11-notice.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision f68c87a86ba3a19a27728d866011e3d0e29cf3ea (the T-DG4-FE-R4 merge) and the fix commits a7bfc9d8b6, 70fcefa172 and 07b72f3261 are all commits and ancestors of f2ae717. (2) They map from the old commits 3b5c368cff4a, ebc23f487d1c, 655b2a6661a6 and e2ef6ecd51fb, all reachable from the backup ref. For each pair the old and new product diffs are identical (10a5f65a…, 1b6d2b61…, cff74809…, 10a5f65a…), and the metadata is equal. For the merge commit the diff is taken against its first parent. (3) The fix is still present. Of the added lines, 49/50, 683/716 and 435/436 are still verbatim; the rest were refined by the later basis work F-DG4-123/126. apps/api/src/modules/benefits/totals.ts:95 restricts gross to the profit-and-cash classes, and lines 21-22 keep revenue_uplift and avoided_cost out of gross and net. apps/web/src/i18n/en/benefitsP4.json:472-475 has 'Gross benefit (profit and cash)' and the beside labels, and apps/web/src/i18n/en/dashboards.json:351-352 has the Finance labels. The targeted tests apps/api/src/modules/benefits/totals.test.ts (unit-node, 91/91 across 4 files, exit 0) and benefits.test.tsx (unit-web, 125/125, exit 0) pass. My round-2 real-stack verification (gross 90, never 435; EN and AR) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-2/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-benefits-totals-gross.png",
+        "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-benefits-totals-gross.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "High, mandatory. Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision f9bcba1bf17d535ff76a145ac735b9c964676c8c is a commit and an ancestor of f2ae717, and the listed fix commit f9bcba1bf1 is the same commit. (2) It maps from old 7320b93e9fd5, which is in the backup ancestry. The old and new product diffs are identical (763e822f6a6ffdda), and subject and dates are equal. (3) The fix is still present: 603 of its 621 substantive added lines are still verbatim, and the rest were refined later by the kpiUnit work for F-DG4-125. apps/web/src/pages/dashboards/ui.tsx:177 sends unit 'ratio' to the percent formatter, and lines 168-170 document that a computed ratio is shown as a percentage, never as money. The targeted unit-web tests valueHeadlines.test.tsx ('the gap reads 100 %', EN and AR) and percentKpi.test.tsx pass: 125/125, exit 0. My round-3 real-stack verification (100 %, 25 % and -20 % in EN and AR on T10, the Overview and Finance) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-3/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-ratio-25pct-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-ratio-25pct-t10.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-123",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision 8ed26e89c096873e90280bf04ca28bf48d1a05ae (the T-DG4-FE-R5 merge) and the fix commits 042f258287, 8a468432e0 and f9bcba1bf1 are all commits and ancestors of f2ae717. (2) They map from the old commits 208cb78a77d9, 546d3c4a1ec7, 3f5ebb751e19 and 7320b93e9fd5, all in the backup ancestry. The old and new product diffs are identical for every pair, and the metadata is equal. (3) The fix is still present. Of the added lines, 161/193, 742/804 and 603/621 are still verbatim; the rest were superseded by the per-basis repair for F-DG4-126/127, which builds on this fix. apps/api/src/modules/reporting/dashboards/engine.ts:590 emits headlineBasis. Lines 712-714 push the separate top_line and non_cash headlines, and line 574 drills a top-line headline by revenue_uplift and a non-cash one by avoided_cost. The targeted tests n4-value-basis.test.ts (unit-node) and valueHeadlines.test.tsx (unit-web: 'top line and non-cash beside, labelled, never summed', EN and AR) pass. My round-3 real-stack verification (90/300/45, never 435) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-3/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-header.png",
+        "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-header.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-124",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. This is a delivery-record finding: the stages.json DG4 history lacked the round-1 FIXING phase. (1) fix_revision 276623e3bf96fa2d35aeef795126931d5504d01d is a commit and an ancestor of f2ae717, and the listed fix commit 276623e3bf is the same commit. (2) It maps from old 546fb4eb0ecf, which is in the backup ancestry, with equal subject and dates. Neither commit has a product diff: both hash to e3b0c442…, the empty diff, as expected for a records-only fix. (3) The fix is still present. The DG4 history at the freeze commit runs PLANNED, BUILDING, REVIEWING (round 1, 21:25:25Z) and then FIXING (2026-10-11T00:51:49Z). Every later REVIEWING/FIXING/VERIFYING step follows, up to REVIEWING (round 9, 09:12:45Z). This round, node tools/gates/validate.mjs --pipeline prints 'PASS pipeline (active stage: DG4 REVIEWING)' with exit 0, in the clone and on the working tree. --historical for DG3, DG2 and DG1 also exits 0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/validators.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/d136-judgement.log",
+        "docs/delivery/reviews/DG4/round-3/domain-reviewer.verifications.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-125",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "High, mandatory. Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision 228e499c6627d0a149329257a6d4be786afd94c8 (the T-DG4-FE-R7 merge) and the fix commits 0595b87a8e, 68b8ba658f, 23eadb5d31 and b9d41dd9f3 are all commits and ancestors of f2ae717. (2) They map from the old commits 7f38e28981fd, 74d99e1b8ca6, 104de0c874e7, 1e57e8c6bbbc and 9505f501da45, all in the backup ancestry. The old and new product diffs are identical for every pair, and the metadata is equal. (3) The fix is still present. Of the added lines, 673/685, 137/153, 495/495 and 599/604 are still verbatim. apps/web/src/pages/dashboards/ui.tsx:9 and 123-125 format a KPI value by its kpiUnit kind, and apps/api/src/modules/reporting/dashboards/areas.ts:226-263 carries kpiUnit on every value emitter. The targeted unit-web tests percentKpi.test.tsx ('every percentage KPI reads 12 %', EN and AR) and kpiUnit.test.tsx (26 tests) pass: 125/125, exit 0. Their stderr carries 14 React 'two children with the same key' warnings, which the test fixtures cause (percentKpi.test.tsx:86-88 builds two items from one KPI id). They are the same warnings disclosed in rounds 4-7 and are not a product failure. My round-4 real-stack, real-worker verification (dom-kpiunit 51/51: '12 %', '12 % of users' and '1.5' in EN and AR) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-kpi-units.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-kpi-units.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-126",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision f8ed23c4fad9cc4fa21b71b307b2470f81536c83 (the T-DG4-FE-R6 merge) and the fix commits 22ef6c7832, 4336273321 and 0595b87a8e are all commits and ancestors of f2ae717. (2) They map from the old commits 8d4134545d6e, d5b847b0acfc, e65d6ac15501 and 74d99e1b8ca6, all in the backup ancestry. The old and new product diffs are identical for every pair, and the metadata is equal. (3) The fix is still present. Of the added lines, 252/276, 994/997 and 673/685 are still verbatim. apps/api/src/modules/reporting/dashboards/areas.ts:377-513 builds the Value RAG's ruleParams.lines per basis and currency (basisClasses, valueLinesOf), so an unvalidated top-line or non-cash plan can no longer hide behind a green profit-and-cash line. The targeted tests n4-value-basis.test.ts and areas.test.ts (unit-node; this includes the property 'Unknown or Stale inputs never combine to green', over 2000 seeded sets) and n4Value.test.tsx (unit-web) pass. My round-4 in-process and real-stack verification (dom-gross4 131/131, EN and AR) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-A-t10.png",
+        "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-A-t10.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-127",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. The fix_revision and the fix commits are the same as for F-DG4-126: f8ed23c4fad9cc4fa21b71b307b2470f81536c83, plus 22ef6c7832, 4336273321 and 0595b87a8e. All are ancestors of f2ae717, all map to old commits in the backup ancestry, their old and new product diffs are identical, and their metadata is equal. The fix is still present. apps/api/src/modules/reporting/dashboards/engine.ts:114-124 makes an initiative with only top-line or non-cash allocations not_applicable (dashboard.portfolio.no_profit_and_cash_allocation). Lines 135 and 179-183 make a missing amount Unknown (benefit.value_amount_missing), never a partial sum. The targeted test n4-value-basis.test.ts (unit-node, including the portfolio cases at lines 369 and 394) passes. My round-4 verification (Portfolio value 90, never 435, and the ranking with n/a and unknown last) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG4-128",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision 8178750761c511c243c6b9a342dc4f39d5966bcc is a commit and an ancestor of f2ae717, and the listed fix commit 8178750761 is the same commit. (2) It maps from old 788188db676a, which is in the backup ancestry. The old and new product diffs are identical (ab9af210be3d8acf), and subject and dates are equal. (3) The fix is still present: all 219 substantive added lines are verbatim at f2ae717. packages/config/src/index.ts:168 defines SUPERVISE_INTERVAL_SECONDS {min 1, max 600, default 60}. packages/config/src/load.ts:162-163 validates WORKER_SUPERVISE_INTERVAL_SECONDS as an integer from 1 to 600. apps/worker/src/queues/platform.ts:54-62 refuses anything else and never passes NaN to pg-boss, and apps/worker/src/main.ts:21 passes the cadence explicitly. The targeted test packages/config/src/load.test.ts (29 tests, unit-node) passes. I did not re-run the worker integration test apps/worker/test/integration/supervise-cadence.test.ts or my measurement harness, because the load envelope forbids integration runs for domain this round. My round-7 measurement and refusal evidence (16 tx/s idle against 6,341/s before; exit 78 for every out-of-range value) applies to byte-identical product code.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+        "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+        "docs/delivery/reviews/DG4/round-7/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG4/domain/round-7/measure-supervise.log",
+        "docs/delivery/test-evidence/DG4/domain/round-7/worker-config-refusal.log"
+      ]
+    }
+  ]
+}
