@@ -1,0 +1,122 @@
+# 08 evidence honesty (DG2 round-10 condition 1) — release-auditor round 9 (2026-10-13T10:34:10Z)
+# scan of every round-9 reviewer log under test-evidence/DG4/{domain,code-security,qa}/round-9 (scripts excluded) for exit!=0, EXIT [1-9], rc=[1-9], failed, FAIL, error, timed out, ENOENT, killed, SIGTERM, skipped; vitest '✓' lines and '0 failed' summaries filtered.
+files scanned: 83
+
+== code-security/round-9/findings-reverify-git.log (1 hits)
+    subject: WIP T-DG4-FE-R9 (unverified; run killed at 08:51Z by a session restart; salvaged per D-103)
+
+== code-security/round-9/install1.log (5 hits)
+    Lockfile is up to date, resolution step is skipped
+    WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/packages/db/dist/cli.js'
+    WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/packages/db/dist/cli.js'
+    WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/api/node_modules/@mth/d
+    WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/worker/node_modules/
+
+== code-security/round-9/install2.log (1 hits)
+    Lockfile is up to date, resolution step is skipped
+
+== code-security/round-9/log-scan.txt (6 hits)
+    # round-9 log scan 2026-10-13T09:34:11Z: exit lines and fail/error/warn/skip/timeout hits per log (case-insensitive)
+    1 Lockfile is up to date, resolution step is skipped
+    1  WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/app
+    1  WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/pac
+    2  WARN  Failed to create bin at /var/tmp/mth-run.5bVR0f/claude-0/review-r9/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.5bVR0f/claude-0/review-r9/
+    1 Lockfile is up to date, resolution step is skipped
+
+== domain/round-9/rewrite-check.log (2 hits)
+    old: evidence: keep the three killed DG4 round-7 review runs and their partial evidence for provenance only (D-084 precedent) | author 2026-10-12T21:50:32+00:00 | committer 2026-10-12T21:50:32+00:00
+    new: evidence: keep the three killed DG4 round-7 review runs and their partial evidence for provenance only (D-084 precedent) | author 2026-10-12T21:50:32+00:00 | committer 2026-10-12T21:50:32+00:00
+
+== qa/round-9/00-install.log (5 hits)
+    Lockfile is up to date, resolution step is skipped
+    WARN  Failed to create bin at $TMPDIR/review-dg4r9/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/review-dg4r9/packages/db/dist/cli.js'
+    WARN  Failed to create bin at $TMPDIR/review-dg4r9/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/review-dg4r9/packages/db/dist/cli.js'
+    WARN  Failed to create bin at $TMPDIR/review-dg4r9/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/review-dg4r9/apps/worker/node_modules/@mth/db/dist/cli.js'
+    WARN  Failed to create bin at $TMPDIR/review-dg4r9/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/review-dg4r9/apps/api/node_modules/@mth/db/dist/cli.js'
+
+== qa/round-9/01-pnpm-check-contrast.log (6 hits)
+    PASS     6.83:1  min 4.5  text       feedback.error.fg #A11B1B on feedback.error.bg #FDECEC  (error banner)
+    PASS     7.81:1  min 4.5  text       feedback.error.fg #A11B1B on surface.card #FFFFFF  (field error message)
+    PASS    13.72:1  min 4.5  text       text.primary #142438 on feedback.error.bg #FDECEC  (body text inside error banners)
+    PASS     7.81:1  min 4.5  text       text.inverse #FFFFFF on feedback.error.fg #A11B1B  (destructive action button (archive, revoke))
+    Prohibited combinations (must fail; never used by the UI):
+    PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented
+
+== qa/round-9/02-unit-envelope-summary.txt (65 hits)
+    node22 unset: 09:19:39-09:26:01 load 4.87-11.67 (n=26) | Test Files  84 passed (84) | Tests  1589 passed (1589) | Test Files  69 passed (69) | Tests  1347 passed (1347) | Test Files  3 passed (3) | Tests  259 passed | 2 
+    FAILLINE: ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  337ms
+    FAILLINE: ✓ schedule network panel (en) > a failed read shows its error and a retry; nothing can be saved until the row is read  572ms
+    FAILLINE: ✓ schedule network panel (ar) > a failed read shows its error and a retry; nothing can be saved until the row is read  477ms
+    FAILLINE: ✓ plan-value editing (en) > a failed read (500) shows its state in the section and no form; Cancel removes it  3362ms
+    FAILLINE: ✓ plan-value editing (en) > a failed read (404) shows its state in the section and no form; Cancel removes it  381ms
+    FAILLINE: ✓ plan-value editing (ar) > a failed read (500) shows its state in the section and no form; Cancel removes it  3466ms
+    node22 C: 09:26:01-09:31:20 load 7.89-8.65 (n=21) | Test Files  84 passed (84) | Tests  1589 passed (1589) | Test Files  69 passed (69) | Tests  1347 passed (1347) | Test Files  3 passed (3) | Tests  259 passed | 2 skipp
+    FAILLINE: ✓ plan-value editing (en) > a failed read (500) shows its state in the section and no form; Cancel removes it  3361ms
+    FAILLINE: ✓ plan-value editing (en) > a failed read (404) shows its state in the section and no form; Cancel removes it  442ms
+    FAILLINE: ✓ plan-value editing (ar) > a failed read (500) shows its state in the section and no form; Cancel removes it  3402ms
+    FAILLINE: ✓ plan-value editing (ar) > a failed read (404) shows its state in the section and no form; Cancel removes it  413ms
+
+== qa/round-9/02-unit-node22-C-r1.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node22-C-r2.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node22-unset-r1.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node22-unset-r2.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node24-C-r1.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node24-C-r2.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node24-unset-r1.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02-unit-node24-unset-r2.log (1 hits)
+    Tests  259 passed | 2 skipped (261)
+
+== qa/round-9/02d-unit-f146-mutants.log (55 hits)
+    ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 6 failed) 2992ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+    FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is he
+    FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is he
+    FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+    FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first
+    FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W3: a GET waits for a GET /me probe in flight (no identity check pending)
+    FAIL   unit-web  src/auth/session-wait.test.tsx > F-DG4-146 apiRequest: a page GET is sent only after the identity work in flight is done > W4: a GET waits for a pending identity check (no GET /me probe in flight)
+    Test Files  1 failed | 3 passed (4)
+    Tests  6 failed | 80 passed (86)
+    EXIT 1
+    ❯  unit-web  src/auth/session-wait.test.tsx (6 tests | 6 failed) 4850ms
+
+== qa/round-9/03-rewrite-check.log (2 hits)
+    old: WIP T-DG4-FE-R9 (unverified; run killed at 08:51Z by a session restart; salvaged per D-103) | a=2026-10-12T08:51:52+00:00 c=2026-10-12T08:51:52+00:00
+    new: WIP T-DG4-FE-R9 (unverified; run killed at 08:51Z by a session restart; salvaged per D-103) | a=2026-10-12T08:51:52+00:00 c=2026-10-12T08:51:52+00:00
+
+== qa/round-9/04-fix-revisions.log (1 hits)
+    subject: WIP T-DG4-FE-R9 (unverified; run killed at 08:51Z by a session restart; salvaged per D-103)
+
+== qa/round-9/07b-writeonce.log (1 hits)
+    EXIT 1
+
+== qa/round-9/RUN-NOTES.md (3 hits)
+    2. Offline install (`00-install.log`; the two `WARN Failed to create bin … mth-db` lines are expected before the build), then `pnpm -r build` (`01-pnpm-r-build.log`), which `pnpm test` needs.
+    ## Disclosed non-zero exits and error lines
+    - `02d-unit-f146-mutants.log`: EXIT 1 for M4/M4a/M4b, by design (mutants must be killed). M4 fails W1/W2 (en, ar), W3 and W4 (6/86); M4a fails W4; M4b fails W3. My round-6 test fails 4/4 under M4 and passes under M4a/M4b
+
+## Disposition of every hit
+- code-security install1.log / install2.log, qa 00-install.log: 'WARN Failed to create bin … mth-db (ENOENT)' before the build, install exit 0. Disclosed: code-security record SEC-R9-06 actual ("install1 prints four 'WARN Failed to create bin … mth-db … (ENOENT)' … expected before the build"); qa RUN-NOTES.md item 2 (cited in qa evidence_paths). 'resolution step is skipped' is pnpm's lockfile message, not a test skip.
+- code-security log-scan.txt: the reviewer's own scan listing the same lines.
+- code-security findings-reverify-git.log, qa 04-fix-revisions.log, qa 03-rewrite-check.log, domain rewrite-check.log: a commit subject "WIP T-DG4-FE-R9 (… run killed …)" / "keep the three killed DG4 round-7 review runs" — history text, not a failure.
+- qa 01-pnpm-check-contrast.log: 'PASS … feedback.error…' token names; and the 3 prohibited pairs that must fail by design (exit 0).
+- qa 02-unit-envelope-summary.txt: 'FAILLINE: ✓ …' entries are passing tests whose names contain 'failed read'; disclosed in the qa record (strict scan 0 failed lines).
+- qa 02-unit-node*-r{1,2}.log: 'Tests 259 passed | 2 skipped (261)': the by-design it.skipIf(NOCODEGEN) skips in fuzz.test.ts, disclosed in the qa record. All 8 logs EXIT 0. Series r1 ran outside the envelope (max 11.67) and is disclosed and not counted; r2 is inside (max 5.81).
+- qa 02d-unit-f146-mutants.log: EXIT 1 for M4/M4a/M4b and 'session-wait.test.tsx (6 tests | 6 failed)' under mutant M4: by design (mutants must be killed); disclosed in the qa record QA-R9-04 and RUN-NOTES.md.
+- qa 07b-writeonce.log: EXIT 1 with 99 errors on the PRE-rewrite head, by design (reproduces B3); disclosed in the qa record (D-136 check) and RUN-NOTES.md line 15.
+- domain: no round-9 log has a failure hit (it copied node_modules, so no install log). Its carried-forward round-7 logs are cited with their non-zero exits disclosed in DOM-R9-12 (e.g. mutation-supervise-cadence.log exit 1 by design).
+Result: every non-zero exit, failure or skip line in the round-9 logs is disclosed and explained in the record or notes that cite it. No undisclosed hook timeout.

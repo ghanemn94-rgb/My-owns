@@ -1,0 +1,26 @@
+# 11 product gates G1-G6 vs engineering gates DG0-DG7 — release-auditor round 9 (candidate source f2ae717)
+$ git grep -lE 'DG[0-7]' f2ae717 -- 'apps/web/src/i18n/**/*.json'  -> 0 files (no engineering gate id in any UI catalogue)
+$ DG ids in non-comment string literals of product source:
+apps/api/src/modules/workflows/gates.ts:780:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+packages/config/src/index.ts:140:      "maintenance (F-DG4-128). Integer 1-600; 60 is the cadence pg-boss documents",
+packages/db/migrations/0009_business_unit_hierarchy_guard.sql:95:  'F-DG1-140: refuses a business_unit row that would close a cycle or nest deeper than 10 levels; serialized per organization by an advisory lock shared wi
+packages/db/migrations/0019_evidence_review_separation.sql:60:  'F-DG2-140: maintains evidence.content_authored_by and refuses a review by the creator, the content author or the uploader of the reviewed/current revision.
+packages/db/migrations/0022_p3_dependency_capacity_funding.sql:163:  'REQ-S09-008: refuses a dependency row that closes a cycle in the initiative graph; serialized per transformation by an advisory lock shared with the A
+packages/shared/src/schemas/common.ts:58:/** True when `value` contains at least one visible code point (F-DG2-160, F-DG2-180, F-DG2-230); see `VISIBLE_CONTENT`. */
+  -> gates.ts:780 states product gates are unrelated to DG0-DG7; the rest are finding ids inside DB COMMENT/config help text (F-DG1-140, F-DG2-140, F-DG4-128), not approvals.
+$ UI statements that business approvals never approve engineering delivery gates:
+apps/web/src/i18n/en/benefitsP4.json:388:    "labelNote": "a Finance decision recorded in this product. It is not an engineering delivery gate.",
+apps/web/src/i18n/en/changeRequestsP4.json:5:  "businessApproval": "A change request is decided in a business approval inside the product, routed by the decision rights (T11). Engineering delivery gat
+apps/web/src/i18n/en/closureP4.json:94:    "businessApproval": "a transition decision is decided through a business approval inside the product (Sponsor or the configured authority; never the requeste
+apps/web/src/i18n/en/gates.json:282:    "businessApproval": "a decision on an exception is a business approval inside the product by the gate's configured approver. It never approves an engineering de
+apps/web/src/i18n/en/governanceP4.json:24:  "businessDecisionBody": "recording an Outcome is a business decision of the decision owner, or of the owner's active delegate, inside this product. It is no
+apps/web/src/i18n/en/kpiP4.json:207:    "requestApprovalNote": "A business approval inside the product, decided by the mapped approver. It is not an engineering delivery gate.",
+apps/web/src/i18n/en/kpiP4.json:270:    "approveNote": "A business approval inside the product: once approved, this trajectory sets the expected values. You cannot approve a trajectory you created. It
+apps/web/src/i18n/en/sustainP4.json:183:    "acceptanceNote": "accepting this handover is the receiving owner's in-product business decision. It is not an engineering delivery gate.",
+$ certification / official claims:
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:132:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+packages/db/migrations/0011_p2_methodology_catalogue.sql:241:-- linguistic review). The playbook is a practical synthesis inspired by PMI/Brightline/BRM, not an official standard.
+packages/db/migrations/0011_p2_methodology_catalogue.sql:248:FROM (SELECT '{"schema": "mth.methodology/1", "source": "docs/source/playbook.md", "sourceTitle": "Business Transformation Playbook", "sourceVersion": "1.0", "
+  -> only disclaimers; #0078FF is described as provisional (common.json brandBody, design-tokens).
+$ G5/G6 approvals in evidence come from synthetic users: packages/db/seeds/dev/synthetic-dev-users.json exists; G6 never implies DG7: no code or string maps a G6 approval to any DG gate (grep above). Same result as round 8 on byte-identical product code.

@@ -1,0 +1,15 @@
+# 13 node tools/gates/validate.mjs --stage DG4 — release-auditor round 9, after writing release-auditor.json, .findings.json, .verifications.json and gates/DG4.json (uncommitted; this run in flight) 2026-10-13T10:44:31Z
+FAIL gate DG4 (current) (12 problems)
+  - gate DG4: decision is BLOCKED
+  - gate DG4: blocking conditions recorded: B1 Unresolved finding F-DG4-160 (Low, not mandatory; raised by the release-auditor in round 9, owner frontend-ux-engineer). apps/web/src/i18n/en/transformations.json:88 and ar/transformations.json:88, form.statusHint, rendered on the transformation edit page (TransformationEditPage.tsx:274) and pinned by transformations.test.tsx:315-321, tell the user that the G6 (Sustain) business approval needed to close a transformation 'is available in a later release'. DG4 delivers G6 and governed closure (REQ-S04-008, REQ-PB-021, REQ-S03-003 IMPLEMENTED; route transformations/:id/closure; e2e p4-gates-closure.spec.ts). A remaining Low observation must be accepted by a specialist reviewer and by the release-auditor. No specialist has seen it, so it is neither repaired and verified nor accepted. The auditor cannot accept it alone, and cannot substitute for a specialist. To resolve it, either: (a) the frontend-ux-engineer rewords the hint in EN and AR to point to the Closure page and the G6 approval and updates the pinned assertions, then a specialist reviewer verifies the fix on a new candidate and the release-auditor audits it; or (b) a specialist reviewer (domain-reviewer or qa-verifier) records PASS -> ACCEPTED_OBSERVATION for F-DG4-160 with a rationale, and the release-auditor concurs. The orchestrator first imports release-auditor.findings.json (the id F-DG4-160 is proposed; it may be renumbered).
+  - review release-auditor (docs/delivery/reviews/DG4/round-9/release-auditor.json): verdict is BLOCKED
+  - review release-auditor (docs/delivery/reviews/DG4/round-9/release-auditor.json): check AUD-R9-13-user-facing-text-g6 is FAIL
+  - review release-auditor (docs/delivery/reviews/DG4/round-9/release-auditor.json): check AUD-R9-14-validate-stage-DG4 is FAIL
+  - review release-auditor (docs/delivery/reviews/DG4/round-9/release-auditor.json) invocation: file not found (docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R9-release-auditor-20261013T102138Z-7b5f734c/meta.json)
+  - gate DG4: test 'User-facing text matches delivered capability: transformations form.statusHint says G6 is 'available in a later release' (F-DG4-160)' is FAIL
+  - gate DG4: test 'Stage validation of DG4' is FAIL
+  - docs/delivery/reviews/DG4/round-9/release-auditor.verifications.json: release-auditor's record for round-9 is not listed in stages.json review_rounds
+  - docs/delivery/reviews/DG4/round-9/release-auditor.json: lists finding F-DG4-160, which is not in findings.json
+  - review release-auditor: finding F-DG4-160 not in findings.json
+  - finding F-DG4-160 raised in docs/delivery/reviews/DG4/round-9/release-auditor.findings.json is missing from findings.json (dropped)
+exit=1

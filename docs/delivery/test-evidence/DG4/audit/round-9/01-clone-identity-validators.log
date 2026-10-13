@@ -1,0 +1,39 @@
+# 01 clone, identity, historical validators — release-auditor round 9 (2026-10-13T10:26:24Z)
+$ sha256sum assignment
+e57165012e4fcf8b224ae91c6d2250c42236cafbc66304286f3266b73c61f322  docs/delivery/assignments/DG4/round-9/release-auditor.md
+$ git rev-parse HEAD (repo)
+9d8906e79928ae68842ce7c1e74e9cf92602420d
+$ clone: git clone --no-local /home/user/My-owns $TMPDIR/c
+is-shallow: false
+commit count: 1126
+fsck exit=0
+clone HEAD: 9d8906e79928ae68842ce7c1e74e9cf92602420d
+source is ancestor of HEAD: exit=0
+$ [clone @ f2ae7170630456a772e1ceac90ab6d96b68e3f5c] node tools/gates/candidate.mjs --stage DG4
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+exit=0
+$ [clone @ 01ad2e185962ebec0bbf541503c09ae4075eeec6] node tools/gates/candidate.mjs --stage DG4
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+exit=0
+$ [repo] node tools/gates/candidate.mjs --stage DG4 --ref f2ae717...
+{"stage":"DG4","source":"f2ae7170630456a772e1ceac90ab6d96b68e3f5c","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+exit=0
+$ [repo working tree] node tools/gates/candidate.mjs --stage DG4
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+exit=0
+$ git diff --name-status f2ae717 HEAD (outside meta-excluded paths?)
+(none outside the meta-excluded set)
+$ git log f2ae717..HEAD -- decisions.md requirements.csv | wc -l
+0
+$ node tools/gates/validate.mjs --historical --stage DG3
+PASS gate DG3 (historical)
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG2
+PASS gate DG2 (historical)
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+exit=0
+$ node tools/gates/validate.mjs --register DG4
+PASS register rules at DG4
+exit=0

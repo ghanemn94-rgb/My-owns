@@ -1,0 +1,29 @@
+# 12 new Low finding raised by release-auditor round 9: stale 'later release' G6 hint on the transformation edit page
+## The string (candidate f2ae717)
+apps/web/src/i18n/ar/transformations.json:88:    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يتطلّب إغلاق التحوّل اعتماد الأعمال في البوابة 6 - الاستدامة، وسيتاح ذلك في إصدار لاحق.",
+apps/web/src/i18n/en/transformations.json:88:    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
+## Where it renders
+apps/web/src/pages/transformations/TransformationEditPage.tsx:274:          hint={t("transformations.form.statusHint")}
+apps/web/src/pages/transformations/transformations.test.tsx:316:    const en = catalogues.en.transformations.form.statusHint;
+apps/web/src/pages/transformations/transformations.test.tsx:317:    const ar = catalogues.ar.transformations.form.statusHint;
+apps/web/src/pages/transformations/transformations.test.tsx:350:      const hint = catalogues[locale].transformations.form.statusHint;
+## The unit test pins the stale sentence
+  it("the status hint no longer promises a close transition and names the G6 approval (en and ar)", () => {
+    const en = catalogues.en.transformations.form.statusHint;
+    const ar = catalogues.ar.transformations.form.statusHint;
+    expect(en).toBe(
+      "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
+        "Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
+    );
+## Origin
+37ec3745 2026-10-01T20:12:43+00:00 DG1 clean re-gate base (D-056 path C): final P1 implementation on base 85e5bbd (pre-DG1-review)
+## G6 and closure are delivered in this candidate (DG4 scope)
+register: REQ-S04-008 'Run the Realize phase procedure and G6 Sustain decision' IMPLEMENTED; REQ-PB-021 'G6 Sustain …' IMPLEMENTED; REQ-S03-003 '… transformation closure as separate statuses' IMPLEMENTED (final_gate DG4)
+apps/web/src/app/router.tsx:208:const ClosurePage = lazyPage(() => import("../pages/closure/ClosurePage.tsx").then((m) => m.ClosurePage));
+apps/web/src/app/router.tsx:402:      { path: "transformations/:id/closure", element: <ClosurePage /> },
+apps/web/src/i18n/en/closureP4.json:33:    "closeDescription": "Closure needs the G6 (Sustain) business approval, each benefit validated by Finance or covered by an approved transition decision, and every performance area in BAU. The transformation is not arch
+apps/web/src/i18n/en/closureP4.json:89:    "closeDescription": "An initiative closes only when its delivery is complete and each of its benefits is validated by Finance or covered by an approved transition decision."
+apps/web/src/i18n/en/problems.json:590:  "closure__g6_not_approved": "Closure requires the G6 (Sustain) business approval.",
+e2e: apps/web/e2e/p4-gates-closure.spec.ts
+## Not previously raised: grep of reviews/DG4, findings.json, decisions.md, handbacks/DG4 for 'statusHint' / 'later release' -> 0 hits
+## Assessment: Low (wording; no workflow is blocked, closure is reachable from its own page), not mandatory. It is user-facing and false in EN and AR for the DG4 product: it tells the user that a capability delivered in DG4 (G6 Sustain approval, governed closure) is not available, and does not point to where closure is done.

@@ -1,0 +1,18 @@
+# 07 pnpm test inside the load envelope — release-auditor round 9; clone $TMPDIR/u at f2ae717 (candidate 18c18fe4 recomputed, 07-unit-setup.log); TZ=UTC CI=1; no other agent run active
+load1 samples (15 s): n=30 min=1.43 median=4.55 max=5.83 above8=0
+  node24 unset: n=14 load 1.43-4.91
+  node22 C: n=16 load 3.99-5.83
+
+== 07-unit-node24-unset.log
+  $ [env -u LANG -u LC_ALL -u LC_CTYPE] TZ=UTC CI=1 PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test (node v24.21.0, 2026-10-13T10:33:13Z) in $TMPDIR/u @ f2ae717
+  Tests: ['1589 passed (1589)', '1347 passed (1347)', '259 passed | 2 skipped (261)']  EXIT ['0']
+  strict failure lines: 0 []
+  architecture.test.ts ms: ['10684']  (limit 30000); raid action register ms: ['1957', '1201']  (limit 5000)
+  stderr duplicate-key warnings: 14
+
+== 07-unit-node22-C.log
+  $ [env LANG=C.UTF-8 LC_ALL=C.UTF-8] TZ=UTC CI=1 PATH=/opt/node22/bin:$PATH pnpm test (node v22.22.2, 2026-10-13T10:36:42Z) in $TMPDIR/u @ f2ae717
+  Tests: ['1589 passed (1589)', '1347 passed (1347)', '259 passed | 2 skipped (261)']  EXIT ['0']
+  strict failure lines: 0 []
+  architecture.test.ts ms: ['10514']  (limit 30000); raid action register ms: ['1693', '1697']  (limit 5000)
+  stderr duplicate-key warnings: 14

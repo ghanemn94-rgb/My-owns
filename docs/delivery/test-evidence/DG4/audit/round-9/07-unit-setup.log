@@ -1,0 +1,21 @@
+$ git clone $TMPDIR/c $TMPDIR/u && git -C $TMPDIR/u checkout f2ae717 (2026-10-13T10:31:44Z)
+f2ae7170630456a772e1ceac90ab6d96b68e3f5c
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+candidate exit=0
+$ cp -a /root/.local/share/pnpm/store/v10 $TMPDIR/store/v10 (private copy of the local store)
+exit=0
+$ pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10
+
+ WARN  Failed to create bin at $TMPDIR/u/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/u/apps/api/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at $TMPDIR/u/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '$TMPDIR/u/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 1.4s using pnpm v10.33.0
+EXIT 0
+$ pnpm -r build
+EXIT 0
+apps/worker build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: Done
+$ pnpm install --offline --frozen-lockfile (link bins)
+Done in 783ms using pnpm v10.33.0
+EXIT 0
+git status lines: 0

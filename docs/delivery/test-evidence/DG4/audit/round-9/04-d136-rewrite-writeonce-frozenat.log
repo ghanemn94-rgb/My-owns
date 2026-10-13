@@ -1,0 +1,29 @@
+# 04 D-136 rewrite, write-once, frozen_at — release-auditor round 9 (2026-10-13T10:31:25Z); clone $TMPDIR/c
+restored-paths entries: 33
+git diff backup..a445b24: entries 33 statuses ['A']
+diff paths == restored-paths list: True
+blob at a445b24 == recorded original blob: 33 / 33
+recorded blob == blob in parent of old deletion commit: 33 / 33
+blob at current HEAD == recorded blob: 33 / 33
+SHA map pairs: 360
+ identical author/committer names, emails, dates and message: 360 / 360
+ tree differences only within the 33 restored paths: 360 / 360 []
+ parent structure maps old->new: 360 / 360
+ backup ref == old head in map: True
+
+B4 frozen_at (stages.json review_rounds vs manifest):
+ round 1: sha256:19656b1f stages.frozen_at=2026-10-10T21:25:25Z manifest.frozen_at=2026-10-10T21:25:25Z equal=True manifest.source=a91d82cf6f source_in_repo=True
+ round 2: sha256:3f51b79d stages.frozen_at=2026-10-11T04:43:11Z manifest.frozen_at=2026-10-11T04:43:11Z equal=True manifest.source=93a7dd7936 source_in_repo=True
+ round 3: sha256:890faa12 stages.frozen_at=2026-10-11T12:34:15Z manifest.frozen_at=2026-10-11T12:34:15Z equal=True manifest.source=925f0bcbea source_in_repo=True
+ round 4: sha256:5ff36f6e stages.frozen_at=2026-10-11T21:53:01Z manifest.frozen_at=2026-10-11T21:53:01Z equal=True manifest.source=ccc37c9f8b source_in_repo=True
+ round 5: sha256:69b7412a stages.frozen_at=2026-10-12T04:22:59Z manifest.frozen_at=2026-10-12T04:22:59Z equal=True manifest.source=3e3a06e4e7 source_in_repo=True
+ round 6: sha256:f966fe57 stages.frozen_at=2026-10-12T12:19:36Z manifest.frozen_at=2026-10-12T12:19:36Z equal=True manifest.source=1e0dc5d807 source_in_repo=True
+ round 7: sha256:baa6ff4d stages.frozen_at=2026-10-12T20:52:03Z manifest.frozen_at=2026-10-12T20:52:03Z equal=True manifest.source=dab4562c71 source_in_repo=True
+ round 8: sha256:8014e5ce stages.frozen_at=2026-10-13T07:05:44Z manifest.frozen_at=2026-10-13T07:05:44Z equal=True manifest.source=8553323d69 source_in_repo=True
+ round 9: sha256:18c18fe4 stages.frozen_at=2026-10-13T09:12:45Z manifest.frozen_at=2026-10-13T09:12:45Z equal=True manifest.source=f2ae717063 source_in_repo=True
+
+$ checkWriteOnce(repo, 'DG4') via tools/gates/lib/rules.mjs (repository) 
+errors: 0
+exit=0
+$ checkWriteOnce on the clone at old head 72c0e65 (for contrast)
+errors: 99
