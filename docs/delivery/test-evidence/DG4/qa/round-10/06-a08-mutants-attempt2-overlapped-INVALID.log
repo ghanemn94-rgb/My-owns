@@ -1,0 +1,112 @@
+## 2026-10-13T17:34:18Z scratch mutant diff (a08 -> zz-qa-r10-a08-mutant)
+--- tests/qa/integration/a08-gate-controls.test.ts	2026-10-13 16:39:07.340826345 +0000
++++ tests/qa/integration/zz-qa-r10-a08-mutant.test.ts	2026-10-13 17:34:18.080191534 +0000
+@@ -19,6 +19,7 @@
+ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+ import { join, relative } from "node:path";
+ import { fileURLToPath } from "node:url";
++import { appendFileSync as qaAppend, mkdirSync as qaMkdir, rmSync as qaRm, writeFileSync as qaWrite } from "node:fs";
+ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+ import { setGateExceptionClock } from "../../../apps/api/src/modules/workflows/gate-exceptions.ts";
+ import { handleGateDecided, handleGateSubmitted } from "../../../apps/worker/src/handlers/gates.ts";
+@@ -147,7 +148,7 @@
+  * candidates, runs, test evidence and progress notes are not gate state, and hashing them (342 MB, mostly handback
+  * evidence, read twice) made this test exceed its timeout on a cold disk cache, at a cost growing with every round.
+  */
+-const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
++const DELIVERY = process.env["QA_R10_DELIVERY"]!.replace(/\/?$/, "/");
+ const DELIVERY_RECORDS = [
+   "gates",
+   "stages.json",
+@@ -845,6 +846,7 @@
+       .execute();
+     expect(decidedEvents.length).toBe(1);
+     await handleGateDecided(api.db, await envelopeByKey(api, decidedEvents[0]!.idempotency_key), "qa-a08-g6-decided");
++    qaR10Mutate();
+     expect(deliveryFingerprint()).toEqual(before);
+   });
+ });
+@@ -1037,3 +1039,14 @@
+     expect([ok.body.status, ok.body.dueDate, ok.body.decidedAt]).toEqual(["deferred", "2099-03-02", null]);
+   });
+ });
++
++function qaR10Mutate(): void {
++  const m = process.env["QA_R10_MUTANT"] ?? "none";
++  const d = DELIVERY;
++  if (m === "stages") qaAppend(join(d, "stages.json"), " ");
++  else if (m === "requirements") qaAppend(join(d, "requirements.csv"), "\n");
++  else if (m === "findings-removed") qaRm(join(d, "findings.json"));
++  else if (m === "new-gate-DG7") qaWrite(join(d, "gates", "DG7.json"), "{}");
++  else if (m === "new-review") { qaMkdir(join(d, "reviews", "DG7", "round-1"), { recursive: true }); qaWrite(join(d, "reviews", "DG7", "round-1", "x.json"), "{}"); }
++  else if (m === "candidates") { qaMkdir(join(d, "candidates", "DG7"), { recursive: true }); qaWrite(join(d, "candidates", "DG7", "x.json"), "{}"); }
++}
+
+### MUTANT=none  load: 3.21 3.02 4.55
+ ✓ |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts (31 tests) 12373ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  564ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception  332ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  624ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  475ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  358ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  1030ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  882ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  880ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  383ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007: an approved disposition resolves the risk and G5 can be submitted  303ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  428ms
+ Test Files  1 passed (1)
+      Tests  31 passed (31)
+EXIT(MUTANT=none) 0
+
+### MUTANT=stages  load: 4.66 3.39 4.62
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: the gate page lists the missing mandatory items; canSubmit is false 118ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015, REQ-S20-008: a submission with missing mandatory evidence is 422 and writes no submission 116ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  537ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-013: a waiver without an expiry or without a compensating action is refused; nothing is written 102ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception 201ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-PB-015: a submission with a stale gate version (If-Match) is refused with 409; nothing is written 13ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S12-009: each required approver receives exactly one task referencing the snapshot; a redelivery adds none 68ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: the seven statuses exist in the database; a direct Draft -> Approved is refused 75ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: submit moves Draft -> Submitted with an audit event 70ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S20-008: approval by a non-approver is 403 (BO, WL, TL) and AUD is 403; nothing is written 92ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-009: a criterion review persists all nine fields; the first review moves the gate to Under Review 123ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-009, REQ-S10-014: a gate decision without rationale is refused (missing or blank: 400 at /rationale); nothing is written 50ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  444ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  468ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  387ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  816ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  688ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  616ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > the transformation reached the Transform phase through four native gate approvals 10ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S03-004: a scale transition before G5 approval is 422 invalid-transition naming G5 16ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  361ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007: an approved disposition resolves the risk and G5 can be submitted  319ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-PB-015: with G5 configured to BO an SP approval is 403; a stale submission number is 409; a BO approval succeeds and records the scale scope 123ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007, REQ-S03-004: after approval scaling inside the scope succeeds; scaling outside it is blocked 42ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  350ms
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 186ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-014: a decision without rationale is refused (missing 400, blank 422 approval.rationale_required); the stored record includes the request version 167ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-016: the requester approving their own scope change is 403 under the default policy; it stays pending 60ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-017: approving version 3 after the record moved to version 4 is 409; no decision is stored 99ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-018: 'request changes' returns the item to the requester without closing it 134ms
+EXIT(MUTANT=stages) 1
+
+### MUTANT=requirements  load: 4.66 3.50 4.63
+EXIT(MUTANT=requirements) 1
+
+### MUTANT=findings-removed  load: 4.66 3.50 4.63
+EXIT(MUTANT=findings-removed) 1
+
+### MUTANT=new-gate-DG7  load: 4.44 3.47 4.61
+EXIT(MUTANT=new-gate-DG7) 1
+
+### MUTANT=new-review  load: 4.17 3.43 4.59
+EXIT(MUTANT=new-review) 1
+
+### MUTANT=candidates  load: 4.17 3.43 4.59
+EXIT(MUTANT=candidates) 1
+
+scratch removed; git status of the clone:
+(end)
+2026-10-13T17:35:26Z

@@ -1,0 +1,53 @@
+### HEAD e70ac02f63cd1f42487cfa4dae73f68e933da015
+## M0412 (anchored master prompt)
+823:[M0412 §21] Source methodology phases are not software delivery stages. In particular, product gate G6 does not imply engineering release DG7 has passed, and a demo Sponsor approval does not approve a real Mobily transformation.
+824-
+825-[M0413 §21] Require usable integrated increments rather than isolated screen collections. Maintain bilingual behavior, authorization, persistence, evidence and audit throughout implementation. Add applicable tests as each capability is built. A dependency genuinely discovered later must update the plan and reopen affected earlier gates rather than hiding regressions or quietly changing approved contracts.
+826-
+## REQ-S04-008 acceptance
+A02;A11: G6 submission without an accepted BAU handover is rejected; product G6 approval changes no engineering DG record
+notes: G6 evidence checklist: REQ-PB-021. Product G6 never implies DG7. DG4 analyst check (T-DG4-AN-P4A, base e3acab1): A02/A11 are asserted by a08-gate-controls.test.ts: G6 without an accepted BAU handover is refused listing 'Ownership transfer', and a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ (fingerprinted); a11-bau-sustain.test.ts approves G6 natively with no DG record named.
+## a08 DELIVERY_RECORDS vs g5-g6 DELIVERY_RECORDS (expected identical)
+a08:   constDELIVERY_RECORDS=["gates","stages.json","findings.json","reviews","decisions.md","requirements.csv",]asconst;
+g5g6:  constDELIVERY_RECORDS=["gates","stages.json","findings.json","reviews","decisions.md","requirements.csv",]asconst;
+IDENTICAL
+## Product code paths that name docs/delivery or the delivery record files (expected: none outside tests)
+packages/db/src/schema.ts:2171:// docs/delivery/handbacks/DG4/T-DG4-ARCH-02-evidence/gen-schema.ts. numeric -> string (decimal), date -> "YYYY-MM-DD".
+packages/db/src/schema.ts:2496:// database (docs/delivery/handbacks/DG4/T-DG4-ARCH-03-evidence/gen-schema.ts).
+packages/db/src/schema.ts:4189:// docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/gen-schema.py. numeric -> string (decimal), date -> "YYYY-MM-DD".
+packages/db/src/schema.ts:4477:// docs/delivery/handbacks/DG4/T-DG4-ARCH-08-evidence/gen-schema.py. numeric -> string (decimal), date -> "YYYY-MM-DD".
+(grep exit=0 ; 1 = none)
+## Product code file-system writes (writeFile/appendFile/createWriteStream/mkdir) outside tests
+apps/api/src/modules/evidence/store.ts:125:      await mkdir(dirname(final), { recursive: true, mode: 0o700 });
+apps/api/src/architecture.testkit.ts:512:    writeFile: () => {},
+packages/design-tokens/src/cli.ts:4:import { mkdirSync, writeFileSync } from "node:fs";
+packages/design-tokens/src/cli.ts:25:  mkdirSync(dirname(file), { recursive: true });
+packages/design-tokens/src/cli.ts:26:  writeFileSync(file, generateTokensCss());
+(grep exit=0)
+## What else lives in docs/delivery (outside the fingerprint) - top-level entries
+agent-protocol.md
+agents.md
+assignments
+candidates
+decisions.md
+environment.md
+findings.json
+gates
+handbacks
+progress.md
+requirements-spec.md
+requirements.csv
+reviews
+runs
+stages.json
+test-evidence
+threat-model.md
+## The fingerprint size now (records only)
+535
+11M	total
+## The only product runtime writer (evidence store) writes under the configured EVIDENCE_STORAGE_PATH, not docs/delivery
+229:  if (config.driver === "filesystem") return new FilesystemEvidenceStore(config.path);
+packages/config/src/load.ts:154:  const storagePath = field("EVIDENCE_STORAGE_PATH", z.string().min(1));
+packages/config/src/index.ts:88:  EVIDENCE_STORAGE_PATH: {
+.env.example:63:EVIDENCE_STORAGE_PATH=
+107:    if (!p.startsWith(this.root + sep)) throw new Error("evidence store: key escapes the root");

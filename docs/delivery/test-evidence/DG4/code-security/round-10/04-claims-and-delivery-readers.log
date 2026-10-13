@@ -1,0 +1,103 @@
+$ sed -n 15,40p;95,115p apps/web/src/pages/AreaPages.tsx
+
+export function AreaPlaceholderPage({ area }: { area: AreaId }) {
+  const { t } = useTranslation();
+  const label = t(`nav.areas.${area}.label`);
+  usePageTitle(label);
+  return (
+    <div className="page">
+      <PageHeader title={label} subtitle={t(`nav.areas.${area}.summary`)} />
+      <section className="card" aria-labelledby="planned-title">
+        <h2 id="planned-title" className="card__title">
+          <span className="lifecycle-chip lifecycle-chip--draft">
+            <Icon name="clock" /> {t("nav.planned")}
+          </span>
+        </h2>
+        <p>{t("nav.plannedBody")}</p>
+        <h3 className="card__subtitle">{t("nav.willContain")}</h3>
+        <p>{t(`nav.areas.${area}.contents`)}</p>
+      </section>
+    </div>
+  );
+}
+
+/**
+ * Entry page of an area whose P2 content lives in each transformation's workspace (Strategy and KPIs -> Define,
+ * Target Operating Model -> Design, Governance -> Gates, Evidence and Reports -> Evidence). It lists the
+ * transformations the user can see and opens the matching workspace tab; the cross-portfolio view is still planned.
+              ))}
+            </ul>
+          )}
+        </QueryState>
+      </section>
+      <section className="card" aria-labelledby="entry-planned">
+        <h2 id="entry-planned" className="card__title">
+          <span className="lifecycle-chip lifecycle-chip--draft">
+            <Icon name="clock" /> {t("nav.planned")}
+          </span>
+        </h2>
+        <p>{t("nav.entry.portfolioPlanned")}</p>
+        <h3 className="card__subtitle">{t("nav.willContain")}</h3>
+        <p>{t(`nav.areas.${area}.contents`)}</p>
+      </section>
+    </div>
+  );
+}
+
+/**
+ * A P4 route whose screen another FE task builds (FE-B…FE-G; p4-plan §5.1). It says what the screen will contain and
+
+$ closure route + tab
+apps/web/src/app/router.tsx:402:      { path: "transformations/:id/closure", element: <ClosurePage /> },
+apps/web/src/i18n/ar/closureP4.json:2:  "tab": "الإغلاق",
+apps/web/src/i18n/en/closureP4.json:2:  "tab": "Closure",
+
+$ tests that read docs/delivery (any reader in tests/, apps/*/test, apps/*/src, packages, e2e)
+== tests/qa/integration/a09-decision-escalation.test.ts
+8:// (docs/delivery/requirements.csv) whose A09 text it proves.
+== tests/qa/integration/a03-modular-entry.test.ts
+4:// (docs/delivery/requirements.csv), D-110 / ADR-0021 amendment W1-W7 (the authorized Modular-links waiver) and
+== tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts
+2:// Acceptance text (docs/delivery/requirements.csv): "A02;A08: a Design-phase draft can be saved before G2; a scale
+== tests/qa/integration/a08-gate-controls.test.ts
+6:// requirement rows (docs/delivery/requirements.csv) whose A08 text it proves.
+17:// G6 approval writes none of the engineering delivery records under docs/delivery/, see deliveryFingerprint).
+19:import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+142: * Recursive listing + SHA-256 of the engineering delivery records under docs/delivery/ of this tree that a product G6
+150:const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
+162:    if (statSync(p).isDirectory()) for (const name of readdirSync(p).sort()) add(join(p, name));
+822:  it("REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/", async () => {
+== tests/qa/integration/a11-bau-sustain.test.ts
+5:// are derived from the acceptance text of the requirement row named in each title (docs/delivery/requirements.csv) and
+== tests/qa/integration/a11-value-closure.test.ts
+3:// (docs/delivery/requirements.csv) and from docs/api/openapi.yaml:
+== tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts
+1:// A01 / REQ-PB-010 "One source of truth" (qa-verifier, T-DG4-QA-D). Acceptance text (docs/delivery/requirements.csv):
+== tests/qa/integration/a11-adoption.test.ts
+4:// of the requirement row named in its title (docs/delivery/requirements.csv) and from docs/api/openapi.yaml:
+== tests/qa/support/p4.ts
+7:// requirement rows in docs/delivery/requirements.csv and docs/api/openapi.yaml. No assertion reuses a backend test's
+== apps/web/src/auth/session-wait.test.tsx
+10:// W1/W2 are adapted from qa-verifier's round-6 probe (docs/delivery/test-evidence/DG4/qa/tests/round-6/unit/
+== apps/api/test/integration/platform.test.ts
+115:  // F-DG1-142 (reviewer repro: docs/delivery/test-evidence/DG1/code-security/round-1/repro-ratelimit/). The key is the
+== apps/api/test/integration/bu-hierarchy-guard.test.ts
+9:// (docs/delivery/test-evidence/DG1/code-security/round-1/repro-bu/zz-review-bu-hierarchy.test.ts, also the technique
+== apps/api/test/integration/workflows/g5-g6.test.ts
+11://    (docs/delivery/gates/**, stages.json, findings.json, reviews/**, decisions.md, requirements.csv; directory listing
+12://    and hashes before/after; T-DG4-BE-R3 narrowed it from all of docs/delivery/, see DELIVERY_RECORDS);
+17:import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+294:const DELIVERY = fileURLToPath(new URL("../../../../../docs/delivery", import.meta.url));
+314:    if (statSync(p).isDirectory()) for (const name of readdirSync(p).sort()) add(join(p, name));
+== packages/shared/src/formula/fuzz.test.ts
+9:import { existsSync, readdirSync, readFileSync } from "node:fs";
+467:  const engine = readdirSync(FORMULA_DIR)
+510: * (docs/delivery/test-evidence/DG3/code-security/round-5/probes/rethrow-rule-attack-probe.mjs and -2.mjs): the helper
+901:      "try {\n  x = walk();\n} catch (e) {\n  if (e instanceof EvalError) throw e; // rethrow first\n  return null;\n}",
+== packages/shared/src/kpi/a05.test.ts
+2:// binding acceptance text of its requirement row (docs/delivery/requirements.csv) and proves it literally, through the
+== packages/db/src/schema.ts
+2171:// docs/delivery/handbacks/DG4/T-DG4-ARCH-02-evidence/gen-schema.ts. numeric -> string (decimal), date -> "YYYY-MM-DD".
+2496:// database (docs/delivery/handbacks/DG4/T-DG4-ARCH-03-evidence/gen-schema.ts).
+4189:// docs/delivery/handbacks/DG4/T-DG4-ARCH-07-evidence/gen-schema.py. numeric -> string (decimal), date -> "YYYY-MM-DD".
+4477:// docs/delivery/handbacks/DG4/T-DG4-ARCH-08-evidence/gen-schema.py. numeric -> string (decimal), date -> "YYYY-MM-DD".

@@ -1,0 +1,96 @@
+## 2026-10-13T17:33:35Z scratch mutant diff (a08 -> zz-qa-r10-a08-mutant)
+--- tests/qa/integration/a08-gate-controls.test.ts	2026-10-13 16:39:07.340826345 +0000
++++ tests/qa/integration/zz-qa-r10-a08-mutant.test.ts	2026-10-13 17:33:35.872276399 +0000
+@@ -19,6 +19,7 @@
+ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+ import { join, relative } from "node:path";
+ import { fileURLToPath } from "node:url";
++import { appendFileSync as qaAppend, mkdirSync as qaMkdir, rmSync as qaRm, writeFileSync as qaWrite } from "node:fs";
+ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+ import { setGateExceptionClock } from "../../../apps/api/src/modules/workflows/gate-exceptions.ts";
+ import { handleGateDecided, handleGateSubmitted } from "../../../apps/worker/src/handlers/gates.ts";
+@@ -147,7 +148,7 @@
+  * candidates, runs, test evidence and progress notes are not gate state, and hashing them (342 MB, mostly handback
+  * evidence, read twice) made this test exceed its timeout on a cold disk cache, at a cost growing with every round.
+  */
+-const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
++const DELIVERY = process.env["QA_R10_DELIVERY"]!.replace(/\/?$/, "/");
+ const DELIVERY_RECORDS = [
+   "gates",
+   "stages.json",
+@@ -845,6 +846,7 @@
+       .execute();
+     expect(decidedEvents.length).toBe(1);
+     await handleGateDecided(api.db, await envelopeByKey(api, decidedEvents[0]!.idempotency_key), "qa-a08-g6-decided");
++    qaR10Mutate();
+     expect(deliveryFingerprint()).toEqual(before);
+   });
+ });
+@@ -1037,3 +1039,14 @@
+     expect([ok.body.status, ok.body.dueDate, ok.body.decidedAt]).toEqual(["deferred", "2099-03-02", null]);
+   });
+ });
++
++function qaR10Mutate(): void {
++  const m = process.env["QA_R10_MUTANT"] ?? "none";
++  const d = DELIVERY;
++  if (m === "stages") qaAppend(join(d, "stages.json"), " ");
++  else if (m === "requirements") qaAppend(join(d, "requirements.csv"), "\n");
++  else if (m === "findings-removed") qaRm(join(d, "findings.json"));
++  else if (m === "new-gate-DG7") qaWrite(join(d, "gates", "DG7.json"), "{}");
++  else if (m === "new-review") { qaMkdir(join(d, "reviews", "DG7", "round-1"), { recursive: true }); qaWrite(join(d, "reviews", "DG7", "round-1", "x.json"), "{}"); }
++  else if (m === "candidates") { qaMkdir(join(d, "candidates", "DG7"), { recursive: true }); qaWrite(join(d, "candidates", "DG7", "x.json"), "{}"); }
++}
+
+### MUTANT=none  load: 2.35 2.81 4.55
+ ❯ |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts (31 tests | 1 failed | 30 skipped) 2710ms
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 134ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts > A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G6 follows G5: G5 must be approved first (phases run in sequence).","code":"gate.out_of_sequence","requestId":"01a13653-efba-71ce-ba45-e17a7964fb5a"}: expected 422 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+EXIT(MUTANT=none) 1
+
+### MUTANT=stages  load: 3.48 3.04 4.60
+ ❯ |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts (31 tests | 1 failed | 30 skipped) 3231ms
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 186ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts > A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G6 follows G5: G5 must be approved first (phases run in sequence).","code":"gate.out_of_sequence","requestId":"01a13654-2a1e-76af-8258-6cb7524214d0"}: expected 422 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+EXIT(MUTANT=stages) 1
+
+### MUTANT=requirements  load: 3.43 3.06 4.58
+EXIT(MUTANT=requirements) 1
+
+### MUTANT=findings-removed  load: 3.32 3.04 4.56
+EXIT(MUTANT=findings-removed) 1
+
+### MUTANT=new-gate-DG7  load: 3.32 3.04 4.56
+EXIT(MUTANT=new-gate-DG7) 1
+
+### MUTANT=new-review  load: 3.21 3.02 4.55
+ ❯ |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts (31 tests | 1 failed | 30 skipped) 3029ms
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 183ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts > A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G6 follows G5: G5 must be approved first (phases run in sequence).","code":"gate.out_of_sequence","requestId":"01a13654-938a-7081-9cad-b3bcfe0230b8"}: expected 422 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+EXIT(MUTANT=new-review) 1
+
+### MUTANT=candidates  load: 4.03 3.23 4.59
+ ❯ |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts (31 tests | 1 failed | 30 skipped) 3181ms
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 198ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/zz-qa-r10-a08-mutant.test.ts > A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"G6 follows G5: G5 must be approved first (phases run in sequence).","code":"gate.out_of_sequence","requestId":"01a13654-e80f-74d2-9474-4d180be6fb07"}: expected 422 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+EXIT(MUTANT=candidates) 1
+
+scratch removed; git status of the clone:
+(end)
+2026-10-13T17:34:57Z

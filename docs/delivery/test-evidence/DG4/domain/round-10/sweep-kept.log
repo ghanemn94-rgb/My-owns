@@ -1,0 +1,167 @@
+### HEAD e70ac02f63cd1f42487cfa4dae73f68e933da015
+## #4-#6 gates.notEnabled/notEnabledBody, problems.gate_not_enabled: render conditions and submission_enabled
+apps/web/src/pages/gates/GateDetailPage.tsx:222:            <Icon name="clock" /> {t("gates.notEnabledBody")}
+apps/web/src/pages/gates/GatesPage.tsx:132:                        <Icon name="clock" /> {t("gates.notEnabled")}
+686-  const def = definitionOf(await loadGateDefinitions(tx), gateCode);
+687-  if (!def.submissionEnabled)
+688:    throw problems.businessRule("gate_not_enabled", `${gateCode} cannot be submitted in this release.`);
+689-  const expected = requireIfMatch(request);
+690-  const instance = await instanceOf(tx, transformationId, gateCode, true);
+-- migrations that set submission_enabled:
+packages/db/migrations/0011_p2_methodology_catalogue.sql
+packages/db/migrations/0024_p3_gates_access_instantiation.sql
+packages/db/migrations/0026_p3_enable_g4.sql
+packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql
+packages/db/migrations/0059_p4_enable_g5_g6.sql
+15:   SET submission_enabled = true,
+19:   AND submission_enabled = false;
+23:  IF (SELECT count(*) FROM gate_definition WHERE code IN ('G5', 'G6') AND submission_enabled) <> 2 THEN
+-- API writes to gate_definition (expected none):
+(grep exit=1)
+-- catalogue test pins all six enabled:
+37:    const rows = await q<{ code: string; submission_enabled: boolean }>(
+38:      `SELECT code, submission_enabled FROM gate_definition ORDER BY ordinal`,
+39-    );
+40:    expect(rows.map((r) => [r.code, r.submission_enabled])).toEqual([
+41-      ["G1", true],
+42-      ["G2", true],
+43-      ["G3", true],
+44-      ["G4", true],
+45-      ["G5", true],
+46-      ["G6", true],
+47-    ]);
+48-  });
+49-
+50-  it("0027: benefit_calculation.rounding is a nullable jsonb object, bound to the row and required on new rows (ADR-0024 §6 item 11)", async () => {
+51-    const cols = await q<{ d: string; n: string }>(
+52-      `SELECT data_type AS d, is_nullable AS n FROM information_schema.columns
+--
+388:         OR t.tgname = 'gate_submission_criterion_exception_valid')
+389-       ORDER BY 1, 2`,
+390-    );
+## #7 transformations.workspace.laterStage: render sites (expected only catalogues)
+apps/web/src/i18n/en/transformations.json:102:    "laterStage": "Recorded from a later release",
+apps/web/src/i18n/ar/transformations.json:102:    "laterStage": "تُسجَّل في إصدار لاحق",
+## #8 admin.plannedSections
+apps/web/src/pages/admin/AdminHomePage.tsx:42:          <p className="muted">{t("admin.plannedSections")}</p>
+  "plannedSections": "إعدادات المنهجية والنماذج ومسارات العمل والأتمتة والهوية البصرية مخططة لإصدارات لاحقة.",
+  "plannedSections": "Methodology, forms, workflows, automation and branding settings are planned for later releases.",
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+## #9 access__scope_type_reserved
+83-): Promise<RoleAssignment> {
+84-  if (!isP1Scope(input.scope.type)) {
+85-    throw problems.businessRule(
+86:      "access.scope_type_reserved",
+87-      `Scope type ${input.scope.type} is reserved for a later stage.`,
+88-    );
+89-  }
+50:export const P1_SCOPE_TYPES = [
+51-  "organization",
+52-  "business_unit",
+53-  "transformation",
+54-] as const satisfies readonly ScopeType[];
+55-
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+## #10 nav.p4.beingBuiltBody: P4_PLANNED_ROUTES contents
+288:export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
+289-  // FE-B (slice A: KPI engine): built by T-DG4-FE-B, see the KPI routes below.
+290-  // FE-C (slice B: benefits and Finance validation): built by T-DG4-FE-C, see the benefit routes below.
+291-  // FE-D (slices E and D: RAID, actions, forums, meetings, T16): built by T-DG4-FE-D, see the routes below.
+292-  // FE-E (slices F and G: adoption, BAU, improvement, lessons): built by T-DG4-FE-E, see the routes below.
+293-  // FE-F (slice H: G5/G6 views live in pages/gates; change control and closure)
+294-  // change requests: built by T-DG4-FE-F2 (pages/change-requests), see the routes below.
+295-  // closure: built by T-DG4-FE-F (pages/closure), see the routes below.
+296-  // FE-G (slices J and K): the six dashboards and the Executive Overview are built by T-DG4-FE-G, see the routes below;
+297-  // traceability, Modular entry, portfolios and workstreams are built by T-DG4-FE-G2, see the routes below.
+298-];
+299-
+300:const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
+301-  path: r.path,
+302-  element: <P4BeingBuiltPage feature={r.feature} />,
+303-}));
+304-
+305-export const routes: RouteObject[] = [
+306-  { path: "/login", element: <LoginPage /> },
+307-  {
+308-    path: "/",
+309-    element: (
+310-      <RequireSession>
+311-        <Shell />
+312-      </RequireSession>
+313-    ),
+314-    children: [
+315-      { index: true, element: <Navigate to="/my-work" replace /> },
+316-      { path: "my-work", element: <MyWorkPage /> },
+## #11 decisionRights.arProvisional
+apps/web/src/i18n/en/adoptionP4.json:13:  "arProvisional": "Provisional Arabic translation",
+apps/web/src/i18n/en/benefitsP4.json:223:    "arProvisional": "Provisional Arabic translation of the playbook text.",
+apps/web/src/i18n/en/closureP4.json:5:  "arProvisional": "Provisional Arabic translation of the status labels.",
+apps/web/src/i18n/en/dashboards.json:227:    "arProvisional": "Arabic labels are provisional. Source:",
+apps/web/src/i18n/en/dashboards.json:491:    "arProvisional": "Arabic basis labels are provisional until a native Arabic reviewer confirms them.",
+apps/web/src/i18n/en/decisionRights.json:8:  "arProvisional": "The {{columns}} labels are shown in their English source text (playbook B0099); an Arabic translation of these labels is provisional and not yet available.",
+apps/web/src/i18n/en/governanceP4.json:75:    "arProvisional": "Provisional Arabic translation of the playbook text; the English source is shown below each line.",
+apps/web/src/i18n/en/phasesP4.json:7:  "arProvisional": "Arabic phase and step texts are a provisional translation of the English source text.",
+## wider sweep (user-facing catalogues): availability wording not in the handback list
+apps/web/src/i18n/en/dashboards.json:318:      "summary": "Your own actions, drafts, reviews, approvals, missing updates and upcoming deadlines."
+apps/web/src/i18n/en/dashboards.json:383:    "deadlines": "Upcoming deadlines",
+apps/web/src/i18n/en/dashboards.json:385:    "noDeadlines": "No upcoming deadline.",
+apps/web/src/i18n/en/dashboards.json:464:      "deadlineHorizonWorkingDays": "Upcoming deadlines horizon"
+apps/web/src/i18n/en/gates.json:45:  "notEnabledBody": "Submission of this gate becomes available in a later release.",
+apps/web/src/i18n/en/admin.json:9:  "plannedSections": "Methodology, forms, workflows, automation and branding settings are planned for later releases.",
+apps/web/src/i18n/en/transformations.json:102:    "laterStage": "Recorded from a later release",
+apps/web/src/i18n/en/decisionRights.json:8:  "arProvisional": "The {{columns}} labels are shown in their English source text (playbook B0099); an Arabic translation of these labels is provisional and not yet available.",
+apps/web/src/i18n/en/nav.json:6:  "plannedBody": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release, so this page shows no data. The screens this area already has are listed under it in the navigation. The dashboards under the Executive Overview summarize the transformations you can read.",
+apps/web/src/i18n/en/nav.json:12:      "contents": "Assigned actions, drafts, reviews, approvals, missing updates and upcoming deadlines."
+apps/web/src/i18n/en/nav.json:83:    "portfolioPlanned": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release. The dashboards under the Executive Overview summarize the transformations you can read."
+apps/web/src/i18n/en/executionP4.json:151:        "incoming": "This initiative depends on it",
+apps/web/src/i18n/en/traceability.json:201:    "intro": "A Modular transformation enters at a later phase. It records what it inherits and must reconnect to outcomes and benefits; missing links are flagged and no approval is ever fabricated.",
+apps/web/src/i18n/ar/dashboards.json:29:    "dashboard__rag__dependencies__needed_by_critical_path": "الاعتماديات: اعتماديات مفتوحة مطلوبة قريبًا أو على المسار الحرج.",
+apps/web/src/i18n/ar/dashboards.json:32:    "dashboard__rag__decisions__due": "القرارات: قرارات مفتوحة مستحقة قريبًا.",
+apps/web/src/i18n/ar/dashboards.json:125:    "due_soon": "مستحق قريبًا",
+apps/web/src/i18n/ar/dashboards.json:277:    "periodsUnavailable": "فترات التقارير غير مرئية لك، لذا مرشح الفترة غير متاح.",
+apps/web/src/i18n/ar/dashboards.json:278:    "unitsUnavailable": "وحدات العمل غير مرئية لك، لذا مرشح الوحدة غير متاح.",
+apps/web/src/i18n/ar/dashboards.json:288:    "transformationsUnavailable": "تعذّر سرد التحوّلات التي يحق لك قراءتها، لذا فإن عامل تصفية التحوّل غير متاح.",
+apps/web/src/i18n/ar/dashboards.json:427:    "gateUnknown": "جاهزية البوابة الحالية غير متاحة",
+apps/web/src/i18n/ar/gates.json:44:  "notEnabled": "غير متاحة في هذا الإصدار",
+apps/web/src/i18n/ar/gates.json:45:  "notEnabledBody": "سيتاح تقديم هذه البوابة في إصدار لاحق.",
+apps/web/src/i18n/ar/admin.json:9:  "plannedSections": "إعدادات المنهجية والنماذج ومسارات العمل والأتمتة والهوية البصرية مخططة لإصدارات لاحقة.",
+apps/web/src/i18n/ar/transformations.json:102:    "laterStage": "تُسجَّل في إصدار لاحق",
+apps/web/src/i18n/ar/nav.json:6:  "plannedBody": "عرض هذا القسم على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق، لذا لا تُعرض في هذه الصفحة أي بيانات. أما الشاشات المتاحة حاليًا لهذا القسم فمدرجة تحته في قائمة التنقل. وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها.",
+apps/web/src/i18n/ar/nav.json:83:    "portfolioPlanned": "عرض هذا المجال على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق. وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها."
+apps/web/src/i18n/ar/executionP4.json:151:        "incoming": "تعتمد هذه المبادرة عليها",
+apps/web/src/i18n/ar/portfolio.json:62:    "funding__on_behalf_not_supported": "يبتّ المعتمِد في قرار التمويل شخصياً؛ البتّ نيابةً عن شخص آخر غير متاح."
+apps/web/src/i18n/ar/portfolio.json:95:    "unavailable": "عرض الترتيب حسب الأولوية غير متاح.",
+apps/web/src/i18n/ar/portfolio.json:315:    "inPerson": "يُتخذ القرار شخصياً: تسجيل قرار نيابةً عن شخص آخر غير متاح.",
+apps/web/src/i18n/ar/dependencies.json:65:    "codeHint": "أحرف لاتينية صغيرة وأرقام وشرطات سفلية، يبدأ بحرف (من 2 إلى 48 حرفًا). لا يمكن تغييره لاحقًا.",
+apps/web/src/i18n/ar/evidence.json:47:    "inaccessible": "غير متاح"
+apps/web/src/i18n/ar/traceability.json:201:    "intro": "يدخل التحوّل بالنمط الجزئي المرن في مرحلة لاحقة. يُسجّل ما يرثه ويجب أن يُعيد الارتباط بالنتائج والمنافع؛ تُميَّز الارتباطات الناقصة ولا يُختلق أي اعتماد أبداً.",
+apps/web/src/i18n/ar/define.json:231:      "charter__north_star_superseded": "صيغة النجم الشمالي التي حُفظ بها إصدار الميثاق هذا حُسِّنت لاحقًا. المعروض هو النجم الشمالي الحالي؛ احفظ الميثاق لتسجيله في إصدار جديد."
+apps/web/src/i18n/ar/define.json:245:      "previousMissing": "الإصدار السابق غير متاح.",
+apps/web/src/i18n/ar/define.json:250:      "savedWithSuperseded": "حُفظ إصدار الميثاق هذا بصيغة سابقة للنجم الشمالي استُبدلت لاحقًا. الصيغة أعلاه هي الحالية؛ احفظ الميثاق لتسجيلها في إصدار جديد."
+apps/web/src/i18n/ar/auth.json:13:    "idp_unavailable": "تعذّر الوصول إلى مزوّد الهوية حاليًا. يُرجى المحاولة لاحقًا.",
+apps/web/src/i18n/ar/auth.json:21:    "warning": "لوضع التطوير فقط: يسجّل دخول مستخدم اصطناعي مُعدّ مسبقًا. غير متاح في بيئة الإنتاج.",
+apps/web/src/i18n/ar/problems.json:13:    "5xx": "الخدمة غير متاحة مؤقتًا. حاول لاحقًا.",
+apps/web/src/i18n/ar/problems.json:26:  "unavailable": "الخدمة غير متاحة مؤقتًا. حاول لاحقًا.",
+apps/web/src/i18n/ar/problems.json:41:  "access__scope_type_reserved": "نوع النطاق هذا غير متاح بعد.",

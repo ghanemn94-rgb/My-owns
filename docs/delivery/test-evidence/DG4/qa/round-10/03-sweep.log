@@ -1,0 +1,68 @@
+## 2026-10-13T16:41:44Z independent sweep of user-facing availability strings in apps/web/src/i18n at 01a801e (source e70ac02)
+apps/web/src/i18n/en/dashboards.json:53:    "other": "Rule not listed in this release.",
+apps/web/src/i18n/en/dashboards.json:92:    "other": "Reason not listed in this release.",
+apps/web/src/i18n/en/gates.json:44:  "notEnabled": "Not available in this release",
+apps/web/src/i18n/en/gates.json:45:  "notEnabledBody": "Submission of this gate becomes available in a later release.",
+apps/web/src/i18n/en/gates.json:115:    "gate__criterion_not_evaluable": "This required output cannot be evaluated in this release.",
+apps/web/src/i18n/en/admin.json:9:  "plannedSections": "Methodology, forms, workflows, automation and branding settings are planned for later releases.",
+apps/web/src/i18n/en/transformations.json:102:    "laterStage": "Recorded from a later release",
+apps/web/src/i18n/en/decisionRights.json:8:  "arProvisional": "The {{columns}} labels are shown in their English source text (playbook B0099); an Arabic translation of these labels is provisional and not yet available.",
+apps/web/src/i18n/en/nav.json:6:  "plannedBody": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release, so this page shows no data. The screens this area already has are listed under it in the navigat…
+apps/web/src/i18n/en/nav.json:83:    "portfolioPlanned": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release. The dashboards under the Executive Overview summarize the transformations you can read."…
+apps/web/src/i18n/en/nav.json:112:    "beingBuiltTitle": "Being built in this stage",
+apps/web/src/i18n/en/nav.json:113:    "beingBuiltBody": "This screen is part of the current release and is being built. It shows no data yet, and nothing here is available to use.",
+apps/web/src/i18n/en/define.json:58:      "noEvaluator": "This criterion cannot be evaluated in this release, so it stays unknown.",
+apps/web/src/i18n/en/problems.json:41:  "access__scope_type_reserved": "This scope type is not available yet.",
+apps/web/src/i18n/en/problems.json:84:  "gate_not_enabled": "This gate cannot be submitted in this release.",
+apps/web/src/i18n/en/problems.json:93:  "gate__criterion_not_evaluable": "A required output cannot be evaluated in this release.",
+apps/web/src/i18n/ar/gates.json:45:  "notEnabledBody": "سيتاح تقديم هذه البوابة في إصدار لاحق.",
+apps/web/src/i18n/ar/transformations.json:102:    "laterStage": "تُسجَّل في إصدار لاحق",
+apps/web/src/i18n/ar/nav.json:6:  "plannedBody": "عرض هذا القسم على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق، لذا لا تُعرض في هذه الصفحة أي بيانات. أما الشاشات المتاحة حاليًا لهذا القسم فمدرجة تحته في قائمة التنقل. وتلخّص لوحات المؤشرات…
+apps/web/src/i18n/ar/nav.json:83:    "portfolioPlanned": "عرض هذا المجال على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق. وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها."
+apps/web/src/i18n/ar/nav.json:112:    "beingBuiltTitle": "قيد البناء في هذه المرحلة",
+apps/web/src/i18n/ar/nav.json:113:    "beingBuiltBody": "هذه الشاشة جزء من الإصدار الحالي وهي قيد البناء. لا تعرض أي بيانات بعد، ولا يتوفر هنا شيء للاستخدام.",
+apps/web/src/i18n/ar/traceability.json:201:    "intro": "يدخل التحوّل بالنمط الجزئي المرن في مرحلة لاحقة. يُسجّل ما يرثه ويجب أن يُعيد الارتباط بالنتائج والمنافع؛ تُميَّز الارتباطات الناقصة ولا يُختلق أي اعتماد أبداً.",
+apps/web/src/i18n/ar/problems.json:41:  "access__scope_type_reserved": "نوع النطاق هذا غير متاح بعد.",
+
+## statusHint render site
+apps/web/src/pages/transformations/TransformationEditPage.tsx:274:          hint={t("transformations.form.statusHint")}
+## laterStage usage outside catalogues
+(end laterStage)
+## P4_PLANNED_ROUTES
+288:export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
+289-  // FE-B (slice A: KPI engine): built by T-DG4-FE-B, see the KPI routes below.
+290-  // FE-C (slice B: benefits and Finance validation): built by T-DG4-FE-C, see the benefit routes below.
+291-  // FE-D (slices E and D: RAID, actions, forums, meetings, T16): built by T-DG4-FE-D, see the routes below.
+--
+300:const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
+301-  path: r.path,
+302-  element: <P4BeingBuiltPage feature={r.feature} />,
+303-}));
+## submission_enabled in migrations
+packages/db/migrations/0011_p2_methodology_catalogue.sql
+packages/db/migrations/0024_p3_gates_access_instantiation.sql
+packages/db/migrations/0026_p3_enable_g4.sql
+packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql
+packages/db/migrations/0059_p4_enable_g5_g6.sql
+15:   SET submission_enabled = true,
+19:   AND submission_enabled = false;
+23:  IF (SELECT count(*) FROM gate_definition WHERE code IN ('G5', 'G6') AND submission_enabled) <> 2 THEN
+## gate_definition writes in apps/api/src
+(end)
+## closure route and tab
+208:const ClosurePage = lazyPage(() => import("../pages/closure/ClosurePage.tsx").then((m) => m.ClosurePage));
+293:  // FE-F (slice H: G5/G6 views live in pages/gates; change control and closure)
+295:  // closure: built by T-DG4-FE-F (pages/closure), see the routes below.
+401:      // P4 slice G closure and transition decisions (T-DG4-FE-F; p4-work-split §F+G FG.8; ADR-0034 §1-§3, §7).
+402:      { path: "transformations/:id/closure", element: <ClosurePage /> },
+apps/web/src/i18n/ar/closureP4.json:2:  "tab": "الإغلاق",
+apps/web/src/i18n/en/closureP4.json:2:  "tab": "Closure",
+apps/web/src/i18n/ar/closureP4.json:33:    "closeDescription": "يتطلب الإغلاق اعتماد الأعمال للبوابة G6 (الاستدامة)، وأن تكون كل منفعة معتم�
+apps/web/src/i18n/ar/closureP4.json:89:    "closeDescription": "لا تُغلق المبادرة إلا عندما يكتمل تسليمها وتكون كل منفعة من منافعها معتمدة
+apps/web/src/i18n/en/closureP4.json:33:    "closeDescription": "Closure needs the G6 (Sustain) business approval, each benefit validated by Finance or covered by an approved transition decision, and e
+apps/web/src/i18n/en/closureP4.json:89:    "closeDescription": "An initiative closes only when its delivery is complete and each of its benefits is validated by Finance or covered by an approved trans
+## planned areas and their subpages
+78:  { id: "playbook", path: "/playbook", availability: "planned" },
+103:  { id: "risks", path: "/risks-actions", availability: "planned" },
+111:  { id: "change", path: "/change-adoption", availability: "planned" },
+113:  { id: "bau", path: "/bau-improvement", availability: "planned" },

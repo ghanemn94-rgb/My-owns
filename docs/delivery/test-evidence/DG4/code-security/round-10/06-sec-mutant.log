@@ -1,0 +1,27 @@
+150c150,152
+< const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
+---
+> const DELIVERY = process.env.SEC_DELIVERY!.replace(/\/?$/, "/");
+> import { mkdirSync as sMk, writeFileSync as sW, rmSync as sRm } from "node:fs";
+> function secMutate(): void { const m = process.env.SEC_MUTANT ?? "none"; if (m === "review-added") { sMk(join(DELIVERY, "reviews", "DG9"), { recursive: true }); sW(join(DELIVERY, "reviews", "DG9", "x.json"), "{}"); } else if (m === "stages-removed") sRm(join(DELIVERY, "stages.json")); else if (m !== "none") throw new Error(m); }
+847a850
+>     secMutate();
+=== SEC_MUTANT=none (scratch copy /var/tmp/mth-run.yGEkqK/claude-0/sec-deliv-none) 2026-10-13T16:52:08Z load 9.78
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/  538ms
+      Tests  31 passed (31)
+exit=0
+=== SEC_MUTANT=review-added (scratch copy /var/tmp/mth-run.yGEkqK/claude-0/sec-deliv-review-added) 2026-10-13T16:52:56Z load 11.11
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 557ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/zz-sec-r10-mutant.test.ts > A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/
+AssertionError: expected { …(536) } to deeply equal { …(535) }
+      Tests  1 failed | 30 passed (31)
+exit=1
+=== SEC_MUTANT=stages-removed (scratch copy /var/tmp/mth-run.yGEkqK/claude-0/sec-deliv-stages-removed) 2026-10-13T16:53:41Z load 11.29
+   × A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/ 525ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/zz-sec-r10-mutant.test.ts > A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/
+AssertionError: expected { …(535) } to deeply equal { …(535) }
+      Tests  1 failed | 30 passed (31)
+exit=1
+scratch test removed; git status: ''

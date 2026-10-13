@@ -1,0 +1,361 @@
+diff --git a/apps/web/e2e/journeys.spec.ts b/apps/web/e2e/journeys.spec.ts
+index 4e5df71..05240c7 100644
+--- a/apps/web/e2e/journeys.spec.ts
++++ b/apps/web/e2e/journeys.spec.ts
+@@ -228,7 +228,11 @@ test("shell: navigation, language persistence and My Work (Transformation Office
+     page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.risks.label"), exact: true }),
+   ).toBeVisible();
+   await expect(page.getByText(tr(lang, "nav.plannedBody"), { exact: true })).toBeVisible();
++  // F-DG4-160 sweep (D-137): the text says the area's delivered screens are listed under it in the navigation.
++  await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
++  await expect(nav.getByRole("link", { name: tr(lang, "nav.sub.raid"), exact: true })).toBeVisible();
+   await shot(page, lang, "03-planned-area");
++  await expectAccessible(page, lang, "planned-area");
+   expect(foreign).toEqual([]);
+ });
+ 
+@@ -338,6 +342,15 @@ test("edit: a concurrent change gives a 409 conflict with compare and re-apply",
+   await signIn(page, lang, "dev.office");
+   await page.goto(`/transformations/${createdId}/edit`);
+   const name = page.getByLabel(fieldLabel(lang, "transformations.field.name"));
++  // F-DG4-160 (D-137): the Status hint points to the Closure page and the G6 (Sustain) approval (delivered in DG4);
++  // it no longer says that G6 or closure comes in a later release.
++  const statusHint = page.getByText(tr(lang, "transformations.form.statusHint"), { exact: true });
++  await expect(statusHint).toBeVisible();
++  await expect(statusHint).toContainText(lang === "ar" ? "«الإغلاق»" : "Closure page");
++  await expect(statusHint).toContainText(lang === "ar" ? "G6 (الاستدامة)" : "G6 (Sustain)");
++  await expect(statusHint).not.toContainText(lang === "ar" ? "إصدار لاحق" : "later release");
++  await shot(page, lang, "08a-edit-status-hint");
++  await expectAccessible(page, lang, "edit-status-hint");
+   await name.fill(`Synthetic ${lang.toUpperCase()} journey (my edit)`);
+   // Someone else saves first (same session cookie, through the real API with CSRF + If-Match).
+   const me = await (await page.request.get("/api/v1/me")).json();
+diff --git a/apps/web/e2e/p3-seams.spec.ts b/apps/web/e2e/p3-seams.spec.ts
+index 1f4ec56..f2068d8 100644
+--- a/apps/web/e2e/p3-seams.spec.ts
++++ b/apps/web/e2e/p3-seams.spec.ts
+@@ -98,6 +98,9 @@ test("Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio an
+     await expect(page.locator("#entry-title")).toHaveText(tr(lang, "nav.entry.title", { tab: tr(lang, tabKey) }));
+     const link = page.locator(`a[href='/transformations/${tid}/${tab}']`);
+     await expect(link).toBeVisible();
++    // F-DG4-160 sweep (D-137): the planned card names the cross-portfolio view and the delivered dashboards.
++    await expect(page.locator("#entry-planned + p")).toHaveText(tr(lang, "nav.entry.portfolioPlanned"));
++    await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+     await expectAccessible(page, lang, `p3-area-${area}`);
+     await shot(page, lang, `p3-area-${area}`);
+     await link.click();
+diff --git a/apps/web/src/app/app.test.tsx b/apps/web/src/app/app.test.tsx
+index 35fe6ee..953b2bb 100644
+--- a/apps/web/src/app/app.test.tsx
++++ b/apps/web/src/app/app.test.tsx
+@@ -20,7 +20,8 @@ import {
+   renderApp,
+   route,
+ } from "../test/fixtures.tsx";
+-import { NAV_AREAS } from "./nav.ts";
++import { catalogues, createI18n } from "../i18n/index.ts";
++import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
+ 
+ beforeEach(() => {
+   localStorage.clear();
+@@ -123,6 +124,83 @@ describe("bilingual shell", () => {
+     expect(screen.getAllByText("Planned").length).toBeGreaterThan(0);
+   });
+ 
++  // F-DG4-160 sweep (D-137): the planned-area and portfolio-view texts never say that an area is "not available yet"
++  // when DG4 delivers screens of that area (listed under it in the navigation) and the dashboards.
++  const PLANNED_TEXT = {
++    en: {
++      plannedBody:
++        "A cross-portfolio view of this area, with its records across all transformations, is planned for a later " +
++        "release, so this page shows no data. The screens this area already has are listed under it in the " +
++        "navigation. The dashboards under the Executive Overview summarize the transformations you can read.",
++      portfolioPlanned:
++        "A cross-portfolio view of this area, with its records across all transformations, is planned for a later " +
++        "release. The dashboards under the Executive Overview summarize the transformations you can read.",
++      willContain: "What this area covers",
++    },
++    ar: {
++      plannedBody:
++        "عرض هذا القسم على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق، لذا لا تُعرض في هذه " +
++        "الصفحة أي بيانات. أما الشاشات المتاحة حاليًا لهذا القسم فمدرجة تحته في قائمة التنقل. " +
++        "وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها.",
++      portfolioPlanned:
++        "عرض هذا المجال على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق. وتلخّص لوحات المؤشرات " +
++        "ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها.",
++      willContain: "ما يغطيه هذا القسم",
++    },
++  } as const;
++
++  it("pins the planned-area texts in en and ar; none says an area is not available yet", () => {
++    for (const locale of ["en", "ar"] as const) {
++      const nav = catalogues[locale].nav;
++      expect(nav.plannedBody).toBe(PLANNED_TEXT[locale].plannedBody);
++      expect(nav.entry.portfolioPlanned).toBe(PLANNED_TEXT[locale].portfolioPlanned);
++      expect(nav.willContain).toBe(PLANNED_TEXT[locale].willContain);
++      for (const s of [nav.plannedBody, nav.entry.portfolioPlanned, nav.willContain]) {
++        expect(s).not.toMatch(/not available yet|will contain|غير متاح بعد|سيتضمنه/i);
++      }
++    }
++  });
++
++  for (const locale of ["en", "ar"] as const) {
++    for (const area of NAV_AREAS.filter((a) => a.availability === "planned")) {
++      it(`${locale}: the planned area ${area.id} says what is planned and its delivered screens are under it`, async () => {
++        mockApi(meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })));
++        renderApp(area.path, { i18n: createI18n(locale) });
++        const label = catalogues[locale].nav.areas[area.id].label;
++        expect(await screen.findByRole("heading", { level: 1, name: label })).toBeTruthy();
++        expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
++        expect(screen.getByText(PLANNED_TEXT[locale].plannedBody)).toBeTruthy();
++        expect(screen.getByRole("heading", { level: 3, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
++        // What the text claims: the area's screens are listed under it in the navigation, and the dashboards exist.
++        const nav = screen.getByRole("navigation", { name: catalogues[locale].nav.primary });
++        const sub = within(nav).getByRole("list", { name: label });
++        const expected = NAV_SUBPAGES.filter((s) => s.area === area.id && !s.requiresAny);
++        expect(expected.length).toBeGreaterThan(0);
++        for (const s of expected) {
++          expect(within(sub).getByRole("link", { name: catalogues[locale].nav.sub[s.id] }).getAttribute("href")).toBe(
++            s.path,
++          );
++        }
++        expect(within(nav).getByRole("link", { name: catalogues[locale].nav.sub.dashboards })).toBeTruthy();
++      });
++    }
++    it(`${locale}: a partial area's planned card names the cross-portfolio view and the dashboards`, async () => {
++      mockApi(
++        meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })),
++        route("GET", /\/api\/v1\/transformations\?/, () => ({
++          status: 200,
++          body: { items: [makeTransformation()], nextCursor: null },
++        })),
++      );
++      renderApp("/benefits-finance", { i18n: createI18n(locale) });
++      expect(
++        await screen.findByRole("heading", { level: 1, name: catalogues[locale].nav.areas.benefits.label }),
++      ).toBeTruthy();
++      expect(screen.getByText(PLANNED_TEXT[locale].portfolioPlanned)).toBeTruthy();
++      expect(screen.getByRole("heading", { level: 3, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
++    });
++  }
++
+   it("redirects to sign-in when there is no session", async () => {
+     mockApi(
+       route("GET", /\/api\/v1\/me$/, () => problem(401, "unauthenticated")),
+diff --git a/apps/web/src/i18n/ar/nav.json b/apps/web/src/i18n/ar/nav.json
+index 971d1bd..18e6e7e 100644
+--- a/apps/web/src/i18n/ar/nav.json
++++ b/apps/web/src/i18n/ar/nav.json
+@@ -3,8 +3,8 @@
+   "toggle": "إظهار التنقل أو إخفاؤه",
+   "about": "حول هذا المنتج",
+   "planned": "مخطط",
+-  "plannedBody": "هذا القسم مخطط لإصدار لاحق. وهو غير متاح بعد، ولا تُعرض فيه أي بيانات.",
+-  "willContain": "ما سيتضمنه هذا القسم",
++  "plannedBody": "عرض هذا القسم على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق، لذا لا تُعرض في هذه الصفحة أي بيانات. أما الشاشات المتاحة حاليًا لهذا القسم فمدرجة تحته في قائمة التنقل. وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها.",
++  "willContain": "ما يغطيه هذا القسم",
+   "areas": {
+     "myWork": {
+       "label": "عملي",
+@@ -80,7 +80,7 @@
+   "entry": {
+     "title": "افتح شاشة «{{tab}}» لأحد التحوّلات",
+     "body": "هذا المحتوى جزء من مساحة عمل كل تحوّل. اختر تحوّلاً:",
+-    "portfolioPlanned": "عرض هذا المجال على مستوى المحفظة كاملة مخطط لإصدار لاحق."
++    "portfolioPlanned": "عرض هذا المجال على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق. وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها."
+   },
+   "sub": {
+     "myWorkItems": "المهام وصندوق الوارد",
+diff --git a/apps/web/src/i18n/ar/transformations.json b/apps/web/src/i18n/ar/transformations.json
+index 39050ad..e58f429 100644
+--- a/apps/web/src/i18n/ar/transformations.json
++++ b/apps/web/src/i18n/ar/transformations.json
+@@ -85,7 +85,7 @@
+     "me": "أنا ({{name}})",
+     "create": "إنشاء التحوّل",
+     "fromStart": "من البداية (التشخيص)",
+-    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يتطلّب إغلاق التحوّل اعتماد الأعمال في البوابة 6 - الاستدامة، وسيتاح ذلك في إصدار لاحق.",
++    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.",
+     "lockedFields": "لا يمكن تعديل النمط ومرحلة الدخول والمرحلة هنا: يُتحكَّم في الانتقال بين المراحل عبر بوابات المراحل.",
+     "editingVersion": "أنت تعدّل الإصدار {{version}}."
+   },
+diff --git a/apps/web/src/i18n/en/nav.json b/apps/web/src/i18n/en/nav.json
+index 3d0b680..5517cf0 100644
+--- a/apps/web/src/i18n/en/nav.json
++++ b/apps/web/src/i18n/en/nav.json
+@@ -3,8 +3,8 @@
+   "toggle": "Show or hide navigation",
+   "about": "About this product",
+   "planned": "Planned",
+-  "plannedBody": "This area is planned for a later release. It is not available yet, and no data is shown here.",
+-  "willContain": "What this area will contain",
++  "plannedBody": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release, so this page shows no data. The screens this area already has are listed under it in the navigation. The dashboards under the Executive Overview summarize the transformations you can read.",
++  "willContain": "What this area covers",
+   "areas": {
+     "myWork": {
+       "label": "My Work",
+@@ -80,7 +80,7 @@
+   "entry": {
+     "title": "Open the {{tab}} screen of a transformation",
+     "body": "This content is part of each transformation's workspace. Choose a transformation:",
+-    "portfolioPlanned": "A cross-portfolio view of this area is planned for a later release."
++    "portfolioPlanned": "A cross-portfolio view of this area, with its records across all transformations, is planned for a later release. The dashboards under the Executive Overview summarize the transformations you can read."
+   },
+   "sub": {
+     "myWorkItems": "Tasks and inbox",
+diff --git a/apps/web/src/i18n/en/transformations.json b/apps/web/src/i18n/en/transformations.json
+index 85f4486..72d67f5 100644
+--- a/apps/web/src/i18n/en/transformations.json
++++ b/apps/web/src/i18n/en/transformations.json
+@@ -85,7 +85,7 @@
+     "me": "Me ({{name}})",
+     "create": "Create transformation",
+     "fromStart": "From the start (Diagnose)",
+-    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
++    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.",
+     "lockedFields": "Mode, entry phase and phase cannot be edited here: phase progression is controlled by stage gates.",
+     "editingVersion": "You are editing version {{version}}."
+   },
+diff --git a/apps/web/src/pages/transformations/transformations.test.tsx b/apps/web/src/pages/transformations/transformations.test.tsx
+index 0854661..8346a7f 100644
+--- a/apps/web/src/pages/transformations/transformations.test.tsx
++++ b/apps/web/src/pages/transformations/transformations.test.tsx
+@@ -56,6 +56,16 @@ const TL_BU_GRANTS = [
+   },
+ ];
+ 
++// F-DG4-160 (D-137): the Status field hint of the edit page, pinned literally in both languages.
++const STATUS_HINT = {
++  en:
++    "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
++    "A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure " +
++    "conditions are met.",
++  ar:
++    "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. " +
++    "يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.",
++} as const;
+ const meRoute = (me: ReturnType<typeof makeMe>) => route("GET", /\/api\/v1\/me$/, () => ({ status: 200, body: me }));
+ const buRoute = route("GET", /\/business-units/, () => ({
+   status: 200,
+@@ -306,26 +316,36 @@ describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
+     for (const s of ["draft", "active", "on_hold"] as TransformationStatus[]) {
+       expect(offeredStatusOptions(s), s).not.toContain("closed");
+     }
+-    // The shared transition table still lists `closed` (G6 arrives in P2+); the web filters it out.
++    // The shared transition table still lists `closed`; the web filters it out, because closure is governed and done
++    // on the Closure page once G6 (Sustain) is approved and the closure conditions are met (DG4).
+     expect(TRANSFORMATION_STATUS_TRANSITIONS.active).toContain("closed");
+     // Defensive: an already-closed record still renders its own status.
+     expect(offeredStatusOptions("closed")[0]).toBe("closed");
+   });
+ 
+-  it("the status hint no longer promises a close transition and names the G6 approval (en and ar)", () => {
++  // F-DG4-160 (D-137): G6 (Sustain) and governed closure are delivered in DG4 (route transformations/:id/closure,
++  // ClosurePage). The hint keeps the offered transitions and points to the Closure page; it never says that G6 or
++  // closure is "available in a later release".
++  it("the status hint no longer promises a close transition and points to the Closure page and G6 (en and ar)", () => {
+     const en = catalogues.en.transformations.form.statusHint;
+     const ar = catalogues.ar.transformations.form.statusHint;
+-    expect(en).toBe(
+-      "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
+-        "Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.",
+-    );
++    expect(en).toBe(STATUS_HINT.en);
++    expect(ar).toBe(STATUS_HINT.ar);
+     expect(en).not.toMatch(/or closed/);
+     expect(en).not.toMatch(/→ closed/i);
++    expect(en).not.toMatch(/later release|not available|available in/i);
++    expect(en).toContain("Closure page");
++    expect(en).toContain("G6 (Sustain) business approval");
+     expect(ar).not.toMatch(/أو مغلق/);
+     expect(ar).not.toMatch(/← مغلق/);
++    expect(ar).not.toMatch(/إصدار لاحق|غير متاح|سيتاح/);
+     expect(ar).toContain("مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط");
+-    expect(ar).toContain("البوابة 6 - الاستدامة");
+-    expect(ar).toContain("التحوّل");
++    // The Closure tab's own label (closureP4.tab) and the G6 wording of its close dialog (closureP4.json).
++    expect(ar).toContain(`«${catalogues.ar.closureP4.tab}»`);
++    expect(en).toContain(catalogues.en.closureP4.tab);
++    expect(ar).toContain("اعتماد الأعمال للبوابة G6 (الاستدامة)");
++    expect(catalogues.ar.closureP4.transformation.closeDescription).toContain("اعتماد الأعمال للبوابة G6 (الاستدامة)");
++    expect(catalogues.en.closureP4.transformation.closeDescription).toContain("the G6 (Sustain) business approval");
+   });
+ 
+   for (const [locale, title, statusLabel] of [
+@@ -347,8 +367,9 @@ describe("P1 close rule in the edit form (F-DG1-001, T-DG1-FE3)", () => {
+       expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(title);
+       expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+       expect([...select.options].map((o) => o.value)).toEqual(["active", "on_hold"]);
+-      const hint = catalogues[locale].transformations.form.statusHint;
+-      expect(screen.getByText(hint)).toBeTruthy();
++      // F-DG4-160: the corrected hint is what the edit page renders, in this locale and direction.
++      expect(catalogues[locale].transformations.form.statusHint).toBe(STATUS_HINT[locale]);
++      expect(screen.getByText(STATUS_HINT[locale])).toBeTruthy();
+     });
+   }
+ });
+diff --git a/tests/qa/integration/a08-gate-controls.test.ts b/tests/qa/integration/a08-gate-controls.test.ts
+index 138af27..e6ba7f6 100644
+--- a/tests/qa/integration/a08-gate-controls.test.ts
++++ b/tests/qa/integration/a08-gate-controls.test.ts
+@@ -14,9 +14,9 @@
+ //    delivers it (the A04/A13 suites run the full relay + pg-boss path).
+ // All data is SYNTHETIC. Every gate decision, exception decision and approval is a synthetic in-product business action
+ // by a test person; product gates G1-G6 never imply any engineering gate DG0-DG7 (and this suite asserts that a product
+-// G6 approval writes nothing under docs/delivery/).
++// G6 approval writes none of the engineering delivery records under docs/delivery/, see deliveryFingerprint).
+ import { createHash } from "node:crypto";
+-import { readdirSync, readFileSync, statSync } from "node:fs";
++import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+ import { join, relative } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+@@ -139,25 +139,34 @@ async function leadAndSponsor(g: NativeGateWorld): Promise<Person> {
+ }
+ 
+ /**
+- * Recursive listing + SHA-256 of every engineering delivery record under docs/delivery/ of this tree (REQ-S04-008):
+- * the DG gate records, reviews, stage state, findings, register, candidates, decisions. Two directories are excluded
+- * because the delivery tooling (not the product) may append to them while this suite runs, e.g. a log tee'd by the
+- * person running it or an agent runner recording its own invocation: test-evidence/ and runs/. They hold no DG decision.
++ * Recursive listing + SHA-256 of the engineering delivery records under docs/delivery/ of this tree that a product G6
++ * approval could be confused with (REQ-S04-008, M0412: product G6 never implies DG7): the DG gate records, the stage
++ * state, the findings, the reviews, the decisions and the requirement register. This is the same set and the same rule
++ * as DELIVERY_RECORDS in apps/api/test/integration/workflows/g5-g6.test.ts (T-DG4-BE-R3, D-112); a missing path is
++ * listed as missing, never skipped. T-DG4-BE-R7 (D-138) narrowed it from the whole tree: handbacks, assignments,
++ * candidates, runs, test evidence and progress notes are not gate state, and hashing them (342 MB, mostly handback
++ * evidence, read twice) made this test exceed its timeout on a cold disk cache, at a cost growing with every round.
+  */
+ const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
+-const LIVE_EVIDENCE = new Set(["test-evidence", "runs"]);
++const DELIVERY_RECORDS = [
++  "gates",
++  "stages.json",
++  "findings.json",
++  "reviews",
++  "decisions.md",
++  "requirements.csv",
++] as const;
+ function deliveryFingerprint(): Record<string, string> {
+   const out: Record<string, string> = {};
+-  const walk = (dir: string) => {
+-    for (const name of readdirSync(dir).sort()) {
+-      const p = join(dir, name);
+-      if (dir === DELIVERY.replace(/\/$/, "") && LIVE_EVIDENCE.has(name)) continue;
+-      const st = statSync(p);
+-      if (st.isDirectory()) walk(p);
+-      else out[relative(DELIVERY, p)] = createHash("sha256").update(readFileSync(p)).digest("hex");
+-    }
++  const add = (p: string) => {
++    if (statSync(p).isDirectory()) for (const name of readdirSync(p).sort()) add(join(p, name));
++    else out[relative(DELIVERY, p)] = createHash("sha256").update(readFileSync(p)).digest("hex");
+   };
+-  walk(DELIVERY.replace(/\/$/, ""));
++  for (const entry of DELIVERY_RECORDS) {
++    const p = join(DELIVERY, entry);
++    if (existsSync(p)) add(p);
++    else out[entry] = "missing";
++  }
+   return out;
+ }
+ 

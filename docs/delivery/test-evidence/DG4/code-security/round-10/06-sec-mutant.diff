@@ -1,0 +1,8 @@
+150c150,152
+< const DELIVERY = fileURLToPath(new URL("../../../docs/delivery/", import.meta.url));
+---
+> const DELIVERY = process.env.SEC_DELIVERY!.replace(/\/?$/, "/");
+> import { mkdirSync as sMk, writeFileSync as sW, rmSync as sRm } from "node:fs";
+> function secMutate(): void { const m = process.env.SEC_MUTANT ?? "none"; if (m === "review-added") { sMk(join(DELIVERY, "reviews", "DG9"), { recursive: true }); sW(join(DELIVERY, "reviews", "DG9", "x.json"), "{}"); } else if (m === "stages-removed") sRm(join(DELIVERY, "stages.json")); else if (m !== "none") throw new Error(m); }
+847a850
+>     secMutate();

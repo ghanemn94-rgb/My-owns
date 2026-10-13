@@ -1,0 +1,37 @@
+# F-DG4-160 reproduction (audit round 9, 12-new-finding-stale-g6-hint.log) re-run on candidate f38274cb (clone at 01a801e, source e70ac02), 2026-10-13T17:56:15Z
+## The string
+apps/web/src/i18n/en/transformations.json:88:    "statusHint": "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.",
+apps/web/src/i18n/ar/transformations.json:88:    "statusHint": "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.",
+## Stale phrases in it? (expect no output)
+(end; grep exit 1, 1 = no match)
+## Where it renders
+apps/web/src/pages/transformations/TransformationEditPage.tsx:274:          hint={t("transformations.form.statusHint")}
+apps/web/src/pages/transformations/transformations.test.tsx:330:    const en = catalogues.en.transformations.form.statusHint;
+apps/web/src/pages/transformations/transformations.test.tsx:331:    const ar = catalogues.ar.transformations.form.statusHint;
+apps/web/src/pages/transformations/transformations.test.tsx:371:      expect(catalogues[locale].transformations.form.statusHint).toBe(STATUS_HINT[locale]);
+## The unit test now pins (STATUS_HINT)
+60:const STATUS_HINT = {
+61-  en:
+62-    "Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. " +
+63-    "A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure " +
+64-    "conditions are met.",
+65-  ar:
+66-    "لا تُعرض إلا الحالات التالية المسموح بها: مسودة ← نشط؛ نشط ← معلّق؛ معلّق ← نشط. " +
+67-    "يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.",
+68-} as const;
+## The old sentence pinned anywhere? (expect no output)
+(end)
+## What the hint points to exists
+402:      { path: "transformations/:id/closure", element: <ClosurePage /> },
+apps/web/src/i18n/en/closureP4.json:2:  "tab": "Closure",
+apps/web/src/i18n/ar/closureP4.json:2:  "tab": "الإغلاق",
+## Rendered on the real stack (my probe P1, both languages, both locale settings):
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-unset.log:  ✓  1 [chromium-en] › apps/web/e2e/zz-qa-r10-fe-r11.spec.ts:60:1 › P1 F-DG4-160: the edit page's Status hint is corrected and its Closure page exi
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-unset.log:  ✓  4 [chromium-ar] › apps/web/e2e/zz-qa-r10-fe-r11.spec.ts:60:1 › P1 F-DG4-160: the edit page's Status hint is corrected and its Closure page exi
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-cutf8.log:  ✓  1 [chromium-en] › apps/web/e2e/zz-qa-r10-fe-r11.spec.ts:60:1 › P1 F-DG4-160: the edit page's Status hint is corrected and its Closure page exi
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-probe-cutf8.log:  ✓  4 [chromium-ar] › apps/web/e2e/zz-qa-r10-fe-r11.spec.ts:60:1 › P1 F-DG4-160: the edit page's Status hint is corrected and its Closure page exi
+## journeys.spec.ts edit test (asserts the hint) in both languages, both locale settings:
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-unset.log:  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:401:1 › edit: a concurrent change gives a 409 conflict with compare and
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-unset.log:  ✓  17 [chromium-ar] › apps/web/e2e/journeys.spec.ts:401:1 › edit: a concurrent change gives a 409 conflict with compare and
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-cutf8.log:  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:401:1 › edit: a concurrent change gives a 409 conflict with compare and
+docs/delivery/test-evidence/DG4/qa/round-10/05-e2e-changed-cutf8.log:  ✓  17 [chromium-ar] › apps/web/e2e/journeys.spec.ts:401:1 › edit: a concurrent change gives a 409 conflict with compare and

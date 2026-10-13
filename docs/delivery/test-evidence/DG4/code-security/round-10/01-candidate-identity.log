@@ -1,0 +1,26 @@
+$ git rev-parse HEAD (repo)
+01a801e5fe03683a4ba8f33e42af3d9e03f2ba40
+$ clone HEAD
+01a801e5fe03683a4ba8f33e42af3d9e03f2ba40
+false
+$ git diff --name-only e70ac02 01a801e
+docs/delivery/assignments/DG4/round-10/code-security-reviewer.md
+docs/delivery/assignments/DG4/round-10/domain-reviewer.md
+docs/delivery/assignments/DG4/round-10/qa-verifier.md
+docs/delivery/candidates/DG4/f38274cb6d50c498.manifest.json
+docs/delivery/stages.json
+$ node tools/gates/candidate.mjs --stage DG4 (clone)
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6","files":1475}
+exit=0
+$ git diff --stat f2ae717..e70ac02 -- . ':!docs/delivery'
+ apps/web/e2e/journeys.spec.ts                      | 13 ++++
+ apps/web/e2e/p3-seams.spec.ts                      |  3 +
+ apps/web/src/app/app.test.tsx                      | 80 +++++++++++++++++++++-
+ apps/web/src/i18n/ar/nav.json                      |  6 +-
+ apps/web/src/i18n/ar/transformations.json          |  2 +-
+ apps/web/src/i18n/en/nav.json                      |  6 +-
+ apps/web/src/i18n/en/transformations.json          |  2 +-
+ .../pages/transformations/transformations.test.tsx | 41 ++++++++---
+ tests/qa/integration/a08-gate-controls.test.ts     | 41 ++++++-----
+ 9 files changed, 159 insertions(+), 35 deletions(-)
+exit=0

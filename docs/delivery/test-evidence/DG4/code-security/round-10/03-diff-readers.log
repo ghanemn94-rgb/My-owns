@@ -1,0 +1,100 @@
+$ grep -n DELIVERY_RECORDS -A12 apps/api/test/integration/workflows/g5-g6.test.ts
+12://    and hashes before/after; T-DG4-BE-R3 narrowed it from all of docs/delivery/, see DELIVERY_RECORDS);
+13-//  - G1-G4 keep the DG2 key form of the 422 detail; AUD 403 on every write; an ADM-only caller 403 on the decision.
+14-// G1-G4 (and G5 for G6) are staged approved with audited fixtures. All data is SYNTHETIC; every decision here is a demo
+15-// business decision by a test person that approves nothing real, and nothing touches the engineering gates DG0-DG7.
+16-import { createHash } from "node:crypto";
+17-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+18-import { join, relative } from "node:path";
+19-import { fileURLToPath } from "node:url";
+20-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+21-import { G5_EVALUATORS, g5SnapshotOf, type G5Facts } from "../../../src/modules/workflows/g5.ts";
+22-import { G6_EVALUATORS, type G6Facts } from "../../../src/modules/workflows/g6.ts";
+23-import { auditOf, call, seedWorld, startApi, type TestApi, type World } from "../../support/harness.ts";
+24-import { ifm } from "../../support/p2-fixtures.ts";
+25-import { extraUser } from "../benefits/fixtures.ts";
+26-import { approve, measuredBenefit, submittedValue } from "../benefits/value-fixtures.ts";
+--
+302:const DELIVERY_RECORDS = [
+303-  "gates",
+304-  "stages.json",
+305-  "findings.json",
+306-  "reviews",
+307-  "decisions.md",
+308-  "requirements.csv",
+309-] as const;
+310:/** Every file of DELIVERY_RECORDS with its SHA-256 (a missing path is listed as missing, never skipped). */
+311-function deliveryTree(): string[] {
+312-  const out: string[] = [];
+313-  const add = (p: string) => {
+314-    if (statSync(p).isDirectory()) for (const name of readdirSync(p).sort()) add(join(p, name));
+315-    else out.push(`${relative(DELIVERY, p)} ${createHash("sha256").update(readFileSync(p)).digest("hex")}`);
+316-  };
+317:  for (const entry of DELIVERY_RECORDS) {
+318-    const p = join(DELIVERY, entry);
+319-    if (existsSync(p)) add(p);
+320-    else out.push(`${entry} missing`);
+321-  }
+322-  return out;
+323-}
+324-
+325-describe("G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002)", () => {
+326-  it("without an accepted BAU handover: 422 listing 'Ownership transfer'; nothing written", async () => {
+327-    const g = await seedGateWorld(api, w);
+328-    await stageGates(api, g, ["G1", "G2", "G3", "G4", "G5"], "realize");
+329-    const res = await submit(g, "G6");
+330-    expect([res.status, res.body.code]).toEqual([422, "gate_criteria_incomplete"]);
+
+$ readers of changed keys (apps/web/src, excluding i18n json)
+--- statusHint
+apps/web/src/pages/transformations/TransformationEditPage.tsx:274:          hint={t("transformations.form.statusHint")}
+apps/web/src/pages/transformations/transformations.test.tsx:330:    const en = catalogues.en.transformations.form.statusHint;
+apps/web/src/pages/transformations/transformations.test.tsx:331:    const ar = catalogues.ar.transformations.form.statusHint;
+apps/web/src/pages/transformations/transformations.test.tsx:371:      expect(catalogues[locale].transformations.form.statusHint).toBe(STATUS_HINT[locale]);
+apps/web/src/pages/decisions/DecisionsPage.tsx:102:      hint: t("decisions.field.statusHint"),
+apps/web/src/pages/diagnose/DiagnosePage.tsx:358:      hint: t("diagnose.finding.statusHint"),
+apps/web/e2e/journeys.spec.ts:347:  const statusHint = page.getByText(tr(lang, "transformations.form.statusHint"), { exact: true });
+apps/web/e2e/journeys.spec.ts:348:  await expect(statusHint).toBeVisible();
+apps/web/e2e/journeys.spec.ts:349:  await expect(statusHint).toContainText(lang === "ar" ? "«الإغلاق»" : "Closure page");
+apps/web/e2e/journeys.spec.ts:350:  await expect(statusHint).toContainText(lang === "ar" ? "G6 (الاستدامة)" : "G6 (Sustain)");
+apps/web/e2e/journeys.spec.ts:351:  await expect(statusHint).not.toContainText(lang === "ar" ? "إصدار لاحق" : "later release");
+--- plannedBody
+apps/web/src/app/app.test.tsx:131:      plannedBody:
+apps/web/src/app/app.test.tsx:141:      plannedBody:
+apps/web/src/app/app.test.tsx:155:      expect(nav.plannedBody).toBe(PLANNED_TEXT[locale].plannedBody);
+apps/web/src/app/app.test.tsx:158:      for (const s of [nav.plannedBody, nav.entry.portfolioPlanned, nav.willContain]) {
+apps/web/src/app/app.test.tsx:172:        expect(screen.getByText(PLANNED_TEXT[locale].plannedBody)).toBeTruthy();
+apps/web/src/pages/AreaPages.tsx:29:        <p>{t("nav.plannedBody")}</p>
+apps/web/e2e/journeys.spec.ts:230:  await expect(page.getByText(tr(lang, "nav.plannedBody"), { exact: true })).toBeVisible();
+--- willContain
+apps/web/src/app/app.test.tsx:138:      willContain: "What this area covers",
+apps/web/src/app/app.test.tsx:148:      willContain: "ما يغطيه هذا القسم",
+apps/web/src/app/app.test.tsx:157:      expect(nav.willContain).toBe(PLANNED_TEXT[locale].willContain);
+apps/web/src/app/app.test.tsx:158:      for (const s of [nav.plannedBody, nav.entry.portfolioPlanned, nav.willContain]) {
+apps/web/src/app/app.test.tsx:173:        expect(screen.getByRole("heading", { level: 3, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
+apps/web/src/app/app.test.tsx:200:      expect(screen.getByRole("heading", { level: 3, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
+apps/web/src/pages/AreaPages.tsx:30:        <h3 className="card__subtitle">{t("nav.willContain")}</h3>
+apps/web/src/pages/AreaPages.tsx:107:        <h3 className="card__subtitle">{t("nav.willContain")}</h3>
+apps/web/e2e/journeys.spec.ts:232:  await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+apps/web/e2e/p3-seams.spec.ts:103:    await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+--- portfolioPlanned
+apps/web/src/app/app.test.tsx:135:      portfolioPlanned:
+apps/web/src/app/app.test.tsx:145:      portfolioPlanned:
+apps/web/src/app/app.test.tsx:156:      expect(nav.entry.portfolioPlanned).toBe(PLANNED_TEXT[locale].portfolioPlanned);
+apps/web/src/app/app.test.tsx:158:      for (const s of [nav.plannedBody, nav.entry.portfolioPlanned, nav.willContain]) {
+apps/web/src/app/app.test.tsx:199:      expect(screen.getByText(PLANNED_TEXT[locale].portfolioPlanned)).toBeTruthy();
+apps/web/src/pages/AreaPages.tsx:106:        <p>{t("nav.entry.portfolioPlanned")}</p>
+apps/web/e2e/p3-seams.spec.ts:102:    await expect(page.locator("#entry-planned + p")).toHaveText(tr(lang, "nav.entry.portfolioPlanned"));
+
+$ key sets en vs ar (nav, transformations)
+nav 127 127 en-only: [] ar-only: []
+transformations 654 654 en-only: [] ar-only: []
+
+$ keys removed between f2ae717 and e70ac02 in changed catalogues
+en/nav removed: [] added: []
+en/transformations removed: [] added: []
+ar/nav removed: [] added: []
+ar/transformations removed: [] added: []
+
+$ placeholders in changed strings
+(none expected) exit=1
