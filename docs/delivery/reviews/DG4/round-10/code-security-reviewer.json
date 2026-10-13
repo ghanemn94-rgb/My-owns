@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG4",
+  "round": 10,
+  "candidate_id": "sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6",
+  "source_commit": "e70ac02f63cd1f42487cfa4dae73f68e933da015",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG4-T-DG4-REV-SEC-R10-code-security-reviewer-20261013T163846Z-fdd5094e",
+    "session_id": "fdd5094e-2d78-4213-a0f3-ffbe68eb8653"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session fdd5094e (task T-DG4-REV-SEC-R10). I authored no implementation in the DG4 scope.\n\nAuthorship of the round-10 delta:\n- the web catalogue text and the tests that pin it are by frontend-ux-engineer (T-DG4-FE-R11);\n- the a08 fingerprint narrowing is by backend-workflow-engineer (T-DG4-BE-R7);\n- D-137 to D-139 and the freeze are by the delivery-orchestrator.\n\nMy only writes are evidence under docs/delivery/test-evidence/DG4/code-security/round-10/ and this record. Builds, static checks and test runs used a disposable, complete clone ($TMPDIR/review-r10, at freeze commit 01a801e), a private copy of the pnpm store and a disposable PostgreSQL. My own scratch mutant test file and its scratch copies of the delivery records were deleted, and the clone's git status was clean afterwards. The validators and candidate.mjs ran read-only in the repository tree.\n\nI formed my verdict before reading any other reviewer's round-10 record, and I have not read one. HEAD stayed at 01a801e for my whole run."
+  },
+  "assignment": "docs/delivery/assignments/DG4/round-10/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-013",
+    "REQ-PB-015",
+    "REQ-PB-082",
+    "REQ-PB-083",
+    "REQ-PB-085",
+    "REQ-S03-001",
+    "REQ-S03-008",
+    "REQ-S04-002",
+    "REQ-S04-009",
+    "REQ-S04-010",
+    "REQ-S04-014",
+    "REQ-S07-003",
+    "REQ-S07-009",
+    "REQ-S07-013",
+    "REQ-S07-015",
+    "REQ-S08-004",
+    "REQ-S08-006",
+    "REQ-S08-015",
+    "REQ-S08-017",
+    "REQ-S09-010",
+    "REQ-S10-003",
+    "REQ-S10-005",
+    "REQ-S10-006",
+    "REQ-S10-007",
+    "REQ-S10-008",
+    "REQ-S10-009",
+    "REQ-S10-010",
+    "REQ-S10-011",
+    "REQ-S10-012",
+    "REQ-S10-014",
+    "REQ-S10-016",
+    "REQ-S10-017",
+    "REQ-S10-018",
+    "REQ-S10-019",
+    "REQ-S11-005",
+    "REQ-S11-009",
+    "REQ-S12-005",
+    "REQ-S12-006",
+    "REQ-S12-009",
+    "REQ-S12-010",
+    "REQ-S12-011",
+    "REQ-S12-014",
+    "REQ-S12-016",
+    "REQ-S13-001",
+    "REQ-S16-005",
+    "REQ-S16-011",
+    "REQ-S16-014",
+    "REQ-S16-017",
+    "REQ-S16-018",
+    "REQ-S16-019",
+    "REQ-S16-020",
+    "REQ-S16-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R10-00-candidate-identity",
+      "procedure": "Make a complete (non-shallow) clone of the repository in $TMPDIR, check out the freeze commit, and recompute the candidate ID there and in the repository tree. Confirm that the freeze commit differs from source commit e70ac02 only in docs/delivery records.",
+      "command": "git clone /home/user/My-owns $TMPDIR/review-r10 && git checkout 01a801e && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG4; git diff --name-only e70ac02 01a801e",
+      "environment": "Node 24.21.0; clone at 01a801e5fe03683a4ba8f33e42af3d9e03f2ba40; repository HEAD 01a801e",
+      "expected": "sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 over 1475 files in both trees; not shallow; freeze commit adds only delivery records.",
+      "actual": "Both the clone and the repository tree give candidate_id sha256:f38274cb…17ccc6 over 1475 files, exit 0. is-shallow-repository = false.\n\nHEAD is 01a801e (the round-10 freeze commit). Its parent is source commit e70ac02. The only files between them are the three round-10 assignments, the candidate manifest f38274cb6d50c498.manifest.json and stages.json, all under docs/delivery. The candidate tree therefore equals source e70ac02.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/candidate-id.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/candidate-id-repo.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-01-product-diff-is-nine-files",
+      "procedure": "List the product diff from round 9's source f2ae717 to e70ac02, excluding docs/delivery. Also confirm that pnpm-lock.yaml and requirements.csv are unchanged.",
+      "command": "git diff --stat f2ae7170630456a772e1ceac90ab6d96b68e3f5c..e70ac02f63cd1f42487cfa4dae73f68e933da015 -- . ':!docs/delivery'; git diff --quiet f2ae717 e70ac02 -- pnpm-lock.yaml; git diff --stat f2ae717 e70ac02 -- docs/delivery/requirements.csv",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e; repository tree",
+      "expected": "Exactly the nine files named in the assignment.",
+      "actual": "Exactly nine files, 159 insertions and 35 deletions:\n- apps/web/e2e/journeys.spec.ts and p3-seams.spec.ts;\n- apps/web/src/app/app.test.tsx;\n- apps/web/src/i18n/{en,ar}/nav.json and {en,ar}/transformations.json;\n- apps/web/src/pages/transformations/transformations.test.tsx;\n- tests/qa/integration/a08-gate-controls.test.ts.\n\nThis matches the assignment's list. There is no apps/api, apps/worker or packages change, and no migration. pnpm-lock.yaml is unchanged (exit 0), and so is requirements.csv (empty diff).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/02-product-diff.patch",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/07-records-size-and-register.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-02-fe-r11-diff-text-and-tests-only",
+      "procedure": "Read the FE-R11 diff line by line (02-product-diff.patch). Grep every changed key's readers in apps/web/src and apps/web/e2e. Compare the en and ar key sets of nav.json and transformations.json, and diff each catalogue's flattened key set against f2ae717. Check the changed strings for interpolation placeholders. Confirm that the text's claims are true: the closure route and tab exist, and every planned area has delivered sub-entries (the unit test asserts this). Spot-check the handback §3 sweep table: P4_PLANNED_ROUTES is empty, no API code writes gate_definition, migration 0059 enables G5 and G6, and laterStage has no reader.",
+      "command": "see 03-diff-readers.log, 04-claims-and-delivery-readers.log, 05-sweep-spotcheck.log (grep -rn <key> apps/web/src apps/web/e2e; node flatten/compare of catalogue keys)",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e, Node 24.21.0",
+      "expected": "Catalogue value changes plus tests only. No logic, routing or authorization change. No key removed or renamed while something still reads it. en and ar key parity. Every claim the new text makes is true in DG4.",
+      "actual": "Only four string values changed per language: transformations.form.statusHint, nav.plannedBody, nav.willContain and nav.entry.portfolioPlanned. No key was added, removed or renamed in any of the four catalogues (removed: [], added: []). en and ar have identical key sets: nav 127/127, transformations 654/654. None of the changed strings holds a {{placeholder}}, so no interpolation surface is added.\n\nThe readers are unchanged:\n- TransformationEditPage.tsx:274 (statusHint);\n- AreaPages.tsx:29 (plannedBody);\n- AreaPages.tsx:30,107 (willContain);\n- AreaPages.tsx:106 (portfolioPlanned).\nAll of them render through react-i18next t() as text nodes, with no dangerouslySetInnerHTML, so there is no XSS surface.\n\nThe claims are true:\n- router.tsx:402 routes transformations/:id/closure to ClosurePage;\n- closureP4.tab is 'Closure' / «الإغلاق»;\n- the app.test.tsx loop asserts at least one non-role-gated NAV_SUBPAGES link under each planned area, and a Dashboards link;\n- P4_PLANNED_ROUTES is [] (pinned by my-work.test.tsx:410);\n- no API source writes gate_definition;\n- 0059 sets submission_enabled for G5 and G6;\n- transformations.workspace.laterStage has no reader.\n\nThe 'later release' strings that remain (gates.notEnabled*, admin.plannedSections, laterStage, access__scope_type_reserved, and the corrected nav texts that scope 'later' to the cross-portfolio view) match the handback's justified keep-list.\n\nThe test changes are assertions only. The e2e additions add two expectAccessible calls and one screenshot, and no fixture or route mock alters product behaviour.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/02-product-diff.patch",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/03-diff-readers.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/04-claims-and-delivery-readers.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/05-sweep-spotcheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-03-web-unit-changed-files",
+      "procedure": "Run the two changed web unit files in the disposable clone. The clone's node_modules is writable, so --configLoader runner was not needed.",
+      "command": "cd apps/web && npx vitest run src/app/app.test.tsx src/pages/transformations/transformations.test.tsx",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e, Node 22.22.2, LANG/LC_ALL unset, 1-minute load 10.4-10.7 (three reviewers running)",
+      "expected": "Both files pass, including the new pinning tests in en and ar.",
+      "actual": "2 files, 49/49 tests pass, exit 0, duration 21.8 s. The log has no failed, skipped or error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/web-unit-changed.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-04-be-r7-fingerprint-soundness",
+      "procedure": "Review the BE-R7 deliveryFingerprint() for:\n- the covered set, compared with g5-g6.test.ts DELIVERY_RECORDS;\n- the missing-path rule;\n- the before/after placement around the API decision and the worker consumer;\n- the non-vacuity guards.\nRead BE-R7's 04-non-vacuity logs and make-mutant.mjs. Then run my own independent mutants on a scratch copy of the six records (a disposable test file, deleted afterwards):\n- none (control);\n- review-added, which creates reviews/DG9/x.json after the decision;\n- stages-removed, which deletes stages.json after the decision.",
+      "command": "node (patch DELIVERY -> $SEC_DELIVERY and insert secMutate() before the final equality into zz-sec-r10-mutant.test.ts); SEC_MUTANT={none,review-added,stages-removed} tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-sec-r10-mutant.test.ts",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e, Node 22.22.2, disposable PostgreSQL 16.13 (UTF8, C) on port 26310-26330 range 26300-26399, load 9.8-11.3",
+      "expected": "The set equals g5-g6's, and a missing path is recorded rather than skipped. The before snapshot is taken after submission and before the decision, and the after snapshot after handleGateDecided. A real change to a covered record fails the test, and the control passes.",
+      "actual": "The set is identical to g5-g6.test.ts:302-309: gates, stages.json, findings.json, reviews, decisions.md and requirements.csv. The add/missing logic matches g5-g6.test.ts:311-323: a missing path gives out[entry]='missing'. Before is taken after the G6 submit (201) and before decideGate. Two guards keep it non-vacuous: it must contain stages.json, findings.json and requirements.csv plus a gates/DGn.json. After is taken after handleGateDecided, the worker consumer. Every other assertion of the test is kept. The whole-tree walk and the LIVE_EVIDENCE exclusion are gone.\n\nBE-R7's evidence: control 31/31 exit 0; the decisions, gate and findings-removed mutants each fail exactly the G6 test (1 failed, 30 passed, exit 1); the handback mutant passes 31/31, out of scope by design.\n\nMy own mutants, where exit 1 is by design:\n- none: 31/31, exit 0;\n- review-added: exit 1. Exactly the G6 test fails with 'expected { …(536) } to deeply equal { …(535) }', so an added file is caught;\n- stages-removed: exit 1. Exactly the G6 test fails with '{ …(535) } vs { …(535) }', the value 'missing' against the hash, so a deleted record is caught.\nThe scratch test file was then removed, and git status of the clone was empty.\n\nThe narrowed set drops handbacks, assignments, candidates, runs, test-evidence, environment.md and progress.md. None of these is gate state that a product G6 could be confused with (REQ-S04-008, M0412), so I accept the narrowing. It is the same rule as D-112.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/02-product-diff.patch",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/04-claims-and-delivery-readers.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.diff",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.log",
+        "docs/delivery/handbacks/DG4/T-DG4-BE-R7-evidence/04-non-vacuity.log",
+        "docs/delivery/handbacks/DG4/T-DG4-BE-R7-evidence/04-non-vacuity-full.log",
+        "docs/delivery/handbacks/DG4/T-DG4-BE-R7-evidence/make-mutant.mjs"
+      ]
+    },
+    {
+      "id": "SEC-R10-05-a08-file-rerun",
+      "procedure": "Re-run the a08 integration file once on a disposable PostgreSQL, and report the G6 test's duration.",
+      "command": "QA_PG_PORT=26310 MTH_PORT_POOL=26300-26399 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/a08-gate-controls.test.ts",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e, Node 22.22.2, LANG/LC_ALL unset, PostgreSQL 16.13 (server_encoding UTF8, lc_collate C) on port 26310 (attempt 1), 61 migrations applied to a fresh database, 1-minute load 10.4-11.3",
+      "expected": "31/31 pass, and the G6 'changes nothing under docs/delivery/' test is well below the 30 s limit.",
+      "actual": "1 file, 31/31 tests pass, exit 0, file duration 31.0 s, which is mostly collect and transform under load.\n\nThe G6 test 'REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/' took 442 ms. The control run of my mutant harness took 538 ms. D-138 recorded 37.6 s (a timeout) before the fix.\n\nThe covered set is 531 files and about 10.0 MB at HEAD. It grows only with reviews/ and the record files, a few hundred KB per round, so it is bounded far below the old 345 MB.\n\nThe log has no failed, skipped, hook-timeout or error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/a08-integration.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/07-records-size-and-register.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-06-no-other-wholesale-delivery-readers",
+      "procedure": "Grep tests/, apps/ and packages/ (.ts, .tsx and .mjs files, excluding node_modules) for docs/delivery references and directory walks. Classify each hit.",
+      "command": "grep -rlnE 'docs/delivery|\\.\\./delivery/' tests apps packages --include=*.ts --include=*.tsx --include=*.mjs | xargs grep -nE 'docs/delivery|readdirSync|walk\\('",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e",
+      "expected": "No test hashes or walks docs/delivery/ wholesale; any reader is named.",
+      "actual": "Only two files read docs/delivery at run time, and both read the same bounded DELIVERY_RECORDS set: a08-gate-controls.test.ts:150-171 and g5-g6.test.ts:294-323.\n\nEvery other hit is a comment citing requirements.csv or test-evidence paths: a01, a02-a08, a03, a09, a11-*, p4.ts, a05.test.ts, session-wait.test.tsx, platform.test.ts, bu-hierarchy-guard.test.ts, fuzz.test.ts and schema.ts. fuzz.test.ts:467 readdirSync reads packages/shared/src/formula (FORMULA_DIR), not docs/delivery.\n\nNo test reads docs/delivery wholesale. The bounded set grows only with reviews/ (see SEC-R10-05).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/04-claims-and-delivery-readers.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-07-judge-D137-D138-D139",
+      "procedure": "Compare D-137, D-138 and D-139 with the diff, the handbacks (FE-R11 §3 sweep table, BE-R7) and their evidence, and with my own reruns.",
+      "environment": "Repository tree at 01a801e; clone results above",
+      "expected": "Each decision's factual claims hold, and none of their falsifiers is triggered.",
+      "actual": "D-137: F-DG4-160 is repaired, not accepted. The statusHint now points to the Closure page and the G6 (Sustain) approval in en and ar (SEC-R10-02). The sweep covers the listed keys. gates.notEnabledBody and admin.plannedSections are kept, with justification I verified: unreachable, or true for DG4. The falsifier 'a product file changed by FE-R11 outside apps/web/src/i18n/** and its tests' does not hold. FE-R11 touched only four catalogue files, two unit tests and two e2e specs.\n\nD-138: the cause analysis (a whole-tree hash of about 342 MB, read twice) is consistent with the old code in the diff. The decision (narrow to DELIVERY_RECORDS, keep every assertion, no timeout raised, nothing skipped) is what the diff does. The falsifier 'the narrowed fingerprint misses a gate record that a product G6 approval could change' does not hold: gates, stages, findings, reviews, decisions and the register are all covered, and the mutants prove it.\n\nD-139: BE-R7's figures are reproduced in kind. The set has 531 files at HEAD (535 at BE-R7's time, plus the round-10 records, which are not yet in reviews/), about 10 MB, and the G6 test takes 442 ms. The handback rename is disclosed. The falsifier 'a product change outside FE-R11's and BE-R7's files' does not hold (SEC-R10-01).\n\nThe 23 round-9 re-verifications and the F-DG4-148 acceptance stand, as the assignment says. This round touched no code they cover.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/05-sweep-spotcheck.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.log",
+        "docs/delivery/handbacks/DG4/T-DG4-FE-R11-frontend-ux-engineer.md",
+        "docs/delivery/handbacks/DG4/T-DG4-BE-R7-backend-workflow-engineer.md"
+      ]
+    },
+    {
+      "id": "SEC-R10-08-install-build",
+      "procedure": "Offline frozen install from a private copy of the local pnpm store, then build all packages, then re-install to create the bins.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Clone $TMPDIR/review-r10 at 01a801e, Node 22.22.2, pnpm 10.33.0, no network",
+      "expected": "All three exit 0.",
+      "actual": "install1, build and install2 each exit 0. Two kinds of log line are disclosed:\n- install1 has 4 'WARN Failed to create bin … mth-db … packages/db/dist/cli' lines. dist does not exist before the build. install2, after the build, has no warnings.\n- The build log has the Vite advisory '(!) Some chunks are larger than 500 kB after minification'. It is informational, not an error, and the same as in earlier rounds.\n\nA first pnpm install against the shared store failed with EROFS (the store is read-only in the sandbox). That is why the private store copy was used. It was not a product failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/build.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R10-09-typecheck",
+      "procedure": "Run the workspace typecheck. It also proves that no changed key is read through a type that no longer exists.",
+      "command": "pnpm -r typecheck",
+      "environment": "Clone at 01a801e, Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0, with no error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-10-lint",
+      "procedure": "Run the workspace ESLint with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "Clone at 01a801e, Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "eslint . --max-warnings=0 exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-11-format",
+      "procedure": "Run the Prettier check.",
+      "command": "pnpm format:check",
+      "environment": "Clone at 01a801e, Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-12-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "Clone at 01a801e, Node 22.22.2",
+      "expected": "exit 0, 652 operations",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 652 operations', exit 0. The contract is unchanged from round 9 (it is not in the diff).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-13-no-cdn",
+      "procedure": "Run the portability scan for public CDNs.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Clone at 01a801e, Node 22.22.2",
+      "expected": "exit 0",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-14-validators",
+      "procedure": "Run the gate validators read-only in the repository tree.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG3; --historical --stage DG2; --historical --stage DG1; --register DG4; --pipeline",
+      "environment": "Repository tree at 01a801e, Node 22.22.2, load about 10",
+      "expected": "All exit 0.",
+      "actual": "Each exits 0:\n- 'PASS gate DG3 (historical)';\n- 'PASS gate DG2 (historical)';\n- 'PASS gate DG1 (historical)';\n- 'PASS register rules at DG4';\n- 'PASS pipeline (active stage: DG4 REVIEWING)'. The pipeline check took about 4.5 minutes under load.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R10-15-unit-node22-node24-carried-forward",
+      "procedure": "Carry forward. Not re-run this round: the load envelope assigns pnpm test to qa only. The product code under unit test differs from round 7/9 only in four catalogue strings and their pinning tests, and those two files were re-run (SEC-R10-03).",
+      "environment": "Round-7 runs on identical code apart from the FE-R11 diff",
+      "expected": "Round-7 evidence shows both Node versions passing, with any failure explained.",
+      "actual": "Not re-run this round, by design (load envelope). The changed web unit files were re-run instead: 49/49 (SEC-R10-03).\n\nRound-7 results:\n- Node 24: exit 0 (1589 + 1347 + 259, 2 skipped by design).\n- Node 22 harness run: exit 1, with 2 unit-web failures: raid.test.tsx 'action register' en and ar, a 5 s findByRole wait under load 23-27. This is the F-DG4-148 class, ACCEPTED_OBSERVATION under D-134. Its repeat exited 0, and the spec alone passed 10/10.\n- --configLoader runner was used for direct vitest calls with read-only node_modules.\n\nThe exit_status recorded here is that of the passing round-7 runs; the failing run is disclosed above.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node22.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-node24.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-repeat.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/raid-alone-a.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/unit-configloader-runner.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-16-integration-twice-carried-forward",
+      "procedure": "Carry forward. Not re-run this round: the load envelope assigns the full integration suite to qa only. The only integration change is a08, which was re-run on its own (SEC-R10-05), with migrations 0001-0061 applied to a fresh database.",
+      "environment": "Round-7 runs: LANG unset and LANG=C.UTF-8",
+      "expected": "Both round-7 runs are green on identical API, worker and db code.",
+      "actual": "Not re-run this round, by design. The API, worker, db and migrations are byte-identical (SEC-R10-01). In round 7, both runs passed 209 files, 1984/1984, exit 0, with no failed, skipped or hook-timeout lines.\n\nDisclosed: each run has one 'unhandled error … ECONNRESET' line. It comes from the passing BE17 db-econnreset test, which injects resets on purpose.\n\nThis round's a08 rerun applied 61 migrations (0001-0061). 0061 is F-DG4-101's fix and has been in the tree since round 2.\n\nD-139 reports BE-R7's full integration run at 1984/1984. I read that figure but did not re-run the suite.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run1-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/integration-run2-lang-c-utf8.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/a08-integration.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-17-authorization-scope-approvals-carried-forward",
+      "procedure": "Carry forward the AUD and ADM sweep, IDOR and read-scope probes, approvals, SoD, Finance and handover probes. None of the code they exercise changed this round.",
+      "environment": "Round-7 probe runs on byte-identical API code",
+      "expected": "Round-7 probes all pass, and nothing in this round's diff touches authorization.",
+      "actual": "Not re-run this round. The diff has no API, worker or packages change, and the web change is text only (SEC-R10-01/02).\n\nRound 7, all exit 0:\n- sec-dg4-r2-sweep 766/766;\n- r1-idor 204/204;\n- r3-drill-scope 163/163;\n- r1-approvals 6/6;\n- the other prior probes, per rerun-prior-probes.summary.txt;\n- handover-race probe H 4/4: one winner, the losers 409.\n\nThe outsider-status differences of D-111 and D-112 (dispensation writes 403, reporting/modular writes 404) are known and unchanged.\n\nThis round's a08 rerun still asserts the self-decision 403 and the stale approval 409 (31/31).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-idor-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r3-drill-scope-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r1-approvals-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-prior-probes.summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/probe-H-handover-race-node22-lang-unset.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/a08-integration.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-18-integrity-graph-migrations-carried-forward",
+      "procedure": "Carry forward the commit-time re-check scan, module graph, worker isolation, decimals, migrations and exactly-once evidence. None of that code changed.",
+      "environment": "Round-7 scans on byte-identical code",
+      "expected": "Round-7 results hold; no change this round.",
+      "actual": "Not re-run this round. The code is byte-identical outside the nine files (SEC-R10-01).\n\nRound 7:\n- commit-scan: 232 write routes, each reaching openWrite(…, {atCommit: true});\n- 0 API value-import cycles, and raid has no governance import;\n- the worker has 0 API imports;\n- no float in money or rates;\n- migrations 0001-0061 are contiguous, with none modified;\n- the exactly-once suites pass;\n- the cadence mutants M1-M3 are killed, with exit 1 by design (4, 1 and 1 expected failures);\n- contract.test.ts and media-types.test.ts pass.\n\nThe FE-R11 change adds no import, so the web import graph is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/commit-time-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/api-module-graph.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/worker-isolation.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/diff-scan.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/suite-counts.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/cadence-mutations.summary.txt"
+      ]
+    },
+    {
+      "id": "SEC-R10-19-requirement-acceptance-carried-forward",
+      "procedure": "Carry forward the round-7 acceptance trace for the 52 assigned requirements. Confirm that the register is unchanged and that the register validator passes this round.",
+      "environment": "Repository tree at 01a801e",
+      "expected": "requirements.csv is unchanged since round 9, --register DG4 passes, and the round-7 trace is green.",
+      "actual": "The trace was not re-run this round: the test files it reads are unchanged, apart from a08's fingerprint helper, which was re-run (31/31).\n\nrequirements.csv has an empty diff from f2ae717 to e70ac02. --register DG4 exits 0. In the round-7 trace every named vitest file was found and passed, with 0 'NOT FOUND'. The partial-coverage disclosures in the notes are unchanged, and I judged them acceptable in round 7. The Playwright specs are left to qa.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-7/requirement-acceptance.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/validate-register-DG4.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/07-records-size-and-register.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-20-environment-residuals",
+      "procedure": "Record the environmental residuals the assignment names as PASS on the offline surface.",
+      "environment": "Sandbox with no network",
+      "expected": "The offline surface is green, and the residuals are noted.",
+      "actual": "The offline frozen install exits 0 (SEC-R10-08), and pnpm-lock.yaml is unchanged (SEC-R10-01). In round 7, check-ci-needs was OK and the oidc tests against the fake IdP passed.\n\nThe residuals are not reachable from this sandbox: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and a live Keycloak (D-049). PASS on the offline surface, as the assignment directs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/install2.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-7/env-residuals.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-21-evidence-honesty-log-scan",
+      "procedure": "Scan every round-10 log I cite for non-zero exits, failures, skips, timeouts, warnings and errors, and explain each one.",
+      "command": "grep -iE 'error|warn|fail|skip|exit_status' docs/delivery/test-evidence/DG4/code-security/round-10/*.log",
+      "environment": "Repository tree",
+      "expected": "Every non-zero exit or error line is explained.",
+      "actual": "summary.txt: all 17 harness steps exit 0, and the clone's git status was clean afterwards.\n\nLines explained:\n- install1: 4 'Failed to create bin mth-db' warnings, from the pre-build state (SEC-R10-08).\n- build: the Vite chunk-size advisory (SEC-R10-08).\n- 06-sec-mutant.log: two exit 1 runs, by design. review-added and stages-removed each fail exactly the G6 test, with the AssertionError quoted in SEC-R10-04; that is the intended kill. The control exits 0.\n- 03-diff-readers.log: the final grep for placeholders exits 1. It means no match, which is the expected result.\n- An initial pnpm install against the shared store failed with EROFS, before the harness ran and outside the logs (SEC-R10-08).\n\nThere are no hook timeouts, no skipped tests and no e2e runs this round, by design.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/code-security/round-10/summary.txt",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/install1.log",
+        "docs/delivery/test-evidence/DG4/code-security/round-10/build.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG4/code-security/round-10/checks.sh",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/summary.txt",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/01-candidate-identity.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/02-product-diff.patch",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/03-diff-readers.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/04-claims-and-delivery-readers.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/05-sweep-spotcheck.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.diff",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/06-sec-mutant.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/07-records-size-and-register.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/candidate-id.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/candidate-id-repo.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/install1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/build.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/install2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/typecheck.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/lint.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/format-check.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/openapi-lint.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/no-cdn.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/web-unit-changed.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/a08-integration.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/validate-historical-DG3.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/validate-historical-DG2.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/validate-historical-DG1.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/validate-register-DG4.log",
+    "docs/delivery/test-evidence/DG4/code-security/round-10/validate-pipeline.log"
+  ],
+  "reviewed_at": "2026-10-13T17:00:00Z",
+  "summary": "PASS, with no new findings. Round 10 is a review of the round-9 repairs, and the candidate ID is confirmed on a complete clone.\n\nThe product diff from f2ae717 is exactly the nine assigned files.\n- FE-R11 changes four catalogue values per language plus their pinning tests. No key is added or removed, en and ar keep key parity, there are no placeholders, the readers are unchanged, and the text's claims are true in DG4.\n- BE-R7 narrows the a08 G6 fingerprint to the same DELIVERY_RECORDS set and missing-path rule as g5-g6. Its non-vacuity is confirmed by BE-R7's mutants and by two of my own (an added review file, a deleted stages.json). The a08 file passes 31/31, with the G6 test at 442 ms under load.\n- No other test reads docs/delivery wholesale.\n\nD-137 to D-139 hold. Typecheck, build, lint, format, openapi:lint (652 operations) and no-cdn pass, and so do all validators (historical DG3/DG2/DG1, register DG4, pipeline). The other checks are carried forward from round 7 on byte-identical code, each labelled as such."
+}
