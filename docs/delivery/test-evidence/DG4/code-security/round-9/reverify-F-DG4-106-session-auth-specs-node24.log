@@ -1,0 +1,58 @@
+# F-DG4-106 targeted re-run: the three fixed spec files only (session-bound, session-identity, session-generation), project unit-web; node v24.21.0; clone 01ad2e185962ebec0bbf541503c09ae4075eeec6; LANG=<unset>; load 8.07 7.92 5.73; started 2026-10-13T09:33:40Z
+# command: pnpm exec vitest run --project unit-web apps/web/src/auth/session-bound.test.tsx apps/web/src/auth/session-identity.test.tsx apps/web/src/auth/session-generation.test.tsx (default config loader; the clone's node_modules is writable, so --configLoader runner is not needed here)
+
+ RUN  v3.2.4 /var/tmp/mth-run.5bVR0f/claude-0/review-r9
+
+ ✓ |unit-web| src/auth/session-identity.test.tsx (18 tests) 10864ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  1367ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  654ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts  490ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > signing out here clears everything; B signing in afterwards never sees A's records  747ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  503ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  695ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts  543ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > signing out here clears everything; B signing in afterwards never sees A's records  967ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > a 403 is never a session end: the phase, the identity and the cache are kept  405ms
+ ✓ |unit-web| src/auth/session-generation.test.tsx (26 tests) 16977ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  1760ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  743ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache  1207ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B  940ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B  1121ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  560ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A  465ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates  436ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  841ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  474ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  640ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  554ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache  543ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B  544ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B  555ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  457ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  442ms
+ ✓ |unit-web| src/auth/session-bound.test.tsx (36 tests) 18052ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  1750ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record  517ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window  564ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  823ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  811ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > a user create whose identity changes between its awaits: B is not navigated to A's new user  927ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: the organization and user creates under one identity still navigate to the new record  480ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer  793ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state  353ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header  328ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  364ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  793ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window  352ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  418ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  493ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > a user create whose identity changes between its awaits: B is not navigated to A's new user  483ms
+   ✓ the convention: no raw navigate or cache write in app code (T-DG2-FE15) > the ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page  1508ms
+
+ Test Files  3 passed (3)
+      Tests  80 passed (80)
+   Start at  09:33:41
+   Duration  23.84s (transform 221.24s, setup 940ms, collect 11.80s, tests 45.89s, environment 2.60s, prepare 473ms)
+
+# exit_status: 0  load: 9.12 8.20 5.88  finished: 2026-10-13T09:34:05Z

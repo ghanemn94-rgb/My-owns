@@ -1,0 +1,84 @@
+## F-DG4-140: register rows cite QA-D tests
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+KeyError: 'id'
+1:// A01 / REQ-PB-010 "One source of truth" (qa-verifier, T-DG4-QA-D). Acceptance text (docs/delivery/requirements.csv):
+2:// "A01: renaming an initiative changes it in roadmap, scorecard and benefits register views in one update; no duplicate
+68:describe("REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row", () => {
+69:  it("before the rename, the scorecard and the traceability view show the original name (the baseline)", async () => {
+76:  it("after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row", async () => {
+14://      gate.g5_not_approved naming G5, and writes no scale_transition row;
+197:      "gate.g5_not_approved",
+## F-DG4-141: journeys.spec.ts users search wait
+414:  await filters.getByLabel(tr(lang, "common.filter.search"), { exact: true }).fill("Synthetic Transformation Lead");
+419:      new URL(r.url()).searchParams.get("q") === "Synthetic Transformation Lead" &&
+424:  await expect(page.getByRole("link", { name: "Synthetic Transformation Lead", exact: true })).toBeVisible();
+495:    ["user_id", "Synthetic Transformation Lead"],
+## F-DG4-143: value RAG line state rendering
+6://    Stale (the last value, labelled Stale) and Not applicable. Each carries `data-value-state` for tests.
+59:  not_applicable: { icon: "stop", css: "unknown" },
+214:      <span className="status-chip status-chip--unknown" data-value-state="unknown">
+226:        <span data-value-state="value" data-value={value.value ?? ""}>
+232:        <span data-value-state="zero" data-value={value.value ?? "0"}>
+239:        <span data-value-state="stale" data-value={value.value ?? ""}>
+251:    case "not_applicable":
+253:        <span data-value-state="not_applicable">
+255:            <Icon name="stop" /> <span>{t("dashboards.state.not_applicable")}</span>
+262:        <span data-value-state="unknown">
+417:const RAG_FLAG = /^(calculated|milestone|outcome)_(green|amber|red|unknown|stale|not_applicable|not_computable)$/;
+581: * and 4). The API gives a null `gapRatio` both for `not_applicable` (nothing planned to date) and for `unknown` (a
+## F-DG4-144: BU filter note text and narrowing
+apps/web/src/pages/dashboards/ui.tsx:1160:export type BlockedFilterReason = "none" | "none_matching" | "too_many";
+apps/web/src/pages/dashboards/ui.tsx:1167: * - `none_matching`: the unit has readable transformations, but none matches the transformation, phase or status chips;
+apps/web/src/pages/dashboards/ui.tsx:1168: * - `too_many`: more than 50 remain.
+apps/web/src/pages/dashboards/ui.tsx:1171: * `too_many` note names can lift the block.
+apps/web/src/pages/dashboards/ui.tsx:1180:  // The unit's readable list without phase and status (its first 51), which also tells `none` from `none_matching`.
+apps/web/src/pages/dashboards/ui.tsx:1212:    if (ids.length === 0) return { query: base, blocked: "none_matching", loading: false };
+apps/web/src/pages/dashboards/ui.tsx:1218:  if (ids.length === 0) return { query: base, blocked: "none_matching", loading: false };
+apps/web/src/pages/dashboards/ui.tsx:1220:    return { query: base, blocked: "too_many", loading: false };
+282:      "too_many": "This business unit has more than 50 transformations you can read, and a dashboard takes at most 50. Narrow the filter by phase or status until 50 or fewer remain, choose transformations with the transformation filter, or open the transformations' own dashboards."
+## F-DG4-145: controlled clock
+6://  - F-DG2-570: every in-app navigation, and any other page GET sent more than SESSION_RECHECK_MS after the last
+19:  SESSION_RECHECK_MS,
+51: * The test's clock (T-DG4-FE-R9, F-DG4-106/145, D-129): `Date.now` is controlled for every test of this file, so the
+52: * identity recheck window (SESSION_RECHECK_MS, which api/client.ts measures with Date.now) is crossed only where a test
+58:  clockNow = Date.now();
+59:  vi.spyOn(Date, "now").mockImplementation(() => clockNow);
+61:/** Moves the controlled clock `ms` ahead (Date.now only). */
+308:      // A slow machine, made deterministic: the controlled clock moves past SESSION_RECHECK_MS at the moment the created
+## F-DG4-146: held-/me wait tests
+6://   W1  an in-app navigation after B signed in elsewhere (the navigation's identity check, held);
+7://   W2  a list refetch past SESSION_RECHECK_MS (the revalidation /me, held), no navigation;
+8://   W3  client level: a GET waits for a GET /me probe in flight (asIdentityProbe), with no identity check pending;
+9://   W4  client level: a GET waits for a pending identity check (revalidateSessionIdentity), with no /me probe in flight.
+10:// W1/W2 are adapted from qa-verifier's round-6 probe (docs/delivery/test-evidence/DG4/qa/tests/round-6/unit/
+11:// qa-r6-session-wait.test.tsx). W3 and W4 each pin one of the two awaits in apiRequest, so dropping either one fails.
+115:    it("W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held", async () => {
+140:    it("W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first", async () => {
+168:  it("W3: a GET waits for a GET /me probe in flight (no identity check pending)", async () => {
+181:  it("W4: a GET waits for a pending identity check (no GET /me probe in flight)", async () => {
+236:let pendingCheck: Promise<void> | null = null;
+261:  return pendingCheck ?? probesIdle;
+265:let probesIdle: Promise<void> | null = null;
+275:    probesIdle = new Promise<void>((resolve) => {
+284:      probesIdle = null;
+296:  if (pendingCheck) return pendingCheck;
+304:      if (pendingCheck === run) pendingCheck = null;
+306:  pendingCheck = run;
+318:  pendingCheck = null;
+322:  probesIdle = null;
+## F-DG4-147: session-end boot /me wait
+97:/** Ends the browser's session from outside the page, as a sign-out in another tab does. */
+98:async function signOutElsewhere(page: Page): Promise<number> {
+132:  await expect(page.getByRole("button", { name: tr(lang, "auth.signOut") })).toHaveCount(0);
+154:  expect(await signOutElsewhere(page)).toBe(200);
+168:  await expect(page.getByRole("button", { name: tr(lang, "auth.signOut") })).toBeVisible();
+231:  const refused = page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/content"));
+254:  expect(await signOutElsewhere(first.page)).toBe(200);
+267:  await expect(second.page.getByRole("button", { name: tr(lang, "auth.signOut") })).toBeVisible();
+278:test("a 403 is not a session end: a refused change keeps the user signed in where they are", async ({ page }, info) => {
+286:  const bootMe = page.waitForResponse(
+
+## F-DG4-140 (re-run; the first attempt above used key 'id', the register's key is 'req_id' -> KeyError, explained)
+REQ-PB-010 IMPLEMENTED a01 cited: True a02-a08 cited: False | notes tail: ten. Green in DG4 round 1 (03-integration-tests-qa-candidate-only.log). No test gap remains for A01.
+REQ-S03-004 IMPLEMENTED a01 cited: False a02-a08 cited: True | notes tail: ate-only.log). registers.test.ts stays as supporting evidence only. No test gap remains for A02/A08.

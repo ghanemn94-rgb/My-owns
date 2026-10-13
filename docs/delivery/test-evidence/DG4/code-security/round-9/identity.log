@@ -1,0 +1,177 @@
+# identity and records-only diff evidence, 2026-10-13T09:18:27Z, load 2.56 1.14 0.87
+$ sha256sum assignment
+1247670c43438e349ad29f4a41b48ad7ddc063142837070d37082467ef77958f  docs/delivery/assignments/DG4/round-9/code-security-reviewer.md
+$ git rev-parse HEAD (repo)
+01ad2e185962ebec0bbf541503c09ae4075eeec6
+$ git -C clone rev-parse HEAD; is-shallow; status lines
+01ad2e185962ebec0bbf541503c09ae4075eeec6
+false
+0
+$ candidate.mjs in clone at freeze 01ad2e1
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+rc=0
+$ git diff --name-only f2ae717..01ad2e1
+docs/delivery/assignments/DG4/round-9/code-security-reviewer.md
+docs/delivery/assignments/DG4/round-9/domain-reviewer.md
+docs/delivery/assignments/DG4/round-9/qa-verifier.md
+docs/delivery/candidates/DG4/18c18fe4eda7cbc1.manifest.json
+docs/delivery/stages.json
+$ candidate.mjs in clone at source f2ae717
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+rc=0
+01ad2e185962ebec0bbf541503c09ae4075eeec6
+$ candidate.mjs in repo tree
+{"stage":"DG4","source":"working-tree","candidate_id":"sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c","files":1475}
+rc=0
+$ stored manifest header
+{'stage_id': 'DG4', 'candidate_id': 'sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c', 'hash_algorithm': 'mth-candidate-v2', 'source_commit': 'f2ae7170630456a772e1ceac90ab6d96b68e3f5c', 'frozen_at': '2026-10-13T09:12:45Z', 'meta_excluded': 'see tools/gates/lib/candidate.mjs META_EXCLUDES'}
+files 0
+$ git rev-parse 5cd1e06 f2ae717
+5cd1e06ca83b0b916566024bd99102c060e86e0b
+f2ae7170630456a772e1ceac90ab6d96b68e3f5c
+$ git diff --stat 5cd1e06..f2ae717 -- . ':!docs/delivery'  (expect empty)
+rc=0 lines=0
+$ git diff --name-only 5cd1e06..f2ae717
+docs/delivery/assignments/DG4/round-8/code-security-reviewer.md
+docs/delivery/assignments/DG4/round-8/domain-reviewer.md
+docs/delivery/assignments/DG4/round-8/qa-verifier.md
+docs/delivery/assignments/DG4/round-8/release-auditor.md
+docs/delivery/candidates/DG4/8014e5ceffe1f374.manifest.json
+docs/delivery/decisions.md
+docs/delivery/findings.json
+docs/delivery/gates/DG4.json
+docs/delivery/progress.md
+docs/delivery/reviews/DG4/round-8/code-security-reviewer.json
+docs/delivery/reviews/DG4/round-8/domain-reviewer.json
+docs/delivery/reviews/DG4/round-8/qa-verifier.json
+docs/delivery/reviews/DG4/round-8/qa-verifier.md
+docs/delivery/reviews/DG4/round-8/qa-verifier.verifications.json
+docs/delivery/reviews/DG4/round-8/release-auditor.json
+docs/delivery/reviews/DG4/round-8/release-auditor.verifications.json
+docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/meta.json
+docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/result.json
+docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/sandbox.json
+docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/settings.json
+docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/stderr.log
+docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R8-release-auditor-20261013T082400Z-bd368477/transcript.jsonl.gz
+docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R8-domain-reviewer-20261013T080146Z-405a9429/meta.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R8-domain-reviewer-20261013T080146Z-405a9429/result.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R8-domain-reviewer-20261013T080146Z-405a9429/sandbox.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R8-domain-reviewer-20261013T080146Z-405a9429/settings.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R8-domain-reviewer-20261013T080146Z-405a9429/stderr.log
+docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R8-domain-reviewer-20261013T080146Z-405a9429/transcript.jsonl.gz
+docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8/meta.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8/result.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8/sandbox.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8/settings.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8/stderr.log
+docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R8-qa-verifier-20261013T071146Z-e31a9fe8/transcript.jsonl.gz
+docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620/meta.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620/result.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620/sandbox.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620/settings.json
+docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620/stderr.log
+docs/delivery/runs/DG4/DG4-T-DG4-REV-SEC-R8-code-security-reviewer-20261013T080206Z-987e0620/transcript.jsonl.gz
+docs/delivery/stages.json
+docs/delivery/test-evidence/DG4/audit/round-8/01-clone-identity-validators.log
+docs/delivery/test-evidence/DG4/audit/round-8/02-provenance.log
+docs/delivery/test-evidence/DG4/audit/round-8/02b-impl-config-change-spotcheck.log
+docs/delivery/test-evidence/DG4/audit/round-8/03-findings.log
+docs/delivery/test-evidence/DG4/audit/round-8/04-incidents.log
+docs/delivery/test-evidence/DG4/audit/round-8/05-requirements.log
+docs/delivery/test-evidence/DG4/audit/round-8/06-disclosure-grep.log
+docs/delivery/test-evidence/DG4/audit/round-8/06a-cited-evidence-existence.txt
+docs/delivery/test-evidence/DG4/audit/round-8/07-build.log
+docs/delivery/test-evidence/DG4/audit/round-8/07-clone-status.txt
+docs/delivery/test-evidence/DG4/audit/round-8/07-done.txt
+docs/delivery/test-evidence/DG4/audit/round-8/07-install.log
+docs/delivery/test-evidence/DG4/audit/round-8/07-unit-node22-C.log
+docs/delivery/test-evidence/DG4/audit/round-8/07-unit-node24-unset.log
+docs/delivery/test-evidence/DG4/audit/round-8/07-unit-repro.sh
+docs/delivery/test-evidence/DG4/audit/round-8/07-unit-samples.log
+docs/delivery/test-evidence/DG4/audit/round-8/07-unit-summary.txt
+docs/delivery/test-evidence/DG4/audit/round-8/08-product-vs-engineering-gates.log
+docs/delivery/test-evidence/DG4/audit/round-8/09-carried-forward-spotcheck.log
+docs/delivery/test-evidence/DG4/audit/round-8/10-decisions-D088-D135.log
+docs/delivery/test-evidence/DG4/audit/round-8/11-validate-stage-DG4-analysis.log
+docs/delivery/test-evidence/DG4/code-security/round-8/build.log
+docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id-repo.log
+docs/delivery/test-evidence/DG4/code-security/round-8/candidate-id.log
+docs/delivery/test-evidence/DG4/code-security/round-8/checks.sh
+docs/delivery/test-evidence/DG4/code-security/round-8/format-check.log
+docs/delivery/test-evidence/DG4/code-security/round-8/identity.log
+docs/delivery/test-evidence/DG4/code-security/round-8/install1.log
+docs/delivery/test-evidence/DG4/code-security/round-8/install2.log
+docs/delivery/test-evidence/DG4/code-security/round-8/lint.log
+docs/delivery/test-evidence/DG4/code-security/round-8/load-envelope-crosscheck.log
+docs/delivery/test-evidence/DG4/code-security/round-8/log-scan.txt
+docs/delivery/test-evidence/DG4/code-security/round-8/no-cdn.log
+docs/delivery/test-evidence/DG4/code-security/round-8/openapi-lint.log
+docs/delivery/test-evidence/DG4/code-security/round-8/summary.txt
+docs/delivery/test-evidence/DG4/code-security/round-8/typecheck.log
+docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG1.log
+docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG2.log
+docs/delivery/test-evidence/DG4/code-security/round-8/validate-historical-DG3.log
+docs/delivery/test-evidence/DG4/code-security/round-8/validate-pipeline.log
+docs/delivery/test-evidence/DG4/code-security/round-8/validate-register-DG4.log
+docs/delivery/test-evidence/DG4/domain/round-8/candidate-and-diff.log
+docs/delivery/test-evidence/DG4/domain/round-8/envelope-figures.log
+docs/delivery/test-evidence/DG4/domain/round-8/format.log
+docs/delivery/test-evidence/DG4/domain/round-8/hygiene.log
+docs/delivery/test-evidence/DG4/domain/round-8/hygiene.sh
+docs/delivery/test-evidence/DG4/domain/round-8/lint.log
+docs/delivery/test-evidence/DG4/domain/round-8/no-cdn.log
+docs/delivery/test-evidence/DG4/domain/round-8/node-version.txt
+docs/delivery/test-evidence/DG4/domain/round-8/openapi-lint.log
+docs/delivery/test-evidence/DG4/domain/round-8/source-seed-static.log
+docs/delivery/test-evidence/DG4/domain/round-8/source-seed-static.sh
+docs/delivery/test-evidence/DG4/domain/round-8/static-driver.log
+docs/delivery/test-evidence/DG4/domain/round-8/static.sh
+docs/delivery/test-evidence/DG4/domain/round-8/typecheck.log
+docs/delivery/test-evidence/DG4/domain/round-8/validators-clone.log
+docs/delivery/test-evidence/DG4/domain/round-8/validators-worktree.log
+docs/delivery/test-evidence/DG4/history-rewrite-D-136.restored-paths.txt
+docs/delivery/test-evidence/DG4/history-rewrite-D-136.shamap.txt
+docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-end.log
+docs/delivery/test-evidence/DG4/qa/round-8/00-candidate-start.log
+docs/delivery/test-evidence/DG4/qa/round-8/00-install.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-contrast.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-check-no-cdn.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-format-check.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-lint.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-openapi-lint.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-r-build.log
+docs/delivery/test-evidence/DG4/qa/round-8/01-pnpm-r-typecheck.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r1.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-samples-r2.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-envelope-summary.txt
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r1.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-C-r2.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r1.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node22-unset-r2.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r1.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-C-r2.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r1.log
+docs/delivery/test-evidence/DG4/qa/round-8/02-unit-node24-unset-r2.log
+docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG1.log
+docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG2.log
+docs/delivery/test-evidence/DG4/qa/round-8/05-validate-historical-stage-DG3.log
+docs/delivery/test-evidence/DG4/qa/round-8/05-validate-pipeline.log
+docs/delivery/test-evidence/DG4/qa/round-8/05-validate-register-DG4.log
+docs/delivery/test-evidence/DG4/qa/round-8/06-register-confirmation.txt
+docs/delivery/test-evidence/DG4/qa/round-8/RUN-NOTES.md
+docs/delivery/test-evidence/DG4/qa/round-8/env.txt
+docs/delivery/test-evidence/DG4/qa/round-8/scripts/req-check.py
+docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-static.sh
+docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-envelope.sh
+docs/delivery/test-evidence/DG4/qa/round-8/scripts/run-unit-one.sh
+$ git diff --quiet 5cd1e06 f2ae717 -- apps packages docs/api tests e2e tools pnpm-lock.yaml package.json
+rc=0
+$ old round-8 source 8553323 (pre-rewrite) vs new 5cd1e06: full tree diff
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 232541 bytes
+ 33 files changed, 3192 insertions(+)
+names:
+     33 docs/delivery/runs/DG4
+$ git diff --quiet 8553323 f2ae717 -- . :!docs/delivery
+rc=0

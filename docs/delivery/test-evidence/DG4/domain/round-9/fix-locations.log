@@ -1,0 +1,87 @@
+### HEAD f2ae7170630456a772e1ceac90ab6d96b68e3f5c
+--- F-DG4-120 T11 provisional-Arabic notice
+81:    <span className="text-cell block" dir="ltr" lang="en" data-verbatim-en={column}>
+97:    <p className="small muted" id="decision-rights-ar-provisional" data-provisional="decision-rights">
+--- F-DG4-120 AR notice text
+apps/web/src/i18n/ar/decisionRights.json:6:  "listIntro": "الصفوف الأربعة الأولى من دليل التحوّل (B0099). تعديلها يغيّر هذا التحوّل فقط، لا القالب ولا أي تحوّل آخر.",
+apps/web/src/i18n/ar/decisionRights.json:8:  "arProvisional": "تُعرض تسميات الأعمدة {{columns}} بنصّها الإنجليزي المصدر كما وردت في دليل التحوّل (B0099)؛ الترجمة العربية لهذه التسميات مؤقتة ولم تتوفر بعد.",
+--- F-DG4-121 gross on the profit-and-cash basis (API)
+21://     margin benefit. Keep avoided cost separate from cash savings"; B0145). revenue_uplift (top line, whose margin
+22://     belongs in margin_uplift) and avoided_cost (non-cash) stay their own lines and are never summed into gross or net;
+95: * The classes the headline gross sums (F-DG4-121; D-117): profit and cash only. revenue_uplift and avoided_cost are
+--- F-DG4-121 gross labels EN
+apps/web/src/i18n/en/dashboards.json:351:      "revenue_uplift": "Revenue uplift (top line), beside gross: not in gross or net",
+apps/web/src/i18n/en/dashboards.json:352:      "avoided_cost": "Avoided cost (non-cash), beside gross: not in gross or net"
+apps/web/src/i18n/en/benefitsP4.json:472:    "gross": "Gross benefit (profit and cash)",
+apps/web/src/i18n/en/benefitsP4.json:474:    "besideRevenue": "Top line, shown beside gross: not in gross or net. Its margin belongs in margin uplift.",
+apps/web/src/i18n/en/benefitsP4.json:475:    "besideAvoided": "Non-cash, shown beside gross: not in gross or net.",
+--- F-DG4-122 ratio -> percent formatting
+7://  - Values are decimal strings formatted without floats; ratios and percentages are fractions shown as percent (D-091,
+10://    a `ratio` KPI is a plain decimal, a percentage KPI × 100 whatever its label; the label is display text only.
+145: *  - ratio, count, duration, score, other (and currency without a currency): a decimal, then the label if set.
+168: *    `ratio` KPI of 1.5 is '1.5', never '150 %'; a percentage labelled '% of users' is '12 % of users'.
+170: *    `{unit: "ratio", currency: "SAR", kpiUnit: null}`, a computed ratio shown as a percentage ("100 %"), never as money.
+177:  if (v.unit === "ratio" || isPercentUnit(v.unit))
+--- F-DG4-123 headline basis (API)
+561: * value.investment); a top_line or non_cash headline drills with its class (`valueClass`), a profit_and_cash one
+574:  const valueClass = basis === "top_line" ? "revenue_uplift" : basis === "non_cash" ? "avoided_cost" : undefined;
+590:    headlineBasis: basis,
+712:      valueHeadlines.push(...basisHeadlines(ctx, o, "top_line", c.topLine, c.topLineGap!, c.currency));
+714:      valueHeadlines.push(...basisHeadlines(ctx, o, "non_cash", c.nonCash, c.nonCashGap!, c.currency));
+--- F-DG4-124 stages.json DG4 FIXING after round 1
+391:          "state": "FIXING",
+401:          "state": "FIXING",
+411:          "state": "FIXING",
+421:          "state": "FIXING",
+431:          "state": "FIXING",
+441:          "state": "FIXING",
+--- F-DG4-125 kpiUnit.kind formatting (web)
+9://  - A KPI-derived value (`kpiUnit` non-null, ADR-0037 N5; D-124) is formatted from its unit KIND as the KPI pages do:
+112: * Since ADR-0037 N5 a KPI value carries `kpiUnit`, which decides instead: this set then only (a) reads a value sent
+113: * WITHOUT `kpiUnit` (the member is optional until T-DG4-KBE-R8 makes it required) and (b) recognizes a percentage
+114: * label that is only the sign. It never applies to the unit of a value that has a `kpiUnit`.
+123:/** The `kpiUnit` member of a value (ADR-0037 N5): absent is read as null (no KPI unit). */
+125:  readonly kpiUnit?: DashboardKpiUnit | null | undefined;
+--- F-DG4-125 kpiUnit on API emitters
+226: * A known decimal value: `zero` when it equals 0 (a fact), else `value` (ADR-0037 §5). Not KPI-derived, so `kpiUnit`
+231:  return { state: d.isZero() ? "zero" : "value", value: d.toFixed(), unit, currency, reasonKey: null, kpiUnit: null };
+235:  return { state: "unknown", value: null, unit, currency, reasonKey, kpiUnit: null };
+239:  return { state: "not_applicable", value: null, unit, currency: null, reasonKey, kpiUnit: null };
+262: * state it says the KPI's unit kind apart from its label (`kpiUnit`, ADR-0037 N5 item 1); `unit` keeps its content.
+263: * Only a KPI whose definition can no longer be read (`unitKind` null) has `kpiUnit` null.
+--- F-DG4-126 value RAG per basis and currency
+--- F-DG4-127 portfolio value on profit-and-cash, n/a otherwise
+apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts:176:        reasonKey: "benefit.value_amount_missing",
+apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts:204:    expect(gapValue({ gapRatio: null, status: "unknown", reasonKey: "benefit.value_amount_missing" }, "SAR")).toEqual({
+apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts:209:      reasonKey: "benefit.value_amount_missing",
+apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts:369:        reasonKey: "dashboard.portfolio.no_profit_and_cash_allocation",
+apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts:394:    expect(v.get("X")).toEqual({ plannedAllocated: null, valueReasonKey: "benefit.value_amount_missing" });
+apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts:414:      reasonKey: "benefit.value_amount_missing",
+--- F-DG4-128 bounded supervise cadence
+apps/worker/src/queues/platform.ts:4:import { SUPERVISE_INTERVAL_SECONDS } from "@mth/config";
+apps/worker/src/queues/platform.ts:49: * `superviseIntervalSeconds` NO default: unset, Boss.start runs setInterval(onSupervise, NaN), which Node turns into
+apps/worker/src/queues/platform.ts:51: * (the worker passes WORKER_SUPERVISE_INTERVAL_SECONDS from @mth/config; tests shorten it to 1 s) or the documented
+apps/worker/src/queues/platform.ts:52: * 60 s. Anything that is not an integer in SUPERVISE_INTERVAL_SECONDS' range (1-600) is refused, never passed on.
+apps/worker/src/queues/platform.ts:54:export function superviseIntervalSecondsOf(value: number | undefined): number {
+apps/worker/src/queues/platform.ts:55:  const seconds = value ?? SUPERVISE_INTERVAL_SECONDS.default;
+--- F-DG4-126 (b) Value RAG lines per basis and currency
+377:export function basisClasses(basis: HeadlineBasis): readonly string[] {
+390:  return VALUE_BASES.find((basis) => basisClasses(basis).includes(valueClass)) ?? null;
+397:export function valueLinesOf(
+447:/** One entry of the Value RAG's `ruleParams.lines` (ADR-0037 amendment N4 item 1). */
+508:        (b) => b.currency === currency && lineEligible(b, "planned") && basisClasses(basis).includes(b.valueClass),
+513:          valueLinesOf(byId, lines, state, clock, basisClasses(basis))
+--- F-DG4-127 (b) portfolio n/a reason constant
+apps/api/src/modules/reporting/dashboards/engine.ts:114:export const NO_PROFIT_AND_CASH_ALLOCATION = "dashboard.portfolio.no_profit_and_cash_allocation";
+apps/api/src/modules/reporting/dashboards/engine.ts:123:  if (i.valueReasonKey === NO_PROFIT_AND_CASH_ALLOCATION)
+apps/api/src/modules/reporting/dashboards/engine.ts:124:    return { ...notApplicableValue(NO_PROFIT_AND_CASH_ALLOCATION, "currency"), currency: i.plannedCurrency };
+apps/api/src/modules/reporting/dashboards/engine.ts:135: * allocated to is unknown (`benefit.value_amount_missing`), never a sum that omits it (D-123 item 3). An initiative
+apps/api/src/modules/reporting/dashboards/engine.ts:179:        ? { plannedAllocated: null, valueReasonKey: "benefit.value_amount_missing" }
+apps/api/src/modules/reporting/dashboards/engine.ts:183:          : { plannedAllocated: null, valueReasonKey: NO_PROFIT_AND_CASH_ALLOCATION },
+--- F-DG4-128 (b) config loader
+packages/config/src/load.ts:12:import { AUTH_MODES, ENV_VARS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+packages/config/src/load.ts:162:    "WORKER_SUPERVISE_INTERVAL_SECONDS",
+packages/config/src/load.ts:163:    z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
+packages/config/src/index.ts:137:  WORKER_SUPERVISE_INTERVAL_SECONDS: {
+packages/config/src/index.ts:168:export const SUPERVISE_INTERVAL_SECONDS = { min: 1, max: 600, default: 60 } as const;
+apps/worker/src/main.ts:21:  // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).

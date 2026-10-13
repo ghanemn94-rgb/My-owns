@@ -1,0 +1,73 @@
+# D-136 rewrite check 2026-10-13T09:19:29Z load 4.85 2.04 1.20
+$ git rev-parse backup/pre-dg4-writeonce-repair-72c0e653a3 a445b2470b
+72c0e653a39b0eaec6721ed891e41cdd19c5b169
+a445b2470bbbf8fbde2e78dcdc2955a94547414b
+$ git diff backup/pre-dg4-writeonce-repair-72c0e653a3 a445b2470b --stat
+ .../.pre-config.txt                                | 570 +++++++++++++++++++++
+ .../.pre-snapshot.json                             |   1 +
+ .../transcript.jsonl                               | 361 +++++++++++++
+ .../meta.json                                      |  58 +++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  47 ++
+ .../settings.json                                  | 449 ++++++++++++++++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 944587 bytes
+ .../meta.json                                      | 188 +++++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  45 ++
+ .../settings.json                                  | 181 +++++++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 119957 bytes
+ .../meta.json                                      | 228 +++++++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  47 ++
+ .../settings.json                                  | 173 +++++++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 252122 bytes
+ .../meta.json                                      | 190 +++++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  47 ++
+ .../settings.json                                  | 177 +++++++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 473993 bytes
+ .../meta.json                                      | 184 +++++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  45 ++
+ .../settings.json                                  | 181 +++++++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 232541 bytes
+ 33 files changed, 3192 insertions(+)
+$ git diff --name-status backup/pre-dg4-writeonce-repair-72c0e653a3 a445b2470b | cut -f1 | sort | uniq -c   (expect 33 A)
+     33 A
+$ paths added vs restored-paths.txt (expect identical)
+IDENTICAL (33 paths)
+$ blob of each restored path at a445b2470b and at <deletion-commit>^ in the old history equals restored-paths.txt blob
+blob mismatches: 0 (33 checked; each absent at its old deletion commit, present at its parent)
+$ every map pair: subject, author name/email/date, committer name/email/date equal; product diff empty; diff only restored run paths
+pairs checked: 360, failures: 0
+$ spot-checks (verbose) for 3 pairs: round-8 source, round-7 source, the old HEAD
+-- old 8553323d6938d5c5077661070ab9f8df2d8dc969 / new 5cd1e06ca83b0b916566024bd99102c060e86e0b
+   old: DG4: D-134 (user accepts F-DG4-148 as an observation with a documented load envelope; round 8 is a confirmation round); environment.md load envelope | author Claude 2026-10-13T07:04:42+00:00 | committer Claude 2026-10-13T07:04:42+00:00
+   new: DG4: D-134 (user accepts F-DG4-148 as an observation with a documented load envelope; round 8 is a confirmation round); environment.md load envelope | author Claude 2026-10-13T07:04:42+00:00 | committer Claude 2026-10-13T07:04:42+00:00
+   git diff old new --name-only | cut -d/ -f1-4 | uniq -c:
+     33 docs/delivery/runs/DG4
+   git diff --quiet old new -- . ':!docs/delivery/runs' -> rc=0
+-- old dab4562c71ab4f0a8e5b89b32ad93a0861539598 / new 8953eec337fe75dc6329ef01d8a7057d90f37da4
+   old: DG4: D-132 (BE-R6 and FE-R10 integrated; pre-freeze verification of caac6da green); progress | author Claude 2026-10-12T20:51:57+00:00 | committer Claude 2026-10-12T20:51:57+00:00
+   new: DG4: D-132 (BE-R6 and FE-R10 integrated; pre-freeze verification of caac6da green); progress | author Claude 2026-10-12T20:51:57+00:00 | committer Claude 2026-10-12T20:51:57+00:00
+   git diff old new --name-only | cut -d/ -f1-4 | uniq -c:
+     15 docs/delivery/runs/DG4
+   git diff --quiet old new -- . ':!docs/delivery/runs' -> rc=0
+-- old 72c0e653a39b0eaec6721ed891e41cdd19c5b169 / new a445b2470bbbf8fbde2e78dcdc2955a94547414b
+   old: DG4 audit round 8: release-auditor shell-written evidence, committed unchanged | author Claude 2026-10-13T08:55:35+00:00 | committer Claude 2026-10-13T08:55:35+00:00
+   new: DG4 audit round 8: release-auditor shell-written evidence, committed unchanged | author Claude 2026-10-13T08:55:35+00:00 | committer Claude 2026-10-13T08:55:35+00:00
+   git diff old new --name-only | cut -d/ -f1-4 | uniq -c:
+     33 docs/delivery/runs/DG4
+   git diff --quiet old new -- . ':!docs/delivery/runs' -> rc=0
+$ DG3 gate commit bc8f455 is an ancestor of both heads and of eda5588's parent (rewrite starts after it)
+bc8f455 ancestor of backup/pre-dg4-writeonce-repair-72c0e653a3: rc=0
+bc8f455 ancestor of a445b2470b: rc=0
+bc8f455 ancestor of eda5588^: rc=0
+$ commit count rewritten: old eda5588^..backup/pre-dg4-writeonce-repair-72c0e653a3 = 360, map pairs = 360
+$ new history contains no old (pre-rewrite) commit from the map: 0
+# done

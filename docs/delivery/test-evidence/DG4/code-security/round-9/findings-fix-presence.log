@@ -1,0 +1,102 @@
+# B2 part 3: fix presence in the frozen candidate source f2ae717 (f2ae7170630456a772e1ceac90ab6d96b68e3f5c); 2026-10-13T09:20:38Z
+== F-DG4-100 (denial audit on slice-B refusals)
+f2ae717:apps/api/src/modules/benefits/register.ts:55:import { denialOf, holdsAnywhere, principalOf, requireTransformationRead, resolveTarget } from "../access/index.ts";
+f2ae717:apps/api/src/modules/benefits/register.ts:134:export async function requirePermissionSomewhere(
+f2ae717:apps/api/src/modules/benefits/register.ts:143:  throw problems.forbidden().withDenial(denialOf(permission, target));
+f2ae717:apps/api/src/modules/benefits/register.ts:153:  await requirePermissionSomewhere(tx, request, permission, transformationId);
+f2ae717:apps/api/src/modules/benefits/finance-validation.ts:236:    throw sodSubmitter().withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
+f2ae717:apps/api/src/modules/benefits/finance-validation.ts:357:    ).withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
+f2ae717:apps/api/src/modules/benefits/overlaps.ts:437:    throw overlapRefusals.resolverIsOwner().withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
+f2ae717:apps/api/src/modules/benefits/valuation-methods.ts:192:    throw valuationRefusals.deciderIsProposer().withDenial(denialOf(FINANCE_VALIDATE, ctx.target));
+f2ae717:apps/api/src/modules/tasks/routes.ts:137:function notAssigneeDenial(item: WorkItemRow): DenialInfo {
+f2ae717:apps/api/src/modules/tasks/routes.ts:160:  if (current.assignee_user_id !== userId) throw taskRefusals.notAssignee().withDenial(notAssigneeDenial(current));
+-- the KBE-R5/BE-R5 fix tests are present:
+apps/api/test/integration/benefits/slice-b-denials.test.ts
+apps/api/test/integration/tasks/work-items.test.ts
+== F-DG4-101 (correction steps the original validation's version; 0061)
+f2ae717:apps/api/src/modules/benefits/corrections.ts:15://   its own audit event, `finance_validation.corrected`) in the same transaction, under the same financeValidationQueue
+f2ae717:apps/api/src/modules/benefits/corrections.ts:27:import { bumpStamps, type WriteContext } from "../transformations/index.ts";
+f2ae717:apps/api/src/modules/benefits/corrections.ts:29:import { lockMeasurement, lockQueue, MEASUREMENT_AUDIT_FIELDS } from "./measurements.ts";
+f2ae717:apps/api/src/modules/benefits/corrections.ts:83:  await lockQueue(tx, peek.benefit_measurement_id);
+f2ae717:apps/api/src/modules/benefits/corrections.ts:193:  await stepOriginal(tx, ctx, validation, reason);
+f2ae717:apps/api/src/modules/benefits/corrections.ts:202:async function stepOriginal(tx: Tx, ctx: WriteContext, validation: FinanceValidationRow, reason: string) {
+f2ae717:apps/api/src/modules/benefits/corrections.ts:205:    .set(bumpStamps(ctx.userId))
+f2ae717:apps/api/src/modules/benefits/corrections.ts:213:    action: "finance_validation.corrected",
+-- corrections.ts lines 202-240:
+202: async function stepOriginal(tx: Tx, ctx: WriteContext, validation: FinanceValidationRow, reason: string) {
+203:   const stepped = await tx
+204:     .updateTable("finance_validation")
+205:     .set(bumpStamps(ctx.userId))
+206:     .where("id", "=", validation.id)
+207:     .where("version", "=", validation.version)
+208:     .returning(["version"])
+209:     .executeTakeFirst();
+210:   // The row is locked FOR UPDATE by openTarget, so the version cannot have moved; refuse rather than write blind.
+211:   if (!stepped) throw problems.versionConflict(validation.version);
+212:   await record(tx, ctx.audit, {
+213:     action: "finance_validation.corrected",
+214:     recordType: "finance_validation",
+215:     recordId: validation.id,
+216:     organizationId: ctx.organizationId,
+217:     transformationId: ctx.transformationId,
+218:     priorVersion: validation.version,
+219:     newVersion: stepped.version,
+220:     reason,
+221:     changes: { version: { from: validation.version, to: stepped.version } },
+222:   });
+223: }
+224: 
+225: async function amend(tx: Tx, request: FastifyRequest, transformationId: string, id: string) {
+226:   const ctx = await openFinanceWrite(tx, request, transformationId);
+227:   const body = parseBody(financeValidationAmendment, request.body);
+228:   const target = await openTarget(tx, request, transformationId, id);
+229:   const delta = amendmentDelta(body.correctedAmount, target.current);
+230:   if (new D(delta).isZero()) throw amendmentUnchanged();
+231:   return createCorrection(tx, ctx, target, "amendment", delta, body.reason);
+232: }
+233: 
+234: async function reverse(tx: Tx, request: FastifyRequest, transformationId: string, id: string) {
+235:   const ctx = await openFinanceWrite(tx, request, transformationId);
+236:   const body = parseBody(reasonRequest, request.body);
+237:   const target = await openTarget(tx, request, transformationId, id);
+238:   return createCorrection(tx, ctx, target, "reversal", reversalAmount(target.current), body.reason);
+239: }
+240: 
+-- migration 0061 in candidate, blob equal to the fix commit's:
+efe449a7abb64838b75b9d79642ef593f67d8e4e
+efe449a7abb64838b75b9d79642ef593f67d8e4e
+-- corrections.ts blob: fix commit vs candidate (changed later?)
+== F-DG4-102 (web import cycles): messages.ts / selection.ts extractions
+apps/web/src/pages/traceability/selection.ts
+no import of MyWorkPage/TraceabilityPage from their section/panel modules
+== F-DG4-103 (gate commit-time re-check)
+f2ae717:apps/api/src/modules/workflows/gates.ts:56:  commitTimeDenial,
+f2ae717:apps/api/src/modules/workflows/gates.ts:62:  refreshPrincipal,
+f2ae717:apps/api/src/modules/workflows/gates.ts:473:      const ctx = await writeAtCommit(tx, request, transformationId, [{ permission: "gate.configure" }]);
+f2ae717:apps/api/src/modules/workflows/gates.ts:651: *  2. At commit time: `refreshPrincipal` re-resolves the session and reloads the grants inside `tx` (401 when the
+f2ae717:apps/api/src/modules/workflows/gates.ts:652: *     session ended meanwhile), the same read and write gates run on them, and `commitTimeDenial` turns a read right
+f2ae717:apps/api/src/modules/workflows/gates.ts:657:async function writeAtCommit(
+f2ae717:apps/api/src/modules/workflows/gates.ts:664:  const fresh = await refreshPrincipal(tx, request);
+f2ae717:apps/api/src/modules/workflows/gates.ts:670:    throw commitTimeDenial(err);
+f2ae717:apps/api/src/modules/workflows/gates.ts:684:  const ctx = await writeAtCommit(tx, request, transformationId, [{ permission: "gate.submit" }]);
+f2ae717:apps/api/src/modules/workflows/gates.ts:920:  //     meanwhile is 403 with its denial (commitTimeDenial); an approver role revoked meanwhile fails check 2 below.
+f2ae717:apps/api/src/modules/workflows/gates.ts:921:  const principal = await refreshPrincipal(tx, request);
+f2ae717:apps/api/src/modules/workflows/gates.ts:926:    throw commitTimeDenial(err);
+-- changes to gates.ts after the fix commit:
+== F-DG4-104 (stages.json history)
+PLANNED > BUILDING > REVIEWING > FIXING > REVIEWING > FIXING > REVIEWING > FIXING > REVIEWING > FIXING > REVIEWING > FIXING > REVIEWING > FIXING > REVIEWING > FIXING > REVIEWING > VERIFYING
+same-state consecutive steps: []
+== F-DG4-105 (currency-exact drill-down)
+f2ae717:apps/api/src/modules/reporting/dashboards/drilldown.ts:4://                            &subjectId=&valueClass=&currency=&cursor=&limit=
+f2ae717:apps/api/src/modules/reporting/dashboards/drilldown.ts:9:// (dashboard.value.multiple_currencies) and each item carries its currency. Zero, Unknown, Stale and not_applicable are
+f2ae717:apps/api/src/modules/reporting/dashboards/drilldown.ts:157:  return notApplicableValue("dashboard.value.multiple_currencies", unit);
+f2ae717:apps/api/src/modules/reporting/dashboards/drilldown.ts:271:          ? notApplicableValue("dashboard.value.multiple_currencies", "currency")
+f2ae717:apps/api/src/modules/reporting/dashboards/drilldown.ts:458:            ? notApplicableValue("dashboard.value.multiple_currencies", "ratio")
+-- changes after fix commit:
+== F-DG4-106 (Y1c deterministic clock)
+f2ae717:apps/web/src/auth/session-bound.test.tsx:57:function installClock() {
+f2ae717:apps/web/src/auth/session-bound.test.tsx:70:  installClock();
+f2ae717:apps/web/src/auth/session-bound.test.tsx:75:  vi.restoreAllMocks();
+f2ae717:apps/web/src/auth/session-generation.test.tsx:60:  vi.restoreAllMocks();
+-- changes after fix commit:
+c675003 T-DG4-FE-R10: held-/me wait tests killing mutant M4 (F-DG4-146); session-end 403 test waits for the boot /me (F-DG4-147); unit-web warms lazy page modules and pnpm test runs every project (F-DG4-148)

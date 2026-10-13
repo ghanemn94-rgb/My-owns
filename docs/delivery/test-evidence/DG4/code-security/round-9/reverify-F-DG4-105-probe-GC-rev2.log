@@ -1,0 +1,99 @@
+# probe sec-dg4-r3-gross-currency.test.ts; node v22.22.2; commit 01ad2e185962ebec0bbf541503c09ae4075eeec6; LANG unset; dcb4d5596ad9d25f16aaae4d56fe0affc3035d72271fd286099c60c56fd7bf4f; load 8.32 8.05 5.43; started 2026-10-13T09:31:29Z
+[with-pg initdb] The database cluster will be initialized with locale "C".
+[with-pg initdb] The default database encoding has accordingly been set to "SQL_ASCII".
+[with-pg] cluster template1 encoding SQL_ASCII, collate C
+
+ RUN  v3.2.4 /var/tmp/mth-run.5bVR0f/claude-0/review-r9
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv6hekk4_fa9bf48d (server_encoding UTF8); applied 61 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts > SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > logs gross, headline and drill-downs for SAR and USD
+[probe-GC] {
+ "SAR": {
+  "grossTotal": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null,
+   "kpiUnit": null
+  },
+  "grossHref": "/api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a1349a-8c3b-75ef-8ce0-94daf9efe903&transformationId=01a1349a-8cb7-77ff-b01d-3023ffb1cbd0&currency=SAR",
+  "grossDrillValue": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null,
+   "kpiUnit": null
+  },
+  "grossDrillItemCurrencies": [
+   "SAR"
+  ],
+  "financeHeadline": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null,
+   "kpiUnit": null
+  },
+  "t10Headline": {
+   "state": "value",
+   "value": "70",
+   "unit": "currency",
+   "currency": "SAR",
+   "reasonKey": null,
+   "kpiUnit": null
+  },
+  "sameHref": true
+ },
+ "USD": {
+  "grossTotal": {
+   "state": "zero",
+   "value": "0",
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": null,
+   "kpiUnit": null
+  },
+  "grossHref": "/api/v1/dashboard-drilldown?metric=value.planned&organizationId=01a1349a-8c3b-75ef-8ce0-94daf9efe903&transformationId=01a1349a-8cb7-77ff-b01d-3023ffb1cbd0&currency=USD",
+  "grossDrillValue": {
+   "state": "not_applicable",
+   "value": null,
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": "dashboard.value.no_profit_and_cash_benefit",
+   "kpiUnit": null
+  },
+  "grossDrillItemCurrencies": [],
+  "financeHeadline": {
+   "state": "not_applicable",
+   "value": null,
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": "dashboard.value.no_profit_and_cash_benefit",
+   "kpiUnit": null
+  },
+  "t10Headline": {
+   "state": "not_applicable",
+   "value": null,
+   "unit": "currency",
+   "currency": "USD",
+   "reasonKey": "dashboard.value.no_profit_and_cash_benefit",
+   "kpiUnit": null
+  },
+  "sameHref": true
+ }
+}
+
+stdout | apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts > SEC-DG4-R3 probe GC: gross line vs profit-and-cash headline per currency > REPRO: the USD n/a headline's drill-down is n/a with no item (not the SAR figure)
+[probe-GC REPRO] USD headline {"state":"not_applicable","value":null,"unit":"currency","currency":"USD","reasonKey":"dashboard.value.no_profit_and_cash_benefit","kpiUnit":null} -> drill value {"state":"not_applicable","value":null,"unit":"currency","currency":"USD","reasonKey":"dashboard.value.no_profit_and_cash_benefit","kpiUnit":null} items []
+
+ ✓ |integration| apps/api/test/integration/zz-sec-dg4/sec-dg4-r3-gross-currency.test.ts (2 tests) 1317ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:31:32
+   Duration  14.26s (transform 4.17s, setup 0ms, collect 8.90s, tests 1.32s, environment 0ms, prepare 121ms)
+
+# exit_status: 0  finished: 2026-10-13T09:31:48Z

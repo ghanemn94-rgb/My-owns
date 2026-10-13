@@ -1,0 +1,12 @@
+$ node writeonce.mjs $TMPDIR/review-dg4r9 DG4  (HEAD 01ad2e1)
+checkWriteOnce DG4: 0 errors
+EXIT 0
+$ node writeonce.mjs $TMPDIR/review-dg4r9 DG3  (HEAD 01ad2e1)
+checkWriteOnce DG3: 0 errors
+EXIT 0
+$ (pre-rewrite head, in a second throwaway clone at origin/backup/pre-dg4-writeonce-repair-72c0e653a3) node writeonce.mjs ... DG4
+checkWriteOnce DG4: 99 errors
+  write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/meta.json has a D event in 7a261742f1 (review evidence is append-only)
+  write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/result.json has a D event in 7a261742f1 (review evidence is append-only)
+  write-once: docs/delivery/runs/DG4/DG4-T-DG4-REV-DOM-R7-domain-reviewer-20261012T205648Z-57f41674/sandbox.json has a D event in 7a261742f1 (review evidence is append-only)
+EXIT 1

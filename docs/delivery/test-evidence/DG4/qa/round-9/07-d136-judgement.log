@@ -1,0 +1,35 @@
+## DG0-DG3 untouched: DG3 gate commit bc8f455 is an ancestor of the old and of the new head
+bc8f455 -> bc8f4550ce46f5a207aebaaaef5eeb0d0b5a0335; ancestor of new a445b24: yes; of old 72c0e65: yes; in SHA map as old id: 0
+eda5588 (first rewritten) maps to: 69d2704187eaee18c76e7f43e17d2f5f8254bae1; old parent(s) 003557819a9937bc3f87c631f340651e93e3594a ; new parent(s) 003557819a9937bc3f87c631f340651e93e3594a
+commits in old history from merge-base(bc8f455) not in the SHA map: 22 (of 382)
+files under docs/delivery/gates, reviews/DG0-3, candidates/DG0-3 changed old->new head: 0
+
+## write-once: does the validator's historical/pipeline mode run checkWriteOnce?
+tools/gates/import-findings.mjs:63:        // (tools/gates/lib/rules.mjs checkWriteOnce), which is what forced the round-17 mishap that this guard prevents.
+
+## B4: stages.json frozen_at vs manifests (rounds of DG4)
+stage candidate sha256:18c18fe4eda7cbc1 frozen_at 2026-10-13T09:12:45Z manifest 2026-10-13T09:12:45Z
+
+## findings.json: DG4 status counts and the 23 returned closures
+Counter({'FIXED_PENDING_VERIFICATION': 23, 'ACCEPTED_OBSERVATION': 1})
+23 ['F-DG4-100', 'F-DG4-101', 'F-DG4-102', 'F-DG4-103', 'F-DG4-120', 'F-DG4-121', 'F-DG4-140', 'F-DG4-141', 'F-DG4-122', 'F-DG4-123', 'F-DG4-124', 'F-DG4-104', 'F-DG4-125', 'F-DG4-126', 'F-DG4-127', 'F-DG4-105', 'F-DG4-143', 'F-DG4-144', 'F-DG4-106', 'F-DG4-145', 'F-DG4-128', 'F-DG4-146', 'F-DG4-147']
+any OPEN Critical/High: []
+fix_revision full 40-hex for all FPV: True
+
+## D-135 cites a pre-rewrite id: grep 16e5343 in decisions.md D-135 row; SHA map entry
+1
+16e5343c40d08e56fbd11e5fc7be00445f2272a2 e8f14db70db7c5215cd76be7273345d5bcf84310
+## B4 (re-run with the stages.json key review_rounds): frozen_at in stages.json vs the candidate manifests
+example round keys: ['round', 'candidate_id', 'frozen_at', 'source_commit', 'records', 'note']
+round 1 sha256:19656b1ff2cc5ce1 | stages 2026-10-10T21:25:25Z | manifest 2026-10-10T21:25:25Z | equal 19656b1ff2cc5ce1.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 2 sha256:3f51b79d671ebf6d | stages 2026-10-11T04:43:11Z | manifest 2026-10-11T04:43:11Z | equal 3f51b79d671ebf6d.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 3 sha256:890faa1284e07356 | stages 2026-10-11T12:34:15Z | manifest 2026-10-11T12:34:15Z | equal 890faa1284e07356.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 4 sha256:5ff36f6e74af1853 | stages 2026-10-11T21:53:01Z | manifest 2026-10-11T21:53:01Z | equal 5ff36f6e74af1853.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 5 sha256:69b7412a0a360135 | stages 2026-10-12T04:22:59Z | manifest 2026-10-12T04:22:59Z | equal 69b7412a0a360135.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 6 sha256:f966fe5728e260b8 | stages 2026-10-12T12:19:36Z | manifest 2026-10-12T12:19:36Z | equal f966fe5728e260b8.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 7 sha256:baa6ff4da306402c | stages 2026-10-12T20:52:03Z | manifest 2026-10-12T20:52:03Z | equal baa6ff4da306402c.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+round 8 sha256:8014e5ceffe1f374 | stages 2026-10-13T07:05:44Z | manifest 2026-10-13T07:05:44Z | equal 8014e5ceffe1f374.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier', 'release-auditor']
+round 9 sha256:18c18fe4eda7cbc1 | stages 2026-10-13T09:12:45Z | manifest 2026-10-13T09:12:45Z | equal 18c18fe4eda7cbc1.manifest.json | records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+stage candidate sha256:18c18fe4eda7cbc1 2026-10-13T09:12:45Z manifest 2026-10-13T09:12:45Z equal
+## B1: decisions.md in the round-9 manifest: [{"path": "docs/delivery/decisions.md", "sha256": "99e0424287392bea5c5c10d8c933e37469d0c3e44a4ab881a867a36ae4ff6ff6", "mode": "100644"}]
+sha256(decisions.md at 01ad2e1): 99e0424287392bea5c5c10d8c933e37469d0c3e44a4ab881a867a36ae4ff6ff6 | contains D-135: True | contains D-136: True
