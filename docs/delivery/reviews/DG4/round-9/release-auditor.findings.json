@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG4-160",
+      "stage_id": "DG4",
+      "requirement": "REQ-S04-008",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The transformation edit page tells users, in EN and AR, that the G6 (Sustain) approval needed to close a transformation 'is available in a later release', but DG4 delivers G6 and governed closure",
+      "reproduction": "Candidate sha256:18c18fe4…d76c, source f2ae717. (1) apps/web/src/i18n/en/transformations.json:88 form.statusHint = 'Only the allowed next statuses are offered: draft → active; active → on hold; on hold → active. Closing a transformation needs the G6 (Sustain) business approval, which is available in a later release.' apps/web/src/i18n/ar/transformations.json:88 says the same ('… وسيتاح ذلك في إصدار لاحق'). (2) It is rendered as the Status field hint on the edit screen: apps/web/src/pages/transformations/TransformationEditPage.tsx:274 hint={t('transformations.form.statusHint')}, and apps/web/src/pages/transformations/transformations.test.tsx:315-321 pins the exact English sentence with toBe, and :350 asserts it is on screen in en and ar. (3) The text was written in P1 (37ec3745, DG1 base, 2026-10-01), when G6 really was later. DG4 delivers it: REQ-S04-008 'Run the Realize phase procedure and G6 Sustain decision', REQ-PB-021 'G6 Sustain …' and REQ-S03-003 (closure as its own status) are final_gate DG4 and IMPLEMENTED; router.tsx:402 routes transformations/:id/closure to ClosurePage; closureP4.json:33 'Closure needs the G6 (Sustain) business approval …'; problems.json:590 closure__g6_not_approved; e2e apps/web/e2e/p4-gates-closure.spec.ts. No DG4 review, finding, decision or handback mentions statusHint or 'later release' (grep: 0 hits). Evidence: docs/delivery/test-evidence/DG4/audit/round-9/12-new-finding-stale-g6-hint.log.",
+      "expected": "User-facing text is true for the release it ships in, in both EN and AR (CLAUDE.md honesty rules: do not mislabel the delivery state of a feature; every user-facing string in AR and EN). With G6 and closure delivered in DG4, the hint should still explain why 'closed' is not offered in the status select, but say where closure is done: for example, that a transformation is closed from its Closure page once the G6 (Sustain) business approval and the closure conditions are met. The unit test that pins the sentence should pin the corrected wording in both languages.",
+      "actual": "The hint says the G6 approval is not available yet, and does not point to the Closure page. It is wrong about the DG4 product in both languages. The behaviour is correct: the select rightly offers no 'closed' (closure is governed and happens on its own page), and nothing is blocked. Only the guidance is false. Hence Low and not mandatory: no data integrity, calculation, access-control or portability impact, and no broken workflow.",
+      "evidence": [
+        "apps/web/src/i18n/en/transformations.json",
+        "apps/web/src/i18n/ar/transformations.json",
+        "apps/web/src/pages/transformations/TransformationEditPage.tsx",
+        "apps/web/src/pages/transformations/transformations.test.tsx",
+        "apps/web/src/app/router.tsx",
+        "apps/web/src/i18n/en/closureP4.json",
+        "docs/delivery/test-evidence/DG4/audit/round-9/12-new-finding-stale-g6-hint.log"
+      ],
+      "reported_by": "release-auditor",
+      "reported_in": "docs/delivery/reviews/DG4/round-9/release-auditor.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-13T10:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by the release-auditor in the DG4 round-9 audit (session 7b5f734c). Proposed id; the orchestrator allocates the final number. Suggested repair: reword form.statusHint in EN and AR to point to the Closure page and the G6 (Sustain) approval, and update the pinned assertions in transformations.test.tsx. A specialist reviewer verifies it, or, as the alternative, a specialist accepts it as an observation and the release-auditor concurs."
+        }
+      ]
+    }
+  ]
+}

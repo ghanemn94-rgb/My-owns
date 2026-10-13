@@ -1,0 +1,25 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG4-148",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "The release-auditor concurs, on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae717), with accepting F-DG4-148 as an observation (D-134, D-136).\n\nWhy acceptance is allowed:\n- The finding is Low, mandatory_violation false, which is what rules.mjs requires for ACCEPTED_OBSERVATION.\n- The reporter (qa-verifier) re-recorded 'PASS -> ACCEPTED_OBSERVATION' in its round-9 sidecar as its latest entry for the finding. Its run 5ead60fc exited 0, with an empty external_config_changed and a matching sandbox.json (02-provenance.log).\n- findings.json mirrors it: acceptance.accepted_by [qa-verifier, release-auditor], owner delivery-orchestrator, with a rationale (03-findings.log).\n\nNo product defect:\n- Both failure classes are timing under CPU oversubscription: a first render missing unit-web's 5 s wait, and architecture.test.ts missing its 30 s timeout.\n- The product tree of f2ae717 is byte-identical to round 7's dab4562 and round 8's 8553323/5cd1e06 (0 files differ outside docs/delivery). No test, timeout or product file changed for the acceptance.\n\nThe envelope (environment.md limitation 6: 1-min load <= 8, sampled at least every 30 s and recorded) is accurate and evidenced on this candidate:\n- qa round 9: I recomputed its raw samples myself. Series r2 has 58 samples, max 5.81, 0 above 8, and 4/4 EXIT 0. Series r1 has 81 samples, max 11.67, 55 above 8; it is disclosed and not counted, and it also passed 4/4. A strict scan of all 8 logs gives 0 failure lines; every 'x' hit is a passing test name.\n- My own reproduction, in a complete clone at f2ae717 with no other agent run active: Node 24 with the locale unset (load 1.43-4.91) and Node 22 with C.UTF-8 (load 3.99-5.83). Both EXIT 0, with 1589 + 1347 + 259 (2 skipped by design). architecture.test.ts took 10.5-10.7 s against 30 s, and the raid action register 1.2-2.0 s against 5 s (07-unit-summary.txt).\n- Every recorded failure is at load >= 12.4, and every run at <= 11.67 has passed.\n\nThe conditions of my round-8 concurrence still apply:\n- A pnpm test failure inside the envelope is a genuine failure.\n- The re-run clause covers only the two named timing classes. Any other failure must be explained on its own (the DG2 round-10 evidence-honesty condition).\n- The two rounded figures in environment.md ('13-16', measured 12.40-17.65; 'pre-freeze 1.4-2.3', which is 1.22-2.33) remain for the delivery-orchestrator to correct, as D-135 committed.\n\nOwner of the acceptance and the text correction: delivery-orchestrator. The code owner stays frontend-ux-engineer.\n\nThis concurrence is independent of the gate decision. The gate is BLOCKED for another reason (F-DG4-160), not because of F-DG4-148.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-summary.txt",
+        "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-load-samples.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/07-unit-setup.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/02-provenance.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/03-findings.log",
+        "docs/delivery/test-evidence/DG4/audit/round-9/08-evidence-honesty-scan.log",
+        "docs/delivery/reviews/DG4/round-9/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-summary.txt",
+        "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-samples-r2.log",
+        "docs/delivery/environment.md",
+        "docs/delivery/findings.json"
+      ]
+    }
+  ]
+}
