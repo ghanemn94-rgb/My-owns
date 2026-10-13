@@ -11672,7 +11672,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T22:22:00Z",
@@ -11693,10 +11693,39 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 70fcefa172, bff9725eb2; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "5d6f4802f9f737f9f93f033dc9f48b54d43ab526",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 70fcefa172ef522a3dfc9515bfd53e179a9e49b2, bff9725eb2769df6df885f4fbcc113dd9ddfa7b5 (before the rewrite: 655b2a6661, b262521c43). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (5d6f4802f9)."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 70fcefa172ef522a3dfc9515bfd53e179a9e49b2, bff9725eb2769df6df885f4fbcc113dd9ddfa7b5 (before the rewrite: 655b2a6661, b262521c43). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (5d6f4802f9).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.sh",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-100-probe-D.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/run-probe.sh",
+          "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-sod-denials.test.ts",
+          "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r2-sweep-node22-lang-unset.log",
+          "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+          "apps/api/src/modules/benefits/register.ts",
+          "apps/api/src/modules/tasks/routes.ts"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae717, after the D-136 rewrite).\n\n(1) Ancestry. fix_revision 5d6f4802f9f737f9f93f033dc9f48b54d43ab526 ('Merge T-DG4-KBE-R5 into the DG4 integration branch') is a commit and an ancestor of f2ae717. So are both fix commits, 70fcefa172 (KBE-R5) and bff9725eb2 (BE-R5), and both are ancestors of 5d6f4802. It is the first commit on f2ae717's first-parent line that contains both (fix-revision-first-integration.log), as D-136 says.\n\n(2) SHA map. 5d6f4802 maps to old 4d9bbd2, 70fcefa172 to old 655b2a6 and bff9725eb2 to old b262521. Each pair has the same subject and author date. The product diff (git diff <c>^ <c> -- . ':!docs/delivery') hashes the same for old and new: c78713f1b9a8ad23 for KBE-R5 (16 files) and 81050aee4a06ca03 for BE-R5 (5 files).\n\n(3) The fix is in the candidate:\n- register.ts:143, requirePermissionSomewhere throws forbidden().withDenial(denialOf(permission, target));\n- finance-validation.ts:236 and :357, overlaps.ts:437 and valuation-methods.ts:192 attach withDenial(denialOf(FINANCE_VALIDATE, ctx.target));\n- tasks/routes.ts:137 and :160, notAssigneeDenial.\n\nI re-ran my round-2 probe D (sec-dg4-r2-sod-denials.test.ts, unchanged) this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 4/4 passed, exit 0, at load 8.4. Each of the four Finance SoD refusals writes exactly one authorization.denied.\n\nThe 766-call sweep (probe S) was not re-run this round, because of the load envelope. It passed 766/766 in round 7 on byte-identical code (rerun-sec-dg4-r2-sweep-node22-lang-unset.log), and my round-2 verification is in round-2/code-security-reviewer.verifications.json."
+      }
     },
     {
       "id": "F-DG4-101",
@@ -11718,7 +11747,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T22:22:00Z",
@@ -11739,10 +11768,37 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 70fcefa172; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "70fcefa172ef522a3dfc9515bfd53e179a9e49b2",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 70fcefa172ef522a3dfc9515bfd53e179a9e49b2 (before the rewrite: 655b2a6661). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 70fcefa172ef522a3dfc9515bfd53e179a9e49b2 (before the rewrite: 655b2a6661). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-101-probe-F-rev2.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/run-probe.sh",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/with-pg.sh",
+          "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-finance.test.ts",
+          "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+          "apps/api/src/modules/benefits/corrections.ts",
+          "packages/db/migrations/0061_p4_finance_validation_correction_step.sql"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 70fcefa172ef522a3dfc9515bfd53e179a9e49b2 (T-DG4-KBE-R5) is a commit and an ancestor of f2ae717 (merge-base --is-ancestor rc=0).\n\n(2) SHA map. 70fcefa172 maps to old 655b2a6, with the same subject and author date. The product diff is identical: c78713f1b9a8ad23 for both, 16 files.\n\n(3) The fix is in the candidate:\n- corrections.ts:193 calls stepOriginal;\n- corrections.ts:202-223 bumps the original finance_validation's version with a version guard (.where('version','=',validation.version); 409 versionConflict otherwise) and writes the finance_validation.corrected audit event (prior and new version);\n- corrections.ts:83 is the lockQueue advisory lock.\nMigration 0061_p4_finance_validation_correction_step.sql has the same blob in the candidate as in the fix commit (efe449a7). Neither corrections.ts nor 0061 changed after 70fcefa172.\n\nI re-ran my round-2 probe F rev2 (sec-dg4-r2-finance.test.ts, unchanged) this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 10/10 passed, exit 0, at load 7.9. F2: another Finance user's stale amend gets 409 and nothing is written. F2a-F2c and G: migration 0061 admits only a version+1 step on an approved, corrected validation."
+      }
     },
     {
       "id": "F-DG4-102",
@@ -11765,7 +11821,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T22:22:00Z",
@@ -11786,10 +11842,35 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 07b72f3261; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "07b72f32611295d979b3055dc04cdfa830126d2a",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: e2ef6ecd51). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: e2ef6ecd51). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-102-web-cycles.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-2/probes/web-cycles.mjs",
+          "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+          "apps/web/src/pages/my-work/messages.ts",
+          "apps/web/src/pages/traceability/selection.ts"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 07b72f32611295d979b3055dc04cdfa830126d2a (T-DG4-FE-R4) is a commit and an ancestor of f2ae717.\n\n(2) SHA map. 07b72f3261 maps to old e2ef6ec, with the same subject and author date. The product diff is identical: e9213ec931b69e76 for both, 25 files.\n\n(3) The fix is in the candidate. The extractions apps/web/src/pages/my-work/messages.ts and apps/web/src/pages/traceability/selection.ts exist, MyWorkSections.tsx:16 imports renderMessage from ../my-work/messages.ts, and no section or panel module imports MyWorkPage or TraceabilityPage.\n\nI re-ran my round-2 probe web-cycles.mjs (unchanged, sha256 a7d492ec…) this round with an absolute root:\n- in the candidate clone: 202 web files and 1 cycle, pages/admin/UsersPage.tsx <-> AssignmentsPage.tsx, which is pre-DG4 DG2 code and was not raised;\n- control, at the remapped round-1 source ebd4a4b (old a91d82c): 3 cycles, including the two P4 cycles MyWorkPage <-> MyWorkSections and TraceabilityPage <-> TracePanels.\nSo the probe still detects the defect, and the candidate does not contain it."
+      }
     },
     {
       "id": "F-DG4-103",
@@ -11812,7 +11893,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T22:22:00Z",
@@ -11833,10 +11914,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to bff9725eb2; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "bff9725eb2769df6df885f4fbcc113dd9ddfa7b5",
-      "fix_summary": "Fix commits after the D-136 history rewrite: bff9725eb2769df6df885f4fbcc113dd9ddfa7b5 (before the rewrite: b262521c43). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: bff9725eb2769df6df885f4fbcc113dd9ddfa7b5 (before the rewrite: b262521c43). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-103-probe-C-rev2.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-2/probes/sec-dg4-r2-gate-commit.test.ts",
+          "docs/delivery/reviews/DG4/round-2/code-security-reviewer.verifications.json",
+          "apps/api/src/modules/workflows/gates.ts"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision bff9725eb2769df6df885f4fbcc113dd9ddfa7b5 (T-DG4-BE-R5) is a commit and an ancestor of f2ae717.\n\n(2) SHA map. bff9725eb2 maps to old b262521, with the same subject and author date. The product diff is identical: 81050aee4a06ca03 for both, 5 files.\n\n(3) The fix is in the candidate:\n- gates.ts:657-670, writeAtCommit runs refreshPrincipal inside the transaction, then commitTimeDenial; updateGate uses it at :473 and submitGate at :684;\n- gates.ts:921-926, decideGate refreshes the principal and uses commitTimeDenial.\ngates.ts has not changed since bff9725eb2.\n\nI re-ran my round-2 probe C rev2 (sec-dg4-r2-gate-commit.test.ts, unchanged) this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 6/6 passed, exit 0, at load 8.6.\n- C1/C2: revoking a delegation or the delegator's role in the window gives 403 and nothing is decided.\n- C3: a user disabled in the window gives 401 with no audit row.\n- C4/C5: submit and configure with the write role revoked give 403 with the permission named.\n- C6: an outsider gets 404 with one denial."
+      }
     },
     {
       "id": "F-DG4-120",
@@ -11858,7 +11963,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T22:20:00Z",
@@ -11879,10 +11984,35 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 07b72f3261; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "07b72f32611295d979b3055dc04cdfa830126d2a",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: e2ef6ecd51). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: e2ef6ecd51). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/rewrite-check.log",
+          "docs/delivery/reviews/DG4/round-2/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-decision-rights-T11-notice.png",
+          "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-decision-rights-T11-notice.png"
+        ],
+        "note": "Re-verified after the D-136 rewrite on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae7170630456a772e1ceac90ab6d96b68e3f5c), in a complete disposable clone. (1) fix_revision 07b72f32611295d979b3055dc04cdfa830126d2a is a commit and an ancestor of f2ae717. So is the listed fix commit 07b72f3261, which is the same commit. (2) In the D-136 SHA map, 07b72f3 maps from old e2ef6ecd51fb, which is reachable from the backup ref. The product diffs (git diff <c>^ <c> -- . ':!docs/delivery') of the old and new commits are byte-identical (hash 10a5f65a7ac54d1a). Subject, author date and committer date are equal. (3) The fix is still present at f2ae717. 435 of its 436 substantive added product lines are still verbatim; the other line was refined later. apps/web/src/pages/decision-rights/DecisionRightsPage.tsx:97 renders the notice #decision-rights-ar-provisional. Line 81 marks each B0099 source label lang=en dir=ltr. apps/web/src/i18n/ar/decisionRights.json:8 holds the Arabic provisional notice. The targeted test governance.test.tsx passed in the unit-web run, 125/125 across 6 files, exit 0. My round-2 verification (real stack, EN and AR screenshots) applies unchanged: the product code is byte-identical to the code I reviewed in full in round 7 (an empty product diff 5cd1e06..f2ae717)."
+      }
     },
     {
       "id": "F-DG4-121",
@@ -11901,7 +12031,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-1/domain-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T22:20:00Z",
@@ -11922,10 +12052,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to a7bfc9d8b6, 70fcefa172, 07b72f3261; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "f68c87a86ba3a19a27728d866011e3d0e29cf3ea",
-      "fix_summary": "Fix commits after the D-136 history rewrite: a7bfc9d8b65b404b4c5ec3874bc5df887d008fc9, 70fcefa172ef522a3dfc9515bfd53e179a9e49b2, 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: ebc23f487d, 655b2a6661, e2ef6ecd51). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (f68c87a86b)."
+      "fix_summary": "Fix commits after the D-136 history rewrite: a7bfc9d8b65b404b4c5ec3874bc5df887d008fc9, 70fcefa172ef522a3dfc9515bfd53e179a9e49b2, 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: ebc23f487d, 655b2a6661, e2ef6ecd51). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (f68c87a86b).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-2/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-2/screens/en-benefits-totals-gross.png",
+          "docs/delivery/test-evidence/DG4/domain/round-2/screens/ar-benefits-totals-gross.png"
+        ],
+        "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision f68c87a86ba3a19a27728d866011e3d0e29cf3ea (the T-DG4-FE-R4 merge) and the fix commits a7bfc9d8b6, 70fcefa172 and 07b72f3261 are all commits and ancestors of f2ae717. (2) They map from the old commits 3b5c368cff4a, ebc23f487d1c, 655b2a6661a6 and e2ef6ecd51fb, all reachable from the backup ref. For each pair the old and new product diffs are identical (10a5f65a…, 1b6d2b61…, cff74809…, 10a5f65a…), and the metadata is equal. For the merge commit the diff is taken against its first parent. (3) The fix is still present. Of the added lines, 49/50, 683/716 and 435/436 are still verbatim; the rest were refined by the later basis work F-DG4-123/126. apps/api/src/modules/benefits/totals.ts:95 restricts gross to the profit-and-cash classes, and lines 21-22 keep revenue_uplift and avoided_cost out of gross and net. apps/web/src/i18n/en/benefitsP4.json:472-475 has 'Gross benefit (profit and cash)' and the beside labels, and apps/web/src/i18n/en/dashboards.json:351-352 has the Finance labels. The targeted tests apps/api/src/modules/benefits/totals.test.ts (unit-node, 91/91 across 4 files, exit 0) and benefits.test.tsx (unit-web, 125/125, exit 0) pass. My round-2 real-stack verification (gross 90, never 435; EN and AR) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-140",
@@ -11946,7 +12100,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-1/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-10T23:40:00Z",
@@ -11967,10 +12121,36 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 12bb5c81b7; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "12bb5c81b7c25972d8099b792b0b86178586343b",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 12bb5c81b7c25972d8099b792b0b86178586343b (before the rewrite: 4baef6520f). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 12bb5c81b7c25972d8099b792b0b86178586343b (before the rewrite: 4baef6520f). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/06-register-confirmation.txt",
+          "docs/delivery/test-evidence/DG4/qa/round-9/03-rewrite-check.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/scripts/check-fixes.sh",
+          "docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json",
+          "docs/delivery/test-evidence/DG4/qa/round-7/03-integration-tests-qa-candidate-only.log"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae7170630456a772e1ceac90ab6d96b68e3f5c) after the D-136 rewrite, in a complete disposable clone that carries origin/backup/pre-dg4-writeonce-repair-72c0e653a3. (1) fix_revision 12bb5c81b7c25972d8099b792b0b86178586343b is a commit and an ancestor of f2ae717 (git merge-base --is-ancestor); it is the only listed fix commit. (2) The SHA map maps it from old 4baef6520f25fb3c93bf3e0a4e99e1384018cc70, with the same subject, author date and committer date. Old and new commit diffs are byte-identical, both outside docs/delivery (empty in both; the fix is a register change) and in full. The old commit is an ancestor of 93a7dd7, the round-2 source where I verified it (04b-fix-presence.log). (3) The fix is still in the frozen candidate. docs/delivery/requirements.csv has 0 diff lines between 12bb5c81b7 and f2ae717. On the candidate clone, REQ-PB-010 (IMPLEMENTED) cites tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts, and REQ-S03-004 (IMPLEMENTED) cites tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts. Both notes end 'No test gap remains', and every evidence path of the 137 rows exists (06-register-confirmation.txt: 1150 paths, 0 missing). The two tests themselves are unchanged since round 7, where they passed in tests/qa alone and in both integration runs (carried forward; the product tree outside docs/delivery is identical to round 7's dab4562). Earlier verification: docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-141",
@@ -11992,7 +12172,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-1/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T00:45:00Z",
@@ -12013,10 +12193,35 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 07b72f3261; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "07b72f32611295d979b3055dc04cdfa830126d2a",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: e2ef6ecd51). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 07b72f32611295d979b3055dc04cdfa830126d2a (before the rewrite: e2ef6ecd51). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json",
+          "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-unset-summary.txt",
+          "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-full-cutf8-summary.txt",
+          "apps/web/e2e/journeys.spec.ts"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision 07b72f32611295d979b3055dc04cdfa830126d2a is a commit and an ancestor of f2ae717; it is the only listed fix commit. (2) It maps from old e2ef6ecd51fbdd1475ad2a46c0e23bfd9210a0d8 (same subject and dates). The product diffs outside docs/delivery are identical, as is the full commit diff (sha256 prefix e9213ec931b69e76 for both); the old commit is an ancestor of the round-2 source 93a7dd7. (3) Still in the candidate: apps/web/e2e/journeys.spec.ts has 0 diff lines from 07b72f3261 to f2ae717. The fix is at lines 414-424: it fills the users-register search with 'Synthetic Transformation Lead', waits for GET /api/v1/users?q=<that name>, then expects the link. The journey passed 9/9 in chromium-en and 9/9 in chromium-ar in my round-7 full e2e runs on identical code (carried forward: e2e not re-run this round, D-136 confirmation round). Earlier verification: docs/delivery/reviews/DG4/round-2/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-122",
@@ -12042,7 +12247,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-2/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T05:40:00Z",
@@ -12063,10 +12268,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to f9bcba1bf1; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "f9bcba1bf17d535ff76a145ac735b9c964676c8c",
-      "fix_summary": "Fix commits after the D-136 history rewrite: f9bcba1bf17d535ff76a145ac735b9c964676c8c (before the rewrite: 7320b93e9f). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: f9bcba1bf17d535ff76a145ac735b9c964676c8c (before the rewrite: 7320b93e9f). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-3/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-ratio-25pct-t10.png",
+          "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-ratio-25pct-t10.png"
+        ],
+        "note": "High, mandatory. Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision f9bcba1bf17d535ff76a145ac735b9c964676c8c is a commit and an ancestor of f2ae717, and the listed fix commit f9bcba1bf1 is the same commit. (2) It maps from old 7320b93e9fd5, which is in the backup ancestry. The old and new product diffs are identical (763e822f6a6ffdda), and subject and dates are equal. (3) The fix is still present: 603 of its 621 substantive added lines are still verbatim, and the rest were refined later by the kpiUnit work for F-DG4-125. apps/web/src/pages/dashboards/ui.tsx:177 sends unit 'ratio' to the percent formatter, and lines 168-170 document that a computed ratio is shown as a percentage, never as money. The targeted unit-web tests valueHeadlines.test.tsx ('the gap reads 100 %', EN and AR) and percentKpi.test.tsx pass: 125/125, exit 0. My round-3 real-stack verification (100 %, 25 % and -20 % in EN and AR on T10, the Overview and Finance) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-123",
@@ -12094,7 +12323,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-2/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T05:40:00Z",
@@ -12115,10 +12344,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 042f258287, 8a468432e0, f9bcba1bf1; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "8ed26e89c096873e90280bf04ca28bf48d1a05ae",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 042f25828710cf436f46930cc868f73f80078ceb, 8a468432e0b62adf35ff77ceea25376d3b411d22, f9bcba1bf17d535ff76a145ac735b9c964676c8c (before the rewrite: 546d3c4a1e, 3f5ebb751e, 7320b93e9f). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (8ed26e89c0)."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 042f25828710cf436f46930cc868f73f80078ceb, 8a468432e0b62adf35ff77ceea25376d3b411d22, f9bcba1bf17d535ff76a145ac735b9c964676c8c (before the rewrite: 546d3c4a1e, 3f5ebb751e, 7320b93e9f). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (8ed26e89c0).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-3/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-3/screens/en-r3-A-header.png",
+          "docs/delivery/test-evidence/DG4/domain/round-3/screens/ar-r3-A-header.png"
+        ],
+        "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision 8ed26e89c096873e90280bf04ca28bf48d1a05ae (the T-DG4-FE-R5 merge) and the fix commits 042f258287, 8a468432e0 and f9bcba1bf1 are all commits and ancestors of f2ae717. (2) They map from the old commits 208cb78a77d9, 546d3c4a1ec7, 3f5ebb751e19 and 7320b93e9fd5, all in the backup ancestry. The old and new product diffs are identical for every pair, and the metadata is equal. (3) The fix is still present. Of the added lines, 161/193, 742/804 and 603/621 are still verbatim; the rest were superseded by the per-basis repair for F-DG4-126/127, which builds on this fix. apps/api/src/modules/reporting/dashboards/engine.ts:590 emits headlineBasis. Lines 712-714 push the separate top_line and non_cash headlines, and line 574 drills a top-line headline by revenue_uplift and a non-cash one by avoided_cost. The targeted tests n4-value-basis.test.ts (unit-node) and valueHeadlines.test.tsx (unit-web: 'top line and non-cash beside, labelled, never summed', EN and AR) pass. My round-3 real-stack verification (90/300/45, never 435) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-124",
@@ -12136,7 +12389,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-2/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T05:40:00Z",
@@ -12157,10 +12410,33 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 276623e3bf; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "276623e3bf96fa2d35aeef795126931d5504d01d",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 276623e3bf96fa2d35aeef795126931d5504d01d (before the rewrite: 546fb4eb0e). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 276623e3bf96fa2d35aeef795126931d5504d01d (before the rewrite: 546fb4eb0e). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/validators.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/d136-judgement.log",
+          "docs/delivery/reviews/DG4/round-3/domain-reviewer.verifications.json"
+        ],
+        "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. This is a delivery-record finding: the stages.json DG4 history lacked the round-1 FIXING phase. (1) fix_revision 276623e3bf96fa2d35aeef795126931d5504d01d is a commit and an ancestor of f2ae717, and the listed fix commit 276623e3bf is the same commit. (2) It maps from old 546fb4eb0ecf, which is in the backup ancestry, with equal subject and dates. Neither commit has a product diff: both hash to e3b0c442…, the empty diff, as expected for a records-only fix. (3) The fix is still present. The DG4 history at the freeze commit runs PLANNED, BUILDING, REVIEWING (round 1, 21:25:25Z) and then FIXING (2026-10-11T00:51:49Z). Every later REVIEWING/FIXING/VERIFYING step follows, up to REVIEWING (round 9, 09:12:45Z). This round, node tools/gates/validate.mjs --pipeline prints 'PASS pipeline (active stage: DG4 REVIEWING)' with exit 0, in the clone and on the working tree. --historical for DG3, DG2 and DG1 also exits 0."
+      }
     },
     {
       "id": "F-DG4-104",
@@ -12185,7 +12461,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T06:03:00Z",
@@ -12206,10 +12482,35 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 276623e3bf; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "276623e3bf96fa2d35aeef795126931d5504d01d",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 276623e3bf96fa2d35aeef795126931d5504d01d (before the rewrite: 546fb4eb0e). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 276623e3bf96fa2d35aeef795126931d5504d01d (before the rewrite: 546fb4eb0e). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG3.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG2.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/validate-historical-DG1.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/validate-pipeline.log",
+          "docs/delivery/reviews/DG4/round-3/code-security-reviewer.verifications.json"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 276623e3bf96fa2d35aeef795126931d5504d01d is a commit and an ancestor of f2ae717.\n\n(2) SHA map. 276623e3bf maps to old 546fb4e, with the same subject and author date. This is a records-only fix: the product diff is empty for both (e3b0c442…). The full diff, docs/delivery included, is identical for old and new (47a3159c99b8f8d7: stages.json, 5 lines added).\n\n(3) The fix holds in the candidate. DG4's history in stages.json at f2ae717 is PLANNED > BUILDING > (REVIEWING > FIXING) x7 > REVIEWING > VERIFYING, and the stage is REVIEWING again for round 9 at the freeze. There is no consecutive same-state step. This round, validate.mjs --historical --stage DG3, DG2 and DG1, and --pipeline, all exit 0 in the repository tree at the freeze commit 01ad2e1 (validate-*.log). In round 2 all four exited 1."
+      }
     },
     {
       "id": "F-DG4-125",
@@ -12234,7 +12535,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-3/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T13:55:00Z",
@@ -12255,10 +12556,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 0595b87a8e, 68b8ba658f, 23eadb5d31, b9d41dd9f3; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "228e499c6627d0a149329257a6d4be786afd94c8",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 0595b87a8ef6a8804237f0d526d0593f0f24afa0, 68b8ba658faaae622b61d6716e45050c6b10d3cd, 23eadb5d3107e2e268b135cc72059e3936e54fd3, b9d41dd9f3fda0142b1005e528949c365ae64219 (before the rewrite: 74d99e1b8c, 104de0c874, 1e57e8c6bb, 9505f501da). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (228e499c66)."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 0595b87a8ef6a8804237f0d526d0593f0f24afa0, 68b8ba658faaae622b61d6716e45050c6b10d3cd, 23eadb5d3107e2e268b135cc72059e3936e54fd3, b9d41dd9f3fda0142b1005e528949c365ae64219 (before the rewrite: 74d99e1b8c, 104de0c874, 1e57e8c6bb, 9505f501da). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (228e499c66).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-t10-kpi-units.png",
+          "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-t10-kpi-units.png"
+        ],
+        "note": "High, mandatory. Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision 228e499c6627d0a149329257a6d4be786afd94c8 (the T-DG4-FE-R7 merge) and the fix commits 0595b87a8e, 68b8ba658f, 23eadb5d31 and b9d41dd9f3 are all commits and ancestors of f2ae717. (2) They map from the old commits 7f38e28981fd, 74d99e1b8ca6, 104de0c874e7, 1e57e8c6bbbc and 9505f501da45, all in the backup ancestry. The old and new product diffs are identical for every pair, and the metadata is equal. (3) The fix is still present. Of the added lines, 673/685, 137/153, 495/495 and 599/604 are still verbatim. apps/web/src/pages/dashboards/ui.tsx:9 and 123-125 format a KPI value by its kpiUnit kind, and apps/api/src/modules/reporting/dashboards/areas.ts:226-263 carries kpiUnit on every value emitter. The targeted unit-web tests percentKpi.test.tsx ('every percentage KPI reads 12 %', EN and AR) and kpiUnit.test.tsx (26 tests) pass: 125/125, exit 0. Their stderr carries 14 React 'two children with the same key' warnings, which the test fixtures cause (percentKpi.test.tsx:86-88 builds two items from one KPI id). They are the same warnings disclosed in rounds 4-7 and are not a product failure. My round-4 real-stack, real-worker verification (dom-kpiunit 51/51: '12 %', '12 % of users' and '1.5' in EN and AR) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-126",
@@ -12277,7 +12602,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-3/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T13:55:00Z",
@@ -12298,10 +12623,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 22ef6c7832, 4336273321, 0595b87a8e; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "f8ed23c4fad9cc4fa21b71b307b2470f81536c83",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 22ef6c78324f193b7e962adbf7493f72c6802742, 433627332166c48e73a032b095ebefaa29b72169, 0595b87a8ef6a8804237f0d526d0593f0f24afa0 (before the rewrite: d5b847b0ac, e65d6ac155, 74d99e1b8c). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (f8ed23c4fa)."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 22ef6c78324f193b7e962adbf7493f72c6802742, 433627332166c48e73a032b095ebefaa29b72169, 0595b87a8ef6a8804237f0d526d0593f0f24afa0 (before the rewrite: d5b847b0ac, e65d6ac155, 74d99e1b8c). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (f8ed23c4fa).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-4/screens/en-r4-A-t10.png",
+          "docs/delivery/test-evidence/DG4/domain/round-4/screens/ar-r4-A-t10.png"
+        ],
+        "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision f8ed23c4fad9cc4fa21b71b307b2470f81536c83 (the T-DG4-FE-R6 merge) and the fix commits 22ef6c7832, 4336273321 and 0595b87a8e are all commits and ancestors of f2ae717. (2) They map from the old commits 8d4134545d6e, d5b847b0acfc, e65d6ac15501 and 74d99e1b8ca6, all in the backup ancestry. The old and new product diffs are identical for every pair, and the metadata is equal. (3) The fix is still present. Of the added lines, 252/276, 994/997 and 673/685 are still verbatim. apps/api/src/modules/reporting/dashboards/areas.ts:377-513 builds the Value RAG's ruleParams.lines per basis and currency (basisClasses, valueLinesOf), so an unvalidated top-line or non-cash plan can no longer hide behind a green profit-and-cash line. The targeted tests n4-value-basis.test.ts and areas.test.ts (unit-node; this includes the property 'Unknown or Stale inputs never combine to green', over 2000 seeded sets) and n4Value.test.tsx (unit-web) pass. My round-4 in-process and real-stack verification (dom-gross4 131/131, EN and AR) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-127",
@@ -12320,7 +12669,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-3/domain-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T13:55:00Z",
@@ -12341,10 +12690,32 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 22ef6c7832, 4336273321, 0595b87a8e; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "f8ed23c4fad9cc4fa21b71b307b2470f81536c83",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 22ef6c78324f193b7e962adbf7493f72c6802742, 433627332166c48e73a032b095ebefaa29b72169, 0595b87a8ef6a8804237f0d526d0593f0f24afa0 (before the rewrite: d5b847b0ac, e65d6ac155, 74d99e1b8c). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (f8ed23c4fa)."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 22ef6c78324f193b7e962adbf7493f72c6802742, 433627332166c48e73a032b095ebefaa29b72169, 0595b87a8ef6a8804237f0d526d0593f0f24afa0 (before the rewrite: d5b847b0ac, e65d6ac155, 74d99e1b8c). The rewrite changed no code; fix_revision names the first integration commit on the branch that contains all of them (f8ed23c4fa).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-4/domain-reviewer.verifications.json"
+        ],
+        "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. The fix_revision and the fix commits are the same as for F-DG4-126: f8ed23c4fad9cc4fa21b71b307b2470f81536c83, plus 22ef6c7832, 4336273321 and 0595b87a8e. All are ancestors of f2ae717, all map to old commits in the backup ancestry, their old and new product diffs are identical, and their metadata is equal. The fix is still present. apps/api/src/modules/reporting/dashboards/engine.ts:114-124 makes an initiative with only top-line or non-cash allocations not_applicable (dashboard.portfolio.no_profit_and_cash_allocation). Lines 135 and 179-183 make a missing amount Unknown (benefit.value_amount_missing), never a partial sum. The targeted test n4-value-basis.test.ts (unit-node, including the portfolio cases at lines 369 and 394) passes. My round-4 verification (Portfolio value 90, never 435, and the ranking with n/a and unknown last) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-105",
@@ -12367,7 +12738,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-3/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-11T13:30:00Z",
@@ -12388,10 +12759,37 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 22ef6c7832, 4336273321; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "433627332166c48e73a032b095ebefaa29b72169",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 22ef6c78324f193b7e962adbf7493f72c6802742, 433627332166c48e73a032b095ebefaa29b72169 (before the rewrite: d5b847b0ac, e65d6ac155). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 22ef6c78324f193b7e962adbf7493f72c6802742, 433627332166c48e73a032b095ebefaa29b72169 (before the rewrite: d5b847b0ac, e65d6ac155). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-105-probe-GC-rev2.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-3/probes/sec-dg4-r3-gross-currency.test.ts",
+          "docs/delivery/test-evidence/DG4/code-security/round-7/rerun-sec-dg4-r4-currency-node22-lang-unset.log",
+          "docs/delivery/reviews/DG4/round-4/code-security-reviewer.verifications.json",
+          "apps/api/src/modules/reporting/dashboards/finance.ts",
+          "apps/api/src/modules/reporting/dashboards/drilldown.ts"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 433627332166c48e73a032b095ebefaa29b72169 (T-DG4-KBE-R7) is a commit and an ancestor of f2ae717. 22ef6c7832 (T-DG4-ARCH-R6) is an ancestor of both f2ae717 and 4336273321. The two fix commits are on one line, so the later one already contains both. A branch-tip fix_revision is therefore consistent with D-136; the first first-parent integration commit is merge b77efdc.\n\n(2) SHA map. 4336273321 maps to old e65d6ac, and 22ef6c7832 to old d5b847b. Each pair has the same subject and author date. The product diffs are identical: 3cdecc3f763f6667 (14 files) and 05ca48d97dd54d2e (5 files).\n\n(3) The fix is in the candidate:\n- finance.ts:224-225, every gross line's drilldownHref names its own currency;\n- finance.ts:343-344, hrefOf passes the currency to drilldownHref;\n- drilldown.ts:157 and :271, a request with no currency in a multi-currency scope is not_applicable dashboard.value.multiple_currencies.\nNeither file changed after 4336273321.\n\nI re-ran my round-3 reproduction, probe GC rev 2 (sec-dg4-r3-gross-currency.test.ts, unchanged), this round as one targeted file on a disposable PostgreSQL, Node 22, LANG unset: 2/2 passed, exit 0, at load 8.3. In round 3 it failed by design. The 151-assertion probe GX was not re-run this round (load envelope); it passed 151/151 in round 7 on identical code."
+      }
     },
     {
       "id": "F-DG4-143",
@@ -12419,7 +12817,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-4/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T00:50:00Z",
@@ -12440,10 +12838,35 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 5f68ba25a2; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "5f68ba25a2b49d4ed48f066a4c77635847d56249",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 5f68ba25a2b49d4ed48f066a4c77635847d56249 (before the rewrite: 3e95af441f). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 5f68ba25a2b49d4ed48f066a4c77635847d56249 (before the rewrite: 3e95af441f). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r2.log",
+          "docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json",
+          "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-probes-unset-summary.txt",
+          "apps/web/src/pages/dashboards/ui.tsx"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision 5f68ba25a2b49d4ed48f066a4c77635847d56249 is a commit and an ancestor of f2ae717; it is the only listed fix commit. (2) It maps from old 3e95af441f17c080f52cde75cc35ed9f3a122a44 (same subject and dates). The product diff outside docs/delivery is identical (sha256 prefix 4c5ea7842494fa3c for both; 8 files under apps/web), as is the full commit diff; the old commit is an ancestor of the round-5 source 3e3a06e, where I verified it. (3) Still in the candidate: ui.tsx, api.ts, the en/ar dashboards.json, valueRagLineState.test.tsx, buFilter.test.tsx and p4-value-rag-lines.spec.ts have 0 diff lines from 5f68ba25a2 to f2ae717. The fix is apps/web/src/pages/dashboards/ui.tsx:251-255: the not_applicable case renders data-value-state='not_applicable' with the dashboards.state.not_applicable label, and line 262 keeps a separate 'unknown' state. Re-run this round: valueRagLineState.test.tsx 8/8 passed in all 8 pnpm test runs (02-unit-node*-r[12].log). My round-5 e2e probe (dg4-qa-r5.spec.ts, en/ar, both locale settings) is carried forward: it passed on this code in rounds 5 and 7. Earlier verification: docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-144",
@@ -12468,7 +12891,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-4/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T00:50:00Z",
@@ -12489,10 +12912,35 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 5f68ba25a2; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "5f68ba25a2b49d4ed48f066a4c77635847d56249",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 5f68ba25a2b49d4ed48f066a4c77635847d56249 (before the rewrite: 3e95af441f). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 5f68ba25a2b49d4ed48f066a4c77635847d56249 (before the rewrite: 3e95af441f). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r2.log",
+          "docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json",
+          "apps/web/src/pages/dashboards/ui.tsx",
+          "apps/web/src/i18n/en/dashboards.json"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1)-(2): the same commit as F-DG4-143. fix_revision 5f68ba25a2b49d4ed48f066a4c77635847d56249 is an ancestor of f2ae717 and maps from old 3e95af441f17; old and new product diffs are identical, and the old commit is an ancestor of the round-5 source 3e3a06e. (3) Still in the candidate, with 0 diff lines since the fix in api.ts, ui.tsx and the en/ar dashboards.json. In apps/web/src/pages/dashboards/ui.tsx:1160-1220, BlockedFilterReason none | none_matching | too_many narrows by the phase/status chips before the 50 limit. The too_many text at apps/web/src/i18n/en/dashboards.json:282 names working remedies: 'Narrow the filter by phase or status until 50 or fewer remain, choose transformations with the transformation filter, or open the transformations' own dashboards.' Re-run this round: buFilter.test.tsx 22/22 passed in all 8 pnpm test runs. My round-5 remedies probe (77 checks per language) is carried forward, on identical code. Earlier verification: docs/delivery/reviews/DG4/round-5/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-106",
@@ -12520,7 +12968,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-5/code-security-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T06:35:00Z",
@@ -12541,10 +12989,38 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 9d66f671c9, 9b6b3ed17a; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:40:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "9b6b3ed17aceaba5eb6500129160a66bfa9a4e82",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 9d66f671c96264537a90ac636baadb48f0807f9b, 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 (before the rewrite: 41b586cff6, 935d33d0da). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 9d66f671c96264537a90ac636baadb48f0807f9b, 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 (before the rewrite: 41b586cff6, 935d33d0da). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-SEC-R9-code-security-reviewer-20261013T091723Z-5dbd0d6a",
+          "session_id": "5dbd0d6a-a158-44b4-8173-2741e40bbfba"
+        },
+        "at": "2026-10-13T09:40:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-reverify-git.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/fix-revision-first-integration.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/findings-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node22.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-9/reverify-F-DG4-106-session-auth-specs-node24.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-node22.log",
+          "docs/delivery/test-evidence/DG4/code-security/round-6/probe-Y1c-m4-node22.log",
+          "docs/delivery/reviews/DG4/round-6/code-security-reviewer.verifications.json",
+          "apps/web/src/auth/session-bound.test.tsx",
+          "apps/web/src/auth/session-generation.test.tsx"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4…d76c (source f2ae717).\n\n(1) Ancestry. fix_revision 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 (T-DG4-FE-R9B) is a commit and an ancestor of f2ae717. 9d66f671c9 (salvaged FE-R9 WIP) is an ancestor of both f2ae717 and 9b6b3ed17a. The two are on one line; the first first-parent integration commit is merge ab6e6ad.\n\n(2) SHA map. 9b6b3ed17a maps to old 935d33d, and 9d66f671c9 to old 41b586c. Each pair has the same subject and author date. The product diffs are identical: b5a6c660ac4250d6 (1 file) and 33bb4703fb604b95 (2 files).\n\n(3) The fix is in the candidate. session-bound.test.tsx:57-75 has installClock in beforeEach and vi.restoreAllMocks in afterEach. session-generation.test.tsx:426-469 holds Date.now still.\n\nOne later commit touched the auth tests: c675003 (T-DG4-FE-R10, which was 0449270 before the rewrite; F-DG4-146/147/148). It adds tests and keeps the controlled clock. I verified it in round 7 on the same code.\n\nI re-ran the three fixed spec files this round as one targeted unit-web invocation in the disposable clone: 80/80 passed, exit 0, on both Node 22.22.2 (load 8.1) and Node 24.21.0 (load 9.1).\n\nThe mutation probes (probe-y1c.sh and M1-M4) were not re-run this round. In round 6 they showed the test still kills the mutants; their logs are cited."
+      }
     },
     {
       "id": "F-DG4-145",
@@ -12570,7 +13046,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-5/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T07:47:00Z",
@@ -12591,10 +13067,37 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 9d66f671c9, 9b6b3ed17a; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "9b6b3ed17aceaba5eb6500129160a66bfa9a4e82",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 9d66f671c96264537a90ac636baadb48f0807f9b, 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 (before the rewrite: 41b586cff6, 935d33d0da). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 9d66f671c96264537a90ac636baadb48f0807f9b, 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 (before the rewrite: 41b586cff6, 935d33d0da). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-summary.txt",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-unset-r1.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02d-unit-f146-mutants.log",
+          "docs/delivery/reviews/DG4/round-6/qa-verifier.verifications.json",
+          "docs/delivery/test-evidence/DG4/qa/round-6/02c3-unit-pinned-y1c-variants.log",
+          "apps/web/src/auth/session-bound.test.tsx"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision 9b6b3ed17aceaba5eb6500129160a66bfa9a4e82 is a commit and an ancestor of f2ae717. Both listed fix commits, 9d66f671c96264537a90ac636baadb48f0807f9b (session-bound and session-identity tests) and 9b6b3ed17a (session-generation test), are ancestors of fix_revision and of f2ae717. (2) 9d66f671c9 maps from old 41b586cff60e and 9b6b3ed17a from old 935d33d0da51 (same subjects and dates). Old and new product diffs are identical for each, as are the full commit diffs, and both old commits are ancestors of the round-6 source 1e0dc5d. (3) Still in the candidate: the three session test files have 0 diff lines from 9b6b3ed17a to f2ae717. The controlled clock is at apps/web/src/auth/session-bound.test.tsx:51-59, where vi.spyOn(Date, 'now') is driven by clockNow. Re-run this round: session-bound 36/36, session-identity 18/18 and session-generation 26/26 passed in all 8 pnpm test runs. That includes series r1, at load up to 11.67, above the envelope; Y1c's original failure needed load 13-15. The 4 session files passed 86/86 in the baseline of my mutant re-run (02d-unit-f146-mutants.log). My round-6 pinned contention experiment is carried forward, on identical code. Earlier verification: docs/delivery/reviews/DG4/round-6/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-128",
@@ -12618,7 +13121,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG4/round-6/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T14:20:00Z",
@@ -12639,10 +13142,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to 8178750761; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T09:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "8178750761c511c243c6b9a342dc4f39d5966bcc",
-      "fix_summary": "Fix commits after the D-136 history rewrite: 8178750761c511c243c6b9a342dc4f39d5966bcc (before the rewrite: 788188db67). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: 8178750761c511c243c6b9a342dc4f39d5966bcc (before the rewrite: 788188db67). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-DOM-R9-domain-reviewer-20261013T091703Z-afa114ad",
+          "session_id": "afa114ad-3075-45d5-880e-be0a041a831d"
+        },
+        "at": "2026-10-13T09:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/domain/round-9/findings-reverify.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/fix-locations.log",
+          "docs/delivery/test-evidence/DG4/domain/round-9/targeted-tests.log",
+          "docs/delivery/reviews/DG4/round-7/domain-reviewer.verifications.json",
+          "docs/delivery/test-evidence/DG4/domain/round-7/measure-supervise.log",
+          "docs/delivery/test-evidence/DG4/domain/round-7/worker-config-refusal.log"
+        ],
+        "note": "Re-verified on candidate 18c18fe4 (source f2ae717) after the D-136 rewrite. (1) fix_revision 8178750761c511c243c6b9a342dc4f39d5966bcc is a commit and an ancestor of f2ae717, and the listed fix commit 8178750761 is the same commit. (2) It maps from old 788188db676a, which is in the backup ancestry. The old and new product diffs are identical (ab9af210be3d8acf), and subject and dates are equal. (3) The fix is still present: all 219 substantive added lines are verbatim at f2ae717. packages/config/src/index.ts:168 defines SUPERVISE_INTERVAL_SECONDS {min 1, max 600, default 60}. packages/config/src/load.ts:162-163 validates WORKER_SUPERVISE_INTERVAL_SECONDS as an integer from 1 to 600. apps/worker/src/queues/platform.ts:54-62 refuses anything else and never passes NaN to pg-boss, and apps/worker/src/main.ts:21 passes the cadence explicitly. The targeted test packages/config/src/load.test.ts (29 tests, unit-node) passes. I did not re-run the worker integration test apps/worker/test/integration/supervise-cadence.test.ts or my measurement harness, because the load envelope forbids integration runs for domain this round. My round-7 measurement and refusal evidence (16 tx/s idle against 6,341/s before; exit 78 for every out-of-range value) applies to byte-identical product code."
+      }
     },
     {
       "id": "F-DG4-146",
@@ -12668,7 +13195,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-6/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T16:50:00Z",
@@ -12689,10 +13216,36 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to c675003488; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "c675003488f6d10fbd3b0b914ecf2a740109be5d",
-      "fix_summary": "Fix commits after the D-136 history rewrite: c675003488f6d10fbd3b0b914ecf2a740109be5d (before the rewrite: 0449270751). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: c675003488f6d10fbd3b0b914ecf2a740109be5d (before the rewrite: 0449270751). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02d-unit-f146-mutants.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/scripts/mutants-146.sh",
+          "docs/delivery/test-evidence/DG4/qa/round-7/02d-unit-f146-mutants.log",
+          "docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json",
+          "apps/web/src/auth/session-wait.test.tsx"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1) fix_revision c675003488f6d10fbd3b0b914ecf2a740109be5d is a commit and an ancestor of f2ae717; it is the only listed fix commit. (2) It maps from old 044927075178af334151a9323fcabac7889b8da7 (same subject and dates). The product diff outside docs/delivery is identical (sha256 prefix 99506d8ff56cd829; session-end.spec.ts, session-wait.test.tsx, harness-config.test.ts, test/setup.ts, package.json), as is the full commit diff, and the old commit is an ancestor of the round-7 source dab4562. (3) Still in the candidate: session-wait.test.tsx has 0 diff lines from c675003488 to f2ae717 (W1-W4 at lines 115, 140, 168 and 181; the two awaits in apps/web/src/api/client.ts use pendingCheck and probesIdle). RE-RUN THIS ROUND (cheap, inside the envelope), my round-7 mutant probe in the disposable clone. Baseline: 86/86, session-wait alone 6/6, my round-6 test 4/4. M4 (both awaits removed): 6/86 fail (W1 and W2 en/ar, W3, W4), session-wait alone 6/6 fail, my round-6 test 4/4 fail. M4a: W4 fails (1/86). M4b: W3 fails (1/86). These counts are identical to round 7. The EXIT 1 lines in the log are the killed mutants, by design. client.ts was restored and cmp-checked, and the clone's git status is empty. Earlier verification: docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-147",
@@ -12715,7 +13268,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG4/round-6/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-12T16:50:00Z",
@@ -12736,10 +13289,34 @@
           "at": "2026-10-13T09:10:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "D-136: the DG4 history was rewritten to restore 33 deleted run files (write-once, audit round 8 B3); every commit id from eda5588 onward changed. Fix commits remapped to c675003488; the closure is re-verified in round 9 on the rewritten history (D-034 precedent)."
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "c675003488f6d10fbd3b0b914ecf2a740109be5d",
-      "fix_summary": "Fix commits after the D-136 history rewrite: c675003488f6d10fbd3b0b914ecf2a740109be5d (before the rewrite: 0449270751). The rewrite changed no code; fix_revision names the latest of them."
+      "fix_summary": "Fix commits after the D-136 history rewrite: c675003488f6d10fbd3b0b914ecf2a740109be5d (before the rewrite: 0449270751). The rewrite changed no code; fix_revision names the latest of them.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/04-fix-revisions.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04b-fix-presence.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/04c-fix-locations.log",
+          "docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json",
+          "docs/delivery/test-evidence/DG4/qa/round-7/04-e2e-f147-delayed-boot-me-unset-summary.txt",
+          "apps/web/e2e/session-end.spec.ts"
+        ],
+        "note": "Re-verified on candidate sha256:18c18fe4... (source f2ae717) after the D-136 rewrite. (1)-(2): the same commit as F-DG4-146. fix_revision c675003488f6d10fbd3b0b914ecf2a740109be5d is an ancestor of f2ae717 and maps from old 044927075178; old and new product diffs are identical, and the old commit is an ancestor of dab4562. (3) Still in the candidate: apps/web/e2e/session-end.spec.ts has 0 diff lines from c675003488 to f2ae717. The test 'a 403 is not a session end' (line 278) waits for the boot GET /me at line 286 (page.waitForResponse), and then for the signed-in shell, before the re-login. Not re-run this round, because e2e needs the full stack and the D-136 round is a confirmation round on byte-identical code. Carried forward from round 7: the delayed-boot-/me probes (pre-repair 12/12 fail, by design; the candidate passes 12/12, including at a 4 s delay), contention x10 at load 5-9 and 13-17 (20/20 each), and both full e2e runs. Earlier verification: docs/delivery/reviews/DG4/round-7/qa-verifier.verifications.json."
+      }
     },
     {
       "id": "F-DG4-148",
@@ -12794,6 +13371,11 @@
           "at": "2026-10-13T08:10:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "accepted by qa-verifier round 8 on candidate 8014e5ce: PASS (8/8 pnpm test inside the envelope, max load 6.01); release-auditor concurrence pending (D-134, D-135)"
+        },
+        {
+          "at": "2026-10-13T10:16:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "acceptance": {
@@ -12803,6 +13385,33 @@
           "qa-verifier",
           "release-auditor"
         ]
+      },
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG4-T-DG4-REV-QA-R9-qa-verifier-20261013T091643Z-5ead60fc",
+          "session_id": "5ead60fc-8cab-4ffa-91dd-c7cb73206e3d"
+        },
+        "at": "2026-10-13T10:16:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-summary.txt",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-samples-r1.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-envelope-samples-r2.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-unset-r2.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-C-r2.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-unset-r2.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r2.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-unset-r1.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node22-C-r1.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-unset-r1.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/02-unit-node24-C-r1.log",
+          "docs/delivery/test-evidence/DG4/qa/round-9/scripts/run-unit-envelope.sh",
+          "docs/delivery/test-evidence/DG4/qa/round-9/RUN-NOTES.md",
+          "docs/delivery/environment.md"
+        ],
+        "note": "Re-recorded as an observation by qa-verifier, the reporter, under the user's decision D-134 and environment.md limitation 6, on candidate sha256:18c18fe4eda7cbc1c9b2c42ffd22f5ec5c1c4851be1a34183cb118bd4ddad76c (source f2ae717). The product code is byte-identical to round 8's 5cd1e06 (ex-8553323) and to round 7's dab4562. pnpm test (TZ=UTC CI=1, unchanged script) ran in a complete disposable clone, as two series of 4 runs (Node 22/24 x locale unset/C.UTF-8), with the 1-minute load sampled every 15 s. SERIES r1 (09:19-09:40Z) WAS OUTSIDE THE ENVELOPE and is NOT counted as the gate check: 55 of 81 samples were above 8 (max 11.67, median 8.26), partly because my own git checks overlapped its start. All 4 of its runs still EXIT 0 with no failure; this is disclosed per limitation 6. SERIES r2 (09:41-09:56Z), INSIDE THE ENVELOPE: 58 samples, load 1.28-5.81 (median 4.74), 0 above 8, max gap 15 s. The per-run bands are node22-unset 1.28-5.81, node22-C 4.03-5.27, node24-unset 3.66-5.07 and node24-C 4.14-5.51. All 4 runs EXIT 0: unit-node 1589/1589, unit-web 1347/1347, unit-formula-nocodegen 259 passed + 2 by-design skips (it.skipIf(NOCODEGEN) in fuzz.test.ts). The strict scan shows 0 failed/x lines and 0 timeouts in all 8 logs. The only stderr lines are the 14 React duplicate-key warnings from the kpiUnit/percentKpi fixtures, identical in rounds 6-8. Margins on the finding's two classes, inside the envelope: architecture.test.ts 11.0-11.5 s against 30 s; raid 'action register' 1.2-1.8 s against 5 s. Even at load up to 11.67 (r1) they were 15.9-17.5 s and 1.4-3.9 s. The envelope stays accurate (every recorded failure is at load >= 12.4, and every run at <= 11.67 has passed) and sufficient (measurable, conservative at 2x cores, with a stated re-run procedure, which this round followed). The finding is Low and not mandatory, and the product is unaffected. Acceptance takes effect only with the release-auditor's concurrence (D-134, D-136)."
       }
     }
   ]

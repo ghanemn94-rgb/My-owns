@@ -25,14 +25,14 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
     - **Auditor observations (non-blocking):**
       - the D-079 labelEn limitation and the F180b 390 px + 200% text grid state are carried to DG6 (REQ-S15-007/009);
       - the `session-identity.test.tsx` flake under load is acceptable as disclosed.
-- **DG4 (P4 "Execution value and sustainment") is in review round 9 (a confirmation and re-verification round).** The build is complete (D-088 to D-116).
+- **DG4 (P4 "Execution value and sustainment") is VERIFYING after review round 9.** The build is complete (D-088 to D-116).
   - **Rounds 1–7:** twenty-four findings. F-DG4-148 (Low) is ACCEPTED_OBSERVATION by the user's decision (D-134), with the load envelope in `environment.md` limitation 6.
   - **Round 8:** all three reviews PASS. The release-auditor BLOCKED the gate on four record defects, B1–B4 (D-136).
-  - **D-136:** with the user's authorization, the history was rewritten to restore 33 deleted run files (B3). The old head is kept on the local ref `backup/pre-dg4-writeonce-repair-72c0e653a3`, and the old→new map is in `docs/delivery/test-evidence/DG4/history-rewrite-D-136.shamap.txt`. `frozen_at` now matches the manifests (B4). The 23 closed findings are FIXED_PENDING_VERIFICATION, with remapped `fix_revision`s.
-  - **Round 9:** a fresh freeze of the rewritten head (B1). Each reviewer re-verifies the findings it closed before, and qa re-records F-DG4-148 (B2). The candidate is in `stages.json` `review_rounds[8]`, and the assignments are in `docs/delivery/assignments/DG4/round-9/`.
+  - **D-136:** with the user's authorization, the history was rewritten to restore 33 deleted run files (B3). The old head is kept on the local ref `backup/pre-dg4-writeonce-repair-72c0e653a3`. `frozen_at` now matches the manifests (B4).
+  - **Round 9** (candidate `18c18fe4`, source `f2ae717`): domain, code-security and qa all PASS, with no new finding. All 23 closures were re-verified on the rewritten history and imported with their `verification` objects (B2), and qa re-accepted F-DG4-148. `decisions.md` is a candidate file, so it stays untouched until the gate decision (B1); round 9's results go into D-137 after the audit.
 - **Next action:**
-  1. Collect the round-9 records and import them (`import-findings.mjs --stage DG4 --round 9`).
-  2. If all three PASS and every closure is re-verified, set VERIFYING and run the release-auditor on round 9.
+  1. Run the release-auditor on round 9 (`docs/delivery/assignments/DG4/round-9/release-auditor.md`).
+  2. On APPROVED: run the validators, then record D-137 with the first DG5 records change.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
