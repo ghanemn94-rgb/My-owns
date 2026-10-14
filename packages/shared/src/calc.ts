@@ -14,3 +14,6 @@ export * from "./adoption/form-schema.ts";
 // P4 slice F adoption measures (T-DG4-KBE-F; ADR-0033 §6): training completion and observed proficiency over injected
 // records, the latest observation per subject, the weighted-ratio aggregation and the below-trajectory test (§4 step 2).
 export * from "./adoption/measures.ts";
+// P5 slice B Studio field types (T-DG5-KBE-B; p5-work-split §B.1; ADR-0041 §3, §7, §10): the eleven field types'
+// settings, value validators and normalizers, and calculated fields over the DG3 formula engine (unchanged).
+export * from "./forms/index.ts";
