@@ -1,0 +1,133 @@
+diff --git a/apps/api/test/integration/contract/contract.test.ts b/apps/api/test/integration/contract/contract.test.ts
+index 5686f2d..67ec918 100644
+--- a/apps/api/test/integration/contract/contract.test.ts
++++ b/apps/api/test/integration/contract/contract.test.ts
+@@ -885,7 +885,9 @@ describe("every operation, validated against the contract and the zod mirrors",
+     // T-DG5-BE-E: + createFormRecordComment, attachFormRecordEvidence, removeFormRecordAttachment (3 JSON bodies; the
+     // other three BE-E operations are GETs).
+     // T-DG5-BE-H2: + 2 JSON bodies (the rule-version dry run and review; its three other POSTs are bodiless).
+-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([343, 342, 1]);
++    // T-DG5-KBE-A: + putScoringDefaultsDraft (1 JSON body; getScoringDefaults and getTransformationScoringDefaults are
++    // GETs).
++    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([344, 343, 1]);
+     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
+       "application/octet-stream",
+     ]);
+diff --git a/apps/api/test/integration/registers.test.ts b/apps/api/test/integration/registers.test.ts
+index b57932c..662b2f3 100644
+--- a/apps/api/test/integration/registers.test.ts
++++ b/apps/api/test/integration/registers.test.ts
+@@ -51,7 +51,9 @@ describe("starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-003)", () => {
+       // p4_instantiate_transformation (2 governance-matrix headers, 4 T11 rows, 6 T12 deliverables, 36 cells, and the 5
+       // seeded forums of slice D, whose 0044 extends the same function). T-DG5-BE-D (ADR-0041 §4; D-144 (a)): + the
+       // form_schema pin of a transformation created from P5 on, with its audit event (2 pins, 83 audited rows).
+-      expect(counts.rows[0]).toEqual({ pin: "2", t01: "6", cells: "10", gates: "6", audits: "83" });
++      // T-DG5-KBE-A (ADR-0040 §5, migration 0065): + the scoring_defaults pin p3_instantiate_transformation() now adds,
++      // with its audit event (3 pins, 84 audited rows).
++      expect(counts.rows[0]).toEqual({ pin: "3", t01: "6", cells: "10", gates: "6", audits: "84" });
+       const catalogue = await call(api.app, "GET", `/api/v1/transformations/${t.body.id}/methodology`, {
+         session: office,
+       });
+diff --git a/apps/api/test/integration/transformations.test.ts b/apps/api/test/integration/transformations.test.ts
+index 3ee63a2..b01831a 100644
+--- a/apps/api/test/integration/transformations.test.ts
++++ b/apps/api/test/integration/transformations.test.ts
+@@ -505,6 +505,8 @@ describe("audit trail endpoint", () => {
+         ...Array<string>(5).fill("forum.create"),
+         // T-DG5-BE-D (ADR-0041 §4): the forms pin of a transformation created from P5 on (TransformationInitializer).
+         "transformation_config_pin.create",
++        // T-DG5-KBE-A (ADR-0040 §5, migration 0065): the scoring_defaults pin p3_instantiate_transformation() now adds.
++        "transformation_config_pin.create",
+       ].sort(),
+     );
+     expect(page2.body.nextCursor).toBeNull();
+diff --git a/apps/web/src/i18n/ar/prioritization.json b/apps/web/src/i18n/ar/prioritization.json
+index 47e39bf..0ede62a 100644
+--- a/apps/web/src/i18n/ar/prioritization.json
++++ b/apps/web/src/i18n/ar/prioritization.json
+@@ -42,12 +42,13 @@
+   },
+   "weights": {
+     "title": "مجموعات الأوزان",
+-    "intro": "يجب أن يكون مجموع الأوزان 100٪ تمامًا. الإصدار 1 هو الافتراضي من المصدر (25/25/20/15/15). تُقترح المجموعة الجديدة ثم يعتمدها شخص غير المقترِح، وتُحفظ الإصدارات المعتمدة.",
++    "intro": "يجب أن يكون مجموع الأوزان 100٪ تمامًا. الإصدار 1 هو مجموعة الأوزان الافتراضية المنشورة في استوديو المنهجية عند إنشاء التحول (الافتراضي من المصدر 25/25/20/15/15). تُقترح المجموعة الجديدة ثم يعتمدها شخص غير المقترِح، وتُحفظ الإصدارات المعتمدة.",
+     "propose": "اقتراح أوزان جديدة",
+     "activeVersion": "النشط: إصدار الأوزان {{n}}",
+     "basis": {
+       "source_default": "(الافتراضي من المصدر، نقطة بداية مُهيّأة وليست موافقة أعمال)",
+-      "approved": "(معتمد بموافقة أعمال)"
++      "approved": "(معتمد بموافقة أعمال)",
++      "studio_default": "(أوزان افتراضية منشورة في استوديو المنهجية، نقطة بداية مُهيّأة وليست موافقة أعمال)"
+     },
+     "noActive": "لا توجد مجموعة أوزان نشطة: الدرجات المرجّحة غير معروفة.",
+     "historyCaption": "إصدارات مجموعات الأوزان",
+diff --git a/apps/web/src/i18n/en/prioritization.json b/apps/web/src/i18n/en/prioritization.json
+index bfe3cd3..efe1419 100644
+--- a/apps/web/src/i18n/en/prioritization.json
++++ b/apps/web/src/i18n/en/prioritization.json
+@@ -42,12 +42,13 @@
+   },
+   "weights": {
+     "title": "Weight sets",
+-    "intro": "Weights must total exactly 100%. Version 1 is the source default (25/25/20/15/15). A new set is proposed, then approved by someone other than the proposer; approved versions are kept.",
++    "intro": "Weights must total exactly 100%. Version 1 is the default weight set published in Playbook Studio when the transformation was created (the source default is 25/25/20/15/15). A new set is proposed, then approved by someone other than the proposer; approved versions are kept.",
+     "propose": "Propose new weights",
+     "activeVersion": "Active: weight version {{n}}",
+     "basis": {
+       "source_default": "(source default, configured starting point, not a business approval)",
+-      "approved": "(approved as a business approval)"
++      "approved": "(approved as a business approval)",
++      "studio_default": "(Studio default weights published in Playbook Studio, configured starting point, not a business approval)"
+     },
+     "noActive": "No active weight set: weighted scores are Unknown.",
+     "historyCaption": "Weight set versions",
+diff --git a/apps/web/src/pages/prioritization/WeightSets.tsx b/apps/web/src/pages/prioritization/WeightSets.tsx
+index 35083fb..681af2f 100644
+--- a/apps/web/src/pages/prioritization/WeightSets.tsx
++++ b/apps/web/src/pages/prioritization/WeightSets.tsx
+@@ -90,7 +90,9 @@ export function WeightSetsSection() {
+                   <span className="muted">
+                     {active.approvalBasis === "source_default"
+                       ? t("prioritization.weights.basis.source_default")
+-                      : t("prioritization.weights.basis.approved")}
++                      : active.approvalBasis === "studio_default"
++                        ? t("prioritization.weights.basis.studio_default")
++                        : t("prioritization.weights.basis.approved")}
+                   </span>
+                 </p>
+               ) : (
+diff --git a/docs/api/openapi.yaml b/docs/api/openapi.yaml
+index 2c83f74..02d5cae 100644
+--- a/docs/api/openapi.yaml
++++ b/docs/api/openapi.yaml
+@@ -28900,7 +28900,7 @@ components:
+         transformationId: { $ref: "#/components/schemas/Uuid" }
+         versionNo: { type: integer, minimum: 1 }
+         status: { type: string, enum: [proposed, active, superseded, withdrawn] }
+-        approvalBasis: { type: [string, "null"], enum: [source_default, approved, null] }
++        approvalBasis: { type: [string, "null"], enum: [source_default, approved, studio_default, null] }
+         rationale: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+         weights: { type: array, minItems: 2, maxItems: 6, items: { $ref: "#/components/schemas/WeightSetWeight" } }
+         approvedBy: { $ref: "#/components/schemas/NullableUuid" }
+@@ -36242,7 +36242,7 @@ components:
+       additionalProperties: false
+       properties:
+         criterionCode: { type: string, enum: [strategic_fit, financial_value, customer_impact, feasibility, time_to_value, risk_compliance] }
+-        weightPercent: { type: string, pattern: '^(100(\\.0{1,2})?|[0-9]{1,2}(\\.[0-9]{1,2})?)$', description: 'Percent as a decimal string with at most two decimals; > 0.' }
++        weightPercent: { type: string, pattern: "^(100(\\.0{1,2})?|[0-9]{1,2}(\\.[0-9]{1,2})?)$", description: 'Percent as a decimal string with at most two decimals; > 0.' }
+     ScoringRubricLevel:
+       type: object
+       description: "A null descriptor is shown as No descriptor defined (never invented)."
+diff --git a/packages/shared/src/schemas/prioritization.ts b/packages/shared/src/schemas/prioritization.ts
+index 47ca3d3..b3abe3a 100644
+--- a/packages/shared/src/schemas/prioritization.ts
++++ b/packages/shared/src/schemas/prioritization.ts
+@@ -44,7 +44,7 @@ export const weightSet = z.strictObject({
+   transformationId: uuid,
+   versionNo: z.number().int().min(1),
+   status: z.enum(["proposed", "active", "superseded", "withdrawn"]),
+-  approvalBasis: z.enum(["source_default", "approved"]).nullable(),
++  approvalBasis: z.enum(["source_default", "approved", "studio_default"]).nullable(),
+   rationale: z.string().min(1).max(4000).nullable(),
+   weights: z.array(weightSetWeight).min(2).max(6),
+   approvedBy: uuid.nullable(),

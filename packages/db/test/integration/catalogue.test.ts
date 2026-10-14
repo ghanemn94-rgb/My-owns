@@ -603,6 +603,34 @@ describe("schema.ts matches the migrated database", () => {
     expect(triggers).toHaveLength(1);
   });
 
+  it("0065: studio_default weight sets have no approver; p3_instantiate_transformation() pins scoring_defaults (T-DG5-KBE-A; D-142 Q12)", async () => {
+    const checks = await q<{ conname: string; def: string }>(
+      `SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
+        WHERE conrelid = 'scoring_weight_set'::regclass
+          AND conname IN ('scoring_weight_set_approval_basis_check', 'scoring_weight_set_approval_complete')
+        ORDER BY conname`,
+    );
+    expect(checks.map((c) => c.conname)).toEqual([
+      "scoring_weight_set_approval_basis_check",
+      "scoring_weight_set_approval_complete",
+    ]);
+    // The basis CHECK lists the DG3 values and the P5 one; the approval CHECK keeps both DG3 clauses and adds 'studio_default'.
+    for (const v of ["source_default", "approved", "studio_default"]) expect(checks[0]!.def).toContain(`'${v}'`);
+    for (const v of ["'approved'", "'source_default'", "'studio_default'"]) expect(checks[1]!.def).toContain(v);
+    const [fn] = await q<{ def: string }>(
+      `SELECT pg_get_functiondef('p3_instantiate_transformation(uuid, uuid, text, text)'::regprocedure) AS def`,
+    );
+    const def = fn!.def;
+    expect(def).toContain("p2_instantiate_transformation(p_transformation_id");
+    expect(def).toContain("'scoring_defaults'");
+    expect(def).toContain("'scoring-defaults'");
+    expect(def).toContain("'studio_default'");
+    // The DG3 statements are still there verbatim (byte-identical output while the defaults equal B0076).
+    expect(def).toContain(
+      "'Source default weights (B0076): strategic fit 25%, financial value 25%, customer impact 20%, feasibility 15%, time-to-value 15%.'",
+    );
+  });
+
   it("0074-0075: the P5 slice D/E guards are attached (deferred audit and effective-version checks, append-only history)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred

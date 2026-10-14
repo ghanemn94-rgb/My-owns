@@ -91,6 +91,13 @@ describe("methodology module (P2)", () => {
       "POST /api/v1/admin/methodology-versions/:versionId/reviews/:reviewId/withdraw": publish,
       "POST /api/v1/admin/methodology-versions/:versionId/publish": publish,
       "POST /api/v1/admin/methodology-versions/:versionId/rollback": publish,
+      // T-DG5-KBE-A (p5-work-split §A.6): the T06 default weights and rubric of a scoring_defaults draft.
+      "PUT /api/v1/admin/methodology-versions/:versionId/scoring-defaults": configure,
+    });
+    // T-DG5-KBE-A: the scoring-defaults reads (ADM_METHOD and the Studio readers; every role with transformation scope).
+    expect(access.get("GET /api/v1/admin/scoring-defaults")).toEqual(read);
+    expect(access.get("GET /api/v1/transformations/:transformationId/scoring-defaults")).toEqual({
+      permission: "transformation.read",
     });
     // T-DG5-BE-B3: the review policies (TO configures; ADM_METHOD reads).
     expect(access.get("GET /api/v1/admin/config-review-policies")).toEqual(read);
