@@ -475,7 +475,7 @@ describe("a kind whose review is switched off (REQ-S06-007 'review where configu
       "form_schema",
       "procedure",
       "automation_rule_set",
-      "automation_rule_set",
+      "health_check_scheme",
       "benefit_formula",
     ]);
     const health = list.body.items.find((p: Body) => p.configKind === "automation_rule_set");
