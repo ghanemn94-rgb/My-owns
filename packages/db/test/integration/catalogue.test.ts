@@ -522,6 +522,53 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0068-0070: the P5 slice B/C guards are attached (deferred audit, record references, append-only comments and links)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('form_custom_value', 'form_draft', 'form_record_attachment', 'form_record_comment', 'methodology_coverage_link', 'procedure_definition', 'procedure_instance', 'procedure_instance_link', 'procedure_step_definition', 'procedure_step_instance', 'form_record_type', 'form_source_field')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["form_custom_value", "form_custom_value_audit_required", true, true],
+      ["form_custom_value", "form_custom_value_guard", false, false],
+      ["form_custom_value", "form_custom_value_record_ref", false, false],
+      ["form_custom_value", "form_custom_value_row_guard", false, false],
+      ["form_draft", "form_draft_audit_required", true, true],
+      ["form_draft", "form_draft_guard", false, false],
+      ["form_draft", "form_draft_record_ref", false, false],
+      ["form_draft", "form_draft_row_guard", false, false],
+      ["form_record_attachment", "form_record_attachment_audit_required", true, true],
+      ["form_record_attachment", "form_record_attachment_guard", false, false],
+      ["form_record_attachment", "form_record_attachment_record_ref", false, false],
+      ["form_record_attachment", "form_record_attachment_row_guard", false, false],
+      ["form_record_comment", "form_record_comment_append_only", false, false],
+      ["form_record_comment", "form_record_comment_append_only_truncate", false, false],
+      ["form_record_comment", "form_record_comment_audit_required", true, true],
+      ["form_record_comment", "form_record_comment_parent", false, false],
+      ["form_record_comment", "form_record_comment_record_ref", false, false],
+      ["form_record_comment", "form_record_comment_row_guard", false, false],
+      ["methodology_coverage_link", "methodology_coverage_link_guard", false, false],
+      ["procedure_definition", "procedure_definition_audit_required", true, true],
+      ["procedure_definition", "procedure_definition_guard", false, false],
+      ["procedure_definition", "procedure_definition_row_guard", false, false],
+      ["procedure_instance", "procedure_instance_audit_required", true, true],
+      ["procedure_instance", "procedure_instance_guard", false, false],
+      ["procedure_instance", "procedure_instance_row_guard", false, false],
+      ["procedure_instance_link", "procedure_instance_link_append_only", false, false],
+      ["procedure_instance_link", "procedure_instance_link_append_only_truncate", false, false],
+      ["procedure_instance_link", "procedure_instance_link_audit_required", true, true],
+      ["procedure_instance_link", "procedure_instance_link_guard", false, false],
+      ["procedure_instance_link", "procedure_instance_link_row_guard", false, false],
+      ["procedure_step_definition", "procedure_step_definition_audit_required", true, true],
+      ["procedure_step_definition", "procedure_step_definition_guard", false, false],
+      ["procedure_step_definition", "procedure_step_definition_row_guard", false, false],
+      ["procedure_step_instance", "procedure_step_instance_audit_required", true, true],
+      ["procedure_step_instance", "procedure_step_instance_guard", false, false],
+      ["procedure_step_instance", "procedure_step_instance_row_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -710,6 +757,14 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "gate_reapproval",
       "methodology_element",
       "methodology_migration",
+      // P5 slices B and C (0068-0069, T-DG5-ARCH-02; ADR-0041, ADR-0042).
+      "form_custom_value",
+      "form_draft",
+      "form_record_attachment",
+      "procedure_definition",
+      "procedure_instance",
+      "procedure_step_definition",
+      "procedure_step_instance",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -978,6 +1033,20 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       methodology_migration_item: "INSERT,SELECT",
       transformation_config_pin_history: "INSERT,SELECT",
       gate_reapproval: SIU,
+      // P5 slices B and C (0068-0070): still no DELETE anywhere; comments and procedure links are append-only
+      // (INSERT,SELECT); the record-type, source-column and coverage registries are read-only.
+      form_record_type: "SELECT",
+      form_source_field: "SELECT",
+      form_custom_value: SIU,
+      form_draft: SIU,
+      form_record_comment: "INSERT,SELECT",
+      form_record_attachment: SIU,
+      procedure_definition: SIU,
+      procedure_step_definition: SIU,
+      procedure_instance: SIU,
+      procedure_step_instance: SIU,
+      procedure_instance_link: "INSERT,SELECT",
+      methodology_coverage_link: "SELECT",
     });
   });
 

@@ -136,7 +136,8 @@ describe("GET /api/v1/me", () => {
         inheritsDownward: true,
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
         // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
-        // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057) + P5 slice A defaults (0064), sorted.
+        // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057) + P5 slice A defaults (0064) + P5 slices B/C defaults (0070),
+        // sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -162,6 +163,7 @@ describe("GET /api/v1/me", () => {
           "evidence.create",
           "evidence.review",
           "executive_decision.create",
+          "form_record.comment",
           "forum.configure",
           "gate.configure",
           "gate.review",
@@ -182,6 +184,10 @@ describe("GET /api/v1/me", () => {
           "phase_step.review",
           "portfolio.manage",
           "prioritization.edit",
+          "procedure.act",
+          "procedure.launch",
+          "procedure.manage",
+          "procedure.read",
           "raci.edit",
           "raid.edit",
           "reporting_period.manage",

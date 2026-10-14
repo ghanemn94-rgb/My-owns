@@ -118,3 +118,125 @@ ARCH-01 → BE-A (W2) → BE-B → BE-B2 → BE-B3 → BE-C and KBE-A (parallel;
 5. **Formula engine.** S12-018 validates formulas with `validateFormula` unchanged; never edit `packages/shared/src/formula/**`.
 6. **Seeds.** The seeded v1 rows have opaque hashes; never recompute or rewrite them. Rubric descriptors are `null` in the seed: render "No descriptor defined", never invent text.
 7. **D-142 decisions** are binding: Q1 (stable identities), Q4 ("create" = a draft version containing the element), Q9 (re-approval behaviour), Q12 (`0065`).
+
+## §B. Slice B (form schemas, the eleven field types, custom fields, protected source columns, the common form framework) — T-DG5-ARCH-02
+
+### B.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0041-p5-form-schemas-field-types-custom-fields-form-framework.md` | Binding design, with the refusal codes and English texts (§10) |
+| Migrations | `packages/db/migrations/0068_p5_form_schemas_framework.sql`, `0070_p5_forms_procedures_permissions_coverage.sql` (shared with §C) | Applied on a fresh PostgreSQL 16.13 and over a P4-populated database; 116 guard probes PASS for B+C (`docs/delivery/handbacks/DG5/T-DG5-ARCH-02-evidence/probe-output.txt`) |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (12 tables for B+C), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts` (0070 block) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P5_FORMS_PROCEDURES_PERMISSIONS`, `P5_FORMS_PROCEDURES_ROLE_PERMISSIONS`; 5 codes) | Equals `0070` |
+| Contract | `docs/api/openapi.yaml` 1.4.0-p5: 18 slice B operations (tag `forms`) | `pnpm openapi:lint` PASS (724 operations) |
+| Contract-test seams | `apps/api/test/support/p5-pending-arch-02.ts` (B+C aggregate; frozen), `p5-pending-be-d.ts` (5), `p5-pending-be-e.ts` (6), `p5-pending-be-e2.ts` (7); `p5-operations.ts` block (34, B+C); `contract.test.ts` operation count 724 | Contract test green with all 34 pending |
+| ERD §1m, data dictionary "P5 tables, slices B and C", permissions matrix §19 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+The plan's BE-E is split into **BE-E** and **BE-E2** (thirteen framework operations were too many for one 60–75 minute task, the p4 `-2` precedent). KBE-B and FE-C are as p5-plan §5.1 names them.
+
+### B.1 KBE-B — the eleven field-type validators (kpi-benefits-engineer; first in slice B)
+
+- **Files:** `packages/shared/src/forms/**` (pure: `field-types.ts` with the Zod settings schema per type, `validate.ts` (value → `{ok, value}` or field problem code), `normalize.ts` (percentage `"12%"`/`"12"` → fraction `"0.12"`, currency `{amount, currencyCode}`, dates in the transformation timezone), `calculated.ts` (`validateFormula`/`evaluateFormula` wrapper: allowed variables = the record type's resolved numeric fields; missing input → `not_computable` with the missing names), property tests), the `forms/**` export lines in `packages/shared/src/calc.ts`.
+- **Consumes:** ADR-0041 §3 (types, settings, stored shapes, 400 field codes and texts), §7; `packages/shared/src/formula/**` unchanged (rule 9).
+- **Tests:** `12%`, `12` and `0.12` normalize to `"0.12"`; `1500000.10` SAR round-trips exactly (no float on any path; property test over random decimal strings); a calculated field referencing an unknown variable is refused; every type's refusal returns its exact code; Arabic-Indic digits are refused with `validation.decimal` (the DG3 decimal rule).
+
+### B.2 BE-D — forms kind provider, form schema reads, custom-field values, the forms pin initializer (backend-workflow-engineer; after BE-A and KBE-B)
+
+- **Files:** `forms/index.ts`, `forms/routes.ts` (first; registration of `forms/schema-reads.ts`, `forms/custom-values.ts` and stubs for BE-E/BE-E2 files), `forms/record-types.ts` (registry reads, `write_permission_code` authorization helper used by every slice B route), `forms/schema-reads.ts`, `forms/custom-values.ts`, `forms/provider.ts` (the `form_schema` `ConfigKindProvider`: Zod attribute schemas for `form`/`form_field`, diff rows "added/removed/changed field", compatibility (`warn` new required field, `fail` invalid calculated formula), affected records per record type, preview of sample records, the ADR-0040 "new required field" plan items; mapping of the `0068` constraint names to the ADR-0041 §10 codes), `forms/pin-initializer.ts` (the `TransformationInitializer` that pins a new transformation to the newest published `forms` version in its create transaction; the `server.ts` registration line is named and owned here), `packages/shared/src/schemas/forms.ts` (+ its barrel line; BE-A creates the stub), `apps/api/test/integration/forms/**` for these operations.
+- **Operations (5):** `listFormRecordTypes`, `getFormSchemaAdmin`, `getTransformationFormSchema`, `getFormRecordCustomFields`, `putFormRecordCustomFields`.
+- **Consumes:** ADR-0041 §1–§4, §9–§10; `ConfigResolver` (slice A); the slice A element operations (`putConfigElement`/`removeConfigElement`) route form elements through this provider (registered in `methodology/kinds.ts` — the one registration line is BE-D's).
+- **Tests (literal):** REQ-S05-002: an extension field added to T03 publishes (Studio pipeline); deleting T03 `gap` → 422 `form_schema.source_column_protected`; changing a source column's type → 422 `form_schema.source_column_type_fixed`. REQ-S06-005: `12%` stores `"0.12"`; a currency value stores decimal SAR exactly; a calculated field naming an unknown field → 422 `form_schema.calculated_formula_invalid`. REQ-S16-010: a value violating its schema → 400/422 before persistence (and the database refuses it when forced: one test with the API check bypassed). A transformation created after the release is pinned to the newest forms version; a DG4 transformation reads forms v1. `If-Match` `"0"` creates, stale → 409 `form_record.conflict` with `currentVersion`; 428 missing; AUD 403; one audit event per write; commit-time re-authorization (permission revoked mid-request → 403, nothing written).
+
+### B.3 BE-E — version history, comments, attachments (backend-workflow-engineer; after BE-D)
+
+- **Files:** `forms/history.ts`, `forms/comments.ts`, `forms/attachments.ts` (writes `evidence_link` for its twenty DG2 record types through the evidence module's exported link function, else `form_record_attachment`), their `forms/routes.ts` lines, `packages/shared/src/schemas/forms-framework.ts`, tests.
+- **Operations (6):** `listFormRecordVersions`, `listFormRecordComments`, `createFormRecordComment`, `listFormRecordAttachments`, `attachFormRecordEvidence`, `removeFormRecordAttachment`.
+- **Consumes:** ADR-0041 §5, §6, §8; `audit_event` (read only); the evidence module's link service (no edit to `evidence/**`: if no exported function exists, request one in the handback and use the repository read path).
+- **Tests (REQ-S05-001 literal, T01 and T14):** after an edit, history lists the new version with the changed fields; a comment and a reply persist and read back; a reply to a reply → 422 `form_comment.parent_invalid`; an attachment on T14 (`benefit`, `form_record_attachment`) and on T01 (`diagnostic_item`, `evidence_link`) persist and list; removal needs a reason; AUD 403 on writes; free-text rules on comment bodies.
+
+### B.4 BE-E2 — export, bulk edit, drafts, the recoverable conflict (backend-workflow-engineer; after BE-E)
+
+- **Files:** `forms/export.ts` (CSV RFC 4180 UTF-8 with BOM and JSON; 5000-row cap), `forms/bulk.ts` (all-or-nothing through each register's exported update function; a register without one is listed in the handback and its record type stays `bulk_edit_allowed` only if served), `forms/drafts.ts`, the `transformations/register-kit.ts` lines that expose each register's update function to `forms/bulk.ts` (named lines only; existing routes unchanged), their `forms/routes.ts` lines, tests.
+- **Operations (7):** `exportFormRecords`, `bulkUpdateFormRecords`, `listFormDrafts`, `createFormDraft`, `getFormDraft`, `updateFormDraft`, `closeFormDraft`.
+- **Consumes:** ADR-0041 §5–§7, §10; `config.consumes` `application/json` on every body; the export response declares `text/csv` and `application/json`.
+- **Tests (REQ-S05-001 literal, T01 and T14):** a saved draft reopens with its payload and `baseChanged` after a concurrent edit; export returns the rows (CSV and JSON, en and ar headers; Unknown marked, never 0); bulk edit of owners on 3 T15 records commits all, and with one stale version commits none (409 `form_record.bulk_conflict` listing it); a conflicting concurrent save returns the recoverable 409; AUD 403; one audit event per record written.
+
+### B.5 Migrations of slice B and C
+
+`0068`–`0070` are delivered. **`0071`–`0073`** are free and are taken, in this order, only by a slice B/C task whose handback shows a database need: **`0071` BE-F2** (expected: the work-item kind `procedure_step` and its My Work section line, if the step assignment is shown in My Work — ADR-0042 §7); **`0072` BE-G** (only if an output adapter needs a constraint or seed change); **`0073` BE-E2** (only if bulk edit or export needs one). A task that needs none leaves its number unused; numbers are never reordered.
+
+### B.6 Integration order (slice B)
+
+ARCH-02 → KBE-B → BE-D (after BE-A) → BE-E → BE-E2 → FE-C (form-builder screens and the form framework on T01 and T14; p5-plan §5.1). BE-E and BE-E2 are sequential on `forms/routes.ts`.
+
+### B.7 Requirement → owner (slice B)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-S05-001 | BE-E (history, comments, attachments), BE-E2 (drafts, export, bulk, conflict), BE-D (validation, inline help reads) | FE-C (T01 and T14 screens) |
+| REQ-S05-002 | BE-D (provider, protected columns) | FE-C (Studio fields screen) |
+| REQ-S05-006 | BE-D (registry reads, badge) | FE-C (badge in en and ar on the twelve forms); the twelve creates/reads are the DG2–DG4 operations of ADR-0041 §1 and BE-F's `putProcedureDefinition` |
+| REQ-S06-005 | KBE-B (validators), BE-D (wiring, calculated fields) | — |
+| REQ-S16-010 | BE-D (custom values) | — |
+
+## §C. Slice C (procedure definitions, instances, the ten seeded procedures, the coverage view, the S16-015 entity group) — T-DG5-ARCH-02
+
+### C.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0042-p5-procedure-definitions-instances-seeded-procedures-coverage.md` | Binding design, with the refusal codes and English texts (§10) |
+| Migrations | `packages/db/migrations/0069_p5_procedures.sql` (tables, guards, the `procedures` v1 seed with the ten procedures and 31 steps), `0070_p5_forms_procedures_permissions_coverage.sql` (permissions, 114 coverage links) | Probe PS, PD, PI, CO, PM: PASS |
+| Lock class | `platform/advisory-locks.ts` `procedureInstanceStep` 730254 (730255–730257 reserved), ADR-0016 §6 | Registry test updated (28 classes) |
+| Contract | 16 slice C operations (tag `procedures`) | As §B |
+| Contract-test seams | `p5-pending-be-f.ts` (5), `p5-pending-be-f2.ts` (10), `p5-pending-be-g.ts` (1) | As §B |
+
+The plan's BE-F is split into **BE-F** (definitions) and **BE-F2** (instances); BE-G is as planned, without the seed migration (the architect delivered the ten seeded procedures in `0069`).
+
+### C.1 BE-F — procedure definitions and the procedures kind provider (backend-workflow-engineer; after BE-D)
+
+- **Files:** `procedures/index.ts`, `procedures/routes.ts` (first; stubs for BE-F2/BE-G files), `procedures/definitions.ts` (reads, put/remove in a draft, the builder validation of ADR-0042 §1–§2 returning every finding), `procedures/provider.ts` (the `procedure` `ConfigKindProvider`: copy of definition and step rows into a new draft, the content-hash rows of ADR-0042 §1, diff rows, compatibility, affected instances (running instances stay pinned), preview), `packages/shared/src/schemas/procedures.ts` (+ barrel line), tests.
+- **Operations (5):** `listProcedureDefinitions`, `validateProcedureDefinition`, `getProcedureDefinition`, `putProcedureDefinition`, `removeProcedureDefinition`.
+- **Consumes:** ADR-0042 §1–§2, §9–§10; the KBE-B field schemas for `inputSchema`; slice A drafts, lock 730250 and publish (`publishConfigVersion` publishes procedures; no separate publish operation).
+- **Tests (REQ-S06-001 literal):** a definition with a conditional and a parallel step validates, is saved in a draft, previewed, reviewed (TO) and published, then launches (with BE-F2); a definition missing a trigger → 422 `procedure_definition.trigger_required`; missing a completion condition → 422 `procedure_definition.completion_required`; ADM_METHOD as a responsible role → 422 `procedure_definition.role_not_allowed`; removing a seeded procedure → 422 `procedure_definition.source_protected`; editing a published version → 409 `config_version.not_editable`; AUD 403; `If-Match` on the draft.
+
+### C.2 BE-F2 — procedure instances, steps and my procedures (backend-workflow-engineer; after BE-F)
+
+- **Files:** `procedures/instances.ts` (launch, read model: current step, assignee, due date through the DG4 business calendar, missing inputs, evidence, next action), `procedures/steps.ts` (activate by ordinal, parallel groups, conditions with decimal.js, complete/skip/assign/evidence, cancel, completion; lock 730254; the output-adapter port `ProcedureOutputAdapter` and its registry that BE-G fills), `procedures/my-steps.ts`, `apps/worker/src/handlers/procedures.ts` (fill BE-A's stub: consume `procedure_step.activated` for the slice E rule actions; no reminder logic here), migration **`0071`** if needed (§B.5), its schema/catalogue lines, tests.
+- **Operations (10):** `listProcedureInstances`, `launchProcedureInstance`, `getProcedureInstance`, `updateProcedureInstanceInputs`, `completeProcedureStep`, `skipProcedureStep`, `assignProcedureStep`, `linkProcedureStepEvidence`, `cancelProcedureInstance`, `listMyProcedureSteps`.
+- **Consumes:** ADR-0042 §3–§4, §7, §9–§10; the canonical approval (ADR-0026) for approval steps (create the approval when the step activates; complete the step in the approval-decided hook — the `workflows/approvals.ts` provider line is named in the handback for the orchestrator, as BE-C did, because BE-C and BE-K also edit that file).
+- **Tests (REQ-S06-002 literal, A02 part):** a `baseline_validation` instance shows `record_baseline` as current step with its assignee and due date; missing inputs listed; completing without them → 422 `procedure_step.inputs_missing` with `missingInputs`; the evidence rule; parallel steps both active; a false condition → `not_applicable`; an approval step completes only after the canonical approval is approved by its business approver; a published v2 does not change a running v1 instance; launch with a launch key twice creates one instance; AUD 403; `If-Match` 428/409; one audit event per mutation; a launch by a role outside the definition's launch roles → 403 `procedure.launch_role`.
+
+### C.3 BE-G — output adapters, the coverage view, the S16-015 entity group (backend-workflow-engineer; after BE-F2)
+
+- **Files:** `procedures/outputs/**` (one adapter per output record type of ADR-0042 §3, each calling the owning module's exported service with the acting user: `transformations` (create), `charter`, `kpi` (baseline create and validate, KPI actual submit and accept), `workflows` (approval, gate submission and decision link, change request), `portfolio` (ranking snapshot), `benefits` (finance validation), `governance` (executive decision), `sustainment` (BAU handover), `evidence`; a missing exported service is requested in the handback, never re-implemented), `procedures/coverage.ts`, its `procedures/routes.ts` line, `apps/api/test/integration/procedures/entity-group.test.ts` (REQ-S16-015), `apps/api/test/integration/procedures/seeded-procedures.test.ts` (REQ-S06-003), migration **`0072`** only if needed.
+- **Operations (1):** `getMethodologyCoverage`.
+- **Consumes:** ADR-0042 §3, §5, §6, §8; `source_element` and `methodology_coverage_link` (read only).
+- **Tests (literal):** REQ-S06-002: completing `baseline_validation` creates a baseline, the FIN step validates it, and the validated baseline is linked to the instance. REQ-S06-003: the ten procedures exist after initialization and each launches and completes with its adapters (synthetic data; approval steps decided by a synthetic business approver). REQ-S01-003: every one of the 80 source elements shows a linked form or procedure; launch windows and health questions show **Planned** (never green) until slice H ships. REQ-S16-015: create and read TOMDimension (draft element), TOMCanvas, Capability, Gap, Journey, Process, ProcedureDefinition, ProcedureInstance through the API with authorization enforced (AUD 403, 404 outside scope).
+
+### C.4 Integration order (slice C)
+
+BE-D → BE-F → BE-F2 → BE-G (sequential on `procedures/routes.ts`) → FE-D (procedure builder, my procedures, instance view; with slice E's screens, p5-plan §5.1) → QA-A/QA-E (A06, A02). Slice E (BE-J) registers the event/schedule launches and the step reminders/escalations as rule actions after BE-F2.
+
+### C.5 Requirement → owner (slice C)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-S01-003 | BE-G (coverage view) | QA-E (A02 guided scenario) |
+| REQ-S06-001 | BE-F | FE-D (procedure builder) |
+| REQ-S06-002 | BE-F2 (instances), BE-G (outputs) | FE-D (instance view, my procedures); slice E (step reminders) |
+| REQ-S06-003 | architect (seed in `0069`), BE-G (launch/complete test) | QA-E |
+| REQ-S16-015 | BE-G (entity-group test); architect (ERD §1m, `0069`) | — |
+
+### C.6 What the implementers of slices B and C must know
+
+1. **One key per kind.** Form schemas are kind `form_schema`, key `forms`; procedures are kind `procedure`, key `procedures`. Drafts copy every row of their base (ADR-0039 §2); the content hash includes the provider rows (ADR-0042 §1), so recompute it on every write.
+2. **The database refuses what the ADRs refuse.** API checks come first and return the ADR-0041 §10 / ADR-0042 §10 codes; reaching a `0068`/`0069` guard is a programming error. The probe (`probe-output.txt`) names each guard and its constraint name.
+3. **Decimals.** Every number, percentage and currency value is a decimal string (KBE-B validators); a percentage is stored as a fraction; currency carries its code. Unknown and Not computable are never 0 or green.
+4. **No DG2–DG4 change.** Custom values live in `form_custom_value`; attachments of the twenty DG2 record types stay in `evidence_link`; bulk edits and output adapters call the owning modules' existing services. Any change to a DG2–DG4 route, request, response or rule is a reopen candidate: stop and raise it.
+5. **Pins.** DG1–DG4 transformations resolve to forms v1 (no back-fill); new ones are pinned at creation by BE-D's initializer. A running procedure instance stays on its definition version.
+6. **Approvals.** Procedure approval steps are decided only through the canonical approval by the human business approver; tests use synthetic approvers labelled as such.
+7. **Locks.** 730254 for instance step transitions; no lock for comments (append-only); 730255–730257 stay reserved.
+8. **Exactly once.** Automation launches carry `launch_key` (UNIQUE); work items use `createWorkItemOnce` with `procedure_step:<stepInstanceId>:<kind>`.
+9. **D-142 decisions** are binding: Q1 (stable identities), Q4 ("create" for TOMDimension = a draft element), Q8 (no new dependency).

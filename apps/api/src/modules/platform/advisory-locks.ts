@@ -85,6 +85,11 @@ export const ADVISORY_LOCK_CLASSES = {
   configPublish: 730251,
   /** The methodology migrations and configuration pins of one transformation (create, preview, submit, decide, execute, withdraw; one open migration per kind is also held by the unique index methodology_migration_one_open_key). Key: "<transformationId>". */
   methodologyMigration: 730252,
+  // P5 block of T-DG5-ARCH-02 (730254-730257; p5-plan §4, ADR-0041 §8, ADR-0042 §7). 730255-730257 are RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it (ADR-0041 §8: append-only
+  // comments need no lock).
+  /** The steps of one procedure instance (procedures: launch creates and activates the first steps, input updates, step complete/skip/assign, cancel and instance completion; exactly-once launch is also held by the unique constraint procedure_instance_launch_key). Key: "<procedureInstanceId>". */
+  procedureInstanceStep: 730254,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

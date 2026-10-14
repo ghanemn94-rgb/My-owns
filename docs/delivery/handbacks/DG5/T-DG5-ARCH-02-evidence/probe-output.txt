@@ -1,0 +1,121 @@
+port-policy: PostgreSQL listening on port 23704 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 67 (0001_identity_access.sql .. 0070_p5_forms_procedures_permissions_coverage.sql)
+PASS  G00 slice B/C migrations 0068-0070 present; nothing in 0071-0073 from this task  -- ids >= 62: 62,63,64,68,69,70
+PASS  G01 fresh database: 0001..last apply  -- applied 67: 0064_p5_studio_permissions_source_inventory.sql, 0068_p5_form_schemas_framework.sql, 0069_p5_procedures.sql, 0070_p5_forms_procedures_permissions_coverage.sql
+PASS  G02 P4 database populated (0001-0061; a synthetic transformation instantiated)  -- applied 61; pins 1
+PASS  G03 P5 over the P4 database: 0062..last apply  -- applied 6: 0062_p5_config_versions.sql, 0063_p5_pins_methodology_migrations.sql, 0064_p5_studio_permissions_source_inventory.sql, 0068_p5_form_schemas_framework.sql, 0069_p5_procedures.sql, 0070_p5_forms_procedures_permissions_coverage.sql
+PASS  G04 the existing pin is byte-identical after 0062..last (no form_schema/procedure pin is back-filled)  -- [["methodology",1]]
+PASS  G05 slice B/C seeds present over the P4 database (33 record types, 111 source columns, 10 procedures, 114 coverage links)  -- {"rt":33,"sf":111,"pd":10,"cl":114}
+PASS  FS01 record types: 15 templates (T10 is the dashboard), 3 source deliverables, 12 M0149 extensions all badged, 3 product records  -- {"extension":[12,12],"product":[3,0],"source_deliverable":[3,0],"template":[15,0]}
+PASS  FS02 T03 'gap' is a registered source column stored in tom_gap.gap  -- {"label_en":"gap","field_type":"rich_text","storage_ref":"tom_gap.gap"}
+PASS  FS03 every 'column' storage reference names an existing typed column  -- 71 column refs; missing []
+PASS  FS04 every registered record table exists with id and transformation_id (procedure_definition: id only)  -- []
+PASS  FS05 forms v1 is a published seed of kind form_schema with no element rows (resolves to the registry)  -- {"config_kind":"form_schema","status":"published","origin":"seed","els":0}; source field types used: attachment,calculated,choice,currency,date,lookup,number,percentage,reference,rich_text,text
+PASS  FE01 a form_schema draft (forms v2, based on v1) commits  -- 01990000-0000-7000-8000-000000000064
+PASS  FE02 extension field T03.risk_score (number) is added to T03 in the draft (REQ-S05-002)  -- 01990000-0000-7000-8000-000000000066
+PASS  FE02 extension field T03.coverage (percentage) is added to T03 in the draft (REQ-S05-002)  -- 01990000-0000-7000-8000-000000000068
+PASS  FE02 extension field T03.cost (currency) is added to T03 in the draft (REQ-S05-002)  -- 01990000-0000-7000-8000-00000000006a
+PASS  FE02 extension field T03.total (calculated) is added to T03 in the draft (REQ-S05-002)  -- 01990000-0000-7000-8000-00000000006c
+PASS  FE03 relabelling the T03 source column 'gap' and adding help commits  -- 01990000-0000-7000-8000-00000000006e
+PASS  FE04 deleting the T03 source column 'gap' is refused (REQ-S05-002)  -- 23514 methodology_element_source_field_protected new row for relation "methodology_element" violates check constraint "methodology_element_source_field_protected"
+PASS  FE05 changing the type of a source column is refused (type semantics fixed)  -- 23514 methodology_element_source_field_type_fixed methodology_element 01990000-0000-7000-8000-000000000071: the type of source column T03.owner is fixed (reference); relabel it instead (REQ-S05-002)
+PASS  FE06 an extension field reusing a source column key is refused  -- 23514 methodology_element_extension_field_key methodology_element 01990000-0000-7000-8000-000000000072: an extension field is <recordType>.<key> of a record type that allows extension fields, and never reuses a source column key
+PASS  FE07 an extension field on a record type without extension fields (phase_step) is refused  -- 23514 methodology_element_extension_field_key methodology_element 01990000-0000-7000-8000-000000000073: an extension field is <recordType>.<key> of a record type that allows extension fields, and never reuses a source column key
+PASS  FE08 an unknown field type is refused (the eleven types, REQ-S06-005)  -- 23514 methodology_element_field_type new row for relation "methodology_element" violates check constraint "methodology_element_field_type"
+PASS  FE09 a calculated field without an expression is refused  -- 23514 methodology_element_field_settings methodology_element 01990000-0000-7000-8000-000000000075: field type calculated is missing its required settings (ADR-0041 §3)
+PASS  FE10 a choice field without options is refused  -- 23514 methodology_element_field_settings methodology_element 01990000-0000-7000-8000-000000000076: field type choice is missing its required settings (ADR-0041 §3)
+PASS  FE11 a form_field element in a methodology-kind draft is refused  -- 23514 methodology_element_kind_type methodology_element 01990000-0000-7000-8000-000000000079: type form_field does not belong to configuration kind methodology
+PASS  FE12 an admin-added form (record type) is refused  -- 23514 methodology_element_form_fixed new row for relation "methodology_element" violates check constraint "methodology_element_form_fixed"
+PASS  FE13 a source form_field that is not a registered source column is refused  -- 23503 methodology_element_source_identity methodology_element 01990000-0000-7000-8000-00000000007b: form_field T03.not_a_column is not a stable source identity
+PASS  FE14 an element write without its audit event fails at COMMIT  -- 23000 methodology_element_audit_required no audit_event for methodology_element 01990000-0000-7000-8000-00000000007c at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  FE15 forms v2 publishes through the slice A pipeline (preview, compatibility, review policy off)  -- 01990000-0000-7000-8000-000000000064
+PASS  FE16 an element write into the published forms v2 is refused (immutable)  -- 23514 methodology_element_draft_only methodology_element 01990000-0000-7000-8000-000000000085: elements change only in a draft being edited; a published version is immutable
+PASS  CV00 fixture: a synthetic T03 (tom_gap) record exists  -- 01990000-0000-7000-8000-000000000086
+PASS  CV01 without a form_schema pin the transformation uses forms v1, which has no extension field: a value is refused  -- 23514 form_custom_value_unknown_field form_custom_value 01990000-0000-7000-8000-000000000088: risk_score is not an extension field of T03 in the pinned form schema version
+PASS  CV02 the transformation is pinned to forms v2 (synthetic pin, as BE-D's initializer or a migration would)  -- 01990000-0000-7000-8000-000000000089
+PASS  CV03 decimal number '12.5', percentage stored as the fraction '0.12' (entered as 12%) and currency {amount '1500000.10', SAR} commit  -- 01990000-0000-7000-8000-00000000008b
+PASS  CV04 the stored values are the exact decimal strings (no float rounding)  -- {"cost":{"amount":"1500000.10","currencyCode":"SAR"},"coverage":"0.12","risk_score":"12.5"}
+PASS  CV05 a JSON float for a number field is refused (decimal strings only)  -- 23514 form_custom_value_type_shape form_custom_value 01990000-0000-7000-8000-00000000008b: the value of risk_score does not have the shape of a number field (ADR-0041 §3)
+PASS  CV06 a currency value without a currency code is refused  -- 23514 form_custom_value_type_shape form_custom_value 01990000-0000-7000-8000-00000000008b: the value of cost does not have the shape of a currency field (ADR-0041 §3)
+PASS  CV07 a stored value for a calculated field is refused (computed at read)  -- 23514 form_custom_value_type_shape form_custom_value 01990000-0000-7000-8000-00000000008b: the value of total does not have the shape of a calculated field (ADR-0041 §3)
+PASS  CV08 an unknown key is refused (custom-field value violating its schema, REQ-S16-010)  -- 23514 form_custom_value_unknown_field form_custom_value 01990000-0000-7000-8000-00000000008b: not_a_field is not an extension field of T03 in the pinned form schema version
+PASS  CV09 values validated against a version other than the pin are refused  -- 23514 form_custom_value_pinned_version form_custom_value 01990000-0000-7000-8000-00000000008b: values are validated against the form schema version the transformation is pinned to
+PASS  CV10 a record that does not exist in the transformation is refused  -- 23503 form_custom_value_record_ref form_custom_value: T03 01990000-0000-7000-8000-00000000008d does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  CV11 the record type and id never change  -- 23514 form_custom_value_record_fixed form_custom_value: record_type and record_id never change
+PASS  CV12 a second value row for the same record is refused (one row per record)  -- 23505 form_custom_value_record_key duplicate key value violates unique constraint "form_custom_value_record_key"
+PASS  CV13 an update without its audit event fails at COMMIT  -- 23000 form_custom_value_audit_required no audit_event for form_custom_value 01990000-0000-7000-8000-00000000008b at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  CV14 an update whose version does not step by 1 is refused  -- 23514 form_custom_value_version_step form_custom_value: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  CV15 clearing a value with JSON null commits  -- 01990000-0000-7000-8000-00000000008b
+PASS  FD01 a draft of an existing T03 record commits (saved draft reopens: same row)  -- 01990000-0000-7000-8000-000000000092
+PASS  FD02 a second open draft of the same record by the same user is refused  -- 23505 form_draft_open_record_key duplicate key value violates unique constraint "form_draft_open_record_key"
+PASS  FD03 a draft owned by someone other than its creator is refused  -- 23514 form_draft_owner_is_creator new row for relation "form_draft" violates check constraint "form_draft_owner_is_creator"
+PASS  FD04 a draft of a planned record type (launch_plan) is refused  -- 23514 form_draft_record_type form_draft: record type launch_plan has no stored records in a transformation
+PASS  FD05 closing the draft as saved commits  -- 01990000-0000-7000-8000-000000000092
+PASS  FD06 a closed draft never changes  -- 23514 form_draft_status_transition form_draft 01990000-0000-7000-8000-000000000092: a closed draft never changes
+PASS  FD07 a draft insert without its audit event fails at COMMIT  -- 23000 form_draft_audit_required no audit_event for form_draft 01990000-0000-7000-8000-000000000098 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  FC01 a comment on the T03 record commits  -- 01990000-0000-7000-8000-000000000099
+PASS  FC02 a reply to it commits  -- 01990000-0000-7000-8000-00000000009b
+PASS  FC03 a reply to a reply is refused (one level)  -- 23514 form_record_comment_parent_same_record form_record_comment 01990000-0000-7000-8000-00000000009d: a reply answers a top-level comment of the same record
+PASS  FC04 UPDATE of a comment is refused by the append-only trigger, even for the owner (mth_app has no UPDATE grant)  -- 42501 form_record_comment is append-only: UPDATE is not allowed
+PASS  FC05 DELETE of a comment is refused by the append-only trigger (owner)  -- 42501 form_record_comment is append-only: DELETE is not allowed
+PASS  FC06 a comment without its audit event fails at COMMIT  -- 23000 form_record_comment_audit_required no audit_event for form_record_comment 01990000-0000-7000-8000-00000000009e at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  FC07 a comment on a record of another transformation is refused  -- 23503 form_record_comment_record_ref form_record_comment: T03 01990000-0000-7000-8000-000000000086 does not exist in transformation 01990000-0000-7000-8000-000000000007
+PASS  FA01 attaching evidence to a T15 (RAID) record commits  -- 01990000-0000-7000-8000-0000000000a4
+PASS  FA02 a second active attachment of the same evidence to the same record is refused  -- 23505 form_record_attachment_active_key duplicate key value violates unique constraint "form_record_attachment_active_key"
+PASS  FA03 a T03 record keeps its attachments in the DG2 evidence_link (one canonical place)  -- 23514 form_record_attachment_use_evidence_link form_record_attachment 01990000-0000-7000-8000-0000000000a7: T03 records keep their attachments in evidence_link
+PASS  FA04 only the removal columns change  -- 23514 form_record_attachment_frozen form_record_attachment 01990000-0000-7000-8000-0000000000a4: only the removal columns change
+PASS  FA05 removing the attachment with a reason commits  -- 01990000-0000-7000-8000-0000000000a4
+PASS  FA06 a removed attachment never returns to active  -- 23514 form_record_attachment_status_transition form_record_attachment 01990000-0000-7000-8000-0000000000a4: removed -> active is not a legal transition
+PASS  PS01 the ten M0153 procedures are seeded in published procedures v1, each with a trigger and a completion rule  -- [["new_transformation_intake",3],["baseline_validation",2],["kpi_submission",2],["tom_approval",4],["initiative_prioritization",3],["gate_review",4],["scope_target_change",3],["benefit_validation",4],["executive_escalation",3],["bau_handover",3]]
+PASS  PS02 the seed has conditional, parallel and approval steps  -- {"cond":2,"par":6,"appr":7}
+PASS  PS03 the application role cannot change a seeded (published) definition  -- 23514 procedure_definition_draft_only procedure_definition 01920005-0301-7000-8000-000000000002: definitions change only in a draft being edited; a published version is immutable
+PASS  PD01 a procedures draft (v2, based on v1) commits  -- 01990000-0000-7000-8000-0000000000aa
+PASS  PD02 an admin-authored definition is added to the draft  -- 01990000-0000-7000-8000-0000000000ac
+PASS  PD03 a definition without a trigger is refused (REQ-S06-001)  -- 23502 null value in column "trigger_kind" of relation "procedure_definition" violates not-null constraint
+PASS  PD04 a definition without a completion condition is refused (REQ-S06-001)  -- 23502 null value in column "completion_rule" of relation "procedure_definition" violates not-null constraint
+PASS  PD05 an event trigger without its event is refused  -- 23514 procedure_definition_trigger_event new row for relation "procedure_definition" violates check constraint "procedure_definition_trigger_event"
+PASS  PD06 ADM_METHOD (technical admin) as a responsible role is refused  -- 23514 procedure_definition_roles procedure_definition 01990000-0000-7000-8000-0000000000b1: every role exists and is a business role, never a technical administrator or AUD
+PASS  PD07 AUD as an approval role is refused  -- 23514 procedure_definition_roles procedure_definition 01990000-0000-7000-8000-0000000000b2: every role exists and is a business role, never a technical administrator or AUD
+PASS  PD08 removing a seeded definition is refused (REQ-S06-003)  -- 23514 procedure_definition_source_kept new row for relation "procedure_definition" violates check constraint "procedure_definition_source_kept"
+PASS  PD09 ordered, parallel (shared group) and conditional steps commit  -- 01990000-0000-7000-8000-0000000000ba
+PASS  PD10 two steps on one ordinal without a shared parallel group are refused  -- 23514 procedure_step_definition_parallel_group procedure_step_definition 01990000-0000-7000-8000-0000000000bc: steps sharing ordinal 1 must share one parallel group
+PASS  PD11 a condition on an undeclared input is refused  -- 23514 procedure_step_definition_inputs procedure_step_definition 01990000-0000-7000-8000-0000000000bd: required inputs and the condition key must be inputs of the definition
+PASS  PD12 an approval step without an approver role is refused  -- 23514 procedure_step_definition_approval_complete new row for relation "procedure_step_definition" violates check constraint "procedure_step_definition_approval_complete"
+PASS  PD13 a definition write without its audit event fails at COMMIT  -- 23000 procedure_definition_audit_required no audit_event for procedure_definition 01990000-0000-7000-8000-0000000000bf at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  PD14 a definition update whose version does not step by 1 is refused  -- 23514 procedure_definition_version_step procedure_definition: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  PD15 a definition's code never changes  -- 23514 procedure_definition_identity_fixed procedure_definition 01990000-0000-7000-8000-0000000000ac: version, code and origin never change
+PASS  PI01 launching baseline_validation creates a persistent instance pinned to the v1 definition with its two steps pending  -- 01990000-0000-7000-8000-0000000000c0
+PASS  PI02 the instance reads back active, pinned to procedures v1, with 2 step instances  -- {"status":"active","methodology_version_id":"01920005-0300-7000-8000-000000000001","steps":2}
+PASS  PI03 launching from a draft (unpublished) definition is refused  -- 23514 procedure_instance_launch procedure_instance 01990000-0000-7000-8000-0000000000c6: an instance starts active, from a published, not removed definition (its code)
+PASS  PI04 an organization-scope procedure launched inside a transformation is refused  -- 23514 procedure_instance_scope procedure_instance 01990000-0000-7000-8000-0000000000c7: a transformation-scope procedure runs in a transformation; an organization-scope one does not
+PASS  PI05 an input the pinned definition does not declare is refused  -- 23514 procedure_instance_inputs procedure_instance 01990000-0000-7000-8000-0000000000c8: an input value names an input the pinned definition does not declare
+PASS  PI06 the pinned definition never changes  -- 23514 procedure_instance_pinned procedure_instance 01990000-0000-7000-8000-0000000000c0: procedure_definition_id never changes (the instance stays pinned)
+PASS  PI07 activating step 2 while step 1 is open is refused (ordered steps)  -- 23514 procedure_step_instance_order procedure_step_instance 01990000-0000-7000-8000-0000000000c4: earlier steps are still open
+PASS  PI08 activating step 1 commits  -- 01990000-0000-7000-8000-0000000000c2
+PASS  PI09 completing a step with missing required inputs is refused (missing inputs)  -- 23514 procedure_step_instance_inputs procedure_step_instance 01990000-0000-7000-8000-0000000000c2: required inputs are missing
+PASS  PI10 providing the inputs (decimal value as a string) commits  -- 01990000-0000-7000-8000-0000000000c0
+PASS  PI11 completing an evidence-required step without linked evidence is refused  -- 23514 procedure_step_instance_evidence procedure_step_instance 01990000-0000-7000-8000-0000000000c2: this step needs linked evidence
+PASS  PI12 with evidence linked, step 1 completes  -- 01990000-0000-7000-8000-0000000000c2
+PASS  PI13 completing the instance while step 2 is pending is refused (completion condition)  -- 23514 procedure_instance_completion procedure_instance 01990000-0000-7000-8000-0000000000c0: every step must be closed before the instance completes
+PASS  PI14 a closed step never changes  -- 23514 procedure_step_instance_status_transition procedure_step_instance 01990000-0000-7000-8000-0000000000c2: a closed step never changes
+PASS  PI15 a link to a record of another transformation is refused  -- 23503 procedure_instance_link_record_ref procedure_instance_link 01990000-0000-7000-8000-0000000000ce: transformation 01990000-0000-7000-8000-000000000007 does not exist in the instance's scope
+PASS  PI16 UPDATE of a link is refused by the append-only trigger, even for the owner (mth_app has no UPDATE grant)  -- 42501 procedure_instance_link is append-only: UPDATE is not allowed
+PASS  PI17 DELETE of a link is refused by the append-only trigger (owner)  -- 42501 procedure_instance_link is append-only: DELETE is not allowed
+PASS  PI18 a step instance update without its audit event fails at COMMIT  -- 23000 procedure_step_instance_audit_required no audit_event for procedure_step_instance 01990000-0000-7000-8000-0000000000c4 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  PI19 an instance update whose version does not step by 1 is refused  -- 23514 procedure_instance_version_step procedure_instance: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  PI20 executive_escalation launches; step 1 completes with its input  -- 01990000-0000-7000-8000-0000000000d0
+PASS  PI21 an approval step cannot be completed without an approved canonical approval  -- 23514 procedure_step_instance_approval procedure_step_instance 01990000-0000-7000-8000-0000000000d4: an approval step completes only through an approved canonical approval
+PASS  PI22 an approval step cannot be skipped  -- 23514 procedure_step_instance_not_skippable procedure_step_instance 01990000-0000-7000-8000-0000000000d4: this step cannot be skipped
+PASS  PI23 cancelling the instance (reason) and its open steps commits  -- 01990000-0000-7000-8000-0000000000d0
+PASS  PI24 a cancelled instance never becomes active again  -- 23514 procedure_instance_status_transition procedure_instance 01990000-0000-7000-8000-0000000000d0: cancelled -> active is not a legal transition
+PASS  PI25 an automation launch with a launch key commits once  -- 01990000-0000-7000-8000-0000000000de
+PASS  PI26 a replay with the same launch key is refused (exactly once)  -- 23505 procedure_instance_launch_key duplicate key value violates unique constraint "procedure_instance_launch_key"
+PASS  PI27 an instance without its audit event fails at COMMIT  -- 23000 procedure_instance_audit_required no audit_event for procedure_instance 01990000-0000-7000-8000-0000000000e5 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  PI28 a step instance copied from another definition's step is refused (pinned)  -- 23514 procedure_step_instance_pinned procedure_step_instance 01990000-0000-7000-8000-0000000000e6: a step instance copies a step of the pinned definition and starts pending
+PASS  CO01 every one of the 80 source elements has at least one linked form or procedure  -- uncovered 0
+PASS  CO02 a coverage link to an unknown form is refused  -- 23503 methodology_coverage_link_target methodology_coverage_link 01990000-0000-7000-8000-0000000000e7: form T99 does not exist
+PASS  CO03 the application role cannot write coverage links (read-only)  -- 42501 permission denied for table methodology_coverage_link
+PASS  PM01 five slice B/C codes, none a business approval; AUD and the technical admins hold procedure.read only  -- [["form_record.comment","write",9],["procedure.act","write",9],["procedure.launch","write",7],["procedure.manage","write",2],["procedure.read","read",14]]
+ALL PROBES PASS
+exit=0

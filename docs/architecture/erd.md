@@ -1647,6 +1647,65 @@ erDiagram
 | Gate re-approval (S06-008, D-142 Q9) | `gate_reapproval` | `id` (one required per gate instance) | `created_by` | execution; the gate decision | `status` (required, satisfied, superseded) | yes | workflows |
 | T06 default weights and rubric (PB-093) | `methodology_version` (`config_kind = 'scoring_defaults'`) + `methodology_element` (`scoring_weight`, `scoring_rubric`) | as above | as above | `methodology.configure`, `methodology.publish` | as above | yes | methodology |
 
+## 1m. P5 slices B and C: native forms and procedures (migrations 0068–0070; T-DG5-ARCH-02; ADR-0041, ADR-0042)
+
+Every table below has PK `id` (uuid from the application, seeds fixed), `timestamptz` stamps and, when mutable, `version` with the P2 guards (`_row_guard`, deferred `_audit_required`). Comments and procedure links are append-only. No DG2–DG4 table changes; `methodology_element` gains the `form` and `form_field` element types (`0068`). The data dictionary ("P5 tables, slices B and C") lists every column, constraint, index and trigger.
+
+### 1m.1 Native forms (slice B)
+
+```mermaid
+erDiagram
+    form_record_type ||--o{ form_source_field : "protected source columns"
+    methodology_version ||--o{ methodology_element : "form / form_field elements (kind form_schema, key forms)"
+    form_source_field |o--o{ methodology_element : "source form_field relabels"
+    transformation_config_pin }o--|| methodology_version : "form_schema pin (else forms v1)"
+    form_record_type ||--o{ form_custom_value : "record type"
+    methodology_version ||--o{ form_custom_value : "validated against (the pin)"
+    transformation ||--o{ form_custom_value : "scope"
+    form_record_type ||--o{ form_draft : "record type"
+    app_user ||--o{ form_draft : "owner"
+    form_record_type ||--o{ form_record_comment : "record type"
+    form_record_comment |o--o{ form_record_comment : "one reply level"
+    form_record_type ||--o{ form_record_attachment : "record type (non-evidence_link types)"
+    evidence ||--o{ form_record_attachment : "attached"
+    permission ||--o{ form_record_type : "write permission"
+```
+
+`(record_type, record_id)` in `form_custom_value`, `form_draft`, `form_record_comment` and `form_record_attachment` is a polymorphic reference to the registered table of the record type (`form_record_type.table_name`, with `decision.kind` for T04/T16), checked by `p5_form_record_ref_guard()` in the same transformation.
+
+### 1m.2 Procedures and coverage (slice C)
+
+```mermaid
+erDiagram
+    methodology_version ||--o{ procedure_definition : "kind procedure, key procedures"
+    procedure_definition ||--o{ procedure_step_definition : "ordered / parallel / conditional steps"
+    procedure_definition ||--o{ procedure_instance : "pinned (id, version)"
+    transformation |o--o{ procedure_instance : "scope (NULL = organization)"
+    procedure_instance ||--o{ procedure_step_instance : "steps"
+    procedure_step_definition ||--o{ procedure_step_instance : "copied from"
+    approval |o--o{ procedure_step_instance : "approval steps"
+    procedure_instance ||--o{ procedure_instance_link : "outputs and evidence (append-only)"
+    procedure_step_instance |o--o{ procedure_instance_link : "by step"
+    source_element ||--o{ methodology_coverage_link : "implemented by"
+```
+
+`procedure_instance_link (record_type, record_id)` names a real record of the output type in the instance's scope (`procedure_instance_link_guard()`); `methodology_coverage_link.target_code` names a `form_record_type` code or a procedure code (`methodology_coverage_link_guard()`).
+
+### 1m.3 P5 entity register (slices B and C) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Native form (S05-001, S05-006) | `form_record_type` (seed) | `code` | — | migrations | `feature_status` (working, planned); `extension_badge` | — | forms |
+| Protected source column (S05-002) | `form_source_field` (seed) | `id` (record type, field key unique) | — | migrations | — | — | forms |
+| Form schema version and fields (S06-004, S06-005) | `methodology_version` (`config_kind = 'form_schema'`) + `methodology_element` (`form`, `form_field`) | as slice A | as slice A | `methodology.configure`, `methodology.publish` | as slice A | yes | methodology (forms provider) |
+| Custom-field values (S16-010) | `form_custom_value` | `id` (record type, record id unique) | `created_by` | the record type's write permission | — | yes | forms |
+| Form draft (S05-001) | `form_draft` | `id` | `owner_user_id` | the record type's write permission | `status` (open, closed) | yes | forms |
+| Comment (S05-001) | `form_record_comment` | `id` | `created_by` | `form_record.comment` | — | append-only | forms |
+| Attachment (S05-001) | `form_record_attachment` (+ DG2 `evidence_link`) | `id` | `created_by` | the record type's write permission | `status` (active, removed) | yes | forms |
+| ProcedureDefinition (S06-001, S06-003, S16-015) | `procedure_definition` + `procedure_step_definition` | `id` (version, code unique; definition, step key unique) | `created_by` | `methodology.configure` (drafts only); seeds by migration | the version's `status`/`draft_stage`; `removed` | yes | procedures |
+| ProcedureInstance (S06-002, S16-015) | `procedure_instance` + `procedure_step_instance` + `procedure_instance_link` | `id` (`launch_key` unique; instance, step key unique) | `launched_by` (steps: `assignee_user_id`) | `procedure.launch`, `procedure.act`, `procedure.manage` | instance `status` (active, completed, cancelled); step `status` (pending, active, completed, skipped, not_applicable, cancelled) | yes; links append-only | procedures |
+| Coverage link (S01-003) | `methodology_coverage_link` (seed) | `id` (element, kind, code unique) | — | migrations | computed (covered, planned, not covered) | — | procedures |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1767,8 +1826,8 @@ erDiagram
 | Gap | `tom_gap` (T03) | **P2** |
 | Journey | `journey` (+ `journey_pain_point`) | **P2** |
 | Process | `journey` with `kind = 'process'` | **P2** |
-| ProcedureDefinition | `procedure_definition` (versioned) | P5 |
-| ProcedureInstance | `procedure_instance` | P5 |
+| ProcedureDefinition | `procedure_definition` (+ `procedure_step_definition`; version-scoped rows of the `procedures` configuration, §1m) | **P5** (`0069`) |
+| ProcedureInstance | `procedure_instance` (+ `procedure_step_instance`, `procedure_instance_link`; §1m) | **P5** (`0069`) |
 
 ### 2.6 Portfolio and roadmap (REQ-S16-016; DG3)
 

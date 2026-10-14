@@ -4895,6 +4895,282 @@ export type MethodologyMigrationItemRow = Selectable<MethodologyMigrationItemTab
 export type TransformationConfigPinHistoryRow = Selectable<TransformationConfigPinHistoryTable>;
 export type GateReapprovalRow = Selectable<GateReapprovalTable>;
 
+// ---- P5 slices B and C (migrations 0068-0070; T-DG5-ARCH-02; ADR-0041, ADR-0042). Generated from the DDL by
+// docs/delivery/handbacks/DG5/T-DG5-ARCH-02-evidence/gen-schema.py.
+export interface FormRecordTypeTable {
+  code: string;
+  ordinal: number;
+  kind: string;
+  title_en: string;
+  title_ar: string;
+  source_ref: string;
+  table_name: string | null;
+  discriminator_column: string | null;
+  discriminator_value: string | null;
+  write_permission_code: string | null;
+  extension_badge: boolean;
+  custom_fields_allowed: boolean;
+  bulk_edit_allowed: boolean;
+  feature_status: string;
+  created_at: TimestampDefault;
+}
+
+export interface FormSourceFieldTable {
+  id: string;
+  record_type: string;
+  field_key: string;
+  ordinal: number;
+  label_en: string;
+  label_ar: string;
+  field_type: string;
+  storage_kind: string;
+  storage_ref: string;
+  bulk_editable: Generated<boolean>;
+  source_ref: string;
+  created_at: TimestampDefault;
+}
+
+export interface FormCustomValueTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  form_schema_version_id: string;
+  field_values: JsonDefault;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface FormDraftTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string | null;
+  base_record_version: number | null;
+  owner_user_id: string;
+  payload: Json;
+  status: Generated<string>;
+  closed_reason: string | null;
+  closed_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface FormRecordCommentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  parent_comment_id: string | null;
+  body: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface FormRecordAttachmentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  evidence_id: string;
+  status: Generated<string>;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  remove_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ProcedureDefinitionTable {
+  id: string;
+  methodology_version_id: string;
+  code: string;
+  origin: string;
+  removed: Generated<boolean>;
+  ordinal: number;
+  name_en: string;
+  name_ar: string;
+  purpose_en: string;
+  purpose_ar: string;
+  trigger_kind: string;
+  trigger_event: string | null;
+  trigger_en: string;
+  trigger_ar: string;
+  scope_level: string;
+  scope_en: string;
+  scope_ar: string;
+  prerequisites_en: string | null;
+  prerequisites_ar: string | null;
+  input_schema: JsonDefault;
+  launch_role_codes: string[];
+  responsible_role_codes: string[];
+  sla_working_days: number;
+  validation_rules_en: string;
+  validation_rules_ar: string;
+  approval_mode: string;
+  approval_role_codes: Generated<string[]>;
+  escalation_role_code: string | null;
+  escalation_after_working_days: number | null;
+  expected_outputs_en: string;
+  expected_outputs_ar: string;
+  completion_rule: string;
+  completion_en: string;
+  completion_ar: string;
+  exceptions_en: string | null;
+  exceptions_ar: string | null;
+  effective_from: string;
+  source_ref: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ProcedureStepDefinitionTable {
+  id: string;
+  procedure_definition_id: string;
+  step_key: string;
+  ordinal: number;
+  parallel_group: string | null;
+  step_kind: string;
+  name_en: string;
+  name_ar: string;
+  instructions_en: string | null;
+  instructions_ar: string | null;
+  responsible_role_code: string;
+  approval_role_code: string | null;
+  sla_working_days: number;
+  condition_input_key: string | null;
+  condition_operator: string | null;
+  condition_value: NullableJson;
+  required_input_keys: Generated<string[]>;
+  evidence_required: Generated<boolean>;
+  output_record_type: string | null;
+  output_mode: string | null;
+  skippable: Generated<boolean>;
+  removed: Generated<boolean>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ProcedureInstanceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string | null;
+  procedure_definition_id: string;
+  methodology_version_id: string;
+  procedure_code: string;
+  status: Generated<string>;
+  subject_record_type: string | null;
+  subject_record_id: string | null;
+  input_values: JsonDefault;
+  due_date: string | null;
+  launch_key: string | null;
+  launched_by: string;
+  launched_at: TimestampDefault;
+  completed_at: NullableTimestamp;
+  cancelled_at: NullableTimestamp;
+  cancelled_by: string | null;
+  cancel_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ProcedureStepInstanceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string | null;
+  procedure_instance_id: string;
+  step_definition_id: string;
+  step_key: string;
+  ordinal: number;
+  status: Generated<string>;
+  assignee_role_code: string;
+  assignee_user_id: string | null;
+  due_date: string | null;
+  activated_at: NullableTimestamp;
+  completed_at: NullableTimestamp;
+  completed_by: string | null;
+  skipped_by: string | null;
+  skip_reason: string | null;
+  completion_note: string | null;
+  approval_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ProcedureInstanceLinkTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string | null;
+  procedure_instance_id: string;
+  step_instance_id: string | null;
+  link_kind: string;
+  record_type: string;
+  record_id: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface MethodologyCoverageLinkTable {
+  id: string;
+  source_element_id: string;
+  target_kind: string;
+  target_code: string;
+  created_at: TimestampDefault;
+}
+
+export interface Database {
+  form_record_type: FormRecordTypeTable;
+  form_source_field: FormSourceFieldTable;
+  form_custom_value: FormCustomValueTable;
+  form_draft: FormDraftTable;
+  form_record_comment: FormRecordCommentTable;
+  form_record_attachment: FormRecordAttachmentTable;
+  procedure_definition: ProcedureDefinitionTable;
+  procedure_step_definition: ProcedureStepDefinitionTable;
+  procedure_instance: ProcedureInstanceTable;
+  procedure_step_instance: ProcedureStepInstanceTable;
+  procedure_instance_link: ProcedureInstanceLinkTable;
+  methodology_coverage_link: MethodologyCoverageLinkTable;
+}
+
+export type FormRecordTypeRow = Selectable<FormRecordTypeTable>;
+export type FormSourceFieldRow = Selectable<FormSourceFieldTable>;
+export type FormCustomValueRow = Selectable<FormCustomValueTable>;
+export type FormDraftRow = Selectable<FormDraftTable>;
+export type FormRecordCommentRow = Selectable<FormRecordCommentTable>;
+export type FormRecordAttachmentRow = Selectable<FormRecordAttachmentTable>;
+export type ProcedureDefinitionRow = Selectable<ProcedureDefinitionTable>;
+export type ProcedureStepDefinitionRow = Selectable<ProcedureStepDefinitionTable>;
+export type ProcedureInstanceRow = Selectable<ProcedureInstanceTable>;
+export type ProcedureStepInstanceRow = Selectable<ProcedureStepInstanceTable>;
+export type ProcedureInstanceLinkRow = Selectable<ProcedureInstanceLinkTable>;
+export type MethodologyCoverageLinkRow = Selectable<MethodologyCoverageLinkTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -9086,6 +9362,234 @@ export const SCHEMA_COLUMNS = {
     "updated_at",
     "updated_by",
   ],
+  form_record_type: [
+    "code",
+    "ordinal",
+    "kind",
+    "title_en",
+    "title_ar",
+    "source_ref",
+    "table_name",
+    "discriminator_column",
+    "discriminator_value",
+    "write_permission_code",
+    "extension_badge",
+    "custom_fields_allowed",
+    "bulk_edit_allowed",
+    "feature_status",
+    "created_at",
+  ],
+  form_source_field: [
+    "id",
+    "record_type",
+    "field_key",
+    "ordinal",
+    "label_en",
+    "label_ar",
+    "field_type",
+    "storage_kind",
+    "storage_ref",
+    "bulk_editable",
+    "source_ref",
+    "created_at",
+  ],
+  form_custom_value: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "form_schema_version_id",
+    "field_values",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  form_draft: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "base_record_version",
+    "owner_user_id",
+    "payload",
+    "status",
+    "closed_reason",
+    "closed_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  form_record_comment: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "parent_comment_id",
+    "body",
+    "created_at",
+    "created_by",
+  ],
+  form_record_attachment: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "evidence_id",
+    "status",
+    "removed_at",
+    "removed_by",
+    "remove_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  procedure_definition: [
+    "id",
+    "methodology_version_id",
+    "code",
+    "origin",
+    "removed",
+    "ordinal",
+    "name_en",
+    "name_ar",
+    "purpose_en",
+    "purpose_ar",
+    "trigger_kind",
+    "trigger_event",
+    "trigger_en",
+    "trigger_ar",
+    "scope_level",
+    "scope_en",
+    "scope_ar",
+    "prerequisites_en",
+    "prerequisites_ar",
+    "input_schema",
+    "launch_role_codes",
+    "responsible_role_codes",
+    "sla_working_days",
+    "validation_rules_en",
+    "validation_rules_ar",
+    "approval_mode",
+    "approval_role_codes",
+    "escalation_role_code",
+    "escalation_after_working_days",
+    "expected_outputs_en",
+    "expected_outputs_ar",
+    "completion_rule",
+    "completion_en",
+    "completion_ar",
+    "exceptions_en",
+    "exceptions_ar",
+    "effective_from",
+    "source_ref",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  procedure_step_definition: [
+    "id",
+    "procedure_definition_id",
+    "step_key",
+    "ordinal",
+    "parallel_group",
+    "step_kind",
+    "name_en",
+    "name_ar",
+    "instructions_en",
+    "instructions_ar",
+    "responsible_role_code",
+    "approval_role_code",
+    "sla_working_days",
+    "condition_input_key",
+    "condition_operator",
+    "condition_value",
+    "required_input_keys",
+    "evidence_required",
+    "output_record_type",
+    "output_mode",
+    "skippable",
+    "removed",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  procedure_instance: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "procedure_definition_id",
+    "methodology_version_id",
+    "procedure_code",
+    "status",
+    "subject_record_type",
+    "subject_record_id",
+    "input_values",
+    "due_date",
+    "launch_key",
+    "launched_by",
+    "launched_at",
+    "completed_at",
+    "cancelled_at",
+    "cancelled_by",
+    "cancel_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  procedure_step_instance: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "procedure_instance_id",
+    "step_definition_id",
+    "step_key",
+    "ordinal",
+    "status",
+    "assignee_role_code",
+    "assignee_user_id",
+    "due_date",
+    "activated_at",
+    "completed_at",
+    "completed_by",
+    "skipped_by",
+    "skip_reason",
+    "completion_note",
+    "approval_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  procedure_instance_link: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "procedure_instance_id",
+    "step_instance_id",
+    "link_kind",
+    "record_type",
+    "record_id",
+    "created_at",
+    "created_by",
+  ],
+  methodology_coverage_link: ["id", "source_element_id", "target_kind", "target_code", "created_at"],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

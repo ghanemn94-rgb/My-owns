@@ -326,6 +326,10 @@ tags:
     description: The configuration versions a transformation is pinned to, and their history (P5, ADR-0039, ADR-0040).
   - name: methodology-migrations
     description: Deliberate, approved migration of a pinned transformation to a newer version, with its plan and gate re-approvals; history is never rewritten (P5, ADR-0040).
+  - name: forms
+    description: Native forms on one common framework - form schema versions, protected source columns, extension fields, custom-field values, drafts, version history, comments, attachments, export and bulk edit (P5, ADR-0041).
+  - name: procedures
+    description: Procedure definitions versioned through Studio, persistent procedure instances pinned to the definition version with outputs as linked records, my procedures and the methodology coverage view (P5, ADR-0042).
 security:
   - sessionCookie: []
 paths:
@@ -18146,6 +18150,902 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/form-schemas:
+    get:
+      tags: [forms]
+      operationId: listFormRecordTypes
+      summary: "The native forms: templates, source deliverables, the twelve extension record types (with the extension badge) and product records, with their write permission, extension-field and bulk-edit flags and feature status (methodology.read; ADR-0041 §1)."
+      parameters:
+        - $ref: "#/components/parameters/FormRecordKindQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordTypeList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/form-schemas/{recordType}:
+    parameters:
+      - $ref: "#/components/parameters/FormRecordTypePath"
+    get:
+      tags: [forms]
+      operationId: getFormSchemaAdmin
+      summary: "The resolved form of one record type in a form_schema version (default: the newest published): protected source columns and extension fields with labels, help, type and settings. Studio edits use putConfigElement/removeConfigElement with elementType form or form_field and publish through publishConfigVersion (methodology.read)."
+      parameters:
+        - $ref: "#/components/parameters/ConfigVersionIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormSchema" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-schemas/{recordType}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+    get:
+      tags: [forms]
+      operationId: getTransformationFormSchema
+      summary: "The form of one record type in the form_schema version the transformation is pinned to (else forms v1): inline help, validation settings, protected and extension flags, and the extension badge (transformation.read). 422 form_record.type_planned."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormSchema" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+      - $ref: "#/components/parameters/FormRecordIdPath"
+    get:
+      tags: [forms]
+      operationId: getFormRecordCustomFields
+      summary: "The extension-field values of one record, with calculated fields evaluated (Not computable with the missing field named, never 0) and the version they were validated against; version 0 when none stored (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormCustomValues" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [forms]
+      operationId: putFormRecordCustomFields
+      summary: "Replace the extension-field values of one record, validated before persistence against the pinned form_schema version: decimals as strings, percentages as fractions (12% -> 0.12), currency as amount + code, calculated fields refused. If-Match is the values' version, 0 to create (the record type's write permission). 400 validation.*; 409 form_record.conflict; 422 form_record.custom_field_unknown, custom_field_required, type_planned; form_schema.extensions_not_allowed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormCustomValuesPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormCustomValues" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+      - $ref: "#/components/parameters/FormRecordIdPath"
+    get:
+      tags: [forms]
+      operationId: listFormRecordVersions
+      summary: "Version history of one record from the audit trail: version, actor, time, action and changed field names, oldest first (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordVersionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+      - $ref: "#/components/parameters/FormRecordIdPath"
+    get:
+      tags: [forms]
+      operationId: listFormRecordComments
+      summary: "Comments on one record with one reply level, oldest first (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordCommentPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [forms]
+      operationId: createFormRecordComment
+      summary: "Add a comment or a reply to a top-level comment; comments are append-only (form_record.comment). 422 form_comment.parent_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormRecordCommentCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordComment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+      - $ref: "#/components/parameters/FormRecordIdPath"
+    get:
+      tags: [forms]
+      operationId: listFormRecordAttachments
+      summary: "Evidence attached to one record: the DG2 evidence links for their twenty record types, else the P5 attachments (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/IncludeRemovedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordAttachmentPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [forms]
+      operationId: attachFormRecordEvidence
+      summary: "Attach evidence of the same transformation to one record (the record type's write permission). 409 the evidence is already attached; 422 form_attachment.evidence_unknown."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormRecordAttachmentCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordAttachment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+      - $ref: "#/components/parameters/FormRecordIdPath"
+      - $ref: "#/components/parameters/FormAttachmentId"
+    post:
+      tags: [forms]
+      operationId: removeFormRecordAttachment
+      summary: "Remove an attachment with a reason; the evidence itself is unchanged (the record type's write permission). 422 form_attachment.already_removed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormRecordAttachmentRemove" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordAttachment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/export:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+    get:
+      tags: [forms]
+      operationId: exportFormRecords
+      summary: "Export the records of one form in the transformation: source columns and the pinned version's extension fields, decimals as strings, Unknown and Not computable marked, never 0; at most 5000 rows (transformation.read). 422 form_export.too_large, form_record.type_planned."
+      parameters:
+        - $ref: "#/components/parameters/ExportFormatQuery"
+        - $ref: "#/components/parameters/ExportLanguageQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            text/csv:
+              schema: { type: string, description: 'RFC 4180 UTF-8 with BOM; header labels in the requested language (ADR-0041 §5).' }
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordExport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+    post:
+      tags: [forms]
+      operationId: bulkUpdateFormRecords
+      summary: "Bulk edit 1-100 records all-or-nothing: bulk-editable source columns through the register's own update, and extension-field values; every item carries its version (the record type's write permission). 409 form_record.bulk_conflict lists the stale items; 422 form_record.bulk_not_allowed, bulk_field_not_editable, bulk_too_many."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormBulkUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormBulkUpdateResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-drafts:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [forms]
+      operationId: listFormDrafts
+      summary: "The caller's own drafts in the transformation, newest first (transformation.read; own drafts only)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/FormRecordTypeQuery"
+        - $ref: "#/components/parameters/FormDraftStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormDraftPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [forms]
+      operationId: createFormDraft
+      summary: "Save a draft of a new record or of an existing record (with its current version) (the record type's write permission). 409 form_draft.open_exists; 422 form_record.type_planned."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormDraftCreate" }
+      responses:
+        "201":
+          description: "Created (open)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormDraft" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-drafts/{draftId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormDraftId"
+    get:
+      tags: [forms]
+      operationId: getFormDraft
+      summary: "Reopen one of the caller's drafts; baseChanged tells whether the record moved past the draft's base version (owner only; others 404)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormDraft" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [forms]
+      operationId: updateFormDraft
+      summary: "Replace the payload of an open draft (owner only). 422 form_draft.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormDraftUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormDraft" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormDraftId"
+    post:
+      tags: [forms]
+      operationId: closeFormDraft
+      summary: "Close an open draft as saved (after the record write succeeded) or discarded; a closed draft never changes (owner only). 422 form_draft.closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormDraftClose" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormDraft" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-definitions:
+    get:
+      tags: [procedures]
+      operationId: listProcedureDefinitions
+      summary: "Procedure definitions of a procedures version (default: the newest published), in order, with their M0152 parts and steps (procedure.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ConfigVersionIdQuery"
+        - $ref: "#/components/parameters/IncludeRemovedQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureDefinitionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-definitions/validate:
+    post:
+      tags: [procedures]
+      operationId: validateProcedureDefinition
+      summary: "Validate a definition body without saving it: trigger, completion condition, steps, parallel groups, conditions, inputs, roles and outputs; returns every finding (methodology.configure). Nothing is written."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureDefinitionInput" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureValidationReport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-definitions/{procedureCode}:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureCodePath"
+    get:
+      tags: [procedures]
+      operationId: getProcedureDefinition
+      summary: "One procedure definition in a procedures version (default: the newest published) (procedure.read)."
+      parameters:
+        - $ref: "#/components/parameters/ConfigVersionIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureDefinition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}:
+    parameters:
+      - $ref: "#/components/parameters/ConfigVersionId"
+      - $ref: "#/components/parameters/ProcedureCodePath"
+    put:
+      tags: [procedures]
+      operationId: putProcedureDefinition
+      summary: "Create or replace one definition with its steps in a procedures draft being edited; If-Match is the draft's version. Publish, review and rollback use the slice A operations (methodology.configure; ADM_METHOD). 409 config_version.not_editable; 422 procedure_definition.trigger_required, completion_required, steps_required, parallel_group_invalid, condition_invalid, input_unknown, input_schema_invalid, role_not_allowed, approval_step_invalid, code_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureDefinitionInput" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureDefinition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}/remove:
+    parameters:
+      - $ref: "#/components/parameters/ConfigVersionId"
+      - $ref: "#/components/parameters/ProcedureCodePath"
+    post:
+      tags: [procedures]
+      operationId: removeProcedureDefinition
+      summary: "Mark an admin-authored definition removed in a procedures draft; seeded procedures are refused (methodology.configure). 409 config_version.not_editable; 422 procedure_definition.source_protected."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances:
+    get:
+      tags: [procedures]
+      operationId: listProcedureInstances
+      summary: "Procedure instances in the caller's scope, newest first, by transformation, status and procedure (procedure.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/TransformationIdQuery"
+        - $ref: "#/components/parameters/ProcedureInstanceStatusQuery"
+        - $ref: "#/components/parameters/ProcedureCodeQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstancePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [procedures]
+      operationId: launchProcedureInstance
+      summary: "Launch a published procedure: creates the instance pinned to the definition version, its steps, and activates the first position (procedure.launch and one of the definition's launch roles). 403 procedure.launch_role; 422 procedure.not_published, scope_mismatch, input_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureLaunch" }
+      responses:
+        "201":
+          description: "Created (active)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+    get:
+      tags: [procedures]
+      operationId: getProcedureInstance
+      summary: "One instance: pinned definition version, current step(s), assignees, due dates (Unknown without a calendar), missing inputs, completed evidence, outputs and the next action (procedure.read in scope)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}/inputs:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+    patch:
+      tags: [procedures]
+      operationId: updateProcedureInstanceInputs
+      summary: "Merge input values into an active instance; each is validated against the pinned input schema (procedure.act). 422 procedure.input_invalid, procedure.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureInputsUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/complete:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+      - $ref: "#/components/parameters/ProcedureStepKeyPath"
+    post:
+      tags: [procedures]
+      operationId: completeProcedureStep
+      summary: "Complete an active task step: required inputs present, evidence linked when required, the output record produced or linked by its adapter; then the next position activates or conditional steps become not applicable (procedure.act; the assignee or a holder of its role). 403 procedure_step.not_assignee; 422 procedure_step.not_active, inputs_missing, evidence_required, output_required, output_record_invalid, decided_through_approval."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureStepComplete" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/skip:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+      - $ref: "#/components/parameters/ProcedureStepKeyPath"
+    post:
+      tags: [procedures]
+      operationId: skipProcedureStep
+      summary: "Skip an active skippable step with a reason (procedure.act). 422 procedure_step.not_skippable, not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureStepSkip" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/assign:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+      - $ref: "#/components/parameters/ProcedureStepKeyPath"
+    post:
+      tags: [procedures]
+      operationId: assignProcedureStep
+      summary: "Assign a pending or active step to a person who holds its role in scope (procedure.manage). 422 procedure_step.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureStepAssign" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/evidence:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+      - $ref: "#/components/parameters/ProcedureStepKeyPath"
+    post:
+      tags: [procedures]
+      operationId: linkProcedureStepEvidence
+      summary: "Link evidence of the instance's transformation to an active step; links are append-only (procedure.act). 422 procedure_step.not_active, procedure_step.output_record_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureStepEvidence" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/procedure-instances/{instanceId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/ProcedureInstanceId"
+    post:
+      tags: [procedures]
+      operationId: cancelProcedureInstance
+      summary: "Cancel an active instance with a reason; its open steps are cancelled; outputs already linked stay (procedure.manage). 422 procedure.not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProcedureCancel" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcedureInstance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/procedure-steps:
+    get:
+      tags: [procedures]
+      operationId: listMyProcedureSteps
+      summary: "My procedures: active steps assigned to the caller, or unassigned steps of a role the caller holds in scope, by due date (Unknown last) (procedure.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyProcedureStepPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/coverage:
+    get:
+      tags: [procedures]
+      operationId: getMethodologyCoverage
+      summary: "The methodology coverage view: every counted source element with its linked forms and procedures and a live status Covered, Planned or Not covered (never green for planned or missing), with integer totals (methodology.read; REQ-S01-003)."
+      parameters:
+        - $ref: "#/components/parameters/ConfigVersionIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologyCoverage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -18163,6 +19063,79 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    FormRecordTypePath:
+      name: recordType
+      in: path
+      required: true
+      description: A native form (form_record_type code, ADR-0041 §1).
+      schema: { $ref: "#/components/schemas/FormRecordTypeCode" }
+    FormRecordIdPath:
+      name: recordId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    FormAttachmentId:
+      name: attachmentId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    FormDraftId:
+      name: draftId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    FormRecordKindQuery:
+      name: kind
+      in: query
+      required: false
+      schema: { type: string, enum: [template, source_deliverable, extension, product] }
+    FormRecordTypeQuery:
+      name: recordType
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/FormRecordTypeCode" }
+    FormDraftStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, closed] }
+    ExportFormatQuery:
+      name: format
+      in: query
+      required: false
+      description: csv (default; text/csv) or json (application/json). Must match the Accept header when both are sent.
+      schema: { type: string, enum: [csv, json] }
+    ExportLanguageQuery:
+      name: lang
+      in: query
+      required: false
+      description: Language of the header labels and choice labels (default the caller's language).
+      schema: { type: string, enum: [en, ar] }
+    ProcedureCodePath:
+      name: procedureCode
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/ProcedureCode" }
+    ProcedureCodeQuery:
+      name: procedureCode
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/ProcedureCode" }
+    ProcedureInstanceId:
+      name: instanceId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ProcedureStepKeyPath:
+      name: stepKey
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[a-z][a-z0-9_]{1,47}$' }
+    ProcedureInstanceStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [active, completed, cancelled] }
     ConfigVersionId:
       name: versionId
       in: path
@@ -19459,6 +20432,578 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    FormRecordTypeCode:
+      type: string
+      description: "A native form: T01-T09, T11-T16, a source deliverable, an M0149 extension record type or a product record (form_record_type, ADR-0041 §1)."
+      pattern: "^(T(0[1-9]|1[0-6])|[a-z][a-z0-9_]{1,39})$"
+    FormFieldType:
+      type: string
+      description: The eleven Studio field types (REQ-S06-005, ADR-0041 §3).
+      enum: [text, rich_text, number, currency, percentage, date, reference, attachment, lookup, choice, calculated]
+    FormRecordType:
+      type: object
+      description: "A native form (ADR-0041 §1). extensionBadge is true exactly for the twelve M0149 extension record types."
+      required: [code, ordinal, kind, titleEn, titleAr, titleArProvisional, sourceRef, writePermission, extensionBadge, customFieldsAllowed, bulkEditAllowed, featureStatus]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        ordinal: { type: integer, minimum: 1 }
+        kind: { type: string, enum: [template, source_deliverable, extension, product] }
+        titleEn: { type: string, minLength: 1, maxLength: 200 }
+        titleAr: { type: string, minLength: 1, maxLength: 200 }
+        titleArProvisional: { type: boolean }
+        sourceRef: { type: string }
+        writePermission: { type: [string, "null"] }
+        extensionBadge: { type: boolean }
+        customFieldsAllowed: { type: boolean }
+        bulkEditAllowed: { type: boolean }
+        featureStatus: { type: string, enum: [working, planned] }
+    FormRecordTypeList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FormRecordType" } }
+    FormField:
+      type: object
+      description: "One resolved field: a protected source column or an extension field (ADR-0041 §2-§3). settings is validated per type (packages/shared/src/forms)."
+      required: [key, origin, protected, extension, fieldType, labelEn, labelAr, helpEn, helpAr, required, bulkEditable, storageKind, sourceRef, ordinal, settings]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: '^[a-z][a-z0-9_]{0,39}$' }
+        origin: { type: string, enum: [source, admin] }
+        protected: { type: boolean }
+        extension: { type: boolean }
+        fieldType: { $ref: "#/components/schemas/FormFieldType" }
+        labelEn: { type: string, minLength: 1, maxLength: 200 }
+        labelAr: { type: string, minLength: 1, maxLength: 200 }
+        helpEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        helpAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        required: { type: boolean }
+        bulkEditable: { type: boolean }
+        storageKind: { type: [string, "null"], enum: [column, composite, computed, null] }
+        sourceRef: { type: [string, "null"] }
+        ordinal: { type: ["integer", "null"] }
+        settings: { type: object }
+    FormSchema:
+      type: object
+      description: "The form of one record type in one form_schema version."
+      required: [recordType, formSchemaVersionId, versionNo, labelEn, labelAr, helpEn, helpAr, fields]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/FormRecordType" }
+        formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
+        versionNo: { type: integer, minimum: 1 }
+        labelEn: { type: string, minLength: 1, maxLength: 200 }
+        labelAr: { type: string, minLength: 1, maxLength: 200 }
+        helpEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        helpAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        fields: { type: array, items: { $ref: "#/components/schemas/FormField" } }
+    FormCustomValues:
+      type: object
+      description: "Extension-field values of one record. Number and percentage values are Decimal strings (a percentage is a fraction: 12% is 0.12); currency values are {amount, currencyCode}; null is Unknown. Calculated fields are returned in calculated, never stored."
+      required: [recordType, recordId, formSchemaVersionId, values, calculated, version, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
+        values: { type: object }
+        calculated: { type: object, additionalProperties: { type: object, additionalProperties: false, required: [status, value, missingFields], properties: { status: { type: string, enum: [computed, not_computable] }, value: { oneOf: [{ $ref: "#/components/schemas/Decimal" }, { type: "null" }] }, missingFields: { type: array, items: { type: string } } } } }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    FormCustomValuesPut:
+      type: object
+      description: "The complete set of extension-field values (absent keys are cleared)."
+      required: [values]
+      additionalProperties: false
+      properties:
+        values: { type: object, maxProperties: 200 }
+    FormRecordVersion:
+      type: object
+      description: "One entry of a record's version history (from the audit trail)."
+      required: [version, action, actorUserId, actorDisplayName, occurredAt, changedFields]
+      additionalProperties: false
+      properties:
+        version: { type: ["integer", "null"], minimum: 1 }
+        action: { type: string }
+        actorUserId: { $ref: "#/components/schemas/NullableUuid" }
+        actorDisplayName: { type: [string, "null"] }
+        occurredAt: { $ref: "#/components/schemas/Timestamp" }
+        changedFields: { type: array, items: { type: string } }
+    FormRecordVersionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FormRecordVersion" } }
+        nextCursor: { type: [string, "null"] }
+    FormRecordComment:
+      type: object
+      description: "A comment on a record (append-only)."
+      required: [id, recordType, recordId, parentCommentId, body, createdAt, createdBy, createdByDisplayName]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        parentCommentId: { $ref: "#/components/schemas/NullableUuid" }
+        body: { type: string, minLength: 1, maxLength: 4000 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        createdByDisplayName: { type: [string, "null"] }
+    FormRecordCommentPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FormRecordComment" } }
+        nextCursor: { type: [string, "null"] }
+    FormRecordCommentCreate:
+      type: object
+      required: [body]
+      additionalProperties: false
+      properties:
+        body: { type: string, minLength: 1, maxLength: 4000 }
+        parentCommentId: { $ref: "#/components/schemas/NullableUuid" }
+    FormRecordAttachment:
+      type: object
+      description: "Evidence attached to a record (DG2 evidence link or P5 attachment)."
+      required: [id, store, recordType, recordId, evidenceId, evidenceTitle, status, removedAt, removeReason, version, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        store: { type: string, enum: [evidence_link, form_record_attachment] }
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        evidenceTitle: { type: [string, "null"] }
+        status: { type: string, enum: [active, removed] }
+        removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        removeReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    FormRecordAttachmentPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FormRecordAttachment" } }
+        nextCursor: { type: [string, "null"] }
+    FormRecordAttachmentCreate:
+      type: object
+      required: [evidenceId]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+    FormRecordAttachmentRemove:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    FormRecordExport:
+      type: object
+      description: "JSON export (format=json): column keys and labels, then one row per record; values are strings or null; statuses mark Unknown and Not computable."
+      required: [recordType, formSchemaVersionId, language, columns, rows]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
+        language: { type: string, enum: [en, ar] }
+        columns: { type: array, items: { type: object, additionalProperties: false, required: [key, label, fieldType, extension], properties: { key: { type: string }, label: { type: string }, fieldType: { $ref: "#/components/schemas/FormFieldType" }, extension: { type: boolean } } } }
+        rows: { type: array, maxItems: 5000, items: { type: object, additionalProperties: false, required: [recordId, version, values, statuses], properties: { recordId: { $ref: "#/components/schemas/Uuid" }, version: { $ref: "#/components/schemas/Version" }, values: { type: object }, statuses: { type: object, additionalProperties: { type: string, enum: [unknown, not_computable] } } } } }
+    FormBulkItem:
+      type: object
+      description: "One record of a bulk edit with the version the user saw."
+      required: [recordId, version]
+      additionalProperties: false
+      properties:
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        sourceFields: { type: object, maxProperties: 20 }
+        customFieldValues: { type: object, maxProperties: 200 }
+    FormBulkUpdate:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, minItems: 1, maxItems: 100, items: { $ref: "#/components/schemas/FormBulkItem" } }
+    FormBulkUpdateResult:
+      type: object
+      description: "All items were saved (all-or-nothing)."
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { type: object, additionalProperties: false, required: [recordId, version], properties: { recordId: { $ref: "#/components/schemas/Uuid" }, version: { $ref: "#/components/schemas/Version" } } } }
+    FormDraft:
+      type: object
+      description: "A saved draft (owner only)."
+      required: [id, recordType, recordId, baseRecordVersion, baseChanged, payload, status, closedReason, closedAt, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        baseRecordVersion: { type: ["integer", "null"], minimum: 1 }
+        baseChanged: { type: boolean }
+        payload: { type: object }
+        status: { type: string, enum: [open, closed] }
+        closedReason: { type: [string, "null"], enum: [saved, discarded, null] }
+        closedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    FormDraftPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FormDraft" } }
+        nextCursor: { type: [string, "null"] }
+    FormDraftCreate:
+      type: object
+      description: "recordId and baseRecordVersion together, or neither (a new record)."
+      required: [recordType, payload]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        baseRecordVersion: { type: ["integer", "null"], minimum: 1 }
+        payload: { type: object }
+    FormDraftUpdate:
+      type: object
+      required: [payload]
+      additionalProperties: false
+      properties:
+        payload: { type: object }
+    FormDraftClose:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, enum: [saved, discarded] }
+    ProcedureCode:
+      type: string
+      pattern: "^[a-z][a-z0-9_]{2,47}$"
+    ProcedureInputField:
+      type: object
+      description: "One input of a procedure, using the eleven field types (ADR-0041 §3)."
+      required: [key, fieldType, labelEn, labelAr, required]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: '^[a-z][a-zA-Z0-9_]{0,39}$' }
+        fieldType: { $ref: "#/components/schemas/FormFieldType" }
+        labelEn: { type: string, minLength: 1, maxLength: 200 }
+        labelAr: { type: string, minLength: 1, maxLength: 200 }
+        required: { type: boolean }
+        helpEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        helpAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        options: { type: array, maxItems: 100, items: { type: string } }
+        settings: { type: object }
+    ProcedureOutputRecordType:
+      type: string
+      enum: [transformation, charter, baseline, kpi_actual, tom_canvas_cell, approval, ranking_snapshot, gate_submission, change_request, finance_validation, decision, bau_handover, evidence]
+    ProcedureStepDefinition:
+      type: object
+      description: "One step (ADR-0042 §2): ordered by ordinal; a shared ordinal with a shared parallelGroup runs in parallel; a condition makes it conditional."
+      required: [stepKey, ordinal, parallelGroup, stepKind, nameEn, nameAr, instructionsEn, instructionsAr, responsibleRoleCode, approvalRoleCode, slaWorkingDays, condition, requiredInputKeys, evidenceRequired, output, skippable, removed]
+      additionalProperties: false
+      properties:
+        stepKey: { type: string, pattern: '^[a-z][a-z0-9_]{1,47}$' }
+        ordinal: { type: integer, minimum: 1, maximum: 99 }
+        parallelGroup: { type: [string, "null"], pattern: "^[a-z][a-z0-9_]{0,31}$" }
+        stepKind: { type: string, enum: [task, approval] }
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        instructionsEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        instructionsAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        responsibleRoleCode: { $ref: "#/components/schemas/RoleCode" }
+        approvalRoleCode: { oneOf: [{ $ref: "#/components/schemas/RoleCode" }, { type: "null" }] }
+        slaWorkingDays: { type: integer, minimum: 1, maximum: 250 }
+        condition: { oneOf: [{ type: "null" }, { type: object, additionalProperties: false, required: [inputKey, operator], properties: { inputKey: { type: string }, operator: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: {} } }] }
+        requiredInputKeys: { type: array, maxItems: 50, items: { type: string } }
+        evidenceRequired: { type: boolean }
+        output: { oneOf: [{ type: "null" }, { type: object, additionalProperties: false, required: [recordType, mode], properties: { recordType: { $ref: "#/components/schemas/ProcedureOutputRecordType" }, mode: { type: string, enum: [create, advance, link] } } }] }
+        skippable: { type: boolean }
+        removed: { type: boolean }
+    ProcedureStepDefinitionInput:
+      type: object
+      required: [stepKey, ordinal, stepKind, nameEn, nameAr, responsibleRoleCode, slaWorkingDays]
+      additionalProperties: false
+      properties:
+        stepKey: { type: string, pattern: '^[a-z][a-z0-9_]{1,47}$' }
+        ordinal: { type: integer, minimum: 1, maximum: 99 }
+        parallelGroup: { type: [string, "null"], pattern: "^[a-z][a-z0-9_]{0,31}$" }
+        stepKind: { type: string, enum: [task, approval] }
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        instructionsEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        instructionsAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        responsibleRoleCode: { $ref: "#/components/schemas/RoleCode" }
+        approvalRoleCode: { oneOf: [{ $ref: "#/components/schemas/RoleCode" }, { type: "null" }] }
+        slaWorkingDays: { type: integer, minimum: 1, maximum: 250 }
+        condition: { oneOf: [{ type: "null" }, { type: object, additionalProperties: false, required: [inputKey, operator], properties: { inputKey: { type: string }, operator: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: {} } }] }
+        requiredInputKeys: { type: array, maxItems: 50, items: { type: string } }
+        evidenceRequired: { type: boolean }
+        output: { oneOf: [{ type: "null" }, { type: object, additionalProperties: false, required: [recordType, mode], properties: { recordType: { $ref: "#/components/schemas/ProcedureOutputRecordType" }, mode: { type: string, enum: [create, advance, link] } } }] }
+        skippable: { type: boolean }
+    ProcedureDefinitionInput:
+      type: object
+      description: "A definition with all M0152 parts. A missing trigger or completion is refused with 422 procedure_definition.trigger_required / completion_required (ADR-0042 §1)."
+      required: [nameEn, nameAr, purposeEn, purposeAr, scope, launchRoleCodes, responsibleRoleCodes, slaWorkingDays, validationRulesEn, validationRulesAr, approval, expectedOutputsEn, expectedOutputsAr, effectiveFrom, steps]
+      additionalProperties: false
+      properties:
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        purposeEn: { type: string, minLength: 1, maxLength: 2000 }
+        purposeAr: { type: string, minLength: 1, maxLength: 2000 }
+        trigger: { type: object, additionalProperties: false, required: [kind, descriptionEn, descriptionAr], properties: { kind: { type: string, enum: [manual, event, schedule] }, event: { type: [string, "null"], pattern: "^[a-z_]+\\.[a-z_.]+$" }, descriptionEn: { type: string, minLength: 1, maxLength: 1000 }, descriptionAr: { type: string, minLength: 1, maxLength: 1000 } } }
+        scope: { type: object, additionalProperties: false, required: [level, descriptionEn, descriptionAr], properties: { level: { type: string, enum: [organization, transformation] }, descriptionEn: { type: string, minLength: 1, maxLength: 1000 }, descriptionAr: { type: string, minLength: 1, maxLength: 1000 } } }
+        prerequisitesEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        prerequisitesAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        inputSchema: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/ProcedureInputField" } }
+        launchRoleCodes: { type: array, minItems: 1, maxItems: 14, uniqueItems: true, items: { $ref: "#/components/schemas/RoleCode" } }
+        responsibleRoleCodes: { type: array, minItems: 1, maxItems: 14, uniqueItems: true, items: { $ref: "#/components/schemas/RoleCode" } }
+        slaWorkingDays: { type: integer, minimum: 1, maximum: 250 }
+        validationRulesEn: { type: string, minLength: 1, maxLength: 2000 }
+        validationRulesAr: { type: string, minLength: 1, maxLength: 2000 }
+        approval: { type: object, additionalProperties: false, required: [mode, roleCodes], properties: { mode: { type: string, enum: [none, any, sequential, parallel] }, roleCodes: { type: array, maxItems: 6, uniqueItems: true, items: { $ref: "#/components/schemas/RoleCode" } } } }
+        escalation: { oneOf: [{ type: "null" }, { type: object, additionalProperties: false, required: [roleCode, afterWorkingDays], properties: { roleCode: { $ref: "#/components/schemas/RoleCode" }, afterWorkingDays: { type: integer, minimum: 1, maximum: 250 } } }] }
+        expectedOutputsEn: { type: string, minLength: 1, maxLength: 2000 }
+        expectedOutputsAr: { type: string, minLength: 1, maxLength: 2000 }
+        completion: { type: object, additionalProperties: false, required: [rule, descriptionEn, descriptionAr], properties: { rule: { type: string, enum: [all_steps_closed, all_steps_closed_and_outputs_linked] }, descriptionEn: { type: string, minLength: 1, maxLength: 1000 }, descriptionAr: { type: string, minLength: 1, maxLength: 1000 } } }
+        exceptionsEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        exceptionsAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        effectiveFrom: { $ref: "#/components/schemas/BusinessDate" }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        steps: { type: array, maxItems: 99, items: { $ref: "#/components/schemas/ProcedureStepDefinitionInput" } }
+    ProcedureDefinition:
+      type: object
+      description: "A procedure definition in one procedures version (ADR-0042 §1). productDefaults marks the seeded texts as product defaults, not playbook text."
+      required: [id, code, methodologyVersionId, versionNo, versionStatus, origin, removed, productDefaults, sourceRef, nameEn, nameAr, purposeEn, purposeAr, trigger, scope, prerequisitesEn, prerequisitesAr, inputSchema, launchRoleCodes, responsibleRoleCodes, slaWorkingDays, validationRulesEn, validationRulesAr, approval, escalation, expectedOutputsEn, expectedOutputsAr, completion, exceptionsEn, exceptionsAr, effectiveFrom, ordinal, steps, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/ProcedureCode" }
+        methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
+        versionNo: { type: integer, minimum: 1 }
+        versionStatus: { type: string, enum: [draft, published, retired] }
+        origin: { type: string, enum: [source, admin] }
+        removed: { type: boolean }
+        productDefaults: { type: boolean }
+        sourceRef: { type: [string, "null"] }
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        purposeEn: { type: string, minLength: 1, maxLength: 2000 }
+        purposeAr: { type: string, minLength: 1, maxLength: 2000 }
+        trigger: { type: object, additionalProperties: false, required: [kind, descriptionEn, descriptionAr], properties: { kind: { type: string, enum: [manual, event, schedule] }, event: { type: [string, "null"], pattern: "^[a-z_]+\\.[a-z_.]+$" }, descriptionEn: { type: string, minLength: 1, maxLength: 1000 }, descriptionAr: { type: string, minLength: 1, maxLength: 1000 } } }
+        scope: { type: object, additionalProperties: false, required: [level, descriptionEn, descriptionAr], properties: { level: { type: string, enum: [organization, transformation] }, descriptionEn: { type: string, minLength: 1, maxLength: 1000 }, descriptionAr: { type: string, minLength: 1, maxLength: 1000 } } }
+        prerequisitesEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        prerequisitesAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        inputSchema: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/ProcedureInputField" } }
+        launchRoleCodes: { type: array, minItems: 1, maxItems: 14, uniqueItems: true, items: { $ref: "#/components/schemas/RoleCode" } }
+        responsibleRoleCodes: { type: array, minItems: 1, maxItems: 14, uniqueItems: true, items: { $ref: "#/components/schemas/RoleCode" } }
+        slaWorkingDays: { type: integer, minimum: 1, maximum: 250 }
+        validationRulesEn: { type: string, minLength: 1, maxLength: 2000 }
+        validationRulesAr: { type: string, minLength: 1, maxLength: 2000 }
+        approval: { type: object, additionalProperties: false, required: [mode, roleCodes], properties: { mode: { type: string, enum: [none, any, sequential, parallel] }, roleCodes: { type: array, maxItems: 6, uniqueItems: true, items: { $ref: "#/components/schemas/RoleCode" } } } }
+        escalation: { oneOf: [{ type: "null" }, { type: object, additionalProperties: false, required: [roleCode, afterWorkingDays], properties: { roleCode: { $ref: "#/components/schemas/RoleCode" }, afterWorkingDays: { type: integer, minimum: 1, maximum: 250 } } }] }
+        expectedOutputsEn: { type: string, minLength: 1, maxLength: 2000 }
+        expectedOutputsAr: { type: string, minLength: 1, maxLength: 2000 }
+        completion: { type: object, additionalProperties: false, required: [rule, descriptionEn, descriptionAr], properties: { rule: { type: string, enum: [all_steps_closed, all_steps_closed_and_outputs_linked] }, descriptionEn: { type: string, minLength: 1, maxLength: 1000 }, descriptionAr: { type: string, minLength: 1, maxLength: 1000 } } }
+        exceptionsEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        exceptionsAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        effectiveFrom: { $ref: "#/components/schemas/BusinessDate" }
+        ordinal: { type: integer, minimum: 1, maximum: 999 }
+        steps: { type: array, items: { $ref: "#/components/schemas/ProcedureStepDefinition" } }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    ProcedureDefinitionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ProcedureDefinition" } }
+        nextCursor: { type: [string, "null"] }
+    ProcedureValidationReport:
+      type: object
+      description: "Every finding of a definition body; valid is true when there is none."
+      required: [valid, findings]
+      additionalProperties: false
+      properties:
+        valid: { type: boolean }
+        findings: { type: array, items: { type: object, additionalProperties: false, required: [code, pointer, message], properties: { code: { type: string }, pointer: { type: string }, message: { type: string } } } }
+    ProcedureLaunch:
+      type: object
+      description: "transformationId is null exactly for an organization-scope procedure."
+      required: [procedureCode, transformationId]
+      additionalProperties: false
+      properties:
+        procedureCode: { $ref: "#/components/schemas/ProcedureCode" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        subjectRecordType: { type: [string, "null"] }
+        subjectRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        inputValues: { type: object }
+    ProcedureInstanceLink:
+      type: object
+      description: "A real record the instance produced (output) or used (evidence); append-only."
+      required: [id, stepKey, linkKind, recordType, recordId, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        stepKey: { type: [string, "null"] }
+        linkKind: { type: string, enum: [output, evidence] }
+        recordType: { $ref: "#/components/schemas/ProcedureOutputRecordType" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    ProcedureStepInstance:
+      type: object
+      description: "One step of an instance; dueDate is null (Unknown) without a business calendar."
+      required: [stepKey, ordinal, parallelGroup, stepKind, nameEn, nameAr, status, assigneeRoleCode, assigneeUserId, dueDate, dueDateUnknownReason, overdue, activatedAt, completedAt, completedBy, skipReason, approvalId, missingInputs]
+      additionalProperties: false
+      properties:
+        stepKey: { type: string }
+        ordinal: { type: integer }
+        parallelGroup: { type: [string, "null"] }
+        stepKind: { type: string, enum: [task, approval] }
+        nameEn: { type: string }
+        nameAr: { type: string }
+        status: { type: string, enum: [pending, active, completed, skipped, not_applicable, cancelled] }
+        assigneeRoleCode: { $ref: "#/components/schemas/RoleCode" }
+        assigneeUserId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        dueDateUnknownReason: { type: [string, "null"] }
+        overdue: { type: ["boolean", "null"] }
+        activatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedBy: { $ref: "#/components/schemas/NullableUuid" }
+        skipReason: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+        approvalId: { $ref: "#/components/schemas/NullableUuid" }
+        missingInputs: { type: array, items: { type: string } }
+    ProcedureInstance:
+      type: object
+      description: "A launched procedure (M0153): pinned definition version, current step, assignee, due date, missing inputs, completed evidence, outputs and next action."
+      required: [id, transformationId, procedureCode, procedureDefinitionId, methodologyVersionId, versionNo, nameEn, nameAr, status, subjectRecordType, subjectRecordId, inputValues, dueDate, currentStepKeys, missingInputs, nextAction, steps, links, launchedBy, launchedAt, completedAt, cancelledAt, cancelReason, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        procedureCode: { $ref: "#/components/schemas/ProcedureCode" }
+        procedureDefinitionId: { $ref: "#/components/schemas/Uuid" }
+        methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
+        versionNo: { type: integer, minimum: 1 }
+        nameEn: { type: string }
+        nameAr: { type: string }
+        status: { type: string, enum: [active, completed, cancelled] }
+        subjectRecordType: { type: [string, "null"] }
+        subjectRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        inputValues: { type: object }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        currentStepKeys: { type: array, items: { type: string } }
+        missingInputs: { type: array, items: { type: object, additionalProperties: false, required: [key, labelEn, labelAr], properties: { key: { type: string }, labelEn: { type: string }, labelAr: { type: string } } } }
+        nextAction: { type: object, additionalProperties: false, required: [kind, stepKey, messageKey, messageParams], properties: { kind: { type: string, enum: [provide_input, link_evidence, complete_step, await_approval, none] }, stepKey: { type: [string, "null"] }, messageKey: { type: string }, messageParams: { type: object } } }
+        steps: { type: array, items: { $ref: "#/components/schemas/ProcedureStepInstance" } }
+        links: { type: array, items: { $ref: "#/components/schemas/ProcedureInstanceLink" } }
+        launchedBy: { $ref: "#/components/schemas/Uuid" }
+        launchedAt: { $ref: "#/components/schemas/Timestamp" }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        cancelledAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        cancelReason: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    ProcedureInstancePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ProcedureInstance" } }
+        nextCursor: { type: [string, "null"] }
+    ProcedureInputsUpdate:
+      type: object
+      description: "Merged into inputValues; null clears an input."
+      required: [inputValues]
+      additionalProperties: false
+      properties:
+        inputValues: { type: object, minProperties: 1, maxProperties: 50 }
+    ProcedureStepComplete:
+      type: object
+      description: "outputRecordId is required for link outputs; create and advance outputs are produced by the adapter."
+      additionalProperties: false
+      properties:
+        note: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        outputRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        outputInput: { type: object }
+    ProcedureStepSkip:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 2000 }
+    ProcedureStepAssign:
+      type: object
+      required: [assigneeUserId]
+      additionalProperties: false
+      properties:
+        assigneeUserId: { $ref: "#/components/schemas/Uuid" }
+    ProcedureStepEvidence:
+      type: object
+      required: [evidenceId]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+    ProcedureCancel:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 2000 }
+    MyProcedureStep:
+      type: object
+      required: [instanceId, transformationId, procedureCode, procedureNameEn, procedureNameAr, step]
+      additionalProperties: false
+      properties:
+        instanceId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        procedureCode: { $ref: "#/components/schemas/ProcedureCode" }
+        procedureNameEn: { type: string }
+        procedureNameAr: { type: string }
+        step: { $ref: "#/components/schemas/ProcedureStepInstance" }
+    MyProcedureStepPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MyProcedureStep" } }
+        nextCursor: { type: [string, "null"] }
+    MethodologyCoverageElement:
+      type: object
+      description: "One counted source element and its implementing forms and procedures (REQ-S01-003)."
+      required: [setCode, stableKey, sourceLabelEn, labelAr, sourceRef, status, links]
+      additionalProperties: false
+      properties:
+        setCode: { type: string }
+        stableKey: { type: string }
+        sourceLabelEn: { type: string }
+        labelAr: { type: string }
+        sourceRef: { type: string }
+        status: { type: string, enum: [covered, planned, not_covered] }
+        links: { type: array, items: { type: object, additionalProperties: false, required: [targetKind, targetCode, resolved, featureStatus], properties: { targetKind: { type: string, enum: [form, procedure] }, targetCode: { type: string }, resolved: { type: boolean }, featureStatus: { type: string, enum: [working, planned] } } } }
+    MethodologyCoverage:
+      type: object
+      description: "Integer totals per status; planned and not covered are never shown green."
+      required: [methodologyVersionId, proceduresVersionId, formSchemaVersionId, totals, elements]
+      additionalProperties: false
+      properties:
+        methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
+        proceduresVersionId: { $ref: "#/components/schemas/Uuid" }
+        formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
+        totals: { type: object, additionalProperties: false, required: [covered, planned, notCovered, total], properties: { covered: { type: integer, minimum: 0 }, planned: { type: integer, minimum: 0 }, notCovered: { type: integer, minimum: 0 }, total: { type: integer, minimum: 0 } } }
+        elements: { type: array, items: { $ref: "#/components/schemas/MethodologyCoverageElement" } }
     Uuid:
       type: string
       format: uuid
@@ -19658,6 +21203,11 @@ components:
         - methodology_migration.plan
         - methodology_migration.approve
         - methodology_migration.execute
+        - form_record.comment
+        - procedure.read
+        - procedure.launch
+        - procedure.act
+        - procedure.manage
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -30033,7 +31583,7 @@ components:
       enum: [methodology, scoring_defaults, form_schema, procedure, automation_rule_set, health_check_scheme]
     ConfigElementType:
       type: string
-      enum: [methodology_text, phase, gate, gate_criterion, mandatory_artifact, checklist_item, template, tom_dimension, approver_route, reminder, escalation_rule, dashboard, report_layout, source_element, scoring_weight, scoring_rubric]
+      enum: [methodology_text, phase, gate, gate_criterion, mandatory_artifact, checklist_item, template, tom_dimension, approver_route, reminder, escalation_rule, dashboard, report_layout, source_element, scoring_weight, scoring_rubric, form, form_field]
     ConfigCheckSummary:
       type: object
       description: "The latest run of one check kind for the version's current content hash; null when none."

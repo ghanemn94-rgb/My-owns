@@ -752,3 +752,42 @@ Legend as in 8.3. **own** = never the caller's own draft or request.
 - **AUD (read-only auditor):** every slice A mutation (draft, element, preview, compatibility, review submit/decide/withdraw, publish, rollback, discard, review policy, source-coverage run, scoring-defaults draft, migration create/preview/submit/decide/execute/withdraw) returns **403** for AUD and writes nothing; AUD reads every slice A record within its scope.
 - **SoD:** a draft's author or the review's requester gets 403 `config_review.self_review` on deciding its review; a migration's requester gets 403 `methodology_migration.self_approval` on deciding it.
 - **REQ-S06-010 acceptance:** ADM_METHOD publishes a form change and gets 403 approving a funding reallocation (it holds neither `approval.decide` nor `funding.approve`); a KPI owner (BO, KDS) updates assigned KPI actuals (DG4) and gets 403 on every Studio write.
+
+## 19. P5 implementation, slices B and C (DG5): native forms, custom fields, form framework, procedures and coverage permission codes and per-entity rights
+
+- **Task:** T-DG5-ARCH-02 (solution-architect), 2026-10-14. **Sources:** ADR-0041 §9, ADR-0042 §9; master prompt M0127, M0149, M0152–M0154; REQ-S06-001 "author: ADM; review: TO; view: all signed-in users", REQ-S06-002 "launch: roles in procedure scope; act: step assignee; view: scoped".
+- **Seed:** `0070_p5_forms_procedures_permissions_coverage.sql`, equal to `P5_FORMS_PROCEDURES_PERMISSIONS` / `P5_FORMS_PROCEDURES_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** none of the five codes is a business-approval or Finance-validation code. Form schemas and procedure definitions are authored with the existing `methodology.configure` (ADM_METHOD) and published through slice A (review by TO, never the author). Methodology admins hold no register write permission and cannot launch or act on procedures. An approval step of a procedure is decided only through the canonical approval (ADR-0026) by the holder of the business approval right; no seed, job or agent approves.
+
+### 19.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `form_record.comment` | write | Comment on a form record the caller can read | SP, TL, BO, WL, FIN, TO, KDS, TD, CM |
+| `procedure.read` | read | Read procedure definitions and the instances in scope; my procedures | all fourteen roles (SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD) |
+| `procedure.launch` | write | Launch a procedure; the caller must also hold one of the definition's launch roles in scope | SP, TL, BO, WL, FIN, TO, KDS |
+| `procedure.act` | write | Provide inputs, link evidence, complete or skip a step assigned to the caller (or unassigned and of a role the caller holds in scope) | SP, TL, BO, WL, FIN, TO, KDS, TD, CM |
+| `procedure.manage` | write | Assign steps and cancel instances in scope | TL, TO |
+
+Reused codes: custom-field values, drafts, attachments and bulk edits use the record type's own write permission (`form_record_type.write_permission_code`, e.g. T03 `tom.edit`, T14 `benefit.edit`, T15 `raid.edit`, funding approvals `funding.approve`); reads use `transformation.read` in scope; the record-type list, admin form schemas and the coverage view use `methodology.read`; Studio field edits and procedure definition edits use `methodology.configure`, `methodology.publish` and `methodology.review` (§18).
+
+### 19.2 Per-entity rights in P5 (slices B and C)
+
+Legend as in 8.3. **W(rt)** = with the record type's write permission in scope. **as(step)** = the step's assignee, or a holder of its role when unassigned.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH, ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Native forms and protected source columns (`form_record_type`, `form_source_field`) | V | V | — | — | — | V | — | — | — | — | V | V | — |
+| Form schema versions and fields (`methodology_version` kind `form_schema`, `methodology_element` `form`/`form_field`) | V | V | V (transformation's form) | V (transformation's form) | V (transformation's form) | V; Rv (review, not own) | V (transformation's form) | V (transformation's form) | V (transformation's form) | V (transformation's form) | V | C U Cf (draft, preview, publish) | — |
+| Custom-field values (`form_custom_value`) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V | V | — | — |
+| Drafts (`form_draft`, own only) | W(rt) | W(rt) | W(rt) | W(rt) | W(rt) | W(rt) | W(rt) | W(rt) | W(rt) | — | — | — | — |
+| Version history (audit read), export | V | V | V | V | V | V | V | V | V | V | V | — | — |
+| Comments (`form_record_comment`) | V C | V C | V C | V C | V C | V C | V C | V C | V C | V | V | — | — |
+| Attachments (`form_record_attachment`, DG2 `evidence_link`) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V; W(rt) | V | V | — | — |
+| Procedure definitions (`procedure_definition`, `procedure_step_definition`) | V | V | V | V | V | V; Rv (review, not own) | V | V | V | V | V | C U Cf (draft, publish) | V |
+| Procedure instances and steps (`procedure_instance`, `procedure_step_instance`, `procedure_instance_link`) | V C (launch) U as(step) | V C U as(step); M (assign, cancel) | V C U as(step) | V C U as(step) | V C U as(step) | V C U as(step); M (assign, cancel) | V C U as(step) | V U as(step) | V U as(step) | V | V | V (scope) | V (scope) |
+| Approval steps of a procedure | decided through the canonical approval by its business approver (ADR-0026; e.g. SP, BO); never by `procedure.act` | | | | | | | | | | | | |
+| Coverage view (`methodology_coverage_link`, `source_element`) | V | V | — | — | — | V | — | — | — | — | V | V | — |
+
+- **AUD (read-only auditor):** every slice B/C mutation (custom values, drafts, comments, attachments, bulk edit, procedure definition put/remove/validate, launch, inputs, step complete/skip/assign/evidence, cancel) returns **403** for AUD and writes nothing; AUD reads every slice B/C record within its scope.
+- **SoD:** procedure approval steps inherit the canonical approval's rules (the requester never decides; ADR-0026); a form schema or procedure draft's author cannot review it (`config_review.self_review`, ADR-0039). Comments and drafts approve nothing.

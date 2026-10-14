@@ -232,6 +232,21 @@ export const P5_STUDIO_PERMISSIONS = {
   "methodology_migration.execute": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P5 slices B and C (T-DG5-ARCH-02; ADR-0041 §9, ADR-0042 §9), seeded by migration 0070. No business_approval or
+ * finance_validation code: an approval step of a procedure is decided through the canonical approval by the holder of
+ * that business approval right. Authoring form schemas and procedures uses the existing methodology.configure
+ * (ADM_METHOD) and the slice A publish pipeline. Custom-field values, drafts and attachments are authorized by the
+ * record type's own write permission (form_record_type.write_permission_code). AUD and the technical admins read only.
+ */
+export const P5_FORMS_PROCEDURES_PERMISSIONS = {
+  "form_record.comment": "write",
+  "procedure.read": "read",
+  "procedure.launch": "write",
+  "procedure.act": "write",
+  "procedure.manage": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -245,6 +260,7 @@ export const PERMISSIONS = {
   ...P4_GATES_CHANGE_PERMISSIONS,
   ...P4_DASHBOARD_TRACE_PERMISSIONS,
   ...P5_STUDIO_PERMISSIONS,
+  ...P5_FORMS_PROCEDURES_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -574,6 +590,24 @@ export const P5_STUDIO_ROLE_PERMISSIONS = {
   ],
 } as const satisfies Record<string, readonly (keyof typeof P5_STUDIO_PERMISSIONS)[]>;
 
+/** P5 slices B and C role defaults (0070). AUD and the technical admins get procedure.read only. */
+export const P5_FORMS_PROCEDURES_ROLE_PERMISSIONS = {
+  SP: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act"],
+  TL: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act", "procedure.manage"],
+  BO: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act"],
+  WL: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act"],
+  FIN: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act"],
+  TO: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act", "procedure.manage"],
+  KDS: ["form_record.comment", "procedure.read", "procedure.launch", "procedure.act"],
+  TD: ["form_record.comment", "procedure.read", "procedure.act"],
+  CM: ["form_record.comment", "procedure.read", "procedure.act"],
+  SEC: ["procedure.read"],
+  AUD: ["procedure.read"],
+  ADM_TECH: ["procedure.read"],
+  ADM_ACCESS: ["procedure.read"],
+  ADM_METHOD: ["procedure.read"],
+} as const satisfies Record<string, readonly (keyof typeof P5_FORMS_PROCEDURES_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -589,6 +623,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SP,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.SP,
       ...P5_STUDIO_ROLE_PERMISSIONS.SP,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -611,6 +646,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TL,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TL,
       ...P5_STUDIO_ROLE_PERMISSIONS.TL,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -629,6 +665,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.BO,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.BO,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.BO,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -645,6 +682,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.WL,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.WL,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.WL,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -661,6 +699,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.FIN,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.FIN,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.FIN,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -682,6 +721,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TO,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TO,
       ...P5_STUDIO_ROLE_PERMISSIONS.TO,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -697,6 +737,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.KDS,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.KDS,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.KDS,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -707,12 +748,18 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.TD,
       ...P4_ROLE_PERMISSIONS.TD,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TD,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
     kind: "implementation",
     inheritsDownward: false,
-    permissions: [...BASE_READ, ...P4_ROLE_PERMISSIONS.CM, ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.CM],
+    permissions: [
+      ...BASE_READ,
+      ...P4_ROLE_PERMISSIONS.CM,
+      ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.CM,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.CM,
+    ],
   },
   SEC: {
     kind: "implementation",
@@ -722,6 +769,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.SEC,
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.SEC,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SEC,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {
@@ -734,6 +782,7 @@ export const ROLES = {
       "access.read",
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.AUD,
       ...P5_STUDIO_ROLE_PERMISSIONS.AUD,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -748,6 +797,7 @@ export const ROLES = {
       "business_unit.manage",
       "role.read",
       ...P4_ROLE_PERMISSIONS.ADM_TECH,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -762,6 +812,7 @@ export const ROLES = {
       "access.read",
       "access.assign",
       ...P4_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {
@@ -773,6 +824,7 @@ export const ROLES = {
       ...P2_ROLE_PERMISSIONS.ADM_METHOD,
       ...P3_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_STUDIO_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

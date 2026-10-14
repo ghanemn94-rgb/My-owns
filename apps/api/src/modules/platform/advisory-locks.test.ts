@@ -33,7 +33,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the twenty-seven classes, each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block)", () => {
+  it("lists the twenty-eight classes, each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block; 730255-730257 for the T-DG5-ARCH-02 block)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -62,6 +62,7 @@ describe("advisory-lock class registry", () => {
       configDraft: 730250,
       configPublish: 730251,
       methodologyMigration: 730252,
+      procedureInstanceStep: 730254,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);
