@@ -8,6 +8,13 @@
 // sub-entries (NAV_SUBPAGES): Administration > Calendar and Jobs, Governance > Groups. The transformation-scoped P4
 // screens are workspace tabs (components/Workspace.tsx); the routes of FE-B…FE-G are registered up front in
 // app/router.tsx (P4_PLANNED_ROUTES) and show a "being built" placeholder until their task replaces the element.
+// Since P5 (T-DG5-FE-A; p5-plan §5.1 row FE-A, §3 rows 18 and 26; D-144): no area is "planned" any more. Playbook and
+// Procedures, Risks and Actions, Change and Adoption and BAU and Improvement have delivered screens in each
+// transformation's workspace (DG4), so they are "partial" like the others. Every non-"available" area has a landing page
+// (pages/AreaPages.tsx) that lists the contents §3 names for it (AREA_CONTENTS, REQ-S03-007), each with where it lives:
+// a workspace tab, a screen of the product, or a P5 screen that is not available yet. The P5 screens of FE-B…FE-G are
+// nav sub-entries and routes registered up front (P5_SUBPAGES here, P5_PLANNED_ROUTES in app/router.tsx); each shows an
+// honest "not available yet" placeholder until its owning task replaces the route element.
 import type { Permission } from "@mth/shared";
 import { ADMIN_PERMISSIONS } from "../auth/permissions.ts";
 
@@ -39,7 +46,19 @@ export type AreaWorkspaceTab =
   | "lessons"
   // P4 slice H (T-DG4-FE-F2).
   | "phases"
-  | "change-requests";
+  | "change-requests"
+  // T-DG5-FE-A: further workspace tabs the area landing pages name for their §3 contents (AREA_CONTENTS).
+  | "diagnose"
+  | "decisions"
+  | "prioritization"
+  | "roadmap"
+  | "dependencies"
+  | "capacity"
+  | "benefit-formulas"
+  | "approval-decisions"
+  | "closure"
+  | "traceability"
+  | "dashboard";
 
 export type AreaId =
   | "myWork"
@@ -60,7 +79,10 @@ export type AreaId =
 export interface NavArea {
   readonly id: AreaId;
   readonly path: string;
-  /** "available": working screens; "partial": some content works (see workspaceTab); "planned": landing page only. */
+  /**
+   * "available": working screens; "partial": its contents live in the transformation workspaces and in screens listed
+   * on its landing page (see workspaceTab, AREA_CONTENTS); "planned": landing page only (no area since P5).
+   */
   readonly availability: "available" | "partial" | "planned";
   /** Shown only to users holding any of these permissions (UI hint; the server still decides). */
   readonly requiresAny?: readonly Permission[];
@@ -75,7 +97,8 @@ export const NAV_AREAS: readonly NavArea[] = [
   // T-DG4-FE-G: the Executive Overview (the executive dashboard, ADR-0037 §8) is a working screen.
   { id: "executive", path: "/executive-overview", availability: "available" },
   { id: "transformations", path: "/transformations", availability: "available" },
-  { id: "playbook", path: "/playbook", availability: "planned" },
+  // T-DG5-FE-A: guidance is the phase workspace (DG4); the reader and executable procedures are P5 screens (FE-G, FE-D).
+  { id: "playbook", path: "/playbook", availability: "partial", workspaceTab: "phases" },
   {
     id: "strategy",
     path: "/strategy-kpis",
@@ -100,7 +123,13 @@ export const NAV_AREAS: readonly NavArea[] = [
       "executive-decisions",
     ],
   },
-  { id: "risks", path: "/risks-actions", availability: "planned" },
+  {
+    id: "risks",
+    path: "/risks-actions",
+    availability: "partial",
+    workspaceTab: "raid",
+    moreWorkspaceTabs: ["actions", "corrective-actions", "executive-decisions"],
+  },
   {
     id: "benefits",
     path: "/benefits-finance",
@@ -108,10 +137,23 @@ export const NAV_AREAS: readonly NavArea[] = [
     workspaceTab: "business-cases",
     moreWorkspaceTabs: ["benefits"],
   },
-  { id: "change", path: "/change-adoption", availability: "planned" },
+  { id: "change", path: "/change-adoption", availability: "partial", workspaceTab: "adoption" },
   { id: "evidence", path: "/evidence-reports", availability: "partial", workspaceTab: "evidence" },
-  { id: "bau", path: "/bau-improvement", availability: "planned" },
-  { id: "admin", path: "/admin", availability: "available", requiresAny: ADMIN_PERMISSIONS },
+  {
+    id: "bau",
+    path: "/bau-improvement",
+    availability: "partial",
+    workspaceTab: "bau",
+    moreWorkspaceTabs: ["improvement", "lessons"],
+  },
+  // T-DG5-FE-A: the methodology administrator (ADM_METHOD: methodology.configure, methodology.publish) configures the
+  // Playbook Studio under Administration (§3 M0113), so Administration is shown to it too. A UI hint only.
+  {
+    id: "admin",
+    path: "/admin",
+    availability: "available",
+    requiresAny: [...ADMIN_PERMISSIONS, "methodology.configure", "methodology.publish"],
+  },
 ];
 
 /**
@@ -148,13 +190,102 @@ export interface NavSubPage {
     | "changeRequests"
     // T-DG4-FE-G2: the organization's portfolios (ADR-0038 §9) and the dashboard RAG policy (ADR-0037 §3).
     | "portfolios"
-    | "ragPolicy";
+    | "ragPolicy"
+    // T-DG5-FE-A: the P5 screens of FE-B…FE-G (P5_SUBPAGES), "not available yet" until their task builds them.
+    | P5SubPageId;
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
   readonly path: string;
   readonly requiresAny?: readonly Permission[];
+  /** T-DG5-FE-A: a P5 screen registered up front; its route shows the "not available yet" placeholder of this feature. */
+  readonly p5Feature?: P5SubPageId;
 }
+
+/** The P5 navigation sub-entries (p5-plan §1.1, §5.1; D-144 item 1). Each id is also its placeholder's feature id. */
+export type P5SubPageId =
+  | "notificationPreferences"
+  | "reader"
+  | "myProcedures"
+  | "launchPlan"
+  | "healthCheck"
+  | "reports"
+  | "exports"
+  | "presentation"
+  | "studio"
+  | "methodologyMigrations"
+  | "sourceCoverage"
+  | "formBuilder"
+  | "procedureBuilder"
+  | "automation"
+  | "approvalRoutes"
+  | "branding"
+  | "demo";
+
+/**
+ * T-DG5-FE-A: the P5 sub-entries, with the FE task that replaces each placeholder (p5-plan §5.1). `requiresAny` is a UI
+ * hint (the server decides); the Studio entries need `methodology.read` (ADR-0039 §10), the others are under an area
+ * that is already permission-filtered or are personal.
+ */
+export const P5_SUBPAGES: readonly (NavSubPage & { readonly p5Feature: P5SubPageId; readonly owner: string })[] = [
+  // FE-D (slice E): quiet hours, digests and urgent escalation preferences (REQ-S12-025).
+  {
+    id: "notificationPreferences",
+    p5Feature: "notificationPreferences",
+    owner: "FE-D",
+    area: "myWork",
+    path: "/my-work/notification-preferences",
+  },
+  // FE-G (slice I): the searchable playbook reader (REQ-S03-010); FE-D (slice C): my procedures (REQ-S06-002).
+  { id: "reader", p5Feature: "reader", owner: "FE-G", area: "playbook", path: "/playbook/reader" },
+  { id: "myProcedures", p5Feature: "myProcedures", owner: "FE-D", area: "playbook", path: "/playbook/procedures" },
+  // FE-F (slice H): the 90-day launch plan and the 25-question health check of a transformation.
+  { id: "launchPlan", p5Feature: "launchPlan", owner: "FE-F", area: "playbook", path: "/playbook/launch-plan" },
+  { id: "healthCheck", p5Feature: "healthCheck", owner: "FE-F", area: "playbook", path: "/playbook/health-check" },
+  // FE-E (slice F): generated reports and snapshots, exports, presentation mode.
+  { id: "reports", p5Feature: "reports", owner: "FE-E", area: "evidence", path: "/evidence-reports/reports" },
+  { id: "exports", p5Feature: "exports", owner: "FE-E", area: "evidence", path: "/evidence-reports/exports" },
+  {
+    id: "presentation",
+    p5Feature: "presentation",
+    owner: "FE-E",
+    area: "evidence",
+    path: "/evidence-reports/presentation",
+  },
+  // FE-B (slice A): the Playbook Studio, methodology migrations and the source-coverage report.
+  {
+    id: "studio",
+    p5Feature: "studio",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/studio",
+    requiresAny: ["methodology.read"],
+  },
+  {
+    id: "methodologyMigrations",
+    p5Feature: "methodologyMigrations",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/methodology-migrations",
+    requiresAny: ["methodology.read"],
+  },
+  {
+    id: "sourceCoverage",
+    p5Feature: "sourceCoverage",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/source-coverage",
+    requiresAny: ["methodology.read"],
+  },
+  // FE-C (slice B): the form builder; FE-D (slices C, D, E): procedures, automation, approval routes.
+  { id: "formBuilder", p5Feature: "formBuilder", owner: "FE-C", area: "admin", path: "/admin/forms" },
+  { id: "procedureBuilder", p5Feature: "procedureBuilder", owner: "FE-D", area: "admin", path: "/admin/procedures" },
+  { id: "automation", p5Feature: "automation", owner: "FE-D", area: "admin", path: "/admin/automation" },
+  { id: "approvalRoutes", p5Feature: "approvalRoutes", owner: "FE-D", area: "admin", path: "/admin/approval-routes" },
+  // FE-G (slices I, J): Branding Settings and the demo environment.
+  { id: "branding", p5Feature: "branding", owner: "FE-G", area: "admin", path: "/admin/branding" },
+  { id: "demo", p5Feature: "demo", owner: "FE-G", area: "admin", path: "/admin/demo" },
+];
 
 export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "myWorkItems", area: "myWork", path: "/my-work" },
@@ -182,8 +313,8 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
     path: "/governance/executive-decisions",
     workspaceTab: "executive-decisions",
   },
-  // T-DG4-FE-E: Change and Adoption and BAU and Improvement stay "planned" (their cross-portfolio views are planned);
-  // their transformation screens are reachable through these sub-entries and the workspace tabs.
+  // T-DG4-FE-E: the transformation screens of Change and Adoption and BAU and Improvement, reachable through these
+  // sub-entries and the workspace tabs (their cross-portfolio views are planned for a later release).
   { id: "adoptionPlan", area: "change", path: "/change-adoption/adoption", workspaceTab: "adoption" },
   { id: "performanceAreas", area: "bau", path: "/bau-improvement/bau", workspaceTab: "bau" },
   { id: "improvementBacklog", area: "bau", path: "/bau-improvement/improvement", workspaceTab: "improvement" },
@@ -197,4 +328,124 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   // T-DG4-FE-G2: portfolios (read: organization.read) and the RAG policy (read: organization.read; edit: dashboard.configure).
   { id: "portfolios", area: "initiatives", path: "/portfolios", requiresAny: ["organization.read"] },
   { id: "ragPolicy", area: "executive", path: "/dashboards/rag-policy", requiresAny: ["organization.read"] },
+
+  // T-DG5-FE-A: the P5 screens, appended after the DG4 entries of each area.
+  ...P5_SUBPAGES,
 ];
+
+/**
+ * T-DG5-FE-A (REQ-S03-007: "each area's landing page lists the contents named in §3"): the contents master prompt §3
+ * (M0100–M0113) names for each area whose landing page is pages/AreaPages.tsx, in §3's order, and where each one lives
+ * at the time of this release:
+ *  - `tabs`: delivered screens in each transformation's workspace (the landing page lists the transformations);
+ *  - `links`: delivered screens outside a workspace (`requiresAny` is a UI hint; the server decides);
+ *  - `p5`: P5 screens registered up front that are not available yet (each shows its placeholder until its FE task
+ *    replaces it; that task also moves the entry from "not available yet" to delivered, F-DG4-160).
+ * Labels are `nav.contents.<area>.<item>`. The four "available" areas (My Work, Executive Overview, Transformations,
+ * Administration) are their own working screens and are not listed here.
+ */
+export interface AreaContentItem {
+  readonly id: string;
+  readonly tabs?: readonly AreaWorkspaceTab[];
+  readonly links?: readonly {
+    readonly path: string;
+    readonly labelKey: string;
+    readonly requiresAny?: readonly Permission[];
+  }[];
+  readonly p5?: readonly P5SubPageId[];
+}
+
+export type LandingAreaId = Exclude<AreaId, "myWork" | "executive" | "transformations" | "admin">;
+
+export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentItem[]>> = {
+  // M0103: searchable source, guidance and executable procedures.
+  playbook: [
+    { id: "source", p5: ["reader"] },
+    { id: "guidance", tabs: ["phases"], p5: ["launchPlan", "healthCheck"] },
+    { id: "procedures", p5: ["myProcedures"] },
+  ],
+  // M0104: outcome trees, definitions, targets, actuals and performance reviews.
+  strategy: [
+    { id: "outcomeTrees", tabs: ["define"] },
+    { id: "definitions", tabs: ["kpis"] },
+    { id: "targets", tabs: ["define", "kpis"] },
+    { id: "actuals", tabs: ["kpis"] },
+    { id: "performanceReviews", tabs: ["kpis", "dashboard"] },
+  ],
+  // M0105: canvas, gaps, capabilities, processes and design decisions.
+  tom: [
+    { id: "canvas", tabs: ["design"] },
+    { id: "gaps", tabs: ["design"] },
+    { id: "capabilities", tabs: ["design"] },
+    { id: "processes", tabs: ["design"] },
+    { id: "designDecisions", tabs: ["design", "decisions"] },
+  ],
+  // M0106: cases, prioritization, waves, resources, milestones and dependencies.
+  initiatives: [
+    {
+      id: "cases",
+      tabs: ["portfolio", "business-cases"],
+      links: [{ path: "/portfolios", labelKey: "nav.sub.portfolios", requiresAny: ["organization.read"] }],
+    },
+    { id: "prioritization", tabs: ["prioritization"] },
+    { id: "waves", tabs: ["roadmap"] },
+    { id: "resources", tabs: ["capacity"] },
+    { id: "milestones", tabs: ["roadmap"] },
+    { id: "dependencies", tabs: ["dependencies"] },
+  ],
+  // M0107: forums, meetings, decision rights, RACI, approvals and stage gates.
+  governance: [
+    { id: "forums", tabs: ["forums"] },
+    { id: "meetings", tabs: ["meetings"] },
+    { id: "decisionRights", tabs: ["decision-rights"] },
+    { id: "raci", tabs: ["raci"] },
+    {
+      id: "approvals",
+      tabs: ["approval-decisions"],
+      links: [{ path: "/my-work/approvals", labelKey: "nav.sub.approvals" }],
+      p5: ["approvalRoutes"],
+    },
+    { id: "stageGates", tabs: ["gates"] },
+  ],
+  // M0108: integrated RAID, corrective actions and escalations.
+  risks: [
+    { id: "raid", tabs: ["raid"] },
+    { id: "correctiveActions", tabs: ["corrective-actions", "actions"] },
+    { id: "escalations", tabs: ["executive-decisions"] },
+  ],
+  // M0109: formulas, realization, validation and forecasts.
+  benefits: [
+    { id: "formulas", tabs: ["benefit-formulas"] },
+    { id: "realization", tabs: ["benefits"] },
+    {
+      id: "validation",
+      tabs: ["benefits"],
+      links: [{ path: "/finance-validation", labelKey: "benefitsP4.finance.orgTitle" }],
+    },
+    { id: "forecasts", tabs: ["benefits", "business-cases"] },
+  ],
+  // M0110: stakeholders, interventions and adoption indicators.
+  change: [
+    { id: "stakeholders", tabs: ["adoption"] },
+    { id: "interventions", tabs: ["adoption"] },
+    { id: "adoptionIndicators", tabs: ["adoption"] },
+  ],
+  // M0111: native deliverables, attachments, snapshots and generated packs.
+  evidence: [
+    { id: "deliverables", tabs: ["evidence", "traceability"] },
+    { id: "attachments", tabs: ["evidence"] },
+    { id: "snapshots", tabs: ["gates"], p5: ["reports"] },
+    { id: "packs", p5: ["reports", "exports", "presentation"] },
+  ],
+  // M0112: handovers, controls, lessons and improvement backlog.
+  bau: [
+    { id: "handovers", tabs: ["bau", "closure"] },
+    { id: "controls", tabs: ["bau"] },
+    {
+      id: "lessons",
+      tabs: ["lessons"],
+      links: [{ path: "/lessons", labelKey: "nav.sub.lessonSearch", requiresAny: ["lesson.search"] }],
+    },
+    { id: "improvementBacklog", tabs: ["improvement"] },
+  ],
+};

@@ -4,7 +4,7 @@ import { Navigate, createBrowserRouter, matchRoutes, type RouteObject } from "re
 import { RequireSession } from "../auth/session.tsx";
 import { RouteLoadFailed, RouteLoadingFallback } from "../components/RouteFallback.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
-import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
+import { AREA_CONTENTS, NAV_AREAS, NAV_SUBPAGES, P5_SUBPAGES, type LandingAreaId } from "./nav.ts";
 import { Shell } from "./Shell.tsx";
 
 /**
@@ -67,9 +67,10 @@ const UserDetailPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").the
 const UsersPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UsersPage));
 const AboutPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AboutPage));
 const AreaEntryPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaEntryPage));
-const AreaPlaceholderPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaPlaceholderPage));
+const AreaLandingPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaLandingPage));
 const NotFoundPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.NotFoundPage));
 const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P4BeingBuiltPage));
+const P5NotAvailablePage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P5NotAvailablePage));
 const ApprovalDetailPage = lazyPage(() =>
   import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalDetailPage),
 );
@@ -261,15 +262,13 @@ const TransformationListPage = lazyPage(() =>
   import("../pages/transformations/TransformationListPage.tsx").then((m) => m.TransformationListPage),
 );
 
-const placeholderRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.availability === "planned").map((a) => ({
+/**
+ * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
+ * contents §3 names for it and where each lives (app/nav.ts AREA_CONTENTS). No area is "planned" since P5.
+ */
+const landingRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.id in AREA_CONTENTS).map((a) => ({
   path: a.path.slice(1),
-  element: <AreaPlaceholderPage area={a.id} />,
-}));
-
-/** Areas whose P2 content lives in each transformation's workspace: the area page leads into that workspace tab. */
-const entryRoutes: RouteObject[] = NAV_AREAS.filter((a) => a.workspaceTab).map((a) => ({
-  path: a.path.slice(1),
-  element: <AreaEntryPage area={a.id} tab={a.workspaceTab!} moreTabs={a.moreWorkspaceTabs ?? []} />,
+  element: <AreaLandingPage area={a.id as LandingAreaId} />,
 }));
 
 /** T-DG4-FE-D: area sub-entries that open one workspace tab of a chosen transformation (nav.ts NAV_SUBPAGES). */
@@ -296,6 +295,60 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   // FE-G (slices J and K): the six dashboards and the Executive Overview are built by T-DG4-FE-G, see the routes below;
   // traceability, Modular entry, portfolios and workstreams are built by T-DG4-FE-G2, see the routes below.
 ];
+
+/**
+ * The P5 screens of FE-B…FE-G (p5-plan §1.1, §5.1; D-144 item 1), registered up front by T-DG5-FE-A. Each one shows the
+ * `P5NotAvailablePage` placeholder (`nav.p5.<feature>.*`: what the screen is for, and that it is not available yet, in
+ * en and ar) until its owning task replaces the element through an orchestrator merge, and removes its row here. The
+ * navigation sub-entries (app/nav.ts P5_SUBPAGES) come first; then the record and transformation-scoped routes the P5
+ * screens and work-item links need, so a link never leads to "page not found".
+ */
+export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
+  ...P5_SUBPAGES.map((s) => ({ path: s.path.slice(1), feature: s.p5Feature, owner: s.owner })),
+  // FE-B (slice A; ADR-0039, ADR-0040): a configuration version (draft editor, diff, checks, review, publish,
+  // rollback), its review requests (the config_review work item), T06 scoring defaults, review policies, revision
+  // proposals; a transformation's methodology migrations and configuration pins.
+  { path: "admin/studio/versions/:versionId", feature: "studioVersion", owner: "FE-B" },
+  { path: "admin/studio/versions/:versionId/reviews/:reviewId", feature: "studioReview", owner: "FE-B" },
+  { path: "admin/studio/scoring-defaults", feature: "scoringDefaults", owner: "FE-B" },
+  { path: "admin/studio/review-policies", feature: "reviewPolicies", owner: "FE-B" },
+  { path: "admin/studio/revision-proposals", feature: "revisionProposals", owner: "FE-B" },
+  { path: "transformations/:id/methodology-migrations", feature: "methodologyMigrations", owner: "FE-B" },
+  { path: "transformations/:id/methodology-migrations/:migrationId", feature: "methodologyMigration", owner: "FE-B" },
+  { path: "transformations/:id/config-pins", feature: "configPins", owner: "FE-B" },
+  // FE-C (slice B; ADR-0041): the form schema of one record type in the form builder.
+  { path: "admin/forms/:recordType", feature: "formSchema", owner: "FE-C" },
+  // FE-D (slices C, D, E; ADR-0042 onward): a procedure definition, the methodology coverage view, a procedure
+  // instance, an automation rule and the automation failure queue.
+  { path: "admin/procedures/:procedureCode", feature: "procedureDefinition", owner: "FE-D" },
+  { path: "admin/coverage", feature: "methodologyCoverage", owner: "FE-D" },
+  { path: "playbook/procedures/:instanceId", feature: "procedureInstance", owner: "FE-D" },
+  { path: "admin/automation/rules/:ruleId", feature: "automationRule", owner: "FE-D" },
+  { path: "admin/automation/failures", feature: "automationFailures", owner: "FE-D" },
+  // FE-E (slice F): a transformation's reports, one issued snapshot, its exports, presentation mode, owner updates.
+  { path: "transformations/:id/reports", feature: "reports", owner: "FE-E" },
+  { path: "transformations/:id/reports/:snapshotId", feature: "reportSnapshot", owner: "FE-E" },
+  { path: "transformations/:id/exports", feature: "exports", owner: "FE-E" },
+  { path: "transformations/:id/presentation", feature: "presentation", owner: "FE-E" },
+  { path: "transformations/:id/owner-updates", feature: "ownerUpdates", owner: "FE-E" },
+  // FE-F (slices G, H): launch plan, Day-90 test, health check, health schemes, KPI restatement, formula preview,
+  // optional financial metrics.
+  { path: "transformations/:id/launch-plan", feature: "launchPlan", owner: "FE-F" },
+  { path: "transformations/:id/day-90-test", feature: "day90Test", owner: "FE-F" },
+  { path: "transformations/:id/health-check", feature: "healthCheck", owner: "FE-F" },
+  { path: "admin/health-schemes", feature: "healthSchemes", owner: "FE-F" },
+  { path: "transformations/:id/kpis/:kpiId/restatements", feature: "kpiRestatement", owner: "FE-F" },
+  { path: "transformations/:id/benefit-formulas/:formulaId/preview", feature: "formulaPreview", owner: "FE-F" },
+  { path: "transformations/:id/financial-metrics", feature: "financialMetrics", owner: "FE-F" },
+  // FE-G (slices I, J): one playbook block in the reader, and the guided demo walkthrough.
+  { path: "playbook/reader/:blockRef", feature: "readerBlock", owner: "FE-G" },
+  { path: "walkthrough", feature: "walkthrough", owner: "FE-G" },
+];
+
+const p5PlannedRoutes: RouteObject[] = P5_PLANNED_ROUTES.map((r) => ({
+  path: r.path,
+  element: <P5NotAvailablePage feature={r.feature} />,
+}));
 
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
@@ -445,9 +498,9 @@ export const routes: RouteObject[] = [
       { path: "admin/assignments", element: <AssignmentsPage /> },
       { path: "about", element: <AboutPage /> },
       ...p4PlannedRoutes,
-      ...entryRoutes,
+      ...p5PlannedRoutes,
+      ...landingRoutes,
       ...subEntryRoutes,
-      ...placeholderRoutes,
       { path: "*", element: <NotFoundPage /> },
     ],
   },

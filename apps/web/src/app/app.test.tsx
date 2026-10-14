@@ -21,7 +21,7 @@ import {
   route,
 } from "../test/fixtures.tsx";
 import { catalogues, createI18n } from "../i18n/index.ts";
-import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
+import { NAV_AREAS } from "./nav.ts";
 
 beforeEach(() => {
   localStorage.clear();
@@ -102,11 +102,26 @@ describe("bilingual shell", () => {
     expect((await screen.findByRole("alert")).dataset["state"]).toBe("no-permission");
   });
 
-  it("marks planned areas as planned instead of pretending they work", async () => {
-    mockApi(meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: "en" })));
+  it("an area with delivered screens is not labelled planned: Risks and Actions lists its §3 contents", async () => {
+    mockApi(
+      meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: "en" })),
+      route("GET", /\/api\/v1\/transformations\?/, () => ({
+        status: 200,
+        body: { items: [makeTransformation()], nextCursor: null },
+      })),
+    );
     renderApp("/risks-actions");
     expect(await screen.findByRole("heading", { level: 1, name: "Risks and Actions" })).toBeTruthy();
-    expect(screen.getAllByText("Planned").length).toBeGreaterThan(0);
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    // T-DG5-FE-A (F-DG4-160, p5-plan §3 row 18): no area carries the "Planned" tag any more.
+    expect(within(nav).queryByText("Planned")).toBeNull();
+    const contents = document.querySelector("[data-area-contents='risks']")!.closest("section")!;
+    expect(within(contents).getByRole("heading", { level: 2, name: "What this area covers" })).toBeTruthy();
+    for (const label of ["Integrated RAID", "Corrective actions", "Escalations"])
+      expect(within(contents).getByText(label)).toBeTruthy();
+    expect(within(contents).getAllByText("Available")).toHaveLength(3);
+    const link = await screen.findByRole("link", { name: /TR-0001/ });
+    expect(link.getAttribute("href")).toBe(`/transformations/${makeTransformation().id}/raid`);
   });
 
   it("a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned", async () => {
@@ -124,24 +139,16 @@ describe("bilingual shell", () => {
     expect(screen.getAllByText("Planned").length).toBeGreaterThan(0);
   });
 
-  // F-DG4-160 sweep (D-137): the planned-area and portfolio-view texts never say that an area is "not available yet"
-  // when DG4 delivers screens of that area (listed under it in the navigation) and the dashboards.
+  // F-DG4-160 sweep (D-137), kept by T-DG5-FE-A: the portfolio-view texts never say that an area is "not available
+  // yet" when screens of that area are delivered. `nav.plannedBody` is gone with the last "planned" area (P5).
   const PLANNED_TEXT = {
     en: {
-      plannedBody:
-        "A cross-portfolio view of this area, with its records across all transformations, is planned for a later " +
-        "release, so this page shows no data. The screens this area already has are listed under it in the " +
-        "navigation. The dashboards under the Executive Overview summarize the transformations you can read.",
       portfolioPlanned:
         "A cross-portfolio view of this area, with its records across all transformations, is planned for a later " +
         "release. The dashboards under the Executive Overview summarize the transformations you can read.",
       willContain: "What this area covers",
     },
     ar: {
-      plannedBody:
-        "عرض هذا القسم على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق، لذا لا تُعرض في هذه " +
-        "الصفحة أي بيانات. أما الشاشات المتاحة حاليًا لهذا القسم فمدرجة تحته في قائمة التنقل. " +
-        "وتلخّص لوحات المؤشرات ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها.",
       portfolioPlanned:
         "عرض هذا المجال على مستوى المحفظة كاملة، بسجلاته في جميع التحوّلات، مخطط لإصدار لاحق. وتلخّص لوحات المؤشرات " +
         "ضمن النظرة التنفيذية التحوّلات التي يحق لك قراءتها.",
@@ -149,41 +156,19 @@ describe("bilingual shell", () => {
     },
   } as const;
 
-  it("pins the planned-area texts in en and ar; none says an area is not available yet", () => {
+  it("pins the area texts in en and ar; none says an area is not available yet", () => {
     for (const locale of ["en", "ar"] as const) {
       const nav = catalogues[locale].nav;
-      expect(nav.plannedBody).toBe(PLANNED_TEXT[locale].plannedBody);
+      expect("plannedBody" in nav).toBe(false);
       expect(nav.entry.portfolioPlanned).toBe(PLANNED_TEXT[locale].portfolioPlanned);
       expect(nav.willContain).toBe(PLANNED_TEXT[locale].willContain);
-      for (const s of [nav.plannedBody, nav.entry.portfolioPlanned, nav.willContain]) {
+      for (const s of [nav.entry.portfolioPlanned, nav.willContain, nav.landing.body]) {
         expect(s).not.toMatch(/not available yet|will contain|غير متاح بعد|سيتضمنه/i);
       }
     }
   });
 
   for (const locale of ["en", "ar"] as const) {
-    for (const area of NAV_AREAS.filter((a) => a.availability === "planned")) {
-      it(`${locale}: the planned area ${area.id} says what is planned and its delivered screens are under it`, async () => {
-        mockApi(meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })));
-        renderApp(area.path, { i18n: createI18n(locale) });
-        const label = catalogues[locale].nav.areas[area.id].label;
-        expect(await screen.findByRole("heading", { level: 1, name: label })).toBeTruthy();
-        expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
-        expect(screen.getByText(PLANNED_TEXT[locale].plannedBody)).toBeTruthy();
-        expect(screen.getByRole("heading", { level: 3, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
-        // What the text claims: the area's screens are listed under it in the navigation, and the dashboards exist.
-        const nav = screen.getByRole("navigation", { name: catalogues[locale].nav.primary });
-        const sub = within(nav).getByRole("list", { name: label });
-        const expected = NAV_SUBPAGES.filter((s) => s.area === area.id && !s.requiresAny);
-        expect(expected.length).toBeGreaterThan(0);
-        for (const s of expected) {
-          expect(within(sub).getByRole("link", { name: catalogues[locale].nav.sub[s.id] }).getAttribute("href")).toBe(
-            s.path,
-          );
-        }
-        expect(within(nav).getByRole("link", { name: catalogues[locale].nav.sub.dashboards })).toBeTruthy();
-      });
-    }
     it(`${locale}: a partial area's planned card names the cross-portfolio view and the dashboards`, async () => {
       mockApi(
         meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })),
@@ -197,7 +182,7 @@ describe("bilingual shell", () => {
         await screen.findByRole("heading", { level: 1, name: catalogues[locale].nav.areas.benefits.label }),
       ).toBeTruthy();
       expect(screen.getByText(PLANNED_TEXT[locale].portfolioPlanned)).toBeTruthy();
-      expect(screen.getByRole("heading", { level: 3, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
+      expect(screen.getByRole("heading", { level: 2, name: PLANNED_TEXT[locale].willContain })).toBeTruthy();
     });
   }
 
