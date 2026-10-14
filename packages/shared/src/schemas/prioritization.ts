@@ -44,7 +44,7 @@ export const weightSet = z.strictObject({
   transformationId: uuid,
   versionNo: z.number().int().min(1),
   status: z.enum(["proposed", "active", "superseded", "withdrawn"]),
-  approvalBasis: z.enum(["source_default", "approved"]).nullable(),
+  approvalBasis: z.enum(["source_default", "approved", "studio_default"]).nullable(),
   rationale: z.string().min(1).max(4000).nullable(),
   weights: z.array(weightSetWeight).min(2).max(6),
   approvedBy: uuid.nullable(),

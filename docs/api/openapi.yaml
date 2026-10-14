@@ -29725,7 +29725,7 @@ components:
         transformationId: { $ref: "#/components/schemas/Uuid" }
         versionNo: { type: integer, minimum: 1 }
         status: { type: string, enum: [proposed, active, superseded, withdrawn] }
-        approvalBasis: { type: [string, "null"], enum: [source_default, approved, null] }
+        approvalBasis: { type: [string, "null"], enum: [source_default, approved, studio_default, null] }
         rationale: { type: [string, "null"], minLength: 1, maxLength: 4000 }
         weights: { type: array, minItems: 2, maxItems: 6, items: { $ref: "#/components/schemas/WeightSetWeight" } }
         approvedBy: { $ref: "#/components/schemas/NullableUuid" }
@@ -37067,7 +37067,7 @@ components:
       additionalProperties: false
       properties:
         criterionCode: { type: string, enum: [strategic_fit, financial_value, customer_impact, feasibility, time_to_value, risk_compliance] }
-        weightPercent: { type: string, pattern: '^(100(\\.0{1,2})?|[0-9]{1,2}(\\.[0-9]{1,2})?)$', description: 'Percent as a decimal string with at most two decimals; > 0.' }
+        weightPercent: { type: string, pattern: "^(100(\\.0{1,2})?|[0-9]{1,2}(\\.[0-9]{1,2})?)$", description: 'Percent as a decimal string with at most two decimals; > 0.' }
     ScoringRubricLevel:
       type: object
       description: "A null descriptor is shown as No descriptor defined (never invented)."

@@ -90,7 +90,9 @@ export function WeightSetsSection() {
                   <span className="muted">
                     {active.approvalBasis === "source_default"
                       ? t("prioritization.weights.basis.source_default")
-                      : t("prioritization.weights.basis.approved")}
+                      : active.approvalBasis === "studio_default"
+                        ? t("prioritization.weights.basis.studio_default")
+                        : t("prioritization.weights.basis.approved")}
                   </span>
                 </p>
               ) : (

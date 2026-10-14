@@ -51,7 +51,9 @@ describe("starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-003)", () => {
       // p4_instantiate_transformation (2 governance-matrix headers, 4 T11 rows, 6 T12 deliverables, 36 cells, and the 5
       // seeded forums of slice D, whose 0044 extends the same function). T-DG5-BE-D (ADR-0041 §4; D-144 (a)): + the
       // form_schema pin of a transformation created from P5 on, with its audit event (2 pins, 83 audited rows).
-      expect(counts.rows[0]).toEqual({ pin: "2", t01: "6", cells: "10", gates: "6", audits: "83" });
+      // T-DG5-KBE-A (ADR-0040 §5, migration 0065): + the scoring_defaults pin p3_instantiate_transformation() now adds,
+      // with its audit event (3 pins, 84 audited rows).
+      expect(counts.rows[0]).toEqual({ pin: "3", t01: "6", cells: "10", gates: "6", audits: "84" });
       const catalogue = await call(api.app, "GET", `/api/v1/transformations/${t.body.id}/methodology`, {
         session: office,
       });

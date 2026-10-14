@@ -887,7 +887,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG5-BE-H2: + 2 JSON bodies (the rule-version dry run and review; its three other POSTs are bodiless).
     // T-DG5-BE-C: + createMethodologyMigration, previewMethodologyMigration, decideMethodologyMigration (3 JSON bodies;
     // submit, execute and withdraw are bodiless, the other three are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([346, 345, 1]);
+    // T-DG5-KBE-A: + putScoringDefaultsDraft (1 JSON body). T-DG5-BE-F: + validateProcedureDefinition,
+    // putProcedureDefinition (2 JSON bodies; removeProcedureDefinition is bodiless).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([349, 348, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
