@@ -33,7 +33,29 @@ function contentIds(area: string): string[] {
   return Object.keys(nav.contents[area] ?? {});
 }
 
-test("P5: every area landing page lists its §3 contents in the project's language (Transformation Office)", async ({
+// One test per area (D-149): the single 14-page test of T-DG5-FE-A ran at the edge of its 30 s budget (31.7 s in EN
+// under load). Every assertion of that test is kept; the timeout is not raised.
+for (const { area, path } of LANDING) {
+  test(`P5: the ${area} area landing page lists its §3 contents in the project's language (Transformation Office)`, async ({
+    page,
+  }, info) => {
+    const lang = langOf(info);
+    const foreign = trackRequests(page);
+    await signIn(page, lang, "dev.office");
+    await page.goto(path);
+    await expect(page.locator("main#main h1")).toHaveText(tr(lang, `nav.areas.${area}.label`));
+    await expect(page.getByRole("heading", { level: 2, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+    const labels = page.locator(`[data-area-contents='${area}'] > li .area-content__label`);
+    await expect(labels).toHaveText(contentIds(area).map((id) => tr(lang, `nav.contents.${area}.${id}`)));
+    await expectAccessible(page, lang, `p5-area-${area}`);
+    await shot(page, lang, `p5-area-${area}`);
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    await expect(page.locator("body")).not.toContainText(/\bDG[0-7]\b/);
+    expect(foreign).toEqual([]);
+  });
+}
+
+test("P5: the navigation has no planned area, and a P5 screen named on a landing page opens its placeholder (Transformation Office)", async ({
   page,
 }, info) => {
   const lang = langOf(info);
@@ -42,15 +64,6 @@ test("P5: every area landing page lists its §3 contents in the project's langua
   const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
   // No area carries the "planned" tag (every area has delivered screens; F-DG4-160).
   await expect(nav.getByText(tr(lang, "nav.planned"), { exact: true })).toHaveCount(0);
-  for (const { area, path } of LANDING) {
-    await page.goto(path);
-    await expect(page.locator("main#main h1")).toHaveText(tr(lang, `nav.areas.${area}.label`));
-    await expect(page.getByRole("heading", { level: 2, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
-    const labels = page.locator(`[data-area-contents='${area}'] > li .area-content__label`);
-    await expect(labels).toHaveText(contentIds(area).map((id) => tr(lang, `nav.contents.${area}.${id}`)));
-    await expectAccessible(page, lang, `p5-area-${area}`);
-    await shot(page, lang, `p5-area-${area}`);
-  }
   // A P5 screen named on a landing page opens its placeholder: not available yet, no data, no form.
   await page.goto("/playbook");
   await page
