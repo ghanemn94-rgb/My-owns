@@ -1904,6 +1904,8 @@ export interface WorkItemKindTable {
   label_en: string;
   label_ar: string;
   source_ref: string;
+  /** P5 (0075; ADR-0044 §5): 'urgent' kinds are always delivered at once (REQ-S12-025). */
+  urgency: Generated<string>;
 }
 
 export interface WorkItemTable extends Stamps {
@@ -1937,6 +1939,12 @@ export interface InboxNotificationTable extends Stamps {
   message_params: JsonDefault;
   dedupe_key: string;
   read_at: NullableTimestamp;
+  // P5 (0075; ADR-0044 §5, REQ-S12-025): delivery state; the defaults keep every DG4 row and insert 'delivered'.
+  urgency: Generated<string>;
+  delivery_state: Generated<string>;
+  deliver_after: NullableTimestamp;
+  digest_id: string | null;
+  is_digest: Generated<boolean>;
 }
 
 export interface AccessGroupTable extends Stamps {
@@ -5171,6 +5179,345 @@ export type ProcedureStepInstanceRow = Selectable<ProcedureStepInstanceTable>;
 export type ProcedureInstanceLinkRow = Selectable<ProcedureInstanceLinkTable>;
 export type MethodologyCoverageLinkRow = Selectable<MethodologyCoverageLinkTable>;
 
+// ---- P5 slices D and E (migrations 0074-0076; T-DG5-ARCH-03; ADR-0043, ADR-0044). Generated from the DDL by
+// docs/delivery/handbacks/DG5/T-DG5-ARCH-03-evidence/gen-schema.py.
+export interface AutomationTriggerTable {
+  code: string;
+  trigger_kind: string;
+  owner_module: string;
+  label_en: string;
+  label_ar: string;
+  condition_fields: Generated<string[]>;
+  initiating_user_field: string | null;
+  admin_selectable: boolean;
+  source_ref: string;
+}
+
+export interface AutomationActionTypeTable {
+  code: string;
+  action_class: string;
+  owner_module: string;
+  label_en: string;
+  label_ar: string;
+  required_permission_code: string | null;
+  admin_selectable: boolean;
+  source_ref: string;
+}
+
+export interface AutomationRuleTable {
+  id: string;
+  code: string;
+  origin: string;
+  source_ref: string | null;
+  name_en: string;
+  name_ar: string;
+  description_en: string | null;
+  description_ar: string | null;
+  scope_level: string;
+  organization_id: string | null;
+  transformation_id: string | null;
+  owner_user_id: string | null;
+  owner_role_code: string | null;
+  enabled: Generated<boolean>;
+  disable_allowed: boolean;
+  disabled_reason: string | null;
+  effective_version_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface AutomationRuleVersionTable {
+  id: string;
+  automation_rule_id: string;
+  version_no: number;
+  status: Generated<string>;
+  trigger_codes: string[];
+  conditions: JsonDefault;
+  actions: Json;
+  action_types: string[];
+  run_as: string;
+  service_permission_codes: Generated<string[]>;
+  parameters: JsonDefault;
+  content_sha256: string;
+  change_summary: string | null;
+  authored_by: string | null;
+  submitted_at: NullableTimestamp;
+  reviewed_by: string | null;
+  reviewed_at: NullableTimestamp;
+  review_note: string | null;
+  published_by: string | null;
+  published_at: NullableTimestamp;
+  superseded_at: NullableTimestamp;
+  discarded_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface AutomationDryRunTable {
+  id: string;
+  automation_rule_version_id: string;
+  content_sha256: string;
+  sample_event: Json;
+  outcome: string;
+  conditions_met: boolean | null;
+  planned_actions: JsonDefault;
+  findings: JsonDefault;
+  run_by: string;
+  created_at: TimestampDefault;
+}
+
+export interface AutomationExecutionTable {
+  id: string;
+  automation_rule_id: string;
+  automation_rule_version_id: string;
+  trigger_code: string;
+  trigger_key: string;
+  trigger_payload: JsonDefault;
+  organization_id: string | null;
+  transformation_id: string | null;
+  run_as: string;
+  initiating_user_id: string | null;
+  status: Generated<string>;
+  conditions_met: boolean | null;
+  attempt_no: Generated<number>;
+  error_code: string | null;
+  error_detail: string | null;
+  started_at: TimestampDefault;
+  finished_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface AutomationActionResultTable {
+  id: string;
+  automation_execution_id: string;
+  attempt_no: number;
+  ordinal: number;
+  action_type: string;
+  idempotency_key: string;
+  outcome: string;
+  result_record_type: string | null;
+  result_record_id: string | null;
+  error_code: string | null;
+  created_at: TimestampDefault;
+}
+
+export interface JobRunTable {
+  id: string;
+  job_schedule_code: string;
+  job_id: string;
+  attempt_no: number;
+  outcome: string;
+  started_at: Timestamp;
+  finished_at: Timestamp;
+  error_code: string | null;
+  created_at: TimestampDefault;
+}
+
+export interface OperationalFailureTable {
+  id: string;
+  source: string;
+  organization_id: string | null;
+  automation_execution_id: string | null;
+  job_schedule_code: string | null;
+  queue_name: string;
+  job_id: string | null;
+  idempotency_key: string;
+  job_data: JsonDefault;
+  error_code: string;
+  error_message: string;
+  attempts: number;
+  first_failed_at: Timestamp;
+  last_failed_at: Timestamp;
+  status: Generated<string>;
+  retry_count: Generated<number>;
+  last_retry_by: string | null;
+  last_retry_at: NullableTimestamp;
+  resolved_at: NullableTimestamp;
+  dismissed_by: string | null;
+  dismissed_at: NullableTimestamp;
+  dismiss_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ApprovalRouteStepTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  approval_id: string;
+  round_no: number;
+  route_key: string;
+  route_mode: string;
+  step_no: number;
+  approver_role_code: string;
+  assignee_user_id: string | null;
+  status: string;
+  activated_at: NullableTimestamp;
+  decided_by: string | null;
+  decided_on_behalf_of: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface GateConditionClosureTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_decision_condition_id: string;
+  closure_note: string;
+  evidence_id: string | null;
+  closed_by: string;
+  created_at: TimestampDefault;
+}
+
+export interface GateConditionEscalationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  gate_decision_condition_id: string;
+  overdue_since: string;
+  escalated_to_user_id: string;
+  work_item_id: string | null;
+  created_at: TimestampDefault;
+  created_by: string | null;
+}
+
+export interface NotificationPolicyTable {
+  id: string;
+  organization_id: string;
+  non_urgent_working_days_only: Generated<boolean>;
+  default_quiet_hours_start: string | null;
+  default_quiet_hours_end: string | null;
+  default_digest_mode: Generated<string>;
+  urgent_delivery: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface NotificationPreferenceTable {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  timezone: Generated<string>;
+  digest_mode: Generated<string>;
+  digest_time: Generated<string>;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface NotificationDigestTable {
+  id: string;
+  organization_id: string;
+  recipient_user_id: string;
+  window_start: Timestamp;
+  window_end: Timestamp;
+  notification_count: number;
+  inbox_notification_id: string;
+  created_at: TimestampDefault;
+  created_by: string | null;
+}
+
+export interface MeetingCutoffPackTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  meeting_id: string;
+  cutoff_date: string;
+  as_of: Timestamp;
+  open_asks: Json;
+  agenda_item_ids: Generated<string[]>;
+  automation_execution_id: string | null;
+  status: Generated<string>;
+  reviewed_by: string | null;
+  reviewed_at: NullableTimestamp;
+  review_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface DependencySlipTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  dependency_id: string;
+  slip_key: string;
+  predecessor_finish_before: string;
+  predecessor_finish_after: string;
+  slip_days: number;
+  needed_by: string | null;
+  critical_reason: string;
+  affected: Json;
+  created_at: TimestampDefault;
+  created_by: string | null;
+}
+
+export interface Database {
+  automation_trigger: AutomationTriggerTable;
+  automation_action_type: AutomationActionTypeTable;
+  automation_rule: AutomationRuleTable;
+  automation_rule_version: AutomationRuleVersionTable;
+  automation_dry_run: AutomationDryRunTable;
+  automation_execution: AutomationExecutionTable;
+  automation_action_result: AutomationActionResultTable;
+  job_run: JobRunTable;
+  operational_failure: OperationalFailureTable;
+  approval_route_step: ApprovalRouteStepTable;
+  gate_condition_closure: GateConditionClosureTable;
+  gate_condition_escalation: GateConditionEscalationTable;
+  notification_policy: NotificationPolicyTable;
+  notification_preference: NotificationPreferenceTable;
+  notification_digest: NotificationDigestTable;
+  meeting_cutoff_pack: MeetingCutoffPackTable;
+  dependency_slip: DependencySlipTable;
+}
+
+export type AutomationTriggerRow = Selectable<AutomationTriggerTable>;
+export type AutomationActionTypeRow = Selectable<AutomationActionTypeTable>;
+export type AutomationRuleRow = Selectable<AutomationRuleTable>;
+export type AutomationRuleVersionRow = Selectable<AutomationRuleVersionTable>;
+export type AutomationDryRunRow = Selectable<AutomationDryRunTable>;
+export type AutomationExecutionRow = Selectable<AutomationExecutionTable>;
+export type AutomationActionResultRow = Selectable<AutomationActionResultTable>;
+export type JobRunRow = Selectable<JobRunTable>;
+export type OperationalFailureRow = Selectable<OperationalFailureTable>;
+export type ApprovalRouteStepRow = Selectable<ApprovalRouteStepTable>;
+export type GateConditionClosureRow = Selectable<GateConditionClosureTable>;
+export type GateConditionEscalationRow = Selectable<GateConditionEscalationTable>;
+export type NotificationPolicyRow = Selectable<NotificationPolicyTable>;
+export type NotificationPreferenceRow = Selectable<NotificationPreferenceTable>;
+export type NotificationDigestRow = Selectable<NotificationDigestTable>;
+export type MeetingCutoffPackRow = Selectable<MeetingCutoffPackTable>;
+export type DependencySlipRow = Selectable<DependencySlipTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -6930,7 +7277,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_by",
   ],
-  work_item_kind: ["code", "owner_module", "label_en", "label_ar", "source_ref"],
+  work_item_kind: ["code", "owner_module", "label_en", "label_ar", "source_ref", "urgency"],
   work_item: [
     "id",
     "organization_id",
@@ -6966,6 +7313,11 @@ export const SCHEMA_COLUMNS = {
     "message_params",
     "dedupe_key",
     "read_at",
+    "urgency",
+    "delivery_state",
+    "deliver_after",
+    "digest_id",
+    "is_digest",
     "version",
     "created_at",
     "updated_at",
@@ -9590,6 +9942,288 @@ export const SCHEMA_COLUMNS = {
     "created_by",
   ],
   methodology_coverage_link: ["id", "source_element_id", "target_kind", "target_code", "created_at"],
+  automation_trigger: [
+    "code",
+    "trigger_kind",
+    "owner_module",
+    "label_en",
+    "label_ar",
+    "condition_fields",
+    "initiating_user_field",
+    "admin_selectable",
+    "source_ref",
+  ],
+  automation_action_type: [
+    "code",
+    "action_class",
+    "owner_module",
+    "label_en",
+    "label_ar",
+    "required_permission_code",
+    "admin_selectable",
+    "source_ref",
+  ],
+  automation_rule: [
+    "id",
+    "code",
+    "origin",
+    "source_ref",
+    "name_en",
+    "name_ar",
+    "description_en",
+    "description_ar",
+    "scope_level",
+    "organization_id",
+    "transformation_id",
+    "owner_user_id",
+    "owner_role_code",
+    "enabled",
+    "disable_allowed",
+    "disabled_reason",
+    "effective_version_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  automation_rule_version: [
+    "id",
+    "automation_rule_id",
+    "version_no",
+    "status",
+    "trigger_codes",
+    "conditions",
+    "actions",
+    "action_types",
+    "run_as",
+    "service_permission_codes",
+    "parameters",
+    "content_sha256",
+    "change_summary",
+    "authored_by",
+    "submitted_at",
+    "reviewed_by",
+    "reviewed_at",
+    "review_note",
+    "published_by",
+    "published_at",
+    "superseded_at",
+    "discarded_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  automation_dry_run: [
+    "id",
+    "automation_rule_version_id",
+    "content_sha256",
+    "sample_event",
+    "outcome",
+    "conditions_met",
+    "planned_actions",
+    "findings",
+    "run_by",
+    "created_at",
+  ],
+  automation_execution: [
+    "id",
+    "automation_rule_id",
+    "automation_rule_version_id",
+    "trigger_code",
+    "trigger_key",
+    "trigger_payload",
+    "organization_id",
+    "transformation_id",
+    "run_as",
+    "initiating_user_id",
+    "status",
+    "conditions_met",
+    "attempt_no",
+    "error_code",
+    "error_detail",
+    "started_at",
+    "finished_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  automation_action_result: [
+    "id",
+    "automation_execution_id",
+    "attempt_no",
+    "ordinal",
+    "action_type",
+    "idempotency_key",
+    "outcome",
+    "result_record_type",
+    "result_record_id",
+    "error_code",
+    "created_at",
+  ],
+  job_run: [
+    "id",
+    "job_schedule_code",
+    "job_id",
+    "attempt_no",
+    "outcome",
+    "started_at",
+    "finished_at",
+    "error_code",
+    "created_at",
+  ],
+  operational_failure: [
+    "id",
+    "source",
+    "organization_id",
+    "automation_execution_id",
+    "job_schedule_code",
+    "queue_name",
+    "job_id",
+    "idempotency_key",
+    "job_data",
+    "error_code",
+    "error_message",
+    "attempts",
+    "first_failed_at",
+    "last_failed_at",
+    "status",
+    "retry_count",
+    "last_retry_by",
+    "last_retry_at",
+    "resolved_at",
+    "dismissed_by",
+    "dismissed_at",
+    "dismiss_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  approval_route_step: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "approval_id",
+    "round_no",
+    "route_key",
+    "route_mode",
+    "step_no",
+    "approver_role_code",
+    "assignee_user_id",
+    "status",
+    "activated_at",
+    "decided_by",
+    "decided_on_behalf_of",
+    "decided_at",
+    "decision_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  gate_condition_closure: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_decision_condition_id",
+    "closure_note",
+    "evidence_id",
+    "closed_by",
+    "created_at",
+  ],
+  gate_condition_escalation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "gate_decision_condition_id",
+    "overdue_since",
+    "escalated_to_user_id",
+    "work_item_id",
+    "created_at",
+    "created_by",
+  ],
+  notification_policy: [
+    "id",
+    "organization_id",
+    "non_urgent_working_days_only",
+    "default_quiet_hours_start",
+    "default_quiet_hours_end",
+    "default_digest_mode",
+    "urgent_delivery",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  notification_preference: [
+    "id",
+    "organization_id",
+    "user_id",
+    "quiet_hours_start",
+    "quiet_hours_end",
+    "timezone",
+    "digest_mode",
+    "digest_time",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  notification_digest: [
+    "id",
+    "organization_id",
+    "recipient_user_id",
+    "window_start",
+    "window_end",
+    "notification_count",
+    "inbox_notification_id",
+    "created_at",
+    "created_by",
+  ],
+  meeting_cutoff_pack: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "meeting_id",
+    "cutoff_date",
+    "as_of",
+    "open_asks",
+    "agenda_item_ids",
+    "automation_execution_id",
+    "status",
+    "reviewed_by",
+    "reviewed_at",
+    "review_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  dependency_slip: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "dependency_id",
+    "slip_key",
+    "predecessor_finish_before",
+    "predecessor_finish_after",
+    "slip_days",
+    "needed_by",
+    "critical_reason",
+    "affected",
+    "created_at",
+    "created_by",
+  ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

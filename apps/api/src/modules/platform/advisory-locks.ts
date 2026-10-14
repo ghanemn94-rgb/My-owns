@@ -90,6 +90,16 @@ export const ADVISORY_LOCK_CLASSES = {
   // comments need no lock).
   /** The steps of one procedure instance (procedures: launch creates and activates the first steps, input updates, step complete/skip/assign, cancel and instance completion; exactly-once launch is also held by the unique constraint procedure_instance_launch_key). Key: "<procedureInstanceId>". */
   procedureInstanceStep: 730254,
+  // P5 block of T-DG5-ARCH-03 (730258-730262; p5-plan §4, ADR-0043 §7, ADR-0044 §6). 730262 is RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** One rule version and one trigger occurrence (automation: execution start, action results, retry of the execution; exactly-once execution is also held by the unique constraint automation_execution_once_key). Key: "<ruleVersionId>:<triggerKey>". */
+  automationRuleExecution: 730258,
+  /** One entry of the failure queue (automation and jobs: retry, dismiss, the retry outcome; one open failure per key is also held by the unique index operational_failure_one_open_key). Key: "<operationalFailureId>". */
+  failureRepair: 730259,
+  /** The route steps of one approval (workflows: step decision, activation of the next sequential step, completion of the approval). Key: "<approvalId>". */
+  approvalRouteStep: 730260,
+  /** One user's digest window (tasks: collecting held notifications into one digest; exactly once is also held by the unique constraint notification_digest_window_key). Key: "<userId>:<windowStartIso>". */
+  digestWindow: 730261,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

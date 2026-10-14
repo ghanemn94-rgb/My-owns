@@ -791,3 +791,49 @@ Legend as in 8.3. **W(rt)** = with the record type's write permission in scope. 
 
 - **AUD (read-only auditor):** every slice B/C mutation (custom values, drafts, comments, attachments, bulk edit, procedure definition put/remove/validate, launch, inputs, step complete/skip/assign/evidence, cancel) returns **403** for AUD and writes nothing; AUD reads every slice B/C record within its scope.
 - **SoD:** procedure approval steps inherit the canonical approval's rules (the requester never decides; ADR-0026); a form schema or procedure draft's author cannot review it (`config_review.self_review`, ADR-0039). Comments and drafts approve nothing.
+
+## 20. P5 implementation, slices D and E (DG5): automation rules, executions and the failure queue, jobs operations, approval routes, conditional-approval conditions, notification policy, cut-off packs and dependency slips permission codes and per-entity rights
+
+- **Task:** T-DG5-ARCH-03 (solution-architect), 2026-10-14. **Sources:** ADR-0043 §8, ADR-0044 §9; master prompt M0221, M0240–M0242, M0213, M0124; REQ-S12-001 "configure: ADM; view-history: ADM, AUD", REQ-S12-002 "configure/retry: ADM", REQ-S12-022 "view/repair: ADM", REQ-S12-025 "configure-policy: ADM; set-preferences: user", REQ-S04-011 "close-condition: condition owner", REQ-S10-015 "configure: ADM".
+- **Seed:** `0076_p5_automation_permissions.sql`, equal to `P5_AUTOMATION_PERMISSIONS` / `P5_AUTOMATION_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** none of the eight codes is a business-approval or Finance-validation code. Rule versions are authored by ADM_METHOD and reviewed by TO (a configuration review, not a business approval; never the author). A rule's service identity never holds an approval right (database guard). Approval route steps are decided only with the existing `approval.decide`, which no technical admin holds; the human-only actions (approve a gate, decide an approval, decide an investment, attest a Finance value, decide an executive ask, approve a methodology migration) can never be automated (REQ-S12-026).
+
+### 20.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `automation.read` | read | Read rules, versions, dry runs, executions and rule-execution failures; the builder catalogue | ADM_METHOD, ADM_TECH, TO, AUD |
+| `automation.configure` | configure | Create and change rules and draft versions, dry run, submit, publish, discard, enable, disable | ADM_METHOD |
+| `automation.review` | write | Approve a rule version in review or send it back (configuration review) | TO |
+| `automation.repair` | configure | Retry or dismiss a failed rule execution in the failure queue | ADM_TECH, ADM_METHOD |
+| `job.repair` | configure | Retry or dismiss a failed job; run a scheduled job now | ADM_TECH |
+| `notification_policy.configure` | configure | Read and set the organization's notification policy | ADM_TECH |
+| `notification.preferences` | write | Set one's own quiet hours, time zone and digest preference | every role except AUD (SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, ADM_TECH, ADM_ACCESS, ADM_METHOD) |
+| `gate_condition.close` | write | Close a condition of a conditional approval the caller owns | SP, TL, BO, WL, FIN, TO, KDS, TD, CM |
+
+Reused codes: the jobs view uses `job.read` (ADM_TECH, DG4), so a non-admin gets 403 (REQ-S12-022); route definitions are Studio `approver_route` elements (`methodology.configure`, `methodology.read`, §18); route steps are decided with `approval.decide` (DG4; default holders SP, BO and FIN) in scope and the step's role; gate conditions, dependency slips and cut-off packs are read with `transformation.read`; a cut-off pack is reviewed by the meeting's chair with `meeting.chair` or its secretary with `meeting.prepare` (DG4).
+
+### 20.2 Per-entity rights in P5 (slices D and E)
+
+Legend as in 8.3. **own** = the caller's own row only. **owner** = the condition's owner. **step** = holder of the step's role (or its DG4 delegate) with `approval.decide` in scope. **chair/sec** = the meeting's chair or secretary.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rules and versions (`automation_rule`, `automation_rule_version`, catalogues) | — | — | — | — | — | V; Rv (review, not own) | — | — | — | — | V | V C U Cf (draft, dry run, submit, publish, enable, disable) | V | — |
+| Dry runs (`automation_dry_run`) | — | — | — | — | — | V | — | — | — | — | V | V C | V | — |
+| Executions (`automation_execution`, `automation_action_result`) | — | — | — | — | — | V | — | — | — | — | V | V | V | — |
+| Failure queue, rule executions (`operational_failure` source `rule_execution`) | — | — | — | — | — | V | — | — | — | — | V | V; Rp (retry, dismiss) | V; Rp (retry, dismiss) | — |
+| Failure queue, jobs (`operational_failure` source `job`); jobs view (`job_schedule`, `job_run`) | — | — | — | — | — | — | — | — | — | — | — | — | V; Rp (retry, dismiss, run now) | — |
+| Approval route definitions (Studio `approver_route`) | V | V | — | — | — | V | — | — | — | — | V | V C U (draft) | — | — |
+| Approval route steps (`approval_route_step`) | V; D (step) | V | V; D (step) | V | V; D (step) | V | V | V | V | V | V | — | — | — |
+| Gate conditions, closures, escalations | V; U (owner) | V; U (owner) | V; U (owner) | V; U (owner) | V; U (owner) | V; U (owner) | V; U (owner) | V; U (owner) | V; U (owner) | V | V | — | — | — |
+| Notification preferences (`notification_preference`) | V U (own) | V U (own) | V U (own) | V U (own) | V U (own) | V U (own) | V U (own) | V U (own) | V U (own) | V U (own) | V (own) | V U (own) | V U (own) | V U (own) |
+| Notification policy (`notification_policy`) | — | — | — | — | — | — | — | — | — | — | — | — | V U | — |
+| Digests (`notification_digest`) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) | V (own) |
+| Cut-off packs (`meeting_cutoff_pack`) | V; U (chair/sec) | V; U (chair/sec) | V | V | V | V; U (chair/sec) | V | V | V | V; U (chair/sec) | V | — | — | — |
+| Dependency slips (`dependency_slip`) | V | V | V | V | V | V | V | V | V | V | V | — | — | — |
+
+D (step) applies to the holders of `approval.decide` (the P4 role defaults give it to SP, BO and FIN only) when they hold the step's role in scope. Reads of transformation records (conditions, packs, slips, route steps) are within the reader's scope (`transformation.read`).
+
+- **AUD (read-only auditor):** every slice D/E mutation (rule and version writes, dry run, submit, review, publish, discard, enable, disable, retry, dismiss, run now, route-step decision, condition closure, pack review, own preferences, policy) returns **403** for AUD and writes nothing; AUD reads rules, versions, dry runs, executions and rule-execution failures (`automation.read`) and the transformation records in its scope. The jobs view is not an AUD read (`job.read` is ADM_TECH's; REQ-S12-022 "a non-admin gets 403").
+- **SoD:** a rule version's author cannot review it; a route step is never decided by the approval's requester (when the type excludes the requester) and one person decides at most one step of a round; a condition is closed only by its owner; no starter, job or service identity decides a route step, a gate, an investment or a Finance attestation.

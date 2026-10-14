@@ -21,6 +21,16 @@ const SUSTAINMENT_SCANS = ["sustainment.control_check_scan", "sustainment.review
 // Seeded by 0054 (T-DG4-ARCH-07); unhandled until BE-K registers the gate-exception expiry handler.
 const GATE_EXCEPTION_SCAN = "gate.exception_expiry_scan";
 // Seeded by 0060 (T-DG4-ARCH-R1; ADR-0032 §10); listed by code. The test passes no governance handler, so they stay unhandled.
+// Seeded by 0074-0075 (T-DG5-ARCH-03; ADR-0043 §6, ADR-0044 §8); unhandled until BE-H2, BE-K and BE-L/BE-L2 register them.
+const P5_AUTOMATION_JOBS = [
+  "automation.tick_daily",
+  "automation.tick_hourly",
+  "gate.condition_escalation_scan",
+  "governance.meeting_cutoff_scan",
+  "notification.digest",
+];
+// The rows are listed by code (ORDER BY code; ASCII codes, so the default sort is the same order).
+const unhandledOf = (...codes: string[]) => [...codes].sort();
 const GOVERNANCE_JOBS = [
   "governance.blocker_escalation_scan",
   "governance.decision_sla_scan",
@@ -95,7 +105,13 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     expect(first).toEqual({
       scheduled: [ESCALATION, SWEEP],
       unscheduled: [],
-      unhandled: [GATE_EXCEPTION_SCAN, ...GOVERNANCE_JOBS, PERIODS, ...SUSTAINMENT_SCANS],
+      unhandled: unhandledOf(
+        GATE_EXCEPTION_SCAN,
+        ...GOVERNANCE_JOBS,
+        PERIODS,
+        ...SUSTAINMENT_SCANS,
+        ...P5_AUTOMATION_JOBS,
+      ),
     });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/15 * * * *", timezone: "Asia/Riyadh" });
@@ -114,7 +130,13 @@ describe("job schedule registration (ADR-0025 §3)", () => {
     expect(r).toEqual({
       scheduled: [ESCALATION],
       unscheduled: [SWEEP],
-      unhandled: [GATE_EXCEPTION_SCAN, ...GOVERNANCE_JOBS, PERIODS, ...SUSTAINMENT_SCANS],
+      unhandled: unhandledOf(
+        GATE_EXCEPTION_SCAN,
+        ...GOVERNANCE_JOBS,
+        PERIODS,
+        ...SUSTAINMENT_SCANS,
+        ...P5_AUTOMATION_JOBS,
+      ),
     });
     const s = await schedules();
     expect(s.get(ESCALATION)).toEqual({ cron: "*/5 * * * *", timezone: "Asia/Riyadh" });

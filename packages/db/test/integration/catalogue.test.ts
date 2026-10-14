@@ -226,6 +226,8 @@ describe("schema.ts matches the migrated database", () => {
     );
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
       ["agenda_item", "agenda_item_audit_required", true, true],
+      // T-DG5-ARCH-03 (0075; ADR-0044 §6): items of an unreviewed cut-off pack are not published.
+      ["agenda_item", "agenda_item_cutoff_review", false, false],
       ["agenda_item", "agenda_item_guard", false, false],
       ["agenda_item", "agenda_item_meeting_editable", false, false],
       ["agenda_item", "agenda_item_row_guard", false, false],
@@ -569,6 +571,59 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0074-0075: the P5 slice D/E guards are attached (deferred audit and effective-version checks, append-only history)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('automation_rule', 'automation_rule_version', 'automation_dry_run',
+         'automation_execution', 'automation_action_result', 'job_run', 'operational_failure', 'approval_route_step',
+         'gate_condition_closure', 'gate_condition_escalation', 'notification_policy', 'notification_preference',
+         'notification_digest', 'meeting_cutoff_pack', 'dependency_slip')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const guarded = (t: string, extra: string[] = [], appendOnly = false, audited = true): Row[] => [
+      ...(appendOnly
+        ? ([
+            [t, `${t}_append_only`, false, false],
+            [t, `${t}_append_only_truncate`, false, false],
+          ] as Row[])
+        : []),
+      ...(audited ? ([[t, `${t}_audit_required`, true, true]] as Row[]) : []),
+      ...extra.map((x): Row => [t, x, false, false]),
+      [t, `${t}_row_guard`, false, false],
+    ];
+    const expected: Row[] = [
+      ...guarded("approval_route_step", ["approval_route_step_guard"]),
+      ...guarded("automation_action_result", ["automation_action_result_guard"], true),
+      ...guarded("automation_dry_run", ["automation_dry_run_guard"], true),
+      ...guarded("automation_execution", ["automation_execution_guard"]),
+      ["automation_rule", "automation_rule_audit_required", true, true] as Row,
+      ["automation_rule", "automation_rule_effective_check", true, true] as Row,
+      ["automation_rule", "automation_rule_guard", false, false] as Row,
+      ["automation_rule", "automation_rule_row_guard", false, false] as Row,
+      ...guarded("automation_rule_version", ["automation_rule_version_guard"]),
+      ...guarded("dependency_slip", [], true),
+      ...guarded("gate_condition_closure", ["gate_condition_closure_guard"], true),
+      ...guarded("gate_condition_escalation", ["gate_condition_escalation_guard"], true),
+      ...guarded("job_run", [], true, false),
+      ...guarded("meeting_cutoff_pack", ["meeting_cutoff_pack_guard"]),
+      ...guarded("notification_digest", [], true),
+      ...guarded("notification_policy"),
+      ...guarded("notification_preference", [
+        "notification_preference_guard",
+        "notification_preference_timezone_known",
+      ]),
+      ...guarded("operational_failure", ["operational_failure_guard"]),
+    ].sort((a, b) => {
+      // Code-point order, as PostgreSQL's C collation sorts (ORDER BY 1, 2).
+      const x = `${a[0]}\u0000${a[1]}`;
+      const y = `${b[0]}\u0000${b[1]}`;
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -765,6 +820,15 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "procedure_instance",
       "procedure_step_definition",
       "procedure_step_instance",
+      // P5 slices D and E (0074-0075, T-DG5-ARCH-03; ADR-0043, ADR-0044).
+      "approval_route_step",
+      "automation_execution",
+      "automation_rule",
+      "automation_rule_version",
+      "meeting_cutoff_pack",
+      "notification_policy",
+      "notification_preference",
+      "operational_failure",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1047,6 +1111,25 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       procedure_step_instance: SIU,
       procedure_instance_link: "INSERT,SELECT",
       methodology_coverage_link: "SELECT",
+      // P5 slices D and E (0074-0076): still no DELETE anywhere; the trigger and action catalogues are read-only;
+      // dry runs, action results, job runs, condition closures/escalations, digests and slips are append-only.
+      automation_trigger: "SELECT",
+      automation_action_type: "SELECT",
+      automation_rule: SIU,
+      automation_rule_version: SIU,
+      automation_dry_run: "INSERT,SELECT",
+      automation_execution: SIU,
+      automation_action_result: "INSERT,SELECT",
+      job_run: "INSERT,SELECT",
+      operational_failure: SIU,
+      approval_route_step: SIU,
+      gate_condition_closure: "INSERT,SELECT",
+      gate_condition_escalation: "INSERT,SELECT",
+      notification_policy: SIU,
+      notification_preference: SIU,
+      notification_digest: "INSERT,SELECT",
+      meeting_cutoff_pack: SIU,
+      dependency_slip: "INSERT,SELECT",
     });
   });
 

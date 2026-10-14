@@ -240,3 +240,121 @@ BE-D → BE-F → BE-F2 → BE-G (sequential on `procedures/routes.ts`) → FE-D
 7. **Locks.** 730254 for instance step transitions; no lock for comments (append-only); 730255–730257 stay reserved.
 8. **Exactly once.** Automation launches carry `launch_key` (UNIQUE); work items use `createWorkItemOnce` with `procedure_step:<stepInstanceId>:<kind>`.
 9. **D-142 decisions** are binding: Q1 (stable identities), Q4 ("create" for TOMDimension = a draft element), Q8 (no new dependency).
+
+## §D. Slice D (automation engine: rules, versions, dry run, executions, failure queue, retries, service identity, jobs operations) — T-DG5-ARCH-03
+
+### D.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0043-p5-automation-engine-rules-executions-failure-queue.md` (slice D), `ADR-0044-p5-starter-automations-approval-routes-notification-policy.md` (slice E) | Binding design, with the refusal codes and English texts (ADR-0043 §9, ADR-0044 §10) |
+| Migrations | `packages/db/migrations/0074_p5_automation_engine.sql`, `0075_p5_starters_routes_policies.sql`, `0076_p5_automation_permissions.sql` (shared with §E) | Applied on a fresh PostgreSQL 16.13 and over a P4-populated database; 133 guard probes PASS for D+E (`docs/delivery/handbacks/DG5/T-DG5-ARCH-03-evidence/probe-output.txt`) |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (17 tables; 1 column on `work_item_kind`, 5 on `inbox_notification`), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts` (0076 block) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P5_AUTOMATION_PERMISSIONS`, `P5_AUTOMATION_ROLE_PERMISSIONS`; 8 codes) | Equals `0076` |
+| Lock classes | `platform/advisory-locks.ts` `automationRuleExecution` 730258, `failureRepair` 730259, `approvalRouteStep` 730260, `digestWindow` 730261 (730262 reserved), ADR-0016 §6 | Registry test updated (32 classes) |
+| Work-item kinds wired | `automation_task`, `automation_rule_review`, `role_assignment`, `dependency_slip`, `gate_condition_overdue`, `meeting_pack_review` in `reporting/my-work.ts` `MY_WORK_SECTION_BY_KIND`; labels in `apps/web/src/i18n/{en,ar}/myWork.json` | The completeness test reads every `work_item_kind` row |
+| Contract | `docs/api/openapi.yaml` 1.4.0-p5: 39 operations (tags `automation`, `jobs`, `approval-routes`, `gate-conditions`, `dependency-slips`, `meetings`, `notifications`); `TransformationCreate.launchPlan` (optional; p5-plan §3 row 15); `PermissionCode` +8 | `pnpm openapi:lint` PASS (763 operations) |
+| Contract-test seams | `apps/api/test/support/p5-pending-arch-03.ts` (D+E aggregate; frozen), `p5-pending-be-h.ts` (11), `p5-pending-be-h2.ts` (6), `p5-pending-be-i.ts` (6), `p5-pending-be-i2.ts` (3), `p5-pending-be-j.ts` (1), `p5-pending-be-k.ts` (5), `p5-pending-be-l.ts` (5), `p5-pending-be-l2.ts` (2); `p5-operations.ts` block (39); `contract.test.ts` operation count 763 | Contract test green with all 39 pending |
+| ERD §1n, data dictionary "P5 tables, slices D and E", permissions matrix §20 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+The plan's BE-H, BE-I and BE-L are each split in two (**BE-H/BE-H2**, **BE-I/BE-I2**, **BE-L/BE-L2**): 39 operations plus the worker engine were too many for four 60–75 minute tasks (the p4 `-2` precedent). BE-J and BE-K are as p5-plan §5.1 names them.
+
+### D.1 BE-H — rules, versions, the builder catalogue, enable/disable (backend-workflow-engineer; after BE-A)
+
+- **Files:** `automation/routes.ts` (fill BE-A's stub; registration lines for `rules.ts`, `versions.ts`, `catalogue.ts` and stubs for BE-H2's `lifecycle.ts`/`dry-run.ts`), `automation/rules.ts`, `automation/versions.ts` (create draft, update content, content hash, readable summary en/ar), `automation/catalogue.ts`, `automation/registry.ts` (the `AutomationActionRegistry` port and descriptor type; its `server.ts` wiring line is named and owned here; each action's descriptor is registered by the module that owns it: `tasks/automation-actions.ts` (new; `create_task`, `notify`, `escalate`; owned by BE-H), `procedures/automation-actions.ts` (new; `launch_procedure`; owned by BE-J)), `automation/human-only.ts` (the S12-026 refusal before any write), `packages/shared/src/schemas/automation.ts` (+ barrel line: conditions, actions, content, Zod mirrors of the OpenAPI schemas), tests.
+- **Operations (11):** `getAutomationCatalogue`, `listAutomationRules`, `createAutomationRule`, `getAutomationRule`, `updateAutomationRule`, `enableAutomationRule`, `disableAutomationRule`, `listAutomationRuleVersions`, `createAutomationRuleVersion`, `getAutomationRuleVersion`, `updateAutomationRuleVersion`.
+- **Consumes:** ADR-0043 §1–§4, §8–§10; `0074` guards (map their constraint names to the §9 codes in `platform/db-errors.ts` P5 lines only where reaching them is not a programming error).
+- **Tests (literal):** REQ-S12-026: saving a rule whose action is `approve_gate` (and each of the other five human-only codes) → 422 `automation_rule.human_only_action`, nothing written; REQ-S12-002: disabling a starter → 422 `automation_rule.guarantee_protected`, disabling an admin rule needs a reason; enabling without an effective version → 422 `automation_rule.no_effective_version`; a starter version with a condition → 422 `automation_rule.starter_fixed`; `initiating_user` on a schedule trigger → 422; a service permission `approval.decide` → 422; AUD 403 on every write; `If-Match` 428/409; one audit event per row written; commit-time re-authorization.
+
+### D.2 BE-H2 — dry run, review where configured, publish, discard; the evaluation handler (backend-workflow-engineer; after BE-H)
+
+- **Files:** `automation/dry-run.ts` (rolled-back read-only transaction; planners only), `automation/lifecycle.ts` (submit, review, publish, discard; `automation_rule_review` work items), `automation/conditions.ts` (pure evaluation with decimal.js; `automation.condition_unknown_value`), their `automation/routes.ts` lines (after BE-H), `apps/worker/src/handlers/automation.ts` and `apps/worker/src/queues/automation.ts` (fill BE-A's stubs: `automation.evaluate` mapped from every admin-selectable event trigger, `automation.tick_hourly`, `automation.tick_daily`; executions under lock 730258), `apps/worker/src/automation/engine.ts`, `apps/worker/src/automation/actions/{create-task,notify,escalate}.ts` (each with a parity test against its API planner), tests.
+- **Operations (6):** `listAutomationDryRuns`, `runAutomationDryRun`, `submitAutomationRuleVersion`, `decideAutomationRuleReview`, `publishAutomationRuleVersion`, `discardAutomationRuleVersion`.
+- **Consumes:** ADR-0043 §2, §4, §5; `config_review_policy` row `automation_rule_set` (read only); the kit's `createWorkItemOnce`, `runOnce`, `jobActor`.
+- **Tests (literal):** REQ-S12-002: a dry run creates no work item, notification, execution or business record (counts before/after), and records one `automation_dry_run`; submit without a pass dry run → 422 `automation_rule_version.dry_run_required`; the author reviewing → 403 `automation_rule_version.self_review`; publish with review required and none → 422 `automation_rule_version.review_required`; TO switches review off (slice A operation) and a draft publishes after its dry run. REQ-S12-001: an enabled admin rule on `gate.decided` records one execution naming its version, trigger event and outcome; conditions not met → `skipped`. REQ-S12-021: the same event ×3 → one execution, one task.
+
+### D.3 BE-I — executions, the failure queue, retry and dismiss, service identity (backend-workflow-engineer; after BE-H2)
+
+- **Files:** `automation/executions.ts`, `automation/failures.ts` (fill BE-A's stub: list, get, retry, dismiss; lock 730259; `boss.send` after COMMIT), `automation/identity.ts` (initiating user vs constrained service identity; scope check; `automation.action_forbidden` → failure at once), `apps/worker/src/automation/identity.ts` (the worker twin, parity test), the failure-capture lines in `apps/worker/src/kit.ts` and `apps/worker/src/worker.ts` (last attempt → `operational_failure`, then rethrow so `ops.failed` is unchanged; the `job.failed` outbox event), the S12-020/S12-021 kill/replay tests, tests.
+- **Operations (6):** `listAutomationExecutions`, `getAutomationExecution`, `listAutomationFailures`, `getAutomationFailure`, `retryAutomationFailure`, `dismissAutomationFailure`.
+- **Consumes:** ADR-0043 §3, §5, §7; `RETRY_POLICY` unchanged.
+- **Tests (literal):** REQ-S12-003: a rule on transformation A configured to create a task in transformation B fails with `automation.action_forbidden` and appears in the failure queue; REQ-S12-002: a failed execution succeeds on retry without duplicating actions (one `done` result per key); REQ-S12-020: killing the worker mid-job and restarting completes the job once; after the retry limit (5) the job is in the failure queue with its idempotency key; REQ-S12-021: replay ×3 of one event yields one reminder, one action and one approval task; retry of a resolved/dismissed failure → 422 `automation_failure.not_open`; the 21st retry → 422 `automation_failure.retry_limit`; AUD 403; job failures need `job.repair`.
+
+### D.4 BE-I2 — the jobs operations view, job runs, next run, run now (backend-workflow-engineer; after BE-I)
+
+- **Files:** `jobs/operations.ts` (fill BE-A's stub), `packages/shared/src/time/cron-next.ts` (pure five-field cron next-run in a time zone; no dependency; property tests against the DG4 cron strings), the `job_run` recording lines in `apps/worker/src/worker.ts` (scheduled queues only; after BE-I's lines), tests.
+- **Operations (3):** `listJobOperations`, `getJobOperation`, `runJobNow`.
+- **Consumes:** ADR-0043 §6; DG4 `job_schedule` (read only; `PATCH /admin/job-schedules` unchanged).
+- **Tests (literal):** REQ-S12-022: the view shows last success and next run for each scheduled job (a never-run job "Never run", a disabled job "Disabled", never a guessed time); a non-admin (TL, AUD) gets 403; run now on a disabled schedule → 422 `job.schedule_disabled`; run now twice in one minute sends one job.
+
+## §E. Slice E (starter automations as rules, new-transformation instantiation, dependency slips, cut-off packs, approval routes, conditional approval, notification policy) — T-DG5-ARCH-03
+
+### E.0 Already delivered by the architect
+
+See §D.0 (shared artifacts). Slice E's seeds are in `0075`: the sixteen starters with their published version 1, the five schedules of slices D and E, the six work-item kinds and `work_item_kind.urgency`.
+
+### E.1 BE-J — starters as rules, S12-004 instantiation, dependency slips (backend-workflow-engineer; after BE-I)
+
+- **Files:** `apps/worker/src/automation/starters.ts` (`withStarterRule`; the registration of each DG4 handler through it in `apps/worker/src/handlers/index.ts` — named lines only, the DG4 handler files are not edited except the one export below), `automation/request-executions.ts` (`recordRequestExecution` for starters 5, 14, 15) and its one call line each in `workflows/gates.ts` (after BE-C; before BE-K), `sustainment/handovers.ts` and `methodology/revision-impact.ts` (after BE-B2), the `launchPlan` member in the `transformations` create schema and the `transformation.created` v2 payload (`packages/shared/src/schemas/events.ts` named lines; v1 consumer kept), the P5 lines of `handleTransformationCreated` in `apps/worker/src/handlers/platform.ts` (phase checklist, role tasks, launch-plan port), the export of the phase-step instantiation function in `apps/worker/src/handlers/gates.ts` (one line, behaviour unchanged), `automation/ports/launch-plan.ts` (the `LaunchPlanPort` and its no-op default; BE-P registers the implementation), `portfolio/slip-events.ts` + its one call line in the DG4 milestone update service, `portfolio/dependency-slips.ts` (list route; its registration line in `portfolio/routes.ts`), `apps/worker/src/handlers/portfolio.ts` (new file; `portfolio.dependency_slip` notifications) and its one import line in `handlers/index.ts`, the `launch_procedure` action (`procedures/automation-actions.ts` (new) + `apps/worker/src/automation/actions/launch-procedure.ts` with its parity test against BE-F2's launch), tests.
+- **Operations (1):** `listDependencySlips`; plus the `createTransformation` extension (`launchPlan`), exercised in `p5-exercises-be-j.ts`.
+- **Consumes:** ADR-0044 §1, §2, §7; ADR-0043 §5; ADR-0023 §5, ADR-0031 (scheduling functions unchanged); ADR-0048 (the launch-plan port, implemented by BE-P).
+- **Tests (literal):** REQ-S12-001: each of the sixteen starters records one execution per trigger occurrence with its rule version, trigger event and outcome, and its DG4 output is byte-identical to the DG4 test fixtures (one regression test per starter, p5-plan R3); replay ×3 per starter creates nothing more. REQ-S12-004: creating one transformation produces one set of phase-checklist rows and role tasks; a retry creates no duplicates; with the plan flag the 90-day tasks are dated from the start date (stays in `p5-pending-be-j` as a pending test until BE-P merges, p5-plan §5.2). REQ-S12-012: a 5-day slip of a critical dependency notifies each affected owner once and the dependent forecasts read after the change are those of the DG4 logic; a slip below `minimumSlipDays` raises nothing; a non-critical dependency raises nothing.
+
+### E.2 BE-K — approval routes, conditional approval and condition escalation (backend-workflow-engineer; after BE-J)
+
+- **Files:** `workflows/approval-routes.ts` (route resolution from `approver_route` elements and procedure approval modes; step instantiation; decision; completion; locks 730226 then 730260), its named lines in `workflows/approvals.ts` (step creation on request and resubmission; `approval.decide_through_route`; after BE-C's lines), `workflows/conditional-approval.ts` (switch resolution with the G5 catalogue default `true`; `gate.conditional_approval_disabled`; closure), its named lines in `workflows/gates.ts` (after BE-J's line), the `conditionalApprovalEnabled` attribute line in `packages/shared/src/schemas/studio.ts`, `workflows/gate-conditions.ts` (list, close), `apps/worker/src/handlers/approvals.ts` route-step lines (activation work items) and the new `gate.condition_escalation_scan` handler in `apps/worker/src/handlers/gates.ts` (new function only), `packages/shared/src/schemas/approval-routes.ts` (+ barrel line), their route registration lines in `workflows/routes.ts`, tests.
+- **Operations (5):** `listApprovalRoutes`, `getApprovalRoute`, `decideApprovalRouteStep`, `listGateConditions`, `closeGateCondition`.
+- **Consumes:** ADR-0044 §3, §4, §8–§10; ADR-0026 (canonical approval, SoD, delegation); BE-C's `decideApprovalInTx`; ADR-0035 §5 (scale scope, unchanged).
+- **Tests (literal):** REQ-S10-015: in a sequential route step 2 has no work item or notification until step 1 approves; in a parallel route both are notified at once; the requester deciding → 403 `approval_route.self_decision`; one person deciding two steps → 403 `approval_route.one_step_per_person`; DG4 `decideApproval` on a routed approval → 422 `approval.decide_through_route`; a DG4 single-step approval is unchanged (regression). REQ-S04-011: a conditional G5 approval limited to one region blocks a scale transition for another region (DG4, re-run); a conditional approval with no scope → 422 `gate.scale_scope_required`; with the switch off in a published v2, conditions → 422 `gate.conditional_approval_disabled`; v1 transformations unchanged; the owner closes a condition, another user → 403 `gate_condition.not_owner`; an overdue condition escalates once to the approver; AUD 403.
+
+### E.3 BE-L — notification policy, preferences, delivery and digests (backend-workflow-engineer; after BE-J)
+
+- **Files:** `packages/shared/src/notifications/delivery.ts` (pure delivery decision: urgent, quiet hours across midnight, digest times, working days; property tests in Asia/Riyadh and another zone), `tasks/notification-policy.ts` (preferences and policy routes; their registration lines in `tasks/routes.ts`), `tasks/digests.ts` (own digest read), the delivery lines in `tasks/service.ts` `createWorkItemOnce` and its twin in `apps/worker/src/kit.ts` (named lines; the parity test extended), the inbox list filter line (`delivery_state = 'delivered'`) in the DG4 inbox read, `apps/worker/src/handlers/digests.ts` (new file; `notification.digest`, lock 730261) and its import line, `packages/shared/src/schemas/notifications.ts` (+ barrel line), tests.
+- **Operations (5):** `getMyNotificationPreferences`, `putMyNotificationPreferences`, `getMyNotificationDigest`, `getNotificationPolicy`, `putNotificationPolicy`.
+- **Consumes:** ADR-0044 §5, §9, §10; DG4 business calendars (`loadDefaultWorkingCalendar`).
+- **Tests (literal):** REQ-S12-025: a non-urgent reminder created in quiet hours (digest daily) is delivered in the next digest, and the digest job run twice in the window creates one digest; an urgent escalation (`approval_escalated`) in quiet hours is delivered immediately; with no preference and no policy every notification is delivered at once (DG4 regression on the inbox list); quiet start = end → 422 `notification_preference.quiet_hours_invalid`; the work item is visible in My Work while its notification is held; AUD 403 on `PUT /me/notification-preferences`; `If-Match "0"` creates; 409 stale.
+
+### E.4 BE-L2 — meeting cut-off draft agenda and pack (backend-workflow-engineer; after BE-L)
+
+- **Files:** `governance/cut-off.ts` (fill BE-A's stub: pack read and review routes; the generation service), `apps/worker/src/handlers/meetings.ts` — **new function only** `governance.meeting_cutoff_scan` (the DG4 series handler is not edited) and its queue line in `apps/worker/src/queues/meetings.ts`, the `agenda_item.pack_not_reviewed` mapping line in `governance/agenda.ts` (the DG4 publish path maps the `0075` trigger refusal), `packages/shared/src/schemas/cutoff.ts` (+ barrel line), tests.
+- **Operations (2):** `getMeetingCutoffPack`, `reviewMeetingCutoffPack`.
+- **Consumes:** ADR-0044 §6; ADR-0032 (agenda items, executive asks; the open-asks read through the governance service — name it in the handback if it is not exported).
+- **Tests (literal):** REQ-S12-015: cut-off creates one draft agenda containing the current open asks (and only those); a second scan creates nothing; publishing one of its items before review → 422 `agenda_item.pack_not_reviewed`; after the chair reviews, the chair publishes; a non-chair/secretary reviewing → 403 `meeting_cutoff_pack.not_reviewer`; DG4 agenda items outside packs publish as before (regression); AUD 403.
+
+### E.5 Migrations of slices D and E
+
+`0074`–`0076` are delivered. **`0077`–`0079`** are free and are taken, in this order, only by a task whose handback shows a database need: **`0077` BE-J** (expected only if a starter needs a seed change, e.g. a further trigger row a DG4 handler consumes that `0075` missed); **`0078` BE-K** (only if route resolution needs a constraint); **`0079` BE-L/BE-L2** (only if delivery or the cut-off scan needs one). A task that needs none leaves its number unused; numbers are never reordered.
+
+### E.6 Integration order (slices D and E)
+
+ARCH-03 → BE-H (after BE-A) → BE-H2 → BE-I → BE-I2 and BE-J (parallel; they share no file: BE-I2 edits `worker.ts` run-recording lines after BE-I, BE-J edits `handlers/index.ts`) → BE-K and BE-L (parallel; BE-K edits `workflows/**` and `handlers/approvals.ts`/`gates.ts`, BE-L edits `tasks/**`, `kit.ts` and `handlers/digests.ts`) → BE-L2 → FE-D (rule builder, dry run, enable/disable, executions, failure queue, jobs view extension, approval routes, notification preferences; p5-plan §5.1) → QA-A (A06), QA-E (A02). BE-H2, BE-I2, BE-L2 are new tasks inserted after their predecessors; the orchestrator places them in waves (each needs only its predecessor).
+
+### E.7 Requirement → owner (the 13 rows of slices D and E)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-S12-001 | BE-H (rules, versions), BE-H2 (engine, execution history), BE-J (sixteen starters as rules) | FE-D (builder, history) |
+| REQ-S12-002 | BE-H (builder content, enable/disable), BE-H2 (dry run), BE-I (failure queue, retry) | FE-D |
+| REQ-S12-003 | BE-I (identity, out-of-scope → failure queue) | — |
+| REQ-S12-020 | BE-I (failure capture, kill/restart test; pg-boss retries unchanged) | — |
+| REQ-S12-021 | BE-H2 and BE-I (replay ×3), BE-J (replay ×3 per starter) | — |
+| REQ-S12-022 | BE-I2 (jobs view, runs, next run, repair) | FE-D (jobs view extension) |
+| REQ-S12-026 | BE-H (refusal; database guard in `0074`) | — |
+| REQ-S04-011 | BE-K (switch, closure, escalation) | FE-D (the conditions list; the gate decision screen is DG4's) |
+| REQ-S10-015 | BE-K | FE-D (approval routes screen) |
+| REQ-S12-004 | BE-J | BE-P (launch-plan port) |
+| REQ-S12-012 | BE-J | — |
+| REQ-S12-015 | BE-L2 | — |
+| REQ-S12-025 | BE-L | FE-D (notification preferences) |
+
+### E.8 What the implementers of slices D and E must know
+
+1. **Human decisions stay human.** No rule, starter, job or service identity decides an approval, a gate, an investment or a Finance attestation; the database refuses it twice (versions and results). Tests use synthetic approvers labelled as such.
+2. **Starters are wrapped, never rewritten.** Keep each DG4 handler's queue, consumer name, `runOnce` key, lock class and outputs; prove byte-identical outputs on the DG4 fixtures (p5-plan R3).
+3. **Exactly once, three layers.** `(rule version, trigger key)` UNIQUE + lock 730258; one `done` result per action key; the effect's own dedupe key. A retry reuses the original keys.
+4. **No remote I/O inside a transaction.** Re-sending a job (`boss.send`) happens after the COMMIT of the `retrying` state; the worker records the outcome.
+5. **Authorization failures are not retried.** They go to the failure queue at once with `automation.action_forbidden`.
+6. **The database refuses what the ADRs refuse.** API checks come first and return the ADR-0043 §9 / ADR-0044 §10 codes; the probe (`probe-output.txt`) names each guard and constraint.
+7. **Unknown is never 0.** Next run, last success, due dates and forecast finishes that cannot be computed are `null` with a reason, shown Unknown/Never run/Disabled.
+8. **DG4 behaviour is the default.** No policy and no preference → every notification delivered at once; the G5 switch resolves to `true` for v1; DG4 approvals have no route rows.
+9. **D-142 decisions** are binding: Q2 (switch on for v1), Q3 (starters never disableable), Q11 (in-app digests only), and plan row 15 (`launchPlan`).

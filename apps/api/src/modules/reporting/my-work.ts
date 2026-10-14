@@ -57,6 +57,10 @@ export const MY_WORK_SECTION_BY_KIND: Readonly<Record<string, Exclude<MyWorkSect
   approval_changes_requested: "assigned_actions",
   // P5 slice A (0063; ADR-0040 §3): resubmit a gate that needs re-approval after a methodology migration.
   gate_reapproval: "assigned_actions",
+  // P5 slices D and E (0075; ADR-0043 §5, ADR-0044 §1-§4).
+  automation_task: "assigned_actions",
+  role_assignment: "assigned_actions",
+  dependency_slip: "assigned_actions",
   // Reviews
   kpi_actual_review: "reviews",
   finance_validation_review: "reviews",
@@ -65,9 +69,14 @@ export const MY_WORK_SECTION_BY_KIND: Readonly<Record<string, Exclude<MyWorkSect
   benefit_overlap_review: "reviews",
   // P5 slice A (0063; ADR-0039 §5, §8): the configured review of a Studio change or a formula revision.
   config_review: "reviews",
+  // P5 slices D and E (0075): the configuration review of a rule version; the chair's review of a cut-off pack.
+  automation_rule_review: "reviews",
+  meeting_pack_review: "reviews",
   // Approvals (business approvals inside the product; never DG0-DG7)
   approval_decision: "approvals",
   approval_escalated: "approvals",
+  // P5 slice E (0075; ADR-0044 §3): an overdue condition of a conditional approval, escalated to the approver.
+  gate_condition_overdue: "approvals",
   gate_decision_due: "approvals",
   gate_exception_to_decide: "approvals",
   executive_decision_due: "approvals",

@@ -1,0 +1,137 @@
+port-policy: PostgreSQL listening on port 23704 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 70 (0001_identity_access.sql .. 0076_p5_automation_permissions.sql)
+PASS  G00 slice D/E migrations 0074-0076 present; 0077-0079 left free  -- ids >= 62: 62,63,64,68,69,70,74,75,76
+PASS  G01 fresh database: 0001..last apply  -- applied 70: 0070_p5_forms_procedures_permissions_coverage.sql, 0074_p5_automation_engine.sql, 0075_p5_starters_routes_policies.sql, 0076_p5_automation_permissions.sql
+PASS  G02 P4 database populated (0001-0061; a synthetic transformation, work item and notification)  -- applied 61
+PASS  G03 P5 over the P4 database: 0062..last apply  -- applied 9: 0070_p5_forms_procedures_permissions_coverage.sql, 0074_p5_automation_engine.sql, 0075_p5_starters_routes_policies.sql, 0076_p5_automation_permissions.sql
+PASS  G04 the DG4 notification keeps its behaviour: normal, delivered, no digest, version unchanged  -- {"urgency":"normal","delivery_state":"delivered","deliver_after":null,"digest_id":null,"is_digest":false,"version":1}
+PASS  G05 every DG4 work-item kind except the three escalation kinds stays 'normal'  -- 38 kinds, 4 urgent (approval_escalated, executive_decision_escalated, approval_overdue, gate_condition_overdue)
+PASS  S01 sixteen starters M0224-M0239, each enabled, never disableable, platform scope, owned by ADM_METHOD  -- {"rules":16,"guarded":16,"refs":16,"lo":"M0224","hi":"M0239"}
+PASS  S02 each starter has a published version 1 as its effective version, no conditions, one starter_handler action, service identity  -- 16
+PASS  S03 six human-only action types catalogued, none admin-selectable  -- approve_gate,approve_methodology_migration,attest_finance_value,decide_approval,decide_executive_ask,decide_investment
+PASS  S04 five new job schedules; 32 migration audit events for the starters and their versions  -- schedules 5, audit 32
+PASS  S05 eight permissions; no technical admin holds an approval right; AUD holds automation.read only of them  -- perms 8, tech-approval 0, AUD automation.read
+PASS  S06 six new work-item kinds  -- 6
+PASS  AR01 an admin rule with its audit event commits (mth_app)  -- 01990000-0000-7000-8000-000000000069
+PASS  AR02 a rule without its audit event fails at COMMIT  -- 23000 automation_rule_audit_required no audit_event for automation_rule 01990000-0000-7000-8000-00000000006b at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  AR03 a non-stepping version update fails  -- 23514 automation_rule_version_step automation_rule: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  AR04 mth_app cannot create a starter  -- 23514 automation_rule_starter_seed automation_rule: starters are seeded by migrations
+PASS  AR05 a guarantee starter cannot be disabled (D-142 Q3)  -- 23514 automation_rule_guarantee_kept new row for relation "automation_rule" violates check constraint "automation_rule_guarantee_kept"
+PASS  AR06 an admin rule cannot have platform scope  -- 23514 automation_rule_origin_shape new row for relation "automation_rule" violates check constraint "automation_rule_origin_shape"
+PASS  AR07 a rule's code never changes  -- 23514 automation_rule_identity_fixed automation_rule: code, origin, source, scope level and the guarantee flag never change
+PASS  AR08 a rule without an effective version cannot be enabled  -- 23514 automation_rule_enabled_needs_version new row for relation "automation_rule" violates check constraint "automation_rule_enabled_needs_version"
+PASS  AR09 an organization/transformation mismatch is refused  -- 23514 automation_rule_organization_matches automation_rule: organization_id must equal the transformation's organization
+PASS  AR10 the auditor role never owns a rule  -- 23514 automation_rule_owner_not_auditor automation_rule: the auditor role never owns a rule
+PASS  AV01 a human-only action (approve_gate) is refused (REQ-S12-026)  -- 23514 automation_rule_version_human_only automation_rule_version: action approve_gate is unknown or a human decision (M0242)
+PASS  AV02 an admin rule cannot use the starter handler  -- 23514 automation_rule_version_admin_catalogue automation_rule_version: an admin rule uses a starter-only trigger or action
+PASS  AV03 run_as initiating_user on a trigger without an initiating user is refused  -- 23514 automation_rule_version_initiating_user automation_rule_version: a trigger of {gate.decided} has no initiating user
+PASS  AV04 a service identity never holds approval.decide  -- 23514 automation_rule_version_service_permission automation_rule_version: service permission approval.decide is unknown or an approval right
+PASS  AV05 an unknown trigger is refused  -- 23503 automation_rule_version_trigger_known automation_rule_version: trigger nope.never is unknown or repeated
+PASS  AV06 version numbers do not skip  -- 23514 automation_rule_version_next_number automation_rule_version: version_no must be the next number of the rule
+PASS  AV07 actions and action_types have the same length  -- 23514 automation_rule_version_actions_match new row for relation "automation_rule_version" violates check constraint "automation_rule_version_actions_match"
+PASS  AV08 a new version starts as a draft  -- 23514 automation_rule_version_transition automation_rule_version: a new version starts as a draft
+PASS  AV09 a draft version with an allowed trigger and action commits  -- 01990000-0000-7000-8000-000000000077
+PASS  AV10 draft -> in_review without a pass dry run for the current content is refused  -- 23514 automation_rule_version_dry_run_required automation_rule_version: no pass dry run for the current content
+PASS  DR01 a dry run of stale content is refused  -- 23514 automation_dry_run_current_draft automation_dry_run: a dry run tests the current content of a draft version
+PASS  DR02 a failing dry run names a finding  -- 23514 automation_dry_run_fail_has_finding new row for relation "automation_dry_run" violates check constraint "automation_dry_run_fail_has_finding"
+PASS  DR03 a pass dry run of the current content commits  -- 01990000-0000-7000-8000-00000000007b
+PASS  DR04 a dry run is append-only (UPDATE, as the owner: the trigger, not only the missing grant)  -- 42501 automation_dry_run is append-only: UPDATE is not allowed
+PASS  AV11 draft -> published straight is refused while the policy requires review  -- 23514 automation_rule_version_review_required automation_rule_version: the configured review is required before publish
+PASS  AV12 draft -> in_review with the pass dry run commits  -- in_review
+PASS  AV13 the author cannot review their own version  -- 23514 automation_rule_version_review_sod new row for relation "automation_rule_version" violates check constraint "automation_rule_version_review_sod"
+PASS  AV14 content is frozen outside a draft  -- 23514 automation_rule_version_content_frozen automation_rule_version: content changes only in a draft (published versions are immutable)
+PASS  AV15 another person approves; publish; the rule names it and is enabled  -- published + enabled
+PASS  AV16 a published version's content never changes  -- 23514 automation_rule_version_content_frozen automation_rule_version: content changes only in a draft (published versions are immutable)
+PASS  AV17 v2: draft, dry run, review, publish, supersede v1, move the effective version (one transaction)  -- 01990000-0000-7000-8000-000000000081
+PASS  AV18 two published versions of one rule fail at COMMIT  -- 23P01 automation_rule_version_one_published conflicting key value violates exclusion constraint "automation_rule_version_one_published"
+PASS  AV19 a superseded version never returns to published  -- 23514 automation_rule_version_transition automation_rule_version: superseded -> published is not allowed
+PASS  AV20 the effective version must be the published one (checked at COMMIT)  -- 23514 automation_rule_effective_published automation_rule: the effective version must be the published version of the rule
+PASS  AV21 a starter version takes no conditions (D-142 Q3)  -- 23514 automation_rule_version_starter_fixed automation_rule_version: a starter keeps its trigger and handler and has no conditions
+PASS  AV22 a starter keeps its trigger  -- 23514 automation_rule_version_starter_fixed automation_rule_version: a starter keeps its trigger and handler and has no conditions
+PASS  AV23 a starter v2 draft that changes only parameters commits  -- 01990000-0000-7000-8000-000000000094
+PASS  AV24 the version row without its audit event fails at COMMIT  -- 23000 automation_rule_version_audit_required no audit_event for automation_rule_version 01990000-0000-7000-8000-000000000081 at version 5 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  EX01 an execution of a draft version is refused  -- 23514 automation_execution_published_version automation_execution: only a published version runs, on its own trigger
+PASS  EX02 an execution on a trigger the version does not name is refused  -- 23514 automation_execution_published_version automation_execution: only a published version runs, on its own trigger
+PASS  EX03 a running execution of the published starter version commits  -- 01990000-0000-7000-8000-000000000098
+PASS  EX04 the same (version, trigger key) twice is refused (exactly once, REQ-S12-021)  -- 23505 automation_execution_once_key duplicate key value violates unique constraint "automation_execution_once_key"
+PASS  AX01 a 'done' action result for the running attempt commits  -- 01990000-0000-7000-8000-00000000009b
+PASS  AX02 a second 'done' for the same idempotency key is refused (REQ-S12-021)  -- 23505 automation_action_result_effect_once_key duplicate key value violates unique constraint "automation_action_result_effect_once_key"
+PASS  AX03 action results are append-only  -- 42501 automation_action_result is append-only: UPDATE is not allowed
+PASS  AX04 a failed result names its error  -- 23514 automation_action_result_error_complete new row for relation "automation_action_result" violates check constraint "automation_action_result_error_complete"
+PASS  AX05 a human-only action never has a result  -- 23514 automation_action_result_human_only automation_action_result: approve_gate is a human decision
+PASS  EX05 a failed execution names its error  -- 23514 automation_execution_failed_complete new row for relation "automation_execution" violates check constraint "automation_execution_failed_complete"
+PASS  EX06 running -> failed with an error code commits  -- failed
+PASS  AX06 no result is recorded for a finished attempt  -- 23514 automation_action_result_running_attempt automation_action_result: results are recorded only for the running attempt of an execution
+PASS  EX07 a retry steps the attempt by exactly 1  -- 23514 automation_execution_transition automation_execution: failed -> running is not allowed
+PASS  EX08 failed -> running at attempt 2 commits (retry from the queue)  -- running #2
+PASS  EX09 the trigger key and scope never change  -- 23514 automation_execution_identity_fixed automation_execution: rule, version, trigger, scope and identity never change
+PASS  EX10 a skipped execution recorded conditions_met = false  -- 23514 automation_execution_skipped_complete new row for relation "automation_execution" violates check constraint "automation_execution_skipped_complete"
+PASS  JR01 a job run is recorded without an audit event (operational log)  -- 01990000-0000-7000-8000-0000000000a3
+PASS  JR02 job runs are append-only  -- 42501 job_run is append-only: UPDATE is not allowed
+PASS  JR03 one row per (job id, attempt)  -- 23505 job_run_job_attempt_key duplicate key value violates unique constraint "job_run_job_attempt_key"
+PASS  JR04 a failed run names its error  -- 23514 job_run_error_complete new row for relation "job_run" violates check constraint "job_run_error_complete"
+PASS  OF01 a job failure enters the queue open  -- 01990000-0000-7000-8000-0000000000a6
+PASS  OF02 a second open failure for the same (source, queue, key) is refused  -- 23505 operational_failure_one_open_key duplicate key value violates unique constraint "operational_failure_one_open_key"
+PASS  OF03 open -> resolved directly is refused  -- 23514 operational_failure_transition operational_failure: open -> resolved is not allowed
+PASS  OF04 a retry counts exactly once  -- 23514 operational_failure_retry_count operational_failure: each retry counts once
+PASS  OF05 open -> retrying -> open (failed again) commits  -- open, 1 retry
+PASS  OF06 the failed work and its key never change  -- 23514 operational_failure_identity_fixed operational_failure: the failed work and its idempotency key never change
+PASS  OF07 a dismissal names who, when and why  -- 23514 operational_failure_dismissed_complete new row for relation "operational_failure" violates check constraint "operational_failure_dismissed_complete"
+PASS  OF08 a rule-execution failure names its execution and organization  -- 23514 operational_failure_source_shape new row for relation "operational_failure" violates check constraint "operational_failure_source_shape"
+PASS  OF09 a failure row without its audit event fails at COMMIT  -- 23000 operational_failure_audit_required no audit_event for operational_failure 01990000-0000-7000-8000-0000000000a6 at version 4 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RS01 a technical administrator is never a route approver  -- 23514 approval_route_step_business_role approval_route_step: a technical administrator or the auditor never approves (REQ-S10-003)
+PASS  RS02 sequential step 2 cannot start active  -- 23514 approval_route_step_transition approval_route_step: a parallel step and sequential step 1 start active; later sequential steps wait
+PASS  RS03 a sequential route: step 1 active, step 2 waiting  -- 2 steps
+PASS  RS04 all steps share one route and mode  -- 23514 approval_route_step_one_route approval_route_step: all steps of an approval share one route and mode
+PASS  RS05 step 2 is not activated before step 1 is approved (REQ-S10-015)  -- 23514 approval_route_step_sequence approval_route_step: step 2 starts only after every earlier step is approved
+PASS  RS06 the requester cannot decide a step  -- 23514 approval_route_step_sod approval_route_step: the requester cannot decide a step
+PASS  RS07 step 1 approved by U2, then step 2 activates  -- step 2 active
+PASS  RS08 one person decides at most one step of an approval  -- 23514 approval_route_step_distinct_deciders approval_route_step: one person decides at most one step of an approval
+PASS  RS09 a decided step never changes status again  -- 23514 approval_route_step_transition approval_route_step: approved -> rejected is not allowed
+PASS  RS10 the step's role never changes  -- 23514 approval_route_step_identity_fixed approval_route_step: approval, route, mode, step number and role never change
+PASS  GC01 only the condition owner closes it  -- 23514 gate_condition_closure_owner gate_condition_closure: only the condition owner closes it
+PASS  GC02 the owner closes the condition  -- 01990000-0000-7000-8000-0000000000bc
+PASS  GC03 a condition closes once  -- 23505 gate_condition_closure_once_key duplicate key value violates unique constraint "gate_condition_closure_once_key"
+PASS  GC04 a closure is append-only  -- 42501 gate_condition_closure is append-only: UPDATE is not allowed
+PASS  GC05 a closed condition is not escalated  -- 23514 gate_condition_escalation_open gate_condition_escalation: a closed condition is not escalated
+PASS  GC06 overdue_since is the day after the due date  -- 23514 gate_condition_escalation_overdue gate_condition_escalation: overdue_since is the day after the condition's due date
+PASS  GC07 an open overdue condition escalates once  -- 01990000-0000-7000-8000-0000000000c1
+PASS  GC08 a second escalation is refused (exactly once)  -- 23505 gate_condition_escalation_once_key duplicate key value violates unique constraint "gate_condition_escalation_once_key"
+PASS  GC09 a closure without its audit event fails at COMMIT  -- 23000 gate_condition_closure_audit_required no audit_event for gate_condition_closure 01990000-0000-7000-8000-0000000000c4 at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  NP01 an urgent notification is never held (REQ-S12-025)  -- 23514 inbox_notification_urgent_immediate new row for relation "inbox_notification" violates check constraint "inbox_notification_urgent_immediate"
+PASS  NP02 a held notification names when it may be delivered  -- 23514 inbox_notification_held_complete new row for relation "inbox_notification" violates check constraint "inbox_notification_held_complete"
+PASS  NP03 a held non-urgent and a delivered notification commit  -- 2 rows
+PASS  NP04 delivered -> held is refused  -- 23514 inbox_notification_delivery_transition inbox_notification: delivery delivered -> held is not allowed
+PASS  NP05 urgency never changes  -- 23514 inbox_notification_delivery_fixed inbox_notification: urgency and the digest flag never change
+FAIL  NP06 one digest per user and window takes the held notification (held -> digested)  -- 23514 inbox_notification_held_complete new row for relation "inbox_notification" violates check constraint "inbox_notification_held_complete"
+FAIL  NP07 a second digest for the same user and window is refused (lock 730261 backstop)  -- 23503 notification_digest_inbox_notification_id_fkey insert or update on table "notification_digest" violates foreign key constraint "notification_digest_inbox_notification_id_fkey"
+FAIL  NP08 digests are append-only  -- committed, but the guard should have refused it
+PASS  NP09 quiet hours need a start and a different end  -- 23514 notification_preference_quiet_complete new row for relation "notification_preference" violates check constraint "notification_preference_quiet_complete"
+PASS  NP10 a preference belongs to the user's organization  -- 23514 notification_preference_organization_matches notification_preference: organization_id must equal the user's organization
+PASS  NP11 an unknown time zone is refused  -- 23514 notification_preference_timezone_known notification_preference: unknown time zone Mars/Olympus
+PASS  NP12 quiet hours 22:00-07:00 with a daily digest commit  -- 01990000-0000-7000-8000-0000000000d6
+PASS  NP13 a preference without its audit event fails at COMMIT  -- 23000 notification_preference_audit_required no audit_event for notification_preference 01990000-0000-7000-8000-0000000000d6 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  NP14 one policy per organization  -- 23505 notification_policy_organization_key duplicate key value violates unique constraint "notification_policy_organization_key"
+PASS  MP01 a pack is for the meeting's own cut-off date  -- 23514 meeting_cutoff_pack_transition meeting_cutoff_pack: a pack starts as a draft for the meeting's own cut-off date
+PASS  MP02 one draft pack for the meeting commits  -- 01990000-0000-7000-8000-0000000000df
+PASS  MP03 one pack per meeting (exactly once)  -- 23505 meeting_cutoff_pack_once_key duplicate key value violates unique constraint "meeting_cutoff_pack_once_key"
+PASS  MP04 an item of an unreviewed pack cannot be published (REQ-S12-015)  -- 23514 agenda_item_cutoff_pack_unreviewed agenda_item: the cut-off pack of this item is not reviewed yet
+PASS  MP05 the generated content never changes  -- 23514 meeting_cutoff_pack_content_fixed meeting_cutoff_pack: the generated content never changes
+PASS  MP06 only the chair or secretary reviews the pack  -- 23514 meeting_cutoff_pack_reviewer meeting_cutoff_pack: only the meeting's chair or secretary reviews its pack
+PASS  MP07 the chair reviews the pack  -- reviewed
+PASS  MP08 reviewed -> draft is refused  -- 23514 meeting_cutoff_pack_transition meeting_cutoff_pack: reviewed -> draft is not allowed
+PASS  DS01 slip_days equals the finish move in calendar days  -- 23514 dependency_slip_days new row for relation "dependency_slip" violates check constraint "dependency_slip_days"
+PASS  DS02 'needed_by_breached' needs a breached needed-by date  -- 23514 dependency_slip_needed_by new row for relation "dependency_slip" violates check constraint "dependency_slip_needed_by"
+PASS  DS03 a 5-day slip commits  -- 01990000-0000-7000-8000-0000000000e6
+PASS  DS04 one slip per (dependency, slip key) (exactly once)  -- 23505 dependency_slip_once_key duplicate key value violates unique constraint "dependency_slip_once_key"
+PASS  DS05 slips are append-only  -- 42501 dependency_slip is append-only: UPDATE is not allowed
+PASS  AO automation_dry_run: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO automation_action_result: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO job_run: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO gate_condition_closure: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO gate_condition_escalation: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO notification_digest: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO dependency_slip: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+
+129/132 PASS, 3 FAIL

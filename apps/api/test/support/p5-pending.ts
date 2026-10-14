@@ -5,5 +5,10 @@
 // frozen after T-DG5-ARCH-06 (p5-plan §5.3). All lists MUST be empty when the DG5 candidate freezes.
 import { P5_PENDING_ARCH_01 } from "./p5-pending-arch-01.ts";
 import { P5_PENDING_ARCH_02 } from "./p5-pending-arch-02.ts";
+import { P5_PENDING_ARCH_03 } from "./p5-pending-arch-03.ts";
 
-export const P5_PENDING_OPERATIONS: readonly string[] = [...P5_PENDING_ARCH_01, ...P5_PENDING_ARCH_02];
+export const P5_PENDING_OPERATIONS: readonly string[] = [
+  ...P5_PENDING_ARCH_01,
+  ...P5_PENDING_ARCH_02,
+  ...P5_PENDING_ARCH_03,
+];

@@ -63,6 +63,10 @@ describe("advisory-lock class registry", () => {
       configPublish: 730251,
       methodologyMigration: 730252,
       procedureInstanceStep: 730254,
+      automationRuleExecution: 730258,
+      failureRepair: 730259,
+      approvalRouteStep: 730260,
+      digestWindow: 730261,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);

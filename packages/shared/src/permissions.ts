@@ -247,6 +247,24 @@ export const P5_FORMS_PROCEDURES_PERMISSIONS = {
   "procedure.manage": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P5 slices D and E (T-DG5-ARCH-03; ADR-0043 §8, ADR-0044 §7), seeded by migration 0076. No business_approval or
+ * finance_validation code: an approval route step is decided with the existing approval.decide, and automation.review
+ * is a configuration review, not a business approval. ADM_METHOD authors rules; ADM_TECH repairs jobs and failures and
+ * configures the notification policy; TO reviews rule versions; AUD reads automation only (the jobs view stays job.read,
+ * ADM_TECH). A rule's service identity never holds an approval right (database guard in 0074).
+ */
+export const P5_AUTOMATION_PERMISSIONS = {
+  "automation.read": "read",
+  "automation.configure": "configure",
+  "automation.review": "write",
+  "automation.repair": "configure",
+  "job.repair": "configure",
+  "notification_policy.configure": "configure",
+  "notification.preferences": "write",
+  "gate_condition.close": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -261,6 +279,7 @@ export const PERMISSIONS = {
   ...P4_DASHBOARD_TRACE_PERMISSIONS,
   ...P5_STUDIO_PERMISSIONS,
   ...P5_FORMS_PROCEDURES_PERMISSIONS,
+  ...P5_AUTOMATION_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -608,6 +627,30 @@ export const P5_FORMS_PROCEDURES_ROLE_PERMISSIONS = {
   ADM_METHOD: ["procedure.read"],
 } as const satisfies Record<string, readonly (keyof typeof P5_FORMS_PROCEDURES_PERMISSIONS)[]>;
 
+/** P5 slices D and E role defaults (0076). AUD gets automation.read only; no technical admin gets a business approval. */
+export const P5_AUTOMATION_ROLE_PERMISSIONS = {
+  SP: ["notification.preferences", "gate_condition.close"],
+  TL: ["notification.preferences", "gate_condition.close"],
+  BO: ["notification.preferences", "gate_condition.close"],
+  WL: ["notification.preferences", "gate_condition.close"],
+  FIN: ["notification.preferences", "gate_condition.close"],
+  TO: ["automation.read", "automation.review", "notification.preferences", "gate_condition.close"],
+  KDS: ["notification.preferences", "gate_condition.close"],
+  TD: ["notification.preferences", "gate_condition.close"],
+  CM: ["notification.preferences", "gate_condition.close"],
+  SEC: ["notification.preferences"],
+  AUD: ["automation.read"],
+  ADM_TECH: [
+    "automation.read",
+    "automation.repair",
+    "job.repair",
+    "notification_policy.configure",
+    "notification.preferences",
+  ],
+  ADM_ACCESS: ["notification.preferences"],
+  ADM_METHOD: ["automation.read", "automation.configure", "automation.repair", "notification.preferences"],
+} as const satisfies Record<string, readonly (keyof typeof P5_AUTOMATION_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -624,6 +667,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.SP,
       ...P5_STUDIO_ROLE_PERMISSIONS.SP,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SP,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -647,6 +691,7 @@ export const ROLES = {
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TL,
       ...P5_STUDIO_ROLE_PERMISSIONS.TL,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TL,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -666,6 +711,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.BO,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.BO,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.BO,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -683,6 +729,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.WL,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.WL,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.WL,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -700,6 +747,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.FIN,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.FIN,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.FIN,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -722,6 +770,7 @@ export const ROLES = {
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TO,
       ...P5_STUDIO_ROLE_PERMISSIONS.TO,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TO,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -738,6 +787,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.KDS,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.KDS,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.KDS,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -749,6 +799,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.TD,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TD,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -759,6 +810,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.CM,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.CM,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.CM,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.CM,
     ],
   },
   SEC: {
@@ -770,6 +822,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.SEC,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SEC,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SEC,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {
@@ -783,6 +836,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.AUD,
       ...P5_STUDIO_ROLE_PERMISSIONS.AUD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.AUD,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -798,6 +852,7 @@ export const ROLES = {
       "role.read",
       ...P4_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_TECH,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -813,6 +868,7 @@ export const ROLES = {
       "access.assign",
       ...P4_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {
@@ -825,6 +881,7 @@ export const ROLES = {
       ...P3_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_STUDIO_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

@@ -330,6 +330,16 @@ tags:
     description: Native forms on one common framework - form schema versions, protected source columns, extension fields, custom-field values, drafts, version history, comments, attachments, export and bulk edit (P5, ADR-0041).
   - name: procedures
     description: Procedure definitions versioned through Studio, persistent procedure instances pinned to the definition version with outputs as linked records, my procedures and the methodology coverage view (P5, ADR-0042).
+  - name: automation
+    description: Automation rules with versions, dry run, review where configured, publish, enable/disable, execution history and the failure queue with retry and dismiss; the sixteen starters run as seeded rules (P5, ADR-0043, ADR-0044).
+  - name: approval-routes
+    description: Sequential and parallel approval routes and the decision of route steps; every step is a human business approval (P5, ADR-0044).
+  - name: gate-conditions
+    description: Conditions of conditional approvals tracked to closure, with escalation when overdue (P5, ADR-0044).
+  - name: dependency-slips
+    description: Critical dependency slips with their affected owners and forecast impacts (P5, ADR-0044).
+  - name: notifications
+    description: Notification preferences and policy - working-day timing, quiet hours, digests and urgent delivery; in-app channel (P5, ADR-0044).
 security:
   - sessionCookie: []
 paths:
@@ -19046,6 +19056,960 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-catalogue:
+    get:
+      tags: [automation]
+      operationId: getAutomationCatalogue
+      summary: "The triggers (event, schedule; with their condition fields and whether they name an initiating user) and action types a rule can use, plus the human-only action types listed so the builder can name them (automation.read; ADR-0043 §2)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationCatalogue" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules:
+    get:
+      tags: [automation]
+      operationId: listAutomationRules
+      summary: "Automation rules in the caller's scope: the sixteen starters (platform) and admin rules, with owner, scope, enabled state, whether they may be disabled and the effective version (automation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AutomationRuleOriginQuery"
+        - $ref: "#/components/parameters/AutomationRuleEnabledQuery"
+        - $ref: "#/components/parameters/TransformationIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRulePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [automation]
+      operationId: createAutomationRule
+      summary: "Create an admin rule (disabled) with its draft version 1 (automation.configure; ADM_METHOD). 409 automation_rule.code_taken; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, scope_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationRuleCreate" }
+      responses:
+        "201":
+          description: "Created (disabled, version 1 draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+    get:
+      tags: [automation]
+      operationId: getAutomationRule
+      summary: "One rule with its effective version and its readable summary in en and ar (automation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [automation]
+      operationId: updateAutomationRule
+      summary: "Change an admin rule's names, description or owner; a starter's names only (automation.configure)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationRuleUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/enable:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+    post:
+      tags: [automation]
+      operationId: enableAutomationRule
+      summary: "Enable a rule that has an effective version (automation.configure). 422 automation_rule.no_effective_version."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/disable:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+    post:
+      tags: [automation]
+      operationId: disableAutomationRule
+      summary: "Disable an admin rule with a reason; the sixteen starters are guarantees and are refused (automation.configure; D-142 Q3). 422 automation_rule.guarantee_protected."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationRuleDisable" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRule" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+    get:
+      tags: [automation]
+      operationId: listAutomationRuleVersions
+      summary: "The versions of one rule, newest first (automation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [automation]
+      operationId: createAutomationRuleVersion
+      summary: "Open a new draft version copied from the effective version; If-Match is the rule's version (automation.configure). 409 automation_rule_version.draft_exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationRuleVersionCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+      - $ref: "#/components/parameters/AutomationVersionNo"
+    get:
+      tags: [automation]
+      operationId: getAutomationRuleVersion
+      summary: "One version: triggers, conditions, actions, identity, service permissions, parameters, content hash, status, review and publication, and its readable summary in en and ar (automation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [automation]
+      operationId: updateAutomationRuleVersion
+      summary: "Change the content of a draft version; a starter version takes parameters only (automation.configure). 409 automation_rule_version.not_editable; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, starter_fixed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationRuleVersionUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/dry-runs:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+      - $ref: "#/components/parameters/AutomationVersionNo"
+    get:
+      tags: [automation]
+      operationId: listAutomationDryRuns
+      summary: "Dry runs of one version, newest first (automation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationDryRunPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [automation]
+      operationId: runAutomationDryRun
+      summary: "Evaluate a draft against a sample event in a rolled-back read-only transaction: conditions, planned actions and permission checks; writes only the dry-run record, never a task, notification or record (automation.configure; REQ-S12-002). 409 automation_rule_version.not_editable; 422 automation.dry_run_sample_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationDryRunRequest" }
+      responses:
+        "201":
+          description: "Created (the dry-run record)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationDryRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/submit:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+      - $ref: "#/components/parameters/AutomationVersionNo"
+    post:
+      tags: [automation]
+      operationId: submitAutomationRuleVersion
+      summary: "Submit a draft for its configured review; needs a pass dry run of the current content (automation.configure). 422 automation_rule_version.dry_run_required, invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/review:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+      - $ref: "#/components/parameters/AutomationVersionNo"
+    post:
+      tags: [automation]
+      operationId: decideAutomationRuleReview
+      summary: "Approve a version in review, or send it back to draft with a note; a configuration review, not a business approval (automation.review; TO). 403 automation_rule_version.self_review; 422 automation_rule_version.invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutomationRuleReviewDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/publish:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+      - $ref: "#/components/parameters/AutomationVersionNo"
+    post:
+      tags: [automation]
+      operationId: publishAutomationRuleVersion
+      summary: "Publish an approved version (or a draft with a pass dry run when the policy requires no review); it becomes the rule's effective version and the previous one is superseded; If-Match is the rule's version (automation.configure). 422 automation_rule_version.review_required, dry_run_required, invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/discard:
+    parameters:
+      - $ref: "#/components/parameters/AutomationRuleId"
+      - $ref: "#/components/parameters/AutomationVersionNo"
+    post:
+      tags: [automation]
+      operationId: discardAutomationRuleVersion
+      summary: "Discard an open version (automation.configure). 422 automation_rule_version.invalid_transition."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationRuleVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-executions:
+    get:
+      tags: [automation]
+      operationId: listAutomationExecutions
+      summary: "Execution history, newest first: rule, version, trigger event, identity, outcome, attempt and error (automation.read; REQ-S12-001)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AutomationRuleIdQuery"
+        - $ref: "#/components/parameters/AutomationExecutionStatusQuery"
+        - $ref: "#/components/parameters/TransformationIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationExecutionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-executions/{executionId}:
+    parameters:
+      - $ref: "#/components/parameters/AutomationExecutionId"
+    get:
+      tags: [automation]
+      operationId: getAutomationExecution
+      summary: "One execution with each action result per attempt (outcome, idempotency key, produced record, error) (automation.read)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutomationExecution" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-failures:
+    get:
+      tags: [automation]
+      operationId: listAutomationFailures
+      summary: "The failure queue: failed rule executions (automation.read) and failed jobs (job.read), open first, with attempts, error, retries and the repair actions allowed to the caller."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/OperationalFailureSourceQuery"
+        - $ref: "#/components/parameters/OperationalFailureStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalFailurePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-failures/{failureId}:
+    parameters:
+      - $ref: "#/components/parameters/OperationalFailureId"
+    get:
+      tags: [automation]
+      operationId: getAutomationFailure
+      summary: "One failure-queue entry (automation.read for rule executions; job.read for jobs)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalFailure" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-failures/{failureId}/retry:
+    parameters:
+      - $ref: "#/components/parameters/OperationalFailureId"
+    post:
+      tags: [automation]
+      operationId: retryAutomationFailure
+      summary: "Retry an open failure with its original idempotency key; completed effects are not repeated (automation.repair for rule executions; job.repair for jobs). 422 automation_failure.not_open, retry_limit."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalFailure" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/automation-failures/{failureId}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/OperationalFailureId"
+    post:
+      tags: [automation]
+      operationId: dismissAutomationFailure
+      summary: "Dismiss an open failure with a reason (automation.repair for rule executions; job.repair for jobs). 422 automation_failure.not_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OperationalFailureDismiss" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalFailure" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/jobs:
+    get:
+      tags: [jobs]
+      operationId: listJobOperations
+      summary: "The jobs operations view: every scheduled job with last success (null = never run), next run (null with a reason: disabled or unknown), last outcome, open failures and repair actions (job.read; ADM_TECH; REQ-S12-022)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobOperationList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/jobs/{jobCode}:
+    parameters:
+      - $ref: "#/components/parameters/JobCode"
+    get:
+      tags: [jobs]
+      operationId: getJobOperation
+      summary: "One scheduled job with its recent runs, newest first (job.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobOperationDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/jobs/{jobCode}/run:
+    parameters:
+      - $ref: "#/components/parameters/JobCode"
+    post:
+      tags: [jobs]
+      operationId: runJobNow
+      summary: "Run a scheduled job now once (singleton per minute); the run is recorded like a scheduled one (job.repair; ADM_TECH). 422 job.schedule_disabled."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        "202":
+          description: "Accepted (sent to the queue)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobRunNowResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/approval-routes:
+    get:
+      tags: [approval-routes]
+      operationId: listApprovalRoutes
+      summary: "The sequential and parallel approval routes resolved from a published methodology version (default: the newest): route key, mode, roles in order. Routes are edited in Studio as approver_route elements (methodology.read; REQ-S10-015)."
+      parameters:
+        - $ref: "#/components/parameters/ConfigVersionIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalRouteDefinitionList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals/{approvalId}/route:
+    parameters:
+      - $ref: "#/components/parameters/ApprovalId"
+    get:
+      tags: [approval-routes]
+      operationId: getApprovalRoute
+      summary: "The route steps of one approval for its current round (and earlier rounds as history): role, status, activation, decision (the approval's read rule)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalRoute" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/approvals/{approvalId}/route/steps/{stepNo}/decision:
+    parameters:
+      - $ref: "#/components/parameters/ApprovalId"
+      - $ref: "#/components/parameters/ApprovalRouteStepNo"
+    post:
+      tags: [approval-routes]
+      operationId: decideApprovalRouteStep
+      summary: "Decide an active step of the current round: approve, reject or request changes; the approval completes when every step is approved (approval.decide in scope and the step's role; If-Match is the approval's version). 403 approval_route.not_step_approver, self_decision, one_step_per_person; 422 approval_route.step_not_active."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApprovalRouteStepDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalRoute" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-conditions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [gate-conditions]
+      operationId: listGateConditions
+      summary: "Conditions of conditional approvals in the transformation with owner, due date and derived status open, overdue or closed, closure and escalation (transformation.read; REQ-S04-011)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/GateConditionStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackedGateConditionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/GateConditionId"
+    post:
+      tags: [gate-conditions]
+      operationId: closeGateCondition
+      summary: "Close a condition you own with a note and optional evidence (gate_condition.close). 403 gate_condition.not_owner; 422 gate_condition.already_closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GateConditionClose" }
+      responses:
+        "201":
+          description: "Created (the closure)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackedGateCondition" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/dependency-slips:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [dependency-slips]
+      operationId: listDependencySlips
+      summary: "Critical dependency slips, newest first: dependency, slip in calendar days, the reason it is critical and each affected initiative with owner and forecast finish before and after (null = Unknown) (transformation.read; REQ-S12-012)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DependencySlipPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [meetings]
+      operationId: getMeetingCutoffPack
+      summary: "The draft agenda and pack generated at the meeting's cut-off: as-of time, the open asks snapshot, the draft agenda items and the review state (transformation.read; REQ-S12-015)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingCutoffPack" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    post:
+      tags: [meetings]
+      operationId: reviewMeetingCutoffPack
+      summary: "Mark the cut-off pack reviewed so its agenda items can be published (the meeting's chair with meeting.chair or its secretary with meeting.prepare). 403 meeting_cutoff_pack.not_reviewer; 422 meeting_cutoff_pack.already_reviewed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetingCutoffPackReview" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingCutoffPack" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/notification-preferences:
+    get:
+      tags: [notifications]
+      operationId: getMyNotificationPreferences
+      summary: "Your quiet hours, time zone and digest preference, with the organization defaults that apply when you set none; version 0 when none stored (authenticated)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationPreferences" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [notifications]
+      operationId: putMyNotificationPreferences
+      summary: "Set your quiet hours, time zone and digest preference; If-Match 0 creates (notification.preferences). 422 notification_preference.quiet_hours_invalid, timezone_unknown."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationPreferencesPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationPreferences" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/notification-digests/{digestId}:
+    parameters:
+      - $ref: "#/components/parameters/NotificationDigestId"
+    get:
+      tags: [notifications]
+      operationId: getMyNotificationDigest
+      summary: "One of your digests with the notifications it delivered (own digests only; others 404)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationDigest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/notification-policy:
+    get:
+      tags: [notifications]
+      operationId: getNotificationPolicy
+      summary: "Your organization's notification policy: working-day timing, default quiet hours, default digest and urgent delivery; version 0 when none stored (notification_policy.configure)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationPolicy" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [notifications]
+      operationId: putNotificationPolicy
+      summary: "Set your organization's notification policy; If-Match 0 creates (notification_policy.configure; ADM_TECH). 422 notification_preference.quiet_hours_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationPolicyPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationPolicy" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -19063,6 +20027,76 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    AutomationRuleId:
+      name: ruleId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AutomationVersionNo:
+      name: versionNo
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    AutomationExecutionId:
+      name: executionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    OperationalFailureId:
+      name: failureId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ApprovalRouteStepNo:
+      name: stepNo
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 6 }
+    GateConditionId:
+      name: conditionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    NotificationDigestId:
+      name: digestId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AutomationRuleOriginQuery:
+      name: origin
+      in: query
+      required: false
+      schema: { type: string, enum: [starter, admin] }
+    AutomationRuleEnabledQuery:
+      name: enabled
+      in: query
+      required: false
+      schema: { type: boolean }
+    AutomationRuleIdQuery:
+      name: ruleId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AutomationExecutionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [running, succeeded, skipped, failed] }
+    OperationalFailureSourceQuery:
+      name: source
+      in: query
+      required: false
+      schema: { type: string, enum: [rule_execution, job] }
+    OperationalFailureStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, retrying, resolved, dismissed] }
+    GateConditionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [open, overdue, closed] }
     FormRecordTypePath:
       name: recordType
       in: path
@@ -20432,6 +21466,590 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    LaunchPlanStart:
+      type: object
+      description: "Optional on create (REQ-S12-004): generate the 90-day plan dated from startDate (day d = startDate + d calendar days; ADR-0048)."
+      required: [startDate]
+      additionalProperties: false
+      properties:
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+    AutomationTrigger:
+      type: object
+      required: [code, triggerKind, ownerModule, labelEn, labelAr, conditionFields, hasInitiatingUser, adminSelectable, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        triggerKind: { type: string, enum: [event, schedule, request] }
+        ownerModule: { type: string }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        conditionFields: { type: array, maxItems: 30, items: { type: string } }
+        hasInitiatingUser: { type: boolean }
+        adminSelectable: { type: boolean }
+        sourceRef: { type: string }
+    AutomationActionType:
+      type: object
+      description: "humanOnly types are never selectable: approvals, investment decisions and Finance attestations stay human (REQ-S12-026)."
+      required: [code, actionClass, ownerModule, labelEn, labelAr, requiredPermissionCode, adminSelectable, parametersSchema, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        actionClass: { type: string, enum: [automatic, human_only] }
+        ownerModule: { type: string }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        requiredPermissionCode: { oneOf: [{ $ref: "#/components/schemas/PermissionCode" }, { type: "null" }] }
+        adminSelectable: { type: boolean }
+        parametersSchema: { type: object }
+        sourceRef: { type: string }
+    AutomationCatalogue:
+      type: object
+      required: [triggers, actionTypes]
+      additionalProperties: false
+      properties:
+        triggers: { type: array, items: { $ref: "#/components/schemas/AutomationTrigger" } }
+        actionTypes: { type: array, items: { $ref: "#/components/schemas/AutomationActionType" } }
+    AutomationRuleSummary:
+      type: object
+      description: "Readable summary of a version for the builder, rendered from its content in en and ar."
+      required: [en, ar]
+      additionalProperties: false
+      properties:
+        en: { type: string }
+        ar: { type: string }
+    AutomationRule:
+      type: object
+      description: "A rule (M0221): trigger, conditions and actions live in its versions; disableAllowed = false marks a guarantee starter (D-142 Q3)."
+      required: [id, code, origin, sourceRef, nameEn, nameAr, descriptionEn, descriptionAr, scopeLevel, organizationId, transformationId, ownerUserId, ownerRoleCode, enabled, disableAllowed, disabledReason, effectiveVersionId, effectiveVersionNo, openVersionNo, summary, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string }
+        origin: { type: string, enum: [starter, admin] }
+        sourceRef: { type: [string, "null"] }
+        nameEn: { type: string }
+        nameAr: { type: string }
+        descriptionEn: { type: [string, "null"] }
+        descriptionAr: { type: [string, "null"] }
+        scopeLevel: { type: string, enum: [platform, organization, transformation] }
+        organizationId: { $ref: "#/components/schemas/NullableUuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerRoleCode: { oneOf: [{ $ref: "#/components/schemas/RoleCode" }, { type: "null" }] }
+        enabled: { type: boolean }
+        disableAllowed: { type: boolean }
+        disabledReason: { type: [string, "null"] }
+        effectiveVersionId: { $ref: "#/components/schemas/NullableUuid" }
+        effectiveVersionNo: { type: ["integer", "null"] }
+        openVersionNo: { type: ["integer", "null"] }
+        summary: { oneOf: [{ $ref: "#/components/schemas/AutomationRuleSummary" }, { type: "null" }] }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    AutomationRulePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AutomationRule" } }
+        nextCursor: { type: [string, "null"] }
+    AutomationRuleContent:
+      type: object
+      required: [triggerCodes, actions, runAs]
+      additionalProperties: false
+      properties:
+        triggerCodes: { type: array, minItems: 1, maxItems: 6, items: { type: string } }
+        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats.", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
+        actions: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: false, required: [type], properties: { type: { type: string, pattern: "^[a-z][a-z0-9_]{2,63}$" }, parameters: { type: object, description: "Validated by the action type schema (ADR-0043 §2)." }, handlers: { type: array, maxItems: 6, items: { type: string }, description: "starter_handler only (read-only)." } } } }
+        runAs: { type: string, enum: [initiating_user, service] }
+        servicePermissionCodes: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/PermissionCode" } }
+        parameters: { type: object }
+    AutomationRuleCreate:
+      type: object
+      description: "Creates an admin rule (disabled) and its draft version 1."
+      required: [code, nameEn, nameAr, scopeLevel, organizationId, ownerUserId, content]
+      additionalProperties: false
+      properties:
+        code: { type: string, pattern: '^[a-z][a-z0-9_.]{2,63}$' }
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        descriptionEn: { type: string, minLength: 1, maxLength: 2000 }
+        descriptionAr: { type: string, minLength: 1, maxLength: 2000 }
+        scopeLevel: { type: string, enum: [organization, transformation] }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        content: { $ref: "#/components/schemas/AutomationRuleContent" }
+    AutomationRuleUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        descriptionEn: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        descriptionAr: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+    AutomationRuleDisable:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    AutomationRuleVersion:
+      type: object
+      required: [id, ruleId, versionNo, status, content, contentSha256, changeSummary, lastDryRun, dryRunCurrent, authoredBy, submittedAt, reviewedBy, reviewedAt, reviewNote, publishedBy, publishedAt, supersededAt, discardedAt, summary, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        ruleId: { $ref: "#/components/schemas/Uuid" }
+        versionNo: { type: integer, minimum: 1 }
+        status: { type: string, enum: [draft, in_review, approved, published, superseded, discarded] }
+        content: { $ref: "#/components/schemas/AutomationRuleContent" }
+        contentSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        changeSummary: { type: [string, "null"] }
+        lastDryRun: { oneOf: [{ $ref: "#/components/schemas/AutomationDryRun" }, { type: "null" }] }
+        dryRunCurrent: { type: boolean }
+        authoredBy: { $ref: "#/components/schemas/NullableUuid" }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reviewedBy: { $ref: "#/components/schemas/NullableUuid" }
+        reviewedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reviewNote: { type: [string, "null"] }
+        publishedBy: { $ref: "#/components/schemas/NullableUuid" }
+        publishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        supersededAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        discardedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        summary: { $ref: "#/components/schemas/AutomationRuleSummary" }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    AutomationRuleVersionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AutomationRuleVersion" } }
+        nextCursor: { type: [string, "null"] }
+    AutomationRuleVersionCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        changeSummary: { type: string, minLength: 3, maxLength: 2000 }
+    AutomationRuleVersionUpdate:
+      type: object
+      description: "A starter version accepts parameters (and changeSummary) only."
+      additionalProperties: false
+      properties:
+        content: { $ref: "#/components/schemas/AutomationRuleContent" }
+        changeSummary: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+    AutomationRuleReviewDecision:
+      type: object
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [approve, request_changes] }
+        note: { type: string, minLength: 3, maxLength: 2000 }
+    AutomationDryRunRequest:
+      type: object
+      description: "A sample event: its triggerCode and a payload with the trigger's fields (synthetic data)."
+      required: [triggerCode, payload]
+      additionalProperties: false
+      properties:
+        triggerCode: { type: string }
+        payload: { type: object }
+    AutomationPlannedAction:
+      type: object
+      required: [ordinal, actionType, outcome, target, idempotencyKey, messageKey]
+      additionalProperties: false
+      properties:
+        ordinal: { type: integer, minimum: 1 }
+        actionType: { type: string }
+        outcome: { type: string, enum: [would_run, forbidden, invalid] }
+        target: { type: object }
+        idempotencyKey: { type: string }
+        messageKey: { type: [string, "null"] }
+    AutomationDryRun:
+      type: object
+      description: "Nothing but this record was written (REQ-S12-002)."
+      required: [id, versionId, contentSha256, outcome, conditionsMet, plannedActions, findings, runBy, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        versionId: { $ref: "#/components/schemas/Uuid" }
+        contentSha256: { type: string }
+        outcome: { type: string, enum: [pass, fail] }
+        conditionsMet: { type: ["boolean", "null"] }
+        plannedActions: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/AutomationPlannedAction" } }
+        findings: { type: array, maxItems: 50, items: { type: object, additionalProperties: false, required: [code, messageEn, messageAr], properties: { code: { type: string }, pointer: { type: string }, messageEn: { type: string }, messageAr: { type: string } } } }
+        runBy: { $ref: "#/components/schemas/Uuid" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    AutomationDryRunPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AutomationDryRun" } }
+        nextCursor: { type: [string, "null"] }
+    AutomationActionResult:
+      type: object
+      required: [attemptNo, ordinal, actionType, idempotencyKey, outcome, resultRecordType, resultRecordId, errorCode, createdAt]
+      additionalProperties: false
+      properties:
+        attemptNo: { type: integer, minimum: 1 }
+        ordinal: { type: integer, minimum: 1 }
+        actionType: { type: string }
+        idempotencyKey: { type: string }
+        outcome: { type: string, enum: [done, existing, skipped, failed, forbidden] }
+        resultRecordType: { type: [string, "null"] }
+        resultRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        errorCode: { type: [string, "null"] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    AutomationExecution:
+      type: object
+      description: "Each execution names its rule version, trigger event and outcome (REQ-S12-001)."
+      required: [id, ruleId, ruleCode, versionId, versionNo, triggerCode, triggerKey, organizationId, transformationId, runAs, initiatingUserId, status, conditionsMet, attemptNo, errorCode, errorDetail, startedAt, finishedAt, actionResults]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        ruleId: { $ref: "#/components/schemas/Uuid" }
+        ruleCode: { type: string }
+        versionId: { $ref: "#/components/schemas/Uuid" }
+        versionNo: { type: integer, minimum: 1 }
+        triggerCode: { type: string }
+        triggerKey: { type: string }
+        organizationId: { $ref: "#/components/schemas/NullableUuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        runAs: { type: string, enum: [initiating_user, service] }
+        initiatingUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [running, succeeded, skipped, failed] }
+        conditionsMet: { type: ["boolean", "null"] }
+        attemptNo: { type: integer, minimum: 1 }
+        errorCode: { type: [string, "null"] }
+        errorDetail: { type: [string, "null"] }
+        startedAt: { $ref: "#/components/schemas/Timestamp" }
+        finishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        actionResults: { type: array, items: { $ref: "#/components/schemas/AutomationActionResult" } }
+    AutomationExecutionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AutomationExecution" } }
+        nextCursor: { type: [string, "null"] }
+    OperationalFailure:
+      type: object
+      description: "One failure-queue entry (M0240); retries keep the original idempotency key."
+      required: [id, source, organizationId, executionId, jobScheduleCode, queueName, jobId, idempotencyKey, errorCode, errorMessage, attempts, firstFailedAt, lastFailedAt, status, retryCount, lastRetryBy, lastRetryAt, resolvedAt, dismissedBy, dismissedAt, dismissReason, allowedActions, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        source: { type: string, enum: [rule_execution, job] }
+        organizationId: { $ref: "#/components/schemas/NullableUuid" }
+        executionId: { $ref: "#/components/schemas/NullableUuid" }
+        jobScheduleCode: { type: [string, "null"] }
+        queueName: { type: string }
+        jobId: { type: [string, "null"] }
+        idempotencyKey: { type: string }
+        errorCode: { type: string }
+        errorMessage: { type: string }
+        attempts: { type: integer, minimum: 1 }
+        firstFailedAt: { $ref: "#/components/schemas/Timestamp" }
+        lastFailedAt: { $ref: "#/components/schemas/Timestamp" }
+        status: { type: string, enum: [open, retrying, resolved, dismissed] }
+        retryCount: { type: integer, minimum: 0, maximum: 20 }
+        lastRetryBy: { $ref: "#/components/schemas/NullableUuid" }
+        lastRetryAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        resolvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        dismissedBy: { $ref: "#/components/schemas/NullableUuid" }
+        dismissedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        dismissReason: { type: [string, "null"] }
+        allowedActions: { type: array, items: { type: string, enum: [retry, dismiss] } }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    OperationalFailurePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/OperationalFailure" } }
+        nextCursor: { type: [string, "null"] }
+    OperationalFailureDismiss:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    JobOperation:
+      type: object
+      description: "lastSuccessAt null = never run; nextRunAt null with nextRunUnknownReason disabled or unknown (never a guessed time)."
+      required: [code, queueName, cron, timezone, enabled, ownerModule, descriptionEn, descriptionAr, lastSuccessAt, lastRunAt, lastOutcome, nextRunAt, nextRunUnknownReason, openFailures, allowedActions]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        queueName: { type: string }
+        cron: { type: string }
+        timezone: { type: string }
+        enabled: { type: boolean }
+        ownerModule: { type: string }
+        descriptionEn: { type: string }
+        descriptionAr: { type: string }
+        lastSuccessAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        lastRunAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        lastOutcome: { type: ["string", "null"], enum: [succeeded, failed, null] }
+        nextRunAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        nextRunUnknownReason: { type: ["string", "null"], enum: [disabled, unknown, null] }
+        openFailures: { type: integer, minimum: 0 }
+        allowedActions: { type: array, items: { type: string, enum: [run_now, retry_failures] } }
+    JobOperationList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/JobOperation" } }
+    JobRun:
+      type: object
+      required: [id, jobId, attemptNo, outcome, startedAt, finishedAt, errorCode]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        jobId: { type: string }
+        attemptNo: { type: integer, minimum: 1 }
+        outcome: { type: string, enum: [succeeded, failed] }
+        startedAt: { $ref: "#/components/schemas/Timestamp" }
+        finishedAt: { $ref: "#/components/schemas/Timestamp" }
+        errorCode: { type: [string, "null"] }
+    JobOperationDetail:
+      type: object
+      required: [job, runs, nextCursor]
+      additionalProperties: false
+      properties:
+        job: { $ref: "#/components/schemas/JobOperation" }
+        runs: { type: array, items: { $ref: "#/components/schemas/JobRun" } }
+        nextCursor: { type: [string, "null"] }
+    JobRunNowResult:
+      type: object
+      required: [code, jobId, singletonKey, queuedAt]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        jobId: { type: [string, "null"] }
+        singletonKey: { type: string }
+        queuedAt: { $ref: "#/components/schemas/Timestamp" }
+    ApprovalRouteDefinition:
+      type: object
+      required: [routeKey, mode, roleCodes, source, labelEn, labelAr]
+      additionalProperties: false
+      properties:
+        routeKey: { type: string }
+        mode: { type: string, enum: [any, sequential, parallel] }
+        roleCodes: { type: array, minItems: 1, maxItems: 6, items: { $ref: "#/components/schemas/RoleCode" } }
+        source: { type: string, enum: [approver_route, procedure] }
+        labelEn: { type: [string, "null"] }
+        labelAr: { type: [string, "null"] }
+    ApprovalRouteDefinitionList:
+      type: object
+      required: [methodologyVersionId, items]
+      additionalProperties: false
+      properties:
+        methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
+        items: { type: array, items: { $ref: "#/components/schemas/ApprovalRouteDefinition" } }
+    ApprovalRouteStep:
+      type: object
+      required: [stepNo, roundNo, approverRoleCode, assigneeUserId, status, activatedAt, decidedBy, decidedOnBehalfOf, decidedAt, decisionNote]
+      additionalProperties: false
+      properties:
+        stepNo: { type: integer, minimum: 1, maximum: 6 }
+        roundNo: { type: integer, minimum: 1 }
+        approverRoleCode: { $ref: "#/components/schemas/RoleCode" }
+        assigneeUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [waiting, active, approved, rejected, changes_requested, cancelled] }
+        activatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedOnBehalfOf: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decisionNote: { type: [string, "null"] }
+    ApprovalRoute:
+      type: object
+      description: "routed = false: a DG4 single-step approval without route steps."
+      required: [approvalId, routed, routeKey, mode, currentRoundNo, steps, approvalStatus, approvalVersion]
+      additionalProperties: false
+      properties:
+        approvalId: { $ref: "#/components/schemas/Uuid" }
+        routed: { type: boolean }
+        routeKey: { type: [string, "null"] }
+        mode: { type: ["string", "null"], enum: [sequential, parallel, null] }
+        currentRoundNo: { type: integer, minimum: 1 }
+        steps: { type: array, items: { $ref: "#/components/schemas/ApprovalRouteStep" } }
+        approvalStatus: { type: string }
+        approvalVersion: { $ref: "#/components/schemas/Version" }
+    ApprovalRouteStepDecision:
+      type: object
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [approve, reject, request_changes] }
+        note: { type: string, minLength: 3, maxLength: 4000 }
+    TrackedGateCondition:
+      type: object
+      description: "status is derived: closed (closure recorded), overdue (open after its due date in the transformation's time zone), else open."
+      required: [id, gateDecisionId, gateCode, ordinal, conditionText, ownerUserId, dueDate, status, closedAt, closedBy, closureNote, evidenceId, escalatedAt, escalatedToUserId]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        gateDecisionId: { $ref: "#/components/schemas/Uuid" }
+        gateCode: { type: string }
+        ordinal: { type: integer }
+        conditionText: { type: string }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        status: { type: string, enum: [open, overdue, closed] }
+        closedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        closedBy: { $ref: "#/components/schemas/NullableUuid" }
+        closureNote: { type: [string, "null"] }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        escalatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        escalatedToUserId: { $ref: "#/components/schemas/NullableUuid" }
+    TrackedGateConditionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/TrackedGateCondition" } }
+        nextCursor: { type: [string, "null"] }
+    GateConditionClose:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 3, maxLength: 2000 }
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+    DependencySlipAffected:
+      type: object
+      description: "Forecast finishes are computed by the DG4 scheduling logic; null = Unknown."
+      required: [initiativeId, initiativeCode, ownerUserId, forecastFinishBefore, forecastFinishAfter]
+      additionalProperties: false
+      properties:
+        initiativeId: { $ref: "#/components/schemas/Uuid" }
+        initiativeCode: { type: string }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        forecastFinishBefore: { $ref: "#/components/schemas/NullableBusinessDate" }
+        forecastFinishAfter: { $ref: "#/components/schemas/NullableBusinessDate" }
+    DependencySlip:
+      type: object
+      required: [id, dependencyId, dependencyCode, predecessorFinishBefore, predecessorFinishAfter, slipDays, neededBy, criticalReason, affected, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        dependencyId: { $ref: "#/components/schemas/Uuid" }
+        dependencyCode: { type: string }
+        predecessorFinishBefore: { $ref: "#/components/schemas/BusinessDate" }
+        predecessorFinishAfter: { $ref: "#/components/schemas/BusinessDate" }
+        slipDays: { type: integer, minimum: 1, description: 'Calendar days.' }
+        neededBy: { $ref: "#/components/schemas/NullableBusinessDate" }
+        criticalReason: { type: string, enum: [critical_path, needed_by_breached] }
+        affected: { type: array, maxItems: 200, items: { $ref: "#/components/schemas/DependencySlipAffected" } }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    DependencySlipPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/DependencySlip" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingCutoffPack:
+      type: object
+      description: "A draft generated from current data at the cut-off; its agenda items are published only after review (REQ-S12-015)."
+      required: [id, meetingId, cutoffDate, asOf, openAsks, agendaItemIds, status, reviewedBy, reviewedAt, reviewNote, reviewerAssigned, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        cutoffDate: { $ref: "#/components/schemas/BusinessDate" }
+        asOf: { $ref: "#/components/schemas/Timestamp" }
+        openAsks: { type: array, maxItems: 200, items: { type: object } }
+        agendaItemIds: { type: array, maxItems: 200, items: { $ref: "#/components/schemas/Uuid" } }
+        status: { type: string, enum: [draft, reviewed] }
+        reviewedBy: { $ref: "#/components/schemas/NullableUuid" }
+        reviewedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        reviewNote: { type: [string, "null"] }
+        reviewerAssigned: { type: boolean }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    MeetingCutoffPackReview:
+      type: object
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 3, maxLength: 2000 }
+    NotificationSettings:
+      type: object
+      description: "Quiet hours as HH:MM in timeZone (may span midnight; both null = none); digest off, daily or twice daily."
+      required: [quietHoursStart, quietHoursEnd, timezone, digestMode, digestTime]
+      additionalProperties: false
+      properties:
+        quietHoursStart: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        quietHoursEnd: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        timezone: { type: string }
+        digestMode: { type: string, enum: [off, daily, twice_daily] }
+        digestTime: { type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+    NotificationPreferences:
+      type: object
+      description: "effective = own settings, else the organization defaults, else none (deliver at once)."
+      required: [own, effective, version]
+      additionalProperties: false
+      properties:
+        own: { oneOf: [{ $ref: "#/components/schemas/NotificationSettings" }, { type: "null" }] }
+        effective: { $ref: "#/components/schemas/NotificationSettings" }
+        version: { type: integer, minimum: 0 }
+    NotificationPreferencesPut:
+      type: object
+      required: [quietHoursStart, quietHoursEnd, digestMode]
+      additionalProperties: false
+      properties:
+        quietHoursStart: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        quietHoursEnd: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        digestMode: { type: string, enum: [off, daily, twice_daily] }
+        digestTime: { type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+    NotificationPolicy:
+      type: object
+      description: "Urgent notifications are always delivered immediately (REQ-S12-025)."
+      required: [organizationId, nonUrgentWorkingDaysOnly, defaultQuietHoursStart, defaultQuietHoursEnd, defaultDigestMode, urgentDelivery, urgentKinds, version]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        nonUrgentWorkingDaysOnly: { type: boolean }
+        defaultQuietHoursStart: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        defaultQuietHoursEnd: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        defaultDigestMode: { type: string, enum: [off, daily, twice_daily] }
+        urgentDelivery: { type: string, enum: [immediate] }
+        urgentKinds: { type: array, items: { type: string } }
+        version: { type: integer, minimum: 0 }
+    NotificationPolicyPut:
+      type: object
+      required: [nonUrgentWorkingDaysOnly, defaultQuietHoursStart, defaultQuietHoursEnd, defaultDigestMode]
+      additionalProperties: false
+      properties:
+        nonUrgentWorkingDaysOnly: { type: boolean }
+        defaultQuietHoursStart: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        defaultQuietHoursEnd: { type: [string, "null"], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+        defaultDigestMode: { type: string, enum: [off, daily, twice_daily] }
+    NotificationDigestItem:
+      type: object
+      required: [notificationId, messageKey, messageParams, linkPath, createdAt]
+      additionalProperties: false
+      properties:
+        notificationId: { $ref: "#/components/schemas/Uuid" }
+        messageKey: { type: string }
+        messageParams: { type: object }
+        linkPath: { type: string }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    NotificationDigest:
+      type: object
+      required: [id, windowStart, windowEnd, count, items]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        windowStart: { $ref: "#/components/schemas/Timestamp" }
+        windowEnd: { $ref: "#/components/schemas/Timestamp" }
+        count: { type: integer, minimum: 1 }
+        items: { type: array, items: { $ref: "#/components/schemas/NotificationDigestItem" } }
     FormRecordTypeCode:
       type: string
       description: "A native form: T01-T09, T11-T16, a source deliverable, an M0149 extension record type or a product record (form_record_type, ADR-0041 §1)."
@@ -21208,6 +22826,14 @@ components:
         - procedure.launch
         - procedure.act
         - procedure.manage
+        - automation.read
+        - automation.configure
+        - automation.review
+        - automation.repair
+        - job.repair
+        - notification_policy.configure
+        - notification.preferences
+        - gate_condition.close
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -21680,6 +23306,7 @@ components:
         leadUserId: { $ref: "#/components/schemas/Uuid" }
         timezone: { $ref: "#/components/schemas/TimeZone" }
         currency: { $ref: "#/components/schemas/Currency" }
+        launchPlan: { $ref: "#/components/schemas/LaunchPlanStart" }
       allOf:
         - if:
             properties: { mode: { const: modular } }
