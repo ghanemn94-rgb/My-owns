@@ -10,3 +10,26 @@ export {
   toTomDimension,
   type MethodologyCatalogue,
 } from "./repository.ts";
+// P5 slice A (ADR-0039 §1-§4; p5-work-split §A.1; T-DG5-BE-A): the ConfigResolver port, the kind-provider registry,
+// the content hash and the Studio draft helpers the other slice A tasks (BE-B, BE-B2, BE-B3, BE-C, KBE-A) build on.
+export {
+  createConfigResolver,
+  loadCatalogue,
+  resolvePinnedVersion,
+  type CatalogueEntry,
+  type ConfigResolver,
+  type PinnedVersion,
+  type ResolvedElement,
+} from "./config-resolver.ts";
+export {
+  configKindProvider,
+  configKindProviders,
+  registerConfigKindProvider,
+  type AffectedRecordCount,
+  type CompatibilityFinding,
+  type ConfigElementChange,
+  type ConfigKindProvider,
+  type ConfigKindProviderHooks,
+  type PreviewOutcome,
+} from "./kinds.ts";
+export { contentSha256 } from "./content-hash.ts";

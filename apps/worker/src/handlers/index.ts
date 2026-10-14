@@ -11,6 +11,12 @@ import { ESCALATIONS_HANDLERS } from "./escalations.ts";
 import { ADOPTION_HANDLERS } from "./adoption.ts";
 import { SUSTAINMENT_HANDLERS } from "./sustainment.ts";
 import { GATES_HANDLERS } from "./gates.ts";
+// P5 domains (T-DG5-BE-A stubs; p5-plan §5.3): one import per new domain, each owned by its task.
+import { AUTOMATION_HANDLERS } from "./automation.ts";
+import { PROCEDURES_HANDLERS } from "./procedures.ts";
+import { REPORTS_HANDLERS } from "./reports.ts";
+import { LAUNCH_HANDLERS } from "./launch.ts";
+import { DEMO_HANDLERS } from "./demo.ts";
 import type { JobHandler } from "./spec.ts";
 
 export {
@@ -22,7 +28,7 @@ export {
 } from "./platform.ts";
 export type { JobHandler } from "./spec.ts";
 
-/** Every domain handler (P4 slices); the platform handlers are wired by worker.ts itself. */
+/** Every domain handler (P4 and P5 slices); the platform handlers are wired by worker.ts itself. */
 export const DOMAIN_HANDLERS: readonly JobHandler[] = [
   ...APPROVALS_HANDLERS,
   ...ACCESS_HANDLERS,
@@ -34,4 +40,9 @@ export const DOMAIN_HANDLERS: readonly JobHandler[] = [
   ...ADOPTION_HANDLERS,
   ...SUSTAINMENT_HANDLERS,
   ...GATES_HANDLERS,
+  ...AUTOMATION_HANDLERS,
+  ...PROCEDURES_HANDLERS,
+  ...REPORTS_HANDLERS,
+  ...LAUNCH_HANDLERS,
+  ...DEMO_HANDLERS,
 ];

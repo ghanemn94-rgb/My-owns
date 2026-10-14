@@ -14,6 +14,9 @@ import { registerAgendaRoutes } from "./agenda.ts";
 import { registerMinutesRoutes } from "./minutes.ts";
 import { registerExecutiveDecisionRoutes } from "./executive-decisions.ts";
 import { registerEscalationRoutes } from "./escalations.ts";
+// P5 (T-DG5-BE-A stubs; p5-plan §5.1): BE-L meeting cut-off, BE-O presentation mode.
+import { registerCutOffRoutes } from "./cut-off.ts";
+import { registerPresentationRoutes } from "./presentation.ts";
 
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG4-BE-A
@@ -31,6 +34,8 @@ export function registerGovernanceModule(app: FastifyInstance, deps: ModuleDeps)
     ...registerMinutesRoutes(app, deps),
     ...registerExecutiveDecisionRoutes(app, deps),
     ...registerEscalationRoutes(app, deps),
+    ...registerCutOffRoutes(app, deps),
+    ...registerPresentationRoutes(app, deps),
   ];
   return Object.freeze({
     module: "governance",

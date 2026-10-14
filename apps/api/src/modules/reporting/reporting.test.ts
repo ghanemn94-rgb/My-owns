@@ -27,6 +27,8 @@ describe("reporting module (P1 scaffold, D-048)", () => {
       "benefits",
       "governance",
       "kpi",
+      // P5 (T-DG5-BE-A; p5-plan §2): report snapshots record the pinned configuration versions via ConfigResolver.
+      "methodology",
       "platform",
       "portfolio",
       "raid",

@@ -3,6 +3,8 @@
 export { effectivePermissions, registerIdentity, sameOrigin, type IdentityOptions } from "./routes.ts";
 export { OidcService, resolveOidcUser, LOGIN_STATE_TTL_MINUTES, loginCookieName } from "./oidc.ts";
 export { RateLimitSubjects } from "./rate-limit-subjects.ts";
+// P5 (T-DG5-BE-A stub; p5-plan §5.1 BE-R): GET /me/navigation, registered by server.ts.
+export { registerNavigationRoutes } from "./navigation.ts";
 export { csrfTokenFor, revokeUserSessions, sessionCookieName, sha256 } from "./sessions.ts";
 export {
   createUser,

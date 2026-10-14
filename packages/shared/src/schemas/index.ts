@@ -114,3 +114,11 @@ export * from "./missing-links.ts";
 // P4 slice K mirrors of BE-M3 (backend-workflow-engineer, T-DG4-BE-M3; p4-work-split §J+K JK.3): portfolios and their
 // transformations, workstreams (WS-nn) and their initiatives (ADR-0038 §9).
 export * from "./structure.ts";
+// P5 slice A (T-DG5-BE-A; ADR-0039/0040; p5-work-split §A.1): the Studio mirrors. studio.ts is BE-A's; the other five
+// are stubs, each filled by its owning task (BE-B, BE-B2, BE-B3, BE-C, KBE-A).
+export * from "./studio.ts";
+export * from "./studio-checks.ts";
+export * from "./studio-coverage.ts";
+export * from "./studio-review.ts";
+export * from "./methodology-migrations.ts";
+export * from "./scoring-defaults.ts";

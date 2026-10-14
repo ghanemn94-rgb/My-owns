@@ -117,7 +117,15 @@ describe("module composition (D-048, P2)", () => {
         "benefits",
         "adoption",
         "sustainment",
+        // P5 (T-DG5-BE-A; p5-plan §3 seam 24): route-free scaffolds until their owners fill them.
+        "forms",
+        "procedures",
+        "automation",
+        "launch",
+        "health",
       ]);
+      for (const m of ["forms", "procedures", "automation", "launch", "health"])
+        expect(modules.find((x) => x.module === m)).toMatchObject({ status: "scaffold", deliversIn: "P5" });
       // P4: tasks routes the five My Work and inbox operations; the other P4 modules are route-free until filled.
       expect(modules.find((m) => m.module === "tasks")).toMatchObject({ status: "active", deliversIn: "P4" });
       expect(modules.find((m) => m.module === "tasks")!.routes).toHaveLength(5);

@@ -19,6 +19,21 @@ import {
   type ModuleRegistration,
 } from "../platform/index.ts";
 import { loadMethodologyCatalogue, toTomDimension } from "./repository.ts";
+// P5 slice A (p5-work-split §A.1; T-DG5-BE-A): every Studio route file registers here. drafts, elements-read and pins
+// are BE-A's; the others are stubs that register nothing until their owners fill them (each edits only its own file).
+import { createConfigResolver, type ConfigResolver } from "./config-resolver.ts";
+import { registerConfigDraftRoutes } from "./drafts.ts";
+import { registerConfigElementReadRoutes } from "./elements-read.ts";
+import { registerConfigPinRoutes } from "./pins.ts";
+import { registerConfigElementRoutes } from "./elements.ts"; // BE-B
+import { registerConfigCheckRoutes } from "./checks.ts"; // BE-B
+import { registerSourceCoverageRoutes } from "./source-coverage.ts"; // BE-B2
+import { registerRevisionProposalRoutes } from "./revision-impact.ts"; // BE-B2
+import { registerConfigReviewRoutes } from "./reviews.ts"; // BE-B3
+import { registerConfigPublishRoutes } from "./publish.ts"; // BE-B3
+import { registerConfigReviewPolicyRoutes } from "./review-policies.ts"; // BE-B3
+import { registerMethodologyMigrationRoutes } from "./migrations.ts"; // BE-C
+import { registerScoringDefaultsRoutes } from "./scoring-defaults.ts"; // KBE-A
 
 const CATALOGUE = "/api/v1/transformations/:transformationId/methodology";
 const TOM_DIMENSION = "/api/v1/methodology/tom-dimensions/:dimensionCode";
@@ -38,7 +53,40 @@ const LABEL_COLUMNS = [
   ["canvasPromptAr", "canvas_prompt_ar"],
 ] as const;
 
-export function registerMethodologyModule(app: FastifyInstance, { db }: ModuleDeps): ModuleRegistration {
+/**
+ * Wiring hook called by the composition root (server.ts) with the ConfigResolver it built (ADR-0039 §3). Registers the
+ * P2 routes above and every P5 Studio route file, and reports all of them.
+ */
+export function registerMethodologyModule(
+  app: FastifyInstance,
+  deps: ModuleDeps,
+  options: { readonly configResolver?: ConfigResolver } = {},
+): ModuleRegistration {
+  const p2 = registerMethodologyP2Routes(app, deps);
+  const resolver = options.configResolver ?? createConfigResolver();
+  const p5 = [
+    ...registerConfigDraftRoutes(app, deps),
+    ...registerConfigElementReadRoutes(app, deps, resolver),
+    ...registerConfigPinRoutes(app, deps),
+    ...registerConfigElementRoutes(app, deps),
+    ...registerConfigCheckRoutes(app, deps),
+    ...registerSourceCoverageRoutes(app, deps),
+    ...registerRevisionProposalRoutes(app, deps),
+    ...registerConfigReviewRoutes(app, deps),
+    ...registerConfigPublishRoutes(app, deps),
+    ...registerConfigReviewPolicyRoutes(app, deps),
+    ...registerMethodologyMigrationRoutes(app, deps),
+    ...registerScoringDefaultsRoutes(app, deps),
+  ];
+  return Object.freeze({
+    module: "methodology",
+    status: "active",
+    deliversIn: "P2",
+    routes: Object.freeze([...p2.routes, ...p5]),
+  });
+}
+
+function registerMethodologyP2Routes(app: FastifyInstance, { db }: ModuleDeps): ModuleRegistration {
   app.get(CATALOGUE, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(z.strictObject({ transformationId: z.uuid() }), request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);

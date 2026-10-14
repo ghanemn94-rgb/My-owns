@@ -40,6 +40,7 @@ import { registerBudgetRoutes } from "./budget.ts";
 import { registerScheduleNetworkRoutes } from "./schedule-network.ts";
 // P4 slice K (T-DG4-BE-M3; ADR-0038 §9): portfolios and workstreams.
 import { registerStructureRoutes } from "./structure.ts";
+import { registerOwnerUpdateRoutes } from "./updates.ts"; // P5 KBE-D (stub by T-DG5-BE-A)
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
 // The gate annotation's inherited approvals (ADR-0021 §5; F-DG3-120): the third member of the GateFactsProvider.
@@ -98,6 +99,8 @@ export function registerPortfolioModule(app: FastifyInstance, deps: ModuleDeps):
     ...registerScheduleNetworkRoutes(app, deps),
     // P4 BE-M3: portfolios and their transformations, workstreams and their initiatives.
     ...registerStructureRoutes(app, deps),
+    // P5 KBE-D: structured owner updates (S09-011).
+    ...registerOwnerUpdateRoutes(app, deps),
   ];
   return Object.freeze({ module: "portfolio", status: "active", deliversIn: "P3", routes: Object.freeze(routes) });
 }

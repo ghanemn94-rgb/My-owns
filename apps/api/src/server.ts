@@ -25,13 +25,25 @@ import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequ
 import type pg from "pg";
 import { registerAccessP2Routes, registerAccessP4Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
 import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
-import { registerAdminRoutes, registerBrandingRoutes } from "./modules/admin/index.ts";
-import { RateLimitSubjects, registerIdentity, sessionCookieName, type OidcService } from "./modules/identity/index.ts";
+import { registerAdminRoutes, registerBrandingRoutes, registerEnvironmentRoutes } from "./modules/admin/index.ts";
+import {
+  RateLimitSubjects,
+  registerIdentity,
+  registerNavigationRoutes,
+  sessionCookieName,
+  type OidcService,
+} from "./modules/identity/index.ts";
 import { registerEvidenceModule } from "./modules/evidence/index.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
-import { registerMethodologyModule } from "./modules/methodology/index.ts";
+import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
-import { registerJobScheduleRoutes } from "./modules/jobs/index.ts";
+import { registerJobOperationRoutes, registerJobScheduleRoutes } from "./modules/jobs/index.ts";
+// P5 modules (p5-plan §3 seam 24; T-DG5-BE-A): each registers its route files (stubs until their owners fill them).
+import { registerAutomationModule } from "./modules/automation/index.ts";
+import { registerFormsModule } from "./modules/forms/index.ts";
+import { registerHealthModule } from "./modules/health/index.ts";
+import { registerLaunchModule } from "./modules/launch/index.ts";
+import { registerProceduresModule } from "./modules/procedures/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule } from "./modules/adoption/index.ts";
 import { registerBenefitsModule } from "./modules/benefits/index.ts";
@@ -317,6 +329,11 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerCalendarRoutes(app, deps);
   registerJobScheduleRoutes(app, db);
   registerAccessP4Routes(app, deps);
+  // P5 (T-DG5-BE-A stubs; p5-plan §5.1): the jobs operations view (BE-I), GET /me/navigation (BE-R) and the environment
+  // read (BE-S). Each owner fills its own file; these lines do not change.
+  registerJobOperationRoutes(app, deps);
+  registerNavigationRoutes(app, deps);
+  registerEnvironmentRoutes(app, deps);
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
   // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
   const gateFacts: GateFactsProvider = {
@@ -341,6 +358,13 @@ export async function buildServer(options: ServerOptions): Promise<{
   setWorkflowsReadPort({ gateReadiness: gateReadinessReader(gateFacts) });
   setMaterialChangePort(materialChangePortImpl);
   setKpiVersionActivator(activateKpiVersionByChangeRequest);
+  // P5 wiring points (p5-plan §2, §5.3; T-DG5-BE-A).
+  //  - ConfigResolver (ADR-0039 §3): the one resolver of pinned configuration versions. Modules that read configuration
+  //    receive it in their register options (named wiring lines below); methodology imports none of them.
+  //  - AutomationActionRegistry (p5-plan §2; BE-H defines it in automation): domain modules register their actions into
+  //    it here, so automation imports no domain module (the GateFactsProvider pattern). BE-H adds the registry line and
+  //    each action owner adds one registration line below it.
+  const configResolver = createConfigResolver();
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
@@ -353,7 +377,7 @@ export async function buildServer(options: ServerOptions): Promise<{
       },
     }),
     registerReportingModule(app, deps),
-    registerMethodologyModule(app, deps),
+    registerMethodologyModule(app, deps, { configResolver }),
     registerEvidenceModule(app, deps),
     registerPortfolioModule(app, deps),
     // P4 modules (p4-plan §2 seam 19): tasks is active (BE-A); the others report "scaffold" until a route exists.
@@ -363,6 +387,12 @@ export async function buildServer(options: ServerOptions): Promise<{
     registerBenefitsModule(app, deps),
     registerAdoptionModule(app, deps),
     registerSustainmentModule(app, deps),
+    // P5 modules (p5-plan §3 seam 24): each reports "scaffold" until a route exists.
+    registerFormsModule(app, deps),
+    registerProceduresModule(app, deps),
+    registerAutomationModule(app, deps),
+    registerLaunchModule(app, deps),
+    registerHealthModule(app, deps),
   ];
 
   if (webRoot) {

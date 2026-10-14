@@ -13,6 +13,9 @@ import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { KPI_VERSION_APPROVAL_TYPE, KPI_VERSION_SUBJECT_PROVIDER, type KpiApprovalPort } from "./kpi-versions.ts";
 import { registerKpiRoutes } from "./routes.ts";
+// P5 (T-DG5-BE-A stubs; p5-plan §5.1): KBE-E restatements, KBE-F formula preview.
+import { registerKpiRestatementRoutes } from "./restatements.ts";
+import { registerFormulaPreviewRoutes } from "./formula-preview.ts";
 
 export { loadKpiGateFacts, type KpiGateFacts } from "./gate-facts.ts";
 // P3 business cases (T-DG3-KBE-B): section completeness, baseline validation state (incl. Stale) and totals, for
@@ -67,7 +70,11 @@ export function registerKpiModule(
 ): ModuleRegistration {
   const approvals = options.approvals ?? null;
   if (approvals !== null) approvals.registerSubject(KPI_VERSION_APPROVAL_TYPE, KPI_VERSION_SUBJECT_PROVIDER);
-  const routes = registerKpiRoutes(app, deps, approvals);
+  const routes = [
+    ...registerKpiRoutes(app, deps, approvals),
+    ...registerKpiRestatementRoutes(app, deps),
+    ...registerFormulaPreviewRoutes(app, deps),
+  ];
   return Object.freeze({ module: "kpi", status: "active", deliversIn: "P2", routes: Object.freeze([...routes]) });
 }
 // P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only KPI facts of the dashboards, through the slice A status service.

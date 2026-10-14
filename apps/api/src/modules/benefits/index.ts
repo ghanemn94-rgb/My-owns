@@ -4,6 +4,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerBenefitRoutes } from "./routes.ts";
+import { registerFinancialMetricRoutes } from "./financial-metrics.ts"; // P5 KBE-F (stub by T-DG5-BE-A)
 // T-DG4-KBE-E (ADR-0030 §6): the slice A DownstreamImpactProvider (financeReview pending / not_applicable).
 import { registerBenefitDownstreamProvider } from "./downstream.ts";
 
@@ -12,7 +13,7 @@ import { registerBenefitDownstreamProvider } from "./downstream.ts";
  * created them as stubs; p4-plan §5.1). The module reports "scaffold" until a route exists, then "active".
  */
 export function registerBenefitsModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
-  const routes = [...registerBenefitRoutes(app, deps)];
+  const routes = [...registerBenefitRoutes(app, deps), ...registerFinancialMetricRoutes(app, deps)];
   registerBenefitDownstreamProvider();
   return Object.freeze({
     module: "benefits",

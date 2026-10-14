@@ -383,5 +383,7 @@ export interface P3ExerciseContext {
  * §1 S-10): the same shape as the P3 seams.
  */
 export type P4ExerciseContext = P3ExerciseContext;
+/** The P5 per-task contract seams (p5-work-split §2 rule 14; T-DG5-BE-A): the same validating client. */
+export type P5ExerciseContext = P3ExerciseContext;
 
 export { createDb, createPool };

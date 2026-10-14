@@ -72,6 +72,8 @@ export const API_MODULES = {
       "sustainment",
       "governance",
       "portfolio",
+      // P5 (p5-plan §2; T-DG5-BE-A): report snapshots record the pinned configuration versions through ConfigResolver.
+      "methodology",
     ],
   },
   evidence: {
@@ -148,6 +150,41 @@ export const API_MODULES = {
     responsibility: "Administration endpoints composed from other modules",
     dependsOn: ["platform", "audit", "access", "organization", "identity", "jobs"],
   },
+  // P5 modules (p5-plan §3 seam 24; T-DG5-BE-A). Each reads configuration through methodology's ConfigResolver port
+  // (ADR-0039 §3); methodology imports none of them. automation imports no domain module: domain modules register
+  // their actions into its AutomationActionRegistry at composition (server.ts), the GateFactsProvider pattern.
+  forms: {
+    responsibility:
+      "Form schemas, field types, custom-field values, the form framework and extension record types (P5 slice B)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "methodology", "evidence", "tasks"],
+  },
+  procedures: {
+    responsibility: "Procedure definitions, instances, step outputs and the seeded procedures (P5 slice C)",
+    dependsOn: [
+      "platform",
+      "audit",
+      "access",
+      "organization",
+      "transformations",
+      "methodology",
+      "forms",
+      "evidence",
+      "tasks",
+    ],
+  },
+  automation: {
+    responsibility:
+      "Rule versions, event/schedule evaluation, dry run, execution history, failure queue and service identity (P5 slices D-E)",
+    dependsOn: ["platform", "audit", "access", "organization", "methodology", "tasks", "jobs"],
+  },
+  launch: {
+    responsibility: "The 90-day launch plan and the Day-90 test (P5 slice H)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "methodology", "tasks"],
+  },
+  health: {
+    responsibility: "The 25-question health check, scoring schemes and assessments (P5 slice H)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "methodology", "tasks"],
+  },
 } as const satisfies Record<string, { responsibility: string; dependsOn: readonly string[] }>;
 
 export type ApiModule = keyof typeof API_MODULES;
@@ -184,18 +221,33 @@ export const P3_MODULES: readonly ApiModule[] = ["portfolio"];
  */
 export const P4_MODULES: readonly ApiModule[] = ["tasks", "governance", "raid", "benefits", "adoption", "sustainment"];
 
-/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4). */
-export const IMPLEMENTED_MODULES: readonly ApiModule[] = [...P1_MODULES, ...P2_MODULES, ...P3_MODULES, ...P4_MODULES];
+/**
+ * Modules added in P5 (p5-plan §3 seam 24; p5-work-split §A.1 BE-A): each with a public index.ts and its own test
+ * suite. BE-A creates them with stub route files; the owning tasks fill them (p5-plan §5.1).
+ */
+export const P5_MODULES: readonly ApiModule[] = ["forms", "procedures", "automation", "launch", "health"];
+
+/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4 + P5). */
+export const IMPLEMENTED_MODULES: readonly ApiModule[] = [
+  ...P1_MODULES,
+  ...P2_MODULES,
+  ...P3_MODULES,
+  ...P4_MODULES,
+  ...P5_MODULES,
+];
 
 /** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
 export const SECTION16_MODULES = {
   "identity/access": ["identity", "access"],
-  transformations: ["transformations"],
-  workflows: ["workflows"],
-  // P4 (p4-plan §3 seam 19): the benefit engine joins the KPI engine under "formulas/KPI".
-  "formulas/KPI": ["kpi", "benefits"],
+  // P5 (p5-plan §3 seam 24): the launch plan is part of the transformation record.
+  transformations: ["transformations", "launch"],
+  // P5: procedures and the rule engine join workflows.
+  workflows: ["workflows", "procedures", "automation"],
+  // P4 (p4-plan §3 seam 19): the benefit engine joins the KPI engine under "formulas/KPI". P5: health-check scoring.
+  "formulas/KPI": ["kpi", "benefits", "health"],
   reporting: ["reporting"],
-  admin: ["admin"],
+  // P5: the form builder is administration (Playbook Studio's form_schema kind, ADR-0041).
+  admin: ["admin", "forms"],
 } as const satisfies Record<string, readonly ApiModule[]>;
 
 /** P1 scaffolds: they exist, but deliver behaviour in a later stage and register no routes in P1 (D-048). */

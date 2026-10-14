@@ -16,6 +16,9 @@ import { registerMyWorkRoutes } from "./my-work.ts";
 import { registerOrphanRoutes } from "./orphans.ts";
 import { registerTraceabilityRoutes } from "./traceability.ts";
 import { registerWorkspaceHeaderRoutes } from "./workspace-header.ts"; // KBE-G2 (ADR-0037 §9, §11)
+// P5 (T-DG5-BE-A stubs; p5-plan §5.1): report snapshots (KBE-C, KBE-D) and exports (BE-M, BE-N).
+import { registerReportRoutes } from "./reports/routes.ts";
+import { registerExportRoutes } from "./exports/routes.ts";
 
 export const REPORTING_MODULE: ModuleRegistration = Object.freeze({
   module: "reporting",
@@ -39,6 +42,8 @@ export function registerReportingModule(app: FastifyInstance, deps: ModuleDeps):
     ...registerMyWorkRoutes(app, deps),
     ...registerExecutiveOverviewRoutes(app, deps),
     ...registerWorkspaceHeaderRoutes(app, deps),
+    ...registerReportRoutes(app, deps),
+    ...registerExportRoutes(app, deps),
   ];
   if (routes.length === 0) return REPORTING_MODULE;
   return Object.freeze({ module: "reporting", status: "active", deliversIn: "P4", routes: Object.freeze(routes) });

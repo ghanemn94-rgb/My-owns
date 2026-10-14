@@ -27,6 +27,9 @@ import { registerPhaseStepRoutes } from "./phase-steps.ts";
 import { registerScaleRoutes } from "./scale.ts";
 // T-DG4-BE-K2 (p4-work-split §H H.2): the per-criterion gate review table, criterion reviews and Under Review.
 import { registerGateReviewRoutes } from "./gate-reviews.ts";
+// P5 (T-DG5-BE-A stubs; p5-plan §5.1 BE-K): approval routes and conditional approval.
+import { registerApprovalRouteRoutes } from "./approval-routes.ts";
+import { registerConditionalApprovalRoutes } from "./conditional-approval.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
@@ -72,6 +75,9 @@ export function registerWorkflowsModule(
     ...registerPhaseStepRoutes(app, deps),
     ...registerScaleRoutes(app, deps),
     ...registerGateReviewRoutes(app, deps),
+    // P5 (p5-plan §5.1): BE-K approval routes and conditional approval.
+    ...registerApprovalRouteRoutes(app, deps),
+    ...registerConditionalApprovalRoutes(app, deps),
   ];
   return Object.freeze({ module: "workflows", status: "active", deliversIn: "P2", routes: Object.freeze(routes) });
 }
