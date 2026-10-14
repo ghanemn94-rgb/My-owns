@@ -469,6 +469,59 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0062-0063: the P5 slice A guards are attached (deferred audit, Studio lifecycle, append-only runs and history)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('methodology_version', 'methodology_element', 'config_review_policy',
+         'config_check_run', 'revision_proposal', 'config_review_request', 'methodology_migration',
+         'methodology_migration_item', 'transformation_config_pin_history', 'gate_reapproval', 'transformation_config_pin')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["config_check_run", "config_check_run_append_only", false, false],
+      ["config_check_run", "config_check_run_append_only_truncate", false, false],
+      ["config_check_run", "config_check_run_audit_required", true, true],
+      ["config_check_run", "config_check_run_row_guard", false, false],
+      ["config_review_policy", "config_review_policy_audit_required", true, true],
+      ["config_review_policy", "config_review_policy_guard", false, false],
+      ["config_review_policy", "config_review_policy_row_guard", false, false],
+      ["config_review_request", "config_review_request_audit_required", true, true],
+      ["config_review_request", "config_review_request_guard", false, false],
+      ["config_review_request", "config_review_request_row_guard", false, false],
+      ["gate_reapproval", "gate_reapproval_audit_required", true, true],
+      ["gate_reapproval", "gate_reapproval_guard", false, false],
+      ["gate_reapproval", "gate_reapproval_row_guard", false, false],
+      ["methodology_element", "methodology_element_audit_required", true, true],
+      ["methodology_element", "methodology_element_guard", false, false],
+      ["methodology_element", "methodology_element_row_guard", false, false],
+      ["methodology_migration", "methodology_migration_audit_required", true, true],
+      ["methodology_migration", "methodology_migration_executed_moved_pin", true, true],
+      ["methodology_migration", "methodology_migration_guard", false, false],
+      ["methodology_migration", "methodology_migration_row_guard", false, false],
+      ["methodology_migration_item", "methodology_migration_item_append_only", false, false],
+      ["methodology_migration_item", "methodology_migration_item_append_only_truncate", false, false],
+      ["methodology_migration_item", "methodology_migration_item_row_guard", false, false],
+      ["methodology_version", "methodology_version_audit_required", true, true],
+      ["methodology_version", "methodology_version_kind_key", false, false],
+      ["methodology_version", "methodology_version_new_draft", false, false],
+      ["methodology_version", "methodology_version_published_immutable", false, false],
+      ["methodology_version", "methodology_version_row_guard", false, false],
+      ["methodology_version", "methodology_version_studio_guard", false, false],
+      ["revision_proposal", "revision_proposal_append_only", false, false],
+      ["revision_proposal", "revision_proposal_append_only_truncate", false, false],
+      ["revision_proposal", "revision_proposal_audit_required", true, true],
+      ["revision_proposal", "revision_proposal_row_guard", false, false],
+      ["transformation_config_pin", "transformation_config_pin_audit_required", true, true],
+      ["transformation_config_pin", "transformation_config_pin_guard", false, false],
+      ["transformation_config_pin", "transformation_config_pin_history_required", true, true],
+      ["transformation_config_pin", "transformation_config_pin_row_guard", false, false],
+      ["transformation_config_pin_history", "transformation_config_pin_history_append_only", false, false],
+      ["transformation_config_pin_history", "transformation_config_pin_history_append_only_truncate", false, false],
+      ["transformation_config_pin_history", "transformation_config_pin_history_row_guard", false, false],
+    ]);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -651,6 +704,12 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "trace_link",
       "workstream",
       "workstream_initiative",
+      // P5 slice A (0062-0063, T-DG5-ARCH-01; ADR-0039, ADR-0040).
+      "config_review_policy",
+      "config_review_request",
+      "gate_reapproval",
+      "methodology_element",
+      "methodology_migration",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -699,7 +758,8 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       actor_display: "SELECT",
       scope_node: "SELECT",
       // P2 (0010-0018): no DELETE anywhere; history/snapshot tables are INSERT,SELECT only (ADR-0016).
-      methodology_version: "SELECT",
+      // P5 slice A (0062): Studio drafts are inserted and updated by the application (ADR-0039 §1).
+      methodology_version: SIU,
       transformation_config_pin: SIU,
       diagnostic_dimension: "SELECT",
       diagnostic_workstream: "SELECT",
@@ -906,6 +966,18 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       t10_area_definition: "SELECT",
       dashboard_rag_policy: SIU,
       my_work_draft: "SELECT",
+      // P5 slice A (0062-0064): still no DELETE anywhere; check runs, revision proposals, plan items and pin history are
+      // append-only (INSERT,SELECT); the source inventory is read-only; review policies are seeded (SELECT,UPDATE).
+      config_review_policy: "SELECT,UPDATE",
+      source_element: "SELECT",
+      methodology_element: SIU,
+      config_check_run: "INSERT,SELECT",
+      revision_proposal: "INSERT,SELECT",
+      config_review_request: SIU,
+      methodology_migration: SIU,
+      methodology_migration_item: "INSERT,SELECT",
+      transformation_config_pin_history: "INSERT,SELECT",
+      gate_reapproval: SIU,
     });
   });
 

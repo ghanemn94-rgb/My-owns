@@ -1,7 +1,7 @@
 // Permission catalogue and seeded role defaults (ADR-0006). Source: docs/analysis/permissions-matrix.md.
 // These are a CONFIGURABLE STARTING POINT, not a Mobily-approved access policy. The database is the runtime
 // source of truth (role, permission, role_permission tables); the seed migrations insert exactly these rows (P1:
-// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql; P4 slices F and G: 0049_p4_adoption_sustainment_permissions.sql; P4 slice H: 0053_p4_gates_change_permissions.sql), and a unit test in @mth/db asserts each
+// 0005_seed_roles_permissions.sql; P2: 0018_p2_access_instantiation.sql; P3: 0024_p3_gates_access_instantiation.sql; P4 slices I and C: 0031_p4_approvals_permissions.sql; P4 slice A: 0036_p4_kpi_permissions_backfill.sql; P4 slice B: 0040_p4_benefit_permissions.sql; P4 slice E: 0043_p4_raid_permissions.sql; P4 slice D: 0046_p4_governance_permissions.sql; P4 slices F and G: 0049_p4_adoption_sustainment_permissions.sql; P4 slice H: 0053_p4_gates_change_permissions.sql; P4 slices J and K: 0057_p4_dashboards_traceability_permissions.sql; P5 slice A: 0064_p5_studio_permissions_source_inventory.sql), and a unit test in @mth/db asserts each
 // seed matches this file.
 
 export const PERMISSION_CATEGORIES = ["read", "write", "configure", "business_approval", "finance_validation"] as const;
@@ -214,6 +214,24 @@ export const P4_DASHBOARD_TRACE_PERMISSIONS = {
   "dashboard.configure": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P5 slice A (T-DG5-ARCH-01; ADR-0039 §9, ADR-0040 §6): Playbook Studio, configuration review, source coverage and the
+ * methodology migration of a pinned transformation. Seeded by migration 0064. One business_approval code,
+ * methodology_migration.approve, held only by SP (TL stays approval-free: the DG1 creator-derived assignment, 0008,
+ * never derives a role that holds an approval code). ADM_METHOD configures, previews, publishes and plans/executes
+ * approved migrations; it never reviews configuration and never approves (REQ-S06-010, REQ-S10-003). AUD reads only.
+ */
+export const P5_STUDIO_PERMISSIONS = {
+  "methodology.read": "read",
+  "methodology.publish": "configure",
+  "methodology.review": "write",
+  "config_review_policy.configure": "configure",
+  "source_coverage.run": "configure",
+  "methodology_migration.plan": "configure",
+  "methodology_migration.approve": "business_approval",
+  "methodology_migration.execute": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -226,6 +244,7 @@ export const PERMISSIONS = {
   ...P4_ADOPTION_SUSTAINMENT_PERMISSIONS,
   ...P4_GATES_CHANGE_PERMISSIONS,
   ...P4_DASHBOARD_TRACE_PERMISSIONS,
+  ...P5_STUDIO_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -540,6 +559,21 @@ export const P4_DASHBOARD_TRACE_ROLE_PERMISSIONS = {
   KDS: ["dashboard.configure"],
 } as const satisfies Record<string, readonly (keyof typeof P4_DASHBOARD_TRACE_PERMISSIONS)[]>;
 
+/** P5 slice A role defaults (0064). AUD gets methodology.read only; no technical admin gets a business approval. */
+export const P5_STUDIO_ROLE_PERMISSIONS = {
+  SP: ["methodology.read", "methodology_migration.approve"],
+  TL: ["methodology.read"],
+  TO: ["methodology.read", "methodology.review", "config_review_policy.configure"],
+  AUD: ["methodology.read"],
+  ADM_METHOD: [
+    "methodology.read",
+    "methodology.publish",
+    "source_coverage.run",
+    "methodology_migration.plan",
+    "methodology_migration.execute",
+  ],
+} as const satisfies Record<string, readonly (keyof typeof P5_STUDIO_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -554,6 +588,7 @@ export const ROLES = {
       ...P4_GOVERNANCE_ROLE_PERMISSIONS.SP,
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SP,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.SP,
+      ...P5_STUDIO_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -575,6 +610,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TL,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TL,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TL,
+      ...P5_STUDIO_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -645,6 +681,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TO,
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.TO,
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.TO,
+      ...P5_STUDIO_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -696,6 +733,7 @@ export const ROLES = {
       "user.read",
       "access.read",
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.AUD,
+      ...P5_STUDIO_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -734,6 +772,7 @@ export const ROLES = {
       "role.read",
       ...P2_ROLE_PERMISSIONS.ADM_METHOD,
       ...P3_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P5_STUDIO_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

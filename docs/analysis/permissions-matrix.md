@@ -710,3 +710,45 @@ Legend as in 8.3. **own** = only the caller's own items.
 - **AUD (read-only auditor):** every mutating slice J/K operation (`putDashboardRagPolicy`, the trace-link writes, `setOutcomeContributionAllocation`, the inherited-record writes, the portfolio and workstream writes) returns **403** for AUD and writes nothing; every read returns 200 within AUD's scope. KBE-G, BE-M, BE-M2 and BE-M3 test this on each of their operations.
 - **Technical admins:** ADM-only users hold no `transformation.read`, so the transformation-scoped reads answer 404 and My Work is empty; they hold no slice J/K write code (403).
 - **Scope:** no response contains a record or figure of a transformation outside the caller's readable set (ADR-0037 §6; REQ-S13-001); reached records in an impact or traceability walk that the caller cannot read are counted, never listed (ADR-0038 §6).
+
+## 18. P5 implementation, slice A (DG5): Playbook Studio, configuration review, source coverage, pins and methodology migration permission codes and per-entity rights
+
+- **Task:** T-DG5-ARCH-01 (solution-architect), 2026-10-13. **Sources:** ADR-0039 §9, ADR-0040 §6; master prompt M0154–M0156, M0238; the rows "Methodology config" and "Methodology migration of a pinned transformation" of §8 above.
+- **Seed:** `0064_p5_studio_permissions_source_inventory.sql`, equal to `P5_STUDIO_PERMISSIONS` / `P5_STUDIO_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation (REQ-S06-010, M0156):** methodology admins (ADM_METHOD) draft, preview, publish and execute approved migrations; they never review their own configuration and never approve (no technical-admin role can hold a `business_approval` or `finance_validation` code; the `0005` trigger refuses it). Approving a migration is a business approval (SP by default). A configuration review is a `write` code, not a business approval. Publishing methodology never grants business-approval rights.
+
+### 18.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `methodology.read` | read | Read Studio versions, drafts, elements, diffs, check runs, reviews, review policies, revision proposals, source coverage and methodology migrations | SP, TL, TO, AUD, ADM_METHOD |
+| `methodology.configure` (DG2) | configure | Create, edit and discard drafts; put and remove elements; edit scoring-defaults drafts | ADM_METHOD |
+| `methodology.publish` | configure | Preview/test, compatibility check, submit and withdraw review, publish, roll back | ADM_METHOD |
+| `methodology.review` | write | Decide the configured review of a draft (never its author or requester) | TO |
+| `config_review_policy.configure` | configure | Set which kinds need review and the reviewer role | TO |
+| `source_coverage.run` | configure | Run and record the source-completeness check | ADM_METHOD |
+| `methodology_migration.plan` | configure | Create, preview, submit and withdraw a methodology migration | ADM_METHOD |
+| `methodology_migration.approve` | business_approval | Approve, reject or return a methodology migration (never the requester) | SP (TL stays approval-free: the DG1 creator-derived assignment, `0008`, never derives a role holding an approval code) |
+| `methodology_migration.execute` | configure | Execute an approved migration | ADM_METHOD |
+
+Config pins and their history are read with `methodology.read`; gate re-approvals and a transformation's scoring defaults with `transformation.read` within the caller's scope (AUD read-only). Resubmitting a gate that needs re-approval uses the DG2 `gate.submit`.
+
+### 18.2 Per-entity rights in P5 (slice A)
+
+Legend as in 8.3. **own** = never the caller's own draft or request.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH, ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Configuration versions and elements (`methodology_version`, `methodology_element`) | V | V | — | — | — | V | — | — | — | — | V | C U Cf (draft, preview, publish, rollback) | — |
+| Check runs (`config_check_run`) and source coverage (`source_element`) | V | V | — | — | — | V | — | — | — | — | V | C (run) | — |
+| Review requests (`config_review_request`) | V | V | — | — | — | Rv (not own) | — | — | — | — | V | S (submit, withdraw) | — |
+| Review policies (`config_review_policy`) | V | V | — | — | — | Cf | — | — | — | — | V | V | — |
+| Revision proposals (`revision_proposal`, S12-018) | V | V | — | — | V (via review task) | V | — | — | — | — | V | V | — |
+| Config pins and pin history (`transformation_config_pin`, `transformation_config_pin_history`) | V | V | — | — | — | V | — | — | — | — | V | V | — |
+| Methodology migrations and plans (`methodology_migration`, `methodology_migration_item`) | Ap | V | — | — | — | V | — | — | — | — | V | C S (plan, submit, execute) | — |
+| Gate re-approvals (`gate_reapproval`) | V | V | V | V | V | V | V | V | V | V | V | — (404) | — |
+| T06 default weights and rubric (`scoring_defaults` versions) | V | V | V (transformation's) | V (transformation's) | V (transformation's) | V; Rv (review) | V (transformation's) | V (transformation's) | V (transformation's) | V (transformation's) | V | C U Cf (draft, publish) | — |
+
+- **AUD (read-only auditor):** every slice A mutation (draft, element, preview, compatibility, review submit/decide/withdraw, publish, rollback, discard, review policy, source-coverage run, scoring-defaults draft, migration create/preview/submit/decide/execute/withdraw) returns **403** for AUD and writes nothing; AUD reads every slice A record within its scope.
+- **SoD:** a draft's author or the review's requester gets 403 `config_review.self_review` on deciding its review; a migration's requester gets 403 `methodology_migration.self_approval` on deciding it.
+- **REQ-S06-010 acceptance:** ADM_METHOD publishes a form change and gets 403 approving a funding reallocation (it holds neither `approval.decide` nor `funding.approve`); a KPI owner (BO, KDS) updates assigned KPI actuals (DG4) and gets 403 on every Studio write.

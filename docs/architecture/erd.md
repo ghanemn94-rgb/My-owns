@@ -7,6 +7,7 @@
   - **P1** means the table is created by P1 migrations.
   - **P2** in bold means the table is created by the P2 migrations 0010–0018 (section 1b; T-DG2-ARCH-01B).
   - **P3** tables are created by the P3 migrations 0020–0024 (section 1c; T-DG3-ARCH-01).
+  - P5 slice A tables are created by the migrations 0062–0064 (section 1l; T-DG5-ARCH-01).
   - `Px` names the stage that adds the table.
   - Entity names are conceptual. Table names are snake_case singular, and `User` becomes `app_user` because `user` is a reserved word.
 
@@ -1591,6 +1592,61 @@ The view `my_work_draft` (`0056`) lists records in status `draft` of 18 record t
 | T10 area (PB-062) | `t10_area_definition` (seed) | `id` (`code`) | — | seed | — | — | reporting |
 | Dashboard RAG policy (PB-063) | `dashboard_rag_policy` | `id` (one per organization) | — | `dashboard.configure` (TO, KDS) | — | yes | reporting |
 
+## 1l. P5 physical model, slice A (migrations 0062–0064, DG5)
+
+T-DG5-ARCH-01 (ADR-0039, ADR-0040). Columns, constraints, triggers and privileges: `data-dictionary.md`, "P5 tables, slice A". The DG2 catalogue rows stay the stable-identity registry (D-142 Q1); versioned attributes are `methodology_element` rows resolved through the pin.
+
+### 1l.1 Studio configuration versions, elements, checks and reviews — `methodology` module
+
+```mermaid
+erDiagram
+    methodology_version ||--o{ methodology_element : "version-scoped attributes (type, stable key)"
+    methodology_version |o--o{ methodology_version : "based on / rollback of"
+    methodology_version ||--o{ config_check_run : "preview, compatibility, source coverage (per content hash)"
+    methodology_version ||--o{ config_review_request : "configured review (per content hash)"
+    config_review_policy ||--o{ config_review_request : "requires reviewer role"
+    revision_proposal |o--o{ config_review_request : "impact and validation (S12-018)"
+    source_element ||--o{ methodology_element : "source identity (templates, forums, lifecycle, windows, example, questions)"
+    gate_definition ||--o{ methodology_element : "identity of type gate"
+    phase_definition ||--o{ methodology_element : "identity of type phase"
+    tom_dimension ||--o{ methodology_element : "identity of type tom_dimension"
+```
+
+`methodology_version.config_kind` ∈ `methodology`, `scoring_defaults`, `form_schema`, `procedure`, `automation_rule_set`, `health_check_scheme`. `revision_proposal.subject_id` is polymorphic (`methodology_version` or `benefit_formula_version`, by `subject_type`); `source_element` is related to `methodology_element` by stable key, not by a foreign key.
+
+### 1l.2 Pins, methodology migrations and re-approvals — `methodology` and `workflows` modules
+
+```mermaid
+erDiagram
+    transformation ||--o{ transformation_config_pin : "one per kind"
+    methodology_version ||--o{ transformation_config_pin : "pinned version"
+    transformation ||--o{ methodology_migration : "deliberate move of one pin"
+    methodology_version ||--o{ methodology_migration : "from / to"
+    methodology_migration ||--o{ methodology_migration_item : "plan revisions (append-only)"
+    methodology_migration |o--o| approval : "business approval (type methodology_migration)"
+    methodology_migration ||--o{ transformation_config_pin_history : "pin moves (append-only)"
+    transformation_config_pin ||--o{ transformation_config_pin_history : "history"
+    methodology_migration ||--o{ gate_reapproval : "re-approvals required"
+    gate_instance ||--o{ gate_reapproval : "re-approval of"
+    gate_decision ||--o{ gate_reapproval : "approved (kept) / satisfying decision"
+    work_item |o--o| gate_reapproval : "G-n submission task"
+```
+
+### 1l.3 P5 entity register (slice A) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| MethodologyVersion (S16-012) and every Studio configuration version (S06-007) | `methodology_version` | `id` (`key`, `version_no` unique) | `created_by` (`published_by`) | `methodology.configure`, `methodology.publish` (ADM_METHOD); seeds by migration | `status` (draft, published, retired) and `draft_stage` (editing, preview, review, approved, discarded) | yes | methodology |
+| Phase, GateDefinition (S16-012, version-scoped) and the other Studio elements (S06-004) | `methodology_element` over `phase_definition`, `gate_definition`, … | `id` (version, type, stable key unique) | `created_by` | `methodology.configure` (drafts only) | the version's | yes | methodology |
+| Source inventory (S02-001) | `source_element` (seed) | `id` (set, key unique) | — | migrations | `feature_status` (working, planned) | — | methodology |
+| Check run (S06-007, S02-001) | `config_check_run` | `id` | `run_by` | `methodology.publish`, `source_coverage.run` | `result` (pass, warn, fail) | append-only | methodology |
+| Review policy and review (S06-007) | `config_review_policy`, `config_review_request` | `id` (policy: kind unique) | `requested_by` | `config_review_policy.configure` (TO); `methodology.publish`, `methodology.review` (TO) | request `status` (pending, approved, changes_requested, withdrawn) | yes | methodology |
+| Revision proposal (S12-018) | `revision_proposal` | `id` (`dedupe_key` unique) | `created_by` (NULL for the system) | the proposing transaction | `validation_result` (pass, fail) | append-only | methodology |
+| Configuration pin (S06-008) | `transformation_config_pin`, `transformation_config_pin_history` | `id` (transformation, kind unique) | `pinned_by` | instantiation; `methodology_migration.execute` | — | yes; history append-only | methodology |
+| Methodology migration (S06-008) | `methodology_migration`, `methodology_migration_item` | `id` (one open per transformation and kind) | `requested_by` | `methodology_migration.plan`, `.approve` (SP; business approval), `.execute` | `status` (draft, submitted, changes_requested, approved, rejected, withdrawn, executed) | yes; items append-only | methodology |
+| Gate re-approval (S06-008, D-142 Q9) | `gate_reapproval` | `id` (one required per gate instance) | `created_by` | execution; the gate decision | `status` (required, satisfied, superseded) | yes | workflows |
+| T06 default weights and rubric (PB-093) | `methodology_version` (`config_kind = 'scoring_defaults'`) + `methodology_element` (`scoring_weight`, `scoring_rubric`) | as above | as above | `methodology.configure`, `methodology.publish` | as above | yes | methodology |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -1640,9 +1696,9 @@ erDiagram
 | Transformation | `transformation` | **P1** (minimal fields) |
 | PerformanceArea | `performance_area` | P4 |
 | Charter | `charter` + `charter_version` (versioned, 14 source fields) | **P2** |
-| MethodologyVersion | `methodology_version` (+ `transformation_config_pin`) | **P2** |
-| Phase | `phase_definition` (per methodology version) | P5 (P2 keeps phases as CHECK values + `gate_definition.phase`) |
-| GateDefinition | `gate_definition` + `gate_criterion_definition` | **P2** |
+| MethodologyVersion | `methodology_version` (+ `transformation_config_pin`); Studio kinds, stages and lineage (section 1l) | **P2**/P5 |
+| Phase | `phase_definition` (P4, stable identities) + `methodology_element` of type `phase` (version-scoped attributes, section 1l) | P4/P5 |
+| GateDefinition | `gate_definition` + `gate_criterion_definition` (stable identities) + `methodology_element` of type `gate` (version-scoped attributes, section 1l) | **P2**/P5 |
 | GateInstance | `gate_instance` + `gate_submission` (versioned, evidence snapshot) + `gate_submission_criterion` | **P2** |
 | GateDecision | `gate_decision` → references `decision` (kind `gate`) | **P2** |
 

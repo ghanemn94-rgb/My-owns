@@ -136,7 +136,7 @@ describe("GET /api/v1/me", () => {
         inheritsDownward: true,
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
         // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
-        // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057), sorted.
+        // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057) + P5 slice A defaults (0064), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -149,6 +149,7 @@ describe("GET /api/v1/me", () => {
           "change_control.configure",
           "change_request.raise",
           "charter.edit",
+          "config_review_policy.configure",
           "control.manage",
           "control_check.record",
           "corrective_rule.configure",
@@ -172,6 +173,8 @@ describe("GET /api/v1/me", () => {
           "lesson.search",
           "meeting.chair",
           "meeting.prepare",
+          "methodology.read",
+          "methodology.review",
           "organization.read",
           "performance_area.manage",
           "phase_step.manage",

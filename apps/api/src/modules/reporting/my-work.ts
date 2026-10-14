@@ -55,12 +55,16 @@ export const MY_WORK_SECTION_BY_KIND: Readonly<Record<string, Exclude<MyWorkSect
   scale_scope_enabled: "assigned_actions",
   assessment_invitation: "assigned_actions",
   approval_changes_requested: "assigned_actions",
+  // P5 slice A (0063; ADR-0040 §3): resubmit a gate that needs re-approval after a methodology migration.
+  gate_reapproval: "assigned_actions",
   // Reviews
   kpi_actual_review: "reviews",
   finance_validation_review: "reviews",
   assessment_to_review: "reviews",
   phase_step_review: "reviews",
   benefit_overlap_review: "reviews",
+  // P5 slice A (0063; ADR-0039 §5, §8): the configured review of a Studio change or a formula revision.
+  config_review: "reviews",
   // Approvals (business approvals inside the product; never DG0-DG7)
   approval_decision: "approvals",
   approval_escalated: "approvals",

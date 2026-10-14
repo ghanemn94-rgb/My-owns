@@ -1,4 +1,4 @@
-# Data dictionary: P1, P2, P3 and P4 tables and views
+# Data dictionary: P1, P2, P3, P4 and P5 tables and views
 
 - **Task:** T-DG1-ARCH-01 (solution-architect), 2026-09-30.
 - **Contract for:** backend-workflow-engineer's P1 migrations (`packages/db/migrations/**`).
@@ -8939,3 +8939,506 @@ Slices J and K of `docs/architecture/p4-plan.md` (T-DG4-ARCH-08; ADR-0037 dashbo
 | API (`@mth/shared/schemas`) | Shapes (OpenAPI slices J and K schemas), filters, free-text rules, strict UTF-8, request media types, `If-Match` |
 | Service | Permissions and record-level rules (ADR-0037 §10, ADR-0038 §10), the readable-transformation scope of every read (404 outside it), the area RAG rules and defaults, the drill-down sum invariant, the My Work kind map and own-items rule, the missing-link and orphan rules, the impact walk, commit-time re-authorization, the exact refusal codes and English texts (ADR-0037 §13, ADR-0038 §12) |
 | Worker | none (slices J and K have no job) |
+
+# P5 tables, slice A (migrations 0062–0064, DG5)
+
+Generated from the catalogue of a freshly migrated disposable database by `docs/delivery/handbacks/DG5/T-DG5-ARCH-01-evidence/gen-dictionary.ts` (T-DG5-ARCH-01; ADR-0039, ADR-0040), so it matches the migrations exactly. `methodology_version` and `transformation_config_pin` are DG2 tables (P2 section above); they are listed again in full because `0062`/`0063` add columns, constraints, triggers and (for `methodology_version`) the INSERT and UPDATE privileges.
+
+## Changes to existing tables (slice A)
+
+- `methodology_version` (`0062`): columns `config_kind` (default `methodology`), `draft_stage`, `origin` (default `seed`), `based_on_version_id`, `rollback_of_version_id`, `change_summary`, `discarded_at`; CHECKs `methodology_version_draft_stage_complete`, `methodology_version_rollback_complete`, `methodology_version_draft_lineage`, `methodology_version_discarded_complete`, `methodology_version_publisher`; unique index `methodology_version_one_open_draft_key`; triggers `methodology_version_kind_key`, `methodology_version_new_draft`, `methodology_version_studio_guard`, and the P2 guards (`_row_guard`, deferred `_audit_required`); `mth_app` gains INSERT, UPDATE. The DG2 trigger `methodology_version_published_immutable` and CHECK `methodology_version_published_complete` are unchanged; the seeded `playbook` v1 row reads `config_kind = 'methodology'`, `origin = 'seed'`.
+- `transformation_config_pin` (`0063`): the kind CHECK widened from `('methodology')` to the six kinds; column `last_migration_id` with the composite FK `transformation_config_pin_last_migration_fkey`; triggers `transformation_config_pin_guard` and deferred `transformation_config_pin_history_required`. Existing pins are unchanged.
+- `approval_type` (`0063`): row `methodology_migration`. `work_item_kind` (`0063`): rows `config_review`, `gate_reapproval`.
+- `permission`, `role_permission` (`0064`): the slice A codes (below).
+
+## methodology_version
+
+- **Purpose:** The version header of every Studio configuration kind (ADR-0039 §1): kind, key, version number, status, draft stage, origin and lineage, content hash; published versions are immutable (REQ-S06-007, REQ-S06-009, REQ-S16-012). Platform-wide (no organization).
+- **Migration:** `0011 (DG2) + 0062_p5_config_versions.sql`. **API module:** `methodology`. **Who writes:** `methodology.configure` (drafts), `methodology.publish` (publish, rollback); seeds by migration only. **Lifecycle:** status draft → published → retired; draft stage editing → preview → review → approved (or discarded); versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| key | text | NOT NULL |  | `CHECK ((key ~ '^[a-z][a-z0-9_-]{0,63}$'))` |
+| version_no | integer | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'published', 'retired'])))` |
+| title_en | text | NOT NULL |  | `CHECK (((char_length(title_en) >= 1) AND (char_length(title_en) <= 200)))` |
+| title_ar | text | NOT NULL |  | `CHECK (((char_length(title_ar) >= 1) AND (char_length(title_ar) <= 200)))` |
+| source_document | text | NOT NULL |  | `CHECK (((char_length(source_document) >= 1) AND (char_length(source_document) <= 500)))` |
+| source_sha256 | character(64) | NULL |  | `CHECK (((source_sha256 IS NULL) OR (source_sha256 ~ '^[0-9a-f]{64}$')))` |
+| definition | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(definition) = 'object'))` |
+| content_sha256 | character(64) | NOT NULL |  | `CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'))` |
+| published_at | timestamp with time zone | NULL |  |  |
+| published_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+| config_kind | text | NOT NULL | `'methodology'` | `CHECK ((config_kind = ANY (ARRAY['methodology', 'scoring_defaults', 'form_schema', 'procedure', 'automation_rule_set', 'health_check_scheme'])))` |
+| draft_stage | text | NULL |  | `CHECK (((draft_stage IS NULL) OR (draft_stage = ANY (ARRAY['editing', 'preview', 'review', 'approved', 'discarded']))))` |
+| origin | text | NOT NULL | `'seed'` | `CHECK ((origin = ANY (ARRAY['seed', 'draft', 'rollback'])))` |
+| based_on_version_id | uuid | NULL |  | FK → methodology_version(id) |
+| rollback_of_version_id | uuid | NULL |  | FK → methodology_version(id) |
+| change_summary | text | NULL |  | `CHECK (((change_summary IS NULL) OR ((char_length(change_summary) >= 1) AND (char_length(change_summary) <= 4000))))` |
+| discarded_at | timestamp with time zone | NULL |  |  |
+
+**Table constraints:**
+
+- `methodology_version_discarded_complete` (CHECK): `CHECK ((COALESCE((draft_stage = 'discarded'), false) = (discarded_at IS NOT NULL)))`
+- `methodology_version_draft_lineage` (CHECK): `CHECK (((origin = 'seed') OR ((based_on_version_id IS NOT NULL) AND (created_by IS NOT NULL))))`
+- `methodology_version_draft_stage_complete` (CHECK): `CHECK (((status = 'draft') = (draft_stage IS NOT NULL)))`
+- `methodology_version_key_no_key` (UNIQUE): `UNIQUE (key, version_no)`
+- `methodology_version_published_complete` (CHECK): `CHECK (((status = 'draft') = (published_at IS NULL)))`
+- `methodology_version_publisher` (CHECK): `CHECK (((status = 'draft') OR (origin = 'seed') OR (published_by IS NOT NULL)))`
+- `methodology_version_rollback_complete` (CHECK): `CHECK ((((origin = 'rollback') = (rollback_of_version_id IS NOT NULL)) AND ((origin <> 'rollback') OR (change_summary IS NOT NULL))))`
+
+**Indexes:**
+
+- `methodology_version_one_open_draft_key`: `UNIQUE (config_kind, key) WHERE ((status = 'draft') AND (draft_stage <> 'discarded'))`
+
+**Triggers:**
+
+- `methodology_version_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `methodology_version_kind_key`: BEFORE INSERT FOR EACH ROW → `methodology_version_kind_key()`
+- `methodology_version_new_draft`: BEFORE INSERT FOR EACH ROW → `methodology_version_new_draft()`
+- `methodology_version_published_immutable`: BEFORE UPDATE FOR EACH ROW → `methodology_version_published_immutable()`
+- `methodology_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `methodology_version_studio_guard`: BEFORE UPDATE FOR EACH ROW → `methodology_version_studio_guard()`
+
+## methodology_element
+
+- **Purpose:** Version-scoped attributes of one stable element (D-142 Q1; ADR-0039 §2): a row exists where a version differs from or adds to the DG2 catalogue; phases, gates and TOM dimensions are never added or removed (REQ-S06-006).
+- **Migration:** `0062_p5_config_versions.sql`. **API module:** `methodology`. **Who writes:** `methodology.configure` (drafts only). **Lifecycle:** written only while its version is a draft being edited; frozen with the version; versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| element_type | text | NOT NULL |  | `CHECK ((element_type = ANY (ARRAY['methodology_text', 'phase', 'gate', 'gate_criterion', 'mandatory_artifact', 'checklist_item', 'template', 'tom_dimension', 'approver_route', 'reminder', 'escalation_rule', 'dashboard', 'report_layout', 'source_element', 'scoring_weight', 'scoring_rubric'])))` |
+| stable_key | text | NOT NULL |  | `CHECK ((stable_key ~ '^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$'))` |
+| origin | text | NOT NULL |  | `CHECK ((origin = ANY (ARRAY['source', 'admin'])))` |
+| removed | boolean | NOT NULL | `false` |  |
+| ordinal | smallint | NULL |  | `CHECK (((ordinal IS NULL) OR ((ordinal >= 1) AND (ordinal <= 999))))` |
+| attributes | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK ((jsonb_typeof(attributes) = 'object'))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `methodology_element_fixed_sets` (CHECK): `CHECK (((element_type <> ALL (ARRAY['phase', 'gate', 'tom_dimension'])) OR ((origin = 'source') AND (NOT removed))))`
+- `methodology_element_key` (UNIQUE): `UNIQUE (methodology_version_id, element_type, stable_key)`
+
+**Indexes:**
+
+- `methodology_element_version_idx`: `(methodology_version_id, element_type, ordinal)`
+
+**Triggers:**
+
+- `methodology_element_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `methodology_element_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `methodology_element_guard()`
+- `methodology_element_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## source_element
+
+- **Purpose:** The source inventory of REQ-S02-001: 80 counted source elements with verbatim English labels, provisional Arabic labels, block references and implementing feature (ADR-0039 §6).
+- **Migration:** `0062_p5_config_versions.sql (table), 0064 (seed)`. **API module:** `methodology`. **Who writes:** migrations only (feature_status moved by the shipping task's migration). **Lifecycle:** seeded catalogue.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| set_code | text | NOT NULL |  | `CHECK ((set_code = ANY (ARRAY['mode', 'phase', 'gate', 'template', 'tom_dimension', 'forum', 'benefit_lifecycle_step', 'launch_window', 'roaming_example', 'health_question'])))` |
+| stable_key | text | NOT NULL |  | `CHECK ((stable_key ~ '^[A-Za-z0-9][A-Za-z0-9_-]{0,47}$'))` |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 99)))` |
+| source_label_en | text | NOT NULL |  | `CHECK (((char_length(source_label_en) >= 1) AND (char_length(source_label_en) <= 300)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 300)))` |
+| source_ref | text | NOT NULL |  | `CHECK (((char_length(source_ref) >= 1) AND (char_length(source_ref) <= 50)))` |
+| feature_ref | text | NOT NULL |  | `CHECK (((char_length(feature_ref) >= 1) AND (char_length(feature_ref) <= 200)))` |
+| feature_status | text | NOT NULL |  | `CHECK ((feature_status = ANY (ARRAY['working', 'planned'])))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `source_element_key` (UNIQUE): `UNIQUE (set_code, stable_key)`
+- `source_element_ordinal_key` (UNIQUE): `UNIQUE (set_code, ordinal)`
+
+## config_check_run
+
+- **Purpose:** One preview/test, compatibility, source-coverage or invariant run over exactly one content hash of a version (ADR-0039 §5, §6).
+- **Migration:** `0062_p5_config_versions.sql`. **API module:** `methodology`. **Who writes:** `methodology.publish`, `source_coverage.run`. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| check_kind | text | NOT NULL |  | `CHECK ((check_kind = ANY (ARRAY['preview', 'compatibility', 'source_coverage', 'invariants'])))` |
+| content_sha256 | character(64) | NOT NULL |  | `CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'))` |
+| result | text | NOT NULL |  | `CHECK ((result = ANY (ARRAY['pass', 'warn', 'fail'])))` |
+| report | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(report) = 'object'))` |
+| run_by | uuid | NOT NULL |  | FK → app_user(id) |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Indexes:**
+
+- `config_check_run_version_idx`: `(methodology_version_id, check_kind, created_at DESC)`
+
+**Triggers:**
+
+- `config_check_run_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `config_check_run_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `config_check_run_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `config_check_run_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## config_review_policy
+
+- **Purpose:** Whether a configuration kind needs review before publish and by which role (REQ-S06-007 "Review where configured"); the benefit_formula row names the reviewer of S12-018 formula-revision tasks.
+- **Migration:** `0062_p5_config_versions.sql`. **API module:** `methodology`. **Who writes:** `config_review_policy.configure` (TO). **Lifecycle:** seeded one row per kind; versioned.
+- **`mth_app` privileges:** SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| config_kind | text | NOT NULL |  | `CHECK ((config_kind = ANY (ARRAY['methodology', 'scoring_defaults', 'form_schema', 'procedure', 'automation_rule_set', 'health_check_scheme', 'benefit_formula'])))` |
+| review_required | boolean | NOT NULL |  |  |
+| reviewer_role_code | text | NOT NULL |  | FK → role(code) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `config_review_policy_kind_key` (UNIQUE): `UNIQUE (config_kind)`
+- `config_review_policy_reviewer_not_auditor` (CHECK): `CHECK ((reviewer_role_code <> 'AUD'))`
+
+**Triggers:**
+
+- `config_review_policy_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `config_review_policy_guard`: BEFORE UPDATE FOR EACH ROW → `config_review_policy_guard()`
+- `config_review_policy_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## revision_proposal
+
+- **Purpose:** The S12-018 starter's record: validation, impact (affected transformations, records, benefits) and review routing of a proposed methodology or formula revision, exactly once per subject and content (ADR-0039 §8).
+- **Migration:** `0062_p5_config_versions.sql`. **API module:** `methodology`. **Who writes:** the API in the submit-review or formula-version transaction. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NULL |  | FK → transformation(id) |
+| subject_type | text | NOT NULL |  | `CHECK ((subject_type = ANY (ARRAY['methodology_version', 'benefit_formula_version'])))` |
+| subject_id | uuid | NOT NULL |  |  |
+| subject_version | integer | NOT NULL |  | `CHECK ((subject_version >= 1))` |
+| content_sha256 | character(64) | NOT NULL |  | `CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'))` |
+| validation_result | text | NOT NULL |  | `CHECK ((validation_result = ANY (ARRAY['pass', 'fail'])))` |
+| validation_report | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(validation_report) = 'object'))` |
+| impact | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(impact) = 'object'))` |
+| reviewer_role_code | text | NOT NULL |  | FK → role(code) |
+| review_task_count | integer | NOT NULL |  | `CHECK ((review_task_count >= 0))` |
+| dedupe_key | text | NOT NULL |  | `CHECK (((char_length(dedupe_key) >= 1) AND (char_length(dedupe_key) <= 200)))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `revision_proposal_dedupe_key` (UNIQUE): `UNIQUE (dedupe_key)`
+- `revision_proposal_dedupe_shape` (CHECK): `CHECK ((dedupe_key = ((((subject_type || ':') || (subject_id)) || ':') || (content_sha256))))`
+- `revision_proposal_scope` (CHECK): `CHECK (((subject_type = 'benefit_formula_version') = (transformation_id IS NOT NULL)))`
+
+**Indexes:**
+
+- `revision_proposal_subject_idx`: `(subject_type, subject_id, created_at DESC)`
+
+**Triggers:**
+
+- `revision_proposal_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `revision_proposal_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `revision_proposal_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `revision_proposal_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## config_review_request
+
+- **Purpose:** The configured review of exactly one content hash of a draft; the reviewer is never the requester or the author (ADR-0039 §5).
+- **Migration:** `0062_p5_config_versions.sql`. **API module:** `methodology`. **Who writes:** `methodology.publish` (request, withdraw), `methodology.review` (decide). **Lifecycle:** pending → approved | changes_requested | withdrawn; versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| content_sha256 | character(64) | NOT NULL |  | `CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'))` |
+| reviewer_role_code | text | NOT NULL |  | FK → role(code) |
+| status | text | NOT NULL | `'pending'` | `CHECK ((status = ANY (ARRAY['pending', 'approved', 'changes_requested', 'withdrawn'])))` |
+| request_note | text | NULL |  | `CHECK (((request_note IS NULL) OR ((char_length(request_note) >= 1) AND (char_length(request_note) <= 4000))))` |
+| revision_proposal_id | uuid | NULL |  | FK → revision_proposal(id) |
+| requested_by | uuid | NOT NULL |  | FK → app_user(id) |
+| requested_at | timestamp with time zone | NOT NULL | `now()` |  |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| decision_note | text | NULL |  | `CHECK (((decision_note IS NULL) OR ((char_length(decision_note) >= 1) AND (char_length(decision_note) <= 4000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `config_review_request_changes_noted` (CHECK): `CHECK (((status <> 'changes_requested') OR (decision_note IS NOT NULL)))`
+- `config_review_request_decided_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'changes_requested'])) = (decided_by IS NOT NULL)) AND ((decided_by IS NULL) = (decided_at IS NULL))))`
+- `config_review_request_reviewer_not_requester` (CHECK): `CHECK (((decided_by IS NULL) OR (decided_by <> requested_by)))`
+
+**Indexes:**
+
+- `config_review_request_one_pending_key`: `UNIQUE (methodology_version_id) WHERE (status = 'pending')`
+
+**Triggers:**
+
+- `config_review_request_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `config_review_request_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `config_review_request_guard()`
+- `config_review_request_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## transformation_config_pin
+
+- **Purpose:** The configuration version a transformation is pinned to, per kind (ADR-0039 §3); moves only through an approved methodology migration (REQ-S06-008).
+- **Migration:** `0011 (DG2) + 0063_p5_pins_methodology_migrations.sql`. **API module:** `methodology`. **Who writes:** instantiation (DG2, KBE-A's 0065), `methodology_migration.execute`. **Lifecycle:** one per transformation and kind; versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['methodology', 'scoring_defaults', 'form_schema', 'procedure', 'automation_rule_set', 'health_check_scheme'])))` |
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| pinned_at | timestamp with time zone | NOT NULL | `now()` |  |
+| pinned_by | uuid | NOT NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+| last_migration_id | uuid | NULL |  |  |
+
+**Table constraints:**
+
+- `transformation_config_pin_kind_key` (UNIQUE): `UNIQUE (transformation_id, kind)`
+- `transformation_config_pin_last_migration_fkey` (FK): `FOREIGN KEY (transformation_id, last_migration_id) REFERENCES methodology_migration(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Triggers:**
+
+- `transformation_config_pin_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `transformation_config_pin_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `transformation_config_pin_guard()`
+- `transformation_config_pin_history_required`: CONSTRAINT AFTER UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `transformation_config_pin_history_required()`
+- `transformation_config_pin_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## methodology_migration
+
+- **Purpose:** The deliberate, approved move of one pin with its plan (REQ-S06-008; ADR-0040 §1).
+- **Migration:** `0063_p5_pins_methodology_migrations.sql`. **API module:** `methodology`. **Who writes:** `methodology_migration.plan`, `.approve` (SP; business approval, via the canonical approval), `.execute`. **Lifecycle:** draft → submitted → approved → executed (or rejected, changes_requested, withdrawn); versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| config_kind | text | NOT NULL |  | `CHECK ((config_kind = ANY (ARRAY['methodology', 'scoring_defaults', 'form_schema', 'procedure', 'automation_rule_set', 'health_check_scheme'])))` |
+| from_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| to_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| status | text | NOT NULL | `'draft'` | `CHECK ((status = ANY (ARRAY['draft', 'submitted', 'changes_requested', 'approved', 'rejected', 'withdrawn', 'executed'])))` |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 4000)))` |
+| plan_revision | integer | NOT NULL | `1` | `CHECK ((plan_revision >= 1))` |
+| plan_sha256 | character(64) | NULL |  | `CHECK (((plan_sha256 IS NULL) OR (plan_sha256 ~ '^[0-9a-f]{64}$')))` |
+| plan_ready | boolean | NOT NULL | `false` |  |
+| requested_by | uuid | NOT NULL |  | FK → app_user(id) |
+| submitted_by | uuid | NULL |  | FK → app_user(id) |
+| submitted_at | timestamp with time zone | NULL |  |  |
+| approval_id | uuid | NULL |  | FK → approval(id) |
+| decided_by | uuid | NULL |  | FK → app_user(id) |
+| decided_at | timestamp with time zone | NULL |  |  |
+| executed_by | uuid | NULL |  | FK → app_user(id) |
+| executed_at | timestamp with time zone | NULL |  |  |
+| withdrawn_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `methodology_migration_decided_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['approved', 'rejected', 'executed'])) = (decided_by IS NOT NULL)) OR (status = 'withdrawn')))`
+- `methodology_migration_decider_not_requester` (CHECK): `CHECK (((decided_by IS NULL) OR (decided_by <> requested_by)))`
+- `methodology_migration_executed_complete` (CHECK): `CHECK ((((status = 'executed') = (executed_at IS NOT NULL)) AND ((executed_by IS NULL) = (executed_at IS NULL))))`
+- `methodology_migration_ready_to_submit` (CHECK): `CHECK (((status = ANY (ARRAY['draft', 'withdrawn'])) OR (plan_ready AND (plan_sha256 IS NOT NULL))))`
+- `methodology_migration_submitted_complete` (CHECK): `CHECK ((((status = 'draft') = (submitted_at IS NULL)) OR (status = 'withdrawn')))`
+- `methodology_migration_submitter` (CHECK): `CHECK (((submitted_by IS NULL) = (submitted_at IS NULL)))`
+- `methodology_migration_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `methodology_migration_versions_differ` (CHECK): `CHECK ((from_version_id <> to_version_id))`
+- `methodology_migration_withdrawn_complete` (CHECK): `CHECK (((status = 'withdrawn') = (withdrawn_at IS NOT NULL)))`
+
+**Indexes:**
+
+- `methodology_migration_one_open_key`: `UNIQUE (transformation_id, config_kind) WHERE (status = ANY (ARRAY['draft', 'submitted', 'changes_requested', 'approved']))`
+
+**Triggers:**
+
+- `methodology_migration_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `methodology_migration_executed_moved_pin`: CONSTRAINT AFTER UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `methodology_migration_executed_moved_pin()`
+- `methodology_migration_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `methodology_migration_guard()`
+- `methodology_migration_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## methodology_migration_item
+
+- **Purpose:** One finding of a plan revision: mapping, new required field, invalidated calculation, re-approval, removed element, unchanged history (ADR-0040 §2).
+- **Migration:** `0063_p5_pins_methodology_migrations.sql`. **API module:** `methodology`. **Who writes:** `methodology_migration.plan`. **Lifecycle:** append-only per plan revision.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| migration_id | uuid | NOT NULL |  |  |
+| plan_revision | integer | NOT NULL |  | `CHECK ((plan_revision >= 1))` |
+| ordinal | integer | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 10000)))` |
+| item_kind | text | NOT NULL |  | `CHECK ((item_kind = ANY (ARRAY['mapping', 'new_required_field', 'invalidated_calculation', 'reapproval', 'removed_element', 'unchanged_history'])))` |
+| element_type | text | NULL |  | `CHECK (((element_type IS NULL) OR ((char_length(element_type) >= 1) AND (char_length(element_type) <= 64))))` |
+| stable_key | text | NULL |  | `CHECK (((stable_key IS NULL) OR ((char_length(stable_key) >= 1) AND (char_length(stable_key) <= 96))))` |
+| record_type | text | NULL |  | `CHECK (((record_type IS NULL) OR (record_type ~ '^[a-z_]{1,64}$')))` |
+| record_id | uuid | NULL |  |  |
+| gate_code | text | NULL |  | `CHECK (((gate_code IS NULL) OR (gate_code ~ '^G[1-6]$')))` |
+| resolution | text | NOT NULL |  | `CHECK ((resolution = ANY (ARRAY['automatic', 'needs_input', 'provided', 'acknowledged'])))` |
+| detail | jsonb | NOT NULL |  | `CHECK ((jsonb_typeof(detail) = 'object'))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `methodology_migration_item_migration_fkey` (FK): `FOREIGN KEY (transformation_id, migration_id) REFERENCES methodology_migration(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `methodology_migration_item_ordinal_key` (UNIQUE): `UNIQUE (migration_id, plan_revision, ordinal)`
+- `methodology_migration_item_reapproval_gate` (CHECK): `CHECK (((item_kind = 'reapproval') = (gate_code IS NOT NULL)))`
+
+**Triggers:**
+
+- `methodology_migration_item_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `methodology_migration_item_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `methodology_migration_item_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## transformation_config_pin_history
+
+- **Purpose:** Every move of a pin, with its migration; required at COMMIT for each pin version change (ADR-0040 §1).
+- **Migration:** `0063_p5_pins_methodology_migrations.sql`. **API module:** `methodology`. **Who writes:** `methodology_migration.execute`. **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| pin_id | uuid | NOT NULL |  | FK → transformation_config_pin(id) |
+| pin_version | integer | NOT NULL |  | `CHECK ((pin_version >= 2))` |
+| kind | text | NOT NULL |  | `CHECK (((char_length(kind) >= 1) AND (char_length(kind) <= 64)))` |
+| from_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| to_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| migration_id | uuid | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `transformation_config_pin_history_migration_fkey` (FK): `FOREIGN KEY (transformation_id, migration_id) REFERENCES methodology_migration(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `transformation_config_pin_history_version_key` (UNIQUE): `UNIQUE (pin_id, pin_version)`
+
+**Triggers:**
+
+- `transformation_config_pin_history_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `transformation_config_pin_history_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `transformation_config_pin_history_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## gate_reapproval
+
+- **Purpose:** A product gate that needs business re-approval after a migration; the approved decision stays in history (D-142 Q9; ADR-0040 §3).
+- **Migration:** `0063_p5_pins_methodology_migrations.sql`. **API module:** `workflows`. **Who writes:** `methodology_migration.execute` (create), the gate decision (satisfy), a later migration (supersede). **Lifecycle:** required → satisfied | superseded; versioned.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| migration_id | uuid | NOT NULL |  |  |
+| gate_instance_id | uuid | NOT NULL |  |  |
+| gate_code | text | NOT NULL |  | `CHECK ((gate_code ~ '^G[1-6]$'))` |
+| approved_decision_id | uuid | NOT NULL |  | FK → gate_decision(id) |
+| status | text | NOT NULL | `'required'` | `CHECK ((status = ANY (ARRAY['required', 'satisfied', 'superseded'])))` |
+| satisfied_decision_id | uuid | NULL |  | FK → gate_decision(id) |
+| work_item_id | uuid | NULL |  | FK → work_item(id) |
+| resolved_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `gate_reapproval_gate_instance_fkey` (FK): `FOREIGN KEY (transformation_id, gate_instance_id) REFERENCES gate_instance(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `gate_reapproval_migration_fkey` (FK): `FOREIGN KEY (transformation_id, migration_id) REFERENCES methodology_migration(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `gate_reapproval_migration_gate_key` (UNIQUE): `UNIQUE (migration_id, gate_code)`
+- `gate_reapproval_resolved_complete` (CHECK): `CHECK (((status = 'required') = (resolved_at IS NULL)))`
+- `gate_reapproval_satisfied_complete` (CHECK): `CHECK (((status = 'satisfied') = (satisfied_decision_id IS NOT NULL)))`
+
+**Indexes:**
+
+- `gate_reapproval_one_required_key`: `UNIQUE (gate_instance_id) WHERE (status = 'required')`
+
+**Triggers:**
+
+- `gate_reapproval_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `gate_reapproval_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `gate_reapproval_guard()`
+- `gate_reapproval_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P5 seeds (0062, 0064, slice A)
+
+- `methodology_version`: `scoring-defaults` v1 (`config_kind = 'scoring_defaults'`, published, `origin = 'seed'`), with five `scoring_weight` elements 25.00/25.00/20.00/15.00/15.00 (B0076) and six `scoring_rubric` elements (five criteria and the optional `risk_compliance` of B0077) whose five level descriptors are `null` (the source gives the 1–5 scale only).
+- `config_review_policy`: 7 rows: the six kinds `review_required = true`, reviewer `TO`; `benefit_formula`, reviewer `FIN`.
+- `source_element`: 80 rows: 2 modes (B0009), 6 phases (B0021), 6 gates (B0023), 16 templates (B0030–B0129), 10 TOM dimensions (B0056), 5 forums (B0093), 6 lifecycle steps (B0121), 3 launch windows (B0134), 1 roaming example (B0143), 25 questions (B0150); `source_label_en` verbatim; `label_ar` provisional; `feature_status` `planned` for the launch windows, the roaming example and the 25 questions, `working` for the rest.
+- `permission` (8 rows) and `role_permission` (12 rows): exactly `P5_STUDIO_PERMISSIONS` / `P5_STUDIO_ROLE_PERMISSIONS` (`packages/db/src/seed.test.ts`). One business-approval code (`methodology_migration.approve`: SP only; TL stays approval-free, `0008`); AUD holds `methodology.read` only; no technical-admin role holds a business-approval or Finance-validation code.
+
+## P5 functions (slice A)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `methodology_version_kind_key()` | 0062 | a key belongs to one kind; a draft's base and a rollback's target are published versions of the same kind and key | via trigger |
+| `methodology_version_new_draft()` | 0062 | seeded rows only by the migration role; Studio rows start as `draft`/`editing` with the next version number | via trigger |
+| `methodology_version_studio_guard()` | 0062 | fixed identity, status and stage transitions, content frozen outside editing/preview, preview/review/check-run requirements, the 100 % rule of `scoring_defaults` at publish | via trigger |
+| `config_review_policy_guard()` | 0062 | the kind never changes; no technical-admin reviewer | via trigger |
+| `methodology_element_guard()` | 0062 | draft-only writes, fixed identity, element types per kind, source identities, decimal weights, no technical-admin or AUD approver | via trigger |
+| `config_review_request_guard()` | 0062 | starts pending; only decision columns move; legal transitions; reviewer is not the draft's author | via trigger |
+| `transformation_config_pin_guard()` | 0063 | pin kind = version kind; new pins name published versions; moves only through the approved migration | via trigger |
+| `methodology_migration_guard()` | 0063 | starts draft with from = current pin and a published target; fixed identity; plan frozen after submit; transitions; outcomes need a person's approval decision | via trigger |
+| `methodology_migration_executed_moved_pin()` | 0063 | an executed migration has moved its pin (deferred) | via constraint trigger |
+| `transformation_config_pin_history_required()` | 0063 | every pin move has its history row (deferred) | via constraint trigger |
+| `gate_reapproval_guard()` | 0063 | names an approved decision of the gate; only resolution columns move; satisfied only by a later approved decision | via trigger |
+
+## P5 validation rules summary (slice A)
+
+| Layer | What it checks |
+|---|---|
+| Database | The P2 record guards (version step, identity, deferred audit coverage); closed sets (kinds, stages, origins, element types, check kinds and results, migration statuses and item kinds, re-approval statuses); the Studio lifecycle and publish prerequisites per content hash; fixed identity sets (phases, gates, TOM dimensions) and source identities; no technical-admin or AUD approver or reviewer; decimal weights and the 100 % rule at publish; pins move only through approved migrations with history; exactly-once revision proposals (dedupe key); append-only runs, proposals, plan items and pin history |
+| API (`@mth/shared/schemas`) | Shapes (OpenAPI slice A schemas), per-element-type attribute schemas (`studio.ts`), free-text rules, strict UTF-8, request media types, `If-Match` |
+| Service | Permissions (ADR-0039 §9, ADR-0040 §6), commit-time re-authorization, the content hash, compatibility, diff, affected-records and coverage computations, migration plan generation, re-approval rules, the exact refusal codes and English texts (ADR-0039 §13, ADR-0040 §8) |
+| Worker | none (slice A has no job; the S12-018 starter runs in the proposing transaction) |

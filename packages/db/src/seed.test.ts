@@ -1,6 +1,6 @@
 // Unit test (no database): the role/permission seed migrations equal packages/shared/src/permissions.ts
 // (data dictionary "role" seed rule, ADR-0006, ADR-0020): 0005 seeds the P1 part, 0018 the P2 part, 0024 the P3 part,
-// 0031 the P4 part of slices I and C (ADR-0026 §8), 0036 the P4 part of slice A (ADR-0027 §11), 0040 the P4 part of slice B (ADR-0029 §9), 0043 the P4 part of slice E (ADR-0031 §9), 0046 the P4 part of slice D (ADR-0032 §9), 0049 the P4 part of slices F and G (ADR-0033 §9, ADR-0034 §10), 0053 the P4 part of slice H (ADR-0035 §8, ADR-0036 §7), 0057 the P4 part of slices J and K (ADR-0037 §8, ADR-0038 §8). The integration
+// 0031 the P4 part of slices I and C (ADR-0026 §8), 0036 the P4 part of slice A (ADR-0027 §11), 0040 the P4 part of slice B (ADR-0029 §9), 0043 the P4 part of slice E (ADR-0031 §9), 0046 the P4 part of slice D (ADR-0032 §9), 0049 the P4 part of slices F and G (ADR-0033 §9, ADR-0034 §10), 0053 the P4 part of slice H (ADR-0035 §8, ADR-0036 §7), 0057 the P4 part of slices J and K (ADR-0037 §8, ADR-0038 §8), 0064 the P5 part of slice A (ADR-0039 §9, ADR-0040 §6). The integration
 // tests check the seeded ROWS too.
 import { readFileSync } from "node:fs";
 import {
@@ -25,6 +25,8 @@ import {
   P4_RAID_PERMISSIONS,
   P4_RAID_ROLE_PERMISSIONS,
   P4_ROLE_PERMISSIONS,
+  P5_STUDIO_PERMISSIONS,
+  P5_STUDIO_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from "@mth/shared";
@@ -48,6 +50,7 @@ const sqlP4DashboardTrace = readFileSync(
   `${defaultMigrationsDir()}/0057_p4_dashboards_traceability_permissions.sql`,
   "utf8",
 );
+const sqlP5Studio = readFileSync(`${defaultMigrationsDir()}/0064_p5_studio_permissions_source_inventory.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -59,6 +62,7 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P4_ADOPTION_SUSTAINMENT_PERMISSIONS),
   ...Object.keys(P4_GATES_CHANGE_PERMISSIONS),
   ...Object.keys(P4_DASHBOARD_TRACE_PERMISSIONS),
+  ...Object.keys(P5_STUDIO_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -140,6 +144,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P4_ADOPTION_SUSTAINMENT_PERMISSIONS,
       ...P4_GATES_CHANGE_PERMISSIONS,
       ...P4_DASHBOARD_TRACE_PERMISSIONS,
+      ...P5_STUDIO_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -483,14 +488,59 @@ describe("0057 seed equals the P4 part of permissions.ts (slices J and K)", () =
   });
 });
 
+describe("0064 seed equals the P5 part of permissions.ts (slice A)", () => {
+  it("permission rows", () => {
+    const rows = [...section("INSERT INTO permission", sqlP5Studio).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm)].map(
+      (m) => [m[1], m[2]],
+    );
+    expect(Object.fromEntries(rows)).toEqual(P5_STUDIO_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P5_STUDIO_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP5Studio).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(Object.entries(o).map(([c, p]) => [c, [...p].sort()]));
+    expect(sorted(byRole)).toEqual(sorted(P5_STUDIO_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P5_STUDIO_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("has one business_approval code held by SP only (TL stays approval-free, 0008); AUD reads only; no technical admin approves", () => {
+    const approval = Object.entries(P5_STUDIO_PERMISSIONS).filter(([, c]) => c === "business_approval");
+    expect(approval).toEqual([["methodology_migration.approve", "business_approval"]]);
+    const holders = Object.entries(P5_STUDIO_ROLE_PERMISSIONS)
+      .filter(([, perms]) => (perms as readonly string[]).includes("methodology_migration.approve"))
+      .map(([r]) => r);
+    expect(holders.sort()).toEqual(["SP"]);
+    for (const r of holders) expect(ROLES[r as keyof typeof ROLES].kind).not.toBe("technical_admin");
+    expect(P5_STUDIO_ROLE_PERMISSIONS.AUD).toEqual(["methodology.read"]);
+    const adm = P5_STUDIO_ROLE_PERMISSIONS.ADM_METHOD as readonly string[];
+    for (const p of adm)
+      expect(["business_approval", "finance_validation"]).not.toContain(
+        P5_STUDIO_PERMISSIONS[p as keyof typeof P5_STUDIO_PERMISSIONS],
+      );
+    expect(adm).not.toContain("methodology.review");
+  });
+});
+
 describe("migration files", () => {
   it("are named NNNN_snake_case.sql with strictly increasing ids, and never use plain timestamp in public", () => {
     const files = listMigrationFiles();
-    // D-089: 0058-0069 are held for repairs and assigned one by one (0058: D-094, T-DG4-BE-B2), so a repair id may
-    // land before the planned 0047-0057 do. Planned ids stay contiguous from 0001; repair ids stay inside their range;
-    // all ids strictly increase (listMigrationFiles refuses anything else).
+    // D-089: 0058-0061 were the DG4 repair ids. P5 (p5-plan §4, D-142): each architecture task owns a contiguous range
+    // (0062-0067 slice A, 0068-0073, 0074-0079, 0080-0084, 0085-0088, 0089-0093) whose unused numbers its implementers
+    // fill in order, and 0094-0099 are held by the orchestrator for repairs, so ids from 0058 may have gaps but stay
+    // at most 0099. Ids below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses
+    // anything else).
     const REPAIR_FIRST = 58;
-    const REPAIR_LAST = 69;
+    const REPAIR_LAST = 99;
     const planned = files.filter((f) => f.id < REPAIR_FIRST).map((f) => f.id);
     expect(planned).toEqual(planned.map((_, i) => i + 1));
     for (const f of files.filter((f) => f.id >= REPAIR_FIRST)) expect(f.id, f.name).toBeLessThanOrEqual(REPAIR_LAST);

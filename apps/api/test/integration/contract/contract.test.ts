@@ -804,8 +804,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 38 P4 operations of slices J and K (T-DG4-ARCH-08; pending in p4-pending-be-m/m2/m3.ts and p4-pending-kbe-g/g2.ts)
     // + 2 repair operations (T-DG4-ARCH-R1; pending in p4-pending-arch-r1.ts)
     // + 2 repair operations (T-DG4-ARCH-R2; pending in p4-pending-arch-r2.ts)
-    // + 3 repair operations (T-DG4-ARCH-R3; pending in p4-pending-arch-r3.ts).
+    // + 3 repair operations (T-DG4-ARCH-R3; pending in p4-pending-arch-r3.ts)
+    // + 38 P5 operations of slice A (T-DG5-ARCH-01; pending in p5-pending-be-a/b/b2/b3/c.ts and p5-pending-kbe-a.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(652);
+    expect(operations).toHaveLength(690);
   });
 });

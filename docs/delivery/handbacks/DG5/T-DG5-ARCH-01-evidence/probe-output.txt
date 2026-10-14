@@ -1,0 +1,81 @@
+port-policy: PostgreSQL listening on port 23701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 64 (0001_identity_access.sql .. 0064_p5_studio_permissions_source_inventory.sql)
+PASS  G00 slice A migrations 0062-0064 present; nothing above 0067 from this task  -- ids >= 62: 62,63,64
+PASS  G01 fresh database: 0001..last apply  -- applied 64: 0061_p4_finance_validation_correction_step.sql, 0062_p5_config_versions.sql, 0063_p5_pins_methodology_migrations.sql, 0064_p5_studio_permissions_source_inventory.sql
+PASS  G02 P4 database populated (0001-0061; a synthetic transformation instantiated: methodology pin and source-default weight set)  -- applied 61; pins [["methodology",1]]
+PASS  G03 P5 slice A over the P4 database: 0062..last apply  -- applied 3: 0062_p5_config_versions.sql, 0063_p5_pins_methodology_migrations.sql, 0064_p5_studio_permissions_source_inventory.sql
+PASS  G04 the existing methodology pin and the DG3 weight set are byte-identical after 0062..last  -- [["methodology",1,"source_default"]]
+PASS  G05 methodology v1 reads as kind methodology, origin seed, published, no draft stage  -- {"config_kind":"methodology","origin":"seed","draft_stage":null,"status":"published"}
+PASS  SE01 the source inventory holds 2/6/6/16/10/5/6/3/1/25 elements (80)  -- {"benefit_lifecycle_step":6,"forum":5,"gate":6,"health_question":25,"launch_window":3,"mode":2,"phase":6,"roaming_example":1,"template":16,"tom_dimension":10}
+PASS  SE02 scoring defaults v1 = 25/25/20/15/15 (B0076), published  -- [{"stable_key":"strategic_fit","w":"25.00"},{"stable_key":"financial_value","w":"25.00"},{"stable_key":"customer_impact","w":"20.00"},{"stable_key":"feasibility","w":"15.00"},{"stable_key":"time_to_value","w":"15.00"}]
+PASS  SE03 methodology_migration.approve is held by SP only (TL stays approval-free, 0008)  -- [{"code":"SP","permission_code":"methodology_migration.approve"}]
+PASS  SE04 a technical admin role cannot be granted methodology_migration.approve (REQ-S06-010, S10-003)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_METHOD cannot hold approval permission methodology_migration.approve (separation of duties)
+PASS  MV01 a Studio draft of methodology (next version_no, editing, based on v1) commits with its audit event  -- 01990000-0000-7000-8000-000000000064
+PASS  MV02 a draft insert without its audit event fails at COMMIT  -- 23000 methodology_version_audit_required no audit_event for methodology_version 01990000-0000-7000-8000-000000000066 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  MV03 a second open draft of the same key is refused  -- 23505 methodology_version_one_open_draft_key duplicate key value violates unique constraint "methodology_version_one_open_draft_key"
+PASS  MV04 the application role cannot insert a seeded version  -- 42501 methodology_version_seed_only methodology_version 01990000-0000-7000-8000-000000000068: seeded versions are inserted by migrations only
+PASS  MV05 a draft update whose version does not step by 1 is refused  -- 23514 methodology_version_version_step methodology_version: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  MV06 editing a published version's definition is refused (DG2 trigger kept)  -- 23514 methodology_version_published_immutable methodology_version playbook/1: a published definition is immutable (ADR-0014)
+PASS  MV07 editing -> approved directly is refused (preview first)  -- 23514 methodology_version_stage_transition methodology_version 01990000-0000-7000-8000-000000000064: draft stage editing -> approved is not a legal transition
+PASS  MV08 editing -> preview without a passing preview run for the content is refused  -- 23514 methodology_version_preview_required methodology_version 01990000-0000-7000-8000-000000000064: a passing preview run for the current content is required
+PASS  MV09 editing -> preview with a passing run for another content hash is refused  -- 23514 methodology_version_preview_required methodology_version 01990000-0000-7000-8000-000000000064: a passing preview run for the current content is required
+PASS  MV10 editing -> preview with a passing preview run for exactly the content commits  -- preview
+PASS  MV11 preview -> approved without the configured review (methodology: review required, TO) is refused  -- 23514 methodology_version_review_required methodology_version 01990000-0000-7000-8000-000000000064: the configured review has not approved this content
+PASS  MV12 preview -> review commits; a pending review request for the content is recorded  -- review
+PASS  MV13 a content change while in review is refused  -- 23514 methodology_version_content_frozen methodology_version 01990000-0000-7000-8000-000000000064: content changes only in a draft being edited (ADR-0039 §4)
+PASS  RR01 the draft's author cannot approve its review (SoD)  -- 23514 config_review_request_reviewer_not_author config_review_request 01990000-0000-7000-8000-00000000006f: the author of a draft cannot review it (SoD)
+PASS  RR02 a review request's content hash never changes  -- 23514 config_review_request_frozen config_review_request 01990000-0000-7000-8000-00000000006f: only the decision columns change
+PASS  RR03 changes requested without a note is refused  -- 23514 config_review_request_changes_noted new row for relation "config_review_request" violates check constraint "config_review_request_changes_noted"
+PASS  MV14 another person approves the review; review -> approved commits  -- approved
+PASS  MV15 publishing without passing compatibility and source-coverage runs is refused  -- 23514 methodology_version_checks_required methodology_version 01990000-0000-7000-8000-000000000064: publishing needs passing preview, compatibility and (methodology) source-coverage runs for the current content
+PASS  MV16 publishing with a FAILED source-coverage run (e.g. a template deleted) is refused  -- 23514 methodology_version_checks_required methodology_version 01990000-0000-7000-8000-000000000064: publishing needs passing preview, compatibility and (methodology) source-coverage runs for the current content
+PASS  MV17 publishing without a named publisher is refused  -- 23514 methodology_version_publish_ready methodology_version 01990000-0000-7000-8000-000000000064: only an approved draft is published, by a named person
+PASS  MV18 publish with passing preview, compatibility and source-coverage runs and an approved review commits  -- published v2
+PASS  MV19 editing the published v2 is refused (immutable published version)  -- 23514 methodology_version_content_frozen methodology_version 01990000-0000-7000-8000-000000000064: content changes only in a draft being edited (ADR-0039 §4)
+PASS  MV20 a published version never returns to draft  -- 23514 methodology_version_status_transition methodology_version 01990000-0000-7000-8000-000000000064: published -> draft is not a legal transition
+PASS  MV21 a rollback draft without a reason is refused  -- 23514 methodology_version_rollback_complete new row for relation "methodology_version" violates check constraint "methodology_version_rollback_complete"
+PASS  MV22 a rollback draft restoring v1 (new version_no, reason given) commits; v1 and v2 stay unchanged  -- rollback draft v3 (then discarded)
+PASS  MV23a the application role has no UPDATE on check runs  -- 42501 permission denied for table config_check_run
+PASS  MV23 a check run is append-only even for the owner (UPDATE refused by the trigger)  -- 42501 config_check_run is append-only: UPDATE is not allowed
+PASS  ME01 renaming the label of G3 in a draft commits  -- 01990000-0000-7000-8000-000000000086
+PASS  ME02 changing the stable key of G3 is refused  -- 23514 methodology_element_identity_fixed methodology_element 01990000-0000-7000-8000-000000000086: version, type, stable key and origin never change (REQ-S06-006)
+PASS  ME03 deleting a TOM dimension is refused  -- 23514 methodology_element_fixed_sets new row for relation "methodology_element" violates check constraint "methodology_element_fixed_sets"
+PASS  ME04 adding a seventh gate is refused  -- 23514 methodology_element_fixed_sets new row for relation "methodology_element" violates check constraint "methodology_element_fixed_sets"
+PASS  ME05 configuring ADM_METHOD as an automatic approver is refused  -- 23514 methodology_element_no_admin_approver methodology_element 01990000-0000-7000-8000-00000000008a: an approver must be an existing business role, never a technical administrator or AUD (REQ-S06-006, REQ-S10-003)
+PASS  ME06 an AUD approver is refused too  -- 23514 methodology_element_no_admin_approver methodology_element 01990000-0000-7000-8000-00000000008b: an approver must be an existing business role, never a technical administrator or AUD (REQ-S06-006, REQ-S10-003)
+PASS  ME07 changing an approver route to BO commits  -- 01990000-0000-7000-8000-00000000008c
+PASS  ME08 deleting template T13 in a draft is recorded (removed = true); the coverage gate blocks its publish (MV16)  -- 01990000-0000-7000-8000-00000000008e
+PASS  ME09 an element of an unknown source identity is refused  -- 23503 methodology_element_source_identity methodology_element 01990000-0000-7000-8000-000000000090: template T17 is not a stable source identity
+PASS  ME10 a scoring element in a methodology draft is refused (kind/type)  -- 23514 methodology_element_kind_type methodology_element 01990000-0000-7000-8000-000000000091: type scoring_weight does not belong to configuration kind methodology
+PASS  ME11 an element change without its audit event fails at COMMIT  -- 23000 methodology_element_audit_required no audit_event for methodology_element 01990000-0000-7000-8000-000000000086 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  ME12 an element of the published v2 cannot be written  -- 23514 methodology_element_draft_only methodology_element 01990000-0000-7000-8000-000000000092: elements change only in a draft being edited; a published version is immutable
+PASS  SD01 a weight that is not a decimal string is refused  -- 23514 methodology_element_weight_decimal methodology_element 01990000-0000-7000-8000-0000000000a9: weightPercent is a decimal string in (0, 100] with at most 2 decimals
+PASS  SD02 publishing default weights that total 95 % is refused (30/20/20/15/10)  -- 23514 methodology_version_weights_total methodology_version 01990000-0000-7000-8000-000000000093: default weights must total 100% over 2-6 criteria (REQ-PB-093)
+PASS  RV01 a revision proposal for the draft is recorded once; a replay (same dedupe key, ON CONFLICT DO NOTHING) inserts nothing  -- 1 row after 3 attempts
+PASS  RV02 a dedupe key that does not match subject and content is refused  -- 23514 revision_proposal_dedupe_shape new row for relation "revision_proposal" violates check constraint "revision_proposal_dedupe_shape"
+PASS  RV03 a revision proposal without its audit event fails at COMMIT  -- 23000 revision_proposal_audit_required no audit_event for revision_proposal 01990000-0000-7000-8000-0000000000af at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RV04 a revision proposal is append-only (owner UPDATE refused)  -- 42501 revision_proposal is append-only: UPDATE is not allowed
+PASS  RP01 a technical admin role as reviewer is refused  -- 23514 config_review_policy_reviewer_not_admin config_review_policy 01920005-0001-7000-8000-000000000001: a technical administrator role cannot be the reviewer of its own configuration
+PASS  RP02 AUD as reviewer is refused  -- 23514 config_review_policy_reviewer_not_auditor new row for relation "config_review_policy" violates check constraint "config_review_policy_reviewer_not_auditor"
+PASS  RP03 a policy change without its audit event fails at COMMIT  -- 23000 config_review_policy_audit_required no audit_event for config_review_policy 01920005-0001-7000-8000-000000000001 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  PN01 moving a pin without an approved migration is refused  -- 23514 transformation_config_pin_moves_by_migration transformation_config_pin 01a1378d-786b-7d4a-8d17-7c8147e88ce5: a pinned version moves only through its approved migration (REQ-S06-008)
+PASS  PN02 a scoring_defaults pin naming a methodology version is refused  -- 23514 transformation_config_pin_kind_matches transformation_config_pin 01990000-0000-7000-8000-0000000000b0: a scoring_defaults pin must name a scoring_defaults version
+PASS  PN03 a scoring_defaults pin naming scoring defaults v1 commits  -- 01990000-0000-7000-8000-0000000000b1
+PASS  MM01 a migration whose target is not published is refused  -- 23514 methodology_migration_target_published methodology_migration 01990000-0000-7000-8000-0000000000b3: from and to are versions of the same kind and key, and the target is published
+PASS  MM02 a migration draft v1 -> v2 of the pinned transformation commits  -- 01990000-0000-7000-8000-0000000000b4
+PASS  MM03 submitting without a ready plan is refused  -- 23514 methodology_migration_ready_to_submit new row for relation "methodology_migration" violates check constraint "methodology_migration_ready_to_submit"
+PASS  MM04 plan items (new required field, G2 re-approval) are appended and the migration is submitted  -- submitted
+PASS  MM05 a plan item is append-only (owner; the application role has no UPDATE)  -- 42501 methodology_migration_item is append-only: UPDATE is not allowed
+PASS  MM06 the plan is frozen once submitted  -- 23514 methodology_migration_plan_frozen methodology_migration 01990000-0000-7000-8000-0000000000b4: the plan changes only in draft or changes_requested
+PASS  MM07 approved without a person's approval decision is refused  -- 23514 methodology_migration_outcome_needs_decision methodology_migration 01990000-0000-7000-8000-0000000000b4: approved needs the decider's matching approval decision
+PASS  MM08 the requester cannot be the decider (the decision guard fires before the CHECK backstop)  -- 23514 methodology_migration_outcome_needs_decision methodology_migration 01990000-0000-7000-8000-0000000000b4: approved needs the decider's matching approval decision
+PASS  MM09 the canonical approval (type methodology_migration) is requested and decided 'approve' by another person; the migration is approved  -- approved
+PASS  MM10 marking the migration executed without moving the pin fails at COMMIT  -- 23000 methodology_migration_executed_moved_pin methodology_migration 01990000-0000-7000-8000-0000000000b4: executed, but the methodology pin does not name the target version and this migration
+PASS  MM11 moving the pin without its history row fails at COMMIT  -- 23000 transformation_config_pin_history_required transformation_config_pin 01a1378d-786b-7d4a-8d17-7c8147e88ce5: a moved pin needs its history row at version 2
+PASS  MM12 execution: pin moved v1 -> v2 by the approved migration, history appended, migration executed  -- executed
+PASS  MM13 pin history is append-only (owner DELETE refused by the trigger; the application role has no DELETE)  -- 42501 transformation_config_pin_history is append-only: DELETE is not allowed
+PASS  MM14 an executed migration is final  -- 23514 methodology_migration_status_transition methodology_migration 01990000-0000-7000-8000-0000000000b4: executed -> withdrawn is not a legal transition
+PASS  GR01 a re-approval marker must name an approved decision of the same gate  -- 23514 gate_reapproval_names_approved_decision gate_reapproval 01990000-0000-7000-8000-0000000000c5: names the approved decision of the same gate
+
+ALL PASS

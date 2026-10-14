@@ -33,7 +33,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the twenty-four classes, each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks)", () => {
+  it("lists the twenty-seven classes, each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -59,6 +59,9 @@ describe("advisory-lock class registry", () => {
       changeRequestSubject: 730246,
       gateException: 730247,
       traceAllocationSet: 730249,
+      configDraft: 730250,
+      configPublish: 730251,
+      methodologyMigration: 730252,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);
@@ -82,8 +85,8 @@ describe("advisory-lock class registry", () => {
   it("no module source outside the registry spells a class number (they import ADVISORY_LOCK_CLASSES)", () => {
     const offenders = walk(MODULES)
       .filter((f) => /\.[cm]?[jt]sx?$/.test(f) && !f.endsWith("advisory-locks.ts") && !f.endsWith(".test.ts"))
-      // 730219-730249: the P1-P3 classes and every P4 block (p4-plan §4).
-      .filter((f) => /\b7302(19|[2-4][0-9])\b/.test(readFileSync(f, "utf8")))
+      // 730219-730299: the P1-P3 classes, every P4 block (p4-plan §4) and the P5 blocks (p5-plan §4, from 730250).
+      .filter((f) => /\b7302(19|[2-9][0-9])\b/.test(readFileSync(f, "utf8")))
       .map((f) => relative(MODULES, f));
     expect(offenders).toEqual([]);
   });

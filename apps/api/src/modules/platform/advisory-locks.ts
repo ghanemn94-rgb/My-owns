@@ -77,6 +77,14 @@ export const ADVISORY_LOCK_CLASSES = {
   // P4 block of T-DG4-ARCH-08 (730249; p4-plan §4, ADR-0038 §3). The dashboard read models take no lock (ADR-0037 §9).
   /** The allocation set of one target record of the traceability chain (reporting traceability links and the portfolio contribution allocation; the database trigger trace_allocation_guard (0055) takes the same lock, so the total stays <= 100 %). Key: "<outcomeKpiId>" or "<benefitId>" (the trigger hashes the uuid text). */
   traceAllocationSet: 730249,
+  // P5 block of T-DG5-ARCH-01 (730250-730253; p5-plan §4, ADR-0039 §11, ADR-0040 §4). 730253 is RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** The open Studio draft of one configuration kind and key (methodology drafts, elements, preview, compatibility, review submit/withdraw/decide, discard; one open draft is also held by the unique index methodology_version_one_open_draft_key). Key: "<configKind>:<key>". */
+  configDraft: 730250,
+  /** Publishing and rollback-creation of one configuration kind and key (methodology publish, rollback). Key: "<configKind>:<key>". */
+  configPublish: 730251,
+  /** The methodology migrations and configuration pins of one transformation (create, preview, submit, decide, execute, withdraw; one open migration per kind is also held by the unique index methodology_migration_one_open_key). Key: "<transformationId>". */
+  methodologyMigration: 730252,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

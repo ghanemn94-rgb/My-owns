@@ -4,7 +4,7 @@
 //  - the kpi_update_due item is created by slice A's REAL period-open job (worker handlers/kpi.ts openDuePeriods) with
 //    the KPI period-entry link, and shows under Missing updates for the KPI owner only, with its due date and overdue
 //    flag, and in Upcoming deadlines;
-//  - each of the 30 work-item kinds of a migrated database maps to exactly one section (the completeness test fails on
+//  - each of the 32 work-item kinds of a migrated database maps to exactly one section (the completeness test fails on
 //    an unmapped kind);
 //  - drafts list only the caller's own drafts (my_work_draft); an owned action item is listed once (not again when a
 //    work item names it); an item of a transformation the caller cannot read is left out;
@@ -249,11 +249,12 @@ describe("REQ-S03-008: My Work shows the caller's own items", () => {
 });
 
 describe("MY_WORK_SECTION_BY_KIND completeness (ADR-0037 §7)", () => {
-  it("each of the 30 work-item kinds of the migrated database maps to exactly one section", async () => {
+  it("each of the 32 work-item kinds of the migrated database maps to exactly one section", async () => {
     const kinds = (await api.db.selectFrom("work_item_kind").select("code").orderBy("code").execute()).map(
       (r) => r.code,
     );
-    expect(kinds.length).toBe(30);
+    // T-DG5-ARCH-01 (0063): + config_review, gate_reapproval.
+    expect(kinds.length).toBe(32);
     const unmapped = kinds.filter((c) => !Object.prototype.hasOwnProperty.call(MY_WORK_SECTION_BY_KIND, c));
     expect(unmapped, "a work_item_kind with no My Work section: add it to MY_WORK_SECTION_BY_KIND").toEqual([]);
     expect(Object.keys(MY_WORK_SECTION_BY_KIND).sort()).toEqual(kinds);
@@ -265,8 +266,8 @@ describe("MY_WORK_SECTION_BY_KIND completeness (ADR-0037 §7)", () => {
   it("the mapping of ADR-0037 §7 (section sizes)", () => {
     const size = (s: string) => Object.values(MY_WORK_SECTION_BY_KIND).filter((x) => x === s).length;
     expect(["assigned_actions", "reviews", "approvals", "missing_updates", "other"].map((s) => [s, size(s)])).toEqual([
-      ["assigned_actions", 9],
-      ["reviews", 5],
+      ["assigned_actions", 10],
+      ["reviews", 6],
       ["approvals", 8],
       ["missing_updates", 5],
       ["other", 3],

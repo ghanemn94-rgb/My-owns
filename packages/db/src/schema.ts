@@ -279,6 +279,14 @@ export interface MethodologyVersionTable {
   content_sha256: string;
   published_at: NullableTimestamp;
   published_by: string | null;
+  /** 0062 (ADR-0039 §1): the Studio configuration kind, draft stage, origin and lineage. */
+  config_kind: Generated<string>;
+  draft_stage: string | null;
+  origin: Generated<string>;
+  based_on_version_id: string | null;
+  rollback_of_version_id: string | null;
+  change_summary: string | null;
+  discarded_at: NullableTimestamp;
   version: Generated<number>;
   created_at: TimestampDefault;
   created_by: string | null;
@@ -294,6 +302,8 @@ export interface TransformationConfigPinTable {
   methodology_version_id: string;
   pinned_at: TimestampDefault;
   pinned_by: string;
+  /** 0063 (ADR-0040 §1): the approved migration that last moved this pin; NULL = never moved. */
+  last_migration_id: string | null;
   version: Generated<number>;
   created_at: TimestampDefault;
   created_by: string;
@@ -4688,6 +4698,203 @@ export interface Database {
 export type TraceabilityEdgeRow = Selectable<TraceabilityEdgeView>;
 export type MyWorkDraftRow = Selectable<MyWorkDraftView>;
 
+// ---- P5 slice A (migrations 0062-0063; T-DG5-ARCH-01; ADR-0039, ADR-0040). Generated from the DDL by
+// docs/delivery/handbacks/DG5/T-DG5-ARCH-01-evidence/gen-schema.py. numeric -> string (decimal).
+export interface ConfigReviewPolicyTable {
+  id: string;
+  config_kind: string;
+  review_required: boolean;
+  reviewer_role_code: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface SourceElementTable {
+  id: string;
+  set_code: string;
+  stable_key: string;
+  ordinal: number;
+  source_label_en: string;
+  label_ar: string;
+  source_ref: string;
+  feature_ref: string;
+  feature_status: string;
+  created_at: TimestampDefault;
+}
+
+export interface MethodologyElementTable {
+  id: string;
+  methodology_version_id: string;
+  element_type: string;
+  stable_key: string;
+  origin: string;
+  removed: Generated<boolean>;
+  ordinal: number | null;
+  attributes: JsonDefault;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ConfigCheckRunTable {
+  id: string;
+  methodology_version_id: string;
+  check_kind: string;
+  content_sha256: string;
+  result: string;
+  report: Json;
+  run_by: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface RevisionProposalTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string | null;
+  subject_type: string;
+  subject_id: string;
+  subject_version: number;
+  content_sha256: string;
+  validation_result: string;
+  validation_report: Json;
+  impact: Json;
+  reviewer_role_code: string;
+  review_task_count: number;
+  dedupe_key: string;
+  created_at: TimestampDefault;
+  created_by: string | null;
+}
+
+export interface ConfigReviewRequestTable {
+  id: string;
+  methodology_version_id: string;
+  content_sha256: string;
+  reviewer_role_code: string;
+  status: Generated<string>;
+  request_note: string | null;
+  revision_proposal_id: string | null;
+  requested_by: string;
+  requested_at: TimestampDefault;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface MethodologyMigrationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  config_kind: string;
+  from_version_id: string;
+  to_version_id: string;
+  status: Generated<string>;
+  reason: string;
+  plan_revision: Generated<number>;
+  plan_sha256: string | null;
+  plan_ready: Generated<boolean>;
+  requested_by: string;
+  submitted_by: string | null;
+  submitted_at: NullableTimestamp;
+  approval_id: string | null;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  executed_by: string | null;
+  executed_at: NullableTimestamp;
+  withdrawn_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface MethodologyMigrationItemTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  migration_id: string;
+  plan_revision: number;
+  ordinal: number;
+  item_kind: string;
+  element_type: string | null;
+  stable_key: string | null;
+  record_type: string | null;
+  record_id: string | null;
+  gate_code: string | null;
+  resolution: string;
+  detail: Json;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface TransformationConfigPinHistoryTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  pin_id: string;
+  pin_version: number;
+  kind: string;
+  from_version_id: string;
+  to_version_id: string;
+  migration_id: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface GateReapprovalTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  migration_id: string;
+  gate_instance_id: string;
+  gate_code: string;
+  approved_decision_id: string;
+  status: Generated<string>;
+  satisfied_decision_id: string | null;
+  work_item_id: string | null;
+  resolved_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface Database {
+  config_review_policy: ConfigReviewPolicyTable;
+  source_element: SourceElementTable;
+  methodology_element: MethodologyElementTable;
+  config_check_run: ConfigCheckRunTable;
+  revision_proposal: RevisionProposalTable;
+  config_review_request: ConfigReviewRequestTable;
+  methodology_migration: MethodologyMigrationTable;
+  methodology_migration_item: MethodologyMigrationItemTable;
+  transformation_config_pin_history: TransformationConfigPinHistoryTable;
+  gate_reapproval: GateReapprovalTable;
+}
+
+export type ConfigReviewPolicyRow = Selectable<ConfigReviewPolicyTable>;
+export type SourceElementRow = Selectable<SourceElementTable>;
+export type MethodologyElementRow = Selectable<MethodologyElementTable>;
+export type ConfigCheckRunRow = Selectable<ConfigCheckRunTable>;
+export type RevisionProposalRow = Selectable<RevisionProposalTable>;
+export type ConfigReviewRequestRow = Selectable<ConfigReviewRequestTable>;
+export type MethodologyMigrationRow = Selectable<MethodologyMigrationTable>;
+export type MethodologyMigrationItemRow = Selectable<MethodologyMigrationItemTable>;
+export type TransformationConfigPinHistoryRow = Selectable<TransformationConfigPinHistoryTable>;
+export type GateReapprovalRow = Selectable<GateReapprovalTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -4911,6 +5118,13 @@ export const SCHEMA_COLUMNS = {
     "content_sha256",
     "published_at",
     "published_by",
+    "config_kind",
+    "draft_stage",
+    "origin",
+    "based_on_version_id",
+    "rollback_of_version_id",
+    "change_summary",
+    "discarded_at",
     "version",
     "created_at",
     "created_by",
@@ -4925,6 +5139,7 @@ export const SCHEMA_COLUMNS = {
     "methodology_version_id",
     "pinned_at",
     "pinned_by",
+    "last_migration_id",
     "version",
     "created_at",
     "created_by",
@@ -8709,6 +8924,167 @@ export const SCHEMA_COLUMNS = {
     "parent_id",
     "created_by",
     "updated_at",
+  ],
+  config_review_policy: [
+    "id",
+    "config_kind",
+    "review_required",
+    "reviewer_role_code",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  source_element: [
+    "id",
+    "set_code",
+    "stable_key",
+    "ordinal",
+    "source_label_en",
+    "label_ar",
+    "source_ref",
+    "feature_ref",
+    "feature_status",
+    "created_at",
+  ],
+  methodology_element: [
+    "id",
+    "methodology_version_id",
+    "element_type",
+    "stable_key",
+    "origin",
+    "removed",
+    "ordinal",
+    "attributes",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  config_check_run: [
+    "id",
+    "methodology_version_id",
+    "check_kind",
+    "content_sha256",
+    "result",
+    "report",
+    "run_by",
+    "created_at",
+    "created_by",
+  ],
+  revision_proposal: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "subject_type",
+    "subject_id",
+    "subject_version",
+    "content_sha256",
+    "validation_result",
+    "validation_report",
+    "impact",
+    "reviewer_role_code",
+    "review_task_count",
+    "dedupe_key",
+    "created_at",
+    "created_by",
+  ],
+  config_review_request: [
+    "id",
+    "methodology_version_id",
+    "content_sha256",
+    "reviewer_role_code",
+    "status",
+    "request_note",
+    "revision_proposal_id",
+    "requested_by",
+    "requested_at",
+    "decided_by",
+    "decided_at",
+    "decision_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  methodology_migration: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "config_kind",
+    "from_version_id",
+    "to_version_id",
+    "status",
+    "reason",
+    "plan_revision",
+    "plan_sha256",
+    "plan_ready",
+    "requested_by",
+    "submitted_by",
+    "submitted_at",
+    "approval_id",
+    "decided_by",
+    "decided_at",
+    "executed_by",
+    "executed_at",
+    "withdrawn_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  methodology_migration_item: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "migration_id",
+    "plan_revision",
+    "ordinal",
+    "item_kind",
+    "element_type",
+    "stable_key",
+    "record_type",
+    "record_id",
+    "gate_code",
+    "resolution",
+    "detail",
+    "created_at",
+    "created_by",
+  ],
+  transformation_config_pin_history: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "pin_id",
+    "pin_version",
+    "kind",
+    "from_version_id",
+    "to_version_id",
+    "migration_id",
+    "created_at",
+    "created_by",
+  ],
+  gate_reapproval: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "migration_id",
+    "gate_instance_id",
+    "gate_code",
+    "approved_decision_id",
+    "status",
+    "satisfied_decision_id",
+    "work_item_id",
+    "resolved_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
