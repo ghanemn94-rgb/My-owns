@@ -114,6 +114,12 @@ export const ADVISORY_LOCK_CLASSES = {
   launchPlan: 730267,
   /** One health assessment's submission (health: score, band and the three actions checked together; taken by the 0086 trigger health_assessment_guard). Key: "<assessmentId>". */
   healthAssessmentSubmit: 730268,
+  // P5 block of T-DG5-ARCH-06 (730270-730272; p5-plan §4, ADR-0049 §8, ADR-0050 §6). 730272 is RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** One organization's branding (admin: a new branding version and the head row naming it; the version step is also held by branding_version_organization_version_key; taken by the 0089 triggers branding_version_guard and branding_setting_guard). Key: "<organizationId>". */
+  brandingPublish: 730270,
+  /** The demo seed or reset of a demo deployment (demo CLI and worker; a SESSION lock on the maintenance database "postgres", because the reset drops and re-creates the demo database). One class-wide key: "demo". */
+  demoReset: 730271,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

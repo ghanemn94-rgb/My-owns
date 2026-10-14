@@ -500,6 +500,8 @@ describe("schema.ts matches the migrated database", () => {
       ["gate_reapproval", "gate_reapproval_row_guard", false, false],
       ["methodology_element", "methodology_element_audit_required", true, true],
       ["methodology_element", "methodology_element_guard", false, false],
+      // 0089 (T-DG5-ARCH-06; ADR-0049 §2, §4, §6): the reader namespaces of methodology_text elements.
+      ["methodology_element", "methodology_element_reader_guard", false, false],
       ["methodology_element", "methodology_element_row_guard", false, false],
       ["methodology_migration", "methodology_migration_audit_required", true, true],
       ["methodology_migration", "methodology_migration_executed_moved_pin", true, true],
@@ -770,6 +772,50 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0089-0090: the P5 slice I/J guards are attached (deferred audit on branding, immutable catalogues and histories)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('guiding_question', 'playbook_block', 'playbook_block_link', 'source_foundation',
+         'methodology_element_profile', 'branding_version', 'branding_setting', 'deployment_environment', 'demo_seed_record',
+         'demo_dataset_run', 'walkthrough_step')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["branding_setting", "branding_setting_audit_required", true, true],
+      ["branding_setting", "branding_setting_guard", false, false],
+      ["branding_setting", "branding_setting_row_guard", false, false],
+      ["branding_version", "branding_version_append_only", false, false],
+      ["branding_version", "branding_version_append_only_truncate", false, false],
+      ["branding_version", "branding_version_audit_required", true, true],
+      ["branding_version", "branding_version_guard", false, false],
+      ["branding_version", "branding_version_row_guard", false, false],
+      ["demo_dataset_run", "demo_dataset_run_append_only", false, false],
+      ["demo_dataset_run", "demo_dataset_run_append_only_truncate", false, false],
+      ["demo_dataset_run", "demo_dataset_run_guard", false, false],
+      ["demo_seed_record", "demo_seed_record_append_only", false, false],
+      ["demo_seed_record", "demo_seed_record_append_only_truncate", false, false],
+      ["demo_seed_record", "demo_seed_record_guard", false, false],
+      ["deployment_environment", "deployment_environment_append_only", false, false],
+      ["deployment_environment", "deployment_environment_append_only_truncate", false, false],
+      ["guiding_question", "guiding_question_append_only", false, false],
+      ["guiding_question", "guiding_question_append_only_truncate", false, false],
+      ["methodology_element_profile", "methodology_element_profile_append_only", false, false],
+      ["methodology_element_profile", "methodology_element_profile_append_only_truncate", false, false],
+      ["methodology_element_profile", "methodology_element_profile_guard", false, false],
+      ["playbook_block", "playbook_block_guard", false, false],
+      ["playbook_block", "playbook_block_guard_truncate", false, false],
+      ["playbook_block_link", "playbook_block_link_append_only", false, false],
+      ["playbook_block_link", "playbook_block_link_append_only_truncate", false, false],
+      ["source_foundation", "source_foundation_append_only", false, false],
+      ["source_foundation", "source_foundation_append_only_truncate", false, false],
+      ["walkthrough_step", "walkthrough_step_append_only", false, false],
+      ["walkthrough_step", "walkthrough_step_append_only_truncate", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -992,6 +1038,8 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "launch_plan",
       "launch_task",
       "launch_task_predecessor",
+      // P5 slices I and J (0089-0090, T-DG5-ARCH-06; ADR-0049, ADR-0050): the branding head row only.
+      "branding_setting",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1325,6 +1373,20 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       launch_task_predecessor: SIU,
       launch_template_item: "SELECT",
       launch_window: "SELECT",
+      // P5 slices I and J (0089-0091): still no DELETE anywhere; the reader catalogues, the environment marker, demo
+      // records, dataset runs and the walkthrough are read-only to mth_app (written by migrations and the demo CLI);
+      // branding versions are append-only and the head row is updated in place with If-Match.
+      branding_setting: SIU,
+      branding_version: "INSERT,SELECT",
+      demo_dataset_run: "SELECT",
+      demo_seed_record: "SELECT",
+      deployment_environment: "SELECT",
+      guiding_question: "SELECT",
+      methodology_element_profile: "SELECT",
+      playbook_block: "SELECT",
+      playbook_block_link: "SELECT",
+      source_foundation: "SELECT",
+      walkthrough_step: "SELECT",
     });
   });
 

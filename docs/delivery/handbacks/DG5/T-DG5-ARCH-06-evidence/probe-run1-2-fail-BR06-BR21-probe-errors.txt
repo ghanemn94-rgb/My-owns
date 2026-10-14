@@ -1,0 +1,100 @@
+port-policy: PostgreSQL listening on port 23701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 80 (0001_identity_access.sql .. 0091_p5_reader_branding_demo_permissions.sql)
+PASS  G00 slice I/J migrations 0089-0091 present; 0092-0093 left free  -- ids >= 85: 85,86,87,89,90,91
+PASS  G01 fresh database: 0001..last apply  -- applied 80: 0087_p5_kpi_launch_health_permissions.sql, 0089_p5_reader_provenance_branding.sql, 0090_p5_demo_environment_walkthrough.sql, 0091_p5_reader_branding_demo_permissions.sql
+PASS  G02 P4 database populated (0001-0061; a synthetic transformation instantiated by the DG3 function)  -- applied 61
+PASS  G03 P5 over the P4 database: 0062..last apply  -- applied 19: 0087_p5_kpi_launch_health_permissions.sql, 0089_p5_reader_provenance_branding.sql, 0090_p5_demo_environment_walkthrough.sql, 0091_p5_reader_branding_demo_permissions.sql
+PASS  G04 the upgrade writes no environment row, no demo record and no branding version; the DG4 transformation stays at version 1  -- {"t":1,"e":0,"d":0,"b":0}
+PASS  S01 the four B0016 questions verbatim  -- Why change? What must become different? How will we execute? How will we prove value?
+PASS  S02 the three B0156 source foundations verbatim  -- PMI Organizational Transformation Series = Transformation concepts, building blocks, lifecycle, readiness, implementation and orchestration. | Brightline Initiative / Transformation Compass = North Star, transformation operating-system thinking, people-centered transformation and transformation lead
+PASS  S03 56 element profiles, 50 custom extensions (B0158-B0162: 6 phases, 6 gates, 10 TOM dimensions, 16 templates, scoring model, 5 forums, 3 launch windows, health check, roaming example, traceability chain) and 6 foundation-inspired benefit lifecycle steps  -- {"n":56,"c":50,"kinds":"benefit_lifecycle_step=6,forum=5,gate=6,health_check=1,launch_window=3,phase=6,roaming_example=1,scoring_model=1,template=16,tom_dimension=10,traceability_chain=1"}
+PASS  S04 every template has exactly one question tag, and all four questions are used  -- T01:why_change,T02:what_different,T03:what_different,T04:what_different,T05:how_execute,T06:how_execute,T07:how_execute,T08:how_execute,T09:how_prove_value,T10:how_prove_value,T11:how_execute,T12:how_execute,T13:how_execute,T14:how_prove_value,T15:how_execute,T16:how_execute
+PASS  S05 every profile resolves a label (its source_element or its own)  -- unlabelled 0
+PASS  S06 the twelve walkthrough steps equal M0349 verbatim, in order  -- create transformation → diagnose and agree baseline → define outcomes/KPIs → design TOM → prioritize initiatives and approve mobilization → update delivery/adoption → submit KPI actual → validate benefit → resolve executive decision → generate report → accept BAU handover → continue performance moni
+PASS  S07 branding.configure and demo.reset are configure codes held by ADM_TECH only  -- ADM_TECH:branding.configure,ADM_TECH:demo.reset / branding.configure:configure,demo.reset:configure
+PASS  S08 the pinned server has the 'english' and 'arabic' text search configurations  -- arabic,english on 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+PASS  T01 p5_claims_official_pmi flags each official-PMI or certification claim (en, ar)  -- [true,true,true,true,true,true,true,true]
+PASS  T02 p5_claims_official_pmi accepts B0004, B0124, 'Official references', negated disclaimers (en, ar) and empty or null text  -- [false,false,false,false,false,false,false,false,false,false,false,false]
+PASS  T03 p5_mentions_engineering_gate flags DG0-DG7 (with space, hyphen, Arabic-Indic digit, punctuation)  -- [true,true,true,true,true]
+PASS  T04 p5_mentions_engineering_gate accepts G1-G6, DG8, DG10, EDG7 and null  -- [false,false,false,false,false,false,false]
+PASS  PB01 mth_app cannot insert a playbook block (read-only catalogue)  -- 42501 permission denied for table playbook_block
+PASS  PB02 the owner seeds blocks B0004, B0026, B0029 (Diagnose), B0031 and B0124 (Realize)  -- 5 blocks
+PASS  PB03 searching 'value pools' (english) returns the Diagnose block B0029  -- B0029:diagnose
+PASS  PB04 searching 'مجمعات القيمة' (arabic) returns B0029  -- B0029
+PASS  PB05 the Realize block says 'aligns with PMI Benefits Realization Management logic' and passes the claim rule  -- | PMI BRM connection This phase aligns with PMI Benefits Realization Management
+PASS  PB06 the verbatim English text never changes (as the owner)  -- 23514 playbook_block_immutable playbook_block B0004: the verbatim source text and its position never change; only text_ar and ar_provisional may be corrected
+PASS  PB07 the Arabic translation may be corrected by a migration (owner)  -- updated
+PASS  PB08 a block is never deleted (as the owner)  -- 42501 playbook_block_immutable playbook_block: source blocks are never deleted
+PASS  PB09 a block is never truncated (as the owner)  -- 42501 playbook_block_immutable playbook_block: source blocks are never deleted
+PASS  PB10 the ordinal equals the block number  -- 23514 playbook_block_ordinal_matches new row for relation "playbook_block" violates check constraint "playbook_block_ordinal_matches"
+PASS  PB11 block refs stop at B0165  -- 23514 playbook_block_block_ref_check new row for relation "playbook_block" violates check constraint "playbook_block_block_ref_check"
+PASS  PL01 the owner seeds the link B0031 -> template T01 and REQ-S02-004  -- 2 links
+PASS  PL02 the T01 form finds its source block B0031 through the link (the reverse direction)  -- B0031
+PASS  PL03 a link names a template T01-T16, a requirement REQ-..., or a procedure code  -- 23514 playbook_block_link_target_shape new row for relation "playbook_block_link" violates check constraint "playbook_block_link_target_shape"
+PASS  PL04 links are append-only (as the owner)  -- 42501 playbook_block_link is append-only: DELETE is not allowed
+PASS  MP01 a question tag only on a template  -- 23514 methodology_element_profile_question_tag new row for relation "methodology_element_profile" violates check constraint "methodology_element_profile_question_tag"
+PASS  MP02 the provenance source follows the element kind (a phase is B0158)  -- 23514 methodology_element_profile_kind_source new row for relation "methodology_element_profile" violates check constraint "methodology_element_profile_kind_source"
+PASS  MP03 foundation_inspired exactly when the source is B0156  -- 23514 methodology_element_profile_provenance new row for relation "methodology_element_profile" violates check constraint "methodology_element_profile_provenance"
+PASS  MP04 a profile's source_element is the same identity  -- 23514 methodology_element_profile_source_element methodology_element_profile phase.y: source_element 01920005-0011-7000-8000-000000000001 is not the same identity
+PASS  MP05 profiles are append-only (as the owner)  -- 42501 methodology_element_profile is append-only: UPDATE is not allowed
+PASS  MP06 source refs are B0001-B0165  -- 23514 methodology_element_profile_source_refs new row for relation "methodology_element_profile" violates check constraint "methodology_element_profile_source_refs"
+PASS  MR01 a profile override: template T01 tagged 'how_execute', provenance kept custom_extension  -- ok
+PASS  MR02 a question tag on a non-template profile is refused  -- 23514 methodology_element_reader_profile methodology_element 01990000-0000-7000-8000-000000000066: a profile override sets provenance (custom_extension | foundation_inspired) and, for a template only, one guiding-question tag
+PASS  MR03 a profile key must name a seeded element  -- 23503 methodology_element_reader_profile methodology_element 01990000-0000-7000-8000-000000000067: profile.template.T99 names no seeded methodology element
+PASS  MR04 an unknown provenance value is refused  -- 23514 methodology_element_reader_profile methodology_element 01990000-0000-7000-8000-000000000068: a profile override sets provenance (custom_extension | foundation_inspired) and, for a template only, one guiding-question tag
+PASS  MR05 provenance outside the reader namespaces is refused (a template element)  -- 23514 methodology_element_reader_namespace methodology_element 01990000-0000-7000-8000-000000000069: provenance, questionTag and block links exist only on methodology_text elements of the reader namespaces
+PASS  MR06 block guidance and added links on B0031  -- ok
+PASS  MR07 a malformed block link is refused  -- 23514 methodology_element_reader_block methodology_element 01990000-0000-7000-8000-00000000006c: each link is {targetKind: template | procedure | requirement, targetKey}
+PASS  MR08 a block key must name a seeded block  -- 23503 methodology_element_reader_block methodology_element 01990000-0000-7000-8000-00000000006d: block.B0100 names no playbook block, or sets a profile attribute
+PASS  MR09 a provenance note claiming PMI certification is refused  -- 23514 methodology_element_reader_text methodology_element 01990000-0000-7000-8000-00000000006e: bodyEn claims official PMI status or certification, or names an engineering gate DG0-DG7
+PASS  MR10 reader text naming an engineering gate is refused  -- 23514 methodology_element_reader_text methodology_element 01990000-0000-7000-8000-00000000006f: bodyEn claims official PMI status or certification, or names an engineering gate DG0-DG7
+PASS  MR11 a negated disclaimer in the provenance note is accepted  -- ok
+PASS  MR12 methodology_text outside the reader namespaces is unaffected  -- ok
+PASS  MR13 links on a profile override are refused  -- 23514 methodology_element_reader_profile methodology_element 01990000-0000-7000-8000-000000000074: a profile override sets provenance (custom_extension | foundation_inspired) and, for a template only, one guiding-question tag
+PASS  BR01 version 1 and the head row (version 1), each with its audit event  -- 01990000-0000-7000-8000-000000000077
+PASS  BR02 version 2 (product name changed, approved colours with a reference, PNG logo, header and footer) and the head steps to version 2  -- v2
+PASS  BR03 a version that skips a number is refused  -- 23514 branding_version_step branding_version: version 4 of organization 01990000-0000-7000-8000-000000000001 is not the next version
+PASS  BR04 a repeated version number is refused  -- 23514 branding_version_step branding_version: version 2 of organization 01990000-0000-7000-8000-000000000001 is not the next version
+PASS  BR05 the head must name the latest version  -- 23514 branding_setting_current_latest branding_setting: the current version of organization 01990000-0000-7000-8000-000000000001 is always its latest branding version
+FAIL  BR06 a non-stepping head version is refused  -- 23514 branding_setting_current_latest branding_setting: the current version of organization 01990000-0000-7000-8000-000000000001 is always its latest branding version
+PASS  BR07 a branding version without its audit event fails at COMMIT  -- 23000 branding_version_audit_required no audit_event for branding_version 01990000-0000-7000-8000-000000000082 at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  BR08 a head update without its audit event fails at COMMIT  -- 23000 branding_setting_audit_required no audit_event for branding_setting 01990000-0000-7000-8000-000000000077 at version 3 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  BR09 mth_app cannot update a branding version (no UPDATE privilege)  -- 42501 permission denied for table branding_version
+PASS  BR10 branding versions are append-only even for the owner (UPDATE)  -- 42501 branding_version is append-only: UPDATE is not allowed
+PASS  BR11 branding versions are append-only even for the owner (DELETE)  -- 42501 branding_version is append-only: DELETE is not allowed
+PASS  BR12 a product name claiming PMI certification is refused  -- 23514 branding_version_no_pmi_claim new row for relation "branding_version" violates check constraint "branding_version_no_pmi_claim"
+PASS  BR13 an Arabic footer claiming PMI accreditation is refused  -- 23514 branding_version_no_pmi_claim new row for relation "branding_version" violates check constraint "branding_version_no_pmi_claim"
+PASS  BR14 a report header naming an engineering gate is refused  -- 23514 branding_version_no_engineering_gate new row for relation "branding_version" violates check constraint "branding_version_no_engineering_gate"
+PASS  BR15 colours are #RRGGBB upper case  -- 23514 branding_version_primary_colour_check new row for relation "branding_version" violates check constraint "branding_version_primary_colour_check"
+PASS  BR16 non-provisional colours need an approval reference  -- 23514 branding_version_colour_approval new row for relation "branding_version" violates check constraint "branding_version_colour_approval"
+PASS  BR17 a logo must be a PNG  -- 23514 branding_version_logo_png_check new row for relation "branding_version" violates check constraint "branding_version_logo_png_check"
+PASS  BR18 the logo hash must match the logo  -- 23514 branding_version_logo_complete new row for relation "branding_version" violates check constraint "branding_version_logo_complete"
+PASS  BR19 report header texts come in pairs (en and ar)  -- 23514 branding_version_header_pair new row for relation "branding_version" violates check constraint "branding_version_header_pair"
+PASS  BR20 only the bundled fonts  -- 23514 branding_version_font_latin_check new row for relation "branding_version" violates check constraint "branding_version_font_latin_check"
+FAIL  BR21 a second head row per organization is refused  -- 23514 branding_setting_version_matches new row for relation "branding_setting" violates check constraint "branding_setting_version_matches"
+PASS  EN01 mth_app cannot write the environment marker  -- 42501 permission denied for table deployment_environment
+PASS  EN02 production initialization writes the production marker (owner)  -- production
+PASS  EN03 the environment kind never changes (as the owner)  -- 42501 deployment_environment is append-only: UPDATE is not allowed
+PASS  EN04 at most one environment row  -- 23505 deployment_environment_pkey duplicate key value violates unique constraint "deployment_environment_pkey"
+PASS  EN05 a demo record is refused in a production database  -- 23514 demo_seed_record_demo_only demo_seed_record: demo records exist only in a database initialized as a demo environment
+PASS  EN06 a dataset run is refused in a production database  -- 23514 demo_dataset_run_demo_only demo_dataset_run: a dataset run exists only in a demo database, for its own dataset and synthetic clock
+PASS  EN07 the production database holds zero demo records and zero demo users (REQ-S18-003 query)  -- {"r":0,"u":0}
+PASS  EN08 a demo marker needs its dataset, version and synthetic clock  -- 23514 deployment_environment_demo_dataset new row for relation "deployment_environment" violates check constraint "deployment_environment_demo_dataset"
+PASS  DM01 demo initialization writes the demo marker with dataset 1.0.0 and the synthetic clock  -- demo
+PASS  DM02 a demo record for an existing row is registered  -- 2 records
+PASS  DM03 a demo record must name an existing row  -- 23503 demo_seed_record_ref demo_seed_record: transformation 01990000-0000-7000-8000-000000000091 does not exist
+PASS  DM04 a demo record must name a table with a uuid id  -- 23503 demo_seed_record_ref demo_seed_record: no_such_table is not a table with a uuid id
+PASS  DM05 fixture keys are unique  -- 23505 demo_seed_record_fixture_key duplicate key value violates unique constraint "demo_seed_record_fixture_key"
+PASS  DM06 demo records are append-only (as the owner)  -- 42501 demo_seed_record is append-only: DELETE is not allowed
+PASS  DM07 dataset run 1 (seed, cli) with counts, checksum and coverage  -- run 1
+PASS  DM08 a run that skips a number is refused  -- 23514 demo_dataset_run_step demo_dataset_run: run 3 is not the next run
+PASS  DM09 a run of another dataset version is refused  -- 23514 demo_dataset_run_demo_only demo_dataset_run: a dataset run exists only in a demo database, for its own dataset and synthetic clock
+PASS  DM10 an API request is a reset with a requester  -- 23514 demo_dataset_run_api_reset new row for relation "demo_dataset_run" violates check constraint "demo_dataset_run_api_reset"
+PASS  DM11 dataset runs are append-only (as the owner)  -- 42501 demo_dataset_run is append-only: UPDATE is not allowed
+PASS  DM12 mth_app cannot register a demo record  -- 42501 permission denied for table demo_seed_record
+PASS  DM13 mth_app cannot write a dataset run  -- 42501 permission denied for table demo_dataset_run
+PASS  WK01 the walkthrough catalogue is read-only to mth_app  -- 42501 permission denied for table walkthrough_step
+PASS  AO01 mth_app has no UPDATE, DELETE or TRUNCATE on the slice I/J catalogues and histories; branding_setting is INSERT, SELECT, UPDATE only  -- null / INSERT,SELECT,UPDATE
+
+93/95 PASS

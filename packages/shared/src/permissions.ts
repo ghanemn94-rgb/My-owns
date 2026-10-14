@@ -293,6 +293,18 @@ export const P5_KPI_LAUNCH_HEALTH_PERMISSIONS = {
   "health_check.assess": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P5 slices I and J (T-DG5-ARCH-06; ADR-0049 §10, ADR-0050 §8): branding and the demo environment. Seeded by 0091.
+ * Two configure codes, both held by ADM_TECH. Reading the reader, provenance, element profiles, branding, navigation,
+ * the environment and the walkthrough needs a session only; editing the reader texts, provenance overrides, question
+ * tags and block links uses the slice A Studio rights. No code is a business_approval or finance_validation code; AUD
+ * gets nothing here and stays read-only.
+ */
+export const P5_READER_DEMO_PERMISSIONS = {
+  "branding.configure": "configure",
+  "demo.reset": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -310,6 +322,7 @@ export const PERMISSIONS = {
   ...P5_AUTOMATION_PERMISSIONS,
   ...P5_REPORTING_PERMISSIONS,
   ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
+  ...P5_READER_DEMO_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -724,6 +737,27 @@ export const P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS = {
   ADM_METHOD: ["financial_metrics.enable"],
 } as const satisfies Record<string, readonly (keyof typeof P5_KPI_LAUNCH_HEALTH_PERMISSIONS)[]>;
 
+/**
+ * P5 slices I and J role defaults (seeded by 0091; ADR-0049 §10, ADR-0050 §8): branding.configure and demo.reset for
+ * ADM_TECH only. Every other role gets none.
+ */
+export const P5_READER_DEMO_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: [],
+  BO: [],
+  WL: [],
+  FIN: [],
+  TO: [],
+  KDS: [],
+  TD: [],
+  CM: [],
+  SEC: [],
+  AUD: [],
+  ADM_TECH: ["branding.configure", "demo.reset"],
+  ADM_ACCESS: [],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P5_READER_DEMO_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -946,6 +980,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_TECH,
+      ...P5_READER_DEMO_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {

@@ -1867,6 +1867,51 @@ erDiagram
 | HealthAssessment (S16-021; PB-091, PB-092, S14-001..003) | `health_assessment` + `health_assessment_answer` + `health_assessment_action` | `id` (sequence per transformation; one draft) | `owner_user_id` | `health_check.assess` | `status` (draft, submitted) | yes | health |
 | Health-check scoring scheme (S14-003) | `methodology_version` (kind `health_check_scheme`) + `methodology_element` (`health_response`, `health_band`) | `id` | `published_by` | Studio (`methodology.configure`, `methodology.publish`) | `status`, `draft_stage` | yes | methodology (Studio), health (reads) |
 
+## 1q. P5 slices I and J: playbook reader, provenance, branding, demo environment and walkthrough (migrations 0089–0091; T-DG5-ARCH-06; ADR-0049, ADR-0050)
+
+Catalogues use their natural keys (`block_ref`, `code`, `element_ref`); the only new mutable table is `branding_setting` (P2 guards: `_row_guard`, deferred `_audit_required`). `branding_version` is an audited append-only history. The reader catalogues, the environment marker, demo records, dataset runs and the walkthrough are read-only to mth_app and append-only (the verbatim `playbook_block` text is immutable). No mth_app DELETE grant on any of them. Slice A's `methodology_element` gains one extra trigger for the reader namespaces of `methodology_text`. No DG1–DG4 table changes. The data dictionary ("P5 tables, slices I and J") lists every column, constraint, index and trigger.
+
+### 1q.1 Reader, provenance and branding (slice I)
+
+```mermaid
+erDiagram
+    playbook_block |o--o{ playbook_block : "section heading (earlier block)"
+    phase_definition |o--o{ playbook_block : "phase section (Diagnose ... Realize)"
+    playbook_block ||--o{ playbook_block_link : "seeded links: template, procedure, requirement"
+    methodology_version ||--o{ methodology_element : "methodology_text block.<ref> (guidance, linksAdded/Removed), profile.<element_ref> (provenance, questionTag), provenance.note"
+    source_element |o--o{ methodology_element_profile : "labels of the 53 profiles with a source element"
+    guiding_question |o--o{ methodology_element_profile : "one question tag per template"
+    organization ||--o{ branding_version : "immutable versions 1, 2, ..."
+    organization ||--o| branding_setting : "head row (If-Match)"
+    branding_version ||--o| branding_setting : "current = latest version"
+```
+
+`source_foundation` (B0156, 3 rows) stands alone. `playbook_block_link.target_key` names a template code (`T01`–`T16`), a procedure code or a requirement ID; it is checked by shape, because templates and requirements are not tables, and resolved by the API. A `methodology_element` reader row's `stable_key` names a `playbook_block` or a `methodology_element_profile` row (checked by `methodology_element_reader_guard`).
+
+### 1q.2 Demo environment and walkthrough (slice J)
+
+```mermaid
+erDiagram
+    deployment_environment ||--o{ demo_seed_record : "only when environment_kind = demo"
+    deployment_environment ||--o{ demo_dataset_run : "only for its dataset version and synthetic clock"
+```
+
+`demo_seed_record (record_type, record_id)` names a row of any table with a uuid `id` (checked by `demo_seed_record_guard`; polymorphic, so no FK). `demo_dataset_run.requested_by` deliberately has no FK: a reset re-creates the database, and the requester's fixed demo user id is re-created by the seed (ADR-0050 §6). `walkthrough_step` (12 rows, M0349, in order) stands alone; its `area_code` is one of the 14 navigation areas of ADR-0049 §9.
+
+### 1q.3 P5 entity register (slices I and J) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Playbook source block (S03-010, PB-001) | `playbook_block` | `block_ref` | — (source) | migrations | — | no (immutable text) | methodology |
+| Block link (S02-004) | `playbook_block_link` + Studio `methodology_text` `block.<ref>` | `(block_ref, target_kind, target_key)` | — | migrations; Studio publish | — | no (append-only); Studio rows versioned | methodology |
+| Element provenance and question tag (PB-002, PB-011) | `methodology_element_profile` (+ `guiding_question`) + Studio `profile.<element_ref>` | `element_ref` | — | migrations; Studio publish | — | no (append-only) | methodology |
+| Source foundations (PB-001) | `source_foundation` | `code` | — | migrations | — | no | methodology |
+| Branding (S15-004, S01-002) | `branding_version` + `branding_setting` | `id`; `(organization_id, version_no)` unique | `created_by` | `branding.configure` | `branding_setting.current_version_no` | head yes; versions append-only | admin |
+| Environment marker (S18-001, S18-003) | `deployment_environment` | `singleton` | — | CLI (owner) | `environment_kind` (production, demo) | no (written once) | admin |
+| Demo fixture registry (S18-001, S18-002) | `demo_seed_record` | `(record_type, record_id)` | — | demo seed (owner) | — | no (append-only) | admin (demo) |
+| Demo dataset run (S18-001, S18-002) | `demo_dataset_run` | `id`; `run_no` unique | `requested_by` | demo seed/reset (owner) | `run_kind` (seed, reset) | no (append-only) | admin (demo) |
+| Walkthrough step (S18-004) | `walkthrough_step` | `code` | — | migrations | — | no | admin (demo) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

@@ -916,3 +916,40 @@ C = create (or generate); U = update; Sb = submit; W = withdraw; D = decide (a b
 - **AUD (read-only auditor):** every slice G/H mutation returns **403** for AUD and writes nothing: create, submit, withdraw and decide a restatement; enablement, assumptions and cash flows; generate the plan, change its start date, task and predecessor edits; Day-90 responses and completion; health-check create, answers, actions and submit. AUD reads every listed entity in its scope, and the session-level reads.
 - **Technical administrators** hold no `transformation.read` by default and therefore read no restatement, plan, test or assessment. ADM_METHOD switches the financial extension on or off and authors scheme drafts through Studio; it decides nothing.
 - **SoD:** a restatement is decided by a holder of `kpi_restatement.approve` who is not its requester. No other slice G/H operation approves anything.
+
+## 23. P5 implementation, slices I and J (DG5): the playbook reader, provenance, element profiles, navigation, branding, the demo environment and the guided walkthrough permission codes and per-entity rights
+
+- **Task:** T-DG5-ARCH-06 (solution-architect), 2026-10-14. **Sources:** ADR-0049 §10, ADR-0050 §8; master prompt M0077, M0088, M0089, M0100–M0113, M0301, M0339, M0348, M0349; REQ-PB-001 "edit-text: ADM (via versioned publish); view: all signed-in users", REQ-PB-002 "edit: ADM (versioned publish only); view: all signed-in users", REQ-PB-011 "edit: ADM (methodology admin); view: all signed-in users", REQ-S02-004 "edit-links: ADM (via Studio publish); view: all signed-in users", REQ-S03-007 "view: per role scope; Administration visible only to ADM and configured admin roles", REQ-S03-010 "view: all signed-in users; launch-procedure: roles allowed by the procedure", REQ-S01-002 and REQ-S15-004 "edit: ADM; view: all signed-in users", REQ-S18-001 and REQ-PB-088 "reset-demo: ADM; view: demo users", REQ-S18-003 "bootstrap: IT".
+- **Seed:** `0091_p5_reader_branding_demo_permissions.sql`, equal to `P5_READER_DEMO_PERMISSIONS` / `P5_READER_DEMO_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation. Both new codes are `configure` codes of the technical administrator ADM_TECH. Reader texts, provenance overrides, question tags and block links change only through a published Studio version (`methodology.configure`, `methodology.publish`; ADM_METHOD; review by TO). `seed-demo`, `reset-demo` and `bootstrap` are operator commands (owner or admin database credentials, IT/devops), not application permissions. Every approval in a demo database is synthetic and approves nothing real (ADR-0050 §2).
+
+### 23.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `branding.configure` | configure | Read and save the branding settings (product name, logo, colours, fonts, report header and footer), publishing a new branding version; read the version history | ADM_TECH |
+| `demo.reset` | configure | Read the demo environment status (dataset runs, counts, checksum, coverage) and request a reset of the demo database to its seeded state | ADM_TECH |
+
+Reused codes: reading the reader (blocks, links, search, provenance, element profiles, guiding questions), the branding, the logo, the design tokens, `GET /me/navigation`, `GET /environment` and the walkthrough needs a session only. A reader request with `transformationId` also needs `transformation.read` there (else 404). "Launch" from the reader is slice C's `launchProcedureInstance` under `procedure.launch` and the procedure's own roles (§19).
+
+### 23.2 Per-entity rights in P5 (slices I and J)
+
+Legend as in 8.3. "session" = any signed-in user.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Playbook blocks, links, search (`playbook_block`, `playbook_block_link`) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) |
+| Provenance, foundations, element profiles, guiding questions (`source_foundation`, `methodology_element_profile`, `guiding_question`) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) |
+| Reader guidance, link changes, provenance overrides, question tags, provenance note (Studio `methodology_text` `block.*`, `profile.*`, `provenance.note`) | — | — | — | — | — | Rv (configured review) | — | — | — | — | — | C U P (Studio) | — | — |
+| Branding (read: `GET /branding`, `/branding/logo`, `/branding/tokens`) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) |
+| Branding settings and versions (`branding_setting`, `branding_version`) | — | — | — | — | — | — | — | — | — | — | — | — | V U (publish) | — |
+| Navigation (`GET /me/navigation`; not stored) | own | own | own | own | own | own | own | own | own | own | own | own | own | own |
+| Environment (`deployment_environment`; `GET /environment`) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) |
+| Demo status and reset (`demo_dataset_run`, `demo_seed_record`) | — | — | — | — | — | — | — | — | — | — | — | — | V Rs (demo database only) | — |
+| Walkthrough (`walkthrough_step`; `GET /demo/walkthrough`) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) | V (demo) |
+
+C = create; U = update; P = publish; Rv = review; Rs = request reset; own = the caller's own visible areas.
+
+- **AUD (read-only auditor):** every slice I/J mutation returns **403** for AUD and writes nothing: `putBrandingSettings`, `requestDemoReset`, and every Studio write to the reader namespaces. AUD reads the session-level entities. In `GET /me/navigation` AUD sees Administration read-only, because it holds `user.read` and `access.read` (the DG1 `ADMIN_PERMISSIONS` rule; ADR-0049 §9).
+- **Administration visibility (REQ-S03-007):** the Administration area is shown to holders of at least one of `methodology.publish`, `methodology.review`, `config_review_policy.configure`, `automation.configure`, `job.read`, `organization.manage`, `business_unit.manage`, `user.read`, `user.manage`, `access.read`, `access.assign`, `branding.configure` or `demo.reset`. A Workstream Lead holds none of them and does not see it.
+- **Technical administrators:** ADM_TECH configures branding and resets the demo database. Neither is a business approval, and neither changes a transformation's records outside the demo database.

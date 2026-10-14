@@ -690,3 +690,254 @@ The plan's BE-P and KBE-G are each split in two: **BE-P/BE-P2** (plan and tasks 
 10. **The database recomputes the score.** Submit the score and band from `packages/shared/src/health/**`; the database refuses any other value (`health_assessment_score_matches`).
 11. **Schemes go through Studio.** Never write `methodology_element` rows of a published scheme; publish a new version and migrate the pin (ADR-0040). Existing assessments keep their scheme forever.
 12. **No digits in codes the database checks.** Work-item kinds, job codes, permission codes and audit actions match `^[a-z_]+…`; that is why the tables are `day_ninety_*` and the permission is `day_ninety_test.respond`. API paths and problem-code texts may say "Day-90".
+
+## §I. Slice I (the playbook reader and search, provenance and question tags, source links, the 14 navigation areas, branding and the product name, the two text scans) — T-DG5-ARCH-06
+
+### I.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0049-p5-playbook-reader-provenance-navigation-branding.md` | Binding design, with the refusal codes and English texts (§11) |
+| Migrations | `packages/db/migrations/0089_p5_reader_provenance_branding.sql`, `0091_p5_reader_branding_demo_permissions.sql` | Probe 96/96 PASS (`docs/delivery/handbacks/DG5/T-DG5-ARCH-06-evidence/probe-output.txt`) |
+| Seeds | `guiding_question` (4, B0016), `source_foundation` (3, B0156), `methodology_element_profile` (56: 50 custom extensions per B0158–B0162, 6 foundation-inspired; one question tag per template) | In `0089` |
+| Text rules | SQL `p5_claims_official_pmi(text)`, `p5_mentions_engineering_gate(text)` (ADR-0049 §7) | In `0089`; CHECKs on branding, the reader guard |
+| Kysely types, catalogue and seed pins, permissions | `packages/db/src/schema.ts` (11 slice I/J tables), `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts`, `P5_READER_DEMO_PERMISSIONS` in `packages/shared/src/permissions.ts` | Pinned |
+| Lock classes | `brandingPublish` 730270 (taken by the `0089` triggers), `demoReset` 730271 (session lock, slice J); 730272 reserved | Registry test updated |
+| Contract | 15 slice I operations (tags `methodology-reader`, `navigation`, `branding`); `PermissionCode` gains `branding.configure`, `demo.reset` | `pnpm openapi:lint` PASS (846 operations) |
+| Contract-test seams | `p5-pending-be-q.ts` (4), `p5-pending-be-q2.ts` (4), `p5-pending-be-r.ts` (6), `p5-pending-be-r2.ts` (1); aggregator `p5-pending-arch-06.ts`; `p5-operations.ts` block | Contract test green |
+
+The plan's BE-Q and BE-R are each split in two: **BE-Q/BE-Q2** (the 165-block seed with blocks and links / search, provenance and profiles) and **BE-R/BE-R2** (branding / navigation and the text scans). Each has 1–6 operations, plus a seed or a scan.
+
+### I.1 BE-Q — the 165 verbatim blocks, block reads and links in both directions (backend-workflow-engineer; after BE-C, because both edit `methodology/routes.ts`)
+
+- **Files:**
+  - **migration `0092`** (`0092_p5_playbook_blocks.sql`): the 165 `playbook_block` rows and the `playbook_block_link` seed.
+    - Each block's `text_en` is **verbatim** from `docs/source/playbook.md` at its anchor. A table block keeps its Markdown rows; the anchor comment is not part of the text.
+    - `text_ar` is a provisional translation, `ar_provisional = true`.
+    - `is_heading`, `section_block_ref` and `phase_code` follow the playbook's structure: Diagnose B0025–B0043, Define B0044–B0051, Design B0052–B0065, Mobilize B0066–B0088, Transform B0089–B0116, Realize B0117–B0131. Verify each boundary against the file.
+    - The links seed: each template's heading and table block → its template (`T01`: B0030, B0031, …), the template blocks → the register requirement IDs, and the procedure blocks → the ten seeded procedure codes of ADR-0042.
+
+    Generate the SQL with a script kept in your evidence folder, and add a test that reads `docs/source/playbook.md` once (it is a fixed source file, not a growing delivery folder) and compares all 165 texts;
+  - `methodology/reader.ts`: the resolved version (latest published `methodology`/`playbook`, or the pin through `ConfigResolver` with `transformation.read`, else 404), block list and get, and the guidance from the version's `block.<ref>` element;
+  - `methodology/source-links.ts`: resolved links (seed + `linksAdded` − `linksRemoved`), labels and routes, `launchable` from slice C's launch check, and the reverse template → blocks;
+  - its registration lines in `methodology/routes.ts`;
+  - the `playbook_block*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (4):** `listMethodologyBlocks`, `getMethodologyBlock`, `listMethodologyBlockLinks`, `listTemplateSourceLinks`.
+- **Consumes:** ADR-0049 §1, §4, §6, §10–§11; ADR-0039 §2–§3 (`ConfigResolver`, elements); ADR-0042 (procedure codes, `launchProcedureInstance`); the `0089` guards.
+- **Tests (literal):**
+  - REQ-S02-004: block B0031 lists a link that opens the T01 register; `listTemplateSourceLinks(T01)` returns B0031.
+  - A version adding a procedure link and removing a seeded one changes only that version's resolved list.
+  - 165/165 blocks equal the source file; `text_en` cannot be changed (`playbook_block_immutable`).
+  - A pinned read without `transformation.read` gives 404.
+
+### I.2 BE-Q2 — search, provenance, element profiles, guiding questions, the reader namespaces in Studio (backend-workflow-engineer; after BE-Q)
+
+- **Files:**
+  - `methodology/search.ts`: `websearch_to_tsquery('english'|'arabic', q)` against `search_en`/`search_ar`, ordered by `ts_rank` then `block_ref`; plain-text snippets from `ts_headline` with private sentinel markers turned into `highlights`; cursor pagination on (rank bucket, block_ref);
+  - `methodology/provenance.ts`;
+  - `methodology/element-profiles.ts`: profiles resolved per version, with `profile.<element_ref>` overrides and `overridden`;
+  - its registration lines in `methodology/routes.ts` (after BE-Q);
+  - the reader attributes in `packages/shared/src/schemas/studio.ts` `CONFIG_ELEMENT_ATTRIBUTES.methodology_text`: optional `provenance`, `questionTag`, `linksAdded`, `linksRemoved`, validated with the §11 codes before the database. Add it as named lines; the rest of the file is frozen;
+  - the `methodology_element_reader_*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (4):** `searchMethodology`, `getMethodologyProvenance`, `listMethodologyElements`, `listGuidingQuestions`.
+- **Consumes:** ADR-0049 §2, §3, §5–§7, §11; BE-Q's reader; the `0089` seeds and guards.
+- **Tests (literal):**
+  - REQ-S03-010: searching "value pools" returns the Diagnose blocks; an Arabic query returns hits from `search_ar`; `q` of 1 character gives 400 `validation.search_query`.
+  - REQ-PB-001: `statement.textEn` equals B0004 verbatim.
+  - REQ-PB-077: `realizeNote.textEn` contains "aligns with PMI Benefits Realization Management logic".
+  - REQ-PB-002: every B0158–B0162 element returns `provenance=custom_extension` from `listMethodologyElements?provenance=custom_extension` (50 rows), and none is labelled a PMI standard.
+  - REQ-PB-011: the four questions render verbatim in en (with ar), and each of the 16 templates has exactly one `questionTag`.
+  - A Studio `profile.phase.diagnose` with a `questionTag` gives 422 `methodology_reader.invalid_override`, and a note claiming certification gives 422 `methodology_reader.prohibited_text`.
+  - AUD gets 403 on these Studio writes.
+
+### I.3 BE-R — versioned branding and the product name (backend-workflow-engineer; after BE-N, whose layout reads the branding port)
+
+- **Files:**
+  - `admin/branding.ts`: keeps `getBrandingTokens` and its shape; adds the five branding operations, the version-0 defaults, the token merge with the ADR-0009 §3 shade derivation (injected from `server.ts`'s existing token source; no new import outside the allow-list), and `putBrandingSettings` under lock 730270 with the version and head inserts, one audit event each, and the outbox event `branding.published`;
+  - `admin/branding-port.ts`: `BrandingReadPort.current(db, organizationId)`, read by the export layout at generation time;
+  - its one wiring line in `reporting/exports/layout/**` (a named line, after BE-N; the snapshot content gains `brandingVersionNo`);
+  - `packages/shared/src/schemas/branding.ts` (+ barrel line);
+  - the `branding_*` lines in `platform/db-errors.ts`;
+  - the DG1 comment "Read-only at DG1 …" in `admin/branding.ts` updated (F-DG4-160);
+  - tests.
+- **Operations (6):** `getBranding`, `getBrandingLogo`, `getBrandingSettings`, `putBrandingSettings`, `listBrandingVersions`, `getBrandingVersion`.
+- **Consumes:** ADR-0049 §8, §10–§12; ADR-0009; ADR-0046 (the layout); the `0089` guards.
+- **Tests (literal):**
+  - REQ-S01-002: a fresh database returns "Mobily Transformation Hub" (version 0); after a PUT with a new name, `getBranding` returns it in en and ar, and the next generated report's header carries it (with BE-N's layout).
+  - REQ-S15-004: changing `primaryColour` changes `GET /branding/tokens` `brand.primary` and the derived action shade, and the header colour of a newly generated PDF, without a restart.
+  - `If-Match: "0"` creates; a stale `If-Match` gives 409 and a missing one 428; one audit event per row.
+  - Each §11 refusal: an SVG logo, `#0078ff`, a font outside the bundled pair, a header in one language only, "PMI certified" in the name, "DG7" in the footer.
+  - AUD and WL get 403; the logo returns `image/png`, or 404 `branding.logo_not_found`.
+
+### I.4 BE-R2 — `GET /me/navigation` and the two text scans (backend-workflow-engineer; after BE-N and FE-A)
+
+- **Files:**
+  - `identity/navigation.ts` (fill BE-A's stub): the ADR-0049 §9 table as data, with visibility from the caller's held permissions (`holdsAnywhere`) and `availability` from a list that the FE tasks update;
+  - `packages/shared/src/text-scan/{claims,engineering-gates}.ts` (+ export line), mirroring the two SQL functions exactly;
+  - `apps/api/test/text-scan/**`: (a) every string of `apps/web/src/i18n/{en,ar}/*.json`, (b) every problem `detail` text, (c) the report/export templates and one rendered sample export per format in en and ar, plus the SQL/TypeScript agreement test on one corpus;
+  - tests.
+- **Operation (1):** `getMyNavigation`.
+- **Consumes:** ADR-0049 §7, §9; the role defaults in `packages/shared/src/permissions.ts`.
+- **Tests (literal):**
+  - REQ-S03-007: an ADM test user holding every role default sees 14 areas in en and ar; WL does not see Administration; each area lists its M0100–M0113 contents.
+  - REQ-PB-001: the claim scan of en+ar UI strings and report templates finds no "official PMI standard", "PMI certified" or equivalent.
+  - REQ-S21-001: the engineering-gate scan finds no DG0–DG7 in UI strings or export templates.
+
+  A scan failure on an existing string is reported in your handback with the string. Changing an approved DG1–DG4 text needs the orchestrator.
+
+### I.5 Integration order (slice I)
+
+1. ARCH-06.
+2. BE-Q (after BE-C; `methodology/routes.ts`), then BE-Q2.
+3. BE-R (after BE-N), then BE-R2 (after BE-R; the scans need BE-N's templates and every P5 FE text merged before the final run, so QA re-runs them at the freeze).
+4. FE-G: `pages/playbook/**` (reader, search with highlights, "About this methodology" with the provenance, foundations and badges, source links, Launch), `components/provenance-badge/**` (the provenance badge and question tag, also used in form headers), `pages/branding/**`, and the shell's switch to `/me/navigation` (FE-A's `nav.ts` keeps the static fallback; request the lines through the orchestrator).
+
+### I.6 Requirement → owner (the 10 rows of slice I)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-PB-001 | BE-Q2 (provenance), BE-R2 (claim scan) | BE-N/BE-R (report footer B0004), FE-G (reader, About) |
+| REQ-PB-002 | BE-Q2 (profiles and overrides) | FE-G (badges en/ar, Studio badge through FE-B's pages by request) |
+| REQ-PB-011 | BE-Q2 (questions, one tag per template) | FE-G (reader, form headers) |
+| REQ-PB-077 | BE-Q2 (`realizeNote`) | FE-G (Realize guidance) |
+| REQ-S01-002 | BE-R | FE-G (`pages/branding/**`, shell header) |
+| REQ-S02-004 | BE-Q (seeded links, both directions), BE-Q2 (Studio link edits) | FE-G (reader links, T01 form source link) |
+| REQ-S03-007 | BE-R2 (`/me/navigation`) | FE-G (shell), FE-A (landing pages, delivered) |
+| REQ-S03-010 | BE-Q (blocks), BE-Q2 (search) | FE-G (search, Launch through slice C) |
+| REQ-S15-004 | BE-R (versions, tokens, port) | BE-N (layout line), FE-G (Branding Settings screen) |
+| REQ-S21-001 | BE-R2 (DG0–DG7 scan) | BE-S/FE-G (synthetic approval label, §J) |
+
+### I.7 What the implementers of slice I must know
+
+1. **Verbatim means byte-equal to the source file.** Never retype a block; generate the seed from `docs/source/playbook.md`. The Arabic is provisional and labelled so.
+2. **The verbatim text never changes per version.** Versions add guidance, links, overrides and a note beside it, through Studio only.
+3. **No HTML from search.** Return plain text with highlight offsets; the web renders the marks.
+4. **The two text rules are one rule in two languages.** The SQL functions and `packages/shared/src/text-scan/**` must agree on the corpus test; a disclaimer like "not an official PMI standard" is allowed.
+5. **Problem texts are scanned too.** Never write "DG0–DG7" or "certified" in a user-facing text, including problem details and i18n keys' values.
+6. **Branding is configuration, not approval.** "Approved colours" means an approval reference recorded by the admin. #0078FF stays provisional, and there is no logo until one is uploaded: show the provisional text wordmark.
+7. **Render time, not build time.** Screens and generated outputs read the current branding version when they render; issued snapshots keep the version they were rendered with.
+8. **Navigation is hidden by the server.** Omit what the caller cannot see; never send it with a flag.
+
+## §J. Slice J (the demo environment: isolation, synthetic flag and labels, production refusal, the roaming dataset and its three chains, deterministic seed and reset, the seed-coverage check, the guided walkthrough) — T-DG5-ARCH-06
+
+### J.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0050-p5-demo-environment-roaming-dataset-reset-walkthrough.md` | Binding design, with the refusal codes, CLI exits and English texts (§9) |
+| Migrations | `0090_p5_demo_environment_walkthrough.sql`, `0091` (permissions, shared with §I) | Probe 96/96 PASS |
+| Tables and seeds | `deployment_environment`, `demo_seed_record`, `demo_dataset_run` (empty; owner-written), `walkthrough_step` (12, M0349) | In `0090` |
+| Contract | 4 slice J operations (tag `environment`) | `pnpm openapi:lint` PASS |
+| Contract-test seams | `p5-pending-be-s.ts` (3), `p5-pending-be-t2.ts` (1) | Contract test green |
+
+### J.1 BE-S — environment, the demo CLI, seed framework, reset, checksum, coverage framework, the in-app reset (backend-workflow-engineer; first in slice J)
+
+- **Files:**
+  - `packages/db/src/demo/{cli,guard,reset,checksum,coverage,seed}.ts`:
+    - the refusals of ADR-0050 §3 (exit 3);
+    - the seed transaction (marker, dataset modules from `demo/data/**`, registration, counts, checksum, coverage, run 1);
+    - the reset by drop and re-create under session lock 730271;
+    - the checksum and counts rule of §4;
+    - the coverage runner with the condition list of §5 (conditions as named queries; BE-T fills their SQL);
+  - the `seed-demo`/`reset-demo` lines and the `bootstrap` marker/refusal lines in `packages/db/src/cli.ts` and `bootstrap.ts`;
+  - `MTH_ENV` and `MTH_DEMO_ADMIN_DATABASE_URL` in `packages/config` (+ its tests);
+  - `admin/environment.ts` (fill BE-A's stub), with the exported `EnvironmentReadPort`;
+  - `apps/worker/src/handlers/demo.ts` and its queue file (fill BE-A's stubs): job `demo.reset`, acknowledged before the drop;
+  - the synthetic-label line in `reporting/exports/layout/**` and `synthetic: true` in snapshot content (named lines, after BE-N);
+  - the `demo_*`/`deployment_environment_*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (3):** `getEnvironment`, `getDemoEnvironmentStatus`, `requestDemoReset`.
+- **Consumes:** ADR-0050 §1–§6, §8–§10; ADR-0005 (bootstrap); ADR-0008 (job kit); the `0090` guards.
+- **Tests (literal):**
+  - REQ-S18-003: after the production path, `SELECT count(*) FROM demo_seed_record` = 0 and no demo user exists; `seed-demo` with `MTH_ENV=production` exits 3 and changes nothing (also on a production-marked or non-empty database).
+  - REQ-S18-001: seed, then reset twice, on a disposable cluster: the record counts and checksums are identical; `GET /environment` returns `synthetic: true` in the demo database and `false` in production.
+  - `requestDemoReset` in production gives 409 `environment.not_demo`; AUD gets 403; `If-Match` gives 428/409.
+  - The export of a demo report carries the illustrative label in en and ar (with BE-N's layout).
+
+  Use only your harness ports, and create and drop databases only inside your disposable cluster.
+
+### J.2 BE-T — the roaming dataset, its chains, the coverage conditions (backend-workflow-engineer; after BE-S, BE-P, KBE-G2 and the engines it seeds)
+
+- **Files:**
+  - `packages/db/src/demo/data/**` except KBE-H's files:
+    - the roaming transformation with the seven B0145 elements verbatim, T01–T16 records, G1–G6 instances (synthetic decisions, one pending approval), the six phases, ten TOM canvas cells, the six dashboard areas, an overdue executive decision, missing mandatory evidence, an adoption gap, a BAU handover, a submitted health assessment and a launch plan;
+    - the **three B0147 chains** as linked records in the DG4 traceability model;
+    - the demo role users (`roaming.user.<role>`, demo IdP issuer only);
+    - every id a fixed literal UUID in `01995000-…`, every time from the synthetic clock;
+  - the coverage conditions' SQL in `packages/db/src/demo/coverage.ts` (named lines, after BE-S);
+  - `packages/db/src/demo/coverage.test.ts`;
+  - **migration `0093`**: `source_element` `roaming_example.international_roaming` → `feature_status = 'working'` (rule A-7), written only once the dataset ships;
+  - tests.
+- **Consumes:** ADR-0050 §2, §4, §5; every seeded engine's ADR; BE-S's seed framework.
+- **Tests (literal):**
+  - REQ-PB-088: the demo transformation's North Star equals "Make international roaming effortless, trusted and economically accretive.".
+  - REQ-PB-090: the traceability view shows "Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift" and the two other chains.
+  - REQ-S18-002: `coverage.test.ts` finds at least one record for each of T01–T16, G1–G6, the six phases, the ten TOM dimensions and the six dashboard areas, plus one each of: stale KPI, overdue decision, shared benefit, adoption gap, BAU handover, missing evidence and pending approval.
+
+### J.3 KBE-H — the dataset's numbers (kpi-benefits-engineer; after BE-S and KBE-E2)
+
+- **Files:** `packages/db/src/demo/data/{kpis,actuals,benefits,business-cases,finance}.ts`.
+- **What they hold:**
+  - KPI definitions, versions and actuals with one **stale** KPI;
+  - the benefit register with a **shared benefit** allocated to two initiatives, and the three chain benefits with distinct financial classifications (M0346);
+  - business cases;
+  - a pending Finance validation.
+- **Rules:**
+  - every number is a decimal string and synthetic;
+  - value bases are never mixed;
+  - Unknown and Stale are never 0.
+- **Consumes:** ADR-0050 §4; the DG3/DG4 KPI and benefit engines; BE-S's seed framework.
+- **Tests:** the KPI and benefit conditions of `coverage.test.ts` (with BE-T), and recomputed values that equal the seeded values.
+
+### J.4 BE-T2 — the guided walkthrough (backend-workflow-engineer; after BE-T)
+
+- **Files:**
+  - `admin/walkthrough.ts`: the twelve completion rules of ADR-0050 §7 as read-only queries over the given transformation;
+  - its one call line in `admin/environment.ts` (after BE-S);
+  - tests.
+- **Operation (1):** `getDemoWalkthrough`.
+- **Consumes:** ADR-0050 §7; ADR-0049 §9 (areas and routes); the engines' tables.
+- **Tests:**
+  - on a fresh demo database the twelve steps are incomplete for a new transformation, and each step's rule becomes true after the native workflow writes its record;
+  - production gives 409 `environment.not_demo`.
+
+  QA-E's A02 performs all twelve steps end to end (REQ-S18-004).
+
+### J.5 Migrations of slices I and J
+
+`0089`, `0090` and `0091` are delivered. **`0092`** is BE-Q's (the blocks and links seed, I.1) and **`0093`** is BE-T's (the roaming source element, J.2), in that order of numbers. A task that needs another migration asks the orchestrator for one from the repair range (`0094`+, D-145).
+
+### J.6 Integration order (slice J)
+
+1. ARCH-06.
+2. BE-S.
+3. BE-T (after BE-S, BE-P, KBE-G2 and the engines it seeds), with KBE-H (after BE-S and KBE-E2) in its own files.
+4. BE-T2 (after BE-T).
+5. FE-G: `components/demo-label/**` (the banner on every screen, the record badge, the synthetic approval label on every product-gate decision, approval and Finance validation), `pages/walkthrough/**` (Help > Guided walkthrough), and the environment screen under Administration.
+6. QA-E (A02 with the twelve steps; DLV-037).
+
+The compose `demo` profile (ADR-0050 §1) is requested from devops by the orchestrator.
+
+### J.7 Requirement → owner (the 7 rows of slice J)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-PB-088 | BE-T (dataset, North Star), BE-S (production path) | QA-E |
+| REQ-PB-089 | BE-S (environment flag, export label line) | FE-G (banner and badges en/ar), BE-N (layout) |
+| REQ-PB-090 | BE-T (three chains) | the DG4 traceability view (delivered) |
+| REQ-S18-001 | BE-S (isolation, flag, reset, counts and checksum) | FE-G (labels), devops (compose profile) |
+| REQ-S18-002 | BE-T (dataset, coverage test), KBE-H (numbers) | — |
+| REQ-S18-003 | BE-S (refusals, bootstrap marker) | QA (A22/A18 later) |
+| REQ-S18-004 | BE-T2 (walkthrough) | FE-G (`pages/walkthrough/**`), QA-E (A02) |
+
+### J.8 What the implementers of slice J must know
+
+1. **A demo database is a separate database.** Never seed demo data into a database that has a production marker, data, or `MTH_ENV=production`; exit 3 and change nothing.
+2. **Determinism is the acceptance.** Fixed UUIDs and the synthetic clock only; no `now()`, `random()` or generated UUID in seeded rows. Reset twice and compare counts and checksums in a test.
+3. **Never weaken the append-only protections.** A reset re-creates the database; it never disables a trigger or truncates the audit trail in place.
+4. **Everything in a demo database is synthetic.** Every screen, record and export shows the label in en and ar, and every approval says "Synthetic demonstration - approves nothing real". Seeded approvals are synthetic decisions by demo users and approve nothing real.
+5. **No demo credentials in the repository.** Demo users authenticate through the demo IdP configured only in the demo deployment.
+6. **Linked, not sample cards.** Every coverage condition is a record of the one roaming transformation, linked into its chains and registers.
+7. **Ports and clusters.** Use only your harness ports, and create, drop and re-create databases only inside your own disposable cluster.

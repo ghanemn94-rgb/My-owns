@@ -8,6 +8,7 @@ import { P5_PENDING_ARCH_02 } from "./p5-pending-arch-02.ts";
 import { P5_PENDING_ARCH_03 } from "./p5-pending-arch-03.ts";
 import { P5_PENDING_ARCH_04 } from "./p5-pending-arch-04.ts";
 import { P5_PENDING_ARCH_05 } from "./p5-pending-arch-05.ts";
+import { P5_PENDING_ARCH_06 } from "./p5-pending-arch-06.ts";
 
 export const P5_PENDING_OPERATIONS: readonly string[] = [
   ...P5_PENDING_ARCH_01,
@@ -15,4 +16,5 @@ export const P5_PENDING_OPERATIONS: readonly string[] = [
   ...P5_PENDING_ARCH_03,
   ...P5_PENDING_ARCH_04,
   ...P5_PENDING_ARCH_05,
+  ...P5_PENDING_ARCH_06,
 ];

@@ -26,6 +26,7 @@ const MIGRATION_CONSTANTS: ReadonlyMap<string, number> = new Map([
   ["kpi_restatement_lock_class", ADVISORY_LOCK_CLASSES.kpiRestatement],
   ["launch_plan_lock_class", ADVISORY_LOCK_CLASSES.launchPlan],
   ["health_assessment_lock_class", ADVISORY_LOCK_CLASSES.healthAssessmentSubmit],
+  ["branding_publish_lock_class", ADVISORY_LOCK_CLASSES.brandingPublish],
 ]);
 
 function walk(dir: string): string[] {
@@ -75,6 +76,8 @@ describe("advisory-lock class registry", () => {
       kpiRestatement: 730266,
       launchPlan: 730267,
       healthAssessmentSubmit: 730268,
+      brandingPublish: 730270,
+      demoReset: 730271,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);

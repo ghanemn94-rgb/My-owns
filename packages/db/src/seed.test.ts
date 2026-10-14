@@ -1,6 +1,6 @@
 // Unit test (no database): the role/permission seed migrations equal packages/shared/src/permissions.ts
 // (data dictionary "role" seed rule, ADR-0006, ADR-0020): 0005 seeds the P1 part, 0018 the P2 part, 0024 the P3 part,
-// 0031 the P4 part of slices I and C (ADR-0026 §8), 0036 the P4 part of slice A (ADR-0027 §11), 0040 the P4 part of slice B (ADR-0029 §9), 0043 the P4 part of slice E (ADR-0031 §9), 0046 the P4 part of slice D (ADR-0032 §9), 0049 the P4 part of slices F and G (ADR-0033 §9, ADR-0034 §10), 0053 the P4 part of slice H (ADR-0035 §8, ADR-0036 §7), 0057 the P4 part of slices J and K (ADR-0037 §8, ADR-0038 §8), 0064 the P5 part of slice A (ADR-0039 §9, ADR-0040 §6), 0070 the P5 part of slices B and C (ADR-0041 §9, ADR-0042 §9), 0076 the P5 part of slices D and E (ADR-0043 §8, ADR-0044 §7), 0082 the P5 part of slice F (ADR-0045 §8, ADR-0046 §6), 0087 the P5 part of slices G and H (ADR-0047 §6, ADR-0048 §7). The integration
+// 0031 the P4 part of slices I and C (ADR-0026 §8), 0036 the P4 part of slice A (ADR-0027 §11), 0040 the P4 part of slice B (ADR-0029 §9), 0043 the P4 part of slice E (ADR-0031 §9), 0046 the P4 part of slice D (ADR-0032 §9), 0049 the P4 part of slices F and G (ADR-0033 §9, ADR-0034 §10), 0053 the P4 part of slice H (ADR-0035 §8, ADR-0036 §7), 0057 the P4 part of slices J and K (ADR-0037 §8, ADR-0038 §8), 0064 the P5 part of slice A (ADR-0039 §9, ADR-0040 §6), 0070 the P5 part of slices B and C (ADR-0041 §9, ADR-0042 §9), 0076 the P5 part of slices D and E (ADR-0043 §8, ADR-0044 §7), 0082 the P5 part of slice F (ADR-0045 §8, ADR-0046 §6), 0087 the P5 part of slices G and H (ADR-0047 §6, ADR-0048 §7), 0091 the P5 part of slices I and J (ADR-0049 §10, ADR-0050 §8). The integration
 // tests check the seeded ROWS too.
 import { readFileSync } from "node:fs";
 import {
@@ -35,6 +35,8 @@ import {
   P5_REPORTING_ROLE_PERMISSIONS,
   P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
   P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS,
+  P5_READER_DEMO_PERMISSIONS,
+  P5_READER_DEMO_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from "@mth/shared";
@@ -69,6 +71,7 @@ const sqlP5KpiLaunchHealth = readFileSync(
   `${defaultMigrationsDir()}/0087_p5_kpi_launch_health_permissions.sql`,
   "utf8",
 );
+const sqlP5ReaderDemo = readFileSync(`${defaultMigrationsDir()}/0091_p5_reader_branding_demo_permissions.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -85,6 +88,7 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P5_AUTOMATION_PERMISSIONS),
   ...Object.keys(P5_REPORTING_PERMISSIONS),
   ...Object.keys(P5_KPI_LAUNCH_HEALTH_PERMISSIONS),
+  ...Object.keys(P5_READER_DEMO_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -171,6 +175,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P5_AUTOMATION_PERMISSIONS,
       ...P5_REPORTING_PERMISSIONS,
       ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
+      ...P5_READER_DEMO_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -708,6 +713,42 @@ describe("0087 seed equals the P5 part of permissions.ts (slices G and H)", () =
     for (const r of ["AUD", "ADM_TECH", "ADM_ACCESS"] as const)
       expect(P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS[r]).toEqual([]);
     expect(P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.ADM_METHOD).toEqual(["financial_metrics.enable"]);
+  });
+});
+
+describe("0091 seed equals the P5 part of permissions.ts (slices I and J)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP5ReaderDemo).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P5_READER_DEMO_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P5_READER_DEMO_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP5ReaderDemo).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P5_READER_DEMO_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P5_READER_DEMO_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; ADM_TECH only; AUD gets nothing", () => {
+    expect(Object.values(P5_READER_DEMO_PERMISSIONS as Record<string, string>)).toEqual(["configure", "configure"]);
+    for (const [r, p] of Object.entries(P5_READER_DEMO_ROLE_PERMISSIONS))
+      expect(p, r).toEqual(r === "ADM_TECH" ? ["branding.configure", "demo.reset"] : []);
   });
 });
 

@@ -6081,6 +6081,169 @@ export type HealthAssessmentRow = Selectable<HealthAssessmentTable>;
 export type HealthAssessmentAnswerRow = Selectable<HealthAssessmentAnswerTable>;
 export type HealthAssessmentActionRow = Selectable<HealthAssessmentActionTable>;
 
+// ---------------------------------------------------------------------------------------------------------------------
+// P5 slices I and J (T-DG5-ARCH-06; ADR-0049, ADR-0050; migrations 0089-0090). The generated tsvector columns of
+// playbook_block are read-only (never inserted or updated); bytea is a Buffer.
+type GeneratedTsvector = ColumnType<string, never, never>;
+
+export interface GuidingQuestionTable {
+  code: string;
+  ordinal: number;
+  text_en: string;
+  text_ar: string;
+  source_ref: string;
+}
+
+export interface PlaybookBlockTable {
+  block_ref: string;
+  ordinal: number;
+  block_kind: string;
+  is_heading: Generated<boolean>;
+  section_block_ref: string | null;
+  phase_code: string | null;
+  text_en: string;
+  text_ar: string;
+  ar_provisional: Generated<boolean>;
+  source_document: Generated<string>;
+  search_en: GeneratedTsvector;
+  search_ar: GeneratedTsvector;
+}
+
+export interface PlaybookBlockLinkTable {
+  block_ref: string;
+  target_kind: string;
+  target_key: string;
+  ordinal: number;
+}
+
+export interface SourceFoundationTable {
+  code: string;
+  ordinal: number;
+  source_en: string;
+  source_ar: string;
+  used_for_en: string;
+  used_for_ar: string;
+  source_ref: string;
+}
+
+export interface MethodologyElementProfileTable {
+  element_ref: string;
+  element_kind: string;
+  stable_key: string;
+  ordinal: number;
+  source_element_id: string | null;
+  label_en: string | null;
+  label_ar: string | null;
+  provenance: string;
+  provenance_source_ref: string;
+  question_tag: string | null;
+  source_refs: string[];
+}
+
+export interface BrandingVersionTable {
+  id: string;
+  organization_id: string;
+  version_no: number;
+  product_name_en: string;
+  product_name_ar: string;
+  primary_colour: string;
+  secondary_colour: string;
+  colours_provisional: boolean;
+  colour_approval_reference: string | null;
+  font_latin: string;
+  font_arabic: string;
+  logo_png: Buffer | null;
+  logo_sha256: string | null;
+  logo_alt_en: string | null;
+  logo_alt_ar: string | null;
+  report_header_en: string | null;
+  report_header_ar: string | null;
+  report_footer_en: string | null;
+  report_footer_ar: string | null;
+  change_note: string | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BrandingSettingTable {
+  id: string;
+  organization_id: string;
+  current_version_no: number;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DeploymentEnvironmentTable {
+  singleton: Generated<boolean>;
+  environment_kind: string;
+  initialized_via: string;
+  dataset_code: string | null;
+  dataset_version: string | null;
+  synthetic_clock_at: NullableTimestamp;
+  initialized_at: TimestampDefault;
+}
+
+export interface DemoSeedRecordTable {
+  record_type: string;
+  record_id: string;
+  fixture_key: string;
+}
+
+export interface DemoDatasetRunTable {
+  id: string;
+  run_no: number;
+  run_kind: string;
+  requested_via: string;
+  requested_by: string | null;
+  dataset_code: string;
+  dataset_version: string;
+  synthetic_clock_at: Timestamp;
+  record_counts: Json;
+  checksum_sha256: string;
+  coverage: Json;
+  coverage_complete: boolean;
+  completed_at: TimestampDefault;
+}
+
+export interface WalkthroughStepTable {
+  code: string;
+  ordinal: number;
+  title_en: string;
+  title_ar: string;
+  area_code: string;
+  completion_rule: string;
+  source_ref: string;
+}
+
+export interface Database {
+  guiding_question: GuidingQuestionTable;
+  playbook_block: PlaybookBlockTable;
+  playbook_block_link: PlaybookBlockLinkTable;
+  source_foundation: SourceFoundationTable;
+  methodology_element_profile: MethodologyElementProfileTable;
+  branding_version: BrandingVersionTable;
+  branding_setting: BrandingSettingTable;
+  deployment_environment: DeploymentEnvironmentTable;
+  demo_seed_record: DemoSeedRecordTable;
+  demo_dataset_run: DemoDatasetRunTable;
+  walkthrough_step: WalkthroughStepTable;
+}
+
+export type GuidingQuestionRow = Selectable<GuidingQuestionTable>;
+export type PlaybookBlockRow = Selectable<PlaybookBlockTable>;
+export type PlaybookBlockLinkRow = Selectable<PlaybookBlockLinkTable>;
+export type SourceFoundationRow = Selectable<SourceFoundationTable>;
+export type MethodologyElementProfileRow = Selectable<MethodologyElementProfileTable>;
+export type BrandingVersionRow = Selectable<BrandingVersionTable>;
+export type BrandingSettingRow = Selectable<BrandingSettingTable>;
+export type DeploymentEnvironmentRow = Selectable<DeploymentEnvironmentTable>;
+export type DemoSeedRecordRow = Selectable<DemoSeedRecordTable>;
+export type DemoDatasetRunRow = Selectable<DemoDatasetRunTable>;
+export type WalkthroughStepRow = Selectable<WalkthroughStepTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -11243,6 +11406,96 @@ export const SCHEMA_COLUMNS = {
     "updated_at",
     "updated_by",
   ],
+  guiding_question: ["code", "ordinal", "text_en", "text_ar", "source_ref"],
+  playbook_block: [
+    "block_ref",
+    "ordinal",
+    "block_kind",
+    "is_heading",
+    "section_block_ref",
+    "phase_code",
+    "text_en",
+    "text_ar",
+    "ar_provisional",
+    "source_document",
+    "search_en",
+    "search_ar",
+  ],
+  playbook_block_link: ["block_ref", "target_kind", "target_key", "ordinal"],
+  source_foundation: ["code", "ordinal", "source_en", "source_ar", "used_for_en", "used_for_ar", "source_ref"],
+  methodology_element_profile: [
+    "element_ref",
+    "element_kind",
+    "stable_key",
+    "ordinal",
+    "source_element_id",
+    "label_en",
+    "label_ar",
+    "provenance",
+    "provenance_source_ref",
+    "question_tag",
+    "source_refs",
+  ],
+  branding_version: [
+    "id",
+    "organization_id",
+    "version_no",
+    "product_name_en",
+    "product_name_ar",
+    "primary_colour",
+    "secondary_colour",
+    "colours_provisional",
+    "colour_approval_reference",
+    "font_latin",
+    "font_arabic",
+    "logo_png",
+    "logo_sha256",
+    "logo_alt_en",
+    "logo_alt_ar",
+    "report_header_en",
+    "report_header_ar",
+    "report_footer_en",
+    "report_footer_ar",
+    "change_note",
+    "created_at",
+    "created_by",
+  ],
+  branding_setting: [
+    "id",
+    "organization_id",
+    "current_version_no",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  deployment_environment: [
+    "singleton",
+    "environment_kind",
+    "initialized_via",
+    "dataset_code",
+    "dataset_version",
+    "synthetic_clock_at",
+    "initialized_at",
+  ],
+  demo_seed_record: ["record_type", "record_id", "fixture_key"],
+  demo_dataset_run: [
+    "id",
+    "run_no",
+    "run_kind",
+    "requested_via",
+    "requested_by",
+    "dataset_code",
+    "dataset_version",
+    "synthetic_clock_at",
+    "record_counts",
+    "checksum_sha256",
+    "coverage",
+    "coverage_complete",
+    "completed_at",
+  ],
+  walkthrough_step: ["code", "ordinal", "title_en", "title_ar", "area_code", "completion_rule", "source_ref"],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

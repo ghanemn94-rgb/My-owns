@@ -360,6 +360,14 @@ tags:
     description: The Day-90 leadership test of the launch plan (P5, ADR-0048).
   - name: health-checks
     description: The 25-question Transformation Health Check, its versioned scoring schemes, score, bands and top 3 actions (P5, ADR-0048).
+  - name: methodology-reader
+    description: The playbook reader with verbatim source blocks, English and Arabic search, block links, provenance, element provenance and guiding-question tags (P5, ADR-0049).
+  - name: navigation
+    description: The primary navigation areas the caller may see, hidden server-side (P5, ADR-0049).
+  - name: branding
+    description: Versioned branding settings and the configurable product name, read by screens and report templates at render time (P5, ADR-0049).
+  - name: environment
+    description: The deployment environment, the isolated and resettable demo environment and the guided walkthrough; demo data is synthetic (P5, ADR-0050).
 security:
   - sessionCookie: []
 paths:
@@ -21636,6 +21644,359 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/blocks:
+    get:
+      tags: [methodology-reader]
+      operationId: listMethodologyBlocks
+      summary: "The 165 playbook blocks in source order, English verbatim with the provisional Arabic, and the guidance and link count of the resolved methodology version: the latest published one, or the transformation's pinned one with transformationId (session; with transformationId also transformation.read, else 404; REQ-S03-010)."
+      parameters:
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+        - $ref: "#/components/parameters/MethodologyPhaseQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologyBlockPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/blocks/{blockRef}:
+    parameters:
+      - $ref: "#/components/parameters/MethodologyBlockRef"
+    get:
+      tags: [methodology-reader]
+      operationId: getMethodologyBlock
+      summary: "One playbook block (verbatim) with the resolved version's guidance (session; REQ-S03-010). 404 methodology_block.not_found."
+      parameters:
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologyBlock" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/blocks/{blockRef}/links:
+    parameters:
+      - $ref: "#/components/parameters/MethodologyBlockRef"
+    get:
+      tags: [methodology-reader]
+      operationId: listMethodologyBlockLinks
+      summary: "The resolved links of a block to the native forms (templates), procedures (with Launch) and requirement IDs that implement it: the seeded links plus the version's additions minus its removals (session; REQ-S02-004). 404 methodology_block.not_found."
+      parameters:
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologyLinkList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/templates/{templateCode}/source-links:
+    parameters:
+      - $ref: "#/components/parameters/MethodologyTemplateCode"
+    get:
+      tags: [methodology-reader]
+      operationId: listTemplateSourceLinks
+      summary: "The playbook blocks that link to a template, for the form's source link back to its playbook text (session; REQ-S02-004; T01 -> B0031). 404 methodology_template.not_found."
+      parameters:
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TemplateSourceLinkList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/search:
+    get:
+      tags: [methodology-reader]
+      operationId: searchMethodology
+      summary: "Full-text search of the published methodology text in English or Arabic (PostgreSQL 'english' and 'arabic' configurations), ordered by relevance, with plain-text snippets and highlight offsets; no HTML (session; REQ-S03-010). 400 validation.search_query."
+      parameters:
+        - $ref: "#/components/parameters/MethodologySearchQuery"
+        - $ref: "#/components/parameters/MethodologySearchLangQuery"
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+        - $ref: "#/components/parameters/MethodologyPhaseQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologySearchPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/provenance:
+    get:
+      tags: [methodology-reader]
+      operationId: getMethodologyProvenance
+      summary: "The provenance statement (B0004 verbatim), the PMI/Brightline connection (B0024), the source-foundations table (B0156), the custom extensions (B0157-B0162), the Realize note (B0124) and the version's optional note; never an official-PMI or certification claim (session; REQ-PB-001, REQ-PB-077)."
+      parameters:
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologyProvenance" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/elements:
+    get:
+      tags: [methodology-reader]
+      operationId: listMethodologyElements
+      summary: "The seeded methodology elements with their resolved provenance (custom_extension or foundation_inspired, with the B0156-B0162 source) and, for templates, their one guiding-question tag (session; REQ-PB-002, REQ-PB-011)."
+      parameters:
+        - $ref: "#/components/parameters/MethodologyProvenanceQuery"
+        - $ref: "#/components/parameters/MethodologyElementKindQuery"
+        - $ref: "#/components/parameters/MethodologyTransformationQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MethodologyElementProfileList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/methodology/guiding-questions:
+    get:
+      tags: [methodology-reader]
+      operationId: listGuidingQuestions
+      summary: "The four guiding questions of B0016, verbatim in English with provisional Arabic (session; REQ-PB-011)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuidingQuestionList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/navigation:
+    get:
+      tags: [navigation]
+      operationId: getMyNavigation
+      summary: "The primary navigation areas (up to 14) and their M0100-M0113 contents the caller may see; areas and items without a permitted item are omitted by the server (session; REQ-S03-007)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Navigation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/branding:
+    get:
+      tags: [branding]
+      operationId: getBranding
+      summary: "The current published branding read at render time: product name (en, ar), colours with their provisional flag, bundled fonts, logo or the provisional text wordmark, report header and footer; version 0 = the defaults (session; REQ-S15-004, REQ-S01-002)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Branding" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/branding/logo:
+    get:
+      tags: [branding]
+      operationId: getBrandingLogo
+      summary: "The current logo (PNG). 404 branding.logo_not_found when none is configured; the shell then shows the provisional text wordmark (session; M0301)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/branding:
+    get:
+      tags: [branding]
+      operationId: getBrandingSettings
+      summary: "The organization's branding settings with their head version (ETag \"0\" when never saved) and the colour approval reference (branding.configure; ADM_TECH; REQ-S15-004)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandingSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [branding]
+      operationId: putBrandingSettings
+      summary: "Save and publish a new branding version (complete settings; If-Match the head version, \"0\" for the first save). Screens and report/export templates read it at render time; issued outputs never change (branding.configure; ADM_TECH; REQ-S15-004, REQ-S01-002). 422 branding.prohibited_claim, .engineering_gate_reference, .logo_invalid, .colour_invalid, .font_unavailable, .text_pair_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BrandingSettingsPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandingSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/branding/versions:
+    get:
+      tags: [branding]
+      operationId: listBrandingVersions
+      summary: "The organization's branding versions, newest first; immutable (branding.configure)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandingVersionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/branding/versions/{versionNo}:
+    parameters:
+      - $ref: "#/components/parameters/BrandingVersionNo"
+    get:
+      tags: [branding]
+      operationId: getBrandingVersion
+      summary: "One immutable branding version (branding.configure)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandingVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/environment:
+    get:
+      tags: [environment]
+      operationId: getEnvironment
+      summary: "The deployment environment: production or demo; in a demo database every record and number is synthetic and every approval approves nothing real (session; REQ-S18-001, REQ-PB-089, REQ-S21-001)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnvironmentInfo" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/environment:
+    get:
+      tags: [environment]
+      operationId: getDemoEnvironmentStatus
+      summary: "The environment kind, the latest demo dataset run (record counts, checksum, seed coverage) and whether an in-app reset is configured; ETag = the latest run number, \"0\" when none (demo.reset; ADM_TECH; REQ-S18-001, REQ-S18-002)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DemoEnvironmentStatus" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/environment/demo-resets:
+    post:
+      tags: [environment]
+      operationId: requestDemoReset
+      summary: "Request a reset of the demo database to its seeded state: the worker re-creates the demo database and re-seeds it deterministically (identical counts and checksum). Refused outside a demo database (demo.reset; ADM_TECH; REQ-S18-001). 409 environment.not_demo, demo_reset.in_progress, demo_reset.not_configured."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DemoResetRequest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/demo/walkthrough:
+    get:
+      tags: [environment]
+      operationId: getDemoWalkthrough
+      summary: "The twelve M0349 walkthrough steps with their area, route and completion evaluated from the persisted records of the given transformation; the guide writes nothing (session; demo database only; REQ-S18-004). 409 environment.not_demo."
+      parameters:
+        - $ref: "#/components/parameters/DemoWalkthroughTransformationQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DemoWalkthrough" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -21653,6 +22014,62 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    MethodologyBlockRef:
+      name: blockRef
+      in: path
+      required: true
+      description: "Playbook block anchor B0001-B0165."
+      schema: { type: string, pattern: '^B0[0-9]{3}$' }
+    MethodologyTemplateCode:
+      name: templateCode
+      in: path
+      required: true
+      description: "Template T01-T16."
+      schema: { type: string, pattern: '^T(0[1-9]|1[0-6])$' }
+    MethodologyTransformationQuery:
+      name: transformationId
+      in: query
+      required: false
+      description: "Resolve the transformation's pinned methodology version instead of the latest published one (needs transformation.read there, else 404)."
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MethodologyPhaseQuery:
+      name: phase
+      in: query
+      required: false
+      schema: { type: string, enum: [diagnose, define, design, mobilize, transform, realize] }
+    MethodologySearchQuery:
+      name: q
+      in: query
+      required: true
+      description: "Search term, 2-200 characters after the free-text rules."
+      schema: { type: string, minLength: 2, maxLength: 200 }
+    MethodologySearchLangQuery:
+      name: lang
+      in: query
+      required: false
+      description: "Text to search; defaults to the caller's interface language."
+      schema: { type: string, enum: [en, ar] }
+    MethodologyProvenanceQuery:
+      name: provenance
+      in: query
+      required: false
+      schema: { type: string, enum: [custom_extension, foundation_inspired] }
+    MethodologyElementKindQuery:
+      name: kind
+      in: query
+      required: false
+      schema: { type: string, enum: [phase, gate, tom_dimension, template, scoring_model, forum, launch_window, health_check, roaming_example, traceability_chain, benefit_lifecycle_step] }
+    BrandingVersionNo:
+      name: versionNo
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    DemoWalkthroughTransformationQuery:
+      name: transformationId
+      in: query
+      required: false
+      description: "The transformation created in step 1; without it only step 1 is evaluated (not completed)."
+      schema: { $ref: "#/components/schemas/Uuid" }
     KpiRestatementId:
       name: restatementId
       in: path
@@ -23211,6 +23628,412 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    MethodologyVersionRef:
+      type: object
+      description: "The methodology version the reader resolved (latest published, or the transformation's pin)."
+      required: [versionId, key, versionNo]
+      additionalProperties: false
+      properties:
+        versionId: { $ref: "#/components/schemas/Uuid" }
+        key: { type: string }
+        versionNo: { type: integer }
+    MethodologyBlock:
+      type: object
+      description: "textEn is verbatim docs/source/playbook.md; textAr is a provisional translation when arProvisional. guidanceEn/guidanceAr come from the version's block.<ref> element."
+      required: [blockRef, ordinal, blockKind, isHeading, sectionBlockRef, phaseCode, textEn, textAr, arProvisional, guidanceEn, guidanceAr, linkCount, methodologyVersion]
+      additionalProperties: false
+      properties:
+        blockRef: { type: string, pattern: '^B0[0-9]{3}$' }
+        ordinal: { type: integer }
+        blockKind: { type: string, enum: [text, table] }
+        isHeading: { type: boolean }
+        sectionBlockRef: { type: [string, "null"] }
+        phaseCode: { type: [string, "null"], enum: [diagnose, define, design, mobilize, transform, realize, null] }
+        textEn: { type: string }
+        textAr: { type: string }
+        arProvisional: { type: boolean }
+        guidanceEn: { type: [string, "null"] }
+        guidanceAr: { type: [string, "null"] }
+        linkCount: { type: integer, minimum: 0 }
+        methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
+    MethodologyBlockPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MethodologyBlock" } }
+        nextCursor: { type: [string, "null"] }
+    MethodologyLink:
+      type: object
+      description: "route is the web route that opens the target; launchable is true for a procedure the caller may launch (launchProcedureInstance)."
+      required: [targetKind, targetKey, labelEn, labelAr, route, origin, launchable]
+      additionalProperties: false
+      properties:
+        targetKind: { type: string, enum: [template, procedure, requirement] }
+        targetKey: { type: string }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        route: { type: string }
+        origin: { type: string, enum: [seed, version] }
+        launchable: { type: boolean }
+    MethodologyLinkList:
+      type: object
+      required: [blockRef, methodologyVersion, items]
+      additionalProperties: false
+      properties:
+        blockRef: { type: string, pattern: '^B0[0-9]{3}$' }
+        methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
+        items: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/MethodologyLink" } }
+    TemplateSourceLink:
+      type: object
+      required: [blockRef, ordinal, phaseCode, excerptEn, excerptAr]
+      additionalProperties: false
+      properties:
+        blockRef: { type: string, pattern: '^B0[0-9]{3}$' }
+        ordinal: { type: integer }
+        phaseCode: { type: [string, "null"], enum: [diagnose, define, design, mobilize, transform, realize, null] }
+        excerptEn: { type: string }
+        excerptAr: { type: string }
+    TemplateSourceLinkList:
+      type: object
+      required: [templateCode, methodologyVersion, items]
+      additionalProperties: false
+      properties:
+        templateCode: { type: string }
+        methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
+        items: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/TemplateSourceLink" } }
+    SearchHighlight:
+      type: object
+      description: "A match inside snippet: offset and length in UTF-16 code units."
+      required: [offset, length]
+      additionalProperties: false
+      properties:
+        offset: { type: integer, minimum: 0 }
+        length: { type: integer, minimum: 1 }
+    MethodologySearchHit:
+      type: object
+      description: "Plain text only (never HTML)."
+      required: [blockRef, phaseCode, sectionBlockRef, lang, snippet, highlights]
+      additionalProperties: false
+      properties:
+        blockRef: { type: string, pattern: '^B0[0-9]{3}$' }
+        phaseCode: { type: [string, "null"], enum: [diagnose, define, design, mobilize, transform, realize, null] }
+        sectionBlockRef: { type: [string, "null"] }
+        lang: { type: string, enum: [en, ar] }
+        snippet: { type: string }
+        highlights: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/SearchHighlight" } }
+    MethodologySearchPage:
+      type: object
+      required: [items, nextCursor, methodologyVersion]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MethodologySearchHit" } }
+        nextCursor: { type: [string, "null"] }
+        methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
+    SourceBlockText:
+      type: object
+      required: [blockRef, textEn, textAr, arProvisional]
+      additionalProperties: false
+      properties:
+        blockRef: { type: string, pattern: '^B0[0-9]{3}$' }
+        textEn: { type: string }
+        textAr: { type: string }
+        arProvisional: { type: boolean }
+    SourceFoundation:
+      type: object
+      description: "A row of the B0156 table (Source / Used for), verbatim; Arabic provisional."
+      required: [code, ordinal, sourceEn, sourceAr, usedForEn, usedForAr, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        ordinal: { type: integer }
+        sourceEn: { type: string }
+        sourceAr: { type: string }
+        usedForEn: { type: string }
+        usedForAr: { type: string }
+        sourceRef: { type: string }
+    ProvenanceNote:
+      type: object
+      description: "An explanatory note published through Studio; the B0004 statement itself is never edited."
+      required: [bodyEn, bodyAr]
+      additionalProperties: false
+      properties:
+        bodyEn: { type: [string, "null"] }
+        bodyAr: { type: [string, "null"] }
+    MethodologyProvenance:
+      type: object
+      description: "A practical synthesis inspired by PMI/Brightline/BRM with custom extensions; never an official PMI standard or certified product (M0089)."
+      required: [statement, connectionNote, foundations, customExtensions, realizeNote, note, methodologyVersion]
+      additionalProperties: false
+      properties:
+        statement: { $ref: "#/components/schemas/SourceBlockText" }
+        connectionNote: { $ref: "#/components/schemas/SourceBlockText" }
+        foundations: { type: array, maxItems: 3, items: { $ref: "#/components/schemas/SourceFoundation" } }
+        customExtensions: { type: array, maxItems: 6, items: { $ref: "#/components/schemas/SourceBlockText" } }
+        realizeNote: { $ref: "#/components/schemas/SourceBlockText" }
+        note: { oneOf: [{ $ref: "#/components/schemas/ProvenanceNote" }, { type: "null" }] }
+        methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
+    MethodologyElementProfile:
+      type: object
+      description: "provenance follows B0156-B0162; overridden is true when the resolved version overrides the seeded default through Studio."
+      required: [elementRef, kind, stableKey, ordinal, labelEn, labelAr, provenance, provenanceSourceRef, questionTag, sourceRefs, overridden]
+      additionalProperties: false
+      properties:
+        elementRef: { type: string }
+        kind: { type: string, enum: [phase, gate, tom_dimension, template, scoring_model, forum, launch_window, health_check, roaming_example, traceability_chain, benefit_lifecycle_step] }
+        stableKey: { type: string }
+        ordinal: { type: integer }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        provenance: { type: string, enum: [custom_extension, foundation_inspired] }
+        provenanceSourceRef: { type: string, enum: [B0156, B0158, B0159, B0160, B0161, B0162] }
+        questionTag: { type: [string, "null"], enum: [why_change, what_different, how_execute, how_prove_value, null] }
+        sourceRefs: { type: array, maxItems: 10, items: { type: string, pattern: '^B0[0-9]{3}$' } }
+        overridden: { type: boolean }
+    MethodologyElementProfileList:
+      type: object
+      required: [methodologyVersion, items]
+      additionalProperties: false
+      properties:
+        methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
+        items: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/MethodologyElementProfile" } }
+    GuidingQuestion:
+      type: object
+      required: [code, ordinal, textEn, textAr, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { type: string, enum: [why_change, what_different, how_execute, how_prove_value] }
+        ordinal: { type: integer }
+        textEn: { type: string }
+        textAr: { type: string }
+        sourceRef: { type: string }
+    GuidingQuestionList:
+      type: object
+      description: "The four B0016 questions, English verbatim; Arabic provisional."
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, maxItems: 4, items: { $ref: "#/components/schemas/GuidingQuestion" } }
+    NavigationItem:
+      type: object
+      description: "availability is planned only while the item's P5 screen is not delivered (F-DG4-160)."
+      required: [code, labelKey, path, availability]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        labelKey: { type: string }
+        path: { type: string }
+        availability: { type: string, enum: [working, planned] }
+    NavigationArea:
+      type: object
+      required: [code, webId, labelKey, path, items]
+      additionalProperties: false
+      properties:
+        code: { type: string, enum: [my_work, executive_overview, transformations, playbook_procedures, strategy_kpis, target_operating_model, initiatives_roadmaps, governance, risks_actions, benefits_finance, change_adoption, evidence_reports, bau_improvement, administration] }
+        webId: { type: string }
+        labelKey: { type: string }
+        path: { type: string }
+        items: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/NavigationItem" } }
+    Navigation:
+      type: object
+      description: "Only the areas and items the caller may see; hidden ones are omitted."
+      required: [areas]
+      additionalProperties: false
+      properties:
+        areas: { type: array, maxItems: 14, items: { $ref: "#/components/schemas/NavigationArea" } }
+    BrandingLogo:
+      type: object
+      required: [sha256, altEn, altAr, url]
+      additionalProperties: false
+      properties:
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        altEn: { type: string }
+        altAr: { type: string }
+        url: { type: string }
+    Branding:
+      type: object
+      description: "Version 0 (source default) is the shipped default: 'Mobily Transformation Hub', the provisional design-token colours (#0078FF is provisional, not a verified Mobily colour) and the provisional text wordmark."
+      required: [versionNo, source, productNameEn, productNameAr, primaryColour, secondaryColour, coloursProvisional, fontLatin, fontArabic, logo, wordmarkProvisional, reportHeaderEn, reportHeaderAr, reportFooterEn, reportFooterAr]
+      additionalProperties: false
+      properties:
+        versionNo: { type: integer, minimum: 0 }
+        source: { type: string, enum: [default, configured] }
+        productNameEn: { type: string }
+        productNameAr: { type: string }
+        primaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        secondaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        coloursProvisional: { type: boolean }
+        fontLatin: { type: string, enum: [IBM Plex Sans] }
+        fontArabic: { type: string, enum: [IBM Plex Sans Arabic] }
+        logo: { oneOf: [{ $ref: "#/components/schemas/BrandingLogo" }, { type: "null" }] }
+        wordmarkProvisional: { type: boolean }
+        reportHeaderEn: { type: [string, "null"] }
+        reportHeaderAr: { type: [string, "null"] }
+        reportFooterEn: { type: [string, "null"] }
+        reportFooterAr: { type: [string, "null"] }
+    BrandingSettings:
+      type: object
+      required: [versionNo, source, productNameEn, productNameAr, primaryColour, secondaryColour, coloursProvisional, fontLatin, fontArabic, logo, wordmarkProvisional, reportHeaderEn, reportHeaderAr, reportFooterEn, reportFooterAr, colourApprovalReference, version, updatedAt, updatedBy]
+      additionalProperties: false
+      properties:
+        versionNo: { type: integer, minimum: 0 }
+        source: { type: string, enum: [default, configured] }
+        productNameEn: { type: string }
+        productNameAr: { type: string }
+        primaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        secondaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        coloursProvisional: { type: boolean }
+        fontLatin: { type: string, enum: [IBM Plex Sans] }
+        fontArabic: { type: string, enum: [IBM Plex Sans Arabic] }
+        logo: { oneOf: [{ $ref: "#/components/schemas/BrandingLogo" }, { type: "null" }] }
+        wordmarkProvisional: { type: boolean }
+        reportHeaderEn: { type: [string, "null"] }
+        reportHeaderAr: { type: [string, "null"] }
+        reportFooterEn: { type: [string, "null"] }
+        reportFooterAr: { type: [string, "null"] }
+        colourApprovalReference: { type: [string, "null"] }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+    BrandingLogoKeep:
+      type: object
+      required: [mode]
+      additionalProperties: false
+      properties:
+        mode: { type: string, enum: [keep] }
+    BrandingLogoNone:
+      type: object
+      required: [mode]
+      additionalProperties: false
+      properties:
+        mode: { type: string, enum: [none] }
+    BrandingLogoSet:
+      type: object
+      description: "A PNG of at most 256 KiB, base64-encoded; SVG is not accepted."
+      required: [mode, pngBase64, altEn, altAr]
+      additionalProperties: false
+      properties:
+        mode: { type: string, enum: [set] }
+        pngBase64: { type: string, minLength: 92, maxLength: 349528, contentEncoding: base64, contentMediaType: image/png }
+        altEn: { type: string, minLength: 1, maxLength: 200 }
+        altAr: { type: string, minLength: 1, maxLength: 200 }
+    BrandingSettingsPut:
+      type: object
+      description: "The complete settings; colours count as approved only with colourApprovalReference, otherwise they stay provisional."
+      required: [productNameEn, productNameAr, primaryColour, secondaryColour, fontLatin, fontArabic, logo]
+      additionalProperties: false
+      properties:
+        productNameEn: { type: string, minLength: 1, maxLength: 80 }
+        productNameAr: { type: string, minLength: 1, maxLength: 80 }
+        primaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        secondaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        colourApprovalReference: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        fontLatin: { type: string, enum: [IBM Plex Sans] }
+        fontArabic: { type: string, enum: [IBM Plex Sans Arabic] }
+        logo: { oneOf: [{ $ref: "#/components/schemas/BrandingLogoKeep" }, { $ref: "#/components/schemas/BrandingLogoNone" }, { $ref: "#/components/schemas/BrandingLogoSet" }] }
+        reportHeaderEn: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        reportHeaderAr: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        reportFooterEn: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        reportFooterAr: { type: [string, "null"], minLength: 1, maxLength: 300 }
+        changeNote: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    BrandingVersion:
+      type: object
+      description: "An immutable branding version."
+      required: [versionNo, productNameEn, productNameAr, primaryColour, secondaryColour, coloursProvisional, colourApprovalReference, fontLatin, fontArabic, logo, reportHeaderEn, reportHeaderAr, reportFooterEn, reportFooterAr, changeNote, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        versionNo: { type: integer, minimum: 1 }
+        productNameEn: { type: string }
+        productNameAr: { type: string }
+        primaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        secondaryColour: { type: string, pattern: '^#[0-9A-F]{6}$' }
+        coloursProvisional: { type: boolean }
+        colourApprovalReference: { type: [string, "null"] }
+        fontLatin: { type: string }
+        fontArabic: { type: string }
+        logo: { oneOf: [{ $ref: "#/components/schemas/BrandingLogo" }, { type: "null" }] }
+        reportHeaderEn: { type: [string, "null"] }
+        reportHeaderAr: { type: [string, "null"] }
+        reportFooterEn: { type: [string, "null"] }
+        reportFooterAr: { type: [string, "null"] }
+        changeNote: { type: [string, "null"] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    BrandingVersionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BrandingVersion" } }
+        nextCursor: { type: [string, "null"] }
+    EnvironmentInfo:
+      type: object
+      description: "synthetic is true exactly in a demo database: every record and number there is an illustrative example, not Mobily actual performance, and every approval approves nothing real."
+      required: [kind, synthetic, datasetCode, datasetVersion, syntheticClockAt]
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [production, demo] }
+        synthetic: { type: boolean }
+        datasetCode: { type: [string, "null"] }
+        datasetVersion: { type: [string, "null"] }
+        syntheticClockAt: { $ref: "#/components/schemas/NullableTimestamp" }
+    DemoDatasetRun:
+      type: object
+      description: "recordCounts: rows per public table (demo_dataset_run excluded); checksum: SHA-256 over the registered demo records (ADR-0050 §4); coverage: the REQ-S18-002 conditions with their counts."
+      required: [runNo, runKind, requestedVia, requestedBy, datasetCode, datasetVersion, syntheticClockAt, recordCounts, checksumSha256, coverage, coverageComplete, completedAt]
+      additionalProperties: false
+      properties:
+        runNo: { type: integer, minimum: 1 }
+        runKind: { type: string, enum: [seed, reset] }
+        requestedVia: { type: string, enum: [cli, api] }
+        requestedBy: { $ref: "#/components/schemas/NullableUuid" }
+        datasetCode: { type: string }
+        datasetVersion: { type: string }
+        syntheticClockAt: { $ref: "#/components/schemas/Timestamp" }
+        recordCounts: { type: object, additionalProperties: { type: integer, minimum: 0 } }
+        checksumSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        coverage: { type: object, additionalProperties: { type: integer, minimum: 0 } }
+        coverageComplete: { type: boolean }
+        completedAt: { $ref: "#/components/schemas/Timestamp" }
+    DemoEnvironmentStatus:
+      type: object
+      required: [kind, latestRun, resetConfigured, version]
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [production, demo] }
+        latestRun: { oneOf: [{ $ref: "#/components/schemas/DemoDatasetRun" }, { type: "null" }] }
+        resetConfigured: { type: boolean }
+        version: { type: integer, minimum: 0 }
+    DemoResetRequest:
+      type: object
+      required: [status, requestedAt, requestedBy]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [queued] }
+        requestedAt: { $ref: "#/components/schemas/Timestamp" }
+        requestedBy: { $ref: "#/components/schemas/Uuid" }
+    DemoWalkthroughStep:
+      type: object
+      required: [code, ordinal, titleEn, titleAr, areaCode, route, completed]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        ordinal: { type: integer, minimum: 1, maximum: 12 }
+        titleEn: { type: string }
+        titleAr: { type: string }
+        areaCode: { type: string, enum: [my_work, executive_overview, transformations, playbook_procedures, strategy_kpis, target_operating_model, initiatives_roadmaps, governance, risks_actions, benefits_finance, change_adoption, evidence_reports, bau_improvement, administration] }
+        route: { type: string }
+        completed: { type: boolean }
+    DemoWalkthrough:
+      type: object
+      description: "The twelve M0349 steps; completion is evaluated from persisted records, never stored by the guide."
+      required: [transformationId, steps, completedCount, total]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        steps: { type: array, maxItems: 12, items: { $ref: "#/components/schemas/DemoWalkthroughStep" } }
+        completedCount: { type: integer, minimum: 0 }
+        total: { type: integer, const: 12 }
     KpiRestatementStatus:
       type: string
       enum: [draft, submitted, approved, rejected, withdrawn, applied]
@@ -25660,6 +26483,8 @@ components:
         - launch_plan.edit
         - day_ninety_test.respond
         - health_check.assess
+        - branding.configure
+        - demo.reset
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
