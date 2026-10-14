@@ -54,6 +54,7 @@ import {
   P2_MODULES,
   P3_MODULES,
   P4_MODULES,
+  P5_MODULES,
   SECTION16_MODULES,
   type ApiModule,
 } from "./modules.ts";
@@ -118,6 +119,36 @@ describe("API module boundaries (ADR-0002)", () => {
       expect(API_MODULES.workflows.dependsOn as readonly string[], m).not.toContain(m);
   });
 
+  it("the P5 modules exist, each with its own test suite; methodology imports none of them (p5-plan §2, §3 seam 24)", () => {
+    expect([...P5_MODULES]).toEqual(["forms", "procedures", "automation", "launch", "health"]);
+    for (const m of P5_MODULES)
+      expect(
+        readdirSync(join(MODULES_DIR, m)).some((f) => f.endsWith(".test.ts")),
+        `${m} has its own test suite`,
+      ).toBe(true);
+    // The ConfigResolver port lives in methodology, which every P5 module may read and which reads none of them.
+    expect([...API_MODULES.methodology.dependsOn].sort()).toEqual(["access", "audit", "platform"]);
+    for (const m of P5_MODULES) expect(API_MODULES[m].dependsOn as readonly string[], m).toContain("methodology");
+    // automation imports no domain module: domain modules register actions into its AutomationActionRegistry in
+    // server.ts. Only the leaves it needs (tasks for work items, jobs for the job kit).
+    expect([...API_MODULES.automation.dependsOn].sort()).toEqual([
+      "access",
+      "audit",
+      "jobs",
+      "methodology",
+      "organization",
+      "platform",
+      "tasks",
+    ]);
+    // No P1-P4 module imports a P5 module (P5 extends DG1-DG4 additively, p5-plan §3).
+    for (const m of Object.keys(API_MODULES) as ApiModule[])
+      if (!P5_MODULES.includes(m))
+        for (const p5 of P5_MODULES)
+          expect(API_MODULES[m].dependsOn as readonly string[], `${m} -> ${p5}`).not.toContain(p5);
+    // No P5 module imports workflows (approval routes and conditional approval live in workflows itself, BE-K).
+    for (const m of P5_MODULES) expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("workflows");
+  });
+
   it("workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)", () => {
     // P4 (T-DG4-BE-A): + organization (working-day due dates) and tasks (approval work items), both leaves.
     expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
@@ -143,11 +174,21 @@ describe("API module boundaries (ADR-0002)", () => {
       ...walk(integrationDir).filter((f) => f.endsWith(".test.ts") && relative(integrationDir, f).startsWith(m)),
     ];
     expect(Object.keys(SECTION16_MODULES)).toHaveLength(6);
-    // P4 (p4-plan §3 seam 19): the benefit engine joins "formulas/KPI" next to kpi.
-    expect([...SECTION16_MODULES["formulas/KPI"]]).toEqual(["kpi", "benefits"]);
+    // P4 (p4-plan §3 seam 19): the benefit engine joins "formulas/KPI" next to kpi. P5 (p5-plan §3 seam 24, T-DG5-BE-A):
+    // launch joins transformations, procedures and automation join workflows, health joins formulas/KPI, forms admin.
+    expect([...SECTION16_MODULES["formulas/KPI"]]).toEqual(["kpi", "benefits", "health"]);
+    expect([...SECTION16_MODULES.transformations]).toEqual(["transformations", "launch"]);
+    expect([...SECTION16_MODULES.workflows]).toEqual(["workflows", "procedures", "automation"]);
+    expect([...SECTION16_MODULES.admin]).toEqual(["admin", "forms"]);
+    expect(
+      Object.values(SECTION16_MODULES)
+        .flat()
+        .filter((m) => P5_MODULES.includes(m))
+        .sort(),
+    ).toEqual([...P5_MODULES].sort());
     for (const [area, mods] of Object.entries(SECTION16_MODULES)) {
       for (const m of mods) {
-        expect([...P1_MODULES, ...P4_MODULES], `${area}: ${m} is a P1 or P4 module`).toContain(m);
+        expect([...P1_MODULES, ...P4_MODULES, ...P5_MODULES], `${area}: ${m} is a P1, P4 or P5 module`).toContain(m);
         expect(suitesOf(m).length, `${area}: ${m} has its own test suite`).toBeGreaterThan(0);
       }
     }

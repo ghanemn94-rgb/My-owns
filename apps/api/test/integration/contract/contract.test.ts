@@ -110,6 +110,34 @@ import { exerciseP4KbeD2Operations, P4_MIRRORS_KBE_D2 } from "./p4-exercises-kbe
 import { exerciseP4KbeEOperations, P4_MIRRORS_KBE_E } from "./p4-exercises-kbe-e.ts";
 import { exerciseP4KbeFOperations, P4_MIRRORS_KBE_F } from "./p4-exercises-kbe-f.ts";
 import { exerciseP4KbeGOperations, P4_MIRRORS_KBE_G } from "./p4-exercises-kbe-g.ts";
+// P5 seams (p5-work-split §2 rule 14): one per P5 backend implementer task; T-DG5-BE-A created them all.
+import { exerciseP5BeAOperations, P5_MIRRORS_BE_A } from "./p5-exercises-be-a.ts";
+import { exerciseP5BeBOperations, P5_MIRRORS_BE_B } from "./p5-exercises-be-b.ts";
+import { exerciseP5BeB2Operations, P5_MIRRORS_BE_B2 } from "./p5-exercises-be-b2.ts";
+import { exerciseP5BeB3Operations, P5_MIRRORS_BE_B3 } from "./p5-exercises-be-b3.ts";
+import { exerciseP5BeCOperations, P5_MIRRORS_BE_C } from "./p5-exercises-be-c.ts";
+import { exerciseP5KbeAOperations, P5_MIRRORS_KBE_A } from "./p5-exercises-kbe-a.ts";
+import { exerciseP5BeDOperations, P5_MIRRORS_BE_D } from "./p5-exercises-be-d.ts";
+import { exerciseP5BeEOperations, P5_MIRRORS_BE_E } from "./p5-exercises-be-e.ts";
+import { exerciseP5BeFOperations, P5_MIRRORS_BE_F } from "./p5-exercises-be-f.ts";
+import { exerciseP5BeGOperations, P5_MIRRORS_BE_G } from "./p5-exercises-be-g.ts";
+import { exerciseP5BeHOperations, P5_MIRRORS_BE_H } from "./p5-exercises-be-h.ts";
+import { exerciseP5BeIOperations, P5_MIRRORS_BE_I } from "./p5-exercises-be-i.ts";
+import { exerciseP5BeJOperations, P5_MIRRORS_BE_J } from "./p5-exercises-be-j.ts";
+import { exerciseP5BeKOperations, P5_MIRRORS_BE_K } from "./p5-exercises-be-k.ts";
+import { exerciseP5BeLOperations, P5_MIRRORS_BE_L } from "./p5-exercises-be-l.ts";
+import { exerciseP5KbeCOperations, P5_MIRRORS_KBE_C } from "./p5-exercises-kbe-c.ts";
+import { exerciseP5KbeDOperations, P5_MIRRORS_KBE_D } from "./p5-exercises-kbe-d.ts";
+import { exerciseP5BeMOperations, P5_MIRRORS_BE_M } from "./p5-exercises-be-m.ts";
+import { exerciseP5BeNOperations, P5_MIRRORS_BE_N } from "./p5-exercises-be-n.ts";
+import { exerciseP5BeOOperations, P5_MIRRORS_BE_O } from "./p5-exercises-be-o.ts";
+import { exerciseP5KbeEOperations, P5_MIRRORS_KBE_E } from "./p5-exercises-kbe-e.ts";
+import { exerciseP5KbeFOperations, P5_MIRRORS_KBE_F } from "./p5-exercises-kbe-f.ts";
+import { exerciseP5BePOperations, P5_MIRRORS_BE_P } from "./p5-exercises-be-p.ts";
+import { exerciseP5KbeGOperations, P5_MIRRORS_KBE_G } from "./p5-exercises-kbe-g.ts";
+import { exerciseP5BeQOperations, P5_MIRRORS_BE_Q } from "./p5-exercises-be-q.ts";
+import { exerciseP5BeROperations, P5_MIRRORS_BE_R } from "./p5-exercises-be-r.ts";
+import { exerciseP5BeSOperations, P5_MIRRORS_BE_S } from "./p5-exercises-be-s.ts";
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -293,6 +321,34 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P4_MIRRORS_KBE_E,
   ...P4_MIRRORS_KBE_F,
   ...P4_MIRRORS_KBE_G,
+  // P5 operations: each task's mirrors come from its own seam file (p5-work-split §2 rule 14).
+  ...P5_MIRRORS_BE_A,
+  ...P5_MIRRORS_BE_B,
+  ...P5_MIRRORS_BE_B2,
+  ...P5_MIRRORS_BE_B3,
+  ...P5_MIRRORS_BE_C,
+  ...P5_MIRRORS_KBE_A,
+  ...P5_MIRRORS_BE_D,
+  ...P5_MIRRORS_BE_E,
+  ...P5_MIRRORS_BE_F,
+  ...P5_MIRRORS_BE_G,
+  ...P5_MIRRORS_BE_H,
+  ...P5_MIRRORS_BE_I,
+  ...P5_MIRRORS_BE_J,
+  ...P5_MIRRORS_BE_K,
+  ...P5_MIRRORS_BE_L,
+  ...P5_MIRRORS_KBE_C,
+  ...P5_MIRRORS_KBE_D,
+  ...P5_MIRRORS_BE_M,
+  ...P5_MIRRORS_BE_N,
+  ...P5_MIRRORS_BE_O,
+  ...P5_MIRRORS_KBE_E,
+  ...P5_MIRRORS_KBE_F,
+  ...P5_MIRRORS_BE_P,
+  ...P5_MIRRORS_KBE_G,
+  ...P5_MIRRORS_BE_Q,
+  ...P5_MIRRORS_BE_R,
+  ...P5_MIRRORS_BE_S,
 };
 
 let api: TestApi;
@@ -623,6 +679,88 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P4 KBE-G operations (p4-exercises-kbe-g.ts)", async () => {
     await exerciseP4KbeGOperations(p3());
   });
+  // P5 seams (p5-work-split §2 rule 14): each task's routed operations, through the same validating client.
+  it("P5 BE-A operations (p5-exercises-be-a.ts)", async () => {
+    await exerciseP5BeAOperations(p3());
+  });
+  it("P5 BE-B operations (p5-exercises-be-b.ts)", async () => {
+    await exerciseP5BeBOperations(p3());
+  });
+  it("P5 BE-B2 operations (p5-exercises-be-b2.ts)", async () => {
+    await exerciseP5BeB2Operations(p3());
+  });
+  it("P5 BE-B3 operations (p5-exercises-be-b3.ts)", async () => {
+    await exerciseP5BeB3Operations(p3());
+  });
+  it("P5 BE-C operations (p5-exercises-be-c.ts)", async () => {
+    await exerciseP5BeCOperations(p3());
+  });
+  it("P5 KBE-A operations (p5-exercises-kbe-a.ts)", async () => {
+    await exerciseP5KbeAOperations(p3());
+  });
+  it("P5 BE-D operations (p5-exercises-be-d.ts)", async () => {
+    await exerciseP5BeDOperations(p3());
+  });
+  it("P5 BE-E operations (p5-exercises-be-e.ts)", async () => {
+    await exerciseP5BeEOperations(p3());
+  });
+  it("P5 BE-F operations (p5-exercises-be-f.ts)", async () => {
+    await exerciseP5BeFOperations(p3());
+  });
+  it("P5 BE-G operations (p5-exercises-be-g.ts)", async () => {
+    await exerciseP5BeGOperations(p3());
+  });
+  it("P5 BE-H operations (p5-exercises-be-h.ts)", async () => {
+    await exerciseP5BeHOperations(p3());
+  });
+  it("P5 BE-I operations (p5-exercises-be-i.ts)", async () => {
+    await exerciseP5BeIOperations(p3());
+  });
+  it("P5 BE-J operations (p5-exercises-be-j.ts)", async () => {
+    await exerciseP5BeJOperations(p3());
+  });
+  it("P5 BE-K operations (p5-exercises-be-k.ts)", async () => {
+    await exerciseP5BeKOperations(p3());
+  });
+  it("P5 BE-L operations (p5-exercises-be-l.ts)", async () => {
+    await exerciseP5BeLOperations(p3());
+  });
+  it("P5 KBE-C operations (p5-exercises-kbe-c.ts)", async () => {
+    await exerciseP5KbeCOperations(p3());
+  });
+  it("P5 KBE-D operations (p5-exercises-kbe-d.ts)", async () => {
+    await exerciseP5KbeDOperations(p3());
+  });
+  it("P5 BE-M operations (p5-exercises-be-m.ts)", async () => {
+    await exerciseP5BeMOperations(p3());
+  });
+  it("P5 BE-N operations (p5-exercises-be-n.ts)", async () => {
+    await exerciseP5BeNOperations(p3());
+  });
+  it("P5 BE-O operations (p5-exercises-be-o.ts)", async () => {
+    await exerciseP5BeOOperations(p3());
+  });
+  it("P5 KBE-E operations (p5-exercises-kbe-e.ts)", async () => {
+    await exerciseP5KbeEOperations(p3());
+  });
+  it("P5 KBE-F operations (p5-exercises-kbe-f.ts)", async () => {
+    await exerciseP5KbeFOperations(p3());
+  });
+  it("P5 BE-P operations (p5-exercises-be-p.ts)", async () => {
+    await exerciseP5BePOperations(p3());
+  });
+  it("P5 KBE-G operations (p5-exercises-kbe-g.ts)", async () => {
+    await exerciseP5KbeGOperations(p3());
+  });
+  it("P5 BE-Q operations (p5-exercises-be-q.ts)", async () => {
+    await exerciseP5BeQOperations(p3());
+  });
+  it("P5 BE-R operations (p5-exercises-be-r.ts)", async () => {
+    await exerciseP5BeROperations(p3());
+  });
+  it("P5 BE-S operations (p5-exercises-be-s.ts)", async () => {
+    await exerciseP5BeSOperations(p3());
+  });
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
@@ -729,7 +867,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // listInheritedRecords are GETs).
     // T-DG4-BE-M3: + createPortfolio, updatePortfolio, addPortfolioTransformation, removePortfolioTransformation,
     // createWorkstream, updateWorkstream, addWorkstreamInitiative, removeWorkstreamInitiative (8 JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([323, 322, 1]);
+    // T-DG5-BE-A: + createConfigDraft, updateConfigDraft (2 JSON bodies; discardConfigDraft is bodiless and the other
+    // five BE-A operations are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([325, 324, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

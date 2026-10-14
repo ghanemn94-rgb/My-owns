@@ -4,3 +4,5 @@
 export { enqueueOutboxEvent, type OutboxEventInput } from "./outbox.ts";
 // P4 (ADR-0025 §3; T-DG4-BE-A): the job-schedule administration routes, registered by server.ts.
 export { registerJobScheduleRoutes, toJobSchedule } from "./schedules.ts";
+// P5 (T-DG5-BE-A stub; p5-plan §5.1 BE-I): the jobs operations view, registered by server.ts.
+export { registerJobOperationRoutes } from "./operations.ts";

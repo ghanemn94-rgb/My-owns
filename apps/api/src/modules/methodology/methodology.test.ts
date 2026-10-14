@@ -25,16 +25,24 @@ describe("methodology module (P2)", () => {
     expect(moduleFiles("methodology")).toContain("index.ts");
     expect(Object.keys(mod).sort()).toEqual([
       "METHODOLOGY_MODULE",
+      // P5 slice A (T-DG5-BE-A; ADR-0039 §1-§3): the ConfigResolver port, the kind registry and the content hash.
+      "configKindProvider",
+      "configKindProviders",
+      "contentSha256",
+      "createConfigResolver",
+      "loadCatalogue",
       "loadGateDefinitions",
       "loadMethodologyCatalogue",
+      "registerConfigKindProvider",
       "registerMethodologyModule",
+      "resolvePinnedVersion",
       "toGateDefinition",
       "toTomDimension",
     ]);
     expect(Object.isFrozen(mod.METHODOLOGY_MODULE)).toBe(true);
   });
 
-  it("registers exactly the catalogue read and the TOM-dimension label edit, each declaring its access", async () => {
+  it("registers the P2 catalogue routes and the P5 Studio routes of BE-A, each declaring its access", async () => {
     const app = Fastify({ logger: false });
     const routes: { key: string; access: unknown }[] = [];
     app.addHook("onRoute", (r) => {
@@ -44,8 +52,27 @@ describe("methodology module (P2)", () => {
     await app.ready();
     expect(routes.map((r) => r.key).sort()).toEqual([...registration.routes].sort());
     expect(registration).toMatchObject({ module: "methodology", status: "active", deliversIn: "P2" });
-    expect(routes.find((r) => r.key.startsWith("PATCH"))?.access).toEqual({ permission: "methodology.configure" });
-    expect(routes.find((r) => r.key.startsWith("GET"))?.access).toEqual({ permission: "transformation.read" });
+    const access = new Map(routes.map((r) => [r.key, r.access]));
+    expect(access.get("PATCH /api/v1/methodology/tom-dimensions/:dimensionCode")).toEqual({
+      permission: "methodology.configure",
+    });
+    expect(access.get("GET /api/v1/transformations/:transformationId/methodology")).toEqual({
+      permission: "transformation.read",
+    });
+    // P5 slice A (p5-work-split §A.1): the eight BE-A operations; the other slice A route files are stubs until filled.
+    const read = { permission: "methodology.read" };
+    const configure = { permission: "methodology.configure" };
+    const studio = [...access].filter(([k]) => k.includes("methodology-versions") || k.includes("config-pins"));
+    expect(Object.fromEntries(studio)).toEqual({
+      "GET /api/v1/admin/methodology-versions": read,
+      "POST /api/v1/admin/methodology-versions": configure,
+      "GET /api/v1/admin/methodology-versions/:versionId": read,
+      "PATCH /api/v1/admin/methodology-versions/:versionId": configure,
+      "POST /api/v1/admin/methodology-versions/:versionId/discard": configure,
+      "GET /api/v1/admin/methodology-versions/:versionId/elements": read,
+      "GET /api/v1/transformations/:transformationId/config-pins": read,
+      "GET /api/v1/transformations/:transformationId/config-pins/history": read,
+    });
     await app.close();
   });
 

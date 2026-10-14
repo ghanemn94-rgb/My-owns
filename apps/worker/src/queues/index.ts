@@ -11,6 +11,12 @@ import { ESCALATIONS_EVENT_QUEUES, ESCALATIONS_QUEUES } from "./escalations.ts";
 import { ADOPTION_EVENT_QUEUES, ADOPTION_QUEUES } from "./adoption.ts";
 import { SUSTAINMENT_EVENT_QUEUES, SUSTAINMENT_QUEUES } from "./sustainment.ts";
 import { GATES_EVENT_QUEUES, GATES_QUEUES } from "./gates.ts";
+// P5 domains (T-DG5-BE-A stubs; p5-plan §5.3): one import per new domain, each owned by its task.
+import { AUTOMATION_EVENT_QUEUES, AUTOMATION_QUEUES } from "./automation.ts";
+import { PROCEDURES_EVENT_QUEUES, PROCEDURES_QUEUES } from "./procedures.ts";
+import { REPORTS_EVENT_QUEUES, REPORTS_QUEUES } from "./reports.ts";
+import { LAUNCH_EVENT_QUEUES, LAUNCH_QUEUES } from "./launch.ts";
+import { DEMO_EVENT_QUEUES, DEMO_QUEUES } from "./demo.ts";
 import {
   ensurePlatformQueues,
   PLATFORM_EVENT_QUEUES,
@@ -33,7 +39,7 @@ export {
 } from "./platform.ts";
 export type { QueueSpec } from "./spec.ts";
 
-/** Every domain queue (P4 slices). */
+/** Every domain queue (P4 and P5 slices). */
 export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...APPROVALS_QUEUES,
   ...ACCESS_QUEUES,
@@ -45,6 +51,11 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...ADOPTION_QUEUES,
   ...SUSTAINMENT_QUEUES,
   ...GATES_QUEUES,
+  ...AUTOMATION_QUEUES,
+  ...PROCEDURES_QUEUES,
+  ...REPORTS_QUEUES,
+  ...LAUNCH_QUEUES,
+  ...DEMO_QUEUES,
 ];
 
 /**
@@ -64,6 +75,11 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   ADOPTION_EVENT_QUEUES,
   SUSTAINMENT_EVENT_QUEUES,
   GATES_EVENT_QUEUES,
+  AUTOMATION_EVENT_QUEUES,
+  PROCEDURES_EVENT_QUEUES,
+  REPORTS_EVENT_QUEUES,
+  LAUNCH_EVENT_QUEUES,
+  DEMO_EVENT_QUEUES,
 ];
 
 /** Merges the domain maps into event type -> the list of its queues, in registration order, each queue once. */

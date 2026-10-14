@@ -2531,6 +2531,159 @@ export function mapP4PhaseStepError(error: PgErrorLike): HttpProblem | null {
  * Maps a P2 database guard or template-constraint error to a problem, or null when the error is not one of them (the
  * generic mapping in hooks.ts then applies).
  */
+/**
+ * P5 slice A (T-DG5-BE-A; p5-work-split §A.10 item 2): the 0062-0064 guards. The API refuses first with the
+ * ADR-0039 §13 / ADR-0040 §8 codes and exact texts; a guard reached only under a race (two writers of the same draft,
+ * migration or pin) maps to the same refusal, and a guard that only a programming error can reach maps to 500.
+ *   methodology_version_one_open_draft_key                  -> 409 config_version.draft_exists (duplicate)
+ *   methodology_version_content_frozen, methodology_element_draft_only, methodology_version_stage_transition,
+ *   methodology_version_status_transition                   -> 409 config_version.not_editable
+ *   methodology_version_identity_fixed, methodology_element_identity_fixed -> 422 config_version.stable_id_change
+ *   methodology_element_fixed_sets                          -> 422 config_version.source_element_protected
+ *   methodology_element_source_identity, methodology_element_kind_type -> 422 config_version.unknown_element
+ *   methodology_element_no_admin_approver                   -> 422 config_version.admin_approver_forbidden
+ *   methodology_version_preview_required                    -> 422 config_version.preview_required
+ *   methodology_version_review_required                     -> 422 config_version.review_required
+ *   methodology_version_checks_required                     -> 422 config_version.checks_required
+ *   methodology_version_weights_total                       -> 422 config_version.weights_total
+ *   methodology_element_weight_decimal                      -> 400 validation.weight_percent (field /weightPercent)
+ *   methodology_version_rollback_complete                   -> 422 config_version.rollback_target_invalid
+ *   config_review_request_reviewer_not_requester, config_review_request_reviewer_not_author -> 403 config_review.self_review
+ *   config_review_policy_reviewer_not_auditor, config_review_policy_reviewer_not_admin -> 422 config_review.reviewer_not_allowed
+ *   methodology_migration_one_open_key                      -> 409 methodology_migration.open_exists (duplicate)
+ *   methodology_migration_target_published, methodology_migration_versions_differ -> 422 methodology_migration.target_invalid
+ *   methodology_migration_decider_not_requester             -> 403 methodology_migration.self_approval
+ *   methodology_migration_from_is_pin, transformation_config_pin_moves_by_migration -> 409 methodology_migration.pin_moved
+ *   methodology_migration_status_transition                 -> 422 methodology_migration.not_open
+ *   methodology_version_next_number, methodology_version_seed_only, methodology_version_created_as_draft,
+ *   methodology_version_publish_ready, methodology_version_draft_lineage, methodology_version_kind_key,
+ *   transformation_config_pin_kind_matches, transformation_config_pin_published, transformation_config_pin_kind_fixed,
+ *   transformation_config_pin_history_required, revision_proposal_dedupe_shape -> 500 (a programming error)
+ */
+export function mapP5StudioError(error: PgErrorLike): HttpProblem | null {
+  const rule = (code: string, detail: string) => problems.businessRule(code, detail);
+  switch (error.constraint ?? "") {
+    case "methodology_version_one_open_draft_key":
+      return problems.duplicate(
+        "config_version.draft_exists",
+        "A draft of this configuration already exists. Continue it or discard it first.",
+      );
+    case "methodology_version_content_frozen":
+    case "methodology_element_draft_only":
+    case "methodology_version_stage_transition":
+    case "methodology_version_status_transition":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "config_version.not_editable",
+        title: "Not editable",
+        detail: "This configuration version is published or no longer being edited. Create a new draft to change it.",
+      });
+    case "methodology_version_identity_fixed":
+    case "methodology_element_identity_fixed":
+      return rule("config_version.stable_id_change", "Stable identifiers cannot be changed. Change the label instead.");
+    case "methodology_element_fixed_sets":
+      return rule(
+        "config_version.source_element_protected",
+        "Source phases, gates and TOM dimensions cannot be added or deleted.",
+      );
+    case "methodology_element_source_identity":
+    case "methodology_element_kind_type":
+      return rule("config_version.unknown_element", "This element does not exist in the methodology.");
+    case "methodology_element_no_admin_approver":
+      return rule(
+        "config_version.admin_approver_forbidden",
+        "An administrator role or the auditor cannot be configured as an approver.",
+      );
+    case "methodology_version_preview_required":
+      return rule("config_version.preview_required", "Run a successful preview and test of the current draft first.");
+    case "methodology_version_review_required":
+      return rule("config_version.review_required", "This change needs an approved review before it can be published.");
+    case "methodology_version_checks_required":
+      return rule(
+        "config_version.checks_required",
+        "Run the compatibility and source-coverage checks for the current draft first.",
+      );
+    case "methodology_version_weights_total":
+      return rule("config_version.weights_total", "Default weights must total exactly 100% over 2 to 6 criteria.");
+    case "methodology_element_weight_decimal": {
+      const message = "Enter a weight as a percentage with at most two decimals, greater than 0 and at most 100.";
+      return new HttpProblem({
+        status: 400,
+        type: PROBLEM_TYPES.validation,
+        code: "validation",
+        title: "Validation failed",
+        detail: message,
+        errors: [{ pointer: "/weightPercent", code: "validation.weight_percent", message }],
+      });
+    }
+    case "methodology_version_rollback_complete":
+      return rule(
+        "config_version.rollback_target_invalid",
+        "Only an earlier published version of the same configuration can be restored.",
+      );
+    case "config_review_request_reviewer_not_requester":
+    case "config_review_request_reviewer_not_author":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "config_review.self_review",
+        title: "Forbidden",
+        detail: "You cannot review a configuration change you authored or requested.",
+      });
+    case "config_review_policy_reviewer_not_auditor":
+    case "config_review_policy_reviewer_not_admin":
+      return rule(
+        "config_review.reviewer_not_allowed",
+        "The auditor or an administrator role cannot be the configured reviewer.",
+      );
+    case "methodology_migration_one_open_key":
+      return problems.duplicate(
+        "methodology_migration.open_exists",
+        "This transformation already has an open migration for this configuration.",
+      );
+    case "methodology_migration_target_published":
+    case "methodology_migration_versions_differ":
+      return rule(
+        "methodology_migration.target_invalid",
+        "The target must be a published version of the same configuration, other than the pinned one.",
+      );
+    case "methodology_migration_decider_not_requester":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "methodology_migration.self_approval",
+        title: "Forbidden",
+        detail: "You cannot approve a migration you requested.",
+      });
+    case "methodology_migration_from_is_pin":
+    case "transformation_config_pin_moves_by_migration":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "methodology_migration.pin_moved",
+        title: "Version conflict",
+        detail: "The transformation's pinned version changed after this migration was planned. Plan it again.",
+      });
+    case "methodology_migration_status_transition":
+      return rule("methodology_migration.not_open", "This migration is no longer open.");
+    case "methodology_version_next_number":
+    case "methodology_version_seed_only":
+    case "methodology_version_created_as_draft":
+    case "methodology_version_publish_ready":
+    case "methodology_version_draft_lineage":
+    case "methodology_version_kind_key":
+    case "transformation_config_pin_kind_matches":
+    case "transformation_config_pin_published":
+    case "transformation_config_pin_kind_fixed":
+    case "transformation_config_pin_history_required":
+    case "revision_proposal_dedupe_shape":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2538,6 +2691,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
 
   const p4Meetings = mapP4GovernanceMeetingError(error);
   if (p4Meetings !== null) return p4Meetings;
+  const p5Studio = mapP5StudioError(error); // P5 slice A (T-DG5-BE-A; ADR-0039 §13, ADR-0040 §8)
+  if (p5Studio !== null) return p5Studio;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
