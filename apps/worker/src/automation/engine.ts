@@ -26,7 +26,7 @@ import { insertAuditEvent, sql, type Db, type Tx } from "@mth/db";
 import type { AutomationCondition } from "@mth/shared/schemas";
 import { FORMULA_DECIMAL as D } from "@mth/shared/calc";
 import type { JobAttempt } from "../handlers/spec.ts";
-import { jobActor } from "../kit.ts";
+import { jobActor, recordExecutionOutcome } from "../kit.ts";
 import {
   automationActionKey,
   type ActionEffect,
@@ -305,7 +305,7 @@ async function finishExecution(
     await lock(tx, lockKey(c.versionId, o.triggerKey));
     const cur = await tx
       .selectFrom("automation_execution")
-      .select(["status", "version", "organization_id", "transformation_id"])
+      .select(["status", "version", "organization_id", "transformation_id", "attempt_no"])
       .where("id", "=", executionId)
       .forUpdate()
       .executeTakeFirstOrThrow();
@@ -339,6 +339,20 @@ async function finishExecution(
         error_code: { from: null, to: set.errorCode },
       },
     });
+    // T-DG5-BE-I (ADR-0043 §3, §5): a failed execution enters the failure queue in this same transaction (at once for
+    // automation.action_forbidden, never retried); a retried one (attempt > 1) resolves or reopens its entry.
+    if (set.status === "failed" || cur.attempt_no > 1)
+      await recordExecutionOutcome(tx, jobActor(jobId), {
+        executionId,
+        organizationId: cur.organization_id ?? c.organizationId,
+        queueName:
+          o.triggerCode === AUTOMATION_TICK_HOURLY || o.triggerCode === AUTOMATION_TICK_DAILY
+            ? o.triggerCode
+            : AUTOMATION_EVALUATE_QUEUE,
+        status: set.status,
+        errorCode: set.errorCode,
+        errorDetail: set.errorDetail,
+      });
   });
 }
 

@@ -299,7 +299,8 @@ describe("the event-to-queue registry (D-102)", () => {
     ]);
     for (const [eventType, queues] of Object.entries(QUEUES_FOR_EVENT)) {
       if (eventType === "kpi.deviation_evaluated") continue;
-      if (eventType in AUTOMATION_EVENT_QUEUES) {
+      // T-DG5-BE-I: the map also holds two internal failure-queue events with their own queue (not engine triggers).
+      if (AUTOMATION_EVENT_QUEUES[eventType] === AUTOMATION_EVALUATE) {
         // At most one domain consumer, then the engine (an event with no DG4 consumer feeds the engine only).
         expect(queues.at(-1), eventType).toBe(AUTOMATION_EVALUATE);
         expect(queues.length, eventType).toBeLessThanOrEqual(2);

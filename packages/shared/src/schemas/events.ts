@@ -81,6 +81,28 @@ export const gateDecidedV1 = z.strictObject({
 });
 export type GateDecidedV1 = z.infer<typeof gateDecidedV1>;
 
+/**
+ * P5 slice D (T-DG5-BE-I; ADR-0043 §5, §7): a job failed on its last attempt and entered the failure queue (internal;
+ * the starter-16 trigger, M0239). Written by the worker's failure capture when the job names an organization.
+ */
+export const jobFailedV1 = z.strictObject({
+  queueName: z.string().min(1).max(100),
+  jobScheduleCode: z.string().min(1).max(100).nullable(),
+  failureId: uuid,
+});
+export type JobFailedV1 = z.infer<typeof jobFailedV1>;
+
+/**
+ * P5 slice D (T-DG5-BE-I; ADR-0043 §5): a person asked to retry a failure-queue entry. Written by the API in the
+ * transaction that moves the entry to `retrying`, so the worker re-sends the work only after that COMMIT (no remote
+ * I/O inside the transaction). `retryCount` is the entry's count after this retry: a stale message does nothing.
+ */
+export const automationFailureRetryRequestedV1 = z.strictObject({
+  failureId: uuid,
+  retryCount: z.number().int().min(1).max(20),
+});
+export type AutomationFailureRetryRequestedV1 = z.infer<typeof automationFailureRetryRequestedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -105,6 +127,10 @@ export const OUTBOX_EVENT_SCHEMAS = {
   // T-DG4-BE-K (ADR-0035 §7): the gate events (R1); consumers gates.submitted and gates.decided (apps/worker gates).
   "gate.submitted": { 1: gateSubmittedV1 },
   "gate.decided": { 1: gateDecidedV1 },
+  // T-DG5-BE-I (ADR-0043 §5, §7): the failure queue's two internal events; consumers automation.job_failed and
+  // automation.failure_retry (apps/worker queues/automation.ts).
+  "job.failed": { 1: jobFailedV1 },
+  "automation_failure.retry_requested": { 1: automationFailureRetryRequestedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

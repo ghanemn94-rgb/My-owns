@@ -12,6 +12,10 @@ export const AUTOMATION_QUEUES: readonly QueueSpec[] = [
   { name: "automation.evaluate" },
   { name: "automation.tick_hourly" },
   { name: "automation.tick_daily" },
+  // T-DG5-BE-I (ADR-0043 §5, §7): the failure queue's two internal consumers (apps/worker/src/worker.ts registers the
+  // retry dispatcher; handlers/automation.ts the job.failed consumer, which BE-J wraps as starter 16).
+  { name: "automation.failure_retry" },
+  { name: "automation.job_failed" },
 ];
 
 /** The admin-selectable event triggers of 0074 and 0075 (automation_trigger), each fed to the engine. */
@@ -34,6 +38,9 @@ export const AUTOMATION_EVENT_TRIGGERS = [
   "transformation.created",
 ] as const;
 
-export const AUTOMATION_EVENT_QUEUES: Readonly<Record<string, string>> = Object.fromEntries(
-  AUTOMATION_EVENT_TRIGGERS.map((t) => [t, "automation.evaluate"]),
-);
+export const AUTOMATION_EVENT_QUEUES: Readonly<Record<string, string>> = Object.fromEntries([
+  ...AUTOMATION_EVENT_TRIGGERS.map((t) => [t, "automation.evaluate"]),
+  // T-DG5-BE-I: the internal failure-queue events (not admin-selectable triggers; never evaluated as rules here).
+  ["automation_failure.retry_requested", "automation.failure_retry"],
+  ["job.failed", "automation.job_failed"],
+]);
