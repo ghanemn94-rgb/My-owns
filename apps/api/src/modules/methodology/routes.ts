@@ -34,6 +34,8 @@ import { registerConfigPublishRoutes } from "./publish.ts"; // BE-B3
 import { registerConfigReviewPolicyRoutes } from "./review-policies.ts"; // BE-B3
 import { registerMethodologyMigrationRoutes } from "./migrations.ts"; // BE-C
 import { registerScoringDefaultsRoutes } from "./scoring-defaults.ts"; // KBE-A
+import { registerMethodologyReaderRoutes } from "./reader.ts"; // BE-Q (slice I)
+import { registerMethodologySourceLinkRoutes } from "./source-links.ts"; // BE-Q (slice I)
 
 const CATALOGUE = "/api/v1/transformations/:transformationId/methodology";
 const TOM_DIMENSION = "/api/v1/methodology/tom-dimensions/:dimensionCode";
@@ -77,6 +79,8 @@ export function registerMethodologyModule(
     ...registerConfigReviewPolicyRoutes(app, deps),
     ...registerMethodologyMigrationRoutes(app, deps),
     ...registerScoringDefaultsRoutes(app, deps),
+    ...registerMethodologyReaderRoutes(app, deps, resolver), // BE-Q (slice I)
+    ...registerMethodologySourceLinkRoutes(app, deps, resolver), // BE-Q (slice I)
   ];
   return Object.freeze({
     module: "methodology",
