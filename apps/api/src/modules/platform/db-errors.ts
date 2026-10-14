@@ -2711,6 +2711,46 @@ export function mapP5AutomationError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P5 slice F (T-DG5-KBE-C; ADR-0045 §11): the 0080 report-snapshot guards that a request can reach in a race (the API
+ * refuses first under lock class reportSnapshotIssue; a concurrent writer can still pass that check first). Every other 0080 guard is
+ * refused by the API first, so reaching it is a programming error (500).
+ *   report_snapshot_one_issued_key, report_snapshot_series_issue_key, report_snapshot_issue_next,
+ *   report_snapshot_superseded_by_issued                     -> 409 report_snapshot.series_changed
+ *   report_snapshot_reissue_of_issued                        -> 422 report_snapshot.not_issued
+ *   report_snapshot_transition                               -> 422 report_snapshot.not_generated
+ *   report_snapshot_subject_ref                              -> 422 report.subject_invalid
+ */
+export function mapP5ReportError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "report_snapshot_one_issued_key":
+    case "report_snapshot_series_issue_key":
+    case "report_snapshot_issue_next":
+    case "report_snapshot_superseded_by_issued":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "report_snapshot.series_changed",
+        title: "Version conflict",
+        detail: "This report was issued or reissued meanwhile; reload it.",
+      });
+    case "report_snapshot_reissue_of_issued":
+      return problems.businessRule("report_snapshot.not_issued", "Only the current issued snapshot can be reissued.");
+    case "report_snapshot_transition":
+      return problems.businessRule(
+        "report_snapshot.not_generated",
+        "Only a generated snapshot can be issued or discarded.",
+      );
+    case "report_snapshot_subject_ref":
+      return problems.businessRule(
+        "report.subject_invalid",
+        "The subject must be a record of this transformation of the type this output reports on.",
+      );
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2722,6 +2762,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Studio !== null) return p5Studio;
   const p5Automation = mapP5AutomationError(error); // P5 slice D (T-DG5-BE-H; ADR-0043 §9)
   if (p5Automation !== null) return p5Automation;
+  const p5Report = mapP5ReportError(error); // P5 slice F (T-DG5-KBE-C; ADR-0045 §11)
+  if (p5Report !== null) return p5Report;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

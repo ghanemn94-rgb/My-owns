@@ -150,7 +150,26 @@ describe("module composition (D-048, P2)", () => {
       // P3 (T-DG3-KBE-C): kpi routes the T09 benefit formulas (/benefit-formulas, /benefit-formula-examples); the
       // reporting module stays route-free until P5. T-DG4-KBE-C: kpi's P4 reporting periods (contract path
       // /organizations/{id}/reporting-periods, ADR-0027 §3) are KPI periods, not reports, so they are excluded here.
-      expect(routes.filter((r) => /report/i.test(r.url) && !/\/reporting-periods(\/|$)/.test(r.url))).toEqual([]);
+      // T-DG5-KBE-C (p5-work-split §F.1; ADR-0045): the report definitions, live reports and report snapshots are
+      // routed (reporting/reports/routes.ts); no other report route exists (exports are BE-M's, under /exports).
+      expect(
+        routes
+          .filter((r) => /report/i.test(r.url) && !/\/reporting-periods(\/|$)/.test(r.url) && r.method !== "HEAD")
+          .map((r) => `${r.method} ${r.url}`)
+          .sort(),
+      ).toEqual([
+        "GET /api/v1/report-definitions",
+        "GET /api/v1/transformations/:transformationId/report-snapshots",
+        "GET /api/v1/transformations/:transformationId/report-snapshots/:snapshotId",
+        "GET /api/v1/transformations/:transformationId/report-snapshots/:snapshotId/evidence",
+        "GET /api/v1/transformations/:transformationId/report-snapshots/:snapshotId/sources",
+        "GET /api/v1/transformations/:transformationId/report-snapshots/:snapshotId/versions",
+        "GET /api/v1/transformations/:transformationId/reports/:definitionCode/live",
+        "POST /api/v1/transformations/:transformationId/report-snapshots/:snapshotId/discard",
+        "POST /api/v1/transformations/:transformationId/report-snapshots/:snapshotId/issue",
+        "POST /api/v1/transformations/:transformationId/report-snapshots/:snapshotId/reissue",
+        "POST /api/v1/transformations/:transformationId/reports/:definitionCode/generate",
+      ]);
     } finally {
       await pool.end();
     }

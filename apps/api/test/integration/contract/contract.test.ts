@@ -894,8 +894,12 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // submit, execute and withdraw are bodiless, the other three are GETs).
     // T-DG5-KBE-A: + putScoringDefaultsDraft (1 JSON body). T-DG5-BE-F: + validateProcedureDefinition,
     // putProcedureDefinition (2 JSON bodies; removeProcedureDefinition is bodiless).
+    // T-DG5-BE-F2: + launchProcedureInstance, updateProcedureInstanceInputs, completeProcedureStep, skipProcedureStep,
+    // assignProcedureStep, linkProcedureStepEvidence, cancelProcedureInstance (7 JSON bodies).
     // T-DG5-BE-I: + dismissAutomationFailure (1 JSON body; retryAutomationFailure is bodiless, the other four are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([350, 349, 1]);
+    // T-DG5-KBE-C: + generateReportSnapshot, issueReportSnapshot, discardReportSnapshot, reissueReportSnapshot (4 JSON
+    // bodies; the other seven KBE-C operations are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([361, 360, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

@@ -132,3 +132,6 @@ export * from "./automation.ts";
 // P5 slice C mirrors of BE-F (T-DG5-BE-F; ADR-0042 §1-§2, §10; p5-work-split §C.1): procedure definitions, the builder
 // validation report and the pure step-condition evaluator.
 export * from "./procedures.ts";
+// P5 slice F (T-DG5-KBE-C; ADR-0045 §1-§5; p5-work-split §F.1): report definitions, the report document model v1,
+// the registers parameters and the report-snapshot mirrors.
+export * from "./report.ts";
