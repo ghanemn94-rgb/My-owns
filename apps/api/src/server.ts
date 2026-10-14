@@ -108,6 +108,11 @@ import { loadSustainmentGateFacts } from "./modules/sustainment/gate-facts.ts";
 import { activateKpiVersionByChangeRequest } from "./modules/kpi/kpi-versions.ts";
 import { setMaterialChangePort } from "./modules/platform/index.ts";
 import { materialChangePortImpl, setKpiVersionActivator } from "./modules/workflows/change-requests.ts";
+// T-DG5-BE-B2 (ADR-0039 §8; REQ-S12-018): the "revision proposed" starter wraps the DG4 material-change port (the DG4
+// behaviour runs first, unchanged) and writes its review tasks through tasks' createWorkItemOnce (methodology imports
+// no business module).
+import { setReviewTaskWriter, withRevisionProposals } from "./modules/methodology/revision-impact.ts";
+import { createWorkItemOnce } from "./modules/tasks/index.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -356,7 +361,9 @@ export async function buildServer(options: ServerOptions): Promise<{
   wireTransitionDecisionApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
   // T-DG4-KBE-G2 (ADR-0037 §1 item 3, §9): the workspace header's live gate readiness, through reporting's port.
   setWorkflowsReadPort({ gateReadiness: gateReadinessReader(gateFacts) });
-  setMaterialChangePort(materialChangePortImpl);
+  // T-DG5-BE-B2 (ADR-0039 §8 case 2): benefitFormulaVersionCreated also records the S12-018 revision proposal.
+  setReviewTaskWriter(createWorkItemOnce);
+  setMaterialChangePort(withRevisionProposals(materialChangePortImpl));
   setKpiVersionActivator(activateKpiVersionByChangeRequest);
   // P5 wiring points (p5-plan §2, §5.3; T-DG5-BE-A).
   //  - ConfigResolver (ADR-0039 §3): the one resolver of pinned configuration versions. Modules that read configuration
