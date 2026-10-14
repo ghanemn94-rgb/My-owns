@@ -115,7 +115,10 @@ import { materialChangePortImpl, setKpiVersionActivator } from "./modules/workfl
 // behaviour runs first, unchanged) and writes its review tasks through tasks' createWorkItemOnce (methodology imports
 // no business module).
 import { setReviewTaskWriter, withRevisionProposals } from "./modules/methodology/revision-impact.ts";
-import { createWorkItemOnce } from "./modules/tasks/index.ts";
+import { closeWorkItemsOfSubject, createWorkItemOnce } from "./modules/tasks/index.ts";
+// T-DG5-BE-C (ADR-0040 §4): methodology migrations request and decide their approval through workflows' service and
+// write re-approval tasks through tasks' services, passed in as ports (methodology imports no business module).
+import { wireMethodologyMigrations } from "./modules/methodology/migrations.ts";
 
 export const JSON_BODY_LIMIT_BYTES = 1_048_576;
 
@@ -368,6 +371,13 @@ export async function buildServer(options: ServerOptions): Promise<{
   setReviewTaskWriter(createWorkItemOnce);
   setMaterialChangePort(withRevisionProposals(materialChangePortImpl));
   setKpiVersionActivator(activateKpiVersionByChangeRequest);
+  // T-DG5-BE-C (ADR-0040 §4): the methodology_migration approval subject (decided through its record) and its ports.
+  wireMethodologyMigrations({
+    requestApproval: requestApprovalInTx,
+    registerSubject: registerApprovalSubject,
+    createWorkItem: createWorkItemOnce,
+    closeWorkItems: closeWorkItemsOfSubject,
+  });
   // P5 wiring points (p5-plan §2, §5.3; T-DG5-BE-A).
   //  - ConfigResolver (ADR-0039 §3): the one resolver of pinned configuration versions. Modules that read configuration
   //    receive it in their register options (named wiring lines below); methodology imports none of them.

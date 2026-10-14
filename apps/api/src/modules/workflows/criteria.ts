@@ -20,6 +20,13 @@ import {
 } from "@mth/shared/schemas";
 import { loadVerifiedEvidenceFacts, type EvidenceFact } from "../evidence/index.ts";
 import { loadKpiGateFacts, type KpiGateFacts } from "../kpi/index.ts";
+// T-DG5-BE-C (ADR-0039 §3, ADR-0040; p5-work-split §A.5): gate labels, help, approver and criteria through the resolver.
+import {
+  createConfigResolver,
+  loadGateDefinitions,
+  type ConfigResolver,
+  type ResolvedElement,
+} from "../methodology/index.ts";
 import { findCharter, findCurrentNorthStar, hasExclusions, loadGoodOutcomeFacts } from "../transformations/index.ts";
 import { G4_EVALUATORS, loadG4Facts, type G4Facts, type GateFactsProvider } from "./g4.ts";
 import { G5_EVALUATORS, loadG5Facts, type G5Facts } from "./g5.ts";
@@ -539,6 +546,76 @@ export function evaluateGate(definition: GateDefinition, facts: GateFacts): Gate
       completeness: outcome.missing.length === 0 ? "complete" : "incomplete",
       missing: outcome.missing,
       unverifiedEvidenceIds: outcome.unverifiedEvidenceIds ?? [],
+    };
+  });
+}
+
+// ------------------------------------------------------------------------------------------------ the gate reader
+
+// T-DG5-BE-C (ADR-0039 §2-§3, ADR-0040 §3; REQ-S06-004, REQ-S06-008; p5-plan R2): the gate definitions as the
+// transformation's PINNED methodology version resolves them. The DG2 catalogue rows stay the stable identities (codes,
+// ordinals, phases, the allowed approver set, the evaluators' criterion keys never change, S06-006); a version's
+// `gate` / `gate_criterion` element row overrides, field by field, the label and help texts, the default approver,
+// `submissionEnabled` and a criterion's `mandatory`. Elements without a catalogue identity (admin-added criteria) have
+// no evaluator and are not gate criteria here; a removed criterion is not evaluated. A version without such rows (the
+// seeded `playbook` v1, so every DG2-DG4 transformation) returns the catalogue objects THEMSELVES, unchanged: the
+// v1 output is byte-identical (apps/api/test/integration/methodology/v1-readers.test.ts).
+const gateResolver: ConfigResolver = createConfigResolver();
+
+const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+const bool = (v: unknown): boolean | undefined => (typeof v === "boolean" ? v : undefined);
+const attr = (e: ResolvedElement, name: string): unknown => new Map(Object.entries(e.attributes)).get(name);
+
+/** The catalogue gate definitions with the pinned version's overrides applied (see above). */
+export async function resolveGateDefinitions(
+  db: DbOrTx,
+  transformationId: string,
+  catalogue?: readonly GateDefinition[],
+): Promise<GateDefinition[]> {
+  const defs = catalogue ?? (await loadGateDefinitions(db));
+  const pinned = await gateResolver.pinnedVersion(db, transformationId, "methodology");
+  const [gates, criteria] = await Promise.all([
+    gateResolver.elements(db, pinned.versionId, "gate", { includeRemoved: true }),
+    gateResolver.elements(db, pinned.versionId, "gate_criterion", { includeRemoved: true }),
+  ]);
+  const gateBy = new Map(gates.filter((e) => e.overridden && e.origin === "source").map((e) => [e.stableKey, e]));
+  const critBy = new Map(criteria.filter((e) => e.overridden && e.origin === "source").map((e) => [e.stableKey, e]));
+  if (gateBy.size === 0 && critBy.size === 0) return [...defs];
+  return defs.map((d) => {
+    const g = gateBy.get(d.code);
+    const touched = d.criteria.some((c) => critBy.has(c.key));
+    if (g === undefined && !touched) return d;
+    const approver = g === undefined ? undefined : str(attr(g, "defaultApproverRoleCode"));
+    return {
+      ...d,
+      ...(g === undefined
+        ? {}
+        : {
+            sourceNameEn: str(attr(g, "labelEn")) ?? d.sourceNameEn,
+            nameAr: str(attr(g, "labelAr")) ?? d.nameAr,
+            sourceDecisionQuestionEn: str(attr(g, "helpEn")) ?? d.sourceDecisionQuestionEn,
+            decisionQuestionAr: str(attr(g, "helpAr")) ?? d.decisionQuestionAr,
+            // Only a role inside the DG2 allowed set (the Studio refuses others first: config_version.approver_not_allowed).
+            defaultApproverRoleCode:
+              approver !== undefined && d.allowedApproverRoleCodes.includes(approver)
+                ? approver
+                : d.defaultApproverRoleCode,
+            submissionEnabled: bool(attr(g, "submissionEnabled")) ?? d.submissionEnabled,
+          }),
+      criteria: d.criteria
+        .filter((c) => critBy.get(c.key)?.removed !== true)
+        .map((c) => {
+          const e = critBy.get(c.key);
+          if (e === undefined) return c;
+          return {
+            ...c,
+            labelEn: str(attr(e, "labelEn")) ?? c.labelEn,
+            labelAr: str(attr(e, "labelAr")) ?? c.labelAr,
+            descriptionEn: str(attr(e, "helpEn")) ?? c.descriptionEn,
+            descriptionAr: str(attr(e, "helpAr")) ?? c.descriptionAr,
+            mandatory: bool(attr(e, "mandatory")) ?? c.mandatory,
+          };
+        }),
     };
   });
 }
