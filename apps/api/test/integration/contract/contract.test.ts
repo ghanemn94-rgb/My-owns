@@ -884,7 +884,7 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // bodies; withdrawConfigReview and publishConfigVersion are bodiless, the other two are GETs).
     // T-DG5-BE-E: + createFormRecordComment, attachFormRecordEvidence, removeFormRecordAttachment (3 JSON bodies; the
     // other three BE-E operations are GETs).
-    // T-DG5-BE-H2: + 2 JSON bodies (its dry-run and lifecycle operations; see p5-exercises-be-h2.ts).
+    // T-DG5-BE-H2: + 2 JSON bodies (the rule-version dry run and review; its three other POSTs are bodiless).
     expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([343, 342, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
