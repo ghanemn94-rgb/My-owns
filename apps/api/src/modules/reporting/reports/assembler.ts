@@ -27,8 +27,13 @@ import type {
   ReportValueBasis,
   ReportVersionKind,
 } from "@mth/shared/schemas";
+import { businessCasesAssembler } from "./assemblers/business-cases.ts";
 import { charterAssembler } from "./assemblers/charter.ts";
+import { diagnosticAssembler } from "./assemblers/diagnostic.ts";
+import { gatePackAssembler } from "./assemblers/gate-pack.ts";
 import { registersAssembler } from "./assemblers/registers.ts";
+import { roadmapAssembler } from "./assemblers/roadmap.ts";
+import { tomAssembler } from "./assemblers/tom.ts";
 import { NOT_APPLICABLE, UNKNOWN_MISSING, type ValueState } from "./provisional.ts";
 
 // ------------------------------------------------------------------------------------------------ context and output
@@ -107,7 +112,12 @@ function assemblers(): ReadonlyMap<ReportDefinitionCode, Assembler> {
   registry ??= new Map<ReportDefinitionCode, Assembler>([
     ["charter", charterAssembler],
     ["registers", registersAssembler],
-    // KBE-C2: diagnostic, tom, business_cases, roadmap, gate_pack (one line each).
+    // KBE-C2 (p5-work-split §F.2): diagnostic, tom, business_cases, roadmap, gate_pack.
+    ["diagnostic", diagnosticAssembler],
+    ["tom", tomAssembler],
+    ["business_cases", businessCasesAssembler],
+    ["roadmap", roadmapAssembler],
+    ["gate_pack", gatePackAssembler],
     // KBE-D: executive_pack. KBE-D2: meeting_minutes, executive_dashboard, handover, meeting_pack.
   ]);
   return registry;
