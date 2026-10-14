@@ -98,7 +98,9 @@ import {
   type WriteContext,
 } from "../transformations/index.ts";
 import { nextCode } from "./codes.ts";
-import { evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
+import { evaluateGate, loadGateFacts, resolveGateDefinitions, type GateFacts } from "./criteria.ts";
+// T-DG5-BE-C (ADR-0040 §3; D-142 Q9): a re-approval's work items close when the gate is approved again.
+import { closeWorkItemsOfSubject } from "../tasks/index.ts";
 import { buildG4Snapshot, type GateFactsProvider, type InheritedApprovalFact } from "./g4.ts";
 import { g5SnapshotOf } from "./g5.ts";
 import { g6SnapshotOf } from "./g6.ts";
@@ -250,6 +252,26 @@ function approverOf(
   };
 }
 
+/**
+ * T-DG5-BE-C (ADR-0039 §3; REQ-S06-004 "a submission is routed to the new approver"): the approver a NEW submission
+ * routes to. A gate whose approver was never configured for the transformation (no named user, the catalogue default
+ * role) follows the default approver of the transformation's pinned methodology version; a configured approver is
+ * kept. For a v1-pinned transformation `resolved` is the catalogue definition, so this is exactly `approverOf`.
+ */
+function routedApproverOf(
+  instance: { approver_role_code: string; approver_user_id: string | null },
+  catalogue: GateDefinition,
+  resolved: GateDefinition,
+): Approver {
+  if (
+    instance.approver_user_id === null &&
+    instance.approver_role_code === catalogue.defaultApproverRoleCode &&
+    resolved.defaultApproverRoleCode !== catalogue.defaultApproverRoleCode
+  )
+    return { roleCode: resolved.defaultApproverRoleCode, userId: null, basis: "default_role" };
+  return approverOf(instance, resolved);
+}
+
 /** Does `userGrants` hold the approver role WITH gate.decide on the transformation? (no title ever implies it) */
 function holdsApproverRole(
   grants: readonly Parameters<typeof grantApplies>[0][],
@@ -299,8 +321,10 @@ export async function isGateApprover(
   gateCode: string,
   target: ResolvedTarget,
 ): Promise<boolean> {
-  const def = (await loadGateDefinitions(db)).find((d) => d.code === gateCode);
-  if (!def) return false;
+  const catalogue = await loadGateDefinitions(db);
+  const def = (await resolveGateDefinitions(db, transformationId, catalogue)).find((d) => d.code === gateCode);
+  const base = catalogue.find((d) => d.code === gateCode);
+  if (!def || !base) return false;
   const instance = await db
     .selectFrom("gate_instance")
     .select(["approver_role_code", "approver_user_id"])
@@ -308,7 +332,7 @@ export async function isGateApprover(
     .where("gate_code", "=", gateCode)
     .executeTakeFirst();
   if (!instance) return false;
-  return isApprover(db, principal, approverOf(instance, def), target, undefined);
+  return isApprover(db, principal, routedApproverOf(instance, base, def), target, undefined);
 }
 
 // ------------------------------------------------------------------------------------------------ views
@@ -352,10 +376,13 @@ async function gateView(
       ? new Map()
       : await coveringExceptions(db, instance.id, await exceptionBusinessDate(db, instance.transformation_id));
   const allComplete = missing.every((c) => covered.has(c.key));
+  // T-DG5-BE-C (D-142 Q9): an approved gate with a required re-approval can be submitted again; a gate after one
+  // cannot. Without a re-approval row (every DG2-DG4 gate) both reads find nothing and the result is the DG2 one.
   const canSubmit =
     def.submissionEnabled &&
-    instance.status !== "approved" &&
+    (instance.status !== "approved" || (await requiredReapprovalOf(db, instance.id)) !== undefined) &&
     allComplete &&
+    (await earlierReapprovalRequired(db, instance.transformation_id, def, defs)) === null &&
     (await sequenceProblem(db, instance.transformation_id, def, defs)) === null &&
     (await holds(db, principal, "gate.submit", target));
   const canDecide =
@@ -414,6 +441,107 @@ async function sequenceProblem(
   return null;
 }
 
+// ------------------------------------------------------------------------------------------------ re-approvals
+
+// T-DG5-BE-C (ADR-0040 §3; D-142 Q9): after an executed methodology migration a gate can need a BUSINESS re-approval
+// (a gate_reapproval row, status `required`). Its approved gate_instance, submissions, snapshot and decision stay as
+// they are. While it is required the gate can be submitted again through the unchanged DG2 path, and no LATER gate can
+// be submitted (422 gate.reapproval_required); the next approved decision of the gate satisfies it. People decide:
+// nothing here approves anything, and nothing relates to the engineering gates DG0-DG7.
+
+/** The gate instance's required re-approval, if any (one at most: gate_reapproval_one_required_key). */
+async function requiredReapprovalOf(db: DbOrTx, gateInstanceId: string) {
+  return db
+    .selectFrom("gate_reapproval")
+    .selectAll()
+    .where("gate_instance_id", "=", gateInstanceId)
+    .where("status", "=", "required")
+    .executeTakeFirst();
+}
+
+/** The code of an EARLIER gate of the transformation whose re-approval is required, else null. */
+async function earlierReapprovalRequired(
+  db: DbOrTx,
+  transformationId: string,
+  def: GateDefinition,
+  defs: readonly GateDefinition[],
+): Promise<string | null> {
+  const earlier = defs.filter((d) => d.ordinal < def.ordinal).map((d) => d.code);
+  if (earlier.length === 0) return null;
+  const row = await db
+    .selectFrom("gate_reapproval")
+    .select("gate_code")
+    .where("transformation_id", "=", transformationId)
+    .where("status", "=", "required")
+    .where("gate_code", "in", earlier)
+    .orderBy("gate_code")
+    .executeTakeFirst();
+  return row?.gate_code ?? null;
+}
+
+export const gateReapprovalRefusals = {
+  required: () =>
+    problems.businessRule(
+      "gate.reapproval_required",
+      "An earlier gate needs re-approval after a methodology migration before this gate can be submitted.",
+    ),
+} as const;
+
+/** An approved decision satisfies the gate's required re-approval, in the deciding transaction, with its audit event. */
+async function satisfyReapproval(
+  tx: Tx,
+  audit: AuditContext,
+  input: { gateInstanceId: string; gateDecisionId: string; organizationId: string; transformationId: string },
+): Promise<void> {
+  const row = await tx
+    .selectFrom("gate_reapproval")
+    .selectAll()
+    .where("gate_instance_id", "=", input.gateInstanceId)
+    .where("status", "=", "required")
+    .forUpdate()
+    .executeTakeFirst();
+  if (row === undefined) return;
+  const by = audit.actorUserId!;
+  const updated = await tx
+    .updateTable("gate_reapproval")
+    .set({
+      status: "satisfied",
+      satisfied_decision_id: input.gateDecisionId,
+      resolved_at: sql<Date>`now()`,
+      version: sql<number>`version + 1`,
+      updated_at: sql<Date>`now()`,
+      updated_by: by,
+    })
+    .where("id", "=", row.id)
+    .where("version", "=", row.version)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+  await record(tx, audit, {
+    action: "gate_reapproval.satisfy",
+    recordType: "gate_reapproval",
+    recordId: row.id,
+    organizationId: input.organizationId,
+    transformationId: input.transformationId,
+    priorVersion: row.version,
+    newVersion: updated.version,
+    changes: {
+      status: { from: "required", to: "satisfied" },
+      satisfied_decision_id: { from: null, to: input.gateDecisionId },
+    },
+  });
+  await closeWorkItemsOfSubject(
+    tx,
+    { actorType: "user", actorUserId: by, requestId: audit.requestId, source: "api" },
+    {
+      organizationId: input.organizationId,
+      subjectType: "gate_reapproval",
+      subjectId: row.id,
+      kinds: ["gate_reapproval"],
+    },
+    "done",
+  );
+}
+
 function definitionOf(defs: readonly GateDefinition[], gateCode: string): GateDefinition {
   const def = defs.find((d) => d.code === gateCode);
   if (!def) throw problems.notFound();
@@ -429,7 +557,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const { transformationId } = parse(tParams, request.params, "params");
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const defs = await loadGateDefinitions(db);
+    const defs = await resolveGateDefinitions(db, transformationId);
     const instances = await db
       .selectFrom("gate_instance")
       .selectAll()
@@ -450,7 +578,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const { transformationId, gateCode } = parse(gParams, request.params, "params");
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const defs = await loadGateDefinitions(db);
+    const defs = await resolveGateDefinitions(db, transformationId);
     const def = definitionOf(defs, gateCode);
     const instance = await instanceOf(db, transformationId, gateCode);
     const view = await gateView(
@@ -528,7 +656,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     });
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const defs = await loadGateDefinitions(db);
+    const defs = await resolveGateDefinitions(db, transformationId);
     const def = definitionOf(defs, gateCode);
     reply.header("ETag", `"${instance.version}"`);
     return gateView(
@@ -683,15 +811,20 @@ async function submitGate(
 ) {
   const ctx = await writeAtCommit(tx, request, transformationId, [{ permission: "gate.submit" }]);
   const body = parseBody(gateSubmissionCreate, request.body);
-  const def = definitionOf(await loadGateDefinitions(tx), gateCode);
+  const catalogue = await loadGateDefinitions(tx);
+  const defs = await resolveGateDefinitions(tx, transformationId, catalogue);
+  const def = definitionOf(defs, gateCode);
   if (!def.submissionEnabled)
     throw problems.businessRule("gate_not_enabled", `${gateCode} cannot be submitted in this release.`);
   const expected = requireIfMatch(request);
   const instance = await instanceOf(tx, transformationId, gateCode, true);
   if (instance.version !== expected) throw problems.versionConflict(instance.version);
-  if (instance.status === "approved")
+  // T-DG5-BE-C (D-142 Q9): an approved gate is resubmitted only while its re-approval is required.
+  if (instance.status === "approved" && (await requiredReapprovalOf(tx, instance.id)) === undefined)
     throw problems.businessRule("gate.already_approved", "This gate is already approved; it cannot be resubmitted.");
-  const outOfSequence = await sequenceProblem(tx, transformationId, def, await loadGateDefinitions(tx));
+  if ((await earlierReapprovalRequired(tx, transformationId, def, defs)) !== null)
+    throw gateReapprovalRefusals.required();
+  const outOfSequence = await sequenceProblem(tx, transformationId, def, defs);
   if (outOfSequence) throw outOfSequence;
 
   // Re-evaluate every criterion INSIDE this transaction and freeze the result (ADR-0015 §2 step 2).
@@ -734,7 +867,7 @@ async function submitGate(
     .select(["id", "code", "name", "current_phase", "version"])
     .where("id", "=", transformationId)
     .executeTakeFirstOrThrow();
-  const approver = approverOf(instance, def);
+  const approver = routedApproverOf(instance, definitionOf(catalogue, gateCode), def);
   const submissionNo = instance.latest_submission_no + 1;
   const id = uuidv7();
   // P3 (ADR-0021 §7): the G4 snapshot (in-scope initiatives, ranking, weight set, cases, formulas, funding, demand,
@@ -925,7 +1058,7 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
   } catch (err) {
     throw commitTimeDenial(err);
   }
-  const defs = await loadGateDefinitions(tx);
+  const defs = await resolveGateDefinitions(tx, transformationId);
   const def = definitionOf(defs, gateCode);
   const instance = await instanceOf(tx, transformationId, gateCode, true);
   const pending = await tx
@@ -1186,6 +1319,14 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
     reason: body.rationale,
     changes: { status: { from: instance.status, to: body.outcome } },
   });
+  // T-DG5-BE-C (ADR-0040 §3): the approved decision satisfies a required re-approval of this gate (no row: nothing).
+  if (body.outcome === "approved")
+    await satisfyReapproval(tx, audit, {
+      gateInstanceId: instance.id,
+      gateDecisionId,
+      organizationId: t.organization_id,
+      transformationId,
+    });
   // Approval advances the phase by exactly one step (G1 diagnose -> define, G2 define -> design, G3 design ->
   // mobilize): the only phase-advance path.
   if (body.outcome === "approved" && def.nextPhase !== null)

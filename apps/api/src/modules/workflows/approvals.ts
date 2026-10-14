@@ -186,6 +186,9 @@ export const approvalRefusals = {
   // ADR-0026 amendment A4 (2026-10-09): the approval types whose provider sets `resubmitThroughSubject`.
   resubmitThroughRecord: () =>
     problems.businessRule("approval.resubmit_through_record", "Resubmit this request by submitting its record again."),
+  // T-DG5-BE-C (ADR-0040 §4, §8): the approval types whose provider sets `decideThroughSubject`.
+  decideThroughRecord: () =>
+    problems.businessRule("approval.decide_through_record", "Decide this request from its record."),
 } as const;
 
 // ------------------------------------------------------------------------------------------------ subject registry
@@ -218,6 +221,12 @@ export interface ApprovalSubjectProvider {
    */
   readonly resubmitThroughSubject?: boolean;
   /**
+   * T-DG5-BE-C (ADR-0040 §4): the subject's own module decides (its decision route calls `decideApprovalInTx` after
+   * its own authorization), so `POST /approvals/{id}/decisions` refuses this type with 422
+   * approval.decide_through_record and writes nothing. Additive: no DG4 approval type sets it.
+   */
+  readonly decideThroughSubject?: boolean;
+  /**
    * Called once at registration with the in-transaction services, for a module that reaches this service through a
    * port and may not import workflows (sustainment, ADR-0002): its registration line already passes
    * `registerApprovalSubject`, so the composition root needs no further wiring.
@@ -229,6 +238,8 @@ export interface ApprovalSubjectProvider {
 export interface ApprovalInTxServices {
   readonly resubmit: (tx: Tx, audit: AuditContext, input: ApprovalResubmitInput) => Promise<ApprovalRow>;
   readonly withdraw: (tx: Tx, audit: AuditContext, input: ApprovalWithdrawInput) => Promise<ApprovalRow>;
+  /** T-DG5-BE-C (ADR-0040 §4): the in-transaction decide, for a provider that sets `decideThroughSubject`. */
+  readonly decide: (tx: Tx, audit: AuditContext, input: ApprovalDecideInput) => Promise<ApprovalRow>;
 }
 
 const SUBJECTS = new Map<string, ApprovalSubjectProvider>();
@@ -236,7 +247,11 @@ const SUBJECTS = new Map<string, ApprovalSubjectProvider>();
 /** Registers (or replaces, so a second server instance in one process is harmless) a subject provider. */
 export function registerApprovalSubject(approvalType: string, provider: ApprovalSubjectProvider): void {
   SUBJECTS.set(approvalType, provider);
-  provider.bindServices?.({ resubmit: resubmitApprovalInTx, withdraw: withdrawApprovalInTx });
+  provider.bindServices?.({
+    resubmit: resubmitApprovalInTx,
+    withdraw: withdrawApprovalInTx,
+    decide: decideApprovalInTx,
+  });
 }
 
 /** The subject's current version, read FOR SHARE (a concurrent subject update waits); null when it does not exist. */
@@ -719,13 +734,67 @@ async function decideApproval(tx: Tx, request: FastifyRequest, approvalId: strin
   } catch (err) {
     throw commitTimeDenial(err);
   }
+  // T-DG5-BE-C (ADR-0040 §4): a type decided from its record (methodology_migration); nothing is written.
+  if (SUBJECTS.get(a.approval_type)?.decideThroughSubject === true) throw approvalRefusals.decideThroughRecord();
+  return decideApprovalInTx(tx, auditContextOf(request), {
+    approvalId,
+    principal: fresh,
+    target,
+    outcome: body.outcome,
+    rationale: body.rationale,
+    comments: body.comments ?? null,
+    subjectVersion: body.subjectVersion,
+    ...(body.deferUntil !== undefined ? { deferUntil: body.deferUntil } : {}),
+    ...(body.onBehalfOfUserId !== undefined ? { onBehalfOfUserId: body.onBehalfOfUserId } : {}),
+    expectedApprovalVersion: () => requireIfMatch(request),
+  });
+}
+
+/** The decision a person records through `decideApprovalInTx` (the route's body, plus the caller's context). */
+export interface ApprovalDecideInput {
+  readonly approvalId: string;
+  /** The deciding person, with grants reloaded inside `tx` (commit-time authorization; the caller's own checks). */
+  readonly principal: Principal;
+  /** The approval's resolved target, when the caller already computed it (read from the approval otherwise). */
+  readonly target?: ResolvedTarget & { transformationId: string };
+  readonly outcome: "approve" | "reject" | "request_changes" | "defer";
+  readonly rationale: string;
+  readonly comments?: string | null;
+  /** The subject version the decider saw (must equal the approval's; ADR-0026 §4 check 7). */
+  readonly subjectVersion: number;
+  readonly deferUntil?: string;
+  readonly onBehalfOfUserId?: string;
+  /** The approval's version the caller saw (the route's If-Match), read at check 5 so the DG4 check order holds. */
+  readonly expectedApprovalVersion?: number | (() => number);
+}
+
+/**
+ * Decides an approval in the caller's transaction (ADR-0026 §4 checks 3-8 and the outcome behaviour; T-DG5-BE-C,
+ * ADR-0040 §4, the A2/A3 pattern). The caller has authorised the decider for its own action (the generic route:
+ * approval.decide; a `decideThroughSubject` module: its own permission). Checks, in order, with nothing written on a
+ * refusal: 404; 403 approval.not_assignee (the assignee, the escalation target, a group member or their delegate);
+ * 403 approval.sod_requester; 409 version conflict (`expectedApprovalVersion`); 422 approval.not_open; 409
+ * approval.stale_version; 400 rationale; the deferral date. Effects as the route always had them, including the
+ * provider's onOutcome. A person decides: no job or timer calls this.
+ */
+export async function decideApprovalInTx(
+  tx: Tx,
+  baseAudit: AuditContext,
+  input: ApprovalDecideInput,
+): Promise<ApprovalRow> {
+  const body = input;
+  const fresh = input.principal;
+  const a = await findApproval(tx, input.approvalId, true);
+  if (!a) throw problems.notFound();
+  const target = input.target ?? (await targetOfApproval(tx, a));
   const acting = await actingCapacity(tx, fresh, a, target, body.onBehalfOfUserId);
   const me = fresh.userId!;
   if (a.sod_policy === "requester_excluded" && (me === a.requested_by || acting.onBehalfOf === a.requested_by))
     throw approvalRefusals.sodRequester().withDenial(denialOf("approval.decide", target));
   // 5. If-Match on the approval
-  const expected = requireIfMatch(request);
-  if (a.version !== expected) throw problems.versionConflict(a.version);
+  const ifMatch = input.expectedApprovalVersion;
+  const expected = typeof ifMatch === "function" ? ifMatch() : ifMatch;
+  if (expected !== undefined && a.version !== expected) throw problems.versionConflict(a.version);
   // 6. open
   if (!(DECIDABLE_STATUSES as readonly string[]).includes(a.status)) throw approvalRefusals.notOpen(a.status);
   // 7. stale: the request version and the subject's current version (read FOR SHARE under the approval-subject lock)
@@ -744,7 +813,7 @@ async function decideApproval(tx: Tx, request: FastifyRequest, approvalId: strin
       { pointer: "/deferUntil", code: "validation.defer_only", message: "Only a deferral takes a new date." },
     ]);
   }
-  const audit: AuditContext = { ...auditContextOf(request), onBehalfOfUserId: acting.onBehalfOf };
+  const audit: AuditContext = { ...baseAudit, onBehalfOfUserId: acting.onBehalfOf };
   const decisionId = uuidv7();
   await tx
     .insertInto("approval_decision")
