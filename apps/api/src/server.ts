@@ -40,6 +40,9 @@ import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/or
 import { registerJobOperationRoutes, registerJobScheduleRoutes } from "./modules/jobs/index.ts";
 // P5 modules (p5-plan §3 seam 24; T-DG5-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAutomationModule } from "./modules/automation/index.ts";
+// T-DG5-BE-H (ADR-0043 §2): the AutomationActionRegistry port and the action descriptors of their owning modules.
+import { createAutomationActionRegistry, setAutomationActionRegistry } from "./modules/automation/registry.ts";
+import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
 import { registerFormsModule } from "./modules/forms/index.ts";
 import { registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
@@ -365,6 +368,10 @@ export async function buildServer(options: ServerOptions): Promise<{
   //    it here, so automation imports no domain module (the GateFactsProvider pattern). BE-H adds the registry line and
   //    each action owner adds one registration line below it.
   const configResolver = createConfigResolver();
+  // T-DG5-BE-H: the registry line; each action owner adds one registration line below it (BE-J: launch_procedure).
+  const automationActions = createAutomationActionRegistry();
+  for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)
+  setAutomationActionRegistry(automationActions);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed

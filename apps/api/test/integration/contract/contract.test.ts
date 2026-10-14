@@ -871,7 +871,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // five BE-A operations are GETs).
     // T-DG5-BE-B: + putConfigElement, runConfigPreview (2 JSON bodies; removeConfigElement and
     // runConfigCompatibilityCheck are bodiless, the other three are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([327, 326, 1]);
+    // T-DG5-BE-H: + createAutomationRule, updateAutomationRule, disableAutomationRule, createAutomationRuleVersion,
+    // updateAutomationRuleVersion (5 JSON bodies; enableAutomationRule is bodiless, the other five are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([332, 331, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

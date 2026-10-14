@@ -122,3 +122,5 @@ export * from "./studio-coverage.ts";
 export * from "./studio-review.ts";
 export * from "./methodology-migrations.ts";
 export * from "./scoring-defaults.ts";
+// P5 slice D (T-DG5-BE-H; ADR-0043 §1-§4; p5-work-split §D.1): automation rule content, requests and response mirrors.
+export * from "./automation.ts";

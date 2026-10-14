@@ -2684,6 +2684,33 @@ export function mapP5StudioError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P5 slice D (T-DG5-BE-H; ADR-0043 §9): the 0074 rule and version guards that a request can reach in a race (two
+ * concurrent requests both passing the API's own check first). Every other 0074 guard is refused by the API first with
+ * its §9 code, so reaching it is a programming error (500).
+ *   automation_rule_code_key                -> 409 automation_rule.code_taken
+ *   automation_rule_version_one_open_key    -> 409 automation_rule_version.draft_exists
+ *   automation_rule_version_content_frozen  -> 409 automation_rule_version.not_editable
+ */
+export function mapP5AutomationError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "automation_rule_code_key":
+      return problems.duplicate("automation_rule.code_taken", "A rule with this code already exists.");
+    case "automation_rule_version_one_open_key":
+      return problems.duplicate("automation_rule_version.draft_exists", "This rule already has an open version.");
+    case "automation_rule_version_content_frozen":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "automation_rule_version.not_editable",
+        title: "Not editable",
+        detail: "Only a draft version can be changed; published versions never change.",
+      });
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2693,6 +2720,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p4Meetings !== null) return p4Meetings;
   const p5Studio = mapP5StudioError(error); // P5 slice A (T-DG5-BE-A; ADR-0039 §13, ADR-0040 §8)
   if (p5Studio !== null) return p5Studio;
+  const p5Automation = mapP5AutomationError(error); // P5 slice D (T-DG5-BE-H; ADR-0043 §9)
+  if (p5Automation !== null) return p5Automation;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
