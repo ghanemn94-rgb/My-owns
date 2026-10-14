@@ -1,10 +1,39 @@
 # Handback T-DG5-BE-B3 (backend-workflow-engineer): review where configured, publish, rollback, review policies
 
+## Continuation run (T-DG5-BE-B3B)
+
+- **Interrupted run:** `DG5-T-DG5-BE-B3-backend-workflow-engineer-20261014T085025Z-b09833cb` (session `b09833cb-b1e4-4702-8fb0-5d4079b22c08`).
+  - A container restart stopped it on 2026-10-14 (exit 143, `result: null`).
+  - Its transcript shows that its last action, at about 10:23 UTC, was waiting for the integration run. It never wrote the results of rows 6–9 of §3; they were still the placeholders `RESULT_UNIT_UNSET`, `RESULT_UNIT_CUTF8`, `RESULT_INTEG` and `RESULT_VAL_END`.
+  - The orchestrator committed its tree as WIP `dc5e1a2` on `dg5/be-b3` (D-147). Its run material is kept for provenance under `docs/delivery/test-evidence/DG5/BE-B3-orphaned/`.
+- **Continuation invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-B3-backend-workflow-engineer-20261014T102849Z-36662429","session_id":"36662429-ec2d-4745-8597-32e34bdb0e8a"}`.
+- **Continuation assignment:** `docs/delivery/assignments/DG5/T-DG5-BE-B3B.md`, sha256 `bd5e965f…a850`, verified at the start.
+- **Time:** start `Wed Oct 14 10:29:01 UTC 2026`, end `Wed Oct 14 11:24:22 UTC 2026` (`date -u`).
+- **What I found:**
+  - **Every file in §1 exists with the content described.** I read the tail of each file (none is truncated) and read `reviews.ts` and `publish.ts` in full against §2. The integration suite has the 14 tests §1 claims. The pending list is `[]`. The contract pin is `[338, 337, 1]` with its `T-DG5-BE-B3` comment line.
+  - I checked one detail that §2 does not cover. Rollback takes the next `version_no` as `max(version_no)` per `key`, which matches the `0011` constraint `UNIQUE (key, version_no)`.
+  - **No code change was needed.**
+  - **The first run's evidence logs did not survive.** It wrote them to its private `$TMPDIR/ev/`, which was removed with its run directory, and the folder `T-DG5-BE-B3-evidence/` was never created in the tree. So every log this handback cited (`validate-dg4-start.log`, `typecheck.log`, …, `methodology-suites.log`, `unit-unset-run1-before-pin-fix.log`) does **not** exist.
+  - The first run's intermediate results (the bullets under "Intermediate runs" in §3) remain its own report, and **no log backs them**.
+  - An empty harness folder `apps/api/.claude/.cc-writes` had reappeared. I removed it before the tests.
+- **What I re-ran:** every acceptance check of the assignment, on the final tree. The logs carry the suffix `-B` and are in `docs/delivery/handbacks/DG5/T-DG5-BE-B3-evidence/`. See §3, which now holds only the results of this run.
+- **What I corrected in this handback:**
+  - The header: the tree state.
+  - §1: the evidence folder.
+  - §3: the results and log names.
+  - §7: what remains.
+  - The rest is the first run's content, which I confirmed against the tree.
+- **Commit state:** the implementation is in WIP commit `dc5e1a2` (made by the orchestrator, not by me). This handback and the `-B` logs are **uncommitted**, for the orchestrator to integrate.
+
+---
+
 - **Stage:** P5 "Configuration automation and outputs", gate DG5 (BUILDING). Section `docs/architecture/p5-work-split.md` §A.4.
 - **Assignment:** `docs/delivery/assignments/DG5/T-DG5-BE-B3.md` (sha256 `b724b871…3886`, verified at start).
-- **Invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-B3-backend-workflow-engineer-20261014T085025Z-b09833cb","session_id":"b09833cb-b1e4-4702-8fb0-5d4079b22c08"}`.
-- **Working tree:** `/home/user/wt/dg5-be-b3`, branch `dg5/be-b3`, starting `HEAD` `f591b7c0981242d246816a3868fe8e36660d181c`. The changes are **uncommitted**, for the orchestrator to integrate.
-- **Time:** start `Wed Oct 14 08:50:36 UTC 2026`; end: see §3.
+- **Invocation reference (first run):** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-B3-backend-workflow-engineer-20261014T085025Z-b09833cb","session_id":"b09833cb-b1e4-4702-8fb0-5d4079b22c08"}`.
+- **Working tree:** `/home/user/wt/dg5-be-b3`, branch `dg5/be-b3`.
+  - Starting `HEAD` of the first run: `f591b7c0981242d246816a3868fe8e36660d181c`.
+  - The first run's implementation is now in WIP commit `dc5e1a2`, which is `HEAD`. The diff against `f591b7c` is the change set for the orchestrator to integrate.
+- **Time:** first run started `Wed Oct 14 08:50:36 UTC 2026` and was interrupted at about 10:26 UTC. For the continuation run, see above.
 - **Product gates.** G1–G6 are business approvals inside the product. A configuration review approves a Studio configuration change only. It never approves a G1–G6 gate, a Finance validation or any business decision, and no timer or job decides one. Nothing here reads or writes the engineering gate records DG0–DG7. All test data is synthetic.
 
 ## 1. Files changed
@@ -20,11 +49,13 @@
 | `apps/api/test/integration/contract/contract.test.ts` | One pinned count only: the media-type triple `[334, 333, 1]` → `[338, 337, 1]`, with a named comment line (the D-146 precedent). See §4. |
 | `apps/api/src/modules/methodology/methodology.test.ts` | The module's route pin: my 6 version routes added under a named `T-DG5-BE-B3` comment, plus the 2 policy routes with their access (the BE-B precedent). |
 | `apps/api/test/integration/methodology/studio-review-publish.test.ts` | New integration suite (14 tests, real PostgreSQL) for the §A.4 tests and the acceptance texts below. |
-| `docs/delivery/handbacks/DG5/T-DG5-BE-B3-backend-workflow-engineer.md`, `…/T-DG5-BE-B3-evidence/` | This handback and its logs. |
+| `docs/delivery/handbacks/DG5/T-DG5-BE-B3-backend-workflow-engineer.md`, `…/T-DG5-BE-B3-evidence/*-B.log` | This handback, and the continuation run's logs. The first run's logs were lost (see the top section). |
 
 - **No migration.** No database change was needed: the `0062` guards and the `platform/db-errors.ts` mappings for every refusal already exist.
 - **No new dependency.** `decimal.js` is already an `apps/api` dependency.
-- **Not mine, not touched:** two empty harness folders, `apps/api/.claude/.cc-writes` and `apps/api/src/modules/methodology/.claude/.cc-writes`, were removed before the tests, as the assignment requires.
+- **Not mine, not touched:** empty harness folders were removed before the tests, as the assignment requires.
+  - The first run removed `apps/api/.claude/.cc-writes` and `apps/api/src/modules/methodology/.claude/.cc-writes`.
+  - The continuation run removed `apps/api/.claude/.cc-writes` again; it had reappeared.
 - **Untracked files not created by this run:** the worktree also shows untracked files at its top level that this run did not create and did not touch: `.bash_profile`, `.bashrc`, `.gitconfig`, `.gitmodules`, `.idea`, `.mcp.json`, `.profile`, `.ripgreprc`, `.vscode`, `.zprofile`, `.zshrc` and `CLAUDE.local.md`. Do not integrate them.
 
 ## 2. Behaviour delivered, per requirement row
@@ -142,22 +173,35 @@ The defaults, the rubric and the instantiation are KBE-A's.
 
 ## 3. Checks actually run
 
-Environment: Node 24.21.0, offline; ports 23800–23849 (`QA_PG_PORT=23800`, `MTH_PORT_POOL=23801-23849`). The machine was shared with the other W5 runs; the measured load average was about 9.
+All rows below come from the **continuation run (T-DG5-BE-B3B)**, on the final tree (`HEAD` `dc5e1a2`, plus only this handback and its logs uncommitted).
+
+- **Environment:** Node 24.21.0, offline; ports 23800–23849 (`QA_PG_PORT=23800`, `MTH_PORT_POOL=23801-23849`).
+- **Load:** the machine was shared with the other W5 runs. The measured load average was up to about 19 during rows 6–8.
+- **Logs:** all under `docs/delivery/handbacks/DG5/T-DG5-BE-B3-evidence/`. Each log ends with an `exit <code>` line.
 
 | # | Command | Exit | Result | Log |
 |---|---|---|---|---|
-| 0 | `node tools/gates/validate.mjs --historical --stage DG4` (start) | 0 | `PASS gate DG4 (historical)` | `T-DG5-BE-B3-evidence/validate-dg4-start.log` |
-| 1 | `pnpm -r typecheck` | 0 | | `…/typecheck.log` |
-| 2 | `pnpm -r build` | 0 | | `…/build.log` |
-| 3 | `pnpm lint` | 0 | eslint `--max-warnings=0` | `…/lint.log` |
-| 4 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | 0 | "All matched files use Prettier code style!" | `…/prettier.log` |
-| 5 | `pnpm openapi:lint` | 0 | "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 789 operations" | `…/openapi.log` |
-| 6 | `pnpm test` (locale unset) | RESULT_UNIT_UNSET | | `…/unit-unset.log` |
-| 7 | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | RESULT_UNIT_CUTF8 | | `…/unit-cutf8.log` |
-| 8 | `QA_PG_PORT=23800 MTH_PORT_POOL=23801-23849 tests/qa/support/with-pg.sh pnpm test:integration` | RESULT_INTEG | | `…/integration.log` |
-| 9 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | RESULT_VAL_END | | `…/validate-dg4-end.log` |
+| 0 | `node tools/gates/validate.mjs --historical --stage DG4` (start, 10:29 UTC) | 0 | `PASS gate DG4 (historical)` | `validate-dg4-start-B.log` |
+| 1 | `pnpm -r typecheck` | 0 | every package `Done` | `typecheck-B.log` |
+| 2 | `pnpm -r build` | 0 | | `build-B.log` |
+| 3 | `pnpm lint` | 0 | eslint `--max-warnings=0`, no output | `lint-B.log` |
+| 4 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | 0 | "All matched files use Prettier code style!" | `prettier-B.log` |
+| 5 | `pnpm openapi:lint` | 0 | "PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 789 operations" | `openapi-B.log` |
+| 6 | `env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE pnpm test` (locale unset) | 0 | unit-node 99 files, **1824/1824**; unit-web 71 files, **1385/1385**; unit-formula-nocodegen 3 files, **259 passed + 2 skipped** (261) | `unit-unset-B.log` |
+| 7a | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test`, first attempt | **1** | unit-node **1823/1824**: `architecture.test.ts > every import respects dependsOn…` **timed out at 30 s** (load timeout, see below); unit-web 1385/1385; formula 259 + 2 skipped | `unit-cutf8-run1-B.log` |
+| 7b | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test`, re-run | 0 | unit-node **1824/1824**; unit-web **1385/1385**; formula **259 + 2 skipped** | `unit-cutf8-B.log` |
+| 8 | `QA_PG_PORT=23800 MTH_PORT_POOL=23801-23849 tests/qa/support/with-pg.sh pnpm test:integration` | 0 | 216 files, **2108/2108** (one Vitest invocation). Includes `contract.test.ts` 72/72 and `studio-review-publish.test.ts` 14/14. Ran 10:42–11:17 UTC. | `integration-B.log` |
+| 9 | `node tools/gates/validate.mjs --historical --stage DG4` (end, 11:23 UTC) | 0 | `PASS gate DG4 (historical)` | `validate-dg4-end-B.log` |
 
-Intermediate runs during development, all disclosed:
+**Row 7a, the non-zero exit, explained.** I ran 7a while the integration run (row 8) was going in parallel. The load average was about 19.
+
+- The failing test is `apps/api/src/architecture.test.ts`. That file is not mine. It walks and lints every module file, under a 30 s per-test timeout.
+- It passed in row 6 (43.2 s for the file, under the same parallel load) and in row 7b (14.7 s, load about 2.5). Row 7b ran after the integration run ended, with no code change in between.
+- No assertion failed, only the timeout. I report it as a **load-sensitive timeout** for the owner of that test (F-DG4-143 to F-DG4-148, determinism under load). It is not a product defect, and it is not caused by this task's files.
+
+**Pinned counts.** The only pinned-count change is the one from the first run: the contract media-type triple `[334, 333, 1]` → `[338, 337, 1]` (§4). The integration run in row 8 passes with it. There is no other pin change.
+
+**First-run intermediate runs.** The first run reported the runs below, during its development. **Their logs were lost** (see the top section), so they are its report only, not evidence:
 
 - **Contract test, first run: exit 1.** 71/72 passed; only the media-type pin failed (`[338, 337, 1]` vs `[334, 333, 1]`), as expected from my four JSON bodies. My exercises passed on that first run. I updated the pin (§4).
 - **New suite, first run: exit 1.** 13/14 passed. The funding check expected 403 and got 400, because the funding route parses the initiative id before it authorizes.
@@ -165,8 +209,8 @@ Intermediate runs during development, all disclosed:
   - An invalid initiative code (`initiative_code_check`).
   - 404 for the plain ADM_METHOD, which cannot read the transformation. The test now uses an admin who can read it, and asserts the plain admin's 404 explicitly.
   - 400 and then 404 on `decideApproval` with a random id. The assertion was removed (§2, REQ-S06-010).
-- **Methodology suites, all 5 files: exit 0, 62/62** (`…/methodology-suites.log`).
-- **`pnpm test`, first run (locale unset): exit 1.** unit-node had 1 failure out of 1824: `methodology.test.ts > registers the P2 catalogue routes and the P5 Studio routes of BE-A` pins the module's routes and did not list my new ones. unit-web passed 1385/1385; unit-formula-nocodegen passed 259 + 2 skipped. This was my omission, not a flake. I added my routes to the pin; the methodology unit files then passed 15/15. That log is kept as `…/unit-unset-run1-before-pin-fix.log`. Rows 6–7 are the reruns.
+- **Methodology suites, all 5 files: exit 0, 62/62** (its log `methodology-suites.log` was lost).
+- **`pnpm test`, first run (locale unset): exit 1.** unit-node had 1 failure out of 1824: `methodology.test.ts > registers the P2 catalogue routes and the P5 Studio routes of BE-A` pins the module's routes and did not list my new ones. unit-web passed 1385/1385; unit-formula-nocodegen passed 259 + 2 skipped. This was my omission, not a flake. I added my routes to the pin; the methodology unit files then passed 15/15. Its log `unit-unset-run1-before-pin-fix.log` was lost. Rows 6–7b above are this continuation run's runs on the fixed tree.
 
 ## 4. Contract seams: the pending-list delta and the pinned counts
 
@@ -196,11 +240,15 @@ Intermediate runs during development, all disclosed:
 
 ## 7. What remains
 
+No code work in my ownership remains. The continuation run re-verified every acceptance check (§3). The open items are those of other owners, or decisions:
+
+
 - **The outbox events** (§5 item 1), pending the `events.ts` registration.
 - **Closing the review tasks on discard** (§5 item 4), a one-line change in `drafts.ts` by its owner.
 - **The `decideApproval` 403 part of REQ-S06-010**, with a real approval fixture: BE-C.
 - **"the diff lists the added field" (REQ-S06-007)**, publishing a `form_schema` version end to end, and REQ-S06-004's routing: slices B and E (§A.9).
 - **The Studio publish, review and policy screens:** FE-B.
+- **For the owner of `apps/api/src/architecture.test.ts` (not mine):** its 30 s timeout was exceeded once under a load average of about 19 (§3, row 7a). It passed in the other two runs.
 
 ## 8. Merge instructions
 
