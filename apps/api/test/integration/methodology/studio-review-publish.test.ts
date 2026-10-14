@@ -14,7 +14,7 @@
 //  - every mutation: AUD 403; If-Match 428/409; one audit event per row written; authorization re-checked at commit
 //    time (403, nothing written); review tasks exactly once.
 // Each test seeds its own synthetic base key (test/support/studio-fixtures.ts), so parallel suites never share a draft.
-// The one policy this file changes is `health_check_scheme` (no other slice A suite publishes that kind), and it is
+// The one policy this file changes is `automation_rule_set` (declared and unused, D-145; no other suite publishes that kind; it replaced `health_check_scheme`, which slice H now constrains, D-148), and it is
 // restored after its test. All data is synthetic; a configuration review or publish approves nothing in the business
 // and never touches the engineering gates DG0-DG7.
 import { randomBytes } from "node:crypto";
@@ -475,11 +475,11 @@ describe("a kind whose review is switched off (REQ-S06-007 'review where configu
       "form_schema",
       "procedure",
       "automation_rule_set",
-      "health_check_scheme",
+      "automation_rule_set",
       "benefit_formula",
     ]);
-    const health = list.body.items.find((p: Body) => p.configKind === "health_check_scheme");
-    const P = `${POLICIES}/health_check_scheme`;
+    const health = list.body.items.find((p: Body) => p.configKind === "automation_rule_set");
+    const P = `${POLICIES}/automation_rule_set`;
     expect(
       (
         await call<Body>(api.app, "PATCH", P, {
@@ -511,25 +511,25 @@ describe("a kind whose review is switched off (REQ-S06-007 'review where configu
         await api.db
           .selectFrom("config_review_policy")
           .select("id")
-          .where("config_kind", "=", "health_check_scheme")
+          .where("config_kind", "=", "automation_rule_set")
           .executeTakeFirstOrThrow()
       ).id;
       expect((await actions(policyId)).slice(-1)).toEqual(["config_review_policy.update"]);
-      const baseId = await seedBaseOfKind("health_check_scheme");
+      const baseId = await seedBaseOfKind("automation_rule_set");
       const d = await freshDraft("methodology", baseId);
       await preview(d.id);
       expect(await compatibility(d.id)).toBe("pass");
       const before = await versionOf(d.id);
       const res = await publish(d.id);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ status: "published", configKind: "health_check_scheme", version: before + 2 });
+      expect(res.body).toMatchObject({ status: "published", configKind: "automation_rule_set", version: before + 2 });
       expect((await actions(d.id)).slice(-2)).toEqual([
         "methodology_version.approve_without_review",
         "methodology_version.publish",
       ]);
     } finally {
       const now = await call<Body>(api.app, "GET", POLICIES, { session: auditor });
-      const cur = now.body.items.find((p: Body) => p.configKind === "health_check_scheme");
+      const cur = now.body.items.find((p: Body) => p.configKind === "automation_rule_set");
       const back = await call<Body>(api.app, "PATCH", P, {
         session: reviewer,
         headers: ifm(cur.version),
