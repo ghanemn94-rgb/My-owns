@@ -25,18 +25,28 @@
 // T-DG3-FE-E: the remaining P3 enum codes are labelled too (`line_kind`, `benefit_class`, `investment_class`,
 // `unit_kind`, `polarity`, `confidence`, `result_kind`, `result_period`, `frequency`, `recurrence`). `result_unit` and
 // `result_currency` stay technical codes: they are a free unit text and an ISO 4217 code, not enums.
+//
+// P5 (T-DG5-FE-A2, D-149): the P5 events written on a transformation (audit_event.transformation_id set) have labelled
+// actions, fields and enum values: configuration pins (`transformation_config_pin.create` from instantiation and the
+// forms pin initializer, `.migrate`), methodology migrations, gate re-approvals, revision proposals, form custom values,
+// comments and attachments, and transformation-scoped automation rules, versions and dry runs. Every configuration kind
+// (`kind`, `config_kind`) has a label. auditChanges.p5.test.ts reads the API sources and fails on any field or value
+// without one.
 import type { TFunction } from "i18next";
 import { CRITERION_CODES, isCriterionCode } from "@mth/shared/calc";
 import {
+  AUTOMATION_SCOPE_LEVELS,
   BENEFIT_CLASSES,
   BENEFIT_FORMULA_KINDS,
   BENEFIT_FORMULA_PERIODS,
   CONFIDENCES,
+  CONFIG_REVIEW_POLICY_KINDS,
   INVESTMENT_CLASSES,
   KPI_FREQUENCIES,
   KPI_POLARITIES,
   KPI_UNIT_KINDS,
   LINE_KINDS,
+  REVISION_SUBJECT_TYPES,
 } from "@mth/shared/schemas";
 
 /** How one side (from / to) of a change is shown. */
@@ -285,6 +295,69 @@ const P3_FIELDS: Readonly<Record<string, ValueKind>> = {
   released_at: DATETIME,
 };
 
+/**
+ * Every configuration kind a P5 event can name: the six Studio kinds of `transformation_config_pin.kind` and
+ * `methodology_version.config_kind` (ADR-0039 §1) plus the S12-018 `benefit_formula` routing kind (0062).
+ */
+export const AUDIT_CONFIG_KINDS = CONFIG_REVIEW_POLICY_KINDS;
+/** Revision-proposal validation results (studio-coverage `RevisionProposal.validationResult`). */
+const VALIDATION_RESULTS = ["pass", "fail"] as const;
+
+/**
+ * P5 record fields shown on a transformation's trail (T-DG5-FE-A2). Version and record ids, hashes, revisions and counts
+ * are `code` (exact, LTR); configuration kinds, scope levels, subject types and validation results are labelled enums.
+ * `kind` keeps its P3 spec: its value labels (`transformations.audit.value.kind.*`) also cover the configuration kinds.
+ */
+const P5_FIELDS: Readonly<Record<string, ValueKind>> = {
+  // configuration pins and methodology migrations (forms/pin-initializer.ts, methodology/migrations.ts, 0065)
+  methodology_version_id: CODE,
+  config_kind: { kind: "p3enum", prefix: "transformations.audit.value.kind", codes: AUDIT_CONFIG_KINDS },
+  from_version_id: CODE,
+  to_version_id: CODE,
+  plan_revision: CODE,
+  plan_sha256: CODE,
+  plan_ready: BOOL,
+  item_count: CODE,
+  approval_id: CODE,
+  last_migration_id: CODE,
+  history_id: CODE,
+  pin_version: CODE,
+  // gate re-approvals (methodology/reapproval.ts, workflows/gates.ts)
+  migration_id: CODE,
+  superseded_by_migration: CODE,
+  approved_decision_id: CODE,
+  satisfied_decision_id: CODE,
+  work_item_id: CODE,
+  task_count: CODE,
+  // revision proposals (methodology/revision-impact.ts)
+  subject_type: p3enum("subject_type", REVISION_SUBJECT_TYPES),
+  subject_id: CODE,
+  subject_version: CODE,
+  content_sha256: CODE,
+  validation_result: p3enum("validation_result", VALIDATION_RESULTS),
+  reviewer_role_code: { kind: "role" },
+  review_task_count: CODE,
+  // form custom values, comments and attachments (forms/custom-values.ts, comments.ts, attachments.ts)
+  field_values: JSON_VALUE,
+  form_schema_version_id: CODE,
+  record_type: CODE,
+  record_id: CODE,
+  record: CODE,
+  parent_comment_id: CODE,
+  body: TEXT,
+  // transformation-scoped automation rules, versions and dry runs (automation/rules.ts, lifecycle.ts, dry-run.ts)
+  scope_level: p3enum("scope_level", AUTOMATION_SCOPE_LEVELS),
+  enabled: BOOL,
+  disabled_reason: TEXT,
+  description_en: TEXT,
+  description_ar: TEXT,
+  reviewed_by: USER,
+  review_note: TEXT,
+  published_by: USER,
+  effective_version_id: CODE,
+  automation_rule_version_id: CODE,
+};
+
 /** Audited transformation fields (apps/api transformations repository) and how their values are presented. */
 const FIELDS: Readonly<Record<string, ValueKind>> = {
   code: { kind: "code" },
@@ -313,6 +386,7 @@ const FIELDS: Readonly<Record<string, ValueKind>> = {
   // P3 prioritization weight set (scoring_weight_set.create): criterion code -> percent as a decimal string.
   weights: { kind: "weights" },
   ...P3_FIELDS,
+  ...P5_FIELDS,
 };
 
 /** A weight percent as recorded: a decimal string 0-100 with at most two fraction digits (ADR-0022). */
