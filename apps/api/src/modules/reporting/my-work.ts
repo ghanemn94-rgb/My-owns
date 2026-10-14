@@ -89,6 +89,8 @@ export const MY_WORK_SECTION_BY_KIND: Readonly<Record<string, Exclude<MyWorkSect
   benefit_monitoring_due: "missing_updates",
   performance_review_due: "missing_updates",
   control_check_due: "missing_updates",
+  // P5 slice F (0080; ADR-0045 §6): the structured owner update of an open monthly reporting period.
+  owner_update_due: "missing_updates",
   // Other
   approval_outcome: "other",
   approval_overdue: "other",

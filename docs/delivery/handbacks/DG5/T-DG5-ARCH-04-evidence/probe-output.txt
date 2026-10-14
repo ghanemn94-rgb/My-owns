@@ -1,0 +1,98 @@
+port-policy: PostgreSQL listening on port 23710 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 73 (0001_identity_access.sql .. 0082_p5_reporting_permissions.sql)
+PASS  G00 slice F migrations 0080-0082 present; 0083-0084 left free  -- ids >= 74: 74,75,76,80,81,82
+PASS  G01 fresh database: 0001..last apply  -- applied 73: 0076_p5_automation_permissions.sql, 0080_p5_reports_snapshots_updates.sql, 0081_p5_export_jobs.sql, 0082_p5_reporting_permissions.sql
+PASS  G02 P4 database populated (0001-0061; a synthetic transformation instantiated by the DG3 function)  -- applied 61
+PASS  G03 P5 over the P4 database: 0062..last apply  -- applied 12: 0076_p5_automation_permissions.sql, 0080_p5_reports_snapshots_updates.sql, 0081_p5_export_jobs.sql, 0082_p5_reporting_permissions.sql
+PASS  G04 the DG4 transformation is unchanged and no snapshot or export exists after the upgrade (additive)  -- transformation v1 rows 1, snapshots 0
+PASS  S01 twelve report definitions: the ten M0253 outputs, the executive pack and the meeting pack  -- {"c":"charter,diagnostic,tom,business_cases,roadmap,registers,meeting_minutes,gate_pack,executive_dashboard,handover,executive_pack,meeting_pack","ten":10,"pdf":12}
+PASS  S02 the five formats PDF, DOCX, XLSX, PPTX and CSV are each offered by at least one output  -- ["csv","docx","pdf","pptx","xlsx"]
+PASS  S03 the owner_update_due work-item kind and the audited reports.owner_update_tasks schedule  -- kind 1, schedule 1
+PASS  S04 four write permissions, none an approval right; AUD and technical admins hold none; issue = SEC, TL, TO  -- export.create:write,owner_update.submit:write,report.generate:write,report.issue:write; aud/tech 0; issuers SEC,TL,TO
+PASS  RS01 a generated snapshot with its audit event commits (mth_app)  -- 01990000-0000-7000-8000-000000000064
+PASS  RS02 a snapshot without its audit event fails at COMMIT  -- 23000 report_snapshot_audit_required no audit_event for report_snapshot 01990000-0000-7000-8000-000000000066 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RS03 a non-stepping version update fails  -- 23514 report_snapshot_version_step report_snapshot: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  RS04 a snapshot is created as generated  -- 23514 report_snapshot_created_generated report_snapshot: a snapshot is created as generated
+PASS  RS05 the subject type must be the definition's (meeting_minutes reports on a meeting)  -- 23514 report_snapshot_subject_type report_snapshot: meeting_minutes reports on a meeting, not a transformation
+PASS  RS06 a missing subject record is refused  -- 23503 report_snapshot_subject_ref report_snapshot: meeting 01990000-0000-7000-8000-000000000069 does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  RS07 the executive dashboard needs a reporting period  -- 23514 report_snapshot_period_required report_snapshot: executive_dashboard needs a reporting period
+PASS  RS08 the period copy must equal the reporting period  -- 23514 report_snapshot_period_matches report_snapshot: the period copy must equal the organization's reporting period
+PASS  RS09 a period id without its copies is refused  -- 23514 report_snapshot_period_copy new row for relation "report_snapshot" violates check constraint "report_snapshot_period_copy"
+PASS  RS10 a transformation subject is the snapshot's own transformation  -- 23514 report_snapshot_subject_transformation new row for relation "report_snapshot" violates check constraint "report_snapshot_subject_transformation"
+PASS  RS11 the content never changes (REQ-S13-007)  -- 23514 report_snapshot_content_immutable report_snapshot: the content, as-of, period, versions and series of a snapshot never change
+PASS  RS12 the as-of time never changes  -- 23514 report_snapshot_content_immutable report_snapshot: the content, as-of, period, versions and series of a snapshot never change
+PASS  RS13 the approval state never changes  -- 23514 report_snapshot_content_immutable report_snapshot: the content, as-of, period, versions and series of a snapshot never change
+PASS  RS14 the first issue of a series is issue version 1  -- 23514 report_snapshot_issue_next report_snapshot: the issue version must be 1 (the next of its series)
+PASS  RS15 issued without its stamps is refused  -- 23514 report_snapshot_issue_complete new row for relation "report_snapshot" violates check constraint "report_snapshot_issue_complete"
+PASS  RS16 generated -> issued (issue version 1) commits  -- issued v1
+PASS  RS17 issued -> generated is refused  -- 23514 report_snapshot_transition report_snapshot: issued -> generated is not a snapshot transition
+PASS  RS18 issue stamps change only with their transition  -- 23514 report_snapshot_stamps_frozen report_snapshot: issue, supersede and discard stamps change only with their transition
+PASS  RS19 issued -> superseded without a later issued snapshot fails at COMMIT  -- 23000 report_snapshot_superseded_by_issued report_snapshot: 01990000-0000-7000-8000-000000000064 is superseded only by a later issued snapshot of its series
+PASS  RS20 a second generated snapshot commits (not a reissue)  -- 01990000-0000-7000-8000-000000000071
+PASS  RS21 a reissue must continue the series of the current issued snapshot  -- 23514 report_snapshot_reissue_of_issued report_snapshot: a reissue continues the series of the current issued snapshot of the same output, subject and period
+PASS  RS22 a reissue names its reason and its series  -- 23514 report_snapshot_reissue_shape new row for relation "report_snapshot" violates check constraint "report_snapshot_reissue_shape"
+PASS  RS23 a reissue of the issued snapshot is generated in the same series  -- 01990000-0000-7000-8000-000000000075
+PASS  RS24 two issued snapshots in one series are refused  -- 23505 report_snapshot_one_issued_key duplicate key value violates unique constraint "report_snapshot_one_issued_key"
+PASS  RS25 the reissue supersedes v1 and is issued as v2 in one transaction  -- v1 superseded, v2 issued
+PASS  RS26 the superseded v1 still holds its original content, hash and approval state  -- {"c":"{\"sections\": []}","content_sha256":"0000000000000000000000000000000000000000000000000000000000000001","approval_state":"approved","status":"superseded"}
+PASS  RS27 a superseded snapshot is terminal  -- 23514 report_snapshot_transition report_snapshot: superseded -> issued is not a snapshot transition
+PASS  RS28 generated -> discarded needs a reason  -- 23514 report_snapshot_discard_complete new row for relation "report_snapshot" violates check constraint "report_snapshot_discard_complete"
+PASS  RS29 generated -> discarded with its reason commits  -- discarded
+PASS  RS30 mth_app cannot DELETE a snapshot  -- 42501 permission denied for table report_snapshot
+PASS  RC01 a snapshot with its sources, versions and evidence in one transaction commits  -- 1 source, 1 version, 1 evidence
+PASS  RC02 a source added in a later transaction is refused  -- 23514 report_snapshot_source_creation_only report_snapshot_source: rows are written only in the transaction that creates the snapshot
+PASS  RC03 a version added in a later transaction is refused  -- 23514 report_snapshot_version_creation_only report_snapshot_version: rows are written only in the transaction that creates the snapshot
+PASS  RC04 sources are append-only (UPDATE)  -- 42501 report_snapshot_source is append-only: UPDATE is not allowed
+PASS  RC05 versions are append-only (DELETE)  -- 42501 report_snapshot_version is append-only: DELETE is not allowed
+PASS  RC06 cited evidence must carry the checksum of the cited content  -- 23514 report_snapshot_evidence_content_matches report_snapshot_evidence: the revision and checksum must be those of the cited content
+PASS  RC07 an unknown validation state is refused  -- 23514 report_snapshot_source_validation_state_check new row for relation "report_snapshot_source" violates check constraint "report_snapshot_source_validation_state_check"
+PASS  RC08 a child of another transformation is refused  -- 23514 report_snapshot_source_same_transformation report_snapshot_source: a child row belongs to its snapshot's transformation
+PASS  OU01 a draft update for an open period commits  -- 01990000-0000-7000-8000-00000000008e
+PASS  OU02 an update without its audit event fails at COMMIT  -- 23000 owner_update_audit_required no audit_event for owner_update 01990000-0000-7000-8000-000000000090 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  OU03 a non-stepping version update fails  -- 23514 owner_update_version_step owner_update: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  OU04 a closed period takes no update  -- 23514 owner_update_period_open owner_update: updates are written only while their reporting period is open (it is closed)
+PASS  OU05 a scheduled period takes no update  -- 23514 owner_update_period_open owner_update: updates are written only while their reporting period is open (it is scheduled)
+PASS  OU06 one update per subject and period  -- 23505 owner_update_subject_period_key duplicate key value violates unique constraint "owner_update_subject_period_key"
+PASS  OU07 a workstream of another transformation is refused  -- 23503 owner_update_subject_ref owner_update: workstream 01990000-0000-7000-8000-0000000000b2 does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  OU08 a submission without its revision row fails at COMMIT  -- 23000 owner_update_revision_present owner_update: submitted revision 1 of 01990000-0000-7000-8000-00000000008e has no matching revision row
+PASS  OU09 a submission must be the next revision  -- 23514 owner_update_revision_step owner_update: each submission is the next revision
+PASS  OU10 submit with its revision row commits  -- revision 1
+PASS  OU11 a submitted update changes only by reopening  -- 23514 owner_update_submitted_frozen owner_update: a submitted update changes only by reopening it
+PASS  OU12 reopening needs a reason  -- 23514 owner_update_reopen_reason owner_update: reopening a submitted update needs a reason
+PASS  OU13 reopening with a reason commits  -- draft
+PASS  OU14 an empty submission is refused  -- 23514 owner_update_submitted_has_content new row for relation "owner_update" violates check constraint "owner_update_submitted_has_content"
+PASS  OU15 revisions are append-only  -- 42501 owner_update_revision is append-only: UPDATE is not allowed
+PASS  OU16 the subject and period never change  -- 23514 owner_update_identity_immutable owner_update: the subject and the period never change
+PASS  OU17 a transformation subject is the update's own transformation  -- 23514 owner_update_subject_transformation new row for relation "owner_update" violates check constraint "owner_update_subject_transformation"
+PASS  EJ01 a queued export job with its progress row and audit event commits  -- queued
+PASS  EJ02 a job without its audit event fails at COMMIT  -- 23000 export_job_audit_required no audit_event for export_job 01990000-0000-7000-8000-00000000009d at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  EJ03 the same requester and idempotency key create one job  -- 23505 export_job_idempotency_key duplicate key value violates unique constraint "export_job_idempotency_key"
+PASS  EJ04 a format the output does not offer is refused (charter has no CSV)  -- 23514 export_job_format_offered export_job: csv is not offered for charter
+PASS  EJ05 a discarded snapshot is not exported  -- 23514 export_job_snapshot_exportable export_job: a discarded snapshot is not exported
+PASS  EJ06 a job is created queued  -- 23514 export_job_created_queued export_job: a job is created queued with no attempt
+PASS  EJ07 queued -> succeeded is not a transition  -- 23514 export_job_transition export_job: queued -> succeeded is not an export transition
+PASS  EJ08 a start is the next attempt  -- 23514 export_job_attempt_step export_job: each start is the next attempt
+PASS  EJ09 a non-stepping version update fails  -- 23514 export_job_version_step export_job: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  EJ10 queued -> running (attempt 1) commits  -- running
+PASS  EJ11 succeeded needs the stored file  -- 23514 export_job_file_complete new row for relation "export_job" violates check constraint "export_job_file_complete"
+PASS  EJ12 the content type matches the format  -- 23514 export_job_content_type_matches new row for relation "export_job" violates check constraint "export_job_content_type_matches"
+PASS  EJ13 progress never moves back  -- 23514 export_job_progress_forward export_job_progress: progress never moves back
+PASS  EJ14 progress 'done' only for a succeeded job  -- 23514 export_job_progress_done_succeeded export_job_progress: done only for a succeeded job
+PASS  EJ15 the progress row steps its version  -- 23514 export_job_progress_version_step export_job_progress: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  EJ16 running -> succeeded with the stored file, and progress done, commits  -- succeeded
+PASS  EJ17 a finished job never changes  -- 23514 export_job_finished_frozen export_job: a finished job never changes
+PASS  EJ18 the request (format, language, snapshot) never changes  -- 23514 export_job_request_immutable export_job: the snapshot, requester, format, language and key never change
+PASS  EJ19 a failed job names its error code  -- 23514 export_job_error_complete new row for relation "export_job" violates check constraint "export_job_error_complete"
+PASS  EJ20 mth_app cannot DELETE an export job  -- 42501 permission denied for table export_job
+PASS  AO report_definition: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO report_snapshot_source: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO report_snapshot_version: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO report_snapshot_evidence: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AO owner_update_revision: mth_app has no UPDATE or DELETE grant  -- {"u":false,"d":false}
+PASS  AD report_snapshot: mth_app has no DELETE grant  -- {"d":false}
+PASS  AD owner_update: mth_app has no DELETE grant  -- {"d":false}
+PASS  AD export_job: mth_app has no DELETE grant  -- {"d":false}
+PASS  AD export_job_progress: mth_app has no DELETE grant  -- {"d":false}
+
+93/93 PASS, 0 FAIL

@@ -837,3 +837,41 @@ D (step) applies to the holders of `approval.decide` (the P4 role defaults give 
 
 - **AUD (read-only auditor):** every slice D/E mutation (rule and version writes, dry run, submit, review, publish, discard, enable, disable, retry, dismiss, run now, route-step decision, condition closure, pack review, own preferences, policy) returns **403** for AUD and writes nothing; AUD reads rules, versions, dry runs, executions and rule-execution failures (`automation.read`) and the transformation records in its scope. The jobs view is not an AUD read (`job.read` is ADM_TECH's; REQ-S12-022 "a non-admin gets 403").
 - **SoD:** a rule version's author cannot review it; a route step is never decided by the approval's requester (when the type excludes the requester) and one person decides at most one step of a round; a condition is closed only by its owner; no starter, job or service identity decides a route step, a gate, an investment or a Finance attestation.
+
+## 21. P5 implementation, slice F (DG5): generated outputs, report snapshots, exports, presentation, owner updates and the evidence register permission codes and per-entity rights
+
+- **Task:** T-DG5-ARCH-04 (solution-architect), 2026-10-14. **Sources:** ADR-0045 §9, ADR-0046 §6; master prompt M0253–M0255, M0185, M0212; REQ-S13-004 "generate: users with view scope over the records", REQ-S13-005 "export: users with view scope", REQ-S13-007 "issue: TL, TO, SEC; view: scoped", REQ-S13-010 "upload: record editors; review: configured reviewer; view: as parent record", REQ-S09-011 "submit: WL; view: scoped", REQ-S10-013 "view: attendees in scope".
+- **Seed:** `0082_p5_reporting_permissions.sql`, equal to `P5_REPORTING_PERMISSIONS` / `P5_REPORTING_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** none of the four codes is a business-approval or Finance-validation code. Issuing a report snapshot freezes what the records said; it approves nothing, so it has no separation-of-duties rule. AUD and the technical administrators hold none of the four codes.
+
+### 21.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `report.generate` | write | Generate a report snapshot (and a reissue's assembly) from records the caller can read | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC |
+| `report.issue` | write | Issue, reissue or discard a report snapshot | TL, TO, SEC |
+| `export.create` | write | Export a snapshot the caller can read as PDF, DOCX, XLSX, PPTX or CSV | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC |
+| `owner_update.submit` | write | Create, change, submit and reopen the structured update of a subject the caller owns | TL, WL |
+
+Reused codes: every read in this slice (report definitions, live reports, snapshots with their sources, versions and cited evidence, the meeting presentation, owner updates and revisions, the evidence register and evidence versions) needs `transformation.read` (DG1) in the transformation, the same right as the records shown (M0255 "the same authorization … as to the parent record"); a live export also needs `report.generate`. Evidence upload and review keep their DG2 codes (`evidence.create`, `evidence.review`), unchanged.
+
+### 21.2 Per-entity rights in P5 (slice F)
+
+Legend as in 8.3. **own** = the caller's own row only. **owner** = the subject's owner: a workstream's `lead_user_id`, or a holder of the TL role in the transformation for the transformation's own update. Reads (V) are within the reader's `transformation.read` scope.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Report definitions (`report_definition`) | V | V | V | V | V | V | V | V | V | V | V | — | — | — |
+| Live reports (not stored) | V | V | V | V | V | V | V | V | V | V | V | — | — | — |
+| Report snapshots (`report_snapshot` and its sources, versions, evidence) | V C | V C; Is (issue, reissue, discard) | V C | V C | V C | V C; Is | V C | V C | V C | V C; Is | V | — | — | — |
+| Export jobs and files (`export_job`, `export_job_progress`) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | C; V U (own) | — | — | — | — |
+| Meeting presentation (live or a meeting-pack snapshot) | V | V | V | V | V | V | V | V | V | V | V | — | — | — |
+| Owner updates (`owner_update`, `owner_update_revision`) | V | V; C U S (owner) | V | V; C U S (owner) | V | V | V | V | V | V | V | — | — | — |
+| Evidence register and versions (`evidence`, `evidence_content`, links; read only) | V | V | V | V | V | V | V | V | V | V | V | — | — | — |
+
+C = generate (snapshots) or create (exports, updates); Is = issue, reissue, discard; S = submit and reopen; U on exports = cancel; V on exports = read status, progress and download (the requester only, with `transformation.read` re-checked at download).
+
+- **AUD (read-only auditor):** every slice F mutation (generate, issue, reissue, discard, create export, cancel export, create, change, submit and reopen an owner update) returns **403** for AUD and writes nothing; AUD reads definitions, live reports, snapshots with their sources, versions and cited evidence, the presentation, owner updates and the evidence register in its scope. AUD cannot export (no `export.create`).
+- **Technical administrators** (ADM_METHOD, ADM_TECH, ADM_ACCESS) hold no `transformation.read` by default and therefore read no report, snapshot, update or evidence register; they hold no slice F code.
+- **SoD:** none required (no code here approves anything). An owner update is written only by its subject's owner; an export is downloaded only by its requester.
+

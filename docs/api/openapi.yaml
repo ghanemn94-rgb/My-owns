@@ -340,6 +340,14 @@ tags:
     description: Critical dependency slips with their affected owners and forecast impacts (P5, ADR-0044).
   - name: notifications
     description: Notification preferences and policy - working-day timing, quiet hours, digests and urgent delivery; in-app channel (P5, ADR-0044).
+  - name: reports
+    description: The generated outputs (the ten M0253 outputs, the executive pack and the meeting pack), live and generated (P5, ADR-0045).
+  - name: report-snapshots
+    description: Immutable report snapshots with as-of time, period, source record revisions, methodology and calculation versions, approval state and cited evidence; issue, reissue as a new version, discard (P5, ADR-0045).
+  - name: exports
+    description: Server-side PDF, DOCX, XLSX, PPTX and CSV exports of report snapshots in English or Arabic, as asynchronous jobs with progress (P5, ADR-0046).
+  - name: owner-updates
+    description: Structured owner updates per reporting period that the executive pack is generated from (P5, ADR-0045).
 security:
   - sessionCookie: []
 paths:
@@ -20010,6 +20018,669 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/report-definitions:
+    get:
+      tags: [reports]
+      operationId: listReportDefinitions
+      summary: "The twelve report definitions: the ten M0253 outputs, the executive pack and the meeting pack, with subject type, whether a reporting period is needed and the export formats each offers (authenticated; ADR-0045 §1)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportDefinitionList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/reports/{definitionCode}/live:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportDefinitionCode"
+    get:
+      tags: [reports]
+      operationId: getLiveReport
+      summary: "The live report: assembled now from the current records, never stored (transformation.read; REQ-S13-004, M0254 'Live reports may refresh'). 422 report.subject_invalid, period_required, period_not_allowed, parameters_invalid, too_large."
+      parameters:
+        - $ref: "#/components/parameters/ReportSubjectIdQuery"
+        - $ref: "#/components/parameters/ReportingPeriodIdQuery"
+        - $ref: "#/components/parameters/ReportParametersQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LiveReport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportDefinitionCode"
+    post:
+      tags: [reports]
+      operationId: generateReportSnapshot
+      summary: "Generate a report snapshot: the assembled content stored with its as-of time, period, source record revisions, methodology and calculation versions, approval state and cited evidence, status generated (report.generate; REQ-S13-004, REQ-S13-007). 422 report.subject_invalid, period_required, period_not_allowed, parameters_invalid, too_large."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportGenerate" }
+      responses:
+        "201":
+          description: "Created (generated)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshot" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [report-snapshots]
+      operationId: listReportSnapshots
+      summary: "Report snapshots of the transformation, newest first, without their content (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ReportDefinitionCodeQuery"
+        - $ref: "#/components/parameters/ReportSnapshotStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshotPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    get:
+      tags: [report-snapshots]
+      operationId: getReportSnapshot
+      summary: "One report snapshot with its content; an issued or superseded snapshot never changes (transformation.read; REQ-S13-007)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshot" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/sources:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    get:
+      tags: [report-snapshots]
+      operationId: listReportSnapshotSources
+      summary: "The source records the snapshot used, each with its revision at the as-of time, approval state and validation state (transformation.read; REQ-S13-007)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshotSourcePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    get:
+      tags: [report-snapshots]
+      operationId: listReportSnapshotVersions
+      summary: "The methodology, configuration and calculation versions the snapshot used (transformation.read; REQ-S13-007)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshotVersionList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/evidence:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    get:
+      tags: [report-snapshots]
+      operationId: listReportSnapshotEvidence
+      summary: "The evidence items the snapshot cites, with the content revision, SHA-256 and review status they had at the as-of time (transformation.read; REQ-S13-010)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshotEvidencePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    post:
+      tags: [report-snapshots]
+      operationId: issueReportSnapshot
+      summary: "Issue a generated snapshot as the next issue version of its series; issuing a reissue supersedes the previous issue (report.issue; TL, TO, SEC; REQ-S13-007). Issuing approves nothing. 422 report_snapshot.not_generated; 409 report_snapshot.series_changed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportSnapshotIssue" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshot" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    post:
+      tags: [report-snapshots]
+      operationId: discardReportSnapshot
+      summary: "Discard a generated snapshot with a reason; it is kept, never deleted (report.issue). 422 report_snapshot.not_generated."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportSnapshotReason" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshot" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ReportSnapshotId"
+    post:
+      tags: [report-snapshots]
+      operationId: reissueReportSnapshot
+      summary: "Generate a reissue of the current issued snapshot from the current records, in the same series, with a reason; the issued snapshot stays unchanged until the reissue is issued (report.issue; REQ-S13-007). 422 report_snapshot.not_issued, report.too_large."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportSnapshotReason" }
+      responses:
+        "201":
+          description: "Created (the reissue, generated)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportSnapshot" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/exports:
+    get:
+      tags: [exports]
+      operationId: listExports
+      summary: "Your export jobs, newest first, with status and progress (authenticated; own jobs only)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ExportStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExportJobPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [exports]
+      operationId: createExport
+      summary: "Export a report snapshot, or a live selection (which generates its snapshot first), as PDF, DOCX, XLSX, PPTX or CSV in English or Arabic; rendered by the worker, with progress (export.create, plus report.generate for a live selection; REQ-S13-005, REQ-S13-009). The same Idempotency-Key returns the existing job with 200. 422 export.format_not_offered, export.snapshot_discarded, report.*."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExportCreate" }
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExportJob" }
+        "200":
+          description: "The existing job for this Idempotency-Key."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExportJob" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/exports/{exportId}:
+    parameters:
+      - $ref: "#/components/parameters/ExportId"
+    get:
+      tags: [exports]
+      operationId: getExport
+      summary: "One of your export jobs: status, stage, percent and sections done; the file's name, type, size and SHA-256 once it succeeded (requester; transformation.read re-checked; others 404)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExportJob" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/exports/{exportId}/download:
+    parameters:
+      - $ref: "#/components/parameters/ExportId"
+    get:
+      tags: [exports]
+      operationId: downloadExport
+      summary: "Download the exported file (attachment; ETag = its SHA-256; requester only, transformation.read re-checked; others 404). 409 export.not_ready; 422 export.failed."
+      responses:
+        "200":
+          description: "The file bytes (Content-Disposition attachment)."
+          content:
+            application/pdf:
+              schema: { type: string, contentMediaType: application/pdf }
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.wordprocessingml.document }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
+            application/vnd.openxmlformats-officedocument.presentationml.presentation:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.presentationml.presentation }
+            text/csv:
+              schema: { type: string, contentMediaType: text/csv }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/exports/{exportId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/ExportId"
+    post:
+      tags: [exports]
+      operationId: cancelExport
+      summary: "Cancel one of your queued or running exports (requester). 422 export.not_cancellable."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExportJob" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/meetings/{meetingId}/presentation:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/MeetingId"
+    get:
+      tags: [meetings]
+      operationId: getMeetingPresentation
+      summary: "Read-only presentation of a meeting: live from its agenda, linked decision briefs, asks and actions, or the stored content of one of its meeting-pack snapshots (transformation.read; REQ-S10-013). 422 presentation.snapshot_mismatch."
+      parameters:
+        - $ref: "#/components/parameters/ReportSnapshotIdQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetingPresentation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/updates:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [owner-updates]
+      operationId: listOwnerUpdates
+      summary: "Structured owner updates of the transformation and its workstreams, per reporting period (transformation.read; REQ-S09-011)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ReportingPeriodIdQuery"
+        - $ref: "#/components/parameters/OwnerUpdateSubjectTypeQuery"
+        - $ref: "#/components/parameters/OwnerUpdateStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdatePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [owner-updates]
+      operationId: createOwnerUpdate
+      summary: "Start the draft update of a subject you own for an open reporting period (owner_update.submit; the workstream lead, or the transformation's TL). 403 owner_update.not_owner; 409 owner_update.exists; 422 owner_update.period_not_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OwnerUpdateCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/updates/{updateId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/OwnerUpdateId"
+    get:
+      tags: [owner-updates]
+      operationId: getOwnerUpdate
+      summary: "One owner update (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [owner-updates]
+      operationId: updateOwnerUpdate
+      summary: "Change the eight fields of a draft update (owner_update.submit; owner). 403 owner_update.not_owner; 422 owner_update.not_draft, owner_update.period_not_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OwnerUpdatePatch" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/updates/{updateId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/OwnerUpdateId"
+    post:
+      tags: [owner-updates]
+      operationId: submitOwnerUpdate
+      summary: "Submit the draft update as its next revision (owner_update.submit; owner). 403 owner_update.not_owner; 422 owner_update.not_draft, owner_update.empty, owner_update.period_not_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/updates/{updateId}/reopen:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/OwnerUpdateId"
+    post:
+      tags: [owner-updates]
+      operationId: reopenOwnerUpdate
+      summary: "Reopen a submitted update as a draft, with a reason, while its period is open (owner_update.submit; owner). 422 owner_update.not_submitted, owner_update.period_not_open."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OwnerUpdateReopen" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/updates/{updateId}/revisions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/OwnerUpdateId"
+    get:
+      tags: [owner-updates]
+      operationId: listOwnerUpdateRevisions
+      summary: "The submitted revisions of an update, newest first (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerUpdateRevisionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/evidence-register:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [evidence]
+      operationId: listEvidenceRegister
+      summary: "The evidence register: per item its linked records, type, source, owner, observation period, upload date, version, checksum and review status (transformation.read; REQ-S13-010)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/EvidenceReviewStatusQuery"
+        - $ref: "#/components/parameters/EvidenceTypeQuery"
+        - $ref: "#/components/parameters/EvidenceRecordTypeQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvidenceRegisterPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/evidence/{evidenceId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/EvidenceId"
+    get:
+      tags: [evidence]
+      operationId: listEvidenceVersions
+      summary: "The content revisions of a file evidence item, newest first: revision, SHA-256, size, type, file name, uploader and upload time (transformation.read; REQ-S13-010)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvidenceVersionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -20027,6 +20698,83 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    ReportDefinitionCode:
+      name: definitionCode
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/ReportDefinitionCode" }
+    ReportSnapshotId:
+      name: snapshotId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ExportId:
+      name: exportId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    OwnerUpdateId:
+      name: updateId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ReportSubjectIdQuery:
+      name: subjectId
+      in: query
+      required: false
+      description: The subject record (meeting, gate instance, business case or BAU handover); omitted for outputs about the transformation itself.
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ReportParametersQuery:
+      name: parameters
+      in: query
+      required: false
+      description: "The output's settings as a JSON object (at most 8192 bytes), e.g. registers: {\"register\":\"raid\",\"filters\":{...}} with the register list route's filters (ADR-0045 §1)."
+      schema: { type: string, maxLength: 8192 }
+    ReportDefinitionCodeQuery:
+      name: definitionCode
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/ReportDefinitionCode" }
+    ReportSnapshotStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [generated, issued, superseded, discarded] }
+    ReportSnapshotIdQuery:
+      name: snapshotId
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ExportStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [queued, running, succeeded, failed, cancelled] }
+    OwnerUpdateStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [draft, submitted] }
+    OwnerUpdateSubjectTypeQuery:
+      name: subjectType
+      in: query
+      required: false
+      schema: { type: string, enum: [transformation, workstream] }
+    EvidenceReviewStatusQuery:
+      name: reviewStatus
+      in: query
+      required: false
+      schema: { type: string, enum: [unverified, verified, rejected] }
+    EvidenceTypeQuery:
+      name: evidenceType
+      in: query
+      required: false
+      schema: { type: string, enum: [document, data_extract, analysis, interview, observation, system_report, other] }
+    EvidenceRecordTypeQuery:
+      name: recordType
+      in: query
+      required: false
+      schema: { type: string, pattern: "^[a-z][a-z0-9_]{1,63}$" }
     AutomationRuleId:
       name: ruleId
       in: path
@@ -21466,6 +22214,426 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    ReportDefinitionCode:
+      type: string
+      enum: [charter, diagnostic, tom, business_cases, roadmap, registers, meeting_minutes, gate_pack, executive_dashboard, handover, executive_pack, meeting_pack]
+    ReportDefinition:
+      type: object
+      required: [code, ordinal, outputKind, subjectType, needsReportingPeriod, formats, labelEn, labelAr, descriptionEn, descriptionAr, sourceRef, playbookRef]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/ReportDefinitionCode" }
+        ordinal: { type: integer, minimum: 1 }
+        outputKind: { type: string, enum: [generated_output, executive_pack, meeting_pack] }
+        subjectType: { type: string, enum: [transformation, meeting, gate_instance, business_case, bau_handover] }
+        needsReportingPeriod: { type: boolean }
+        formats: { type: array, minItems: 1, maxItems: 5, items: { type: string, enum: [pdf, docx, xlsx, pptx, csv] } }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        descriptionEn: { type: string }
+        descriptionAr: { type: string }
+        sourceRef: { type: string }
+        playbookRef: { type: [string, "null"] }
+    ReportDefinitionList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ReportDefinition" } }
+    ReportDocument:
+      type: object
+      description: "The assembled document model, content schema version 1 (ADR-0045 §3; validated by the Zod schema ReportDocument in @mth/shared/schemas). Labels are i18n keys translated at render time; every value carries its validation state (validated, provisional, unknown, stale, not_applicable); unknown and stale values have no number."
+      required: [schemaVersion, definitionCode, transformation, subject, period, asOf, methodology, approvalState, sections]
+      additionalProperties: true
+      properties:
+        schemaVersion: { type: integer, enum: [1] }
+        definitionCode: { $ref: "#/components/schemas/ReportDefinitionCode" }
+        transformation: { type: object }
+        subject: { type: object }
+        period: { type: [object, "null"] }
+        asOf: { $ref: "#/components/schemas/Timestamp" }
+        methodology: { type: object }
+        approvalState: { type: string, enum: [approved, pending, not_submitted, changes_requested, rejected, mixed, not_applicable] }
+        sections: { type: array, items: { type: object } }
+    LiveReport:
+      type: object
+      required: [snapshotId, document]
+      additionalProperties: false
+      properties:
+        snapshotId: { type: "null" }
+        document: { $ref: "#/components/schemas/ReportDocument" }
+    ReportGenerate:
+      type: object
+      description: "subjectId for outputs about a record; reportingPeriodId for executive_dashboard and executive_pack; parameters for registers."
+      additionalProperties: false
+      properties:
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        parameters: { type: object }
+    ReportSnapshotSummary:
+      type: object
+      required: [id, transformationId, definitionCode, subjectType, subjectId, reportingPeriodId, periodLabel, periodStart, periodEnd, asOf, methodologyVersionId, approvalState, provisionalValueCount, unknownValueCount, contentSha256, seriesId, reissueOfId, reissueReason, status, issueVersion, issuedAt, issuedBy, issueNote, supersededAt, supersededById, discardedAt, discardedBy, discardReason, version, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        definitionCode: { $ref: "#/components/schemas/ReportDefinitionCode" }
+        subjectType: { type: string, enum: [transformation, meeting, gate_instance, business_case, bau_handover] }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/NullableUuid" }
+        periodLabel: { type: [string, "null"] }
+        periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        asOf: { $ref: "#/components/schemas/Timestamp" }
+        methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
+        approvalState: { type: string, enum: [approved, pending, not_submitted, changes_requested, rejected, mixed, not_applicable] }
+        provisionalValueCount: { type: integer, minimum: 0 }
+        unknownValueCount: { type: integer, minimum: 0 }
+        contentSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        seriesId: { $ref: "#/components/schemas/Uuid" }
+        reissueOfId: { $ref: "#/components/schemas/NullableUuid" }
+        reissueReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        status: { type: string, enum: [generated, issued, superseded, discarded] }
+        issueVersion: { type: [integer, "null"], minimum: 1 }
+        issuedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        issuedBy: { $ref: "#/components/schemas/NullableUuid" }
+        issueNote: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        supersededAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        supersededById: { $ref: "#/components/schemas/NullableUuid" }
+        discardedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        discardedBy: { $ref: "#/components/schemas/NullableUuid" }
+        discardReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    ReportSnapshot:
+      type: object
+      description: "A report snapshot (ADR-0045 §2-§4). Its content and context never change after it is generated."
+      required: [id, transformationId, definitionCode, subjectType, subjectId, reportingPeriodId, periodLabel, periodStart, periodEnd, asOf, methodologyVersionId, approvalState, provisionalValueCount, unknownValueCount, contentSha256, seriesId, reissueOfId, reissueReason, status, issueVersion, issuedAt, issuedBy, issueNote, supersededAt, supersededById, discardedAt, discardedBy, discardReason, version, createdAt, createdBy, parameters, content]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        definitionCode: { $ref: "#/components/schemas/ReportDefinitionCode" }
+        subjectType: { type: string, enum: [transformation, meeting, gate_instance, business_case, bau_handover] }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/NullableUuid" }
+        periodLabel: { type: [string, "null"] }
+        periodStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        periodEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        asOf: { $ref: "#/components/schemas/Timestamp" }
+        methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
+        approvalState: { type: string, enum: [approved, pending, not_submitted, changes_requested, rejected, mixed, not_applicable] }
+        provisionalValueCount: { type: integer, minimum: 0 }
+        unknownValueCount: { type: integer, minimum: 0 }
+        contentSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        seriesId: { $ref: "#/components/schemas/Uuid" }
+        reissueOfId: { $ref: "#/components/schemas/NullableUuid" }
+        reissueReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        status: { type: string, enum: [generated, issued, superseded, discarded] }
+        issueVersion: { type: [integer, "null"], minimum: 1 }
+        issuedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        issuedBy: { $ref: "#/components/schemas/NullableUuid" }
+        issueNote: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+        supersededAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        supersededById: { $ref: "#/components/schemas/NullableUuid" }
+        discardedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        discardedBy: { $ref: "#/components/schemas/NullableUuid" }
+        discardReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        parameters: { type: object }
+        content: { $ref: "#/components/schemas/ReportDocument" }
+    ReportSnapshotPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ReportSnapshotSummary" } }
+        nextCursor: { type: [string, "null"] }
+    ReportSnapshotSource:
+      type: object
+      required: [id, sectionKey, recordType, recordId, recordVersion, recordUpdatedAt, approvalState, validationState]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        sectionKey: { type: string }
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordVersion: { type: integer, minimum: 1 }
+        recordUpdatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        approvalState: { type: [string, "null"], enum: [approved, pending, not_submitted, changes_requested, rejected, not_applicable, null] }
+        validationState: { type: string, enum: [validated, provisional, unknown, stale, not_applicable] }
+    ReportSnapshotSourcePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ReportSnapshotSource" } }
+        nextCursor: { type: [string, "null"] }
+    ReportSnapshotVersion:
+      type: object
+      required: [versionKind, referenceId, referenceKey, versionLabel]
+      additionalProperties: false
+      properties:
+        versionKind: { type: string, enum: [methodology_version, config_version, kpi_version, formula_version, weight_set, calculation_engine, scoring_scheme] }
+        referenceId: { $ref: "#/components/schemas/NullableUuid" }
+        referenceKey: { type: string }
+        versionLabel: { type: string }
+    ReportSnapshotVersionList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ReportSnapshotVersion" } }
+    ReportSnapshotEvidenceItem:
+      type: object
+      required: [sectionKey, evidenceId, contentId, contentRevision, contentSha256, reviewStatus]
+      additionalProperties: false
+      properties:
+        sectionKey: { type: string }
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        contentId: { $ref: "#/components/schemas/NullableUuid" }
+        contentRevision: { type: [integer, "null"], minimum: 1 }
+        contentSha256: { type: [string, "null"], pattern: '^[0-9a-f]{64}$' }
+        reviewStatus: { type: string, enum: [unverified, verified, rejected] }
+    ReportSnapshotEvidencePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ReportSnapshotEvidenceItem" } }
+        nextCursor: { type: [string, "null"] }
+    ReportSnapshotIssue:
+      type: object
+      additionalProperties: false
+      properties:
+        note: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    ReportSnapshotReason:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    ExportLiveSelection:
+      type: object
+      required: [definitionCode]
+      additionalProperties: false
+      properties:
+        definitionCode: { $ref: "#/components/schemas/ReportDefinitionCode" }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        parameters: { type: object }
+    ExportCreate:
+      type: object
+      description: "Exactly one of snapshotId (an existing snapshot) or report (a live selection; its snapshot is generated first)."
+      required: [format, language]
+      oneOf:
+        - required: [snapshotId]
+        - required: [report]
+      additionalProperties: false
+      properties:
+        snapshotId: { $ref: "#/components/schemas/Uuid" }
+        report: { $ref: "#/components/schemas/ExportLiveSelection" }
+        format: { type: string, enum: [pdf, docx, xlsx, pptx, csv] }
+        language: { type: string, enum: [en, ar] }
+    ExportJob:
+      type: object
+      description: "An export job (ADR-0046 §5); the file fields are set exactly when status is succeeded."
+      required: [id, transformationId, snapshotId, format, language, status, stage, percent, sectionsDone, sectionsTotal, attemptCount, startedAt, finishedAt, fileName, contentType, fileSha256, fileSizeBytes, errorCode, cancelledAt, version, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        snapshotId: { $ref: "#/components/schemas/Uuid" }
+        format: { type: string, enum: [pdf, docx, xlsx, pptx, csv] }
+        language: { type: string, enum: [en, ar] }
+        status: { type: string, enum: [queued, running, succeeded, failed, cancelled] }
+        stage: { type: string, enum: [queued, loading, rendering, storing, done] }
+        percent: { type: integer, minimum: 0, maximum: 100 }
+        sectionsDone: { type: integer, minimum: 0 }
+        sectionsTotal: { type: [integer, "null"], minimum: 0 }
+        attemptCount: { type: integer, minimum: 0 }
+        startedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        finishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        fileName: { type: [string, "null"] }
+        contentType: { type: [string, "null"] }
+        fileSha256: { type: [string, "null"], pattern: '^[0-9a-f]{64}$' }
+        fileSizeBytes: { type: [integer, "null"], minimum: 1 }
+        errorCode: { type: [string, "null"], enum: [export.render_failed, export.too_large, export.source_unavailable, export.retries_exhausted, null] }
+        cancelledAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    ExportJobPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ExportJob" } }
+        nextCursor: { type: [string, "null"] }
+    MeetingPresentation:
+      type: object
+      description: "Read-only presentation of a meeting (ADR-0045 §7): live, or the stored content of a meeting-pack snapshot."
+      required: [meetingId, mode, snapshotId, document]
+      additionalProperties: false
+      properties:
+        meetingId: { $ref: "#/components/schemas/Uuid" }
+        mode: { type: string, enum: [live, snapshot] }
+        snapshotId: { $ref: "#/components/schemas/NullableUuid" }
+        document: { $ref: "#/components/schemas/ReportDocument" }
+    OwnerUpdate:
+      type: object
+      description: "A structured owner update per subject and reporting period (ADR-0045 §6; M0185)."
+      required: [id, transformationId, subjectType, subjectId, reportingPeriodId, periodLabel, ownerUserId, achievements, nextSteps, milestones, outcomes, adoption, risks, dependencies, asks, status, revisionNo, submittedAt, submittedBy, reopenReason, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        subjectType: { type: string, enum: [transformation, workstream] }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        periodLabel: { type: string }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        achievements: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        nextSteps: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        milestones: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        outcomes: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        adoption: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        risks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        dependencies: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        asks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        status: { type: string, enum: [draft, submitted] }
+        revisionNo: { type: integer, minimum: 0 }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        submittedBy: { $ref: "#/components/schemas/NullableUuid" }
+        reopenReason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    OwnerUpdatePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/OwnerUpdate" } }
+        nextCursor: { type: [string, "null"] }
+    OwnerUpdateCreate:
+      type: object
+      required: [subjectType, subjectId, reportingPeriodId]
+      additionalProperties: false
+      properties:
+        subjectType: { type: string, enum: [transformation, workstream] }
+        subjectId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        achievements: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        nextSteps: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        milestones: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        outcomes: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        adoption: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        risks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        dependencies: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        asks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    OwnerUpdatePatch:
+      type: object
+      description: "At least one of the eight fields; null clears a field."
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        achievements: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        nextSteps: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        milestones: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        outcomes: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        adoption: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        risks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        dependencies: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        asks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    OwnerUpdateReopen:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    OwnerUpdateRevision:
+      type: object
+      required: [revisionNo, achievements, nextSteps, milestones, outcomes, adoption, risks, dependencies, asks, submittedAt, submittedBy]
+      additionalProperties: false
+      properties:
+        revisionNo: { type: integer, minimum: 1 }
+        achievements: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        nextSteps: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        milestones: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        outcomes: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        adoption: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        risks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        dependencies: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        asks: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        submittedAt: { $ref: "#/components/schemas/Timestamp" }
+        submittedBy: { $ref: "#/components/schemas/Uuid" }
+    OwnerUpdateRevisionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/OwnerUpdateRevision" } }
+        nextCursor: { type: [string, "null"] }
+    EvidenceRegisterLink:
+      type: object
+      required: [recordType, recordId, via]
+      additionalProperties: false
+      properties:
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        via: { type: string }
+    EvidenceRegisterItem:
+      type: object
+      description: "One evidence item with the M0255 fields (ADR-0045 §8). Null source or observation period is shown as Not stated; checksum and revision exist for files only."
+      required: [evidenceId, title, kind, evidenceType, source, ownerUserId, observationStart, observationEnd, uploadedAt, currentRevision, recordVersion, sha256, reviewStatus, accessibilityStatus, status, links]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        title: { type: string }
+        kind: { type: string, enum: [file, note, external_link, file_reference] }
+        evidenceType: { type: string, enum: [document, data_extract, analysis, interview, observation, system_report, other] }
+        source: { type: [string, "null"] }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        observationStart: { $ref: "#/components/schemas/NullableBusinessDate" }
+        observationEnd: { $ref: "#/components/schemas/NullableBusinessDate" }
+        uploadedAt: { $ref: "#/components/schemas/Timestamp" }
+        currentRevision: { type: [integer, "null"], minimum: 1 }
+        recordVersion: { $ref: "#/components/schemas/Version" }
+        sha256: { type: [string, "null"], pattern: '^[0-9a-f]{64}$' }
+        reviewStatus: { type: string, enum: [unverified, verified, rejected] }
+        accessibilityStatus: { type: string, enum: [unchecked, accessible, inaccessible] }
+        status: { type: string, enum: [active, archived] }
+        links: { type: array, items: { $ref: "#/components/schemas/EvidenceRegisterLink" } }
+    EvidenceRegisterPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/EvidenceRegisterItem" } }
+        nextCursor: { type: [string, "null"] }
+    EvidenceVersion:
+      type: object
+      required: [contentId, revision, sha256, sizeBytes, contentType, fileName, uploadedBy, uploadedAt]
+      additionalProperties: false
+      properties:
+        contentId: { $ref: "#/components/schemas/Uuid" }
+        revision: { type: integer, minimum: 1 }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        sizeBytes: { type: integer, minimum: 0 }
+        contentType: { type: string }
+        fileName: { type: string }
+        uploadedBy: { $ref: "#/components/schemas/Uuid" }
+        uploadedAt: { $ref: "#/components/schemas/Timestamp" }
+    EvidenceVersionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/EvidenceVersion" } }
+        nextCursor: { type: [string, "null"] }
     LaunchPlanStart:
       type: object
       description: "Optional on create (REQ-S12-004): generate the 90-day plan dated from startDate (day d = startDate + d calendar days; ADR-0048)."
@@ -22834,6 +24002,10 @@ components:
         - notification_policy.configure
         - notification.preferences
         - gate_condition.close
+        - report.generate
+        - report.issue
+        - export.create
+        - owner_update.submit
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]

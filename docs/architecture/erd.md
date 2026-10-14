@@ -1770,6 +1770,44 @@ The sixteen starters are `automation_rule` rows with `origin = 'starter'` (`0075
 | Cut-off pack (S12-015) | `meeting_cutoff_pack` | `id` (meeting unique) | the meeting's chair/secretary (review) | the worker; `meeting.chair`/`meeting.prepare` | `status` (draft, reviewed) | yes | governance |
 | Dependency slip (S12-012) | `dependency_slip` | `id` (dependency, slip key unique) | — (affected owners in `affected`) | the API (milestone change) | — | append-only | portfolio |
 
+## 1o. P5 slice F: report definitions, snapshots, owner updates and export jobs (migrations 0080–0082; T-DG5-ARCH-04; ADR-0045, ADR-0046)
+
+Every new table has PK `id` (uuid from the application; the catalogue uses `code`; `export_job_progress` uses `export_job_id`), `timestamptz` stamps and, when mutable, `version` with the P2 guards (`_row_guard`; deferred `_audit_required` on `report_snapshot`, `owner_update` and `export_job`). A snapshot's content and context never change after its INSERT; its sources, versions and cited evidence are append-only and written only in its creating transaction; owner-update revisions are append-only. No DG1–DG4 table changes; `work_item_kind` and `job_schedule` gain one row each (`0080`). The data dictionary ("P5 tables, slice F") lists every column, constraint, index and trigger.
+
+### 1o.1 Snapshots, owner updates and exports
+
+```mermaid
+erDiagram
+    report_definition ||--o{ report_snapshot : "definition (subject type, period need, formats)"
+    transformation ||--o{ report_snapshot : "every output is about one transformation"
+    reporting_period |o--o{ report_snapshot : "period (copied; executive_dashboard, executive_pack)"
+    methodology_version ||--o{ report_snapshot : "pinned methodology at the as-of time"
+    report_snapshot ||--o{ report_snapshot_source : "source record revisions (append-only)"
+    report_snapshot ||--o{ report_snapshot_version : "methodology, config and calculation versions (append-only)"
+    report_snapshot ||--o{ report_snapshot_evidence : "cited evidence (append-only)"
+    evidence ||--o{ report_snapshot_evidence : "cited item"
+    evidence_content |o--o{ report_snapshot_evidence : "cited revision and SHA-256"
+    report_snapshot |o--o{ report_snapshot : "reissue_of / superseded_by (one series)"
+    workstream |o--o{ owner_update : "subject (or the transformation itself)"
+    reporting_period ||--o{ owner_update : "one per subject and period (open periods only)"
+    owner_update ||--o{ owner_update_revision : "one per submission (append-only)"
+    report_snapshot ||--o{ export_job : "exported in one format and language"
+    app_user ||--o{ export_job : "requester (one job per idempotency key)"
+    export_job ||--|| export_job_progress : "progress (forward only)"
+```
+
+`report_snapshot.subject_id` names the transformation itself or a `meeting`, `gate_instance`, `business_case` or `bau_handover` of the same transformation (checked by `report_snapshot_guard`; ADR-0045 §1). `series_id` groups an issued snapshot and its reissues; at most one is `issued` at a time.
+
+### 1o.2 P5 entity register (slice F) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Report definition (S13-004) | `report_definition` (seed) | `code` | — | migrations | `output_kind` (generated_output, executive_pack, meeting_pack) | — | reporting |
+| ReportSnapshot (S13-007, S13-008) | `report_snapshot` | `id` (series, issue version unique) | `created_by`, `issued_by` | `report.generate`, `report.issue` | `status` (generated, issued, superseded, discarded) | yes | reporting |
+| Snapshot sources, versions, evidence (S13-007, S13-010) | `report_snapshot_source`, `report_snapshot_version`, `report_snapshot_evidence` | `id` (per snapshot unique) | — | the snapshot's creating transaction | `validation_state`, `approval_state`, `review_status` (as captured) | append-only | reporting |
+| Owner update (S09-011) | `owner_update` + `owner_update_revision` | `id` (subject, period unique; update, revision unique) | `owner_user_id` | `owner_update.submit` (subject owner) | `status` (draft, submitted) | yes; revisions append-only | portfolio |
+| Export job (S13-005, S13-009) | `export_job` + `export_job_progress` | `id` (requester, idempotency key unique) | `requested_by` | `export.create`; the worker | `status` (queued, running, succeeded, failed, cancelled); `stage` | yes (progress without audit) | reporting |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

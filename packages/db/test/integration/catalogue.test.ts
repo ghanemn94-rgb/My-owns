@@ -624,6 +624,49 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0080-0081: the P5 slice F guards are attached (immutable snapshots, creation-only children, deferred checks)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('report_snapshot', 'report_snapshot_source', 'report_snapshot_version',
+         'report_snapshot_evidence', 'owner_update', 'owner_update_revision', 'export_job', 'export_job_progress')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["export_job", "export_job_audit_required", true, true],
+      ["export_job", "export_job_guard", false, false],
+      ["export_job", "export_job_row_guard", false, false],
+      ["export_job_progress", "export_job_progress_guard", false, false],
+      ["export_job_progress", "export_job_progress_row_guard", false, false],
+      ["owner_update", "owner_update_audit_required", true, true],
+      ["owner_update", "owner_update_guard", false, false],
+      ["owner_update", "owner_update_revision_present", true, true],
+      ["owner_update", "owner_update_row_guard", false, false],
+      ["owner_update_revision", "owner_update_revision_append_only", false, false],
+      ["owner_update_revision", "owner_update_revision_append_only_truncate", false, false],
+      ["owner_update_revision", "owner_update_revision_row_guard", false, false],
+      ["report_snapshot", "report_snapshot_audit_required", true, true],
+      ["report_snapshot", "report_snapshot_guard", false, false],
+      ["report_snapshot", "report_snapshot_row_guard", false, false],
+      ["report_snapshot", "report_snapshot_supersede_check", true, true],
+      ["report_snapshot_evidence", "report_snapshot_evidence_append_only", false, false],
+      ["report_snapshot_evidence", "report_snapshot_evidence_append_only_truncate", false, false],
+      ["report_snapshot_evidence", "report_snapshot_evidence_content", false, false],
+      ["report_snapshot_evidence", "report_snapshot_evidence_guard", false, false],
+      ["report_snapshot_evidence", "report_snapshot_evidence_row_guard", false, false],
+      ["report_snapshot_source", "report_snapshot_source_append_only", false, false],
+      ["report_snapshot_source", "report_snapshot_source_append_only_truncate", false, false],
+      ["report_snapshot_source", "report_snapshot_source_guard", false, false],
+      ["report_snapshot_source", "report_snapshot_source_row_guard", false, false],
+      ["report_snapshot_version", "report_snapshot_version_append_only", false, false],
+      ["report_snapshot_version", "report_snapshot_version_append_only_truncate", false, false],
+      ["report_snapshot_version", "report_snapshot_version_guard", false, false],
+      ["report_snapshot_version", "report_snapshot_version_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("marks exactly the views as views", async () => {
     const views = await q<{ table_name: string }>(
       `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1`,
@@ -829,6 +872,11 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "notification_policy",
       "notification_preference",
       "operational_failure",
+      // P5 slice F (0080-0081, T-DG5-ARCH-04; ADR-0045, ADR-0046).
+      "export_job",
+      "export_job_progress",
+      "owner_update",
+      "report_snapshot",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1130,6 +1178,17 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       notification_digest: "INSERT,SELECT",
       meeting_cutoff_pack: SIU,
       dependency_slip: "INSERT,SELECT",
+      // P5 slice F (0080-0082): still no DELETE anywhere; the report catalogue is read-only; snapshot sources,
+      // versions and evidence and owner-update revisions are append-only; snapshots are never deleted.
+      report_definition: "SELECT",
+      report_snapshot: SIU,
+      report_snapshot_source: "INSERT,SELECT",
+      report_snapshot_version: "INSERT,SELECT",
+      report_snapshot_evidence: "INSERT,SELECT",
+      owner_update: SIU,
+      owner_update_revision: "INSERT,SELECT",
+      export_job: SIU,
+      export_job_progress: SIU,
     });
   });
 

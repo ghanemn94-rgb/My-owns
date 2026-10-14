@@ -5518,6 +5518,212 @@ export type NotificationDigestRow = Selectable<NotificationDigestTable>;
 export type MeetingCutoffPackRow = Selectable<MeetingCutoffPackTable>;
 export type DependencySlipRow = Selectable<DependencySlipTable>;
 
+// P5 slice F (0080-0081, T-DG5-ARCH-04; ADR-0045, ADR-0046): report definitions, snapshots and their captured
+// sources, versions and evidence; owner updates and their revisions; export jobs and their progress.
+export interface ReportDefinitionTable {
+  code: string;
+  ordinal: number;
+  output_kind: string;
+  subject_type: string;
+  needs_reporting_period: boolean;
+  formats: string[];
+  label_en: string;
+  label_ar: string;
+  description_en: string;
+  description_ar: string;
+  source_ref: string;
+  playbook_ref: string | null;
+}
+
+export interface ReportSnapshotTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  definition_code: string;
+  subject_type: string;
+  subject_id: string;
+  reporting_period_id: string | null;
+  period_label: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  parameters: JsonDefault;
+  as_of: Timestamp;
+  content_schema_version: number;
+  content: Json;
+  content_sha256: string;
+  methodology_version_id: string;
+  approval_state: string;
+  provisional_value_count: number;
+  unknown_value_count: number;
+  series_id: string;
+  reissue_of_id: string | null;
+  reissue_reason: string | null;
+  status: Generated<string>;
+  issue_version: number | null;
+  issued_at: NullableTimestamp;
+  issued_by: string | null;
+  issue_note: string | null;
+  superseded_at: NullableTimestamp;
+  superseded_by_id: string | null;
+  discarded_at: NullableTimestamp;
+  discarded_by: string | null;
+  discard_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ReportSnapshotSourceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  section_key: string;
+  record_type: string;
+  record_id: string;
+  record_version: number;
+  record_updated_at: NullableTimestamp;
+  approval_state: string | null;
+  validation_state: string;
+  created_at: TimestampDefault;
+}
+
+export interface ReportSnapshotVersionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  version_kind: string;
+  reference_id: string | null;
+  reference_key: string;
+  version_label: string;
+  created_at: TimestampDefault;
+}
+
+export interface ReportSnapshotEvidenceTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  section_key: string;
+  evidence_id: string;
+  content_id: string | null;
+  content_revision: number | null;
+  content_sha256: string | null;
+  review_status: string;
+  created_at: TimestampDefault;
+}
+
+export interface OwnerUpdateTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  subject_type: string;
+  subject_id: string;
+  reporting_period_id: string;
+  owner_user_id: string;
+  achievements: string | null;
+  next_steps: string | null;
+  milestones: string | null;
+  outcomes: string | null;
+  adoption: string | null;
+  risks: string | null;
+  dependencies: string | null;
+  asks: string | null;
+  status: Generated<string>;
+  revision_no: Generated<number>;
+  submitted_at: NullableTimestamp;
+  submitted_by: string | null;
+  reopen_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface OwnerUpdateRevisionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  owner_update_id: string;
+  revision_no: number;
+  achievements: string | null;
+  next_steps: string | null;
+  milestones: string | null;
+  outcomes: string | null;
+  adoption: string | null;
+  risks: string | null;
+  dependencies: string | null;
+  asks: string | null;
+  submitted_at: Timestamp;
+  submitted_by: string;
+  created_at: TimestampDefault;
+}
+
+export interface ExportJobTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  requested_by: string;
+  format: string;
+  language: string;
+  idempotency_key: string;
+  status: Generated<string>;
+  attempt_count: Generated<number>;
+  started_at: NullableTimestamp;
+  finished_at: NullableTimestamp;
+  storage_key: string | null;
+  file_name: string | null;
+  content_type: string | null;
+  file_sha256: string | null;
+  file_size_bytes: string | null;
+  error_code: string | null;
+  cancelled_at: NullableTimestamp;
+  cancelled_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ExportJobProgressTable {
+  export_job_id: string;
+  organization_id: string;
+  stage: Generated<string>;
+  percent: Generated<number>;
+  sections_done: Generated<number>;
+  sections_total: number | null;
+  version: Generated<number>;
+  updated_at: TimestampDefault;
+}
+
+export interface Database {
+  report_definition: ReportDefinitionTable;
+  report_snapshot: ReportSnapshotTable;
+  report_snapshot_source: ReportSnapshotSourceTable;
+  report_snapshot_version: ReportSnapshotVersionTable;
+  report_snapshot_evidence: ReportSnapshotEvidenceTable;
+  owner_update: OwnerUpdateTable;
+  owner_update_revision: OwnerUpdateRevisionTable;
+  export_job: ExportJobTable;
+  export_job_progress: ExportJobProgressTable;
+}
+
+export type ReportDefinitionRow = Selectable<ReportDefinitionTable>;
+export type ReportSnapshotRow = Selectable<ReportSnapshotTable>;
+export type ReportSnapshotSourceRow = Selectable<ReportSnapshotSourceTable>;
+export type ReportSnapshotVersionRow = Selectable<ReportSnapshotVersionTable>;
+export type ReportSnapshotEvidenceRow = Selectable<ReportSnapshotEvidenceTable>;
+export type OwnerUpdateRow = Selectable<OwnerUpdateTable>;
+export type OwnerUpdateRevisionRow = Selectable<OwnerUpdateRevisionTable>;
+export type ExportJobRow = Selectable<ExportJobTable>;
+export type ExportJobProgressRow = Selectable<ExportJobProgressTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -10223,6 +10429,179 @@ export const SCHEMA_COLUMNS = {
     "affected",
     "created_at",
     "created_by",
+  ],
+  report_definition: [
+    "code",
+    "ordinal",
+    "output_kind",
+    "subject_type",
+    "needs_reporting_period",
+    "formats",
+    "label_en",
+    "label_ar",
+    "description_en",
+    "description_ar",
+    "source_ref",
+    "playbook_ref",
+  ],
+  report_snapshot: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "definition_code",
+    "subject_type",
+    "subject_id",
+    "reporting_period_id",
+    "period_label",
+    "period_start",
+    "period_end",
+    "parameters",
+    "as_of",
+    "content_schema_version",
+    "content",
+    "content_sha256",
+    "methodology_version_id",
+    "approval_state",
+    "provisional_value_count",
+    "unknown_value_count",
+    "series_id",
+    "reissue_of_id",
+    "reissue_reason",
+    "status",
+    "issue_version",
+    "issued_at",
+    "issued_by",
+    "issue_note",
+    "superseded_at",
+    "superseded_by_id",
+    "discarded_at",
+    "discarded_by",
+    "discard_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  report_snapshot_source: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "section_key",
+    "record_type",
+    "record_id",
+    "record_version",
+    "record_updated_at",
+    "approval_state",
+    "validation_state",
+    "created_at",
+  ],
+  report_snapshot_version: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "version_kind",
+    "reference_id",
+    "reference_key",
+    "version_label",
+    "created_at",
+  ],
+  report_snapshot_evidence: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "section_key",
+    "evidence_id",
+    "content_id",
+    "content_revision",
+    "content_sha256",
+    "review_status",
+    "created_at",
+  ],
+  owner_update: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "subject_type",
+    "subject_id",
+    "reporting_period_id",
+    "owner_user_id",
+    "achievements",
+    "next_steps",
+    "milestones",
+    "outcomes",
+    "adoption",
+    "risks",
+    "dependencies",
+    "asks",
+    "status",
+    "revision_no",
+    "submitted_at",
+    "submitted_by",
+    "reopen_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  owner_update_revision: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "owner_update_id",
+    "revision_no",
+    "achievements",
+    "next_steps",
+    "milestones",
+    "outcomes",
+    "adoption",
+    "risks",
+    "dependencies",
+    "asks",
+    "submitted_at",
+    "submitted_by",
+    "created_at",
+  ],
+  export_job: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "requested_by",
+    "format",
+    "language",
+    "idempotency_key",
+    "status",
+    "attempt_count",
+    "started_at",
+    "finished_at",
+    "storage_key",
+    "file_name",
+    "content_type",
+    "file_sha256",
+    "file_size_bytes",
+    "error_code",
+    "cancelled_at",
+    "cancelled_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  export_job_progress: [
+    "export_job_id",
+    "organization_id",
+    "stage",
+    "percent",
+    "sections_done",
+    "sections_total",
+    "version",
+    "updated_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

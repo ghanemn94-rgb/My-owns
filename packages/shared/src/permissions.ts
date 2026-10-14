@@ -265,6 +265,17 @@ export const P5_AUTOMATION_PERMISSIONS = {
   "gate_condition.close": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P5 slice F (T-DG5-ARCH-04; ADR-0045 §8, ADR-0046 §6): reports, snapshots, exports and owner updates. Seeded by 0082.
+ * Reading needs transformation.read (DG1). No code is a business_approval or finance_validation code.
+ */
+export const P5_REPORTING_PERMISSIONS = {
+  "report.generate": "write",
+  "report.issue": "write",
+  "export.create": "write",
+  "owner_update.submit": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -280,6 +291,7 @@ export const PERMISSIONS = {
   ...P5_STUDIO_PERMISSIONS,
   ...P5_FORMS_PROCEDURES_PERMISSIONS,
   ...P5_AUTOMATION_PERMISSIONS,
+  ...P5_REPORTING_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -651,6 +663,27 @@ export const P5_AUTOMATION_ROLE_PERMISSIONS = {
   ADM_METHOD: ["automation.read", "automation.configure", "automation.repair", "notification.preferences"],
 } as const satisfies Record<string, readonly (keyof typeof P5_AUTOMATION_PERMISSIONS)[]>;
 
+/**
+ * P5 slice F role defaults (seeded by 0082; ADR-0045 §8). Issue: TL, TO, SEC (REQ-S13-007); owner updates: TL, WL
+ * (REQ-S09-011). AUD and the technical administrators get none (AUD stays read-only).
+ */
+export const P5_REPORTING_ROLE_PERMISSIONS = {
+  SP: ["report.generate", "export.create"],
+  TL: ["report.generate", "report.issue", "export.create", "owner_update.submit"],
+  BO: ["report.generate", "export.create"],
+  WL: ["report.generate", "export.create", "owner_update.submit"],
+  FIN: ["report.generate", "export.create"],
+  TO: ["report.generate", "report.issue", "export.create"],
+  KDS: ["report.generate", "export.create"],
+  TD: ["report.generate", "export.create"],
+  CM: ["report.generate", "export.create"],
+  SEC: ["report.generate", "report.issue", "export.create"],
+  AUD: [],
+  ADM_TECH: [],
+  ADM_ACCESS: [],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P5_REPORTING_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -668,6 +701,7 @@ export const ROLES = {
       ...P5_STUDIO_ROLE_PERMISSIONS.SP,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SP,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SP,
+      ...P5_REPORTING_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -692,6 +726,7 @@ export const ROLES = {
       ...P5_STUDIO_ROLE_PERMISSIONS.TL,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TL,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TL,
+      ...P5_REPORTING_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -712,6 +747,7 @@ export const ROLES = {
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.BO,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.BO,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.BO,
+      ...P5_REPORTING_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -730,6 +766,7 @@ export const ROLES = {
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.WL,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.WL,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.WL,
+      ...P5_REPORTING_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -748,6 +785,7 @@ export const ROLES = {
       ...P4_GATES_CHANGE_ROLE_PERMISSIONS.FIN,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.FIN,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.FIN,
+      ...P5_REPORTING_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -771,6 +809,7 @@ export const ROLES = {
       ...P5_STUDIO_ROLE_PERMISSIONS.TO,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TO,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TO,
+      ...P5_REPORTING_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -788,6 +827,7 @@ export const ROLES = {
       ...P4_DASHBOARD_TRACE_ROLE_PERMISSIONS.KDS,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.KDS,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.KDS,
+      ...P5_REPORTING_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -800,6 +840,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.TD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TD,
+      ...P5_REPORTING_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -811,6 +852,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.CM,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.CM,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.CM,
+      ...P5_REPORTING_ROLE_PERMISSIONS.CM,
     ],
   },
   SEC: {
@@ -823,6 +865,7 @@ export const ROLES = {
       ...P4_ADOPTION_SUSTAINMENT_ROLE_PERMISSIONS.SEC,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SEC,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SEC,
+      ...P5_REPORTING_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {

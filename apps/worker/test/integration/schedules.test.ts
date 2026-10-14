@@ -29,6 +29,8 @@ const P5_AUTOMATION_JOBS = [
   "governance.meeting_cutoff_scan",
   "notification.digest",
 ];
+// Seeded by 0080 (T-DG5-ARCH-04; ADR-0045 §6, §10); unhandled until KBE-D registers the owner-update task handler.
+const P5_REPORT_JOBS = ["reports.owner_update_tasks"];
 // The rows are listed by code (ORDER BY code; ASCII codes, so the default sort is the same order).
 const unhandledOf = (...codes: string[]) => [...codes].sort();
 const GOVERNANCE_JOBS = [
@@ -111,6 +113,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         PERIODS,
         ...SUSTAINMENT_SCANS,
         ...P5_AUTOMATION_JOBS,
+        ...P5_REPORT_JOBS,
       ),
     });
     const s = await schedules();
@@ -136,6 +139,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         PERIODS,
         ...SUSTAINMENT_SCANS,
         ...P5_AUTOMATION_JOBS,
+        ...P5_REPORT_JOBS,
       ),
     });
     const s = await schedules();

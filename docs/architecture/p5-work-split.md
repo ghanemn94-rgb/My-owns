@@ -358,3 +358,108 @@ ARCH-03 → BE-H (after BE-A) → BE-H2 → BE-I → BE-I2 and BE-J (parallel; t
 7. **Unknown is never 0.** Next run, last success, due dates and forecast finishes that cannot be computed are `null` with a reason, shown Unknown/Never run/Disabled.
 8. **DG4 behaviour is the default.** No policy and no preference → every notification delivered at once; the G5 switch resolves to `true` for v1; DG4 approvals have no route rows.
 9. **D-142 decisions** are binding: Q2 (switch on for v1), Q3 (starters never disableable), Q11 (in-app digests only), and plan row 15 (`launchPlan`).
+
+## §F. Slice F (generated outputs, report snapshots, PDF/DOCX/XLSX/PPTX/CSV exports, presentation mode, owner updates, the evidence register) — T-DG5-ARCH-04
+
+### F.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0045-p5-generated-outputs-report-snapshots-owner-updates-presentation-evidence.md`, `ADR-0046-p5-exporters-pdf-docx-xlsx-pptx-csv-fonts-rtl-injection-export-jobs.md` | Binding design, with the refusal codes and English texts (ADR-0045 §11, ADR-0046 §8) |
+| Migrations | `packages/db/migrations/0080_p5_reports_snapshots_updates.sql`, `0081_p5_export_jobs.sql`, `0082_p5_reporting_permissions.sql` | Applied on a fresh PostgreSQL 16.13 and over a P4-populated database; 93 guard probes PASS (`docs/delivery/handbacks/DG5/T-DG5-ARCH-04-evidence/probe-output.txt`) |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (9 tables), `packages/db/test/integration/catalogue.test.ts` (tables, the slice F trigger set, grants, mutable `version` tables), `packages/db/src/seed.test.ts` (0082 block) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P5_REPORTING_PERMISSIONS`, `P5_REPORTING_ROLE_PERMISSIONS`; 4 codes) | Equals `0082` |
+| Lock classes | `platform/advisory-locks.ts` `reportSnapshotIssue` 730263, `exportJob` 730264 (730265 reserved), ADR-0016 §6 | Registry test updated (34 classes) |
+| Seeds | 12 `report_definition` rows; work-item kind `owner_update_due`; job schedule `reports.owner_update_tasks` | In `0080` |
+| Work-item kind wired | `owner_update_due` → `missing_updates` in `reporting/my-work.ts` `MY_WORK_SECTION_BY_KIND`; labels in `apps/web/src/i18n/{en,ar}/myWork.json` | The completeness tests read every `work_item_kind` row |
+| Contract | `docs/api/openapi.yaml` 1.4.0-p5: 26 operations (tags `reports`, `report-snapshots`, `exports`, `owner-updates`; `getMeetingPresentation` under `meetings`; two `evidence` reads); `PermissionCode` +4 | `pnpm openapi:lint` PASS (789 operations) |
+| Contract-test seams | `apps/api/test/support/p5-pending-arch-04.ts` (aggregate; frozen), `p5-pending-kbe-c.ts` (11), `p5-pending-kbe-d.ts` (7), `p5-pending-be-m.ts` (5), `p5-pending-be-o.ts` (3); `p5-operations.ts` block (26); `contract.test.ts` operation count 789 | Contract test green with all 26 pending |
+| ERD §1o, data dictionary "P5 tables, slice F", permissions matrix §21 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+| Export dependency evidence | ADR-0046 §7; `docs/delivery/handbacks/DG5/T-DG5-ARCH-04-evidence/font-tables.txt` | The install request is in the T-DG5-ARCH-04 handback; the orchestrator installs before BE-M/BE-N (D-142 Q8) |
+
+The plan's KBE-C and KBE-D are each split in two (**KBE-C/KBE-C2**, **KBE-D/KBE-D2**): twelve assemblers, the snapshot service and seven owner-update operations are too much for two 60–75 minute tasks (the p4 `-2` precedent). The renderers move from `apps/api/src/modules/reporting/exports/{pdf,docx,xlsx,pptx,csv}.ts` (p5-plan §5.1) to the reserved package `packages/reporting` (`@mth/reporting`), because the worker renders and cannot import API code (ADR-0046 §1; ADR-0002).
+
+### F.1 KBE-C — report definitions, the document model, snapshots, issue, discard, reissue; the charter and registers assemblers (kpi-benefits-engineer; after BE-A)
+
+- **Files:** `reporting/reports/routes.ts` (fill BE-A's stub; first), `reporting/reports/definitions.ts`, `reporting/reports/snapshots.ts` (generate in one `REPEATABLE READ` read-only assembly then one write transaction; captured sources, versions and evidence in the creating transaction; content hash; issue, discard, reissue under lock 730263; the `report_snapshot.issued` outbox event), `reporting/reports/provisional.ts` (ADR-0045 §5 rules, one function per source kind, unit-tested), `reporting/reports/assembler.ts` (the `Assembler` interface and registry; the other tasks add one line each), `reporting/reports/assemblers/charter.ts`, `reporting/reports/assemblers/registers.ts` (the six registers through their DG2–DG4 list services and filter schemas), `packages/shared/src/schemas/report.ts` (+ barrel line: `ReportDocument` v1, values with `validation`, registers parameters), the `report.*`/`report_snapshot.*` lines in `platform/db-errors.ts`, tests.
+- **Operations (11):** `listReportDefinitions`, `getLiveReport`, `generateReportSnapshot`, `listReportSnapshots`, `getReportSnapshot`, `listReportSnapshotSources`, `listReportSnapshotVersions`, `listReportSnapshotEvidence`, `issueReportSnapshot`, `discardReportSnapshot`, `reissueReportSnapshot`.
+- **Consumes:** ADR-0045 §1–§5, §9–§12; `ConfigResolver` (the methodology pin at the as-of time); the DG2–DG4 register list services and their Zod filter schemas (read only); `0080` guards.
+- **Tests (literal):** REQ-S13-004: `charter` and `registers` generate from a seeded transformation and contain its ID and records; REQ-S13-007: after a later change to a KPI shown in a register, the issued snapshot still returns the old values with their `kpi_version` rows, and a reissue issued becomes `issueVersion` 2 while v1 is `superseded` with its content unchanged; REQ-S13-008: a pending benefit value in the benefits register has `validation: provisional` and is counted; a register filtered to RAID rows returns exactly the DG4 list route's rows for the same filters; 5,001 rows → 422 `report.too_large`, nothing written; issue by WL → 403; issuing a non-generated snapshot → 422 `report_snapshot.not_generated`; reissuing a superseded one → 422 `report_snapshot.not_issued`; two concurrent issues of reissues of one series → one 200, one 409 `report_snapshot.series_changed`; AUD 403 on every write; `If-Match` 428/409; one audit event per row written; commit-time re-authorization.
+
+### F.2 KBE-C2 — the diagnostic, TOM, business-case, roadmap and gate-pack assemblers (kpi-benefits-engineer; after KBE-C)
+
+- **Files:** `reporting/reports/assemblers/{diagnostic,tom,business-cases,roadmap,gate-pack}.ts` and their registry lines in `reporting/reports/assembler.ts` (after KBE-C), tests.
+- **Operations:** none new (they become reachable through KBE-C's routes).
+- **Consumes:** ADR-0045 §1, §3, §5; the DG2 diagnostic/TOM services, DG3 business case, formula versions and roadmap services, the DG2/DG4 gate evaluators' outputs (criteria with state and evidence) — read only; `ENGINE_VERSION` of `packages/shared/src/formula` (read, never changed).
+- **Tests (literal):** REQ-S13-004: each of the five generates from a seeded transformation and contains its ID and records; the gate pack lists every criterion of the gate with its state and evidence (the content REQ-S13-005's PPTX test needs); a business case whose formula version is not validated has provisional values; the snapshot records one `formula_version` row per formula used and the `calculation_engine` row; value bases are never summed together (D-117, D-119, D-122).
+
+### F.3 KBE-D — structured owner updates, update tasks and the executive pack (kpi-benefits-engineer; after KBE-C)
+
+- **Files:** `portfolio/updates.ts` (create, update, submit, reopen, revisions; subject ownership) and its registration line in `portfolio/routes.ts`, `reporting/reports/assemblers/executive-pack.ts` and its registry line (after KBE-C2), `apps/worker/src/handlers/reports.ts` and `apps/worker/src/queues/reports.ts` (fill BE-A's stubs: `reports.owner_update_tasks`, exactly once via `createWorkItemOnce`), the `owner_update.*` lines in `platform/db-errors.ts`, tests. (The `owner_update_due` kind is already mapped to `missing_updates` in `reporting/my-work.ts` with its en/ar labels in `myWork.json`; F.0.)
+- **Operations (7):** `listOwnerUpdates`, `createOwnerUpdate`, `getOwnerUpdate`, `updateOwnerUpdate`, `submitOwnerUpdate`, `reopenOwnerUpdate`, `listOwnerUpdateRevisions`.
+- **Consumes:** ADR-0045 §6, §9, §11; DG4 `reporting_period`, `workstream`, the workstream dashboard read model (ADR-0037); `0080` guards.
+- **Tests (literal):** REQ-S09-011: a WL submits the update of their workstream for the open period; the generated executive pack's workstream section contains the submitted text and the workstream's current metrics, with no manual edit; a workstream without an update shows "No update submitted"; a non-lead WL → 403 `owner_update.not_owner`; a closed period → 422 `owner_update.period_not_open`; an empty submit → 422 `owner_update.empty`; editing a submitted update → 422 `owner_update.not_draft`; reopen needs a reason; the task job run twice creates one task per owner and period; AUD 403; `If-Match` 428/409; one audit event per mutation.
+
+### F.4 KBE-D2 — the minutes, executive-dashboard, handover and meeting-pack assemblers (kpi-benefits-engineer; after KBE-D)
+
+- **Files:** `reporting/reports/assemblers/{meeting-minutes,executive-dashboard,handover,meeting-pack}.ts` and their registry lines (after KBE-D), tests.
+- **Operations:** none new.
+- **Consumes:** ADR-0045 §1, §3, §5, §7; DG4 minutes, agenda, decision briefs, asks and actions services; the dashboards engine (`reporting/dashboards/**`, read only); DG4 BAU handover service — read only.
+- **Tests (literal):** REQ-S13-004: each of the four generates from a seeded transformation (with its meeting or handover) and contains the transformation's ID and the records; the executive dashboard needs a period (422 `report.period_required` without one) and shows Unknown/Stale values with no number; the meeting pack lists the agenda items with their linked decisions and asks; approval states as ADR-0045 §3 lists them.
+
+### F.5 BE-M — `@mth/reporting` scaffold, export-file store, formula-injection rule, CSV and XLSX, export jobs (backend-workflow-engineer; after KBE-C and after the orchestrator's install)
+
+- **Files:** `packages/reporting/src/{index.ts,render.ts,storage.ts,injection.ts,csv.ts}`, `packages/reporting/src/xlsx/**`, `packages/reporting/tsconfig.json` and the `src/**` layout (the `package.json` with its dependencies and the `exports` entries `.` and `./storage` is written by the orchestrator with the install, ADR-0046 §7), `reporting/exports/routes.ts` (fill BE-A's stub; first), `reporting/exports/jobs.ts` (create with idempotency, cancel, status, download with re-check), `apps/worker/src/handlers/reports.ts` and `queues/reports.ts` lines for `reports.export` (after KBE-D's lines), `apps/worker/src/reports/export-runner.ts` (lock 730264, progress, retries, failure capture through BE-I's kit lines), the `export.*` lines in `platform/db-errors.ts`, tests.
+- **Operations (5):** `createExport`, `listExports`, `getExport`, `downloadExport`, `cancelExport`.
+- **Consumes:** ADR-0046 §2, §4–§6, §8–§9; ADR-0045 §3 (the document model); ADR-0043 §5 (failure capture); `RETRY_POLICY` unchanged.
+- **Tests (literal):** REQ-S13-006: a RAID description `=HYPERLINK("http://x","y")` is an inline string with `quotePrefix` in XLSX and `'=HYPERLINK(...)` in CSV; each of `=`, `+`, `-`, `@`, TAB and CR is neutralized, other first characters are not (property test); the system SUM total is `<f>SUM(...)</f>` with the decimal.js total as cached value; REQ-S13-005: an XLSX export of the RAID register with a filter contains exactly the filtered rows (cell-by-cell against the DG4 list route); a CSV export is UTF-8 with BOM and CRLF; Unknown is an empty cell with status "Unknown", never 0; the same `Idempotency-Key` → one job (200 on repeat); progress moves forward and ends `done`; a killed worker mid-export completes once; another user's `getExport`/`downloadExport` → 404; a requester who lost `transformation.read` → 404 on download; cancel of a succeeded job → 422 `export.not_cancellable`; download before success → 409 `export.not_ready`; AUD 403 on `POST /exports`.
+
+### F.6 BE-N — PDF, DOCX and PPTX, bidirectional layout and bundled fonts (backend-workflow-engineer; after BE-M)
+
+- **Files:** `packages/reporting/src/pdf/**`, `packages/reporting/src/layout/**` (bidi with `bidi-js`, line breaking, run fonts, RTL tables), `packages/reporting/src/fonts.ts` (loads the bundled `.woff` files from the two `@fontsource` packages), `packages/reporting/src/{docx,pptx}.ts`, their lines in `render.ts` (after BE-M), `packages/reporting/THIRD_PARTY_NOTICES.md` (each library's licence and the OFL text), tests and the A15 sample files under the task's evidence folder.
+- **Operations:** none new (rendered through BE-M's jobs).
+- **Consumes:** ADR-0046 §2, §3, §7, §9; slice I's branding read port and provenance footer text (BE-R). Until BE-R merges, the header uses the DG1 product name and the footer carries no provenance line; none is invented here, and BE-R's port adds it.
+- **Tests (literal):** REQ-S13-009: an Arabic PDF of a register has RTL base direction, embeds IBM Plex Sans Arabic, and its identifiers (`RAID-014`) and numbers keep their left-to-right order (text extraction of the PDF's content stream and the glyph-run check: the Arabic word's glyph ids differ from the isolated forms, proving `GSUB` joining); an English PDF is LTR; REQ-S13-005: a PPTX gate pack contains each criterion of the gate (read back from the PPTX XML); REQ-S13-008: a pending benefit value prints "مؤقت"/"Provisional" in the PDF pack; a generated (not issued) snapshot carries "Draft — not an issued report"; DOCX Arabic paragraphs are `bidi`; the outcome of DOCX font embedding is stated in the handback (ADR-0046 §3).
+
+### F.7 BE-O — meeting presentation, the evidence register and versions (backend-workflow-engineer; after KBE-C)
+
+- **Files:** `governance/presentation.ts` (fill BE-A's stub: live through KBE-D2's `meeting_pack` assembler, or a snapshot's content), `evidence/register.ts` (register and versions; links across `evidence_link` and the domain link tables) and its registration line in `evidence/routes.ts`, tests.
+- **Operations (3):** `getMeetingPresentation`, `listEvidenceRegister`, `listEvidenceVersions`.
+- **Consumes:** ADR-0045 §7, §8; DG2 evidence repository (unchanged; no evidence column is added); KBE-D2's `meeting_pack` assembler (until it merges, the live mode test stays in `p5-pending-be-o.ts` as a pending test, the BE-J precedent).
+- **Tests (literal):** REQ-S10-013: changing a linked decision before cut-off changes the live presentation; the issued meeting-pack snapshot still returns the old decision; a snapshot of another meeting → 422 `presentation.snapshot_mismatch`; REQ-S13-010: an uploaded file appears in the register with its SHA-256 and version 1; a second upload makes version 2, and the versions list shows both with their checksums and upload times; a note shows no checksum and "Not stated" for a missing source; a reader without `transformation.read` → 403; AUD reads.
+
+### F.8 Migrations of slice F
+
+`0080`–`0082` are delivered. **`0083`–`0084`** are free and are taken, in this order, only by a task whose handback shows a database need: **`0083` KBE-C/KBE-D** (expected only if an assembler needs an index on a DG2–DG4 table for the 5,000-row reads); **`0084` BE-M/BE-N** (only if export retention or a further error code needs one). A task that needs none leaves its number unused; numbers are never reordered.
+
+### F.9 Integration order (slice F)
+
+ARCH-04 → orchestrator install of the ADR-0046 §7 packages and `packages/reporting/package.json` → KBE-C (after BE-A) → KBE-C2, KBE-D and BE-O (parallel: KBE-C2 and KBE-D both add one line to `assembler.ts`, merged as appends; BE-O edits `governance/**` and `evidence/**`) → KBE-D2 (after KBE-D) and BE-M (after KBE-D's worker lines) → BE-N (after BE-M) → FE-E (`pages/reports/**`, `pages/exports/**`, `pages/presentation/**`, `pages/updates/**`; p5-plan §5.1) → QA-C (A15). Slice G's restatement (KBE-E) needs KBE-C's reissue and `report_snapshot.issued` event.
+
+### F.10 Requirement → owner (the 9 rows of slice F)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-S13-004 | KBE-C (definitions, snapshots, charter, registers), KBE-C2 (diagnostic, TOM, business cases, roadmap, gate pack), KBE-D2 (minutes, executive dashboard, handover) | FE-E (generate screens) |
+| REQ-S13-005 | BE-M (jobs, XLSX, CSV), BE-N (PDF, DOCX, PPTX) | FE-E (export dialog, progress), QA-C (A15) |
+| REQ-S13-006 | BE-M (injection rule, XLSX/CSV writers) | — |
+| REQ-S13-007 | KBE-C (snapshot, issue, reissue; database guards in `0080`) | FE-E (snapshots screen), KBE-E (reissue offer) |
+| REQ-S13-008 | KBE-C (rules), KBE-C2/KBE-D/KBE-D2 (per assembler), BE-M/BE-N (labels in files) | FE-E |
+| REQ-S13-009 | BE-N (layout, fonts) | QA-C (bilingual inspection) |
+| REQ-S13-010 | BE-O (register, versions), KBE-C (snapshot evidence) | FE-E (evidence register screen) |
+| REQ-S09-011 | KBE-D (updates, tasks, executive pack) | FE-E (`pages/updates/**`) |
+| REQ-S10-013 | BE-O (presentation), KBE-D2 (meeting-pack assembler) | FE-E (`pages/presentation/**`) |
+
+### F.11 What the implementers of slice F must know
+
+1. **A snapshot never changes.** Its content and context are fixed at INSERT; only the status moves. Reissue is a new row in the same series. Do not set `created_at` explicitly on `report_snapshot`: the children's guard compares it with the transaction time.
+2. **One assembler, many views.** Live view, generated snapshot, presentation and every export of an output come from the same assembler; nothing is typed into a report, and no copy is edited separately (M0212).
+3. **Assemblers read through the owning module's services**, so a report shows what the screen shows. They compute no new business number; totals use decimal.js; value bases and currencies are never mixed.
+4. **Provisional, Unknown and Stale are labelled, never 0 or green**, in the content, the native views and every file (ADR-0045 §5, ADR-0046 §4, §9).
+5. **Renderers are pure and run in the worker.** No database, no network, no transaction around rendering or storing; the API never loads a renderer library.
+6. **Formulas only from the template.** Spreadsheet formulas come only from the document model's declared totals; user text is never a formula (REQ-S13-006).
+7. **Exports are authorized like the records.** Create and download re-check `transformation.read`; only the requester sees a job; others get 404.
+8. **Exactly once.** Export jobs: requester + idempotency key UNIQUE, `singletonKey` = job id, lock 730264; owner-update tasks: the work-item dedupe key; snapshot issue: lock 730263 + the one-issued-per-series index.
+9. **Dependencies come from the orchestrator.** Do not add or upgrade a package; if the ADR-0046 §7 packages are not installed when you start, your rendering checks are BLOCKED and you say so.
+10. **Texts.** Labels, legends, "Draft — not an issued report", "No update submitted", "No records" and every problem code are i18n keys in en and ar (FE-E adds the web keys; the export label table lives in the API's i18n source the worker receives); no DG0–DG7 string appears in any template (slice I's scan reads `packages/reporting/src/**`).
+

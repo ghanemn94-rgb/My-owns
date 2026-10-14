@@ -100,6 +100,12 @@ export const ADVISORY_LOCK_CLASSES = {
   approvalRouteStep: 730260,
   /** One user's digest window (tasks: collecting held notifications into one digest; exactly once is also held by the unique constraint notification_digest_window_key). Key: "<userId>:<windowStartIso>". */
   digestWindow: 730261,
+  // P5 block of T-DG5-ARCH-04 (730263-730265; p5-plan §4, ADR-0045 §7, ADR-0046 §5). 730265 is RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** The snapshots of one report definition and subject (reporting: issue, reissue, discard; one current issued snapshot per series is also held by the unique index report_snapshot_one_issued_key). Key: "<definitionCode>:<transformationId>:<subjectId>:<reportingPeriodId or ->". */
+  reportSnapshotIssue: 730263,
+  /** One export job (reporting/worker: start, progress, completion, failure, cancel; exactly one job per request is also held by the unique constraint export_job_idempotency_key). Key: "<exportJobId>". */
+  exportJob: 730264,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;
