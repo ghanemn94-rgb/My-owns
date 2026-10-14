@@ -1,0 +1,27 @@
+diff --git a/tests/qa/integration/a13-job-idempotency.test.ts b/tests/qa/integration/a13-job-idempotency.test.ts
+index da9fd02..a1e9e3e 100644
+--- a/tests/qa/integration/a13-job-idempotency.test.ts
++++ b/tests/qa/integration/a13-job-idempotency.test.ts
+@@ -27,6 +27,8 @@ import {
+   startWorker,
+   STARTER_AUTOMATION_CONSUMER,
+ } from "../../../apps/worker/src/index.ts";
++import { QUEUES_FOR_EVENT } from "../../../apps/worker/src/queues/index.ts";
++import { jobsForEvent } from "../../../apps/worker/src/relay.ts";
+ import {
+   auditOf,
+   createBu,
+@@ -172,7 +174,12 @@ describe("A13 outbox relay: publishing twice enqueues one job", () => {
+     await relayUntilPublished(t.body.id);
+     const jobs = await jobsFor(event!.id);
+     expect(jobs, "a replayed relay send created a second job").toHaveLength(1);
+-    expect(jobs[0]!.id).toBe(event!.id);
++    // The job id is deterministic per (event, queue): the event id while the event has one queue, the D-102 fan-out id
++    // once it has several (transformation.created also feeds automation.evaluate, ADR-0043 §5).
++    const expected = jobsForEvent(event!.id, QUEUES_FOR_EVENT["transformation.created"]!).find(
++      (j) => j.queue === QUEUES.transformationCreated,
++    );
++    expect(jobs[0]!.id).toBe(expected!.id);
+   });
+ });
+ 
