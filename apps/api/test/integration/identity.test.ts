@@ -137,7 +137,7 @@ describe("GET /api/v1/me", () => {
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
         // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
         // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057) + P5 slice A defaults (0064) + P5 slices B/C defaults (0070),
-        // sorted.
+        // + P5 slices G/H defaults (0087: health_check.assess, launch_plan.edit), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -172,9 +172,11 @@ describe("GET /api/v1/me", () => {
           "gate.review",
           "gate_condition.close",
           "group.manage",
+          "health_check.assess",
           "improvement.edit",
           "inherited_record.record",
           "initiative.edit",
+          "launch_plan.edit",
           "lesson.edit",
           "lesson.search",
           "meeting.chair",

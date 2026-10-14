@@ -463,3 +463,230 @@ ARCH-04 → orchestrator install of the ADR-0046 §7 packages and `packages/repo
 9. **Dependencies come from the orchestrator.** Do not add or upgrade a package; if the ADR-0046 §7 packages are not installed when you start, your rendering checks are BLOCKED and you say so.
 10. **Texts.** Labels, legends, "Draft — not an issued report", "No update submitted", "No records" and every problem code are i18n keys in en and ar (FE-E adds the web keys; the export label table lives in the API's i18n source the worker receives); no DG0–DG7 string appears in any template (slice I's scan reads `packages/reporting/src/**`).
 
+
+## §G. Slice G (KPI prospective change and restatement, formula preview, the optional NPV/ROI/payback extension) — T-DG5-ARCH-05
+
+### G.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0047-p5-kpi-restatement-formula-preview-financial-metrics.md` | Binding design, with the refusal codes and English texts (§8) |
+| Migrations | `packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql`, `0087_p5_kpi_launch_health_permissions.sql` (shared with §H) | Applied on a fresh PostgreSQL 16.13 and over a P4-populated database; guard probe 157/157 PASS (`docs/delivery/handbacks/DG5/T-DG5-ARCH-05-evidence/probe-output.txt`) |
+| Kysely types, catalogue pins, seed pins | `packages/db/src/schema.ts` (7 slice G tables), `packages/db/test/integration/catalogue.test.ts` (tables, the slice G/H triggers, the two added DG4 triggers, grants, mutable `version` tables), `packages/db/src/seed.test.ts` (0087 block) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` `P5_KPI_LAUNCH_HEALTH_PERMISSIONS`/`_ROLE_PERMISSIONS` (7 codes, shared with §H) | Equals `0087` |
+| Lock class | `platform/advisory-locks.ts` `kpiRestatement` 730266 (730269 reserved for the block), ADR-0016 §6 | Registry test updated (37 classes) |
+| Work-item kinds | `kpi_restatement_to_decide` (My Work Approvals), `report_reissue_offer` (Assigned actions) in `0085`; `reporting/my-work.ts` `MY_WORK_SECTION_BY_KIND` and `apps/web/src/i18n/{en,ar}/myWork.json` labels | The completeness tests read every `work_item_kind` row |
+| Contract | `docs/api/openapi.yaml` 1.4.0-p5: 16 slice G operations (tags `kpi-restatements`, `formula-previews`, `financial-metrics`); `PermissionCode` +7 (shared with §H) | `pnpm openapi:lint` PASS (827 operations) |
+| Contract-test seams | `apps/api/test/support/p5-pending-arch-05.ts` (aggregate; frozen), `p5-pending-kbe-e.ts` (6), `p5-pending-kbe-e2.ts` (2), `p5-pending-kbe-f.ts` (8); `p5-operations.ts` block (38 with §H); `contract.test.ts` operation count 827 | Contract test green with all 38 pending |
+| ERD §1p, data dictionary "P5 tables, slices G and H", permissions matrix §22 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+The plan's KBE-E is split in two (**KBE-E/KBE-E2**). Creation, the reconciliation and submission form one 60–75 minute task. The decision, the one-time recalculation and the reissue offers form a second. The p4 `-2` precedent applies.
+
+### G.1 KBE-E — prospective application, restatement create, reconciliation, submit, withdraw (kpi-benefits-engineer; after KBE-C)
+
+- **Files:**
+  - `kpi/restatements.ts` (fill BE-A's stub; first): routes, create (lock 730266), get, list, withdraw;
+  - `kpi/restatement-reconciliation.ts`: before/after per selected period, scope and basis through the DG4 KPI library, read-only and unchanged; the draft preview; the rows written at submit;
+  - the submit transaction: the reconciliation rows, then the status, and the `kpi_restatement_to_decide` work items (dedupe `kpi_restatement:<restatementId>:<userId>`);
+  - **the prospective lines** in `apps/worker/src/handlers/kpi.ts` (lines 862–866 as of `f591b7c`): the three non-actual triggers recalculate the latest **open** period only, ADR-0047 §1. This is subject to the orchestrator's decision on that reopen candidate; if it is declined, only `version_activated` changes;
+  - `packages/shared/src/schemas/kpi-restatement.ts` (+ barrel line);
+  - the `kpi_restatement.*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (6):** `listKpiRestatements`, `createKpiRestatement`, `getKpiRestatement`, `getKpiRestatementReconciliation`, `submitKpiRestatement`, `withdrawKpiRestatement`.
+- **Consumes:** ADR-0047 §1, §2, §6–§9; ADR-0027/ADR-0028 (versions, periods, evaluations; the KPI library in `@mth/shared/calc` `kpi/**`, unchanged); `0085` guards.
+- **Tests (literal):**
+  - REQ-S07-016 (a): a target change approved through a DG4 change request and activated while Q2 is `scheduled` leaves Q1's latest evaluation and RAG unchanged, and the next opened period is evaluated with the new version.
+  - Restating an open period gives 422 `kpi_restatement.period_not_closed`; a draft version gives 422 `kpi_restatement.version_not_approved`; 25 periods give 422 `kpi_restatement.too_many_periods`; a second restatement in progress gives 409 `kpi_restatement.open_exists`; submitting a draft whose periods have no value gives 422 `kpi_restatement.nothing_to_reconcile`.
+  - The retained reconciliation equals the draft preview, and Unknown/stale rows carry no number.
+  - Withdrawing a decided restatement gives 422 `kpi_restatement.not_withdrawable`.
+  - AUD gets 403 on every write; `If-Match` gives 428/409; one audit event per row; commit-time re-authorization.
+
+### G.2 KBE-E2 — decision with authority, recalculation once, reissue offers, the DG4 text (kpi-benefits-engineer; after KBE-E)
+
+- **Files:**
+  - `kpi/restatement-decisions.ts` and its registration line in `kpi/restatements.ts` (after KBE-E): `decideKpiRestatement` checks `kpi_restatement.approve` (403 `kpi_restatement.no_authority`), the requester (403 `kpi_restatement.self_decision`) and the recorded authority role, and writes the `kpi_restatement.approved` outbox event;
+  - `apps/worker/src/handlers/kpi.ts` restatement lines and `apps/worker/src/queues/kpi.ts` (after KBE-E): `runOnce`, lock 730266, the one restatement run, the applied stamp, the reissue offers and the `report_reissue_offer` work items (dedupe `report_reissue_offer:<restatementId>:<seriesId>:<userId>`);
+  - `kpi/restatement-offers.ts` (`listKpiRestatementReissueOffers`);
+  - the `change_request.retrospective_not_supported` text line in `packages/shared/src/schemas/change-control.ts` (ADR-0047 §3, a DG4 text change the orchestrator decides). The en/ar `problems.json` key goes to the orchestrator for an append-only merge (§5.3);
+  - tests.
+- **Operations (2):** `decideKpiRestatement`, `listKpiRestatementReissueOffers`.
+- **Consumes:** ADR-0047 §3, §6–§8; ADR-0045 §4 and §10 (reissue; `report_snapshot_version` `kpi_version` rows and `report_snapshot_source`); ADR-0025 (work items, `createWorkItemOnce`); `0085` guards.
+- **Tests (literal):**
+  - REQ-S07-016 (b): deciding a submitted Q1 restatement as a user without `kpi_restatement.approve` gives 403 `kpi_restatement.no_authority`, and as its requester 403 `kpi_restatement.self_decision`; both write nothing.
+  - REQ-S07-016 (c): after approval, the Q1 report snapshot issued earlier returns its old content, versions and approval state; one reissue offer exists; `reissueReportSnapshot` plus issue gives `issueVersion` 2, and v1 is `superseded` with unchanged content.
+  - Replaying the event three times writes one run and one set of offers.
+  - Rejecting without a note gives 422 `kpi_restatement.note_required`.
+  - AUD gets 403; `If-Match` gives 428/409; one audit event.
+
+### G.3 KBE-F — formula preview, the finance functions, settings, cash flows and metrics (kpi-benefits-engineer)
+
+- **Files:**
+  - `kpi/formula-preview.ts` (fill BE-A's stub): calls `validateFormula`/`evaluateFormula` only (shared rule 9); the seeded examples come from `benefit_formula_example`;
+  - `packages/shared/src/finance/**`: pure NPV, ROI and payback in decimal.js, with property tests;
+  - its export line in `packages/shared/src/calc.ts`, after KBE-B's forms line and before KBE-G's health line (§5.3);
+  - `benefits/financial-metrics.ts` (fill BE-A's stub): settings, enablement, assumptions, cash flows, metrics;
+  - `packages/shared/src/schemas/financial-metrics.ts` (+ barrel line);
+  - the `financial_metrics.*`/`financial_cash_flows.*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (8):** `previewFormula`, `getFinancialMetricSettings`, `putFinancialMetricEnablement`, `putFinancialMetricAssumptions`, `getBusinessCaseCashFlows`, `putBusinessCaseCashFlows`, `getBusinessCaseFinancialMetrics`, `listTransformationFinancialMetrics`.
+- **Consumes:** ADR-0047 §4–§9; ADR-0024 §6 (engine codes and texts, unchanged); the DG3 `benefit_formula_example` rows (`0023`); `0085` guards.
+- **Tests (literal):**
+  - REQ-S08-005: `{exampleCode: "revenue_uplift"}` gives unit kind `currency`, currency `SAR`, and the edge case `arpu` missing → `not_computable` with `formula.missing_input`, never 0.
+  - REQ-S08-019: with no settings row, or the extension off, the metrics status is `disabled`; enabled with assumptions but no discount rate gives `npv: null`, `npvReason: discount_rate_missing`; with 0.100000 and `beginning_of_period`, the fixture (outflow 1000 at t=0, inflows 300/400/500) gives NPV `-21.04`, `end_of_period` gives `-19.12`, ROI `0.200000` and payback index 3.
+  - The response names the assumptions and `extension: true`.
+  - Cash flows in USD for a SAR case give 422 `financial_cash_flows.currency_mismatch`.
+  - ADM_METHOD can switch the extension but gets 403 on the assumptions; FIN gets 403 on the switch.
+  - AUD gets 403 on every write; `If-Match "0"` creates and is 409 once a row exists.
+
+### G.4 Migrations of slice G
+
+`0085` and `0087` are delivered. Slice G needs no further migration. The one free number of the range, **`0088`**, belongs to §H (H.4).
+
+### G.5 Integration order (slice G)
+
+ARCH-05, then KBE-E after KBE-C, because it reads report snapshots for the reconciliation context, and its prospective lines touch `apps/worker/src/handlers/kpi.ts` before KBE-E2. Then KBE-E2 (after KBE-E, same worker file). KBE-F is independent of KBE-E. Its `calc.ts` line is merged after KBE-B's. FE-F (`pages/kpi-restatement/**`, `pages/formula-preview/**`, `pages/financial-metrics/**`) and QA-B (A07: restatement and snapshots intact) follow.
+
+### G.6 Requirement → owner (the 3 rows of slice G)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-S07-016 | KBE-E (prospective rule, restatement, reconciliation), KBE-E2 (authority, recalculation, reissue offer) | FE-F (`pages/kpi-restatement/**`), QA-B (A07) |
+| REQ-S08-005 | KBE-F (preview) | FE-F (`pages/formula-preview/**`) |
+| REQ-S08-019 | KBE-F (finance functions, settings, cash flows, metrics) | FE-F (`pages/financial-metrics/**`) |
+
+## §H. Slice H (90-day launch plan, Day-90 leadership test, 25-question health check, versioned scoring schemes, HealthAssessment) — T-DG5-ARCH-05
+
+### H.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADR | `docs/architecture/adr/ADR-0048-p5-launch-plan-day-90-test-health-check-scoring-schemes.md` | Binding design, with the refusal codes and English texts (§9) |
+| Migrations | `packages/db/migrations/0086_p5_launch_plans_health_checks.sql`, `0087_p5_kpi_launch_health_permissions.sql` | Probe 157/157 PASS (see §G.0) |
+| Seeds | `launch_window` (3), `launch_template_item` (33), `day_ninety_question` (6), health-check scheme v1 (key `health-check`; yes/no and the four B0152 bands); work-item kind `day_ninety_test_due`; job schedule `launch.day_ninety_tests` | In `0086` |
+| Studio element types | `health_response`, `health_band` in the element-type CHECK and `methodology_element_guard()` (`0086`); `CONFIG_ELEMENT_TYPES`, `ELEMENT_TYPES_BY_KIND.health_check_scheme` and `CONFIG_ELEMENT_ATTRIBUTES` in `packages/shared/src/schemas/studio.ts`; `ConfigElementType` in the contract | Pinned |
+| Kysely types, catalogue and seed pins, permissions | as §G.0 (11 slice H tables) | Pinned |
+| Lock classes | `launchPlan` 730267, `healthAssessmentSubmit` 730268 (taken by the `0086` triggers) | Registry test updated |
+| Contract | 22 slice H operations (tags `launch-plans`, `day-90-tests`, `health-checks`) | `pnpm openapi:lint` PASS |
+| Contract-test seams | `p5-pending-be-p.ts` (9), `p5-pending-be-p2.ts` (3), `p5-pending-kbe-g.ts` (3), `p5-pending-kbe-g2.ts` (7) | Contract test green |
+
+The plan's BE-P and KBE-G are each split in two: **BE-P/BE-P2** (plan and tasks / the Day-90 test) and **KBE-G/KBE-G2** (scoring functions, the scheme kind provider and the reads / the assessments). Each pair has 10–12 operations, plus a worker job or a Studio provider.
+
+### H.1 BE-P — the launch plan, tasks, predecessors, the template and the S12-004 port (backend-workflow-engineer; after BE-A; before BE-J's "with the plan flag" test)
+
+- **Files:**
+  - `launch/routes.ts` (fill BE-A's stub; first);
+  - `launch/plan.ts`: generate under lock 730267 (33 tasks plus the `day_ninety_test` row; day *d* = start + *d* calendar days; the non-working-day flag from the ADR-0025 calendar, never a shift); the start-date change re-dates `not_started` tasks and an open test, with `last_shift_days`;
+  - `launch/tasks.ts`: list, create, get, update, the status rules, output links;
+  - `launch/predecessors.ts`: the replacement set, stamped removals, `blockedBy`;
+  - `launch/template.ts`;
+  - `launch/port.ts`: the `LaunchPlanPort` implementation; replay returns the existing plan;
+  - its one registration line in `server.ts` (ADR-0044 §1);
+  - `packages/shared/src/schemas/launch.ts` (+ barrel line);
+  - the `launch_plan.*`/`launch_task.*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (9):** `getLaunchPlanTemplate`, `getLaunchPlan`, `generateLaunchPlan`, `updateLaunchPlan`, `listLaunchTasks`, `createLaunchTask`, `getLaunchTask`, `updateLaunchTask`, `putLaunchTaskPredecessors`.
+- **Consumes:** ADR-0048 §1–§3, §7–§9; ADR-0044 §1 (the port signature and idempotency key); ADR-0025 (working-day calendar); `0086` guards.
+- **Tests (literal):**
+  - REQ-PB-086: with start 2026-10-01, the Days 31-60 tasks fall between 2026-11-01 and 2026-11-30, and all 17 B0134 actions appear verbatim (rejoined with `; `, they equal `launch_window.actions_source_en` without its final `.`).
+  - REQ-S14-004: moving the start date by +7 days moves every unstarted task by 7 days and leaves completed tasks unchanged; a task whose predecessor is incomplete returns `blockedBy` naming it.
+  - A loop gives 422 `launch_task.predecessor_cycle`; a second generate gives 409 `launch_plan.exists`; the port replayed three times gives one plan.
+  - AUD gets 403 on every write; `If-Match` gives 428/409; one audit event per row.
+
+### H.2 BE-P2 — the Day-90 leadership test and its task job (backend-workflow-engineer; after BE-P)
+
+- **Files:**
+  - `launch/day-ninety.ts`: the read with verbatim questions and evidence suggestions (≤ 5 per question from `evidence_record_types`, read through the owning modules' services), responses with `If-Match` of the test, completion;
+  - its registration lines in `launch/routes.ts` (after BE-P);
+  - `apps/worker/src/handlers/launch.ts` and `apps/worker/src/queues/launch.ts` (fill BE-A's stubs): job `launch.day_ninety_tests`, exactly once via `createWorkItemOnce` (dedupe `day_ninety_test:<testId>:<userId>`);
+  - the `day_ninety_test.*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (3):** `getDayNinetyTest`, `putDayNinetyResponse`, `completeDayNinetyTest`.
+- **Consumes:** ADR-0048 §4, §7–§9; ADR-0025 §3–§4 (job kit, work items, time zone); `0086` guards.
+- **Tests (literal):**
+  - REQ-PB-087: all six questions render verbatim (equal to B0136–B0141); with 5 responses the test reports `completion {answered: 5, total: 6, complete: false}`, and completing gives 422 `day_ninety_test.incomplete`.
+  - A response after completion gives 422 `day_ninety_test.completed`.
+  - The job run twice on day 90 creates one task per SP/TL holder.
+  - AUD gets 403; `If-Match` gives 428/409; one audit event.
+
+### H.3 KBE-G — scoring functions, the health-check scheme kind provider, questions and schemes (kpi-benefits-engineer; after BE-B3, the publish pipeline)
+
+- **Files:**
+  - `packages/shared/src/health/**`: pure score, band, completion and the scheme rules of ADR-0048 §6 in decimal.js, mirroring `p5_health_scheme_problem` and `p5_health_assessment_result` exactly, with property tests;
+  - its export line in `packages/shared/src/calc.ts` (after KBE-F's, §5.3);
+  - `health/routes.ts` (fill BE-A's stub; first);
+  - `health/provider.ts`: `registerConfigKindProvider("health_check_scheme", { defaultKey: "health-check", validateElement, preview, compatibility, affectedRecords })`. The preview fails with the §9 `health_scheme.*` codes before the database does, and `affectedRecords` lists draft assessments. Its registration call in `server.ts` follows the `forms/provider.ts` precedent, one line;
+  - `health/schemes.ts` and `health/questions.ts`;
+  - the `health_scheme.*` lines in `platform/db-errors.ts`;
+  - tests.
+- **Operations (3):** `listHealthCheckQuestions`, `listHealthCheckSchemes`, `getHealthCheckScheme`.
+- **Consumes:** ADR-0048 §5, §6, §9, §10; ADR-0039 §1–§5 (kinds, elements, the publish pipeline, `ConfigResolver`); ADR-0040 §2 (`invalidated_calculation`); `0086` guards and seed.
+- **Tests (literal):**
+  - REQ-S14-003: a draft scheme with `na` that keeps the source bands fails its preview with 422 `health_scheme.own_bands_required` and cannot be published; with its own bands and `percent_of_applicable` it publishes.
+  - The 25 questions are returned verbatim; scheme v1 returns `implementationAssumption: true`.
+  - The shared functions agree with the database function on 1,000 generated answer sets.
+
+### H.4 KBE-G2 — assessments, the S16-021 group test, and `0088` (kpi-benefits-engineer; after KBE-G and BE-P)
+
+- **Files:**
+  - `health/assessments.ts`: create under the pinned scheme (`ConfigResolver`, else v1) with the previous submitted one; update; answers with `If-Match` of the assessment; actions; submit under lock 730268 with the score and band from `packages/shared/src/health/**`;
+  - its registration lines in `health/routes.ts` (after KBE-G);
+  - `packages/shared/src/schemas/health.ts` (+ barrel line);
+  - the `health_check.*` lines in `platform/db-errors.ts`;
+  - `apps/api/test/integration/health/s16-021-group.test.ts`;
+  - **migration `0088`**: moves the `source_element` rows of sets `launch_window` and `health_question` to `feature_status = 'working'` (p5-work-split §A rule A-7). It is written only once BE-P and this task have shipped (F-DG4-160);
+  - tests.
+- **Operations (7):** `listHealthChecks`, `createHealthCheck`, `getHealthCheck`, `updateHealthCheck`, `putHealthCheckAnswer`, `putHealthCheckActions`, `submitHealthCheck`.
+- **Consumes:** ADR-0048 §5, §7–§11; KBE-G's shared functions and provider; `0086` guards.
+- **Tests (literal):**
+  - REQ-PB-091: the 25 questions render verbatim; an assessment with an unanswered question is labelled incomplete and shows no band; submitting without three actions gives 422 `health_check.actions_required`.
+  - REQ-S14-002: 24 answers give `completion {answered: 24, total: 25}` and `band: null`.
+  - REQ-S14-001: 25 answers with 17 Yes give score `17` and band `16-20`, and `scoringAssumption: true`.
+  - REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 texts verbatim.
+  - REQ-S14-003 (A07 part): an assessment submitted under v1 keeps v1, its score and its band after v2 is published and the pin migrated (ADR-0040).
+  - REQ-S16-021: the group test creates and reads BAUHandover, Control, ControlCheck, ImprovementItem, Lesson and HealthAssessment through the API, with 403 for a caller without the write right and for AUD.
+  - AUD gets 403; `If-Match` gives 428/409; one audit event.
+
+### H.5 Migrations of slice H
+
+`0086` and `0087` are delivered. **`0088`** is the only free number of the range, and it is KBE-G2's (H.4). A task that needs another migration asks the orchestrator for one from the repair range (`0094`+, D-145).
+
+### H.6 Integration order (slices G and H)
+
+1. ARCH-05.
+2. BE-P (after BE-A; in the wave of BE-J, so BE-J's port test leaves `p5-pending-be-j`), then BE-P2.
+3. KBE-G (after BE-B3; `calc.ts` after KBE-F), then KBE-G2, after KBE-G and BE-P because of `0088`.
+4. KBE-E (after KBE-C), then KBE-E2.
+5. KBE-F (independent).
+6. FE-F: `pages/launch-plan/**`, `pages/day-90-test/**`, `pages/health-check/**`, `pages/health-schemes/**`, `pages/kpi-restatement/**`, `pages/formula-preview/**`, `pages/financial-metrics/**`. Its texts include the "Incomplete (n/total)" label, "Blocked by", the scoring-assumption notice, "Not computable" and "Extension, not a playbook requirement", in en and ar.
+7. QA-D (A16) and QA-B (A07).
+
+`server.ts` gets two one-line registrations, the `LaunchPlanPort` (BE-P) and the health provider call (KBE-G), merged append-only. `calc.ts` gets KBE-F's line, then KBE-G's.
+
+### H.7 Requirement → owner (the 9 rows of slice H)
+
+| Requirement | Owner task(s) | Completes with |
+|---|---|---|
+| REQ-PB-086 | BE-P (generation, dating, port) | FE-F (`pages/launch-plan/**`), QA-D (A16) |
+| REQ-PB-087 | BE-P2 (test, responses, job) | FE-F (`pages/day-90-test/**`), QA-D |
+| REQ-PB-091 | KBE-G2 (assessments, three actions, reassessments) | FE-F (`pages/health-check/**`), QA-D |
+| REQ-PB-092 | KBE-G (bands), KBE-G2 (band on the assessment) | FE-F, QA-D |
+| REQ-S14-001 | KBE-G (scoring), KBE-G2 (score, assumption flag) | FE-F (assumption notice), QA-D |
+| REQ-S14-002 | KBE-G (completion), KBE-G2 (`band: null`) | FE-F ("Incomplete (24/25)"), QA-D |
+| REQ-S14-003 | KBE-G (provider, schemes), KBE-G2 (assessments keep their scheme) | FE-F (`pages/health-schemes/**` through Studio), QA-D, QA-B |
+| REQ-S14-004 | BE-P (tasks, owners, predecessors, re-dating) | FE-F, QA-D |
+| REQ-S16-021 | KBE-G2 (HealthAssessment and the group test); DG4 entities already built | — |
+
+### H.8 What the implementers of slices G and H must know
+
+1. **Prospective means open periods only.** A KPI version changes a closed period only through an approved restatement (ADR-0047 §1). Never update or delete an evaluation; a restatement writes a new run.
+2. **Authority is a business approval inside the product.** `kpi_restatement.approve` is decided by a person, never the requester, never an agent or a job, and never labelled with DG0–DG7.
+3. **The reconciliation is retained, not recomputed.** It is written once, at submission, in the submitting transaction; reads of a submitted restatement return the stored rows.
+4. **Issued reports never change.** A restatement only offers a reissue; the person reissues through ADR-0045 §4.
+5. **The formula engine is untouched** (shared rule 9). Previews and the finance functions call it or sit beside it in `packages/shared/src/finance/**`.
+6. **Extension, not a source requirement.** NPV, ROI and payback are off by default, always show their assumptions, and carry `extension: true`. No NPV without a discount rate; nothing is ever shown as 0 when it is not computed.
+7. **Verbatim texts.** B0134 actions and outputs, B0136–B0141, B0150 and B0152 are rendered verbatim from the seeded rows (D-142 Q5). The Arabic texts are provisional translations, labelled so where the UI labels provisional translations.
+8. **Calendar days, never a silent shift** (D-142 Q6). Show the non-working-day flag as a warning.
+9. **Incomplete is not zero.** An assessment with an unanswered question has `score: null` and `band: null`; a Day-90 test with an unanswered question is incomplete.
+10. **The database recomputes the score.** Submit the score and band from `packages/shared/src/health/**`; the database refuses any other value (`health_assessment_score_matches`).
+11. **Schemes go through Studio.** Never write `methodology_element` rows of a published scheme; publish a new version and migrate the pin (ADR-0040). Existing assessments keep their scheme forever.
+12. **No digits in codes the database checks.** Work-item kinds, job codes, permission codes and audit actions match `^[a-z_]+…`; that is why the tables are `day_ninety_*` and the permission is `day_ninety_test.respond`. API paths and problem-code texts may say "Day-90".

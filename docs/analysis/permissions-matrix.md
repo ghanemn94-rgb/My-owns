@@ -875,3 +875,44 @@ C = generate (snapshots) or create (exports, updates); Is = issue, reissue, disc
 - **Technical administrators** (ADM_METHOD, ADM_TECH, ADM_ACCESS) hold no `transformation.read` by default and therefore read no report, snapshot, update or evidence register; they hold no slice F code.
 - **SoD:** none required (no code here approves anything). An owner update is written only by its subject's owner; an export is downloaded only by its requester.
 
+
+## 22. P5 implementation, slices G and H (DG5): KPI restatements, formula preview, the optional NPV/ROI/payback extension, the 90-day launch plan, the Day-90 leadership test and the health check permission codes and per-entity rights
+
+- **Task:** T-DG5-ARCH-05 (solution-architect), 2026-10-14. **Sources:** ADR-0047 §6, ADR-0048 §7; master prompt M0163, M0168, M0174, M0257, M0261, M0262, M0288; REQ-S07-016 "restate: configured authority; view: scoped", REQ-S08-005 "preview: formula authors", REQ-S08-019 "enable: ADM; define-assumptions: FIN", REQ-PB-086 "generate/edit: TL, TO; view: scoped", REQ-PB-087 "respond: SP, TL; view: scoped", REQ-PB-091 "assess: TL, TO; view: scoped", REQ-S14-003 "publish-scheme: ADM; view: all signed-in users", REQ-S14-004 "edit: TL, TO; view: scoped".
+- **Seed:** `0087_p5_kpi_launch_health_permissions.sql`, equal to `P5_KPI_LAUNCH_HEALTH_PERMISSIONS` / `P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** one code is a business approval: `kpi_restatement.approve` (D-142 Q10: the approvers of a KPI change request, SP, BO and FIN, the `approval.decide` holders). The requester never decides their own restatement (API 403 `kpi_restatement.self_decision`; CHECK `kpi_restatement_sod`). The decider's authority is recorded with the decision. TL holds no business-approval code (ADR-0039 §9). The technical administrators hold no business-approval code (the `0005` trigger). ADM_METHOD's only grant here is the switch that turns the financial extension on or off. A health-check score and a Day-90 answer are assessments, not approvals.
+
+### 22.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `kpi_restatement.request` | write | Create, submit and withdraw a restatement of selected closed periods of a KPI | TL, BO, FIN, KDS |
+| `kpi_restatement.approve` | business_approval | Approve or reject a restatement requested by someone else | SP, BO, FIN |
+| `financial_metrics.enable` | configure | Switch the optional NPV/ROI/payback extension on or off | ADM_METHOD |
+| `financial_metrics.define` | write | Set the methodology, timing, period-basis and discount-rate assumptions and the business cases' cash flows | FIN |
+| `launch_plan.edit` | write | Generate the 90-day plan, change its start date, edit tasks, owners and predecessors | TL, TO |
+| `day_ninety_test.respond` | write | Record responses to the Day-90 leadership test and complete it | SP, TL |
+| `health_check.assess` | write | Create, answer, set the top 3 actions of and submit a health check | TL, TO |
+
+Reused codes: every transformation-scoped read in this slice (restatements, reconciliation, reissue offers, financial metrics, cash flows, the launch plan and tasks, the Day-90 test, health checks) needs `transformation.read` (DG1) in the transformation. Reading the launch template, the 25 questions, the health-check schemes and the financial-metric settings needs a session only (REQ-S14-003 "view: all signed-in users"). The formula preview needs a session only, because it writes nothing (the DG3 `checkBenefitFormula` precedent). Drafting and publishing a health-check scheme use the slice A Studio codes `methodology.configure` and `methodology.publish` (ADM_METHOD), with the configured review by TO (§18).
+
+### 22.2 Per-entity rights in P5 (slices G and H)
+
+Legend as in 8.3. Reads (V) are within the reader's `transformation.read` scope, except where marked "session".
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| KPI restatements (`kpi_restatement` and its periods, reconciliation, reissue offers) | V; D | V C U Sb W | V C U Sb W; D | V | V C U Sb W; D | V | V C U Sb W | V | V | V | V | — | — | — |
+| Formula preview (not stored) | session | session | session | session | session | session | session | session | session | session | session | session | session | session |
+| Financial-metric settings (`financial_metric_setting`) | V (session) | V (session) | V (session) | V (session) | V U (assumptions) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session) | V U (on/off) | V (session) | V (session) |
+| Cash flows and metrics (`financial_cash_flow_set`, `financial_cash_flow`; metrics not stored) | V | V | V | V | V C U | V | V | V | V | V | V | — | — | — |
+| Launch plan and tasks (`launch_plan`, `launch_task`, `launch_task_predecessor`; catalogues `launch_window`, `launch_template_item`) | V | V C U | V | V | V | V C U | V | V | V | V | V | V (template, session) | V (template, session) | V (template, session) |
+| Day-90 test (`day_ninety_test`, `day_ninety_response`; catalogue `day_ninety_question`) | V U Cp | V U Cp | V | V | V | V | V | V | V | V | V | — | — | — |
+| Health checks (`health_assessment`, `_answer`, `_action`) | V | V C U Sb | V | V | V | V C U Sb | V | V | V | V | V | — | — | — |
+| Health-check scoring schemes (`methodology_version` kind `health_check_scheme`, `methodology_element` `health_response`/`health_band`) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session); Rv (configured review) | V (session) | V (session) | V (session) | V (session) | V (session) | V (session); C U P (Studio) | V (session) | V (session) |
+
+C = create (or generate); U = update; Sb = submit; W = withdraw; D = decide (a business approval inside the product; never the requester); Cp = complete; P = publish; Rv = review.
+
+- **AUD (read-only auditor):** every slice G/H mutation returns **403** for AUD and writes nothing: create, submit, withdraw and decide a restatement; enablement, assumptions and cash flows; generate the plan, change its start date, task and predecessor edits; Day-90 responses and completion; health-check create, answers, actions and submit. AUD reads every listed entity in its scope, and the session-level reads.
+- **Technical administrators** hold no `transformation.read` by default and therefore read no restatement, plan, test or assessment. ADM_METHOD switches the financial extension on or off and authors scheme drafts through Studio; it decides nothing.
+- **SoD:** a restatement is decided by a holder of `kpi_restatement.approve` who is not its requester. No other slice G/H operation approves anything.

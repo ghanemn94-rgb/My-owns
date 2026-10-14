@@ -1,0 +1,165 @@
+Wed Oct 14 10:30:50 UTC 2026
+port-policy: PostgreSQL listening on port 23710 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 77 (0001_identity_access.sql .. 0087_p5_kpi_launch_health_permissions.sql)
+PASS  G00 slice G/H migrations 0085-0087 present; 0088 left free  -- ids >= 80: 80,81,82,85,86,87
+PASS  G01 fresh database: 0001..last apply  -- applied 77: 0082_p5_reporting_permissions.sql, 0085_p5_kpi_restatements_financial_metrics.sql, 0086_p5_launch_plans_health_checks.sql, 0087_p5_kpi_launch_health_permissions.sql
+PASS  G02 P4 database populated (0001-0061; a synthetic transformation instantiated by the DG3 function)  -- applied 61
+PASS  G03 P5 over the P4 database: 0062..last apply  -- applied 16: 0082_p5_reporting_permissions.sql, 0085_p5_kpi_restatements_financial_metrics.sql, 0086_p5_launch_plans_health_checks.sql, 0087_p5_kpi_launch_health_permissions.sql
+PASS  G04 the DG4 rows are unchanged after the upgrade (a version_activated run, the transformation at version 1)  -- run 1, transformation v1 1
+PASS  G05 a DG4-kind calculation run is still accepted after 0085 widened the closed sets  -- inserted (rolled back)
+PASS  S01 three B0134 windows with their objectives verbatim and day ranges 0-30, 31-60, 61-90  -- days_0_30:0-30:Diagnose & align|days_31_60:31-60:Define & design|days_61_90:61-90:Mobilize & prove
+PASS  S02 the template: 17 actions, 15 outputs and the Day-90 test on day 90; the Days 31-60 actions rejoin to the B0134 cell verbatim  -- 17/15/1: Agree North Star/outcomes; build KPI tree; design TOM; run design decisions; identify initiatives; size benefits
+PASS  S03 the six Day-90 questions verbatim (B0136-B0141)  -- Can leaders explain the same case for change and North Star? | Can every initiative be traced to a target-state gap and 
+PASS  S04 health-check scheme v1: published, points basis, four B0152 bands (21,16,10,0), yes=1, no=0; its publish rule holds  -- {"status":"published","config_kind":"health_check_scheme","b":"points","el":"b0152_21_25=21,b0152_16_20=16,b0152_10_15=10,b0152_0_9=0,yes=1,no=0","problem":null}
+PASS  S05 the 0-9 band text is B0152 verbatim  -- Transformation is likely being managed as disconnected projects; reset around outcomes and operating model.
+PASS  S06 seven permissions; kpi_restatement.approve is the only business approval (SP, BO, FIN); AUD and technical admins hold none but the extension switch  -- day_ninety_test.respond:write,financial_metrics.define:write,financial_metrics.enable:configure,health_check.assess:write,kpi_restatement.approve:business_approval,kpi_restatement.request:write,launch_plan.edit:write; approvers BO,FIN,SP; aud/tech 0
+PASS  S07 three work-item kinds and the audited launch.day_ninety_tests schedule  -- day_ninety_test_due,kpi_restatement_to_decide,report_reissue_offer; schedule 1
+PASS  KR01 a restatement without its audit event fails at COMMIT  -- 23000 kpi_restatement_audit_required no audit_event for kpi_restatement 01990000-0000-7000-8000-000000000065 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  KR02 a draft restatement with one closed period (audited) commits  -- 01990000-0000-7000-8000-000000000067
+PASS  KR03 a restatement of a draft (not approved) version is refused  -- 23514 kpi_restatement_version_approved kpi_restatement: the restated version must be an approved (active or superseded) version of this KPI
+PASS  KR04 a second restatement in progress for the same KPI is refused  -- 23505 kpi_restatement_one_open_key duplicate key value violates unique constraint "kpi_restatement_one_open_key"
+PASS  KR05 period_count different from the selected periods fails at COMMIT  -- 23000 kpi_restatement_counts kpi_restatement 01990000-0000-7000-8000-000000000067: period_count and reconciliation_count must equal the selected periods and reconciliation rows
+PASS  KR06 submitting without a reconciliation fails at COMMIT  -- 23000 kpi_restatement_reconciled kpi_restatement 01990000-0000-7000-8000-000000000067: a submitted restatement needs at least one period and a reconciliation of every period, written at submission
+PASS  KR07 a non-stepping version is refused  -- 23514 kpi_restatement_version_step kpi_restatement: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  KR08 the restated version never changes  -- 23514 kpi_restatement_identity_fixed kpi_restatement: the KPI, version, change request and requester never change; reason and periods change only in draft
+PASS  KR09 draft -> approved is not an allowed transition  -- 23514 kpi_restatement_status_step kpi_restatement: draft -> approved is not an allowed transition
+PASS  KP01 an open period cannot be restated  -- 23514 kpi_restatement_period_closed kpi_restatement_period: 2026-Q2 is not a closed quarterly period of this organization
+PASS  KP02 a closed period of another frequency cannot be restated  -- 23514 kpi_restatement_period_closed kpi_restatement_period: 2026-01 is not a closed quarterly period of this organization
+PASS  KC01 a reconciliation difference that is not after - before is refused  -- 23514 kpi_restatement_reconciliation_difference new row for relation "kpi_restatement_reconciliation" violates check constraint "kpi_restatement_reconciliation_difference"
+PASS  KC02 an unknown before-value with a number is refused (Unknown is never a number)  -- 23514 kpi_restatement_reconciliation_before new row for relation "kpi_restatement_reconciliation" violates check constraint "kpi_restatement_reconciliation_before"
+PASS  KC03 a reconciliation row written without the submission fails at COMMIT  -- 23000 kpi_restatement_counts kpi_restatement 01990000-0000-7000-8000-000000000067: period_count and reconciliation_count must equal the selected periods and reconciliation rows
+PASS  KC04 the submission writes the reconciliation in the same transaction (submitted_at = its time)  -- {"status":"submitted","same":true}
+PASS  KC05 no reconciliation row can be added after the submission  -- 23514 kpi_restatement_reconciliation_at_submit kpi_restatement_reconciliation: the reconciliation is written only by the submission of a draft
+PASS  KP03 no period can be added after the submission  -- 23514 kpi_restatement_period_draft_only kpi_restatement_period: periods are selected only while the restatement is a draft
+PASS  KP04 mth_app cannot UPDATE a selected period (no grant)  -- 42501 permission denied for table kpi_restatement_period
+PASS  KC06 DELETE of a reconciliation row is refused  -- 42501 permission denied for table kpi_restatement_reconciliation
+PASS  KR10 the requester cannot decide their own restatement (SoD)  -- 23514 kpi_restatement_sod new row for relation "kpi_restatement" violates check constraint "kpi_restatement_sod"
+PASS  KR11 an approval without its recorded authority is refused  -- 23514 kpi_restatement_decision_complete new row for relation "kpi_restatement" violates check constraint "kpi_restatement_decision_complete"
+PASS  KR12 a rejection without a note is refused  -- 23514 kpi_restatement_reject_note new row for relation "kpi_restatement" violates check constraint "kpi_restatement_reject_note"
+PASS  CR01 a restatement run for a restatement that is not approved is refused  -- 23514 calculation_run_restatement_approved calculation_run: a restatement run needs an approved restatement of this transformation (slot 1, key kpi_restatement:<id>)
+PASS  KR13 approval by another person with the recorded authority commits  -- approved
+PASS  KR14 the decision cannot be rewritten after it is recorded  -- 23514 kpi_restatement_decision_frozen kpi_restatement: the decision is recorded only by the approve or reject transition
+PASS  KR15 applied needs the completed restatement run  -- 23514 kpi_restatement_applied_run kpi_restatement: applied needs the completed restatement calculation run of this restatement
+PASS  CR02 a restatement run with another idempotency key is refused  -- 23514 calculation_run_restatement_approved calculation_run: a restatement run needs an approved restatement of this transformation (slot 1, key kpi_restatement:<id>)
+PASS  CR03 a restatement kind with another record type is refused by the widened pair CHECK  -- 23514 calculation_run_trigger_pair new row for relation "calculation_run" violates check constraint "calculation_run_trigger_pair"
+PASS  EV01 a restatement run cannot evaluate an unselected period  -- 23514 kpi_evaluation_restatement_scope kpi_evaluation: a restatement run evaluates only the selected periods, and the restated KPI with the restated version
+PASS  EV02 a restatement run evaluates the restated KPI only with the restated version  -- 23514 kpi_evaluation_restatement_scope kpi_evaluation: a restatement run evaluates only the selected periods, and the restated KPI with the restated version
+PASS  CR04 + EV03 + KR16 one run for the approved restatement, its Q1 evaluation, then applied  -- Q1 evaluations 2 (the DG4 one is kept beside the restated one)
+PASS  CR05 a second run for the same restatement is refused (exactly once)  -- 23514 calculation_run_restatement_approved calculation_run: a restatement run needs an approved restatement of this transformation (slot 1, key kpi_restatement:<id>)
+PASS  EV04 mth_app cannot UPDATE the DG4 Q1 evaluation (no grant)  -- 42501 permission denied for table kpi_evaluation
+PASS  EV05 a DG4-kind run still evaluates without the restatement guard  -- ok
+PASS  KR17 an applied restatement is final  -- 23514 kpi_restatement_status_step kpi_restatement: applied -> withdrawn is not an allowed transition
+PASS  KO01 a reissue offer for the issued snapshot of an applied restatement commits  -- snapshot unchanged: {"status":"issued","issue_version":1}
+PASS  KO02 an offer for a generated (not issued) snapshot is refused  -- 23514 kpi_restatement_reissue_offer_valid kpi_restatement_reissue_offer: an offer names an issued snapshot (and its series) of an approved restatement
+PASS  KO03 a second offer of the same snapshot for the same restatement is refused (exactly once)  -- 23505 kpi_restatement_reissue_offer_key duplicate key value violates unique constraint "kpi_restatement_reissue_offer_key"
+PASS  KO04 mth_app cannot UPDATE an offer (no grant)  -- 42501 permission denied for table kpi_restatement_reissue_offer
+PASS  KR18 after the first is applied, a new restatement of the KPI can start; it is submitted  -- 01990000-0000-7000-8000-00000000008a
+PASS  KR19 submit, then withdraw a submitted restatement  -- withdrawn
+PASS  FS01 a setting without its audit event fails at COMMIT  -- 23000 financial_metric_setting_audit_required no audit_event for financial_metric_setting 01990000-0000-7000-8000-000000000091 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  FS02 the organization's setting is created disabled by default  -- {"enabled":false,"discount_rate":null}
+PASS  FS03 one setting per organization  -- 23505 financial_metric_setting_org_key duplicate key value violates unique constraint "financial_metric_setting_org_key"
+PASS  FS04 incomplete assumptions (a timing without the methodology note and period basis) are refused  -- 23514 financial_metric_setting_assumptions_complete new row for relation "financial_metric_setting" violates check constraint "financial_metric_setting_assumptions_complete"
+PASS  FS05 a discount rate without the assumptions is refused  -- 23514 financial_metric_setting_assumptions_complete new row for relation "financial_metric_setting" violates check constraint "financial_metric_setting_assumptions_complete"
+PASS  FS06 a discount rate above 1 is refused  -- 23514 financial_metric_setting_discount_rate_check new row for relation "financial_metric_setting" violates check constraint "financial_metric_setting_discount_rate_check"
+PASS  FS07 enabled with the assumptions and a 10% discount rate (decimal 0.100000)  -- {"r":"0.100000"}
+PASS  FS08 a non-stepping version is refused  -- 23514 financial_metric_setting_version_step financial_metric_setting: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  CF01 cash flows in another currency than the business case are refused  -- 23514 financial_cash_flow_set_currency financial_cash_flow_set: the cash flows are in the business case currency
+PASS  CF02 a set whose rows do not match line_count fails at COMMIT  -- 23000 financial_cash_flow_set_rows financial_cash_flow_set 01990000-0000-7000-8000-000000000096: revision 1 needs exactly 4 rows with period indexes 0..3
+PASS  CF03 the fixture set (outflow 1000 at t=0, inflows 300/400/500) commits  -- NPV at 10% beginning-of-period (SQL cross-check) = -21.04
+PASS  CF04 a row for an old or future revision is refused  -- 23514 financial_cash_flow_current_revision financial_cash_flow: rows are written only for the current revision of their set
+PASS  CF05 an extra row written without its set fails at COMMIT  -- 23000 financial_cash_flow_set_rows financial_cash_flow_set 01990000-0000-7000-8000-000000000096: revision 1 needs exactly 4 rows with period indexes 0..3
+PASS  CF06 the revision steps by exactly 1  -- 23514 financial_cash_flow_set_revision_step financial_cash_flow_set: the business case and currency never change, and a replacement steps the revision by exactly 1
+PASS  CF07 a replacement (revision 2) keeps the revision-1 rows as history  -- [{"revision":1,"n":4},{"revision":2,"n":2}]
+PASS  CF08 mth_app cannot UPDATE a cash-flow row (no grant)  -- 42501 permission denied for table financial_cash_flow
+PASS  CF09 a set without its audit event fails at COMMIT  -- 23000 financial_cash_flow_set_audit_required no audit_event for financial_cash_flow_set 01990000-0000-7000-8000-000000000096 at version 3 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  LP01 a plan without its audit event fails at COMMIT  -- 23000 launch_plan_audit_required no audit_event for launch_plan 01990000-0000-7000-8000-0000000000a7 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  LP02 the idempotency key is 'launch_plan:<transformationId>'  -- 23514 launch_plan_idempotency_shape new row for relation "launch_plan" violates check constraint "launch_plan_idempotency_shape"
+PASS  LP03 generate: the plan, 33 template tasks dated from 2026-10-01 and the Day-90 test  -- Days 31-60: 11 tasks from 2026-11-01 to 2026-11-30
+PASS  LP04 one plan per transformation  -- 23505 launch_plan_transformation_key duplicate key value violates unique constraint "launch_plan_transformation_key"
+PASS  LP05 a start-date shift must record last_shift_days  -- 23514 launch_plan_shift_recorded launch_plan: last_shift_days records the start-date shift in days
+PASS  LP06 the template reference never changes  -- 23514 launch_plan_identity_fixed launch_plan: the template, origin and idempotency key never change
+PASS  LP07 a non-stepping version is refused  -- 23514 launch_plan_version_step launch_plan: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  LT01 a task completes (w1_a1); another starts (w1_a2)  -- ok
+PASS  LT02 +7 days: every not_started task moves by 7, the completed and in-progress ones keep their dates  -- moved 31; w1_a1=2026-10-01..2026-10-31 w1_a2=2026-10-01..2026-10-31 w2_a1=2026-11-08..2026-12-07
+PASS  LT03 a completed task keeps its dates  -- 23514 launch_task_completed_dates_fixed launch_task: a completed task keeps its dates
+PASS  LT04 completed -> not_started is not allowed  -- 23514 launch_task_status_step launch_task: completed -> not_started is not an allowed transition
+PASS  LT05 a task is created not started  -- 23514 launch_task_created_not_started launch_task: a task is created not started
+PASS  LT06 a template task keeps its template item's kind  -- 23514 launch_task_template_match launch_task: a template task keeps its template item's kind, window and output record type
+PASS  LT07 the window, ordinal and template item of a task never change  -- 23514 launch_task_identity_fixed launch_task: plan, template item, kind, window, ordinal and a template output type never change
+PASS  LT08 an output link must name a record of the transformation  -- 23503 launch_task_output_record launch_task: charter 01990000-0000-7000-8000-000000000115 is not a record of this transformation
+PASS  LT09 a due date before the start date is refused  -- 23514 launch_task_dates new row for relation "launch_task" violates check constraint "launch_task_dates"
+PASS  LT10 cancel a task (w3_o3)  -- cancelled
+PASS  LT11 a cancelled task is final  -- 23514 launch_task_status_step launch_task: a cancelled task is final
+PASS  LT12 a task without its audit event fails at COMMIT  -- 23000 launch_task_audit_required no audit_event for launch_task 01990000-0000-7000-8000-0000000000c5 at version 3 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  LD01 w2_a2 needs w2_a1 first (audited link)  -- linked
+PASS  LD02 w2_a3 needs w2_a2  -- linked
+PASS  LD03 a chain that would loop (w2_a1 needs w2_a3) is refused  -- 23514 launch_task_predecessor_no_cycle launch_task_predecessor: the link would create a cycle
+PASS  LD04 a task cannot precede itself (the cycle guard fires before the CHECK launch_task_predecessor_not_self)  -- 23514 launch_task_predecessor_no_cycle launch_task_predecessor: the link would create a cycle
+PASS  LD05 one active link per pair  -- 23505 launch_task_predecessor_active_key duplicate key value violates unique constraint "launch_task_predecessor_active_key"
+PASS  LD06 a link is never deleted (no DELETE grant)  -- 42501 permission denied for table launch_task_predecessor
+PASS  LD07 'blocked by' derives from the active predecessors that are not completed  -- [{"t":"w2_a2","by":"w2_a1"},{"t":"w2_a3","by":"w2_a2"}]
+PASS  LD08 removing a link stamps removed_at (its only change)  -- removed
+PASS  LD09 a removed link cannot be changed again  -- 23514 launch_task_predecessor_immutable launch_task_predecessor: the only change of a link is its removal
+PASS  LD10 re-adding a removed link makes a new row  -- re-linked
+PASS  DT01 a test is created open with no response  -- 23514 day_ninety_test_created_open day_ninety_test: a test is created open with no response
+PASS  DT02 five responses: the test stays open (incomplete, 5/6)  -- {"status":"open","answered_count":5}
+PASS  DT03 completing with 5 of 6 answers is refused  -- 23514 day_ninety_test_completed_complete new row for relation "day_ninety_test" violates check constraint "day_ninety_test_completed_complete"
+PASS  DT04 answered_count different from the responses fails at COMMIT  -- 23000 day_ninety_test_answered_count day_ninety_test 01990000-0000-7000-8000-0000000000ed: answered_count must equal its responses
+PASS  DR01 an answer outside yes/no is refused  -- 23514 day_ninety_response_answer_check new row for relation "day_ninety_response" violates check constraint "day_ninety_response_answer_check"
+PASS  DR02 one response per question  -- 23505 day_ninety_response_key duplicate key value violates unique constraint "day_ninety_response_key"
+PASS  DT05 the sixth response, then complete  -- completed
+PASS  DR03 no response changes after completion  -- 23514 day_ninety_response_test_open day_ninety_response: responses are recorded only while the test is open
+PASS  DT06 a completed test is final  -- 23514 day_ninety_test_completed_final day_ninety_test: the plan never changes, and a completed test is final
+PASS  HS01 a draft that adds N/A but keeps the source bands breaks the publish rule  -- health_scheme_own_bands_required
+PASS  HS02 publishing that draft is refused by the database (REQ-S14-003)  -- 23514 health_scheme_own_bands_required methodology_version 01990000-0000-7000-8000-0000000000f1: this health-check scheme cannot be published (health_scheme_own_bands_required)
+PASS  HS03 N/A with own bands but a points basis breaks the rule (N/A scores as a percentage of the applicable questions)  -- health_scheme_na_needs_percent
+PASS  HS04 N/A with its own bands and the percent basis satisfies the rule  -- null
+PASS  HS05 a float-like or out-of-range credit is refused  -- 23514 methodology_element_health_credit methodology_element 01990000-0000-7000-8000-00000000013c: a health response credit is a decimal string in [0, 1] (null for na)
+PASS  HS06 a band without its Arabic text is refused  -- 23514 methodology_element_health_band methodology_element 01990000-0000-7000-8000-00000000013d: a health band has a decimal-string minScore, a rangeLabel and both texts
+PASS  HS07 a response key outside yes/no/partial/na is refused  -- 23503 methodology_element_source_identity methodology_element 01990000-0000-7000-8000-00000000013e: health_response maybe is not a stable source identity
+PASS  HS08 a source band must be one of the four B0152 bands  -- 23503 methodology_element_source_identity methodology_element 01990000-0000-7000-8000-00000000013f: health_band b0152_99 is not a stable source identity
+PASS  HS09 a health element in a methodology version is refused  -- 23514 methodology_element_draft_only methodology_element 01990000-0000-7000-8000-000000000140: elements change only in a draft being edited; a published version is immutable
+PASS  HS10 a valid partial-credit response is accepted in a draft being edited  -- ok
+PASS  HS11 the published v1 cannot gain an element  -- 23514 methodology_element_draft_only methodology_element 01990000-0000-7000-8000-000000000143: elements change only in a draft being edited; a published version is immutable
+PASS  HA01 an assessment without its audit event fails at COMMIT  -- 23000 health_assessment_audit_required no audit_event for health_assessment 01990000-0000-7000-8000-000000000144 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  HA02 an assessment needs a published scheme version  -- 23514 health_assessment_scheme_published health_assessment: the scheme must be a published health-check scoring scheme version
+PASS  HA03 an assessment is created as a draft  -- 23514 health_assessment_created_draft health_assessment: an assessment is created as a draft with no answer
+PASS  HA04 a draft assessment under scheme v1  -- 01990000-0000-7000-8000-000000000147
+PASS  HA05 at most one draft per transformation  -- 23505 health_assessment_one_draft_key duplicate key value violates unique constraint "health_assessment_one_draft_key"
+PASS  HN01 N/A is not a response of scheme v1  -- 23514 health_assessment_answer_response_allowed health_assessment_answer: na is not a response of this assessment's scoring scheme
+PASS  HN02 question q26 does not exist  -- 23514 health_assessment_answer_question_code_check new row for relation "health_assessment_answer" violates check constraint "health_assessment_answer_question_code_check"
+PASS  HN03 24 answers (16 yes): incomplete, no score and no band  -- 24/25: {"score":null,"score_max":null,"band_key":null}
+PASS  HA06 answered_count different from the answers fails at COMMIT  -- 23000 health_assessment_answered_count health_assessment 01990000-0000-7000-8000-000000000147: answered_count must equal its answers
+PASS  HX01 top action 1  -- ok
+PASS  HX02 top action 2  -- ok
+PASS  HX03 top action 3  -- ok
+PASS  HX04 a fourth action (rank 4) is refused  -- 23514 health_assessment_action_rank_check new row for relation "health_assessment_action" violates check constraint "health_assessment_action_rank_check"
+PASS  HX05 one action per rank  -- 23505 health_assessment_action_rank_key duplicate key value violates unique constraint "health_assessment_action_rank_key"
+PASS  HA07 an incomplete assessment (24/25) cannot be submitted  -- 23514 health_assessment_incomplete health_assessment: an incomplete or not computable assessment cannot be submitted
+PASS  HN04 the 25th answer (yes): 17 of 25 -> score 17, band 16-20  -- {"score":"17.00","score_max":"25","band_key":"b0152_16_20"}
+PASS  HA08 a submitted score that differs from the scheme result is refused  -- 23514 health_assessment_score_matches health_assessment: score 18.00/25.00 and band b0152_16_20 differ from the scheme result 17.00/25 and b0152_16_20
+PASS  HA09 a submitted band that differs from the scheme result is refused  -- 23514 health_assessment_score_matches health_assessment: score 17.00/25.00 and band b0152_21_25 differ from the scheme result 17.00/25 and b0152_16_20
+PASS  HA10 submission with 25 answers, 3 actions, score 17 and band 16-20  -- submitted
+PASS  HA11 a submitted assessment is final  -- 23514 health_assessment_submitted_final health_assessment: a submitted assessment is final (reassess with a new assessment)
+PASS  HN05 no answer changes after submission  -- 23514 health_assessment_answer_draft_only health_assessment_answer: answers change only while the assessment is a draft
+PASS  HX06 no action changes after submission  -- 23514 health_assessment_action_draft_only health_assessment_action: actions change only while the assessment is a draft
+PASS  HA12 a reassessment names the previous submitted assessment  -- 01990000-0000-7000-8000-00000000018a
+PASS  HA13 submission without the top 3 actions is refused  -- 23514 health_assessment_three_actions health_assessment: submission needs the top 3 actions
+PASS  HA14 the scheme version of an assessment never changes  -- 23514 health_assessment_scheme_fixed health_assessment: the scheme version, sequence and previous assessment never change
+PASS  HA15 a non-stepping version is refused  -- 23514 health_assessment_version_step health_assessment: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  HA16 scores 21, 16, 10, 9 map to the four B0152 bands (computed in the database; rolled back)  -- 21.00->21-25: Strong transformation discipline; focus on value acceleration and continuous improvement. | 16.00->16-20: Solid foundation; address a few structural gaps before scaling. | 10.00->10-15: Execution risk is material; strengthen direction, TOM, governance or benefits. | 9.00->0-9: Transfor
+PASS  AO01 mth_app has no DELETE or TRUNCATE on any slice G/H table  -- null
+PASS  AO03 UPDATE on kpi_restatement_period is refused by its append-only trigger (as the owner)  -- 42501 kpi_restatement_period is append-only: UPDATE is not allowed
+PASS  AO04 DELETE on kpi_restatement_period is refused by its append-only trigger (as the owner)  -- 42501 kpi_restatement_period is append-only: DELETE is not allowed
+PASS  AO05 UPDATE on kpi_restatement_reconciliation is refused by its append-only trigger (as the owner)  -- 42501 kpi_restatement_reconciliation is append-only: UPDATE is not allowed
+PASS  AO06 DELETE on kpi_restatement_reconciliation is refused by its append-only trigger (as the owner)  -- 42501 kpi_restatement_reconciliation is append-only: DELETE is not allowed
+PASS  AO07 UPDATE on kpi_restatement_reissue_offer is refused by its append-only trigger (as the owner)  -- 42501 kpi_restatement_reissue_offer is append-only: UPDATE is not allowed
+PASS  AO08 DELETE on kpi_restatement_reissue_offer is refused by its append-only trigger (as the owner)  -- 42501 kpi_restatement_reissue_offer is append-only: DELETE is not allowed
+PASS  AO09 UPDATE on financial_cash_flow is refused by its append-only trigger (as the owner)  -- 42501 financial_cash_flow is append-only: UPDATE is not allowed
+PASS  AO010 DELETE on financial_cash_flow is refused by its append-only trigger (as the owner)  -- 42501 financial_cash_flow is append-only: DELETE is not allowed
+PASS  AO02 the launch catalogues are read-only to mth_app  -- 42501 permission denied for table launch_window
+
+157/157 PASS
+exit=0
+Wed Oct 14 10:30:58 UTC 2026

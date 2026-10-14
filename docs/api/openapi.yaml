@@ -348,6 +348,18 @@ tags:
     description: Server-side PDF, DOCX, XLSX, PPTX and CSV exports of report snapshots in English or Arabic, as asynchronous jobs with progress (P5, ADR-0046).
   - name: owner-updates
     description: Structured owner updates per reporting period that the executive pack is generated from (P5, ADR-0045).
+  - name: kpi-restatements
+    description: Retrospective KPI restatements with selected closed periods, authority and a retained reconciliation; approved changes otherwise apply prospectively (P5, ADR-0047).
+  - name: formula-previews
+    description: Formula previews with evaluated examples, the result unit and edge cases before publication (P5, ADR-0047).
+  - name: financial-metrics
+    description: The optional NPV, ROI and payback extension with explicit methodology, timing and discount-rate assumptions; an extension, not a playbook requirement (P5, ADR-0047).
+  - name: launch-plans
+    description: The 90-day launch plan as editable scheduled tasks with owners, predecessors and required outputs (P5, ADR-0048).
+  - name: day-90-tests
+    description: The Day-90 leadership test of the launch plan (P5, ADR-0048).
+  - name: health-checks
+    description: The 25-question Transformation Health Check, its versioned scoring schemes, score, bands and top 3 actions (P5, ADR-0048).
 security:
   - sessionCookie: []
 paths:
@@ -20681,6 +20693,949 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiDefinitionId"
+    get:
+      tags: [kpi-restatements]
+      operationId: listKpiRestatements
+      summary: "The restatements of a KPI, newest first: periods, status, decision and authority (transformation.read; REQ-S07-016)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatementPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [kpi-restatements]
+      operationId: createKpiRestatement
+      summary: "Start a retrospective restatement of selected closed periods with an approved KPI version and a reason (kpi_restatement.request; TL, BO, FIN, KDS; REQ-S07-016). Approved changes otherwise apply prospectively. 409 kpi_restatement.open_exists; 422 kpi_restatement.version_not_approved, .periods_required, .too_many_periods, .period_not_closed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KpiRestatementCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiRestatementId"
+    get:
+      tags: [kpi-restatements]
+      operationId: getKpiRestatement
+      summary: "One restatement with its selected periods, status, decision and recorded authority (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reconciliation:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiRestatementId"
+    get:
+      tags: [kpi-restatements]
+      operationId: getKpiRestatementReconciliation
+      summary: "The reconciliation per selected period, scope and basis: value, status, RAG, target and version before and after, and the difference. For a draft it is computed now and not stored (`retained: false`); from submission on it is the retained record (`retained: true`; transformation.read; M0163)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatementReconciliation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiRestatementId"
+    post:
+      tags: [kpi-restatements]
+      operationId: submitKpiRestatement
+      summary: "Submit a draft: computes and retains the reconciliation in the same transaction and creates a decision task for each holder of kpi_restatement.approve except the requester (kpi_restatement.request). 422 kpi_restatement.not_draft, .nothing_to_reconcile."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiRestatementId"
+    post:
+      tags: [kpi-restatements]
+      operationId: decideKpiRestatement
+      summary: "Approve or reject a submitted restatement (kpi_restatement.approve, a business approval; SP, BO, FIN; never the requester; REQ-S07-016). Approval recalculates the selected periods once and offers the reissue of affected issued reports; issued snapshots never change. 403 kpi_restatement.no_authority, .self_decision; 422 kpi_restatement.not_submitted, .note_required."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KpiRestatementDecision" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiRestatementId"
+    post:
+      tags: [kpi-restatements]
+      operationId: withdrawKpiRestatement
+      summary: "Withdraw a draft or submitted restatement (kpi_restatement.request; the requester). 422 kpi_restatement.not_withdrawable."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reissue-offers:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/KpiRestatementId"
+    get:
+      tags: [kpi-restatements]
+      operationId: listKpiRestatementReissueOffers
+      summary: "The issued report snapshots that showed the restated KPI for a restated period, offered for reissue once the restatement is approved; a reissue is made with reissueReportSnapshot (transformation.read; ADR-0045 §4)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KpiRestatementReissueOfferList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/formula-previews:
+    post:
+      tags: [formula-previews]
+      operationId: previewFormula
+      summary: "Preview a formula before publication: the engine's verdict, the result unit, evaluated examples and the zero / missing / negative edge cases; a missing input is not_computable, never 0. Takes a seeded B0087 example (exampleCode) or an expression with typed variables; writes nothing (session; REQ-S08-005). 422 formula.* (ADR-0024 §6)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FormulaPreviewRequest" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormulaPreviewResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/benefits/financial-metrics/settings:
+    get:
+      tags: [financial-metrics]
+      operationId: getFinancialMetricSettings
+      summary: "The organization's optional NPV/ROI/payback extension: on or off (off by default; version 0 when never configured) and the explicit methodology, timing, period-basis and discount-rate assumptions (session; REQ-S08-019)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancialMetricSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/benefits/financial-metrics/settings/enablement:
+    put:
+      tags: [financial-metrics]
+      operationId: putFinancialMetricEnablement
+      summary: "Switch the optional extension on or off; If-Match \"0\" creates the settings (financial_metrics.enable; ADM_METHOD)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FinancialMetricEnablement" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancialMetricSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/benefits/financial-metrics/settings/assumptions:
+    put:
+      tags: [financial-metrics]
+      operationId: putFinancialMetricAssumptions
+      summary: "Set the methodology statement, timing convention, period basis and discount rate (a decimal fraction per period, or null for none); If-Match \"0\" creates the settings (financial_metrics.define; FIN). 422 financial_metrics.assumptions_incomplete, .discount_rate_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FinancialMetricAssumptions" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancialMetricSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/business-cases/{businessCaseId}/cash-flows:
+    parameters:
+      - $ref: "#/components/parameters/BusinessCaseId"
+    get:
+      tags: [financial-metrics]
+      operationId: getBusinessCaseCashFlows
+      summary: "The current cash-flow set of a business case (outflow and inflow per period index, its revision and basis note; version 0 when none) (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessCaseCashFlows" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [financial-metrics]
+      operationId: putBusinessCaseCashFlows
+      summary: "Replace the cash-flow set as a whole (a new revision; earlier revisions stay as history); If-Match \"0\" creates it (financial_metrics.define; FIN). 422 financial_cash_flows.currency_mismatch, .periods_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessCaseCashFlowsPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessCaseCashFlows" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/business-cases/{businessCaseId}/financial-metrics:
+    parameters:
+      - $ref: "#/components/parameters/BusinessCaseId"
+    get:
+      tags: [financial-metrics]
+      operationId: getBusinessCaseFinancialMetrics
+      summary: "NPV, ROI and payback of a business case with the assumptions used, labelled as an extension; nothing when the extension is off, and no NPV without a discount rate (transformation.read; REQ-S08-019)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancialMetrics" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/benefits/financial-metrics:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [financial-metrics]
+      operationId: listTransformationFinancialMetrics
+      summary: "The financial metrics of each business case of the transformation, with the same rules as getBusinessCaseFinancialMetrics (transformation.read)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancialMetricsPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/launch-plan-template:
+    get:
+      tags: [launch-plans]
+      operationId: getLaunchPlanTemplate
+      summary: "The source 90-day launch plan: the three B0134 windows with objectives, actions and outputs verbatim, and the Day-90 test (session; REQ-PB-086)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchPlanTemplate" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/launch-plan:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [launch-plans]
+      operationId: getLaunchPlan
+      summary: "The transformation's 90-day launch plan: start date, last shift and progress (transformation.read). 404 when none was generated."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchPlan" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [launch-plans]
+      operationId: generateLaunchPlan
+      summary: "Generate the plan from a start date: one scheduled task per B0134 action and output and the Day-90 test, day d = start date + d calendar days (launch_plan.edit; TL, TO; REQ-PB-086). 409 launch_plan.exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchPlanCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchPlan" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [launch-plans]
+      operationId: updateLaunchPlan
+      summary: "Change the start date: every not-started task and an open Day-90 test move by the same number of days; started, completed and cancelled tasks keep their dates (launch_plan.edit; REQ-S14-004)."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchPlanUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchPlan" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/launch-plan/tasks:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [launch-plans]
+      operationId: listLaunchTasks
+      summary: "The plan's tasks by due date with owner, status, required output, predecessors and 'blocked by' (the predecessors not completed) (transformation.read; REQ-S14-004)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/LaunchWindowQuery"
+        - $ref: "#/components/parameters/LaunchTaskStatusQuery"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchTaskPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [launch-plans]
+      operationId: createLaunchTask
+      summary: "Add a custom task to a window (launch_plan.edit). 422 validation.user_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchTaskCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchTask" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/LaunchTaskId"
+    get:
+      tags: [launch-plans]
+      operationId: getLaunchTask
+      summary: "One task with its predecessors and 'blocked by' (transformation.read)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchTask" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [launch-plans]
+      operationId: updateLaunchTask
+      summary: "Edit a task: title, notes, dates, owner, status, output record (launch_plan.edit; REQ-S14-004). 422 launch_task.cancelled, .completed_dates_fixed, .status_step, .output_record_invalid, validation.user_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchTaskUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchTask" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/LaunchTaskId"
+    put:
+      tags: [launch-plans]
+      operationId: putLaunchTaskPredecessors
+      summary: "Replace the task's predecessors (tasks of the same plan; no loop); a removed link is stamped, never deleted (launch_plan.edit; REQ-S14-004). 422 launch_task.predecessor_cycle, .predecessor_other_plan."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchTaskPredecessors" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchTask" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/day-90-test:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [day-90-tests]
+      operationId: getDayNinetyTest
+      summary: "The Day-90 leadership test of the launch plan: the six B0136-B0141 questions verbatim, responses, pre-filled evidence suggestions and completion ('Incomplete (n/6)' while any is unanswered) (transformation.read; REQ-PB-087)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DayNinetyTest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/DayNinetyQuestionCode"
+    put:
+      tags: [day-90-tests]
+      operationId: putDayNinetyResponse
+      summary: "Record or change the response to one question, with an optional comment and evidence; If-Match of the test (day_ninety_test.respond; SP, TL). 422 day_ninety_test.completed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DayNinetyResponsePut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DayNinetyTest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/day-90-test/complete:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    post:
+      tags: [day-90-tests]
+      operationId: completeDayNinetyTest
+      summary: "Complete the test once all six questions are answered (day_ninety_test.respond). 422 day_ninety_test.incomplete, .completed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DayNinetyTest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/health-check-questions:
+    get:
+      tags: [health-checks]
+      operationId: listHealthCheckQuestions
+      summary: "The 25 Transformation Health Check questions, verbatim from B0150 (session)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheckQuestionList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/health-checks:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [health-checks]
+      operationId: listHealthChecks
+      summary: "The transformation's health checks in sequence (reassessments tracked over time): status, completion, score and band (null while incomplete) and scheme version (transformation.read; REQ-PB-091)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheckPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [health-checks]
+      operationId: createHealthCheck
+      summary: "Start a health check under the transformation's pinned scoring scheme (else v1), linked to the previous submitted one (health_check.assess; TL, TO). 409 health_check.draft_exists."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HealthCheckCreate" }
+      responses:
+        "201":
+          description: "Created (draft)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/health-checks/{assessmentId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/HealthCheckId"
+    get:
+      tags: [health-checks]
+      operationId: getHealthCheck
+      summary: "One health check: the 25 questions with responses, evidence, owner and action; completion ('Incomplete (24/25)'); score out of 25 and band (null while incomplete); the top 3 actions; the scoring method shown as an implementation assumption (transformation.read; REQ-S14-001, REQ-S14-002)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      tags: [health-checks]
+      operationId: updateHealthCheck
+      summary: "Change the assessment date or owner of a draft (health_check.assess). 422 health_check.not_draft, validation.user_invalid."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HealthCheckUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/HealthCheckId"
+      - $ref: "#/components/parameters/HealthQuestionCode"
+    put:
+      tags: [health-checks]
+      operationId: putHealthCheckAnswer
+      summary: "Record or change one answer (a response of the scheme, evidence, owner, action note); If-Match of the assessment (health_check.assess; REQ-PB-091). 422 health_check.not_draft, .response_not_allowed."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HealthCheckAnswerPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/HealthCheckId"
+    put:
+      tags: [health-checks]
+      operationId: putHealthCheckActions
+      summary: "Set the top 3 improvement actions (ranks 1-3; health_check.assess; M0288). 422 health_check.not_draft."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HealthCheckActionsPut" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/HealthCheckId"
+    post:
+      tags: [health-checks]
+      operationId: submitHealthCheck
+      summary: "Submit a complete health check with its top 3 actions; the score and band are fixed with the scheme version (health_check.assess; REQ-PB-091). 422 health_check.incomplete, .actions_required, .not_computable, .not_draft."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheck" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/health-check-schemes:
+    get:
+      tags: [health-checks]
+      operationId: listHealthCheckSchemes
+      summary: "The published health-check scoring schemes: responses with credits, score basis and interpretation bands; v1 is Yes = 1, No = 0 with the four B0152 bands (session; REQ-S14-003). Drafts are authored through the Studio configuration operations (kind health_check_scheme)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheckSchemeList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/health-check-schemes/{schemeVersionId}:
+    parameters:
+      - $ref: "#/components/parameters/HealthCheckSchemeVersionId"
+    get:
+      tags: [health-checks]
+      operationId: getHealthCheckScheme
+      summary: "One published scoring scheme version (session; REQ-S14-003)."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthCheckScheme" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -20698,6 +21653,48 @@ components:
       description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
 
   parameters:
+    KpiRestatementId:
+      name: restatementId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    LaunchTaskId:
+      name: taskId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    HealthCheckId:
+      name: assessmentId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    HealthCheckSchemeVersionId:
+      name: schemeVersionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    HealthQuestionCode:
+      name: questionCode
+      in: path
+      required: true
+      description: "Health-check question q01-q25 (B0150)."
+      schema: { type: string, pattern: '^q(0[1-9]|1[0-9]|2[0-5])$' }
+    DayNinetyQuestionCode:
+      name: questionCode
+      in: path
+      required: true
+      description: "Day-90 question q1-q6 (B0136-B0141)."
+      schema: { type: string, pattern: '^q[1-6]$' }
+    LaunchWindowQuery:
+      name: window
+      in: query
+      required: false
+      schema: { type: string, enum: [days_0_30, days_31_60, days_61_90] }
+    LaunchTaskStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema: { type: string, enum: [not_started, in_progress, completed, cancelled] }
     ReportDefinitionCode:
       name: definitionCode
       in: path
@@ -22214,6 +23211,656 @@ components:
           schema: { $ref: "#/components/schemas/Problem" }
 
   schemas:
+    KpiRestatementStatus:
+      type: string
+      enum: [draft, submitted, approved, rejected, withdrawn, applied]
+    KpiRestatementPeriod:
+      type: object
+      required: [reportingPeriodId, periodLabel]
+      additionalProperties: false
+      properties:
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        periodLabel: { type: string }
+    KpiRestatement:
+      type: object
+      description: "A retrospective restatement (ADR-0047 §2). authorityPermission and authorityRoleCode record the right through which the decider approved or rejected (a business approval inside the product, never DG0-DG7)."
+      required: [id, transformationId, kpiDefinitionId, kpiVersionId, changeRequestId, reason, status, periods, requestedBy, submittedAt, decidedBy, decidedAt, decisionNote, authorityPermission, authorityRoleCode, calculationRunId, appliedAt, withdrawnAt, withdrawnBy, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        kpiDefinitionId: { $ref: "#/components/schemas/Uuid" }
+        kpiVersionId: { $ref: "#/components/schemas/Uuid" }
+        changeRequestId: { $ref: "#/components/schemas/NullableUuid" }
+        reason: { type: string }
+        status: { $ref: "#/components/schemas/KpiRestatementStatus" }
+        periods: { type: array, maxItems: 24, items: { $ref: "#/components/schemas/KpiRestatementPeriod" } }
+        requestedBy: { $ref: "#/components/schemas/Uuid" }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decidedBy: { $ref: "#/components/schemas/NullableUuid" }
+        decidedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        decisionNote: { type: [string, "null"] }
+        authorityPermission: { type: [string, "null"], enum: [kpi_restatement.approve, null] }
+        authorityRoleCode: { type: [string, "null"] }
+        calculationRunId: { $ref: "#/components/schemas/NullableUuid" }
+        appliedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        withdrawnAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        withdrawnBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    KpiRestatementPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/KpiRestatement" } }
+        nextCursor: { type: [string, "null"] }
+    KpiRestatementCreate:
+      type: object
+      required: [kpiVersionId, reportingPeriodIds, reason]
+      additionalProperties: false
+      properties:
+        kpiVersionId: { $ref: "#/components/schemas/Uuid" }
+        reportingPeriodIds: { type: array, minItems: 1, maxItems: 24, uniqueItems: true, items: { $ref: "#/components/schemas/Uuid" } }
+        reason: { type: string, minLength: 3, maxLength: 2000 }
+        changeRequestId: { $ref: "#/components/schemas/NullableUuid" }
+    KpiRestatementDecision:
+      type: object
+      required: [decision]
+      additionalProperties: false
+      properties:
+        decision: { type: string, enum: [approve, reject] }
+        note: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    KpiRestatementValueBefore:
+      type: object
+      description: "The slot's latest evaluation before the restatement; valueStatus none when it was never evaluated. Unknown, stale and not computable values have no number."
+      required: [evaluationId, kpiVersionId, value, valueStatus, rag, target]
+      additionalProperties: false
+      properties:
+        evaluationId: { $ref: "#/components/schemas/NullableUuid" }
+        kpiVersionId: { $ref: "#/components/schemas/NullableUuid" }
+        value: { $ref: "#/components/schemas/NullableDecimal" }
+        valueStatus: { type: string, enum: [ok, unknown, stale, not_computable, none] }
+        rag: { type: string, enum: [green, amber, red, unknown, stale, not_computable, none] }
+        target: { $ref: "#/components/schemas/NullableDecimal" }
+    KpiRestatementValueAfter:
+      type: object
+      required: [value, valueStatus, rag, target]
+      additionalProperties: false
+      properties:
+        value: { $ref: "#/components/schemas/NullableDecimal" }
+        valueStatus: { type: string, enum: [ok, unknown, stale, not_computable] }
+        rag: { type: string, enum: [green, amber, red, unknown, stale, not_computable] }
+        target: { $ref: "#/components/schemas/NullableDecimal" }
+    KpiRestatementReconciliationRow:
+      type: object
+      required: [reportingPeriodId, periodLabel, scopeKind, scopeId, valueBasis, before, after, difference, currency, unitKind]
+      additionalProperties: false
+      properties:
+        reportingPeriodId: { $ref: "#/components/schemas/Uuid" }
+        periodLabel: { type: string }
+        scopeKind: { type: string, enum: [transformation, business_unit, initiative] }
+        scopeId: { $ref: "#/components/schemas/Uuid" }
+        valueBasis: { type: string, enum: [period, cumulative] }
+        before: { $ref: "#/components/schemas/KpiRestatementValueBefore" }
+        after: { $ref: "#/components/schemas/KpiRestatementValueAfter" }
+        difference: { $ref: "#/components/schemas/NullableDecimal" }
+        currency: { oneOf: [{ $ref: "#/components/schemas/Currency" }, { type: "null" }] }
+        unitKind: { type: string, enum: [currency, percentage, count, ratio, duration, score, other] }
+    KpiRestatementReconciliation:
+      type: object
+      required: [restatementId, retained, rows]
+      additionalProperties: false
+      properties:
+        restatementId: { $ref: "#/components/schemas/Uuid" }
+        retained: { type: boolean }
+        rows: { type: array, items: { $ref: "#/components/schemas/KpiRestatementReconciliationRow" } }
+    KpiRestatementReissueOffer:
+      type: object
+      required: [snapshotId, seriesId, definitionCode, issueVersion, periodLabel, snapshotStatus, createdAt]
+      additionalProperties: false
+      properties:
+        snapshotId: { $ref: "#/components/schemas/Uuid" }
+        seriesId: { $ref: "#/components/schemas/Uuid" }
+        definitionCode: { $ref: "#/components/schemas/ReportDefinitionCode" }
+        issueVersion: { type: integer }
+        periodLabel: { type: [string, "null"] }
+        snapshotStatus: { type: string, enum: [issued, superseded] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    KpiRestatementReissueOfferList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/KpiRestatementReissueOffer" } }
+    FormulaPreviewExampleInput:
+      type: object
+      required: [label, inputs]
+      additionalProperties: false
+      properties:
+        label: { type: string, minLength: 1, maxLength: 100 }
+        inputs: { type: object, maxProperties: 30, additionalProperties: { $ref: "#/components/schemas/NullableDecimal" } }
+    FormulaPreviewRequest:
+      type: object
+      description: "Either exampleCode (a seeded B0087 example) or expression with variables (the FormulaCheckRequest shape); not both."
+      additionalProperties: false
+      properties:
+        exampleCode: { type: string, enum: [revenue_uplift, cost_reduction] }
+        expression: { type: string, minLength: 1, maxLength: 2000 }
+        variables: { type: array, maxItems: 30, items: { $ref: "#/components/schemas/FormulaVariable" } }
+        examples: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/FormulaPreviewExampleInput" } }
+        edgeCases: { type: boolean }
+    FormulaPreviewUnit:
+      type: object
+      required: [kind, currency, period, unitLabel]
+      additionalProperties: false
+      properties:
+        kind: { oneOf: [{ $ref: "#/components/schemas/FormulaKind" }, { type: "null" }] }
+        currency: { oneOf: [{ $ref: "#/components/schemas/Currency" }, { type: "null" }] }
+        period: { oneOf: [{ $ref: "#/components/schemas/FormulaPeriod" }, { type: "null" }] }
+        unitLabel: { type: [string, "null"] }
+    FormulaPreviewOutcome:
+      type: object
+      description: "A not_computable result has result null and a reasonCode (formula.missing_input, formula.division_by_zero, formula.result_out_of_range); it is shown as 'Not computable', never 0."
+      required: [label, inputs, status, result, reasonCode]
+      additionalProperties: false
+      properties:
+        label: { type: string }
+        inputs: { type: object, additionalProperties: { $ref: "#/components/schemas/NullableDecimal" } }
+        status: { type: string, enum: [ok, not_computable] }
+        result: { $ref: "#/components/schemas/NullableDecimal" }
+        reasonCode: { type: [string, "null"] }
+    FormulaPreviewEdgeCase:
+      type: object
+      required: [variable, case, status, result, reasonCode]
+      additionalProperties: false
+      properties:
+        variable: { type: string }
+        case: { type: string, enum: [zero, missing, negative] }
+        status: { type: string, enum: [ok, not_computable] }
+        result: { $ref: "#/components/schemas/NullableDecimal" }
+        reasonCode: { type: [string, "null"] }
+    FormulaPreviewProblem:
+      type: object
+      required: [code, message, pointer]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        message: { type: string }
+        pointer: { type: [string, "null"] }
+    FormulaPreviewResult:
+      type: object
+      required: [valid, errors, unit, examples, edgeCases, engineVersion]
+      additionalProperties: false
+      properties:
+        valid: { type: boolean }
+        errors: { type: array, items: { $ref: "#/components/schemas/FormulaPreviewProblem" } }
+        unit: { $ref: "#/components/schemas/FormulaPreviewUnit" }
+        examples: { type: array, items: { $ref: "#/components/schemas/FormulaPreviewOutcome" } }
+        edgeCases: { type: array, items: { $ref: "#/components/schemas/FormulaPreviewEdgeCase" } }
+        engineVersion: { type: string }
+    FinancialMetricSettings:
+      type: object
+      description: "An extension, not a playbook requirement (M0174). Off by default; version 0 when never configured. discountRate is a decimal fraction per period of periodBasis (\"0.100000\" = 10%)."
+      required: [enabled, methodology, methodologyNote, timing, periodBasis, discountRate, assumptionsSetBy, assumptionsSetAt, enabledChangedBy, enabledChangedAt, extension, version]
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean }
+        methodology: { type: string, enum: [discounted_net_cash_flow] }
+        methodologyNote: { type: [string, "null"] }
+        timing: { type: [string, "null"], enum: [end_of_period, beginning_of_period, null] }
+        periodBasis: { type: [string, "null"], enum: [annual, quarterly, monthly, null] }
+        discountRate: { $ref: "#/components/schemas/NullableDecimal" }
+        assumptionsSetBy: { $ref: "#/components/schemas/NullableUuid" }
+        assumptionsSetAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        enabledChangedBy: { $ref: "#/components/schemas/NullableUuid" }
+        enabledChangedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        extension: { type: boolean, const: true }
+        version: { type: integer, minimum: 0 }
+    FinancialMetricEnablement:
+      type: object
+      required: [enabled]
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean }
+    FinancialMetricAssumptions:
+      type: object
+      required: [methodologyNote, timing, periodBasis, discountRate]
+      additionalProperties: false
+      properties:
+        methodologyNote: { type: string, minLength: 3, maxLength: 2000 }
+        timing: { type: string, enum: [end_of_period, beginning_of_period] }
+        periodBasis: { type: string, enum: [annual, quarterly, monthly] }
+        discountRate: { $ref: "#/components/schemas/NullableDecimal" }
+    CashFlowRow:
+      type: object
+      required: [periodIndex, outflow, inflow]
+      additionalProperties: false
+      properties:
+        periodIndex: { type: integer, minimum: 0, maximum: 120 }
+        outflow: { $ref: "#/components/schemas/Decimal" }
+        inflow: { $ref: "#/components/schemas/Decimal" }
+        note: { type: [string, "null"], minLength: 1, maxLength: 500 }
+    BusinessCaseCashFlows:
+      type: object
+      required: [businessCaseId, currency, revision, basisNote, rows, version, updatedAt]
+      additionalProperties: false
+      properties:
+        businessCaseId: { $ref: "#/components/schemas/Uuid" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        revision: { type: integer, minimum: 0 }
+        basisNote: { type: [string, "null"] }
+        rows: { type: array, maxItems: 121, items: { $ref: "#/components/schemas/CashFlowRow" } }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+    BusinessCaseCashFlowsPut:
+      type: object
+      required: [rows]
+      additionalProperties: false
+      properties:
+        basisNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        rows: { type: array, minItems: 1, maxItems: 121, items: { $ref: "#/components/schemas/CashFlowRow" } }
+    FinancialMetrics:
+      type: object
+      description: "Computed on read with decimal arithmetic; a metric that is not shown or not computable is null with its reason, never 0 (ADR-0047 §5)."
+      required: [businessCaseId, status, currency, npv, npvReason, roi, roiReason, paybackPeriodIndex, paybackReason, assumptions, cashFlowRevision, extension]
+      additionalProperties: false
+      properties:
+        businessCaseId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [shown, disabled, assumptions_missing, cash_flows_missing] }
+        currency: { $ref: "#/components/schemas/Currency" }
+        npv: { $ref: "#/components/schemas/NullableDecimal" }
+        npvReason: { type: [string, "null"], enum: [discount_rate_missing, not_shown, null] }
+        roi: { $ref: "#/components/schemas/NullableDecimal" }
+        roiReason: { type: [string, "null"], enum: [not_computable, not_shown, null] }
+        paybackPeriodIndex: { type: [integer, "null"] }
+        paybackReason: { type: [string, "null"], enum: [not_reached, not_computable, not_shown, null] }
+        assumptions: { oneOf: [{ $ref: "#/components/schemas/FinancialMetricAssumptions" }, { type: "null" }] }
+        cashFlowRevision: { type: [integer, "null"] }
+        extension: { type: boolean, const: true }
+    FinancialMetricsPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/FinancialMetrics" } }
+        nextCursor: { type: [string, "null"] }
+    LaunchTemplateItem:
+      type: object
+      required: [code, itemKind, ordinal, textEn, textAr, outputRecordType, startDay, dueDay, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        itemKind: { type: string, enum: [action, output, day_ninety_test] }
+        ordinal: { type: integer }
+        textEn: { type: string }
+        textAr: { type: string }
+        outputRecordType: { type: [string, "null"], enum: [charter, diagnostic_item, baseline, north_star, kpi_definition, tom_canvas_cell, initiative, business_case, roadmap_wave, benefit, evidence, meeting_series, null] }
+        startDay: { type: integer }
+        dueDay: { type: integer }
+        sourceRef: { type: string }
+    LaunchWindow:
+      type: object
+      required: [code, ordinal, labelEn, labelAr, objectiveEn, objectiveAr, actionsSourceEn, outputsSourceEn, startDay, endDay, items]
+      additionalProperties: false
+      properties:
+        code: { type: string, enum: [days_0_30, days_31_60, days_61_90] }
+        ordinal: { type: integer }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        objectiveEn: { type: string }
+        objectiveAr: { type: string }
+        actionsSourceEn: { type: string }
+        outputsSourceEn: { type: string }
+        startDay: { type: integer }
+        endDay: { type: integer }
+        items: { type: array, items: { $ref: "#/components/schemas/LaunchTemplateItem" } }
+    LaunchPlanTemplate:
+      type: object
+      description: "Verbatim B0134 (and B0135) texts; the Arabic texts are provisional translations."
+      required: [windows, sourceRef]
+      additionalProperties: false
+      properties:
+        windows: { type: array, items: { $ref: "#/components/schemas/LaunchWindow" } }
+        sourceRef: { type: string }
+    LaunchPlan:
+      type: object
+      required: [id, transformationId, startDate, templateRef, generatedVia, lastShiftDays, taskCount, completedCount, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        templateRef: { type: string }
+        generatedVia: { type: string, enum: [request, automation] }
+        lastShiftDays: { type: [integer, "null"] }
+        taskCount: { type: integer, minimum: 0 }
+        completedCount: { type: integer, minimum: 0 }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    LaunchPlanCreate:
+      type: object
+      required: [startDate]
+      additionalProperties: false
+      properties:
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+    LaunchPlanUpdate:
+      type: object
+      required: [startDate]
+      additionalProperties: false
+      properties:
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+    LaunchTaskRef:
+      type: object
+      required: [taskId, ordinal, title, status]
+      additionalProperties: false
+      properties:
+        taskId: { $ref: "#/components/schemas/Uuid" }
+        ordinal: { type: integer }
+        title: { type: string }
+        status: { type: string, enum: [not_started, in_progress, completed, cancelled] }
+    LaunchTask:
+      type: object
+      description: "blockedBy lists the active predecessors that are not completed ('Blocked by'). nonWorkingDay is true when the due date is not a working day (shown as a warning, never shifted; D-142 Q6)."
+      required: [id, planId, ordinal, templateItemCode, windowCode, taskKind, title, sourceTextEn, notes, startDate, dueDate, nonWorkingDay, ownerUserId, status, completedAt, completedBy, outputRecordType, outputRecordId, predecessors, blockedBy, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        planId: { $ref: "#/components/schemas/Uuid" }
+        ordinal: { type: integer }
+        templateItemCode: { type: [string, "null"] }
+        windowCode: { type: string, enum: [days_0_30, days_31_60, days_61_90] }
+        taskKind: { type: string, enum: [action, output, day_ninety_test, custom] }
+        title: { type: string }
+        sourceTextEn: { type: [string, "null"] }
+        notes: { type: [string, "null"] }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        nonWorkingDay: { type: boolean }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [not_started, in_progress, completed, cancelled] }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedBy: { $ref: "#/components/schemas/NullableUuid" }
+        outputRecordType: { type: [string, "null"], enum: [charter, diagnostic_item, baseline, north_star, kpi_definition, tom_canvas_cell, initiative, business_case, roadmap_wave, benefit, evidence, meeting_series, null] }
+        outputRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        predecessors: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/LaunchTaskRef" } }
+        blockedBy: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/LaunchTaskRef" } }
+        version: { $ref: "#/components/schemas/Version" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    LaunchTaskPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/LaunchTask" } }
+        nextCursor: { type: [string, "null"] }
+    LaunchTaskCreate:
+      type: object
+      required: [windowCode, title, startDate, dueDate]
+      additionalProperties: false
+      properties:
+        windowCode: { type: string, enum: [days_0_30, days_31_60, days_61_90] }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        notes: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+    LaunchTaskUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        notes: { type: [string, "null"], minLength: 1, maxLength: 4000 }
+        startDate: { $ref: "#/components/schemas/BusinessDate" }
+        dueDate: { $ref: "#/components/schemas/BusinessDate" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [not_started, in_progress, completed, cancelled] }
+        outputRecordType: { type: [string, "null"], enum: [charter, diagnostic_item, baseline, north_star, kpi_definition, tom_canvas_cell, initiative, business_case, roadmap_wave, benefit, evidence, meeting_series, null] }
+        outputRecordId: { $ref: "#/components/schemas/NullableUuid" }
+    LaunchTaskPredecessors:
+      type: object
+      required: [predecessorTaskIds]
+      additionalProperties: false
+      properties:
+        predecessorTaskIds: { type: array, maxItems: 20, uniqueItems: true, items: { $ref: "#/components/schemas/Uuid" } }
+    DayNinetyEvidenceSuggestion:
+      type: object
+      description: "A record the platform suggests as evidence; the leader confirms it. Never an answer."
+      required: [recordType, recordId, label, state]
+      additionalProperties: false
+      properties:
+        recordType: { type: string }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        label: { type: string }
+        state: { type: [string, "null"] }
+    DayNinetyResponse:
+      type: object
+      required: [answer, comment, evidenceId, respondedBy, updatedAt]
+      additionalProperties: false
+      properties:
+        answer: { type: string, enum: [yes, no] }
+        comment: { type: [string, "null"] }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        respondedBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    DayNinetyQuestion:
+      type: object
+      required: [code, ordinal, textEn, textAr, sourceRef, response, evidenceSuggestions]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        ordinal: { type: integer }
+        textEn: { type: string }
+        textAr: { type: string }
+        sourceRef: { type: string }
+        response: { oneOf: [{ $ref: "#/components/schemas/DayNinetyResponse" }, { type: "null" }] }
+        evidenceSuggestions: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/DayNinetyEvidenceSuggestion" } }
+    Completion:
+      type: object
+      description: "answered of total; complete only when every question is answered (an incomplete record shows no result)."
+      required: [answered, total, complete]
+      additionalProperties: false
+      properties:
+        answered: { type: integer, minimum: 0 }
+        total: { type: integer }
+        complete: { type: boolean }
+    DayNinetyTest:
+      type: object
+      required: [id, planId, scheduledDate, status, completion, questions, completedAt, completedBy, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        planId: { $ref: "#/components/schemas/Uuid" }
+        scheduledDate: { $ref: "#/components/schemas/BusinessDate" }
+        status: { type: string, enum: [open, completed] }
+        completion: { $ref: "#/components/schemas/Completion" }
+        questions: { type: array, maxItems: 6, items: { $ref: "#/components/schemas/DayNinetyQuestion" } }
+        completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        completedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+    DayNinetyResponsePut:
+      type: object
+      required: [answer]
+      additionalProperties: false
+      properties:
+        answer: { type: string, enum: [yes, no] }
+        comment: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+    HealthCheckQuestion:
+      type: object
+      required: [code, ordinal, textEn, textAr, sourceRef]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        ordinal: { type: integer }
+        textEn: { type: string }
+        textAr: { type: string }
+        sourceRef: { type: string }
+    HealthCheckQuestionList:
+      type: object
+      description: "The 25 questions verbatim (B0150); the Arabic texts are provisional translations."
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/HealthCheckQuestion" } }
+    HealthCheckBand:
+      type: object
+      required: [key, minScore, rangeLabel, textEn, textAr, origin]
+      additionalProperties: false
+      properties:
+        key: { type: string }
+        minScore: { $ref: "#/components/schemas/Decimal" }
+        rangeLabel: { type: string }
+        textEn: { type: string }
+        textAr: { type: string }
+        origin: { type: string, enum: [source, admin] }
+    HealthCheckResponseOption:
+      type: object
+      required: [key, credit, labelEn, labelAr]
+      additionalProperties: false
+      properties:
+        key: { type: string, enum: [yes, no, partial, na] }
+        credit: { $ref: "#/components/schemas/NullableDecimal" }
+        labelEn: { type: [string, "null"] }
+        labelAr: { type: [string, "null"] }
+    HealthCheckScheme:
+      type: object
+      description: "A published scoring scheme version (configuration kind health_check_scheme). implementationAssumption is true for v1 (Yes = 1, No = 0; M0262)."
+      required: [versionId, key, versionNo, titleEn, titleAr, scoreBasis, questionCount, implementationAssumption, responses, bands, publishedAt]
+      additionalProperties: false
+      properties:
+        versionId: { $ref: "#/components/schemas/Uuid" }
+        key: { type: string }
+        versionNo: { type: integer }
+        titleEn: { type: string }
+        titleAr: { type: string }
+        scoreBasis: { type: string, enum: [points, percent_of_applicable] }
+        questionCount: { type: integer }
+        implementationAssumption: { type: boolean }
+        responses: { type: array, maxItems: 4, items: { $ref: "#/components/schemas/HealthCheckResponseOption" } }
+        bands: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/HealthCheckBand" } }
+        publishedAt: { $ref: "#/components/schemas/Timestamp" }
+    HealthCheckSchemeList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/HealthCheckScheme" } }
+    HealthCheckAnswer:
+      type: object
+      required: [questionCode, response, evidenceNote, evidenceId, ownerUserId, actionNote, answeredBy, updatedAt]
+      additionalProperties: false
+      properties:
+        questionCode: { type: string }
+        response: { type: string, enum: [yes, no, partial, na] }
+        evidenceNote: { type: [string, "null"] }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        actionNote: { type: [string, "null"] }
+        answeredBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    HealthCheckAction:
+      type: object
+      required: [rank, actionText]
+      additionalProperties: false
+      properties:
+        rank: { type: integer, minimum: 1, maximum: 3 }
+        actionText: { type: string, minLength: 1, maxLength: 1000 }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
+        improvementItemId: { $ref: "#/components/schemas/NullableUuid" }
+    HealthCheckSummary:
+      type: object
+      description: "score and band are null while the assessment is incomplete (REQ-S14-002)."
+      required: [id, transformationId, sequenceNo, schemeVersionId, schemeVersionNo, assessmentDate, ownerUserId, status, completion, score, scoreMax, band, scoringAssumption, previousAssessmentId, submittedAt, submittedBy, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        sequenceNo: { type: integer }
+        schemeVersionId: { $ref: "#/components/schemas/Uuid" }
+        schemeVersionNo: { type: integer }
+        assessmentDate: { $ref: "#/components/schemas/BusinessDate" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [draft, submitted] }
+        completion: { $ref: "#/components/schemas/Completion" }
+        score: { $ref: "#/components/schemas/NullableDecimal" }
+        scoreMax: { $ref: "#/components/schemas/NullableDecimal" }
+        band: { oneOf: [{ $ref: "#/components/schemas/HealthCheckBand" }, { type: "null" }] }
+        scoringAssumption: { type: boolean }
+        previousAssessmentId: { $ref: "#/components/schemas/NullableUuid" }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        submittedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    HealthCheckPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/HealthCheckSummary" } }
+        nextCursor: { type: [string, "null"] }
+    HealthCheck:
+      type: object
+      description: "score and band are null while the assessment is incomplete (REQ-S14-002); a complete draft shows its computed score and band, fixed only on submission."
+      required: [id, transformationId, sequenceNo, schemeVersionId, schemeVersionNo, assessmentDate, ownerUserId, status, completion, score, scoreMax, band, scoringAssumption, previousAssessmentId, submittedAt, submittedBy, version, createdAt, updatedAt, answers, actions]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        sequenceNo: { type: integer }
+        schemeVersionId: { $ref: "#/components/schemas/Uuid" }
+        schemeVersionNo: { type: integer }
+        assessmentDate: { $ref: "#/components/schemas/BusinessDate" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [draft, submitted] }
+        completion: { $ref: "#/components/schemas/Completion" }
+        score: { $ref: "#/components/schemas/NullableDecimal" }
+        scoreMax: { $ref: "#/components/schemas/NullableDecimal" }
+        band: { oneOf: [{ $ref: "#/components/schemas/HealthCheckBand" }, { type: "null" }] }
+        scoringAssumption: { type: boolean }
+        previousAssessmentId: { $ref: "#/components/schemas/NullableUuid" }
+        submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        submittedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        answers: { type: array, maxItems: 25, items: { $ref: "#/components/schemas/HealthCheckAnswer" } }
+        actions: { type: array, maxItems: 3, items: { $ref: "#/components/schemas/HealthCheckAction" } }
+    HealthCheckCreate:
+      type: object
+      required: [assessmentDate]
+      additionalProperties: false
+      properties:
+        assessmentDate: { $ref: "#/components/schemas/BusinessDate" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+    HealthCheckUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        assessmentDate: { $ref: "#/components/schemas/BusinessDate" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+    HealthCheckAnswerPut:
+      type: object
+      required: [response]
+      additionalProperties: false
+      properties:
+        response: { type: string, enum: [yes, no, partial, na] }
+        evidenceNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
+        actionNote: { type: [string, "null"], minLength: 1, maxLength: 1000 }
+    HealthCheckActionsPut:
+      type: object
+      required: [actions]
+      additionalProperties: false
+      properties:
+        actions: { type: array, minItems: 1, maxItems: 3, items: { $ref: "#/components/schemas/HealthCheckAction" } }
     ReportDefinitionCode:
       type: string
       enum: [charter, diagnostic, tom, business_cases, roadmap, registers, meeting_minutes, gate_pack, executive_dashboard, handover, executive_pack, meeting_pack]
@@ -24006,6 +25653,13 @@ components:
         - report.issue
         - export.create
         - owner_update.submit
+        - kpi_restatement.request
+        - kpi_restatement.approve
+        - financial_metrics.enable
+        - financial_metrics.define
+        - launch_plan.edit
+        - day_ninety_test.respond
+        - health_check.assess
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -34382,7 +36036,7 @@ components:
       enum: [methodology, scoring_defaults, form_schema, procedure, automation_rule_set, health_check_scheme]
     ConfigElementType:
       type: string
-      enum: [methodology_text, phase, gate, gate_criterion, mandatory_artifact, checklist_item, template, tom_dimension, approver_route, reminder, escalation_rule, dashboard, report_layout, source_element, scoring_weight, scoring_rubric, form, form_field]
+      enum: [methodology_text, phase, gate, gate_criterion, mandatory_artifact, checklist_item, template, tom_dimension, approver_route, reminder, escalation_rule, dashboard, report_layout, source_element, scoring_weight, scoring_rubric, form, form_field, health_response, health_band]
     ConfigCheckSummary:
       type: object
       description: "The latest run of one check kind for the version's current content hash; null when none."

@@ -46,6 +46,9 @@ export const CONFIG_ELEMENT_TYPES = [
   // T-DG5-BE-D (ADR-0041 §2; 0068 widened the element-type CHECK): the form_schema kind's element types.
   "form",
   "form_field",
+  // T-DG5-ARCH-05 (ADR-0048 §6; 0086 widened the element-type CHECK): the health_check_scheme kind's element types.
+  "health_response",
+  "health_band",
 ] as const;
 export type ConfigElementType = (typeof CONFIG_ELEMENT_TYPES)[number];
 export const configElementType = z.enum(CONFIG_ELEMENT_TYPES);
@@ -161,6 +164,26 @@ export const CONFIG_ELEMENT_ATTRIBUTES = {
   // T-DG5-BE-D (ADR-0041 §2): the forms kind provider checks field types and settings with the §10 codes.
   form: formElementAttributes,
   form_field: formFieldElementAttributes,
+  // T-DG5-ARCH-05 (ADR-0048 §6; the 0086 guard): a response's credit is a decimal string in [0, 1] (null for na); a
+  // band's minScore is a decimal string with at most two decimals; the band carries its range label and both texts.
+  // The scheme-level rules (yes = 1 and no = 0 present; own bands with partial or na) are the publish rule of
+  // p5_health_scheme_problem (0086), checked by KBE-G's kind provider before the database.
+  health_response: z.strictObject({
+    ...common,
+    credit: z
+      .string()
+      .regex(/^(0|1|0\.[0-9]{1,2})$/, "validation.decimal")
+      .nullable(),
+    sourceRef,
+  }),
+  health_band: z.strictObject({
+    ...common,
+    minScore: z.string().regex(/^[0-9]{1,3}(\.[0-9]{1,2})?$/, "validation.decimal"),
+    rangeLabel: freeText(1, 20),
+    textEn: freeText(1, 500),
+    textAr: freeText(1, 500),
+    sourceRef,
+  }),
 } as const satisfies Record<ConfigElementType, z.ZodType>;
 
 /** The element types each configuration kind accepts (the database trigger `methodology_element_guard`'s list). */
@@ -185,7 +208,7 @@ export const ELEMENT_TYPES_BY_KIND: Readonly<Record<ConfigKind, readonly ConfigE
   form_schema: ["form", "form_field"], // T-DG5-BE-D (ADR-0041 §2; the 0068 guard's list)
   procedure: [],
   automation_rule_set: [],
-  health_check_scheme: [],
+  health_check_scheme: ["health_response", "health_band"], // T-DG5-ARCH-05 (ADR-0048 §6; the 0086 guard's list)
 };
 
 // ------------------------------------------------------------------------------------------------ definition

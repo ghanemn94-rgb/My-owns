@@ -61,6 +61,10 @@ export const MY_WORK_SECTION_BY_KIND: Readonly<Record<string, Exclude<MyWorkSect
   automation_task: "assigned_actions",
   role_assignment: "assigned_actions",
   dependency_slip: "assigned_actions",
+  // P5 slices G and H (0085, 0086; ADR-0047 §4, ADR-0048 §4): a restated KPI's issued report offered for reissue; the
+  // Day-90 leadership test once day 90 of the launch plan has come.
+  report_reissue_offer: "assigned_actions",
+  day_ninety_test_due: "assigned_actions",
   // Reviews
   kpi_actual_review: "reviews",
   finance_validation_review: "reviews",
@@ -77,6 +81,8 @@ export const MY_WORK_SECTION_BY_KIND: Readonly<Record<string, Exclude<MyWorkSect
   approval_escalated: "approvals",
   // P5 slice E (0075; ADR-0044 §3): an overdue condition of a conditional approval, escalated to the approver.
   gate_condition_overdue: "approvals",
+  // P5 slice G (0085; ADR-0047 §2): a KPI restatement waiting for its authorized approver (a business approval).
+  kpi_restatement_to_decide: "approvals",
   gate_decision_due: "approvals",
   gate_exception_to_decide: "approvals",
   executive_decision_due: "approvals",

@@ -1808,6 +1808,65 @@ erDiagram
 | Owner update (S09-011) | `owner_update` + `owner_update_revision` | `id` (subject, period unique; update, revision unique) | `owner_user_id` | `owner_update.submit` (subject owner) | `status` (draft, submitted) | yes; revisions append-only | portfolio |
 | Export job (S13-005, S13-009) | `export_job` + `export_job_progress` | `id` (requester, idempotency key unique) | `requested_by` | `export.create`; the worker | `status` (queued, running, succeeded, failed, cancelled); `stage` | yes (progress without audit) | reporting |
 
+## 1p. P5 slices G and H: KPI restatements, financial-metric extension, launch plan, Day-90 test and health check (migrations 0085–0087; T-DG5-ARCH-05; ADR-0047, ADR-0048)
+
+Every new table has PK `id` (uuid from the application; the three catalogues use `code`), `timestamptz` stamps and, when mutable, `version` with the P2 guards (`_row_guard` and the deferred `_audit_required`). Restatement periods, reconciliation and reissue offers and cash-flow rows are append-only. No mth_app DELETE grant on any of them (a predecessor link is removed by a stamp). DG4 tables touched additively: `calculation_run` (one more trigger kind, `restatement_approved`, and a guard trigger for it) and `kpi_evaluation` (a guard trigger for evaluations of a restatement run). Slice A's `methodology_element` gains the two health-check scheme element types (`health_response`, `health_band`), and `methodology_version` gains the health-check scheme publish trigger. `work_item_kind` gains three rows and `job_schedule` one. The data dictionary ("P5 tables, slices G and H") lists every column, constraint, index and trigger.
+
+### 1p.1 KPI restatements and the financial-metric extension (slice G)
+
+```mermaid
+erDiagram
+    kpi_definition ||--o{ kpi_restatement : "restated KPI (one in progress at a time)"
+    kpi_version ||--o{ kpi_restatement : "approved version applied to the selected periods"
+    change_request |o--o{ kpi_restatement : "optional: the KPI change request behind the version"
+    kpi_restatement ||--o{ kpi_restatement_period : "explicitly selected closed periods (append-only)"
+    reporting_period ||--o{ kpi_restatement_period : "a closed period of the KPI's frequency"
+    kpi_restatement ||--o{ kpi_restatement_reconciliation : "retained reconciliation, written at submission (append-only)"
+    kpi_evaluation |o--o{ kpi_restatement_reconciliation : "the evaluation before"
+    calculation_run |o--o| kpi_restatement : "the one restatement run (trigger restatement_approved)"
+    calculation_run ||--o{ kpi_evaluation : "restated evaluations (selected periods only)"
+    kpi_restatement ||--o{ kpi_restatement_reissue_offer : "issued reports offered for reissue (append-only)"
+    report_snapshot ||--o{ kpi_restatement_reissue_offer : "the issued snapshot (never changed)"
+    organization ||--o| financial_metric_setting : "the optional NPV/ROI/payback extension (off by default)"
+    business_case ||--o| financial_cash_flow_set : "the cash-flow set (revisions)"
+    financial_cash_flow_set ||--o{ financial_cash_flow : "outflow and inflow per period index (append-only)"
+```
+
+### 1p.2 Launch plan, Day-90 test and health check (slice H)
+
+```mermaid
+erDiagram
+    launch_window ||--o{ launch_template_item : "B0134 actions and outputs, the Day-90 test"
+    transformation ||--o| launch_plan : "one 90-day plan (start date)"
+    launch_plan ||--o{ launch_task : "editable scheduled tasks"
+    launch_template_item |o--o{ launch_task : "template task (null for custom tasks)"
+    launch_task ||--o{ launch_task_predecessor : "needs (predecessor links; removed by stamp)"
+    launch_plan ||--|| day_ninety_test : "the Day-90 leadership test (day 90)"
+    day_ninety_question ||--o{ day_ninety_response : "the six B0136-B0141 questions"
+    day_ninety_test ||--o{ day_ninety_response : "one response per question"
+    transformation ||--o{ health_assessment : "assessments and reassessments (sequence)"
+    methodology_version ||--o{ health_assessment : "the scoring scheme version (kind health_check_scheme; fixed)"
+    methodology_version ||--o{ methodology_element : "scheme responses (health_response) and bands (health_band)"
+    health_assessment |o--o{ health_assessment : "previous submitted assessment"
+    health_assessment ||--o{ health_assessment_answer : "25 answers (q01-q25, source_element health_question)"
+    health_assessment ||--o{ health_assessment_action : "top 3 actions"
+    improvement_item |o--o{ health_assessment_action : "optional link to a DG4 improvement item"
+```
+
+`launch_task.output_record_id` names a record of `output_record_type` (charter, diagnostic item, baseline, North Star, KPI, TOM cell, initiative, business case, roadmap wave, benefit, evidence, meeting series) in the same transformation (checked by `launch_task_guard`). `health_assessment.scheme_version_id` is the transformation's `health_check_scheme` pin at creation, else v1 (`health-check`, Yes = 1 / No = 0, the four B0152 bands).
+
+### 1p.3 P5 entity register (slices G and H) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| KPI restatement (S07-016) | `kpi_restatement` + `kpi_restatement_period`, `kpi_restatement_reconciliation`, `kpi_restatement_reissue_offer` | `id` (one in progress per KPI) | `requested_by`; `decided_by` (authority recorded) | `kpi_restatement.request`, `kpi_restatement.approve`, the worker | `status` (draft, submitted, approved, rejected, withdrawn, applied) | yes; children append-only | kpi |
+| Financial-metric settings (S08-019) | `financial_metric_setting` | `id` (one per organization) | `assumptions_set_by`, `enabled_changed_by` | `financial_metrics.enable`, `financial_metrics.define` | `enabled` | yes | benefits |
+| Cash flows (S08-019) | `financial_cash_flow_set` + `financial_cash_flow` | `id` (one set per business case; set, revision, period unique) | `created_by`/`updated_by` | `financial_metrics.define` | `revision` | yes; rows append-only | benefits |
+| Launch plan (PB-086, S14-004) | `launch_plan` + `launch_task` + `launch_task_predecessor` (catalogues `launch_window`, `launch_template_item`) | `id` (one plan per transformation) | `launch_task.owner_user_id` | `launch_plan.edit`, the S12-004 port | `launch_task.status` (not_started, in_progress, completed, cancelled) | yes | launch |
+| Day-90 test (PB-087) | `day_ninety_test` + `day_ninety_response` (catalogue `day_ninety_question`) | `id` (one per plan) | `responded_by` | `day_ninety_test.respond` | `status` (open, completed) | yes | launch |
+| HealthAssessment (S16-021; PB-091, PB-092, S14-001..003) | `health_assessment` + `health_assessment_answer` + `health_assessment_action` | `id` (sequence per transformation; one draft) | `owner_user_id` | `health_check.assess` | `status` (draft, submitted) | yes | health |
+| Health-check scoring scheme (S14-003) | `methodology_version` (kind `health_check_scheme`) + `methodology_element` (`health_response`, `health_band`) | `id` | `published_by` | Studio (`methodology.configure`, `methodology.publish`) | `status`, `draft_stage` | yes | methodology (Studio), health (reads) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -2065,7 +2124,7 @@ erDiagram
 | ControlCheck | `control_check` | P4 |
 | ImprovementItem | `improvement_item` | P4 |
 | Lesson | `lesson` | P4/P5 |
-| HealthAssessment | `health_assessment` (25-question check) | P5 |
+| HealthAssessment | `health_assessment` (25-question check; `0086`, §1p) | P5 |
 
 ### 2.12 Configuration, automation, integration, reporting and audit (REQ-S16-022; DG6)
 
