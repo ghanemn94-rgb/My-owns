@@ -100,7 +100,8 @@ test("Initiatives and Roadmaps / Benefits and Finance lead into the Portfolio an
     await expect(link).toBeVisible();
     // F-DG4-160 sweep (D-137): the planned card names the cross-portfolio view and the delivered dashboards.
     await expect(page.locator("#entry-planned + p")).toHaveText(tr(lang, "nav.entry.portfolioPlanned"));
-    await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+    // T-DG5-FE-A (REQ-S03-007): the area's §3 contents are listed on its landing page, under their own heading.
+    await expect(page.getByRole("heading", { level: 2, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
     await expectAccessible(page, lang, `p3-area-${area}`);
     await shot(page, lang, `p3-area-${area}`);
     await link.click();

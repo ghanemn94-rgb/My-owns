@@ -222,17 +222,24 @@ test("shell: navigation, language persistence and My Work (Transformation Office
   await expect(skipLink).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("main#main")).toBeFocused();
-  // A planned area is labelled planned (Governance became a partial area in P2; Risks and Actions is still planned).
+  // REQ-S03-007 (T-DG5-FE-A): an area's landing page lists the contents §3 names for it and where each lives. Risks and
+  // Actions has delivered screens (DG4), so no area is labelled planned any more (F-DG4-160, p5-plan §3 row 18).
   await navLink(nav, lang, "risks").click();
   await expect(
     page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.risks.label"), exact: true }),
   ).toBeVisible();
-  await expect(page.getByText(tr(lang, "nav.plannedBody"), { exact: true })).toBeVisible();
-  // F-DG4-160 sweep (D-137): the text says the area's delivered screens are listed under it in the navigation.
-  await expect(page.getByRole("heading", { level: 3, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: tr(lang, "nav.willContain"), exact: true })).toBeVisible();
+  const contents = page.locator("[data-area-contents='risks'] > li .area-content__label");
+  await expect(contents).toHaveText([
+    tr(lang, "nav.contents.risks.raid"),
+    tr(lang, "nav.contents.risks.correctiveActions"),
+    tr(lang, "nav.contents.risks.escalations"),
+  ]);
+  await expect(page.locator("[data-area-contents='risks'] [data-availability='available']")).toHaveCount(3);
+  await expect(nav.getByText(tr(lang, "nav.planned"), { exact: true })).toHaveCount(0);
   await expect(nav.getByRole("link", { name: tr(lang, "nav.sub.raid"), exact: true })).toBeVisible();
-  await shot(page, lang, "03-planned-area");
-  await expectAccessible(page, lang, "planned-area");
+  await shot(page, lang, "03-area-landing");
+  await expectAccessible(page, lang, "area-landing");
   expect(foreign).toEqual([]);
 });
 
