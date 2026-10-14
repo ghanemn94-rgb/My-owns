@@ -869,7 +869,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // createWorkstream, updateWorkstream, addWorkstreamInitiative, removeWorkstreamInitiative (8 JSON bodies).
     // T-DG5-BE-A: + createConfigDraft, updateConfigDraft (2 JSON bodies; discardConfigDraft is bodiless and the other
     // five BE-A operations are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([325, 324, 1]);
+    // T-DG5-BE-B: + putConfigElement, runConfigPreview (2 JSON bodies; removeConfigElement and
+    // runConfigCompatibilityCheck are bodiless, the other three are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([327, 326, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
