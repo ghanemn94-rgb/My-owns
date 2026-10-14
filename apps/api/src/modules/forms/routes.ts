@@ -2,7 +2,10 @@
 // files (schema reads, custom-field values); BE-E and BE-E2 add their own lines below, sequentially (§B.6).
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
+import { registerFormAttachmentRoutes } from "./attachments.ts";
+import { registerFormCommentRoutes } from "./comments.ts";
 import { registerCustomValueRoutes } from "./custom-values.ts";
+import { registerFormHistoryRoutes } from "./history.ts";
 import { registerFormsKindProvider } from "./provider.ts";
 import { registerFormSchemaReadRoutes } from "./schema-reads.ts";
 
@@ -13,6 +16,9 @@ export function registerFormRoutes(app: FastifyInstance, deps: ModuleDeps): stri
   return [
     ...registerFormSchemaReadRoutes(app, deps), // T-DG5-BE-D: listFormRecordTypes, getFormSchemaAdmin, getTransformationFormSchema
     ...registerCustomValueRoutes(app, deps), // T-DG5-BE-D: getFormRecordCustomFields, putFormRecordCustomFields
-    // BE-E (history, comments, attachments) and BE-E2 (export, bulk, drafts) register here.
+    ...registerFormHistoryRoutes(app, deps), // T-DG5-BE-E: listFormRecordVersions
+    ...registerFormCommentRoutes(app, deps), // T-DG5-BE-E: listFormRecordComments, createFormRecordComment
+    ...registerFormAttachmentRoutes(app, deps), // T-DG5-BE-E: listFormRecordAttachments, attachFormRecordEvidence, removeFormRecordAttachment
+    // BE-E2 (export, bulk, drafts) registers here.
   ];
 }
