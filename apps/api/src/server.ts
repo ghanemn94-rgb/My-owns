@@ -46,7 +46,7 @@ import { createAutomationActionRegistry, setAutomationActionRegistry } from "./m
 import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
 import { registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
-import { registerProceduresModule } from "./modules/procedures/index.ts";
+import { registerProceduresModule, wireProcedureApprovals } from "./modules/procedures/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule } from "./modules/adoption/index.ts";
 import { registerBenefitsModule } from "./modules/benefits/index.ts";
@@ -378,6 +378,9 @@ export async function buildServer(options: ServerOptions): Promise<{
     createWorkItem: createWorkItemOnce,
     closeWorkItems: closeWorkItemsOfSubject,
   });
+  // T-DG5-BE-F2 (ADR-0042 §2): a procedure approval step requests its `procedure_step` approval through workflows'
+  // service and completes when its business approver approves (procedures imports no workflows code).
+  wireProcedureApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
   // P5 wiring points (p5-plan §2, §5.3; T-DG5-BE-A).
   //  - ConfigResolver (ADR-0039 §3): the one resolver of pinned configuration versions. Modules that read configuration
   //    receive it in their register options (named wiring lines below); methodology imports none of them.

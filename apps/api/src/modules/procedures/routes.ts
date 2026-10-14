@@ -4,7 +4,10 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
 import { registerProcedureDefinitionRoutes } from "./definitions.ts";
+import { registerProcedureInstanceRoutes } from "./instances.ts";
+import { registerMyProcedureStepRoutes } from "./my-steps.ts";
 import { registerProceduresKindProvider } from "./provider.ts";
+import { registerProcedureStepRoutes } from "./steps.ts";
 
 /** Registers the procedures routes and returns them as "METHOD /path". */
 export function registerProcedureRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
@@ -12,7 +15,9 @@ export function registerProcedureRoutes(app: FastifyInstance, deps: ModuleDeps):
   registerProceduresKindProvider();
   return [
     ...registerProcedureDefinitionRoutes(app, deps), // T-DG5-BE-F: list/validate/get/put/remove procedure definitions
-    // BE-F2 (instances.ts, steps.ts, my-steps.ts) registers here.
+    ...registerProcedureInstanceRoutes(app, deps), // T-DG5-BE-F2: list/launch/get instances, inputs, cancel
+    ...registerProcedureStepRoutes(app, deps), // T-DG5-BE-F2: complete/skip/assign/evidence of a step
+    ...registerMyProcedureStepRoutes(app, deps), // T-DG5-BE-F2: my procedures
     // BE-G (coverage.ts) registers here.
   ];
 }

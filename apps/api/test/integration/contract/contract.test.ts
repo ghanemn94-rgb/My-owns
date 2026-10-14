@@ -120,6 +120,7 @@ import { exerciseP5KbeAOperations, P5_MIRRORS_KBE_A } from "./p5-exercises-kbe-a
 import { exerciseP5BeDOperations, P5_MIRRORS_BE_D } from "./p5-exercises-be-d.ts";
 import { exerciseP5BeEOperations, P5_MIRRORS_BE_E } from "./p5-exercises-be-e.ts";
 import { exerciseP5BeFOperations, P5_MIRRORS_BE_F } from "./p5-exercises-be-f.ts";
+import { exerciseP5BeF2Operations, P5_MIRRORS_BE_F2 } from "./p5-exercises-be-f2.ts";
 import { exerciseP5BeGOperations, P5_MIRRORS_BE_G } from "./p5-exercises-be-g.ts";
 import { exerciseP5BeHOperations, P5_MIRRORS_BE_H } from "./p5-exercises-be-h.ts";
 import { exerciseP5BeH2Operations, P5_MIRRORS_BE_H2 } from "./p5-exercises-be-h2.ts";
@@ -332,6 +333,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_D,
   ...P5_MIRRORS_BE_E,
   ...P5_MIRRORS_BE_F,
+  ...P5_MIRRORS_BE_F2,
   ...P5_MIRRORS_BE_G,
   ...P5_MIRRORS_BE_H,
   ...P5_MIRRORS_BE_H2,
@@ -708,6 +710,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   });
   it("P5 BE-F operations (p5-exercises-be-f.ts)", async () => {
     await exerciseP5BeFOperations(p3());
+  });
+  it("P5 BE-F2 operations (p5-exercises-be-f2.ts)", async () => {
+    await exerciseP5BeF2Operations(p3());
   });
   it("P5 BE-G operations (p5-exercises-be-g.ts)", async () => {
     await exerciseP5BeGOperations(p3());

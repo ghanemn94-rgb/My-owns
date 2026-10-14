@@ -17,3 +17,13 @@ export function registerProceduresModule(app: FastifyInstance, deps: ModuleDeps)
     routes: Object.freeze(routes),
   });
 }
+// T-DG5-BE-F2 (ADR-0042 §2-§3): the approval-step ports server.ts wires, the output-adapter port BE-G fills, and the
+// launch service slice E's launch_procedure action calls (with its launch key).
+export {
+  registerProcedureOutputAdapter,
+  wireProcedureApprovals,
+  type ProcedureApprovalPorts,
+  type ProcedureOutputAdapter,
+  type ProcedureOutputContext,
+} from "./steps.ts";
+export { launchProcedureInTx, type LaunchInput } from "./instances.ts";
