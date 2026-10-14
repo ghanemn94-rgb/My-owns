@@ -81,6 +81,28 @@ export const gateDecidedV1 = z.strictObject({
 });
 export type GateDecidedV1 = z.infer<typeof gateDecidedV1>;
 
+/**
+ * P5 slice C (T-DG5-BE-F2; ADR-0042 §7): a procedure step became active (its due date in working days on the business
+ * calendar, null = Unknown). Consumer: automation.evaluate (the slice E rule actions: step reminders and the escalation
+ * path). Key `procedure_step.activated:<stepInstanceId>`. The event reports an activation; it never completes or
+ * approves a step.
+ */
+export const procedureStepActivatedV1 = z.strictObject({
+  instanceId: uuid,
+  stepInstanceId: uuid,
+  procedureCode: z.string().regex(/^[a-z][a-z0-9_]{2,47}$/),
+  transformationId: uuid.nullable(),
+  stepKey: z.string().regex(/^[a-z][a-z0-9_]{1,47}$/),
+  stepKind: z.enum(["task", "approval"]),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  assigneeUserId: uuid.nullable(),
+  assigneeRoleCode: z.string().min(1).max(32),
+});
+export type ProcedureStepActivatedV1 = z.infer<typeof procedureStepActivatedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -105,6 +127,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   // T-DG4-BE-K (ADR-0035 §7): the gate events (R1); consumers gates.submitted and gates.decided (apps/worker gates).
   "gate.submitted": { 1: gateSubmittedV1 },
   "gate.decided": { 1: gateDecidedV1 },
+  // T-DG5-BE-F2 (ADR-0042 §7): consumer automation.evaluate (apps/worker/src/queues/automation.ts).
+  "procedure_step.activated": { 1: procedureStepActivatedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 
