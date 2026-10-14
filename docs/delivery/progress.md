@@ -33,7 +33,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
 - **DG5 (P5 "Configuration automation and outputs") is BUILDING** (78 DG5-final requirements; D-141).
 - **Next action:**
-  1. W1–W3 are integrated and verified (D-143 to D-145). W4 runs: `T-DG5-ARCH-04` (slice F), `T-DG5-BE-B2`, `T-DG5-BE-D`, `T-DG5-BE-H`.
+  1. W1–W4 are integrated and verified (D-143 to D-146); the export dependencies are installed. W5 runs: `T-DG5-ARCH-05` (slices G + H), `T-DG5-BE-B3`, `T-DG5-BE-E`, `T-DG5-BE-H2`.
   2. Then waves W4–W14 per p5-plan §5.2, with BE-B2/BE-B3/BE-C/KBE-A placed as D-143 says.
 ## DG2 scope (P2 — diagnose, define and design)
 
