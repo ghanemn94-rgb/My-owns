@@ -10,8 +10,8 @@ import { defaultMigrationsDir } from "@mth/db";
 import PgBoss from "pg-boss";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { handleTransformationCreated, STARTER_AUTOMATION_CONSUMER } from "../../src/handlers/index.ts";
-import { ensureQueues, QUEUES } from "../../src/queues/index.ts";
-import { relayOnce, txExecutor } from "../../src/relay.ts";
+import { ensureQueues, QUEUES, QUEUES_FOR_EVENT } from "../../src/queues/index.ts";
+import { jobsForEvent, relayOnce, txExecutor } from "../../src/relay.ts";
 import { startWorker } from "../../src/worker.ts";
 import { bossFor, seedTransformationWithOutbox, waitFor, workerEnv, type WorkerEnv } from "../support.ts";
 
@@ -30,6 +30,13 @@ afterAll(async () => {
   await env.close();
 });
 
+/**
+ * The jobs the relay sends for one transformation.created event: its platform queue and (T-DG5-BE-H2, ADR-0043 §5) the
+ * automation engine's queue, each with its deterministic job id (D-102 fan-out).
+ */
+const expectedJobs = (outboxId: string) => jobsForEvent(outboxId, QUEUES_FOR_EVENT["transformation.created"]!);
+const platformJobId = (outboxId: string) =>
+  expectedJobs(outboxId).find((j) => j.queue === QUEUES.transformationCreated)!.id;
 const jobsFor = async (outboxId: string) =>
   (await env.owner.query("SELECT id, name, state, data FROM pgboss.job WHERE data->>'outboxEventId' = $1", [outboxId]))
     .rows;
@@ -62,8 +69,12 @@ describe("outbox relay idempotency", () => {
     expect(first.published).toBeGreaterThanOrEqual(1);
     expect(second.published).toBe(0);
     const jobs = await jobsFor(outboxId);
-    expect(jobs).toHaveLength(1);
-    expect(jobs[0]).toMatchObject({ id: outboxId, name: QUEUES.transformationCreated });
+    expect(jobs).toHaveLength(expectedJobs(outboxId).length);
+    expect(jobs.map((j) => ({ id: j.id, name: j.name })).sort((a, b) => a.name.localeCompare(b.name))).toEqual(
+      expectedJobs(outboxId)
+        .map((j) => ({ id: j.id, name: j.queue }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    );
     const row = await env.db
       .selectFrom("outbox_event")
       .select(["published_at", "publish_attempts"])
@@ -92,11 +103,11 @@ describe("outbox relay idempotency", () => {
           organizationId: row.organization_id,
           payload: row.payload as object,
         },
-        { id: outboxId, db: txExecutor(tx) },
+        { id: platformJobId(outboxId), db: txExecutor(tx) },
       ),
     );
     await relayOnce(env.db, boss);
-    expect(await jobsFor(outboxId)).toHaveLength(1);
+    expect(await jobsFor(outboxId)).toHaveLength(expectedJobs(outboxId).length);
     expect(
       (
         await env.db
@@ -118,7 +129,7 @@ describe("outbox relay idempotency", () => {
     } finally {
       await other.stop({ graceful: false, wait: true, timeout: 5000 });
     }
-    for (const s of seeded) expect(await jobsFor(s.outboxId)).toHaveLength(1);
+    for (const s of seeded) expect(await jobsFor(s.outboxId)).toHaveLength(expectedJobs(s.outboxId).length);
   });
 
   it("records an unroutable event as a relay failure instead of dropping it", async () => {
@@ -215,8 +226,11 @@ describe("worker runtime: end to end, restarts and the dead-letter queue", () =>
       expect(ledger.outcome).toBe("done");
       const job = await waitFor(
         async () =>
-          (await env.owner.query("SELECT state FROM pgboss.job WHERE id = $1 AND state = 'completed'", [s.outboxId]))
-            .rows[0],
+          (
+            await env.owner.query("SELECT state FROM pgboss.job WHERE id = $1 AND state = 'completed'", [
+              platformJobId(s.outboxId),
+            ])
+          ).rows[0],
       );
       expect(job.state).toBe("completed");
     } finally {

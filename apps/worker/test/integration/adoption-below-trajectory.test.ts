@@ -24,6 +24,9 @@ import {
 import { CORRECTIVE_CONSUMERS, RAID_HANDLERS } from "../../src/handlers/raid.ts";
 import { ensureQueues, QUEUE_FOR_EVENT, QUEUES_FOR_EVENT, queuesForEvents } from "../../src/queues/index.ts";
 import { fanOutJobId, jobsForEvent, relayOnce } from "../../src/relay.ts";
+import { AUTOMATION_EVENT_QUEUES } from "../../src/queues/automation.ts";
+
+const AUTOMATION_EVALUATE = "automation.evaluate";
 import { startWorker, type RunningWorker } from "../../src/worker.ts";
 import { bossFor, seedTransformationWithOutbox, waitFor, workerEnv, type WorkerEnv } from "../support.ts";
 
@@ -288,13 +291,19 @@ const jobsOf = async (outboxId: string) =>
 
 describe("the event-to-queue registry (D-102)", () => {
   it("kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue", () => {
+    // T-DG5-BE-H2 (ADR-0043 §5): every admin-selectable event trigger also feeds the automation engine, last.
     expect(QUEUES_FOR_EVENT["kpi.deviation_evaluated"]).toEqual([
       CORRECTIVE_CONSUMERS.kpi,
       ADOPTION_INDICATOR_CONSUMER,
+      AUTOMATION_EVALUATE,
     ]);
     for (const [eventType, queues] of Object.entries(QUEUES_FOR_EVENT)) {
       if (eventType === "kpi.deviation_evaluated") continue;
-      expect(queues, eventType).toHaveLength(1);
+      if (eventType in AUTOMATION_EVENT_QUEUES) {
+        // At most one domain consumer, then the engine (an event with no DG4 consumer feeds the engine only).
+        expect(queues.at(-1), eventType).toBe(AUTOMATION_EVALUATE);
+        expect(queues.length, eventType).toBeLessThanOrEqual(2);
+      } else expect(queues, eventType).toHaveLength(1);
       expect(QUEUE_FOR_EVENT[eventType]).toBe(queues[0]);
     }
     expect(QUEUE_FOR_EVENT["kpi.deviation_evaluated"]).toBe(CORRECTIVE_CONSUMERS.kpi);
@@ -329,9 +338,14 @@ describe("the outbox relay fans kpi.deviation_evaluated out (D-102)", () => {
     const relayed = await relayOnce(env.db, boss, 50);
     expect(relayed.failed).toBe(0);
     const jobs = await jobsOf(outboxId);
-    expect(jobs.map((j) => j.name)).toEqual([ADOPTION_INDICATOR_CONSUMER, CORRECTIVE_CONSUMERS.kpi]);
+    expect(jobs.map((j) => j.name)).toEqual([
+      ADOPTION_INDICATOR_CONSUMER,
+      AUTOMATION_EVALUATE,
+      CORRECTIVE_CONSUMERS.kpi,
+    ]);
     expect(Object.fromEntries(jobs.map((j) => [j.name, j.id]))).toEqual({
       [ADOPTION_INDICATOR_CONSUMER]: fanOutJobId(outboxId, ADOPTION_INDICATOR_CONSUMER),
+      [AUTOMATION_EVALUATE]: fanOutJobId(outboxId, AUTOMATION_EVALUATE),
       [CORRECTIVE_CONSUMERS.kpi]: fanOutJobId(outboxId, CORRECTIVE_CONSUMERS.kpi),
     });
     // Relay again (nothing pending for this event), then replay both sends with the same ids: still one job each.
@@ -349,7 +363,8 @@ describe("the outbox relay fans kpi.deviation_evaluated out (D-102)", () => {
         },
         { id: j.id },
       );
-    expect((await jobsOf(outboxId)).length).toBe(2);
+    // Still one job per queue (the two consumers and, T-DG5-BE-H2, the automation engine).
+    expect((await jobsOf(outboxId)).length).toBe(3);
 
     // The production worker runs both consumers once each.
     const worker: RunningWorker = await startWorker({
@@ -416,9 +431,9 @@ describe("the outbox relay fans kpi.deviation_evaluated out (D-102)", () => {
       .where("id", "=", outboxId)
       .executeTakeFirstOrThrow();
     expect(row).toMatchObject({ published_at: null, publish_attempts: 1, last_error: "synthetic send failure" });
-    // The retry with a healthy boss publishes both jobs.
+    // The retry with a healthy boss publishes every job (the two consumers and, T-DG5-BE-H2, the automation engine).
     expect((await relayOnce(env.db, boss, 50)).failed).toBe(0);
-    expect((await jobsOf(outboxId)).length).toBe(2);
+    expect((await jobsOf(outboxId)).length).toBe(3);
   });
 
   it("an event type with no queue is a recorded relay failure; a single-queue event keeps job id = event id", async () => {
@@ -430,7 +445,13 @@ describe("the outbox relay fans kpi.deviation_evaluated out (D-102)", () => {
       .where("event_type", "=", "transformation.created")
       .executeTakeFirstOrThrow();
     await relayOnce(env.db, boss, 50);
-    expect(await jobsOf(t.id)).toEqual([{ id: t.id, name: QUEUE_FOR_EVENT["transformation.created"] }]);
+    // T-DG5-BE-H2 (ADR-0043 §5): transformation.created also feeds the automation engine, so it fans out like any
+    // multi-queue event (the single-queue id rule itself is pinned by the "job ids" test above).
+    expect(await jobsOf(t.id)).toEqual(
+      jobsForEvent(t.id, QUEUES_FOR_EVENT["transformation.created"]!)
+        .map((j) => ({ id: j.id, name: j.queue }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    );
     const orphan = randomUUID();
     await env.db
       .insertInto("outbox_event")

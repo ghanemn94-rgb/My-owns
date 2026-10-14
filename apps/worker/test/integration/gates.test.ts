@@ -310,8 +310,10 @@ describe("parity and wiring (D-102)", () => {
   });
 
   it("each gate event maps to its gates.* queue", () => {
-    expect(QUEUES_FOR_EVENT["gate.submitted"]).toEqual(["gates.submitted"]);
-    expect(QUEUES_FOR_EVENT["gate.decided"]).toEqual(["gates.decided"]);
+    // T-DG5-BE-H2 (ADR-0043 §5): each gate event also feeds the automation engine (D-102 fan-out); its gates.* queue
+    // stays first.
+    expect(QUEUES_FOR_EVENT["gate.submitted"]).toEqual(["gates.submitted", "automation.evaluate"]);
+    expect(QUEUES_FOR_EVENT["gate.decided"]).toEqual(["gates.decided", "automation.evaluate"]);
   });
 });
 

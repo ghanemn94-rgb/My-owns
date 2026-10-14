@@ -122,6 +122,7 @@ import { exerciseP5BeEOperations, P5_MIRRORS_BE_E } from "./p5-exercises-be-e.ts
 import { exerciseP5BeFOperations, P5_MIRRORS_BE_F } from "./p5-exercises-be-f.ts";
 import { exerciseP5BeGOperations, P5_MIRRORS_BE_G } from "./p5-exercises-be-g.ts";
 import { exerciseP5BeHOperations, P5_MIRRORS_BE_H } from "./p5-exercises-be-h.ts";
+import { exerciseP5BeH2Operations, P5_MIRRORS_BE_H2 } from "./p5-exercises-be-h2.ts";
 import { exerciseP5BeIOperations, P5_MIRRORS_BE_I } from "./p5-exercises-be-i.ts";
 import { exerciseP5BeJOperations, P5_MIRRORS_BE_J } from "./p5-exercises-be-j.ts";
 import { exerciseP5BeKOperations, P5_MIRRORS_BE_K } from "./p5-exercises-be-k.ts";
@@ -333,6 +334,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_F,
   ...P5_MIRRORS_BE_G,
   ...P5_MIRRORS_BE_H,
+  ...P5_MIRRORS_BE_H2,
   ...P5_MIRRORS_BE_I,
   ...P5_MIRRORS_BE_J,
   ...P5_MIRRORS_BE_K,
@@ -713,6 +715,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 BE-H operations (p5-exercises-be-h.ts)", async () => {
     await exerciseP5BeHOperations(p3());
   });
+  it("P5 BE-H2 operations (p5-exercises-be-h2.ts)", async () => {
+    await exerciseP5BeH2Operations(p3());
+  });
   it("P5 BE-I operations (p5-exercises-be-i.ts)", async () => {
     await exerciseP5BeIOperations(p3());
   });
@@ -879,7 +884,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // bodies; withdrawConfigReview and publishConfigVersion are bodiless, the other two are GETs).
     // T-DG5-BE-E: + createFormRecordComment, attachFormRecordEvidence, removeFormRecordAttachment (3 JSON bodies; the
     // other three BE-E operations are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([341, 340, 1]);
+    // T-DG5-BE-H2: + 2 JSON bodies (its dry-run and lifecycle operations; see p5-exercises-be-h2.ts).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([343, 342, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
