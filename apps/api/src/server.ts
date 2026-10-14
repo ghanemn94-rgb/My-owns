@@ -41,6 +41,9 @@ import { registerJobOperationRoutes, registerJobScheduleRoutes } from "./modules
 // P5 modules (p5-plan §3 seam 24; T-DG5-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAutomationModule } from "./modules/automation/index.ts";
 import { pinNewTransformationToForms, registerFormsModule } from "./modules/forms/index.ts";
+// T-DG5-BE-H (ADR-0043 §2): the AutomationActionRegistry port and the action descriptors of their owning modules.
+import { createAutomationActionRegistry, setAutomationActionRegistry } from "./modules/automation/registry.ts";
+import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
 import { registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
 import { registerProceduresModule } from "./modules/procedures/index.ts";
@@ -375,6 +378,10 @@ export async function buildServer(options: ServerOptions): Promise<{
   // T-DG5-BE-D (ADR-0041 §4): a transformation created from this release on is pinned to the newest published forms
   // version in its create transaction (DG1-DG4 transformations stay unpinned and read forms v1).
   registerTransformationInitializer("forms.pin", pinNewTransformationToForms);
+  // T-DG5-BE-H: the registry line; each action owner adds one registration line below it (BE-J: launch_procedure).
+  const automationActions = createAutomationActionRegistry();
+  for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)
+  setAutomationActionRegistry(automationActions);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
