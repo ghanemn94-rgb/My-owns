@@ -59,9 +59,11 @@ describe("methodology module (P2)", () => {
     expect(access.get("GET /api/v1/transformations/:transformationId/methodology")).toEqual({
       permission: "transformation.read",
     });
-    // P5 slice A (p5-work-split §A.1): the eight BE-A operations; the other slice A route files are stubs until filled.
+    // P5 slice A (p5-work-split §A.1, §A.2): the eight BE-A and seven BE-B operations; the other slice A route files are
+    // stubs until filled.
     const read = { permission: "methodology.read" };
     const configure = { permission: "methodology.configure" };
+    const publish = { permission: "methodology.publish" };
     const studio = [...access].filter(([k]) => k.includes("methodology-versions") || k.includes("config-pins"));
     expect(Object.fromEntries(studio)).toEqual({
       "GET /api/v1/admin/methodology-versions": read,
@@ -72,6 +74,14 @@ describe("methodology module (P2)", () => {
       "GET /api/v1/admin/methodology-versions/:versionId/elements": read,
       "GET /api/v1/transformations/:transformationId/config-pins": read,
       "GET /api/v1/transformations/:transformationId/config-pins/history": read,
+      // T-DG5-BE-B (p5-work-split §A.2): element edits, diff, affected records, check runs, compatibility, preview.
+      "PUT /api/v1/admin/methodology-versions/:versionId/elements/:elementType/:stableKey": configure,
+      "POST /api/v1/admin/methodology-versions/:versionId/elements/:elementType/:stableKey/remove": configure,
+      "GET /api/v1/admin/methodology-versions/:versionId/diff": read,
+      "GET /api/v1/admin/methodology-versions/:versionId/affected-records": read,
+      "GET /api/v1/admin/methodology-versions/:versionId/check-runs": read,
+      "POST /api/v1/admin/methodology-versions/:versionId/compatibility-checks": publish,
+      "POST /api/v1/admin/methodology-versions/:versionId/preview": publish,
     });
     await app.close();
   });
