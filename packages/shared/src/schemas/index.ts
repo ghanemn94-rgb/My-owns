@@ -125,5 +125,7 @@ export * from "./scoring-defaults.ts";
 // P5 slice B mirrors of BE-D (backend-workflow-engineer, T-DG5-BE-D; p5-work-split §B.2): native forms, form schemas,
 // custom-field values and the `form`/`form_field` element attributes (ADR-0041 §1-§4).
 export * from "./forms.ts";
+// P5 slice B mirrors of BE-E (T-DG5-BE-E; p5-work-split §B.3): version history, comments, attachments (ADR-0041 §5).
+export * from "./forms-framework.ts";
 // P5 slice D (T-DG5-BE-H; ADR-0043 §1-§4; p5-work-split §D.1): automation rule content, requests and response mirrors.
 export * from "./automation.ts";
