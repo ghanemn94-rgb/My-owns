@@ -82,6 +82,20 @@ describe("methodology module (P2)", () => {
       "GET /api/v1/admin/methodology-versions/:versionId/check-runs": read,
       "POST /api/v1/admin/methodology-versions/:versionId/compatibility-checks": publish,
       "POST /api/v1/admin/methodology-versions/:versionId/preview": publish,
+      // T-DG5-BE-B3 (p5-work-split §A.4): review where configured, publish, rollback.
+      "POST /api/v1/admin/methodology-versions/:versionId/submit-review": publish,
+      "GET /api/v1/admin/methodology-versions/:versionId/reviews": read,
+      "POST /api/v1/admin/methodology-versions/:versionId/reviews/:reviewId/decision": {
+        permission: "methodology.review",
+      },
+      "POST /api/v1/admin/methodology-versions/:versionId/reviews/:reviewId/withdraw": publish,
+      "POST /api/v1/admin/methodology-versions/:versionId/publish": publish,
+      "POST /api/v1/admin/methodology-versions/:versionId/rollback": publish,
+    });
+    // T-DG5-BE-B3: the review policies (TO configures; ADM_METHOD reads).
+    expect(access.get("GET /api/v1/admin/config-review-policies")).toEqual(read);
+    expect(access.get("PATCH /api/v1/admin/config-review-policies/:configKind")).toEqual({
+      permission: "config_review_policy.configure",
     });
     await app.close();
   });
