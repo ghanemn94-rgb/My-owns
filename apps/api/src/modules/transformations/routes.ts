@@ -43,6 +43,7 @@ import {
   withIdempotency,
   type ModuleDeps,
 } from "../platform/index.ts";
+import { runTransformationInitializers } from "./initializers.ts";
 import { registerTransformationP2Routes } from "./p2-routes.ts";
 import {
   activeUsersExist,
@@ -232,6 +233,13 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
           await sql`SELECT p4_instantiate_transformation(${id}::uuid, ${principal.userId!}::uuid, ${audit.requestId}, 'api')`.execute(
             tx,
           );
+          // P5 (T-DG5-BE-D; ADR-0041 §4): the registered initializers (the forms pin of slice B), in this transaction.
+          await runTransformationInitializers(tx, {
+            transformationId: id,
+            organizationId: org.id,
+            actorUserId: principal.userId!,
+            audit,
+          });
           // F-DG1-106: a creator authorized only by a non-inheriting business-unit grant (TL) gets an explicit,
           // audited transformation-scope assignment, so create and the following read resolve the same scope.
           await grantCreatorTransformationRoles(

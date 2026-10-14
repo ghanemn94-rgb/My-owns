@@ -19,6 +19,7 @@ import type { MethodologyVersionRow } from "./drafts.ts";
 import { studioRefusals } from "./drafts.ts";
 import {
   configKindProvider,
+  configKindProviders,
   elementAttributeSchema,
   kindAcceptsElementType,
   type CompatibilityFinding,
@@ -55,6 +56,14 @@ export interface ElementIdentity {
   readonly ordinal: number;
 }
 
+/** True when `type` has a catalogue: a DG2 one, or a kind provider's (T-DG5-BE-D: `form`, `form_field`). */
+function hasCatalogue(type: ConfigElementType): boolean {
+  return (
+    CATALOGUE_TYPES.has(type) ||
+    configKindProviders().some((p) => p.catalogue !== undefined && p.elementTypes.includes(type))
+  );
+}
+
 /** The catalogue identity of `(type, key)`, or null (types without a catalogue have none). */
 export async function catalogueIdentity(
   db: DbOrTx,
@@ -62,7 +71,7 @@ export async function catalogueIdentity(
   stableKey: string,
 ): Promise<ElementIdentity | null> {
   if (SCORING_TYPES.has(type)) return SCORING_KEYS.has(stableKey) ? { stableKey, ordinal: 0 } : null;
-  if (!CATALOGUE_TYPES.has(type)) return null;
+  if (!hasCatalogue(type)) return null;
   const found = (await loadCatalogue(db, type)).find((c) => c.stableKey === stableKey);
   return found === undefined ? null : { stableKey: found.stableKey, ordinal: found.ordinal };
 }
@@ -206,6 +215,22 @@ export async function prepareElementRemove(
   if (!kindAcceptsElementType(kind, type)) throw studioRefusals.unknownElement();
   const existing = await loadElementRow(db, version.id, type, stableKey);
   const identity = await catalogueIdentity(db, type, stableKey);
+  // T-DG5-BE-D (ADR-0041 §2, §10): the kind's own removal refusals first (a protected source column, a native form).
+  const removeHook = configKindProvider(kind).validateRemove;
+  if (removeHook !== undefined)
+    await removeHook(db, {
+      versionId: version.id,
+      elementType: type,
+      stableKey,
+      origin:
+        existing !== undefined
+          ? existing.origin === "admin"
+            ? "admin"
+            : "source"
+          : identity !== null
+            ? "source"
+            : null,
+    });
   // Deleting a source phase, gate or TOM dimension is refused (REQ-S06-006 "deleting a TOM dimension ... is rejected").
   if (FIXED_SET_TYPES.has(type))
     throw identity === null ? studioRefusals.unknownElement() : studioRefusals.sourceElementProtected();
@@ -244,11 +269,7 @@ export async function elementRowFindings(db: DbOrTx, version: MethodologyVersion
       out.push(finding("config_version.source_element_protected", r.element_type, r.stable_key));
       continue;
     }
-    if (
-      r.origin === "source" &&
-      (await catalogueIdentity(db, type, r.stable_key)) === null &&
-      CATALOGUE_TYPES.has(type)
-    ) {
+    if (r.origin === "source" && (await catalogueIdentity(db, type, r.stable_key)) === null && hasCatalogue(type)) {
       out.push(finding("config_version.unknown_element", r.element_type, r.stable_key));
       continue;
     }

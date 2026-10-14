@@ -40,7 +40,7 @@ import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/or
 import { registerJobOperationRoutes, registerJobScheduleRoutes } from "./modules/jobs/index.ts";
 // P5 modules (p5-plan §3 seam 24; T-DG5-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAutomationModule } from "./modules/automation/index.ts";
-import { registerFormsModule } from "./modules/forms/index.ts";
+import { pinNewTransformationToForms, registerFormsModule } from "./modules/forms/index.ts";
 import { registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
 import { registerProceduresModule } from "./modules/procedures/index.ts";
@@ -82,7 +82,7 @@ import {
 import { registerReportingModule } from "./modules/reporting/index.ts";
 // T-DG4-KBE-G2 (ADR-0037 §1 item 3): the workspace header's gate-readiness port (the raidDependencyPort precedent).
 import { setWorkflowsReadPort } from "./modules/reporting/ports.ts";
-import { registerTransformationRoutes } from "./modules/transformations/index.ts";
+import { registerTransformationInitializer, registerTransformationRoutes } from "./modules/transformations/index.ts";
 // T-DG4-KBE-C / T-DG4-BE-R1: the approval service for the kpi and sustainment ports, through workflows' public
 // interface (workflows/index.ts exports it since BE-C).
 import {
@@ -372,6 +372,9 @@ export async function buildServer(options: ServerOptions): Promise<{
   //    it here, so automation imports no domain module (the GateFactsProvider pattern). BE-H adds the registry line and
   //    each action owner adds one registration line below it.
   const configResolver = createConfigResolver();
+  // T-DG5-BE-D (ADR-0041 §4): a transformation created from this release on is pinned to the newest published forms
+  // version in its create transaction (DG1-DG4 transformations stay unpinned and read forms v1).
+  registerTransformationInitializer("forms.pin", pinNewTransformationToForms);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed

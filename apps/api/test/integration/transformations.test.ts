@@ -503,6 +503,8 @@ describe("audit trail endpoint", () => {
         ...Array<string>(6).fill("transformation_raci_deliverable.create"),
         ...Array<string>(36).fill("transformation_raci_assignment.create"),
         ...Array<string>(5).fill("forum.create"),
+        // T-DG5-BE-D (ADR-0041 §4): the forms pin of a transformation created from P5 on (TransformationInitializer).
+        "transformation_config_pin.create",
       ].sort(),
     );
     expect(page2.body.nextCursor).toBeNull();
