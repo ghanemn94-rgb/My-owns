@@ -112,6 +112,7 @@ import {
   exceptionSnapshotOf,
   gateExceptionRefusals,
 } from "./gate-exceptions.ts";
+import { recordRequestExecution, REQUEST_STARTERS } from "../platform/index.ts";
 
 const G = "/api/v1/transformations/:transformationId/gates";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -970,6 +971,12 @@ async function submitGate(
       snapshotSha256: { from: null, to: sha },
       charterVersionNo: { from: null, to: facts.charter?.version ?? null },
     },
+  });
+  // T-DG5-BE-J (ADR-0044 §1, starter 5): the committed submission (its evidence check passed) is one execution.
+  await recordRequestExecution(tx, REQUEST_STARTERS.gateEvidenceMissing, id, {
+    organizationId: ctx.organizationId,
+    transformationId,
+    audit: ctx.audit,
   });
   for (const c of criteria) {
     await tx

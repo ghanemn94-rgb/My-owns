@@ -105,6 +105,14 @@ export { registerHealthRoutes } from "./health.ts";
 export { createInFlight, registerInFlightTracking, type InFlight } from "./in-flight.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";
 export { ADVISORY_LOCK_CLASSES, type AdvisoryLockClassName } from "./advisory-locks.ts";
+// T-DG5-BE-J (ADR-0044 §1): the request starters' execution recorder (starters 5, 14, 15), a leaf every module may use.
+export {
+  recordRequestExecution,
+  REQUEST_STARTERS,
+  type RequestExecutionOutcome,
+  type RequestExecutionScope,
+  type RequestStarter,
+} from "./request-executions.ts";
 // P4 slice H (T-DG4-BE-L; ADR-0036 §6): the material-change port kpi calls and workflows implements (server.ts wires it).
 export {
   materialChangePort,

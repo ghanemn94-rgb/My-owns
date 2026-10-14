@@ -55,6 +55,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
+import { recordRequestExecution, REQUEST_STARTERS } from "../platform/index.ts";
 import { assertActiveUsers, type WriteContext } from "../transformations/index.ts";
 import {
   areaChanges,
@@ -734,6 +735,12 @@ async function acceptHandover(tx: Tx, request: FastifyRequest): Promise<void> {
   await transferOwnership(ctx, accepted);
   // The first recurring review for the BAU owner, exactly once (sustainment_review_due_key; REQ-PB-083).
   await scheduleAreaReview(tx, area.id, nextReviewDate, userActor(ctx));
+  // T-DG5-BE-J (ADR-0044 §1, starter 14): the committed acceptance is recorded as one execution of its starter rule.
+  await recordRequestExecution(tx, REQUEST_STARTERS.bauHandoverAccepted, accepted.id, {
+    organizationId: ctx.organizationId,
+    transformationId,
+    audit: ctx.audit,
+  });
 }
 
 async function returnHandover(tx: Tx, request: FastifyRequest): Promise<void> {

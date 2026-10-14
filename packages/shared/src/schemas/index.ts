@@ -135,3 +135,5 @@ export * from "./procedures.ts";
 // P5 slice F (T-DG5-KBE-C; ADR-0045 §1-§5; p5-work-split §F.1): report definitions, the report document model v1,
 // the registers parameters and the report-snapshot mirrors.
 export * from "./report.ts";
+// P5 slice E (T-DG5-BE-J; ADR-0044 §7): the critical dependency slip response mirrors.
+export * from "./dependency-slips.ts";

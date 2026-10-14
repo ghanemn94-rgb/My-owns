@@ -54,6 +54,8 @@ export const transformationCreate = z
     leadUserId: uuid.optional(),
     timezone: timeZone.optional(),
     currency: currency.optional(),
+    // T-DG5-BE-J (ADR-0044 §2; p5-plan §3 row 15): the optional 90-day plan, dated from startDate (additive).
+    launchPlan: z.strictObject({ startDate: z.iso.date("validation.business_date") }).optional(),
   })
   .superRefine((t, ctx) => {
     if (t.mode === "modular" && t.entryPhase === undefined) {

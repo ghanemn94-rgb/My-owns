@@ -39,6 +39,7 @@ import {
   type LooseRow,
 } from "../transformations/index.ts";
 import { readableInitiative } from "./deliverables.ts";
+import { recordDependencySlips } from "./slip-events.ts";
 import { assertInitiativeEditable } from "./repository.ts";
 import { checkVersion, dateText, JSON_BODY, lockForWrite, rule } from "./waves.ts";
 
@@ -224,6 +225,8 @@ async function updateMilestone(tx: Tx, request: FastifyRequest, id: string): Pro
     newVersion: updated.version,
     changes: diffFields(current as unknown as LooseRow, updated as unknown as LooseRow, AUDIT_FIELDS),
   });
+  // T-DG5-BE-J (ADR-0044 §7; REQ-S12-012): a moved predecessor finish may be a critical dependency slip.
+  await recordDependencySlips(tx, ctx, current, updated);
   return updated;
 }
 
@@ -279,6 +282,8 @@ async function approveMilestoneDate(tx: Tx, request: FastifyRequest, id: string)
       approved_by: { from: current.approved_by, to: ctx.userId },
     },
   });
+  // T-DG5-BE-J (ADR-0044 §7; REQ-S12-012): the approved date counts when no forecast is set (predecessorFinish).
+  await recordDependencySlips(tx, ctx, current, updated);
   return updated;
 }
 

@@ -56,6 +56,7 @@ import {
 import { affectedRecords } from "./affected-records.ts";
 import { canonicalContentJson } from "./content-hash.ts";
 import { requireStudioPermission, type MethodologyVersionRow } from "./drafts.ts";
+import { recordRequestExecution, REQUEST_STARTERS } from "../platform/index.ts";
 
 export const REVISION_PROPOSALS = "/api/v1/admin/revision-proposals";
 /** The work-item kind of every S12-018 review task (0063; My Work section "Reviews"). */
@@ -228,6 +229,12 @@ async function insertProposalOnce(
       reviewer_role_code: { from: null, to: p.reviewerRoleCode },
       review_task_count: { from: null, to: p.reviewTaskCount },
     },
+  });
+  // T-DG5-BE-J (ADR-0044 §1, starter 15): the committed proposal is one execution of its starter rule.
+  await recordRequestExecution(tx, REQUEST_STARTERS.revisionProposed, id, {
+    organizationId: p.organizationId,
+    transformationId: p.transformationId,
+    audit,
   });
   return { row: inserted, created: true };
 }

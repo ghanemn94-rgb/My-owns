@@ -17,6 +17,7 @@ import { PROCEDURES_EVENT_QUEUES, PROCEDURES_QUEUES } from "./procedures.ts";
 import { REPORTS_EVENT_QUEUES, REPORTS_QUEUES } from "./reports.ts";
 import { LAUNCH_EVENT_QUEUES, LAUNCH_QUEUES } from "./launch.ts";
 import { DEMO_EVENT_QUEUES, DEMO_QUEUES } from "./demo.ts";
+import { PORTFOLIO_EVENT_QUEUES, PORTFOLIO_QUEUES } from "./portfolio.ts"; // T-DG5-BE-J (ADR-0044 §7, §8)
 import {
   ensurePlatformQueues,
   PLATFORM_EVENT_QUEUES,
@@ -56,6 +57,7 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...REPORTS_QUEUES,
   ...LAUNCH_QUEUES,
   ...DEMO_QUEUES,
+  ...PORTFOLIO_QUEUES,
 ];
 
 /**
@@ -75,6 +77,8 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   ADOPTION_EVENT_QUEUES,
   SUSTAINMENT_EVENT_QUEUES,
   GATES_EVENT_QUEUES,
+  // T-DG5-BE-J: the domain consumer of dependency.slipped comes before the engine (D-102 order: domain, then engine).
+  PORTFOLIO_EVENT_QUEUES,
   AUTOMATION_EVENT_QUEUES,
   PROCEDURES_EVENT_QUEUES,
   REPORTS_EVENT_QUEUES,

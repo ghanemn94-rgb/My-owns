@@ -18,18 +18,30 @@ import { REPORTS_HANDLERS } from "./reports.ts";
 import { LAUNCH_HANDLERS } from "./launch.ts";
 import { DEMO_HANDLERS } from "./demo.ts";
 import type { JobHandler } from "./spec.ts";
+import type { Db } from "@mth/db";
+// T-DG5-BE-J (ADR-0044 §1, §7; p5-work-split §E.1): the starters' wrapper and the dependency-slip consumer.
+import { runAsStarter, withStarterRules } from "../automation/starters.ts";
+import { handleTransformationCreated as handleTransformationCreatedDg4, type HandlerOutcome } from "./platform.ts";
+import { PORTFOLIO_HANDLERS } from "./portfolio.ts";
 
-export {
-  handleTransformationCreated,
-  purgeExpired,
-  STARTER_AUTOMATION_CONSUMER,
-  type HandlerOutcome,
-  type PurgeResult,
-} from "./platform.ts";
+export { purgeExpired, STARTER_AUTOMATION_CONSUMER, type HandlerOutcome, type PurgeResult } from "./platform.ts";
 export type { JobHandler } from "./spec.ts";
 
-/** Every domain handler (P4 and P5 slices); the platform handlers are wired by worker.ts itself. */
-export const DOMAIN_HANDLERS: readonly JobHandler[] = [
+/**
+ * T-DG5-BE-J: `transformation.created` (worker.ts wires it itself) runs as starter 1 `starter.transformation_created`
+ * through the same wrapper (the handler unchanged; its outcome returned as it is).
+ */
+export function handleTransformationCreated(db: Db, data: unknown, jobId: string): Promise<HandlerOutcome> {
+  return runAsStarter(db, "starter.transformation_created", "transformation.created", data, jobId, undefined, () =>
+    handleTransformationCreatedDg4(db, data, jobId),
+  );
+}
+
+/**
+ * Every domain handler (P4 and P5 slices); the platform handlers are wired by worker.ts itself. T-DG5-BE-J: each
+ * handler on a starter queue is registered through withStarterRule (automation/starters.ts), same queue, unchanged.
+ */
+export const DOMAIN_HANDLERS: readonly JobHandler[] = withStarterRules([
   ...APPROVALS_HANDLERS,
   ...ACCESS_HANDLERS,
   ...KPI_HANDLERS,
@@ -45,4 +57,5 @@ export const DOMAIN_HANDLERS: readonly JobHandler[] = [
   ...REPORTS_HANDLERS,
   ...LAUNCH_HANDLERS,
   ...DEMO_HANDLERS,
-];
+  ...PORTFOLIO_HANDLERS,
+]);

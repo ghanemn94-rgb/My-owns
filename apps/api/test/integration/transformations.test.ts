@@ -99,7 +99,8 @@ describe("create", () => {
     expect(outbox).toHaveLength(1);
     expect(outbox[0]).toMatchObject({
       event_type: "transformation.created",
-      schema_version: 1,
+      // T-DG5-BE-J (ADR-0044 §2): v2 (adds launchPlan, null without the 90-day plan); v1 is still consumed.
+      schema_version: 2,
       idempotency_key: `transformation.created:${res.body.id}`,
       published_at: null,
     });
@@ -108,6 +109,7 @@ describe("create", () => {
       mode: "modular",
       entryPhase: "design",
       createdBy: w.office.id,
+      launchPlan: null,
     });
   });
 
