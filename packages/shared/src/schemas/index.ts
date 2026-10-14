@@ -129,3 +129,6 @@ export * from "./forms.ts";
 export * from "./forms-framework.ts";
 // P5 slice D (T-DG5-BE-H; ADR-0043 §1-§4; p5-work-split §D.1): automation rule content, requests and response mirrors.
 export * from "./automation.ts";
+// P5 slice C mirrors of BE-F (T-DG5-BE-F; ADR-0042 §1-§2, §10; p5-work-split §C.1): procedure definitions, the builder
+// validation report and the pure step-condition evaluator.
+export * from "./procedures.ts";

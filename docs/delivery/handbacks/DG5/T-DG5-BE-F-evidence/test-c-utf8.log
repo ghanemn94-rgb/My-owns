@@ -1,0 +1,1162 @@
+
+> mobily-transformation-hub@0.1.0 test /home/user/wt/dg5-be-f
+> s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-f
+
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 2823ms
+   ✓ reporting module (P1 scaffold, D-048) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  2774ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 20150ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  3106ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  3096ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  8029ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  4087ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  1679ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 2918ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  2847ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (41 tests) 5211ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  4646ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (139 tests) 35601ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  19572ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  852ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  2431ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  10292ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  778ms
+ ✓ |unit-node| packages/shared/src/kpi/property.test.ts (11 tests) 3634ms
+   ✓ measures > higher- and lower-is-better shortfalls are exact negatives; deviation follows the sign  321ms
+   ✓ measures > band: within ⇔ L ≤ a ≤ U, the shortfall is never negative, and equals the distance to the band  346ms
+   ✓ RAG > higher-is-better: a lower actual never gives a better RAG (monotonic), relative and absolute  480ms
+   ✓ RAG > relative mode is scale-invariant: scaling actual and expected by k > 0 keeps the RAG  549ms
+   ✓ changes > pp = (x₁ − x₀) × 100 exactly, and relative × |x₀| = x₁ − x₀ (to precision 80)  622ms
+   ✓ cumulative and roll-ups > cumulative YTD of a flow equals the exact sum of its period values; removing any period makes it Unknown  346ms
+   ✓ trajectory > linear expected values lie between the neighbouring points; step values are point values  420ms
+   ✓ storage rounding > rounds once half-up: |stored − exact| ≤ 0.0000005 and the record is honest  406ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 3808ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  3673ms
+ ✓ |unit-node| packages/shared/src/adoption/measures.test.ts (24 tests) 955ms
+   ✓ properties (seeded) > never 0 for an empty denominator: Unknown with value null exactly when the denominator is 0  466ms
+ ✓ |unit-node| packages/shared/src/forms/property.test.ts (6 tests) 2199ms
+   ✓ property: no float on any path > currency amounts round-trip exactly, e.g. 1500000.10 SAR (3000 cases)  314ms
+   ✓ property: percentages are stored as fractions > "p%" and typed "p" store p / 100; the API fraction stores itself (3000 cases)  817ms
+   ✓ property: Arabic-Indic digits are refused (the DG3 decimal rule) > any Arabic-Indic digit makes a number refused with validation.decimal (3000 cases)  369ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 2994ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  1266ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  976ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  397ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 845ms
+   ✓ evidence module (P2) > its declared boundary holds  652ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts (36 tests) 946ms
+   ✓ property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation > stored value, 2-digit display and 0–100 view all match for 3125 combinations  894ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 275ms
+ ✓ |unit-node| packages/config/src/load.test.ts (29 tests) 196ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/areas.test.ts (35 tests) 998ms
+   ✓ combine (ADR-0037 §3 precedence) > property: Unknown or Stale inputs never combine to green, and the result is one of the inputs' ranks (2000 seeded sets)  425ms
+   ✓ Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, D-119) > property: per currency and basis, the decimal sum of the basis's contributing lines equals its headline (300 seeded sets)  315ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 56ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 513ms
+   ✓ registerInFlightTracking > wraps every route handler registered after it: async handlers are tracked until their cleanup ran; results are unchanged  322ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 510ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 478ms
+(node:4286) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 118ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 371ms
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow)  307ms
+ ✓ |unit-node| apps/api/src/modules/benefits/benefits.test.ts (2 tests) 121ms
+ ✓ |unit-node| apps/api/src/modules/kpi/formulas.test.ts (10 tests) 61ms
+ ✓ |unit-node| apps/api/src/modules/adoption/adoption.test.ts (2 tests) 49ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 203ms
+ ✓ |unit-node| apps/api/src/modules/governance/governance.test.ts (2 tests) 171ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 124ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 181ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts (140 tests) 299ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 155ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts (12 tests) 271ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts (22 tests) 29ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (49 tests) 118ms
+ ✓ |unit-node| tests/qa/unit/a05-calc-units.test.ts (15 tests) 197ms
+ ✓ |unit-node| apps/api/src/modules/raid/raid.test.ts (7 tests) 223ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 403ms
+ ✓ |unit-node| apps/api/src/modules/automation/automation.test.ts (2 tests) 50ms
+ ✓ |unit-node| packages/shared/src/forms/validate.test.ts (103 tests) 100ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/tasks/tasks.test.ts (5 tests) 59ms
+ ✓ |unit-node| packages/shared/src/forms/field-types.test.ts (39 tests) 45ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts (26 tests) 34ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 21ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 221ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 68ms
+ ✓ |unit-node| apps/api/src/modules/sustainment/sustainment.test.ts (2 tests) 60ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4.test.ts (5 tests) 65ms
+ ✓ |unit-node| apps/api/src/modules/procedures/procedures.test.ts (2 tests) 87ms
+ ✓ |unit-node| apps/api/src/modules/benefits/register-rules.test.ts (45 tests) 29ms
+ ✓ |unit-node| packages/shared/src/time/working-days.test.ts (19 tests) 61ms
+ ✓ |unit-node| apps/api/src/modules/automation/content.test.ts (8 tests) 37ms
+ ✓ |unit-node| apps/api/src/modules/methodology/compatibility.test.ts (3 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/budget.test.ts (13 tests) 20ms
+ ✓ |unit-node| packages/shared/src/kpi/a05.test.ts (17 tests) 37ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts (22 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/forms/forms.test.ts (2 tests) 89ms
+ ✓ |unit-node| packages/shared/src/forms/normalize.test.ts (18 tests) 46ms
+ ✓ |unit-node| apps/api/src/modules/workflows/g4.test.ts (5 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/procedures/definitions.test.ts (8 tests) 39ms
+ ✓ |unit-node| apps/api/src/modules/automation/conditions.test.ts (4 tests) 10ms
+ ✓ |unit-node| packages/shared/src/schemas/missing-links.test.ts (10 tests) 77ms
+ ✓ |unit-node| apps/api/src/modules/kpi/totals.test.ts (20 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/capacity.test.ts (4 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/launch/launch.test.ts (2 tests) 32ms
+ ✓ |unit-node| packages/shared/src/kpi/trajectory.test.ts (14 tests) 13ms
+ ✓ |unit-node| packages/shared/src/kpi/measures.test.ts (30 tests) 12ms
+ ✓ |unit-node| packages/shared/src/kpi/types.test.ts (40 tests) 48ms
+ ✓ |unit-node| apps/api/src/modules/benefits/totals.test.ts (15 tests) 71ms
+ ✓ |unit-node| packages/shared/src/adoption/form-schema.test.ts (8 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/benefits/d2-rules.test.ts (15 tests) 131ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kbe-c.test.ts (9 tests) 21ms
+ ✓ |unit-node| packages/shared/src/kpi/status.test.ts (25 tests) 41ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/k1-value-class.test.ts (7 tests) 71ms
+ ✓ |unit-node| packages/shared/src/kpi/periods.test.ts (26 tests) 51ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/sequencing.test.ts (9 tests) 26ms
+ ✓ |unit-node| packages/shared/src/schemas/roadmap.test.ts (6 tests) 25ms
+ ✓ |unit-node| apps/api/src/modules/kpi/p3-gate-facts.test.ts (9 tests) 14ms
+ ✓ |unit-node| packages/shared/src/kpi/purity.test.ts (14 tests) 47ms
+ ✓ |unit-node| packages/shared/src/schedule/working-day-slip.test.ts (11 tests) 14ms
+ ✓ |unit-node| packages/shared/src/governance/recurrence.test.ts (19 tests) 32ms
+ ✓ |unit-node| packages/shared/src/schedule/critical-path.test.ts (13 tests) 30ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/schedule.test.ts (14 tests) 36ms
+ ✓ |unit-node| apps/api/src/modules/health/health.test.ts (2 tests) 35ms
+ ✓ |unit-node| apps/api/src/modules/raid/corrective.test.ts (4 tests) 42ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5.test.ts (3 tests) 31ms
+ ✓ |unit-node| packages/shared/src/kpi/rag.test.ts (38 tests) 61ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 21ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/readiness-transform.test.ts (4 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/methodology/studio-core.test.ts (7 tests) 130ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts (12 tests) 29ms
+ ✓ |unit-node| apps/api/src/modules/workflows/t08-cycle-problem.test.ts (2 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 14ms
+ ✓ |unit-node| packages/shared/src/schemas/corrective.test.ts (10 tests) 37ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 14ms
+ ✓ |unit-node| packages/shared/src/kpi/aggregate.test.ts (20 tests) 30ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/methodology/source-coverage.test.ts (1 test) 17ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/governance/raci.test.ts (2 tests) 5ms
+
+ Test Files  101 passed (101)
+      Tests  1839 passed (1839)
+   Start at  14:31:07
+   Duration  127.56s (transform 13.58s, setup 0ms, collect 216.58s, tests 90.85s, environment 29ms, prepare 14.87s)
+
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-f
+
+ ✓ |unit-web| src/app/p5-shell.test.tsx (30 tests) 39903ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: playbook lands on its §3 contents with where each one lives  3414ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: strategy lands on its §3 contents with where each one lives  657ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: tom lands on its §3 contents with where each one lives  1909ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: initiatives lands on its §3 contents with where each one lives  1447ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: governance lands on its §3 contents with where each one lives  1381ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: risks lands on its §3 contents with where each one lives  768ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: benefits lands on its §3 contents with where each one lives  1327ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: change lands on its §3 contents with where each one lives  383ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: evidence lands on its §3 contents with where each one lives  932ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: bau lands on its §3 contents with where each one lives  1118ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: playbook lands on its §3 contents with where each one lives  1175ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: strategy lands on its §3 contents with where each one lives  1072ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: tom lands on its §3 contents with where each one lives  1240ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: initiatives lands on its §3 contents with where each one lives  902ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: governance lands on its §3 contents with where each one lives  1266ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: risks lands on its §3 contents with where each one lives  1080ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: benefits lands on its §3 contents with where each one lives  1093ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: change lands on its §3 contents with where each one lives  1016ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: evidence lands on its §3 contents with where each one lives  1318ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: bau lands on its §3 contents with where each one lives  958ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > en: every P5 placeholder says the screen is not available yet, with no data and no form  7199ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > ar: every P5 placeholder says the screen is not available yet, with no data and no form  5883ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > Administration shows the Studio entries only with methodology.read, and is shown to the methodology admin  654ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > the Transformation Office still sees 13 areas, with the P5 entries of its areas  459ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 56327ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  2795ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  962ms
+   ✓ Diagnose > renders the six workstreams with their key questions  1400ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  2193ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  1482ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  1790ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  1084ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  1468ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  999ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  1154ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  959ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  1756ms
+   ✓ Diagnose > Arabic: RTL with Arabic labels and the unquantified label  554ms
+   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  1165ms
+   ✓ Define > requires a target date on a T02 row before sending anything  556ms
+   ✓ Define > sets the North Star with one sentence and no If-Match the first time  1078ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  761ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  1381ms
+   ✓ Define: KPI activation (F-DG2-201) > an active KPI shows Active and offers no Activate  584ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  864ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  1531ms
+   ✓ Charter > thesis: an empty part is Incomplete and no sentence is composed (F-DG2-203)  390ms
+   ✓ Charter > thesis: the four parts compose the B0037 sentence (EN and AR)  496ms
+   ✓ Charter > North Star (field 5): the current statement; a superseded link is flagged Stale (F-DG2-204)  375ms
+   ✓ Charter > compares a version with the previous one  448ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('en')  636ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('ar')  909ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  1091ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  1057ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  1111ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  1193ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  687ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  2188ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  1612ms
+   ✓ Decisions (T04) > reads the log with kind=design and shows D-codes, options A/B/C and Open status  674ms
+   ✓ Decisions (T04) > creates a design decision with inline options and an idempotency key  510ms
+   ✓ Gates (business approval) > lists G1-G6 as business approvals with live readiness, and never mentions the engineering gates  1442ms
+   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  892ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  873ms
+   ✓ Gates (business approval) > gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)  428ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  980ms
+   ✓ Gates (business approval) > Arabic: the gate is labelled a business approval, RTL  379ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  1814ms
+   ✓ Evidence > never offers review to the creator; a filename reference can only be rejected  1817ms
+   ✓ read-only auditor (AUD) > diagnose: no write control and a read-only note  498ms
+   ✓ read-only auditor (AUD) > team: no write control and a read-only note  571ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 59564ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  1852ms
+   ✓ gate submission note (en) > a invisible-only note is refused inline and nothing is sent  508ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  1338ms
+   ✓ gate submission note (ar) > a whitespace-only note is refused inline and nothing is sent  700ms
+   ✓ gate submission note (ar) > a invisible-only note is refused inline and nothing is sent  617ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  1996ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  1538ms
+   ✓ gate decision rationale and comments (en) > a invisible-only rationale is refused inline and nothing is sent  891ms
+   ✓ gate decision rationale and comments (en) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  691ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  724ms
+   ✓ gate decision rationale and comments (en) > a invisible-only comment is refused inline (focus on it) and nothing is sent  902ms
+   ✓ gate decision rationale and comments (en) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  795ms
+   ✓ gate decision rationale and comments (en) > a server 400 validation.blank on /rationale lands on the field  865ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only rationale is refused inline and nothing is sent  350ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only rationale is refused inline and nothing is sent  791ms
+   ✓ gate decision rationale and comments (ar) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  814ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  763ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only comment is refused inline (focus on it) and nothing is sent  451ms
+   ✓ gate decision rationale and comments (ar) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  953ms
+   ✓ gate decision rationale and comments (ar) > a server 400 validation.blank on /rationale lands on the field  970ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  1927ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  1287ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  1440ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  1729ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  1162ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  1237ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  1401ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  1497ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  1233ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  1135ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  1079ms
+   ✓ Finance validation note and archive reason (en) > reason: a whitespace-only reason is refused inline and nothing is archived  1311ms
+   ✓ Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived  973ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  1603ms
+   ✓ Finance validation note and archive reason (en) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  1106ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message  782ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  780ms
+   ✓ Finance validation note and archive reason (ar) > note: a whitespace-only note is refused inline and nothing is sent  1499ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  1080ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  912ms
+   ✓ Finance validation note and archive reason (ar) > reason: a whitespace-only reason is refused inline and nothing is archived  946ms
+   ✓ Finance validation note and archive reason (ar) > reason: a invisible-only reason is refused inline and nothing is archived  1149ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  1302ms
+   ✓ Finance validation note and archive reason (ar) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  1173ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message  831ms
+   ✓ Finance validation note and archive reason (ar) > reason: empty keeps 'too short'; visible text is sent verbatim  1002ms
+   ✓ North Star statement (en) > a whitespace-only statement is refused inline and nothing is sent  1276ms
+   ✓ North Star statement (en) > a invisible-only statement is refused inline and nothing is sent  840ms
+   ✓ North Star statement (ar) > a whitespace-only statement is refused inline and nothing is sent  863ms
+   ✓ North Star statement (ar) > a invisible-only statement is refused inline and nothing is sent  1081ms
+   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  527ms
+   ✓ P1 transformation edit: server validation.blank on /name (ar) > is the localized field message, not only a generic failure  479ms
+ ✓ |unit-web| src/pages/render-time-language.test.tsx (28 tests) 36713ms
+   ✓ sign-in (dev form), 'en' → 'ar' > an invalid user name: the inline message follows the switch  420ms
+   ✓ sign-in (dev form), 'en' → 'ar' > a refused sign-in: the server's problem follows the switch  380ms
+   ✓ sign-in (dev form), 'ar' → 'en' > an invalid user name: the inline message follows the switch  431ms
+   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  3433ms
+   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  1196ms
+   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  844ms
+   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  1063ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation note's 'required' follows the switch  2554ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation choice's 'required' follows the switch  2386ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the archive reason's 'too short' follows the switch  1735ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation note's 'required' follows the switch  2477ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation choice's 'required' follows the switch  1975ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the archive reason's 'too short' follows the switch  1479ms
+   ✓ gate dialogs, 'en' → 'ar' > the submission note's field error follows the switch  1709ms
+   ✓ gate dialogs, 'en' → 'ar' > the decision rationale's field error follows the switch  1084ms
+   ✓ gate dialogs, 'ar' → 'en' > the submission note's field error follows the switch  792ms
+   ✓ gate dialogs, 'ar' → 'en' > the decision rationale's field error follows the switch  912ms
+   ✓ North Star statement, 'en' → 'ar' > the statement's field error follows the switch  2463ms
+   ✓ North Star statement, 'ar' → 'en' > the statement's field error follows the switch  1503ms
+   ✓ evidence dialogs, 'en' → 'ar' > upload without a file: 'required' follows the switch  1600ms
+   ✓ evidence dialogs, 'en' → 'ar' > a link without a record type or record: both 'required' messages follow the switch  1310ms
+   ✓ evidence dialogs, 'ar' → 'en' > upload without a file: 'required' follows the switch  1622ms
+   ✓ evidence dialogs, 'ar' → 'en' > a link without a record type or record: both 'required' messages follow the switch  1602ms
+ ✓ |unit-web| src/pages/portfolio/portfolio.test.tsx (32 tests) 32754ms
+   ✓ Portfolio (en) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  2308ms
+   ✓ Portfolio (en) > the proposed rank is Unknown (never 0) when the prioritization view is unavailable  316ms
+   ✓ Portfolio (en) > filters by status and wave on the server  615ms
+   ✓ Portfolio (en) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  1567ms
+   ✓ Portfolio (en) > the read-only auditor sees the list with no enabled write control  559ms
+   ✓ Portfolio (ar) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  539ms
+   ✓ Portfolio (ar) > the proposed rank is Unknown (never 0) when the prioritization view is unavailable  461ms
+   ✓ Portfolio (ar) > filters by status and wave on the server  373ms
+   ✓ Portfolio (ar) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  782ms
+   ✓ Portfolio (ar) > the read-only auditor sees the list with no enabled write control  542ms
+   ✓ Portfolio (ar) > outcome hierarchy: five levels, an Unknown target is Unknown (never 0)  351ms
+   ✓ Initiative Card (en) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  1509ms
+   ✓ Initiative Card (en) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  1028ms
+   ✓ Initiative Card (en) > submit refused: 'Outcome before activity…' (validation at /outcomeContributions) is translated  827ms
+   ✓ Initiative Card (en) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  1427ms
+   ✓ Initiative Card (en) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  2044ms
+   ✓ Initiative Card (en) > a 409 shows the conflict banner and reloads  979ms
+   ✓ Initiative Card (en) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  1214ms
+   ✓ Initiative Card (en) > an outcome contribution needs an outcome; the KPI is optional and labelled so  1657ms
+   ✓ Initiative Card (en) > the read-only auditor sees the card with no enabled write control  887ms
+   ✓ Initiative Card (en) > a cancelled initiative is read-only even for the lead  1140ms
+   ✓ Initiative Card (ar) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  1085ms
+   ✓ Initiative Card (ar) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  867ms
+   ✓ Initiative Card (ar) > submit refused: 'Outcome before activity…' (validation at /outcomeContributions) is translated  947ms
+   ✓ Initiative Card (ar) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  922ms
+   ✓ Initiative Card (ar) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  1490ms
+   ✓ Initiative Card (ar) > a 409 shows the conflict banner and reloads  1536ms
+   ✓ Initiative Card (ar) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  1148ms
+   ✓ Initiative Card (ar) > an outcome contribution needs an outcome; the KPI is optional and labelled so  895ms
+   ✓ Initiative Card (ar) > the read-only auditor sees the card with no enabled write control  926ms
+   ✓ Initiative Card (ar) > a cancelled initiative is read-only even for the lead  418ms
+ ✓ |unit-web| src/auth/session-bound.test.tsx (36 tests) 32374ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  2499ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record  694ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window  1524ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  900ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > router state left in history (Back/Forward) never shows A's created record to B  391ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  1352ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  1244ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > a user create whose identity changes between its awaits: B is not navigated to A's new user  1953ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: the organization and user creates under one identity still navigate to the new record  1536ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates  669ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer  555ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state  364ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header  425ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  402ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > writes neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token  346ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  1046ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record  1699ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window  1491ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  677ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  619ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  779ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > a user create whose identity changes between its awaits: B is not navigated to A's new user  916ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > sanity: the organization and user creates under one identity still navigate to the new record  881ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > sanity: an edit under one identity (a same-identity /me between its awaits) still updates the cache and navigates  363ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > N2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state  598ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > N0 (the reviewer's Y5): B signed in a moment ago, no time passes, no focus event: the next page is B's under B's header  467ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > bounded: one GET /me per navigation, shared by the page's burst; other GETs only after the window; same identity kept  849ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > writes neither wait for nor trigger the recheck: the save goes out at once with the user's own CSRF token  599ms
+   ✓ the convention: no raw navigate or cache write in app code (T-DG2-FE15) > the ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page  4222ms
+ ✓ |unit-web| src/pages/gates/g5-g6.test.tsx (35 tests) 26035ms
+   ✓ G5 view (en) > lists the G5 missing item translated with the risk code, and the exceptions with expiry and coverage  1584ms
+   ✓ G5 view (en) > requests an exception with all five REQ-S04-013 fields; a missing expiry is refused before sending  954ms
+   ✓ G5 view (en) > a refused G5 submission lists 'Risk closure' by its translated label, never the English detail  597ms
+   ✓ G5 view (en) > a G5 approval needs the scale scope: nothing is sent without one; the scope goes with the decision  1327ms
+   ✓ G5 view (en) > a frozen submission shows its exception lines and the nine-field review table, Under review  1029ms
+   ✓ G5 view (ar) > lists the G5 missing item translated with the risk code, and the exceptions with expiry and coverage  569ms
+   ✓ G5 view (ar) > requests an exception with all five REQ-S04-013 fields; a missing expiry is refused before sending  775ms
+   ✓ G5 view (ar) > a refused G5 submission lists 'Risk closure' by its translated label, never the English detail  684ms
+   ✓ G5 view (ar) > a G5 approval needs the scale scope: nothing is sent without one; the scope goes with the decision  1243ms
+   ✓ G5 view (ar) > a frozen submission shows its exception lines and the nine-field review table, Under review  1103ms
+   ✓ Modular G3 waiver on the gate page (en) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated without params (an older server): the text shown before, no placeholder  916ms
+   ✓ Modular G3 waiver on the gate page (en) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated with params.date (ADR-0038 Q1): the date localized  2010ms
+   ✓ Modular G3 waiver on the gate page (en) > a G3 submission refused for missing links lists each item translated  359ms
+   ✓ Modular G3 waiver on the gate page (ar) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated without params (an older server): the text shown before, no placeholder  889ms
+   ✓ Modular G3 waiver on the gate page (ar) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated with params.date (ADR-0038 Q1): the date localized  971ms
+   ✓ Modular G3 waiver on the gate page (ar) > a G3 submission refused for missing links lists each item translated  410ms
+   ✓ G3 submit dialog coverage warning (en) > end_to_end: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  301ms
+   ✓ G3 submit dialog coverage warning (en) > modular: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  492ms
+   ✓ G3 submit dialog coverage warning (en) > every mandatory output complete: neither note  556ms
+   ✓ G3 submit dialog coverage warning (ar) > end_to_end: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  681ms
+   ✓ G3 submit dialog coverage warning (ar) > modular: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  847ms
+   ✓ G3 submit dialog coverage warning (ar) > every mandatory output complete: neither note  397ms
+   ✓ G5 scale transitions and risk dispositions (en) > scaling before G5 is approved shows the translated invalid-transition that names G5  730ms
+   ✓ G5 scale transitions and risk dispositions (en) > an open High-impact risk without a disposition is flagged; proposing one sends the four fields  799ms
+   ✓ G5 scale transitions and risk dispositions (en) > a pending disposition is shown as pending, not as closed; an approved one completes the row  583ms
+   ✓ G5 scale transitions and risk dispositions (en) > the approved scope and the transitions name units by code and locale name, an inactive unit labelled; a new transition offers only selectable units  427ms
+   ✓ G5 scale transitions and risk dispositions (en) > scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal  729ms
+   ✓ G5 scale transitions and risk dispositions (ar) > scaling before G5 is approved shows the translated invalid-transition that names G5  577ms
+   ✓ G5 scale transitions and risk dispositions (ar) > an open High-impact risk without a disposition is flagged; proposing one sends the four fields  403ms
+   ✓ G5 scale transitions and risk dispositions (ar) > a pending disposition is shown as pending, not as closed; an approved one completes the row  595ms
+   ✓ G5 scale transitions and risk dispositions (ar) > the approved scope and the transitions name units by code and locale name, an inactive unit labelled; a new transition offers only selectable units  604ms
+   ✓ G5 scale transitions and risk dispositions (ar) > scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal  667ms
+ ✓ |unit-web| src/auth/session-generation.test.tsx (26 tests) 19545ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  2301ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  1276ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache  1564ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B  1061ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B  1015ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  874ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A  403ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates  573ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  937ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  524ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  698ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  1200ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache  1153ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B  957ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B  708ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  747ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a language save retried after a 409 is never written for the identity that replaced A  421ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > sanity: a write in flight that finishes under the SAME identity still updates the cache and navigates  448ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  537ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  586ms
+ ✓ |unit-web| src/pages/business-cases/business-cases.test.tsx (18 tests) 16784ms
+   ✓ business cases (en) > register: levels, Finance baseline states with text (Stale is never green) and drafts  1364ms
+   ✓ business cases (en) > detail: all ten sections, totals with gross / cost / net apart, net Unknown (never 0), roll-up by reference  779ms
+   ✓ business cases (en) > totals: a partial total says how many Unknown lines it leaves out  518ms
+   ✓ business cases (en) > sections: saves only the changed section with If-Match; blank text is refused inline and nothing is sent  1640ms
+   ✓ business cases (en) > sections: a 409 shows the standard conflict panel (nothing saved) with the current values  1000ms
+   ✓ business cases (en) > lines: exactly one class from one select; the value basis follows the class; a 422 is translated  780ms
+   ✓ business cases (en) > Finance validation: a business approval for FIN who did not author the case; If-Match; translated 403  871ms
+   ✓ business cases (en) > Finance validation: the case author sees no validate action, only the separation-of-duties note  559ms
+   ✓ business cases (ar) > register: levels, Finance baseline states with text (Stale is never green) and drafts  384ms
+   ✓ business cases (ar) > detail: all ten sections, totals with gross / cost / net apart, net Unknown (never 0), roll-up by reference  575ms
+   ✓ business cases (ar) > totals: a partial total says how many Unknown lines it leaves out  671ms
+   ✓ business cases (ar) > sections: saves only the changed section with If-Match; blank text is refused inline and nothing is sent  1893ms
+   ✓ business cases (ar) > sections: a 409 shows the standard conflict panel (nothing saved) with the current values  821ms
+   ✓ business cases (ar) > lines: exactly one class from one select; the value basis follows the class; a 422 is translated  1142ms
+   ✓ business cases (ar) > Finance validation: a business approval for FIN who did not author the case; If-Match; translated 403  693ms
+   ✓ business cases (ar) > Finance validation: the case author sees no validate action, only the separation-of-duties note  521ms
+   ✓ business cases (ar) > read-only auditor: the ten sections as text, no enabled write control, the read-only note  372ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 22095ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  1823ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  880ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  1358ms
+   ✓ after create (F-DG1-004) > treats a 403 for the just-created record the same way  700ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  1031ms
+   ✓ audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout  585ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option  663ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option  350ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated  717ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name  790ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  1030ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  4741ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  4404ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  1074ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  860ms
+ ✓ |unit-web| src/pages/prioritization/prioritization.test.tsx (20 tests) 28408ms
+   ✓ prioritization (en) > ranked table: an incomplete score is 'incomplete' (never a number), 3.30 complete; 0–100 shows 57.5 with its label  2050ms
+   ✓ prioritization (en) > scorecard: 6 is refused inline and nothing is sent; 4 is POSTed as the integer; the weighted score is read-only 'incomplete'  2032ms
+   ✓ prioritization (en) > weight sets: the live total refuses 95% and 105%; 100% is accepted and POSTed as decimal strings  1241ms
+   ✓ prioritization (en) > weight sets: the proposer is never offered approval; another approver's approval is a business approval with If-Match; 403 SoD is translated  1861ms
+   ✓ prioritization (en) > weight set approval: a 409 shows the conflict banner and reloads  2089ms
+   ✓ prioritization (en) > ranking history: causes are translated from codes, including 'weight version 2', score change and the override reason  873ms
+   ✓ prioritization (en) > overrides: a reason is required (missing and invisible-only are refused, nothing sent); with a reason it is POSTed  1173ms
+   ✓ prioritization (en) > the read-only auditor sees the data and no enabled write control  643ms
+   ✓ prioritization (en) > never mentions a delivery gate (DG0–DG7)  770ms
+   ✓ prioritization (ar) > ranked table: an incomplete score is 'incomplete' (never a number), 3.30 complete; 0–100 shows 57.5 with its label  1468ms
+   ✓ prioritization (ar) > scorecard: 6 is refused inline and nothing is sent; 4 is POSTed as the integer; the weighted score is read-only 'incomplete'  2433ms
+   ✓ prioritization (ar) > weight sets: the live total refuses 95% and 105%; 100% is accepted and POSTed as decimal strings  1676ms
+   ✓ prioritization (ar) > weight sets: the proposer is never offered approval; another approver's approval is a business approval with If-Match; 403 SoD is translated  2519ms
+   ✓ prioritization (ar) > weight set approval: a 409 shows the conflict banner and reloads  1294ms
+   ✓ prioritization (ar) > overrides: a reason is required (missing and invisible-only are refused, nothing sent); with a reason it is POSTed  1361ms
+   ✓ prioritization (ar) > the read-only auditor sees the data and no enabled write control  1240ms
+   ✓ prioritization (ar) > a portfolio above 500 eligible initiatives is the translated 422 state, not an empty table  349ms
+   ✓ prioritization (ar) > never mentions a delivery gate (DG0–DG7)  1321ms
+ ✓ |unit-web| src/pages/benefits/benefits.test.tsx (33 tests) 29920ms
+   ✓ benefits screens (en) > T14 register: ten columns; Value (SAR) n/a and Unknown never 0; Realized kept apart with pending labelled  2628ms
+   ✓ benefits screens (en) > totals: per class and state, pending overlap apart, cost and net Unknown (never 0), non-financial counted apart  565ms
+   ✓ benefits screens (en) > totals (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed  556ms
+   ✓ benefits screens (en) > totals (F-DG4-121): a beside-gross class with no line shows no value, never 0  650ms
+   ✓ benefits screens (en) > lifecycle: six steps with question and output, missing outputs listed, only the allowed next step offered  676ms
+   ✓ benefits screens (en) > allocations: percent and unallocated share; the replace sends fractions with If-Match  863ms
+   ✓ benefits screens (en) > allocations above 100 %: the preview warns and the server's 422 is translated in the one form alert  2179ms
+   ✓ benefits screens (en) > values: seven states apart; measurements before Measure are explained (a delivered enabler is not realized value)  642ms
+   ✓ benefits screens (en) > measurements: a validated value offers no edit; the 409 validated_immutable is translated  1030ms
+   ✓ benefits screens (en) > Finance decision: six items, the decision body with If-Match; labelled Finance validation, never DG0-DG7  2211ms
+   ✓ benefits screens (en) > Finance decision: a missing item is left to the server, whose 422 names the six items; the submitter is never offered a decision  596ms
+   ✓ benefits screens (en) > Finance decision: the content_incomplete 422 and a Business Owner's 403 are translated  1410ms
+   ✓ benefits screens (en) > read-only (auditor): Finance item without decide, register without create  1560ms
+   ✓ benefits screens (en) > scenarios: every value is labelled with its scenario kind  1035ms
+   ✓ benefits screens (en) > measurement lineage: inputs with KPI value versions, a provisional basis labelled  986ms
+   ✓ benefits screens (ar) > T14 register: ten columns; Value (SAR) n/a and Unknown never 0; Realized kept apart with pending labelled  1242ms
+   ✓ benefits screens (ar) > totals: per class and state, pending overlap apart, cost and net Unknown (never 0), non-financial counted apart  772ms
+   ✓ benefits screens (ar) > totals (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed  372ms
+   ✓ benefits screens (ar) > totals (F-DG4-121): a beside-gross class with no line shows no value, never 0  305ms
+   ✓ benefits screens (ar) > lifecycle: six steps with question and output, missing outputs listed, only the allowed next step offered  384ms
+   ✓ benefits screens (ar) > allocations: percent and unallocated share; the replace sends fractions with If-Match  702ms
+   ✓ benefits screens (ar) > allocations above 100 %: the preview warns and the server's 422 is translated in the one form alert  1204ms
+   ✓ benefits screens (ar) > values: seven states apart; measurements before Measure are explained (a delivered enabler is not realized value)  441ms
+   ✓ benefits screens (ar) > measurements: a validated value offers no edit; the 409 validated_immutable is translated  1021ms
+   ✓ benefits screens (ar) > Finance decision: six items, the decision body with If-Match; labelled Finance validation, never DG0-DG7  1115ms
+   ✓ benefits screens (ar) > Finance decision: a missing item is left to the server, whose 422 names the six items; the submitter is never offered a decision  766ms
+   ✓ benefits screens (ar) > Finance decision: the content_incomplete 422 and a Business Owner's 403 are translated  957ms
+   ✓ benefits screens (ar) > read-only (auditor): Finance item without decide, register without create  1551ms
+   ✓ benefits screens (ar) > scenarios: every value is labelled with its scenario kind  313ms
+   ✓ benefits screens (ar) > measurement lineage: inputs with KPI value versions, a provisional basis labelled  356ms
+ ✓ |unit-web| src/pages/portfolio/fe-e.test.tsx (18 tests) 20490ms
+   ✓ Funding decisions (en) > is a labelled business approval with no 'on behalf of' control; rationale required; POST with an Idempotency-Key  3727ms
+   ✓ Funding decisions (en) > the BE-E 422s are the dialog's one translated alert; funding.amount_invalid is also inline at /amount  2852ms
+   ✓ Funding decisions (en) > the history shows a missing amount as Unknown (never 0); a re-selected initiative explains the deselect rule  696ms
+   ✓ Funding decisions (ar) > is a labelled business approval with no 'on behalf of' control; rationale required; POST with an Idempotency-Key  948ms
+   ✓ Funding decisions (ar) > the BE-E 422s are the dialog's one translated alert; funding.amount_invalid is also inline at /amount  1214ms
+   ✓ Funding decisions (ar) > the history shows a missing amount as Unknown (never 0); a re-selected initiative explains the deselect rule  504ms
+   ✓ Funding decisions (ar) > an exact decimal amount is shown with its currency; the auditor sees no record control  575ms
+   ✓ Deliverables and milestones on the card (en) > creates (Idempotency-Key), edits (If-Match) and archives (reason, If-Match) a deliverable  1250ms
+   ✓ Deliverables and milestones on the card (en) > creates a milestone with its wave and forecast, and edits it with If-Match  852ms
+   ✓ Deliverables and milestones on the card (en) > 422 initiative.read_only (a closure raced the edit) is translated as the dialog's one alert  512ms
+   ✓ Deliverables and milestones on the card (en) > a cancelled initiative shows deliverables, milestones and funding with no write control  686ms
+   ✓ Deliverables and milestones on the card (en) > the card edit form translates initiative.planned_range specifically (RecordDialog namespaces)  1288ms
+   ✓ Deliverables and milestones on the card (ar) > creates (Idempotency-Key), edits (If-Match) and archives (reason, If-Match) a deliverable  1208ms
+   ✓ Deliverables and milestones on the card (ar) > creates a milestone with its wave and forecast, and edits it with If-Match  763ms
+   ✓ Deliverables and milestones on the card (ar) > 422 initiative.read_only (a closure raced the edit) is translated as the dialog's one alert  441ms
+   ✓ Deliverables and milestones on the card (ar) > a cancelled initiative shows deliverables, milestones and funding with no write control  450ms
+   ✓ Deliverables and milestones on the card (ar) > the card edit form translates initiative.planned_range specifically (RecordDialog namespaces)  989ms
+ ✓ |unit-web| src/pages/dashboards/valueHeadlines.test.tsx (26 tests) 23977ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > t10: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  1879ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > overview: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  1142ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > finance: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  722ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > header: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  777ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > t10: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1776ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > overview: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  978ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > finance: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1733ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > header: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1721ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > t10: a not_applicable profit-and-cash headline shows its reason, never 0 or green; top line and non-cash still shown  469ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > overview: a not_applicable profit-and-cash headline shows its reason, never 0 or green; top line and non-cash still shown  356ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > finance: a not_applicable profit-and-cash headline shows its reason, never 0 or green; top line and non-cash still shown  483ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > header: a not_applicable profit-and-cash headline shows its reason, never 0 or green; top line and non-cash still shown  568ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > t10: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  406ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > overview: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  558ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > finance: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  447ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > header: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  326ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > t10: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1166ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > overview: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1641ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > finance: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1745ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > header: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  734ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > t10: a not_applicable profit-and-cash headline shows its reason, never 0 or green; top line and non-cash still shown  573ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > overview: a not_applicable profit-and-cash headline shows its reason, never 0 or green; top line and non-cash still shown  487ms
+ ✓ |unit-web| src/pages/actions/BudgetPanel.test.tsx (18 tests) 22445ms
+   ✓ budget panel (en) > lines in their own currency with Unknown for an empty amount; totals per currency, Unknown with reason  2167ms
+   ✓ budget panel (en) > no active line: the budget is Unknown 'No budget lines' (no_budget_lines), never a total of 0  1046ms
+   ✓ budget panel (en) > create: decimal strings, empty amounts omitted (Unknown), an invalid amount is refused inline with the §11 text  1635ms
+   ✓ budget panel (en) > a refusal is translated: 409 budget_line.duplicate on create keeps the dialog with the §11 text  1688ms
+   ✓ budget panel (en) > edit sends only the changed member with If-Match of the version seen; a stale version is a 409 (nothing saved, lines re-read)  2372ms
+   ✓ budget panel (en) > archive sends the reason with If-Match; 422 budget_line.archived is translated in the dialog  1353ms
+   ✓ budget panel (en) > the auditor (no budget.edit) sees the panel read-only: no add, edit or archive control  983ms
+   ✓ budget panel (ar) > lines in their own currency with Unknown for an empty amount; totals per currency, Unknown with reason  1354ms
+   ✓ budget panel (ar) > no active line: the budget is Unknown 'No budget lines' (no_budget_lines), never a total of 0  683ms
+   ✓ budget panel (ar) > create: decimal strings, empty amounts omitted (Unknown), an invalid amount is refused inline with the §11 text  1634ms
+   ✓ budget panel (ar) > a refusal is translated: 409 budget_line.duplicate on create keeps the dialog with the §11 text  1583ms
+   ✓ budget panel (ar) > edit sends only the changed member with If-Match of the version seen; a stale version is a 409 (nothing saved, lines re-read)  1616ms
+   ✓ budget panel (ar) > archive sends the reason with If-Match; 422 budget_line.archived is translated in the dialog  2074ms
+   ✓ budget panel (ar) > the auditor (no budget.edit) sees the panel read-only: no add, edit or archive control  1362ms
+ ✓ |unit-web| src/pages/benefits/plan-values.test.tsx (15 tests) 19843ms
+   ✓ plan-value editing (en) > Edit reads getBenefitPlanValue, pre-fills the form and PATCHes the changed member with the read's If-Match  2106ms
+   ✓ plan-value editing (en) > an unchanged form sends nothing and says so; Cancel closes  1374ms
+   ✓ plan-value editing (en) > a 409 (changed by someone else after the read) is a conflict: the record is re-read, If-Match never moves under the typed values  953ms
+   ✓ plan-value editing (en) > a failed read (500) shows its state in the section and no form; Cancel removes it  4088ms
+   ✓ plan-value editing (en) > a failed read (404) shows its state in the section and no form; Cancel removes it  491ms
+   ✓ plan-value editing (en) > a reader (no benefit.edit) is offered no edit  511ms
+   ✓ plan-value editing (ar) > Edit reads getBenefitPlanValue, pre-fills the form and PATCHes the changed member with the read's If-Match  1217ms
+   ✓ plan-value editing (ar) > an unchanged form sends nothing and says so; Cancel closes  910ms
+   ✓ plan-value editing (ar) > a 409 (changed by someone else after the read) is a conflict: the record is re-read, If-Match never moves under the typed values  1409ms
+   ✓ plan-value editing (ar) > a failed read (500) shows its state in the section and no form; Cancel removes it  3998ms
+   ✓ plan-value editing (ar) > a failed read (404) shows its state in the section and no form; Cancel removes it  1009ms
+   ✓ plan-value editing (ar) > a reader (no benefit.edit) is offered no edit  542ms
+ ✓ |unit-web| src/pages/traceability/traceability.test.tsx (32 tests) 26877ms
+   ✓ Traceability (en) > graph: clickable nodes, orphan flags, allocation totals, unseen links counted; orphan report  1717ms
+   ✓ Traceability (en) > impact of a KPI definition: affected benefit (value affected), dashboards and areas, hidden count  552ms
+   ✓ Traceability (en) > allocation set: 100 % total, 0 % unallocated; a 110 % share is refused with the translated message  1538ms
+   ✓ Traceability (en) > creates a trace link with its statement and a decimal share  401ms
+   ✓ Traceability (en) > read-only users get no write control  305ms
+   ✓ Traceability (ar) > graph: clickable nodes, orphan flags, allocation totals, unseen links counted; orphan report  326ms
+   ✓ Traceability (ar) > impact of a KPI definition: affected benefit (value affected), dashboards and areas, hidden count  311ms
+   ✓ Traceability (ar) > allocation set: 100 % total, 0 % unallocated; a 110 % share is refused with the translated message  967ms
+   ✓ Traceability (ar) > creates a trace link with its statement and a decimal share  991ms
+   ✓ Traceability (ar) > read-only users get no write control  571ms
+   ✓ Modular entry (en) > missing links with the waiver in force; G2 Inherited, never Approved; inherited records labelled  1392ms
+   ✓ Modular entry (en) > records an inherited evidence item and withdraws one with If-Match  1317ms
+   ✓ Modular entry (ar) > missing links with the waiver in force; G2 Inherited, never Approved; inherited records labelled  437ms
+   ✓ Modular entry (ar) > records an inherited evidence item and withdraws one with If-Match  1655ms
+   ✓ Portfolios and workstreams (en) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal  3627ms
+   ✓ Portfolios and workstreams (en) > portfolio: placing a transformation already in a portfolio shows the translated refusal  928ms
+   ✓ Portfolios and workstreams (en) > portfolios list is read-only without portfolio.manage  500ms
+   ✓ Portfolios and workstreams (ar) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal  2109ms
+   ✓ Portfolios and workstreams (ar) > portfolio: placing a transformation already in a portfolio shows the translated refusal  302ms
+   ✓ RAG policy and transformation chip (en) > first save of the default policy sends If-Match "0"; a stale save says nothing was saved  667ms
+   ✓ RAG policy and transformation chip (en) > the transformation chip is repeatable, offers readable transformations and sends each id  1627ms
+   ✓ RAG policy and transformation chip (ar) > first save of the default policy sends If-Match "0"; a stale save says nothing was saved  650ms
+   ✓ RAG policy and transformation chip (ar) > an invalid ratio is caught before sending; a threshold-order refusal is translated  774ms
+   ✓ RAG policy and transformation chip (ar) > the transformation chip is repeatable, offers readable transformations and sends each id  1439ms
+ ✓ |unit-web| src/pages/raid/raid.test.tsx (18 tests) 33068ms
+   ✓ RAID and actions screens (en) > T15 register: nine columns, Probability n/a outside Risk, per-type mitigation header, Dependency links to T08  2371ms
+   ✓ RAID and actions screens (en) > Dependency form: 'To' initiative required, no probability; nothing is sent without it  2045ms
+   ✓ RAID and actions screens (en) > Dependency edit has no 'In progress'; a Risk edit offers it; a closed Dependency shows no closure fields  898ms
+   ✓ RAID and actions screens (en) > an Issue with a probability is refused by the server; the 422 is translated in one alert  995ms
+   ✓ RAID and actions screens (en) > action register: source, follow-up date and overdue flag; edit sends If-Match  7952ms
+   ✓ RAID and actions screens (en) > corrective case: source and benefit step, owner Unassigned, follow-up Unknown with reason, signals never green  875ms
+   ✓ RAID and actions screens (en) > rules: a rule without a stored row is labelled Default; saving it creates the row (POST, no If-Match)  712ms
+   ✓ RAID and actions screens (en) > the read-only auditor sees the register without any write control  518ms
+   ✓ RAID and actions screens (ar) > T15 register: nine columns, Probability n/a outside Risk, per-type mitigation header, Dependency links to T08  761ms
+   ✓ RAID and actions screens (ar) > Dependency form: 'To' initiative required, no probability; nothing is sent without it  1194ms
+   ✓ RAID and actions screens (ar) > Dependency edit has no 'In progress'; a Risk edit offers it; a closed Dependency shows no closure fields  1231ms
+   ✓ RAID and actions screens (ar) > an Issue with a probability is refused by the server; the 422 is translated in one alert  1110ms
+   ✓ RAID and actions screens (ar) > action register: source, follow-up date and overdue flag; edit sends If-Match  7029ms
+   ✓ RAID and actions screens (ar) > corrective case: source and benefit step, owner Unassigned, follow-up Unknown with reason, signals never green  591ms
+   ✓ RAID and actions screens (ar) > rules: a rule without a stored row is labelled Default; saving it creates the row (POST, no If-Match)  1194ms
+   ✓ RAID and actions screens (ar) > the read-only auditor sees the register without any write control  1624ms
+ ✓ |unit-web| src/pages/actions/ExecutionPanel.test.tsx (12 tests) 26819ms
+   ✓ execution panel (en) > milestone slip in working days (+5, −5, 0) beside calendar days; a missing date is Unknown with its reason  3215ms
+   ✓ execution panel (en) > deliverable acceptance, demand without capacity (Unknown), dependency without impact (Unknown), decisions  2481ms
+   ✓ execution panel (en) > critical-path membership: a label when computed; null is Unknown with no critical styling  2584ms
+   ✓ execution panel (en) > the initiative page holds the slot: budget lines, execution and schedule network, in its on-this-page navigation  1458ms
+   ✓ execution panel (en) > an answer outside the contract is the panel's error state; the rest of the initiative page still renders  4728ms
+   ✓ execution panel (ar) > milestone slip in working days (+5, −5, 0) beside calendar days; a missing date is Unknown with its reason  1196ms
+   ✓ execution panel (ar) > deliverable acceptance, demand without capacity (Unknown), dependency without impact (Unknown), decisions  1284ms
+   ✓ execution panel (ar) > critical-path membership: a label when computed; null is Unknown with no critical styling  2168ms
+   ✓ execution panel (ar) > the initiative page holds the slot: budget lines, execution and schedule network, in its on-this-page navigation  2002ms
+   ✓ execution panel (ar) > an answer outside the contract is the panel's error state; the rest of the initiative page still renders  3784ms
+ ✓ |unit-web| src/pages/actions/ScheduleNetworkPanel.test.tsx (16 tests) 31945ms
+   ✓ schedule network panel (en) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  3218ms
+   ✓ schedule network panel (en) > not computable (missing duration): the reason and INI-03 listed; no critical styling or label at all  1711ms
+   ✓ schedule network panel (en) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  4087ms
+   ✓ schedule network panel (en) > change a duration: If-Match is the getInitiativeSchedule ETag; a stale version is a 409 (nothing saved), the row is re-read and shown, the next save sends the re-read ETag  1890ms
+   ✓ schedule network panel (en) > a recorded row with a null duration is a change (PATCH), and an emptied note is sent as null  2077ms
+   ✓ schedule network panel (en) > a failed read shows its error and a retry; nothing can be saved until the row is read  2737ms
+   ✓ schedule network panel (en) > the auditor (no roadmap.edit) sees the network read-only: no duration control  843ms
+   ✓ schedule network panel (ar) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  966ms
+   ✓ schedule network panel (ar) > not computable (missing duration): the reason and INI-03 listed; no critical styling or label at all  1165ms
+   ✓ schedule network panel (ar) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  3355ms
+   ✓ schedule network panel (ar) > change a duration: If-Match is the getInitiativeSchedule ETag; a stale version is a 409 (nothing saved), the row is re-read and shown, the next save sends the re-read ETag  2149ms
+   ✓ schedule network panel (ar) > a recorded row with a null duration is a change (PATCH), and an emptied note is sent as null  2765ms
+   ✓ schedule network panel (ar) > a failed read shows its error and a retry; nothing can be saved until the row is read  2358ms
+   ✓ schedule network panel (ar) > the auditor (no roadmap.edit) sees the network read-only: no duration control  1043ms
+ ✓ |unit-web| src/pages/kpi/kpi.test.tsx (27 tests) 32500ms
+   ✓ KPI screens (en) > RAG panel: the seven elements, the threshold version named, and the override beside the calculated RAG  2781ms
+   ✓ KPI screens (en) > no actual for the current period: Unknown, grey and labelled, with its reason; never 0 and never green  1182ms
+   ✓ KPI screens (en) > the status overview shows Unknown KPIs grey and labelled (no zero in the list)  1211ms
+   ✓ KPI screens (en) > four-step update: submits once, then lists downstream views, 'review pending' and 'Finance review pending'  2689ms
+   ✓ KPI screens (en) > a second entry for the same KPI and period is value version 2 of the same slot (If-Match)  1855ms
+   ✓ KPI screens (en) > a 409 on submit is the form's one alert: nothing was saved, the latest data is loaded  1865ms
+   ✓ KPI screens (en) > no active version: the update explains it and links to the versions (no form)  688ms
+   ✓ KPI screens (en) > review queue: the reviewer accepts with If-Match; the submitter of a value is not offered a decision  1239ms
+   ✓ KPI screens (en) > an actual: a submitted value says it is not used until accepted; a draft is labelled not submitted  1457ms
+   ✓ KPI screens (en) > read-only viewer (auditor): no write action on the KPI page, labels say business approval  1175ms
+   ✓ KPI screens (en) > data quality: an open finding is resolved with a note and If-Match  3053ms
+   ✓ KPI screens (ar) > RAG panel: the seven elements, the threshold version named, and the override beside the calculated RAG  672ms
+   ✓ KPI screens (ar) > no actual for the current period: Unknown, grey and labelled, with its reason; never 0 and never green  806ms
+   ✓ KPI screens (ar) > the status overview shows Unknown KPIs grey and labelled (no zero in the list)  512ms
+   ✓ KPI screens (ar) > four-step update: submits once, then lists downstream views, 'review pending' and 'Finance review pending'  1381ms
+   ✓ KPI screens (ar) > a second entry for the same KPI and period is value version 2 of the same slot (If-Match)  1835ms
+   ✓ KPI screens (ar) > a 409 on submit is the form's one alert: nothing was saved, the latest data is loaded  1452ms
+   ✓ KPI screens (ar) > no active version: the update explains it and links to the versions (no form)  677ms
+   ✓ KPI screens (ar) > review queue: the reviewer accepts with If-Match; the submitter of a value is not offered a decision  890ms
+   ✓ KPI screens (ar) > an actual: a submitted value says it is not used until accepted; a draft is labelled not submitted  853ms
+   ✓ KPI screens (ar) > read-only viewer (auditor): no write action on the KPI page, labels say business approval  1144ms
+   ✓ KPI screens (ar) > data quality: an open finding is resolved with a note and If-Match  1549ms
+ ✓ |unit-web| src/pages/adoption/adoption.test.tsx (22 tests) 27010ms
+   ✓ adoption screens (en) > T13: the seven columns, influence separate from impact, closed lists, provisional Arabic flag  2246ms
+   ✓ adoption screens (en) > a server 400 stakeholder_group.stance_invalid lands on the stance field, translated  1720ms
+   ✓ adoption screens (en) > interventions: below-trajectory row shows Unassigned and Unknown due date with its reason  2159ms
+   ✓ adoption screens (en) > indicators: all seven by name; a measure without data is Unknown, never 0  1528ms
+   ✓ adoption screens (en) > training vs proficiency: 100 % completion beside proficiency Unknown (not adopted)  1354ms
+   ✓ adoption screens (en) > T04 decision page lists a champion's constraint through ?decisionId=  1372ms
+   ✓ adoption screens (en) > form: a proficiency observation is submitted with its stakeholder group; the API derives the result  1918ms
+   ✓ adoption screens (en) > record page: answers are labelled from the version answered (getAssessmentFormVersion), a key the version lacks shows 'Unknown question'  1376ms
+   ✓ adoption screens (en) > record page: a version that cannot be read says so; every answer keeps its key and 'Unknown question', never a blank  759ms
+   ✓ adoption screens (en) > AUD sees the plan read-only (no write control)  1570ms
+   ✓ adoption screens (ar) > T13: the seven columns, influence separate from impact, closed lists, provisional Arabic flag  1957ms
+   ✓ adoption screens (ar) > a server 400 stakeholder_group.stance_invalid lands on the stance field, translated  880ms
+   ✓ adoption screens (ar) > interventions: below-trajectory row shows Unassigned and Unknown due date with its reason  1524ms
+   ✓ adoption screens (ar) > indicators: all seven by name; a measure without data is Unknown, never 0  759ms
+   ✓ adoption screens (ar) > training vs proficiency: 100 % completion beside proficiency Unknown (not adopted)  1027ms
+   ✓ adoption screens (ar) > T04 decision page lists a champion's constraint through ?decisionId=  860ms
+   ✓ adoption screens (ar) > form: a proficiency observation is submitted with its stakeholder group; the API derives the result  647ms
+   ✓ adoption screens (ar) > record page: answers are labelled from the version answered (getAssessmentFormVersion), a key the version lacks shows 'Unknown question'  425ms
+   ✓ adoption screens (ar) > record page: a version that cannot be read says so; every answer keeps its key and 'Unknown question', never a blank  346ms
+   ✓ adoption screens (ar) > AUD sees the plan read-only (no write control)  957ms
+ ✓ |unit-web| src/pages/gates/g4.test.tsx (16 tests) 27849ms
+   ✓ G4 refusal item by item (en) > two initiatives without owners: two separate translated 'Owners' items, never the joined English message  4980ms
+   ✓ G4 refusal item by item (en) > without a usable gate view: one translated line per refused criterion, never the English message  1651ms
+   ✓ G4 refusal item by item (ar) > two initiatives without owners: two separate translated 'Owners' items, never the joined English message  2108ms
+   ✓ G4 refusal item by item (ar) > without a usable gate view: one translated line per refused criterion, never the English message  2036ms
+   ✓ G4 view (en) > lists the eight G4 criteria with their missing items: 'Owners', 'Finance validation' and the initiative  1300ms
+   ✓ G4 view (en) > a refused submission shows the 422 list with the initiative names, translated  618ms
+   ✓ G4 view (en) > the decision's 403 urn:mth:problem:forbidden is translated  1711ms
+   ✓ G4 view (en) > the decision's 403 urn:mth:problem:forbidden is translated  2522ms
+   ✓ G4 view (en) > the decision's 409 urn:mth:problem:version-conflict is translated  1990ms
+   ✓ G4 view (ar) > lists the eight G4 criteria with their missing items: 'Owners', 'Finance validation' and the initiative  1272ms
+   ✓ G4 view (ar) > a refused submission shows the 422 list with the initiative names, translated  1565ms
+   ✓ G4 view (ar) > the decision's 403 urn:mth:problem:forbidden is translated  1065ms
+   ✓ G4 view (ar) > the decision's 403 urn:mth:problem:forbidden is translated  1112ms
+   ✓ G4 view (ar) > the decision's 409 urn:mth:problem:version-conflict is translated  1688ms
+ ✓ |unit-web| src/pages/meetings/governance.test.tsx (20 tests) 33000ms
+   ✓ governance screens (en) > forums: the five layers with their verbatim source cadence; Arabic labelled provisional  1354ms
+   ✓ governance screens (en) > series editor: 'future meetings only' must be confirmed; the result lists the kept meetings  5569ms
+   ✓ governance screens (en) > meeting: the brief lists missing elements; quorum not configured is never 'met'; no engineering gate named  1943ms
+   ✓ governance screens (en) > publishing an incomplete ask shows the server's 422 once, translated  1252ms
+   ✓ governance screens (en) > published minutes are read-only and the meeting shows the frozen note  1488ms
+   ✓ governance screens (en) > T16 log: nine columns; an earlier record shows Unknown for what it lacks; the overdue filter asks the server  2912ms
+   ✓ governance screens (en) > raising an ask without 'why now': the server's 400 lands on its field  1959ms
+   ✓ governance screens (en) > recording an Outcome is labelled a business decision and sends If-Match  1610ms
+   ✓ governance screens (en) > escalations: a routing error is a visible row; a rule without a stored row is labelled Default  973ms
+   ✓ governance screens (ar) > forums: the five layers with their verbatim source cadence; Arabic labelled provisional  691ms
+   ✓ governance screens (ar) > series editor: 'future meetings only' must be confirmed; the result lists the kept meetings  2166ms
+   ✓ governance screens (ar) > meeting: the brief lists missing elements; quorum not configured is never 'met'; no engineering gate named  453ms
+   ✓ governance screens (ar) > publishing an incomplete ask shows the server's 422 once, translated  902ms
+   ✓ governance screens (ar) > published minutes are read-only and the meeting shows the frozen note  1319ms
+   ✓ governance screens (ar) > T16 log: nine columns; an earlier record shows Unknown for what it lacks; the overdue filter asks the server  1629ms
+   ✓ governance screens (ar) > raising an ask without 'why now': the server's 400 lands on its field  2035ms
+   ✓ governance screens (ar) > recording an Outcome is labelled a business decision and sends If-Match  1466ms
+   ✓ governance screens (ar) > escalations: a routing error is a visible row; a rule without a stored row is labelled Default  498ms
+ ✓ |unit-web| src/pages/dashboards/dashboards.test.tsx (29 tests) 33176ms
+   ✓ Dashboards (en) > transformation dashboard: six areas, distinct value states, provisional Arabic, drill-down  4230ms
+   ✓ Dashboards (en) > Executive Overview: organizationId and the period filter reach the server; window and as-of shown  1447ms
+   ✓ Dashboards (en) > Finance dashboard: per-class lines, gross and net, an Unknown net is never 0, non-financial is n/a  2326ms
+   ✓ Dashboards (en) > Finance dashboard (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed  1309ms
+   ✓ Dashboards (en) > Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total  2602ms
+   ✓ Dashboards (en) > workspace header: every element Unknown where data is missing; one click opens the RAID register  1284ms
+   ✓ Dashboards (en) > workspace header: known elements show their values; a known 0 validated value is 'Known zero', not Unknown  1010ms
+   ✓ Dashboards (en) > workspace header unavailable: every element is Unknown, with a retry (never a guessed value)  766ms
+   ✓ Dashboards (en) > My Work: sections with totals, the KPI update under Missing updates, a draft labelled not submitted, deadlines  1837ms
+   ✓ Dashboards (en) > the dashboards hub lists the six dashboards and /dashboards/executive opens the Executive Overview  1776ms
+   ✓ Dashboards (ar) > transformation dashboard: six areas, distinct value states, provisional Arabic, drill-down  2087ms
+   ✓ Dashboards (ar) > Executive Overview: organizationId and the period filter reach the server; window and as-of shown  1209ms
+   ✓ Dashboards (ar) > Finance dashboard: per-class lines, gross and net, an Unknown net is never 0, non-financial is n/a  2083ms
+   ✓ Dashboards (ar) > Finance dashboard (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed  660ms
+   ✓ Dashboards (ar) > Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total  1687ms
+   ✓ Dashboards (ar) > workspace header: every element Unknown where data is missing; one click opens the RAID register  389ms
+   ✓ Dashboards (ar) > workspace header: known elements show their values; a known 0 validated value is 'Known zero', not Unknown  559ms
+   ✓ Dashboards (ar) > workspace header unavailable: every element is Unknown, with a retry (never a guessed value)  519ms
+   ✓ Dashboards (ar) > My Work: sections with totals, the KPI update under Missing updates, a draft labelled not submitted, deadlines  1234ms
+   ✓ Dashboards (ar) > the dashboards hub lists the six dashboards and /dashboards/executive opens the Executive Overview  1553ms
+ ✓ |unit-web| src/auth/session-end.test.tsx (12 tests) 30486ms
+   ✓ session end while the app is open (en) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  6151ms
+   ✓ session end while the app is open (en) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  4373ms
+   ✓ session end while the app is open (en) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  672ms
+   ✓ session end while the app is open (en) > a 403 (forbidden) is never treated as a session end  1308ms
+   ✓ session end while the app is open (ar) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  3287ms
+   ✓ session end while the app is open (ar) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  2973ms
+   ✓ session end while the app is open (ar) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  922ms
+   ✓ session end while the app is open (ar) > a 403 (forbidden) is never treated as a session end  2513ms
+   ✓ session end under <StrictMode> (as in production) > still lands exactly once on sign-in  2545ms
+   ✓ sign-in page and the cached identity > decides 'already signed in' only from a fresh /me, never from a stale cache  618ms
+   ✓ sign-in page and the cached identity > signing out here shows 'signed out', not 'session ended', and no /me loop  1920ms
+ ✓ |unit-web| src/pages/team/team.test.tsx (10 tests) 28019ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  2587ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  1825ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  2667ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  1647ms
+   ✓ Team: read-only auditor (AUD) > sees the roles, accountabilities and members, a read-only note, and no assign control  1199ms
+   ✓ Team (Arabic RTL) > shows Arabic role names and the provisional Arabic accountability text  1538ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  4031ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  3416ms
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  3681ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  4409ms
+ ✓ |unit-web| src/pages/roadmap/roadmap.test.tsx (14 tests) 26808ms
+   ✓ roadmap (en) > shows the four source waves verbatim (English source also shown in Arabic) with overlapping horizons  1150ms
+   ✓ roadmap (en) > moving a milestone PATCHes the forecast with If-Match and the timeline, table and board all show the new date from one refetch  815ms
+   ✓ roadmap (en) > a 409 on moving a milestone shows the conflict notice and reloads the roadmap  1793ms
+   ✓ roadmap (en) > re-approving a date requires a reason; then it is POSTed with If-Match  1853ms
+   ✓ roadmap (en) > deliverable acceptance sends the AcceptanceDecision with If-Match (no 'on behalf of' control)  2757ms
+   ✓ roadmap (en) > an Unknown schedule flag is shown as Unknown; missing dates are Unknown, never blank  1121ms
+   ✓ roadmap (en) > the read-only auditor sees no write control  1949ms
+   ✓ roadmap (ar) > shows the four source waves verbatim (English source also shown in Arabic) with overlapping horizons  1106ms
+   ✓ roadmap (ar) > moving a milestone PATCHes the forecast with If-Match and the timeline, table and board all show the new date from one refetch  1824ms
+   ✓ roadmap (ar) > a 409 on moving a milestone shows the conflict notice and reloads the roadmap  3040ms
+   ✓ roadmap (ar) > re-approving a date requires a reason; then it is POSTed with If-Match  2605ms
+   ✓ roadmap (ar) > deliverable acceptance sends the AcceptanceDecision with If-Match (no 'on behalf of' control)  3682ms
+   ✓ roadmap (ar) > an Unknown schedule flag is shown as Unknown; missing dates are Unknown, never blank  1041ms
+   ✓ roadmap (ar) > the read-only auditor sees no write control  1038ms
+ ✓ |unit-web| src/pages/raci/governance.test.tsx (19 tests) 23957ms
+   ✓ Governance (en) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match  4088ms
+   ✓ Governance (en) > RACI: an auditor sees the matrix read-only (no cell editor, no save)  789ms
+   ✓ Governance (en) > role mapping: an unmapped governance role shows the visible routing error  1545ms
+   ✓ Governance (en) > decision rights: seeded rows; the due-date preview shows Unknown with its reason  1675ms
+   ✓ Governance (en) > decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120)  623ms
+   ✓ Governance (en) > decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120)  707ms
+   ✓ Governance (en) > decision rights: submits the matrix for business approval with If-Match  1485ms
+   ✓ Governance (en) > decision rights: a field with an unknown party code is refused before sending  1975ms
+   ✓ Governance (en) > Transform readiness lists what is missing and links to the fix  916ms
+   ✓ Governance (ar) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match  570ms
+   ✓ Governance (ar) > decision rights: seeded rows; the due-date preview shows Unknown with its reason  333ms
+   ✓ Governance (ar) > decision rights: the R/A/C/I/SLA source labels carry a provisional-Arabic notice in Arabic only (F-DG4-120)  320ms
+   ✓ Governance (ar) > decision rights: a label the transformation wrote in Arabic is not marked as English source (F-DG4-120)  356ms
+   ✓ Governance (ar) > decision rights: submits the matrix for business approval with If-Match  1946ms
+   ✓ Governance (ar) > decision rights: a field with an unknown party code is refused before sending  1747ms
+   ✓ Governance (ar) > Transform readiness lists what is missing and links to the fix  626ms
+ ✓ |unit-web| src/pages/gates/g1-agreements.test.tsx (10 tests) 25053ms
+   ✓ G1 agreements step (en) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  7110ms
+   ✓ G1 agreements step (en) > a non-approve outcome on G1 sends no agreements (even after ticking them)  2439ms
+   ✓ G1 agreements step (en) > approving another gate (G2) shows no confirmations and sends no agreements  1746ms
+   ✓ G1 agreements step (en) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  1691ms
+   ✓ G1 agreements step (en) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  1209ms
+   ✓ G1 agreements step (ar) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  2892ms
+   ✓ G1 agreements step (ar) > a non-approve outcome on G1 sends no agreements (even after ticking them)  2131ms
+   ✓ G1 agreements step (ar) > approving another gate (G2) shows no confirmations and sends no agreements  1610ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  806ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  533ms
+ ✓ |unit-web| src/pages/benefit-formulas/benefit-formulas.test.tsx (18 tests) 35292ms
+   ✓ T09 benefit formulas (en) > register: the six T09 columns with confidence H/M/L; examples marked illustrative with 100000 and 500000 SAR per year  4930ms
+   ✓ T09 benefit formulas (en) > builder: an undefined variable shows translated, with its position, before saving; nothing is sent  4439ms
+   ✓ T09 benefit formulas (en) > builder: monthly ARPU × annual customers is a period mismatch, translated, before saving  1959ms
+   ✓ T09 benefit formulas (en) > builder: a fraction is entered as percent and stored as a fraction; a version is saved with If-Match  1622ms
+   ✓ T09 benefit formulas (en) > builder: a fraction difference shows percentage points (translated suffix), never %  926ms
+   ✓ T09 benefit formulas (en) > builder: a 409 shows the standard conflict panel; nothing was saved  1551ms
+   ✓ T09 benefit formulas (en) > Finance validation of a version: a business approval by FIN; the author cannot; translated refusal  2348ms
+   ✓ T09 benefit formulas (en) > Finance validation: the version's author sees the separation-of-duties note and no action  968ms
+   ✓ T09 benefit formulas (en) > read-only auditor: no builder, no write control, the read-only note; a validated version reads Validated  376ms
+   ✓ T09 benefit formulas (ar) > register: the six T09 columns with confidence H/M/L; examples marked illustrative with 100000 and 500000 SAR per year  1467ms
+   ✓ T09 benefit formulas (ar) > builder: an undefined variable shows translated, with its position, before saving; nothing is sent  2214ms
+   ✓ T09 benefit formulas (ar) > builder: monthly ARPU × annual customers is a period mismatch, translated, before saving  1224ms
+   ✓ T09 benefit formulas (ar) > builder: a fraction is entered as percent and stored as a fraction; a version is saved with If-Match  2217ms
+   ✓ T09 benefit formulas (ar) > builder: a fraction difference shows percentage points (translated suffix), never %  1282ms
+   ✓ T09 benefit formulas (ar) > builder: a 409 shows the standard conflict panel; nothing was saved  2102ms
+   ✓ T09 benefit formulas (ar) > Finance validation of a version: a business approval by FIN; the author cannot; translated refusal  2078ms
+   ✓ T09 benefit formulas (ar) > Finance validation: the version's author sees the separation-of-duties note and no action  782ms
+   ✓ T09 benefit formulas (ar) > read-only auditor: no builder, no write control, the read-only note; a validated version reads Validated  798ms
+ ✓ |unit-web| src/pages/roadmap/fe-e.test.tsx (8 tests) 22223ms
+   ✓ wave editing (en) > edits planned dates (overlap accepted) with If-Match; the source text is read-only and never sent  4965ms
+   ✓ wave editing (en) > 422 roadmap_wave.planned_range is inline at the planned end and translated  813ms
+   ✓ wave editing (en) > adds a non-source wave with its bilingual texts (POST, Idempotency-Key)  2467ms
+   ✓ wave editing (en) > the read-only auditor gets no wave control  593ms
+   ✓ wave editing (ar) > edits planned dates (overlap accepted) with If-Match; the source text is read-only and never sent  2727ms
+   ✓ wave editing (ar) > 422 roadmap_wave.planned_range is inline at the planned end and translated  1769ms
+   ✓ wave editing (ar) > adds a non-source wave with its bilingual texts (POST, Idempotency-Key)  4859ms
+   ✓ wave editing (ar) > the read-only auditor gets no wave control  1371ms
+ ✓ |unit-web| src/pages/change-requests/change-requests.test.tsx (15 tests) 20309ms
+   ✓ change requests (en) > lists a draft as a saved draft and an automatic request by its origin; the policy reads 'no threshold'  1275ms
+   ✓ change requests (en) > the first policy save sends If-Match "0"; an out-of-range value shows the translated refusal  3267ms
+   ✓ change requests (en) > raising a schedule rebaseline: the forecast is shown separately, the preview names the preserved G4 approval  1792ms
+   ✓ change requests (en) > a KPI target change (REQ-S07-015): the draft version's diff is the change; the preview lists the benefit and the G2 approval  1357ms
+   ✓ change requests (en) > a returned request offers round 2; a non-requester is told so and the 403 is translated  1688ms
+   ✓ change requests (en) > a submitted request shows its frozen assessment with SHA-256 and the preserved original approval  693ms
+   ✓ change requests (ar) > lists a draft as a saved draft and an automatic request by its origin; the policy reads 'no threshold'  928ms
+   ✓ change requests (ar) > the first policy save sends If-Match "0"; an out-of-range value shows the translated refusal  2026ms
+   ✓ change requests (ar) > raising a schedule rebaseline: the forecast is shown separately, the preview names the preserved G4 approval  2394ms
+   ✓ change requests (ar) > a KPI target change (REQ-S07-015): the draft version's diff is the change; the preview lists the benefit and the G2 approval  1642ms
+   ✓ change requests (ar) > a returned request offers round 2; a non-requester is told so and the 403 is translated  1305ms
+   ✓ change requests (ar) > a submitted request shows its frozen assessment with SHA-256 and the preserved original approval  1027ms
+ ✓ |unit-web| src/pages/capacity/fe-e.test.tsx (13 tests) 24710ms
+   ✓ capacity editing (en) > creates a role; a taken code (409) is the form's translated alert; then the role is created  3739ms
+   ✓ capacity editing (en) > edits a role's labels and archives it, each with If-Match  3382ms
+   ✓ capacity editing (en) > creates a capacity row with a decimal FTE string; a duplicate (409) is translated  1282ms
+   ✓ capacity editing (en) > creates a demand; after the save the plan is re-read and the conflict with its shortfall appears; Unknown stays Unknown  2977ms
+   ✓ capacity editing (en) > edits a planned demand with If-Match; 422 resource_demand.not_planned is translated  2083ms
+   ✓ capacity editing (en) > the read-only auditor sees roles and capacity rows with no editing control  721ms
+   ✓ capacity editing (ar) > creates a role; a taken code (409) is the form's translated alert; then the role is created  863ms
+   ✓ capacity editing (ar) > edits a role's labels and archives it, each with If-Match  1124ms
+   ✓ capacity editing (ar) > creates a capacity row with a decimal FTE string; a duplicate (409) is translated  923ms
+   ✓ capacity editing (ar) > creates a demand; after the save the plan is re-read and the conflict with its shortfall appears; Unknown stays Unknown  3110ms
+   ✓ capacity editing (ar) > edits a planned demand with If-Match; 422 resource_demand.not_planned is translated  1431ms
+   ✓ capacity editing (ar) > the read-only auditor sees roles and capacity rows with no editing control  412ms
+ ✓ |unit-web| src/pages/kpi/kpi-periods.test.tsx (6 tests) 17868ms
+   ✓ KPI update periods (en) > a Lead or KPI owner chooses an open period that is not the current one, from the transformation's list  1620ms
+   ✓ KPI update periods (en) > a transformation-scoped KPI owner (no organization.read) gets the same choice  1724ms
+   ✓ KPI update periods (en) > no open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice  3786ms
+   ✓ KPI update periods (ar) > a Lead or KPI owner chooses an open period that is not the current one, from the transformation's list  2722ms
+   ✓ KPI update periods (ar) > a transformation-scoped KPI owner (no organization.read) gets the same choice  1506ms
+   ✓ KPI update periods (ar) > no open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice  4452ms
+ ✓ |unit-web| src/auth/session-identity.test.tsx (18 tests) 22023ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  2327ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  960ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts  1761ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft  490ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (en) > the same identity re-probed (window refocus) keeps the cache and the page state  485ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > signing out here clears everything; B signing in afterwards never sees A's records  1033ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > a 403 is never a session end: the phase, the identity and the cache are kept  465ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  1215ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  1588ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > a refocus /me that returns another identity removes every session query before B renders, and drops A's drafts  2707ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > a new session of the same person (signed in again elsewhere) refetches the queries but keeps their own draft  1259ms
+   ✓ F-DG2-500 an identity change with no session end in this tab (ar) > the same identity re-probed (window refocus) keeps the cache and the page state  774ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > signing out here clears everything; B signing in afterwards never sees A's records  3562ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > a 403 is never a session end: the phase, the identity and the cache are kept  791ms
+ ✓ |unit-web| src/pages/bau/sustain.test.tsx (14 tests) 25112ms
+   ✓ BAU and improvement screens (en) > handover checklist marks data access missing; submit 422 names it in the shown language  2732ms
+   ✓ BAU and improvement screens (en) > only the receiving owner is offered accept, labelled a business approval  2868ms
+   ✓ BAU and improvement screens (en) > after reopening, the area shows the original handover acceptance and closure date  760ms
+   ✓ BAU and improvement screens (en) > a failed check links to its recovery action; an unknown review signal is Unknown, never on track  1941ms
+   ✓ BAU and improvement screens (en) > CI backlog stays visible and editable after the transformation is closed  3077ms
+   ✓ BAU and improvement screens (en) > lesson search finds a published lesson of another transformation  1073ms
+   ✓ BAU and improvement screens (ar) > handover checklist marks data access missing; submit 422 names it in the shown language  1175ms
+   ✓ BAU and improvement screens (ar) > only the receiving owner is offered accept, labelled a business approval  4061ms
+   ✓ BAU and improvement screens (ar) > after reopening, the area shows the original handover acceptance and closure date  695ms
+   ✓ BAU and improvement screens (ar) > a failed check links to its recovery action; an unknown review signal is Unknown, never on track  1364ms
+   ✓ BAU and improvement screens (ar) > CI backlog stays visible and editable after the transformation is closed  1926ms
+   ✓ BAU and improvement screens (ar) > lesson search finds a published lesson of another transformation  911ms
+ ✓ |unit-web| src/pages/approvals/approvals.test.tsx (16 tests) 19113ms
+   ✓ Approvals (en) > lists my approvals; an Unknown due date shows Unknown with its reason, never a date  1785ms
+   ✓ Approvals (en) > offers exactly four outcomes; defer needs a date; the decision sends subjectVersion with If-Match  1635ms
+   ✓ Approvals (en) > a blank rationale is refused before sending  826ms
+   ✓ Approvals (en) > a stale 409 says the record changed, records nothing and links to the history  2025ms
+   ✓ Approvals (en) > the requester is not offered the decision; the history shows 'B on behalf of A'  379ms
+   ✓ Approvals (en) > offers 'on behalf of' only for an active delegation to me  505ms
+   ✓ Approvals (ar) > offers exactly four outcomes; defer needs a date; the decision sends subjectVersion with If-Match  1058ms
+   ✓ Approvals (ar) > a blank rationale is refused before sending  1067ms
+   ✓ Approvals (ar) > a stale 409 says the record changed, records nothing and links to the history  1600ms
+   ✓ Approvals (ar) > the requester is not offered the decision; the history shows 'B on behalf of A'  590ms
+   ✓ Approvals (ar) > offers 'on behalf of' only for an active delegation to me  1135ms
+   ✓ Delegations (en) > records a delegation with Asia/Riyadh wall-clock times sent as UTC; a loop 422 is translated  946ms
+   ✓ Delegations (en) > revokes with a reason and If-Match; a read-only user sees no action  543ms
+   ✓ Delegations (ar) > records a delegation with Asia/Riyadh wall-clock times sent as UTC; a loop 422 is translated  769ms
+   ✓ Delegations (ar) > revokes with a reason and If-Match; a read-only user sees no action  1194ms
+ ✓ |unit-web| src/pages/dependencies/dependencies.test.tsx (12 tests) 20041ms
+   ✓ dependencies (en) > shows the seven T08 columns, an External source, the type label and the needed-by conflict flag  1061ms
+   ✓ dependencies (en) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  1504ms
+   ✓ dependencies (en) > an External source is sent as {kind: external, label}  1616ms
+   ✓ dependencies (en) > dependency types: system types are undeletable; an administrator may retire a custom type  1602ms
+   ✓ dependencies (en) > a system type's 422 dependency_type.system_undeletable is translated  720ms
+   ✓ dependencies (en) > the read-only auditor sees the map and no write control  710ms
+   ✓ dependencies (ar) > shows the seven T08 columns, an External source, the type label and the needed-by conflict flag  1154ms
+   ✓ dependencies (ar) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  1942ms
+   ✓ dependencies (ar) > an External source is sent as {kind: external, label}  3113ms
+   ✓ dependencies (ar) > dependency types: system types are undeletable; an administrator may retire a custom type  2127ms
+   ✓ dependencies (ar) > a system type's 422 dependency_type.system_undeletable is translated  2014ms
+   ✓ dependencies (ar) > the read-only auditor sees the map and no write control  954ms
+ ✓ |unit-web| src/app/app.test.tsx (20 tests) 24438ms
+   ✓ bilingual shell > renders Arabic RTL by default with the provisional wordmark  1435ms
+   ✓ bilingual shell > switches to English LTR and persists the preference with If-Match  908ms
+   ✓ bilingual shell > shows all fourteen areas to an administrator  1309ms
+   ✓ bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission  1868ms
+   ✓ bilingual shell > an area with delivered screens is not labelled planned: Risks and Actions lists its §3 contents  4779ms
+   ✓ bilingual shell > a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned  3956ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  2927ms
+   ✓ transformations > shows the empty state (not zero rows) when nothing is visible  381ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  1946ms
+   ✓ transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version  1845ms
+ ✓ |unit-web| src/pages/gates/inherited-approval.test.tsx (16 tests) 19928ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 pending_verification (counts false) is a badge next to 'Not submitted'  2568ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 accepted (counts true) is a badge next to 'Not submitted'  834ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 accepted (counts false) is a badge next to 'Not submitted'  1452ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 rejected (counts false) is a badge next to 'Not submitted'  920ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 revoked (counts false) is a badge next to 'Not submitted'  664ms
+   ✓ inherited-approval annotation (en) > Gates list: no inherited approval, no badge  540ms
+   ✓ inherited-approval annotation (en) > gate view: an accepted inherited approval is a labelled row beside the 'Not submitted' status  1821ms
+   ✓ inherited-approval annotation (en) > gate view: without an inherited approval there is no row  1546ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 pending_verification (counts false) is a badge next to 'Not submitted'  1275ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 accepted (counts true) is a badge next to 'Not submitted'  798ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 accepted (counts false) is a badge next to 'Not submitted'  872ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 rejected (counts false) is a badge next to 'Not submitted'  992ms
+   ✓ inherited-approval annotation (ar) > Gates list: G1 revoked (counts false) is a badge next to 'Not submitted'  975ms
+   ✓ inherited-approval annotation (ar) > Gates list: no inherited approval, no badge  807ms
+   ✓ inherited-approval annotation (ar) > gate view: an accepted inherited approval is a labelled row beside the 'Not submitted' status  429ms
+   ✓ inherited-approval annotation (ar) > gate view: without an inherited approval there is no row  575ms
+ ✓ |unit-web| src/pages/my-work/my-work.test.tsx (20 tests) 19824ms
+   ✓ My Work (en) > renders tasks and reminders from messageKey + messageParams; Unknown due dates; system-managed tasks  2346ms
+   ✓ My Work (en) > marks a task done and a reminder read with bodiless POSTs and If-Match  2005ms
+   ✓ My Work (ar) > renders tasks and reminders from messageKey + messageParams; Unknown due dates; system-managed tasks  440ms
+   ✓ My Work (ar) > marks a task done and a reminder read with bodiless POSTs and If-Match  1153ms
+   ✓ Calendar, jobs and groups (en) > calendar: read-only without calendar.configure; the calculator shows Unknown with its reason  474ms
+   ✓ Calendar, jobs and groups (en) > calendar: a technical administrator adds a holiday; a range error is caught before sending  1186ms
+   ✓ Calendar, jobs and groups (en) > jobs: no permission without job.read; job.configure edits a schedule with If-Match  2180ms
+   ✓ Calendar, jobs and groups (en) > groups: membership grants no permission (stated); group.manage creates a group  755ms
+   ✓ Calendar, jobs and groups (ar) > calendar: read-only without calendar.configure; the calculator shows Unknown with its reason  1219ms
+   ✓ Calendar, jobs and groups (ar) > calendar: a technical administrator adds a holiday; a range error is caught before sending  2354ms
+   ✓ Calendar, jobs and groups (ar) > jobs: no permission without job.read; job.configure edits a schedule with If-Match  2061ms
+   ✓ Calendar, jobs and groups (ar) > groups: membership grants no permission (stated); group.manage creates a group  960ms
+ ✓ |unit-web| src/pages/dispensations/dispensations.test.tsx (12 tests) 28630ms
+   ✓ Dispensations (en) > lists waivers and inherited approvals; unverified evidence is shown as unverified; recorder cannot decide  4014ms
+   ✓ Dispensations (en) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  2380ms
+   ✓ Dispensations (en) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  3184ms
+   ✓ Dispensations (en) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  3205ms
+   ✓ Dispensations (en) > the read-only auditor sees the register with no enabled write control  1182ms
+   ✓ Dispensations (ar) > lists waivers and inherited approvals; unverified evidence is shown as unverified; recorder cannot decide  1699ms
+   ✓ Dispensations (ar) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  2306ms
+   ✓ Dispensations (ar) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  2780ms
+   ✓ Dispensations (ar) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  2665ms
+   ✓ Dispensations (ar) > revoking an accepted dispensation needs a reason and is a business approval  965ms
+   ✓ Dispensations (ar) > the read-only auditor sees the register with no enabled write control  1319ms
+ ✓ |unit-web| src/pages/dashboards/n4Value.test.tsx (9 tests) 12573ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > t10: the Value RAG shows each basis's gap with its own status; the area is the worst (Red); no cross-basis gap  3065ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > overview: the Value RAG shows each basis's gap with its own status; the area is the worst (Red); no cross-basis gap  1138ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > T10 Portfolio: the value column names the profit-and-cash basis; n/a shows its reason, never 0; Unknown stays Unknown  1172ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > Finance: the top-line gap headline sits beside, labelled; its drill-down shows its basis and currency (SAR)  1705ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (ar) > t10: the Value RAG shows each basis's gap with its own status; the area is the worst (Red); no cross-basis gap  952ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (ar) > overview: the Value RAG shows each basis's gap with its own status; the area is the worst (Red); no cross-basis gap  560ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (ar) > T10 Portfolio: the value column names the profit-and-cash basis; n/a shows its reason, never 0; Unknown stays Unknown  581ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (ar) > Finance: the top-line gap headline sits beside, labelled; its drill-down shows its basis and currency (SAR)  632ms
+ ✓ |unit-web| src/app/p3-seams.test.tsx (10 tests) 14460ms
+   ✓ P3 routes > workspace tabs (en) > the workspace tabs include the P3 tabs, labelled from their own namespaces  1286ms
+   ✓ P3 routes > workspace tabs (ar) > the workspace tabs include the P3 tabs, labelled from their own namespaces  1813ms
+   ✓ P3 navigation areas > en /initiatives-roadmaps leads into the Initiatives and Roadmaps tab of each transformation  2945ms
+   ✓ P3 navigation areas > ar /initiatives-roadmaps leads into the المبادرات وخرائط الطريق tab of each transformation  2987ms
+   ✓ P3 navigation areas > en /benefits-finance leads into the Benefits and Finance tab of each transformation  2299ms
+   ✓ P3 navigation areas > ar /benefits-finance leads into the المنافع والمالية tab of each transformation  1521ms
+ ✓ |unit-web| src/pages/closure/closure.test.tsx (11 tests) 15507ms
+   ✓ closure page (en) > shows the four statuses side by side and the value-pending labels; never 'successful'  2496ms
+   ✓ closure page (en) > closing a value-pending initiative shows the translated 422 closure.value_validation_pending  2913ms
+   ✓ closure page (en) > closing the transformation without G6 shows the translated refusal  774ms
+   ✓ closure page (en) > a returned decision offers 'Submit again (round 2)'; a non-requester's withdrawal is refused, translated  333ms
+   ✓ closure page (en) > creates a transition decision with the residual owner and monitoring (a draft until submitted)  514ms
+   ✓ closure page (ar) > closing a value-pending initiative shows the translated 422 closure.value_validation_pending  1303ms
+   ✓ closure page (ar) > closing the transformation without G6 shows the translated refusal  2674ms
+   ✓ closure page (ar) > a returned decision offers 'Submit again (round 2)'; a non-requester's withdrawal is refused, translated  1492ms
+   ✓ closure page (ar) > creates a transition decision with the residual owner and monitoring (a draft until submitted)  1276ms
+ ✓ |unit-web| src/pages/phases/phases.test.tsx (6 tests) 13923ms
+   ✓ phase workspace (en) > lists the six phases in order, the objective, Unknown owners and the review queue; never moves a gate  1478ms
+   ✓ phase workspace (en) > a step with no record is read with ETag "0" and its first save sends If-Match "0"  3293ms
+   ✓ phase workspace (en) > requesting review with an unmet completion rule shows the translated 422  1533ms
+   ✓ phase workspace (ar) > lists the six phases in order, the objective, Unknown owners and the review queue; never moves a gate  587ms
+   ✓ phase workspace (ar) > a step with no record is read with ETag "0" and its first save sends If-Match "0"  2522ms
+   ✓ phase workspace (ar) > requesting review with an unmet completion rule shows the translated 422  2001ms
+ ✓ |unit-web| src/pages/capacity/capacity.test.tsx (6 tests) 6148ms
+   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  2150ms
+   ✓ capacity (en) > committing a demand POSTs with If-Match; a 409 shows the conflict notice and reloads  613ms
+   ✓ capacity (ar) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  552ms
+   ✓ capacity (ar) > committing a demand POSTs with If-Match; a 409 shows the conflict notice and reloads  700ms
+   ✓ capacity (ar) > the read-only auditor sees the grid and no commit or release control  745ms
+stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ |unit-web| src/pages/dashboards/kpiUnit.test.tsx (26 tests) 16519ms
+   ✓ N5 surfaces (en): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down  3806ms
+   ✓ N5 surfaces (en): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas  2131ms
+   ✓ N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items  1681ms
+   ✓ N5 surfaces (ar): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down  4000ms
+   ✓ N5 surfaces (ar): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas  1233ms
+   ✓ N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items  1432ms
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ |unit-web| src/pages/dashboards/percentKpi.test.tsx (12 tests) 12213ms
+   ✓ F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down  3938ms
+   ✓ F-DG4-125 surfaces (en): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas  1781ms
+   ✓ F-DG4-125 surfaces (en): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items  854ms
+   ✓ F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down  1439ms
+   ✓ F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas  1290ms
+   ✓ F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items  437ms
+ ✓ |unit-web| src/components/LanguageSwitch.test.tsx (10 tests) 15877ms
+   ✓ a refused language save, 'en' → other ('403 csrf') > keeps ar on screen and says, in ar, that it was not saved  3560ms
+   ✓ a refused language save, 'ar' → other ('403 csrf') > keeps en on screen and says, in en, that it was not saved  1851ms
+   ✓ a refused language save, 'en' → other ('403 forbidden') > keeps ar on screen and says, in ar, that it was not saved  1199ms
+   ✓ a refused language save, 'ar' → other ('503') > keeps en on screen and says, in en, that it was not saved  1941ms
+   ✓ the live region and the persisted preference > switching back clears the notice; the region stays in the DOM, empty  1194ms
+   ✓ the live region and the persisted preference > a successful save never flips back to the previous language while the PUT is in flight  1264ms
+   ✓ the live region and the persisted preference > if the persisted preference changes later and is re-applied, the notice says so in that language  1007ms
+   ✓ the live region and the persisted preference > en: the notice is a warning banner below the header, not inside it  1020ms
+   ✓ the live region and the persisted preference > ar: the notice is a warning banner below the header, not inside it  571ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx (6 tests) 11042ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held  3148ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first  1044ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held  2020ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first  1623ms
+ ✓ |unit-web| src/pages/dispensations/modular-waiver.test.tsx (7 tests) 13590ms
+   ✓ Modular G3 waiver (en) > labels a Modular G3 waiver as the waiver of the missing links; End-to-End keeps the DG3 label  2776ms
+   ✓ Modular G3 waiver (en) > offers the waiver with the Modular hint and sends a G3 waiver without an initiative  3738ms
+   ✓ Modular G3 waiver (en) > any other Modular waiver shows the DG3 refusal, translated  1574ms
+   ✓ Modular G3 waiver (ar) > labels a Modular G3 waiver as the waiver of the missing links; End-to-End keeps the DG3 label  747ms
+   ✓ Modular G3 waiver (ar) > offers the waiver with the Modular hint and sends a G3 waiver without an initiative  1521ms
+   ✓ Modular G3 waiver (ar) > any other Modular waiver shows the DG3 refusal, translated  953ms
+ ✓ |unit-web| src/pages/readiness/readiness.test.tsx (4 tests) 6897ms
+   ✓ Readiness (en) > lists the missing diagnostic areas by name, the gates and the translated sequencing blockers  1542ms
+   ✓ Readiness (en) > an accepted, verified inherited approval counts, and the gate itself still is not approved  1516ms
+   ✓ Readiness (ar) > lists the missing diagnostic areas by name, the gates and the translated sequencing blockers  1436ms
+   ✓ Readiness (ar) > an accepted, verified inherited approval counts, and the gate itself still is not approved  918ms
+ ✓ |unit-web| src/pages/dashboards/buFilter.test.tsx (22 tests) 11429ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > overview: a unit of 120 is blocked (too_many), and no dashboard request is sent  1061ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > finance: a unit of 120 is blocked (too_many), and no dashboard request is sent  910ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > adoption: a unit of 120 is blocked (too_many), and no dashboard request is sent  987ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > overview: narrowing by phase, as the note advises, lifts the block: the unit list is read with phase, and the dashboard gets the 2 left  321ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > finance: narrowing by phase, as the note advises, lifts the block: the unit list is read with phase, and the dashboard gets the 2 left  646ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > phase and status together narrow the list (status sent to the list read); one left is requested  373ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > the transformation chip lifts the block, also for a transformation beyond the unit's first 51  392ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > a transformation chip outside the unit sends no request (none_matching), never 'all'  342ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > overview: a unit of 120 is blocked (too_many), and no dashboard request is sent  639ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > finance: a unit of 120 is blocked (too_many), and no dashboard request is sent  635ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > overview: narrowing by phase, as the note advises, lifts the block: the unit list is read with phase, and the dashboard gets the 2 left  335ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > finance: narrowing by phase, as the note advises, lifts the block: the unit list is read with phase, and the dashboard gets the 2 left  412ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > a narrowing that leaves none says so (none_matching), never 'you cannot read any', and sends no request  907ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > the transformation chip lifts the block, also for a transformation beyond the unit's first 51  348ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (ar) > a transformation chip outside the unit sends no request (none_matching), never 'all'  498ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 7024ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 5173ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 9630ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  4690ms
+   ✓ New transformation: mode guidance (English LTR) > Modular requires an entry phase before anything is sent  590ms
+   ✓ New transformation: mode guidance (English LTR) > a server validation error on the entry phase is shown on that field  1047ms
+   ✓ New transformation: mode guidance (Arabic RTL) > shows the Arabic rendering, marked provisional, with the English source text alongside  351ms
+ ✓ |unit-web| src/pages/dashboards/valueRagLineState.test.tsx (8 tests) 6684ms
+   ✓ Value RAG lines by status (F-DG4-143) (en) > t10: an n/a line reads Not applicable with its reason, an unknown line Unknown, a valued line its gap  1971ms
+   ✓ Value RAG lines by status (F-DG4-143) (en) > overview: an n/a line reads Not applicable with its reason, an unknown line Unknown, a valued line its gap  1426ms
+   ✓ Value RAG lines by status (F-DG4-143) (ar) > t10: an n/a line reads Not applicable with its reason, an unknown line Unknown, a valued line its gap  1185ms
+ ✓ |unit-web| src/i18n/problems-slices-hijk.test.ts (18 tests) 7634ms
+   ✓ slice H, I, C, A, J, K problem keys (ar) > every code-table code of these slices is translated, with no server placeholder left  343ms
+ ✓ |unit-web| src/i18n/problems-p5.test.ts (5 tests) 6503ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 5523ms
+   ✓ record form: one alert per distinct form error (en) > dialog > a 400 whose only field error has pointer "" says its message once, in one live region  600ms
+   ✓ record form: one alert per distinct form error (ar) > inline-sections > a field-pointer error stays on its field; the generic banner is said once  995ms
+ ✓ |unit-web| src/test/harness-config.test.ts (3 tests) 8460ms
+ ✓ |unit-web| src/styles/styles.test.ts (6 tests) 3530ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 5899ms
+   ✓ explicit states in ar > conflict compares values and offers re-apply and discard  446ms
+ ✓ |unit-web| src/pages/my-work/message-keys.test.ts (87 tests) 6237ms
+ ✓ |unit-web| src/components/RouteFallback.test.tsx (8 tests) 3777ms
+   ✓ route fallback (en) > is one polite status with the translated label, no number and no status colour  408ms
+   ✓ route fallback (en) > lazyPage shows the load error, not a blank area, when the chunk cannot be fetched  348ms
+   ✓ route fallback (ar) > lazyPage shows the load error, not a blank area, when the chunk cannot be fetched  314ms
+ ✓ |unit-web| src/pages/business-cases/problem-codes.test.ts (4 tests) 1836ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 4792ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (125 tests) 1557ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 1949ms
+
+ Test Files  71 passed (71)
+      Tests  1385 passed (1385)
+   Start at  14:33:16
+   Duration  678.83s (transform 288.74s, setup 37.07s, collect 308.22s, tests 1429.64s, environment 155.91s, prepare 25.25s)
+
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-f
+
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts (10 tests) 18ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts (140 tests) 482ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts (111 tests | 2 skipped) 9037ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  2964ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  2158ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  3864ms
+
+ Test Files  3 passed (3)
+      Tests  259 passed | 2 skipped (261)
+   Start at  14:44:35
+   Duration  11.08s (transform 652ms, setup 0ms, collect 2.01s, tests 9.54s, environment 3ms, prepare 757ms)
+
+pnpm test (LANG=LC_ALL=C.UTF-8) exit=0
