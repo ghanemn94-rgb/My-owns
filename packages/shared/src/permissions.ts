@@ -276,6 +276,23 @@ export const P5_REPORTING_PERMISSIONS = {
   "owner_update.submit": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P5 slices G and H (T-DG5-ARCH-05; ADR-0047 §6, ADR-0048 §7): KPI restatements, the optional NPV/ROI/payback
+ * extension, the 90-day launch plan, the Day-90 leadership test and the health check. Seeded by migration 0087. One
+ * business_approval code, kpi_restatement.approve (D-142 Q10: SP, BO, FIN, the approval.decide holders; never the
+ * requester). TL holds none (ADR-0039 §9). ADM_METHOD only switches the financial extension on or off; AUD gets
+ * nothing here and stays read-only. Publishing a health-check scheme uses the slice A Studio rights.
+ */
+export const P5_KPI_LAUNCH_HEALTH_PERMISSIONS = {
+  "kpi_restatement.request": "write",
+  "kpi_restatement.approve": "business_approval",
+  "financial_metrics.enable": "configure",
+  "financial_metrics.define": "write",
+  "launch_plan.edit": "write",
+  "day_ninety_test.respond": "write",
+  "health_check.assess": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -292,6 +309,7 @@ export const PERMISSIONS = {
   ...P5_FORMS_PROCEDURES_PERMISSIONS,
   ...P5_AUTOMATION_PERMISSIONS,
   ...P5_REPORTING_PERMISSIONS,
+  ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -684,6 +702,28 @@ export const P5_REPORTING_ROLE_PERMISSIONS = {
   ADM_METHOD: [],
 } as const satisfies Record<string, readonly (keyof typeof P5_REPORTING_PERMISSIONS)[]>;
 
+/**
+ * P5 slices G and H role defaults (seeded by 0087; ADR-0047 §6, ADR-0048 §7). Restatement: request TL, BO, FIN, KDS;
+ * approve SP, BO, FIN. Launch plan and health check: TL, TO; Day-90 test: SP, TL; financial extension: enable
+ * ADM_METHOD, define FIN. AUD and ADM_TECH/ADM_ACCESS get none.
+ */
+export const P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS = {
+  SP: ["kpi_restatement.approve", "day_ninety_test.respond"],
+  TL: ["kpi_restatement.request", "launch_plan.edit", "day_ninety_test.respond", "health_check.assess"],
+  BO: ["kpi_restatement.request", "kpi_restatement.approve"],
+  WL: [],
+  FIN: ["kpi_restatement.request", "kpi_restatement.approve", "financial_metrics.define"],
+  TO: ["launch_plan.edit", "health_check.assess"],
+  KDS: ["kpi_restatement.request"],
+  TD: [],
+  CM: [],
+  SEC: [],
+  AUD: [],
+  ADM_TECH: [],
+  ADM_ACCESS: [],
+  ADM_METHOD: ["financial_metrics.enable"],
+} as const satisfies Record<string, readonly (keyof typeof P5_KPI_LAUNCH_HEALTH_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -702,6 +742,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SP,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SP,
       ...P5_REPORTING_ROLE_PERMISSIONS.SP,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -727,6 +768,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TL,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TL,
       ...P5_REPORTING_ROLE_PERMISSIONS.TL,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -748,6 +790,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.BO,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.BO,
       ...P5_REPORTING_ROLE_PERMISSIONS.BO,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -767,6 +810,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.WL,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.WL,
       ...P5_REPORTING_ROLE_PERMISSIONS.WL,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -786,6 +830,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.FIN,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.FIN,
       ...P5_REPORTING_ROLE_PERMISSIONS.FIN,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -810,6 +855,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TO,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TO,
       ...P5_REPORTING_ROLE_PERMISSIONS.TO,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -828,6 +874,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.KDS,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.KDS,
       ...P5_REPORTING_ROLE_PERMISSIONS.KDS,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -841,6 +888,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.TD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TD,
       ...P5_REPORTING_ROLE_PERMISSIONS.TD,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -853,6 +901,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.CM,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.CM,
       ...P5_REPORTING_ROLE_PERMISSIONS.CM,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.CM,
     ],
   },
   SEC: {
@@ -866,6 +915,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.SEC,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SEC,
       ...P5_REPORTING_ROLE_PERMISSIONS.SEC,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {
@@ -925,6 +975,7 @@ export const ROLES = {
       ...P5_STUDIO_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

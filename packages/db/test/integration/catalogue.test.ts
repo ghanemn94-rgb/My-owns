@@ -104,6 +104,8 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
       ["calculation_run", "calculation_run_append_only", false, false],
       ["calculation_run", "calculation_run_append_only_truncate", false, false],
+      // 0085 (T-DG5-ARCH-05; ADR-0047 §2): constrains only runs of the new kind 'restatement_approved'.
+      ["calculation_run", "calculation_run_restatement_guard", false, false],
       ["data_quality_finding", "data_quality_finding_audit_required", true, true],
       ["data_quality_finding", "data_quality_finding_guard", false, false],
       ["kpi_actual", "kpi_actual_audit_required", true, true],
@@ -118,6 +120,8 @@ describe("schema.ts matches the migrated database", () => {
       ["kpi_actual_value", "kpi_actual_value_guard", false, false],
       ["kpi_evaluation", "kpi_evaluation_append_only", false, false],
       ["kpi_evaluation", "kpi_evaluation_append_only_truncate", false, false],
+      // 0085 (T-DG5-ARCH-05; ADR-0047 §2): constrains only evaluations of a restatement run.
+      ["kpi_evaluation", "kpi_evaluation_restatement_guard", false, false],
       ["kpi_formula_input", "kpi_formula_input_append_only", false, false],
       ["kpi_formula_input", "kpi_formula_input_append_only_truncate", false, false],
       ["kpi_formula_input", "kpi_formula_input_guard", false, false],
@@ -504,6 +508,8 @@ describe("schema.ts matches the migrated database", () => {
       ["methodology_migration_item", "methodology_migration_item_append_only", false, false],
       ["methodology_migration_item", "methodology_migration_item_append_only_truncate", false, false],
       ["methodology_migration_item", "methodology_migration_item_row_guard", false, false],
+      // 0086 (T-DG5-ARCH-05; ADR-0048 §6): the publish rule of a health-check scoring scheme.
+      ["methodology_version", "health_scheme_publish_guard", false, false],
       ["methodology_version", "methodology_version_audit_required", true, true],
       ["methodology_version", "methodology_version_kind_key", false, false],
       ["methodology_version", "methodology_version_new_draft", false, false],
@@ -687,6 +693,79 @@ describe("schema.ts matches the migrated database", () => {
       ["report_snapshot_version", "report_snapshot_version_append_only_truncate", false, false],
       ["report_snapshot_version", "report_snapshot_version_guard", false, false],
       ["report_snapshot_version", "report_snapshot_version_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0085-0086: the P5 slice G/H guards are attached (deferred audit and completeness checks, append-only children)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('kpi_restatement', 'kpi_restatement_period', 'kpi_restatement_reconciliation', 'kpi_restatement_reissue_offer',
+         'financial_metric_setting', 'financial_cash_flow_set', 'financial_cash_flow', 'launch_plan', 'launch_task',
+         'launch_task_predecessor', 'day_ninety_test', 'day_ninety_response', 'health_assessment', 'health_assessment_answer',
+         'health_assessment_action')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["day_ninety_response", "day_ninety_response_audit_required", true, true],
+      ["day_ninety_response", "day_ninety_response_counted", true, true],
+      ["day_ninety_response", "day_ninety_response_guard", false, false],
+      ["day_ninety_response", "day_ninety_response_row_guard", false, false],
+      ["day_ninety_test", "day_ninety_test_audit_required", true, true],
+      ["day_ninety_test", "day_ninety_test_counted", true, true],
+      ["day_ninety_test", "day_ninety_test_guard", false, false],
+      ["day_ninety_test", "day_ninety_test_row_guard", false, false],
+      ["financial_cash_flow", "financial_cash_flow_append_only", false, false],
+      ["financial_cash_flow", "financial_cash_flow_append_only_truncate", false, false],
+      ["financial_cash_flow", "financial_cash_flow_complete", true, true],
+      ["financial_cash_flow", "financial_cash_flow_guard", false, false],
+      ["financial_cash_flow", "financial_cash_flow_row_guard", false, false],
+      ["financial_cash_flow_set", "financial_cash_flow_set_audit_required", true, true],
+      ["financial_cash_flow_set", "financial_cash_flow_set_complete", true, true],
+      ["financial_cash_flow_set", "financial_cash_flow_set_guard", false, false],
+      ["financial_cash_flow_set", "financial_cash_flow_set_row_guard", false, false],
+      ["financial_metric_setting", "financial_metric_setting_audit_required", true, true],
+      ["financial_metric_setting", "financial_metric_setting_row_guard", false, false],
+      ["health_assessment", "health_assessment_audit_required", true, true],
+      ["health_assessment", "health_assessment_counted", true, true],
+      ["health_assessment", "health_assessment_guard", false, false],
+      ["health_assessment", "health_assessment_row_guard", false, false],
+      ["health_assessment_action", "health_assessment_action_audit_required", true, true],
+      ["health_assessment_action", "health_assessment_action_guard", false, false],
+      ["health_assessment_action", "health_assessment_action_row_guard", false, false],
+      ["health_assessment_answer", "health_assessment_answer_audit_required", true, true],
+      ["health_assessment_answer", "health_assessment_answer_counted", true, true],
+      ["health_assessment_answer", "health_assessment_answer_guard", false, false],
+      ["health_assessment_answer", "health_assessment_answer_row_guard", false, false],
+      ["kpi_restatement", "kpi_restatement_audit_required", true, true],
+      ["kpi_restatement", "kpi_restatement_complete", true, true],
+      ["kpi_restatement", "kpi_restatement_guard", false, false],
+      ["kpi_restatement", "kpi_restatement_row_guard", false, false],
+      ["kpi_restatement_period", "kpi_restatement_period_append_only", false, false],
+      ["kpi_restatement_period", "kpi_restatement_period_append_only_truncate", false, false],
+      ["kpi_restatement_period", "kpi_restatement_period_complete", true, true],
+      ["kpi_restatement_period", "kpi_restatement_period_guard", false, false],
+      ["kpi_restatement_period", "kpi_restatement_period_row_guard", false, false],
+      ["kpi_restatement_reconciliation", "kpi_restatement_reconciliation_append_only", false, false],
+      ["kpi_restatement_reconciliation", "kpi_restatement_reconciliation_append_only_truncate", false, false],
+      ["kpi_restatement_reconciliation", "kpi_restatement_reconciliation_complete", true, true],
+      ["kpi_restatement_reconciliation", "kpi_restatement_reconciliation_guard", false, false],
+      ["kpi_restatement_reconciliation", "kpi_restatement_reconciliation_row_guard", false, false],
+      ["kpi_restatement_reissue_offer", "kpi_restatement_reissue_offer_append_only", false, false],
+      ["kpi_restatement_reissue_offer", "kpi_restatement_reissue_offer_append_only_truncate", false, false],
+      ["kpi_restatement_reissue_offer", "kpi_restatement_reissue_offer_guard", false, false],
+      ["kpi_restatement_reissue_offer", "kpi_restatement_reissue_offer_row_guard", false, false],
+      ["launch_plan", "launch_plan_audit_required", true, true],
+      ["launch_plan", "launch_plan_guard", false, false],
+      ["launch_plan", "launch_plan_row_guard", false, false],
+      ["launch_task", "launch_task_audit_required", true, true],
+      ["launch_task", "launch_task_guard", false, false],
+      ["launch_task", "launch_task_row_guard", false, false],
+      ["launch_task_predecessor", "launch_task_predecessor_audit_required", true, true],
+      ["launch_task_predecessor", "launch_task_predecessor_guard", false, false],
+      ["launch_task_predecessor", "launch_task_predecessor_row_guard", false, false],
     ];
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
@@ -901,6 +980,18 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "export_job_progress",
       "owner_update",
       "report_snapshot",
+      // P5 slices G and H (0085-0086, T-DG5-ARCH-05; ADR-0047, ADR-0048).
+      "day_ninety_response",
+      "day_ninety_test",
+      "financial_cash_flow_set",
+      "financial_metric_setting",
+      "health_assessment",
+      "health_assessment_action",
+      "health_assessment_answer",
+      "kpi_restatement",
+      "launch_plan",
+      "launch_task",
+      "launch_task_predecessor",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1213,6 +1304,27 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       owner_update_revision: "INSERT,SELECT",
       export_job: SIU,
       export_job_progress: SIU,
+      // P5 slices G and H (0085-0087): still no DELETE anywhere; the launch and Day-90 catalogues are read-only;
+      // restatement periods, reconciliations and reissue offers and cash-flow rows are append-only; a predecessor link
+      // is removed by stamping removed_at, never deleted.
+      day_ninety_question: "SELECT",
+      day_ninety_response: SIU,
+      day_ninety_test: SIU,
+      financial_cash_flow: "INSERT,SELECT",
+      financial_cash_flow_set: SIU,
+      financial_metric_setting: SIU,
+      health_assessment: SIU,
+      health_assessment_action: SIU,
+      health_assessment_answer: SIU,
+      kpi_restatement: SIU,
+      kpi_restatement_period: "INSERT,SELECT",
+      kpi_restatement_reconciliation: "INSERT,SELECT",
+      kpi_restatement_reissue_offer: "INSERT,SELECT",
+      launch_plan: SIU,
+      launch_task: SIU,
+      launch_task_predecessor: SIU,
+      launch_template_item: "SELECT",
+      launch_window: "SELECT",
     });
   });
 

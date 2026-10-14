@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { operations } from "../../support/contract.ts";
 import { auditOfRequest, call, seedWorld, startApi, type TestApi } from "../../support/harness.ts";
 import { P4_OPERATION_IDS } from "../../support/p4-operations.ts";
+import { P5_OPERATION_IDS } from "../../support/p5-operations.ts";
 import { ifMatch, seedKpiWorld, type KpiWorld } from "./fixtures.ts";
 
 let api: TestApi;
@@ -20,7 +21,11 @@ const KPI_PATH =
 // their own AUD tests from KBE-B and KBE-C once routed (p4-work-split.md S-4), as the P2 sweep in aud-write-deny.test.ts
 // skips P3 and P4.
 const kpiMutations = operations.filter(
-  (o) => o.method !== "GET" && KPI_PATH.test(o.path) && !P4_OPERATION_IDS.has(o.operationId),
+  (o) =>
+    o.method !== "GET" &&
+    KPI_PATH.test(o.path) &&
+    !P4_OPERATION_IDS.has(o.operationId) &&
+    !P5_OPERATION_IDS.has(o.operationId),
 );
 
 /** A valid body for every kpi mutation (so the 403 is the authorization decision, not a 400). */

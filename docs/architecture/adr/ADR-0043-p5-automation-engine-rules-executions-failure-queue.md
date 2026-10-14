@@ -189,3 +189,19 @@ The engine stores no money, rate or FTE. Condition values that are numbers are d
 - **Database (probe, 133/133 PASS on PostgreSQL 16.13):** G00–G05 (migrations, fresh and over P4 data), S01–S06 (seeds), AR01–AR10, AV01–AV24, DR01–DR04, EX01–EX10, AX01–AX06, JR01–JR04, OF01–OF09, AO (no UPDATE/DELETE grant on append-only tables) in `docs/delivery/handbacks/DG5/T-DG5-ARCH-03-evidence/probe-output.txt`.
 - **Catalogue and seed pins:** `packages/db/test/integration/catalogue.test.ts` (tables, triggers, grants, mutable `version` tables), `packages/db/src/seed.test.ts` (`0076` equals `P5_AUTOMATION_PERMISSIONS`/`_ROLE_PERMISSIONS`; no approval code; AUD automation.read only), `apps/api/src/modules/platform/advisory-locks.test.ts` (distinct classes).
 - **Implementer tests (literal, p5-work-split §D):** saving a rule with action `approve_gate` → 422 `automation_rule.human_only_action` (REQ-S12-026); a dry run creates no work item, notification or execution (REQ-S12-002); an out-of-scope `create_task` fails with `automation.action_forbidden` and appears in the failure queue (REQ-S12-003); a failed execution succeeds on retry without a second effect (REQ-S12-002); a worker killed mid-job and restarted completes once, and after the retry limit the job is in the failure queue (REQ-S12-020); replaying one event ×3 yields one reminder, one action and one approval task (REQ-S12-021); the jobs view shows last success and next run per schedule, and a non-admin gets 403 (REQ-S12-022); each execution shows its rule version, trigger event and outcome (REQ-S12-001); AUD 403 on every write; `If-Match` 428/409; one audit event per mutation.
+
+## Amendment (2026-10-14, T-DG5-ARCH-05; D-146): the action parameter schemas, three codes and idempotent enable/disable (as built by BE-H)
+
+D-146 confirms these points from BE-H's handback (`docs/delivery/handbacks/DG5/T-DG5-BE-H-backend-workflow-engineer.md` §5). They are part of §2, §4 and §9 from now on.
+
+1. **Action parameter schemas** (§2; `packages/shared/src/schemas/automation.ts`; the builder catalogue publishes each one as JSON Schema in `parametersSchema`):
+   - `create_task`: `{assigneeRole, messageKey, dueInWorkingDays?, targetTransformationId?}`, where `dueInWorkingDays` is an integer from 1 to 60;
+   - `notify`: `{recipientRole, messageKey, targetTransformationId?}`;
+   - `escalate`: `{toRole, messageKey, targetTransformationId?}`.
+   In all three, `messageKey` is one of the four keys `automation.message.follow_up`, `automation.message.review_needed`, `automation.message.update_due` and `automation.message.attention_required` (parameters `ruleName` and `triggerLabel`). The worker executors (BE-H2, BE-I) and the rule builder (FE-D) use exactly these shapes.
+2. **Three codes added to the §9 table** (status, code and English text exactly as BE-H returns them):
+   - 422 `validation.user_invalid`, "A named person must be an active user of the rule's organization.": a non-active or foreign `ownerUserId`. This reuses the DG3 register-kit code.
+   - 422 `automation_rule.starter_fixed`, the §9 text of that code: a `PATCH` of a starter rule that names anything other than its names (for example its description or owner).
+   - 400 `validation.service_permissions_need_service`: a version with `runAs: initiating_user` that lists service permissions. This is a request-validation error that mirrors the CHECK `automation_rule_version_service_permissions`.
+3. **Enable and disable are idempotent** (§4). Enabling a rule that is already enabled, or disabling one that is already disabled, returns 200 and writes nothing: no version step and no audit event.
+4. **Not changed:** `launch_procedure` stays catalogued but reports `adminSelectable: false` until BE-J registers its descriptor; a rule that uses it before then gets 422 `automation_rule.action_unknown`. A version-level `parameters` value other than `{}` on an admin rule gets 422 `automation_rule.action_parameters_invalid`.

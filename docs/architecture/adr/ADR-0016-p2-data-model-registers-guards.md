@@ -153,6 +153,10 @@ This is the **one registry** of the transaction-scoped advisory-lock classes. AD
 | 730263 | `reportSnapshotIssue` (reporting) | the snapshots of one report definition and subject: issue, reissue, discard | `<definitionCode>:<transformationId>:<subjectId>:<reportingPeriodId or ->` | API (KBE-C); one current issued snapshot per series is also held by the unique index `report_snapshot_one_issued_key` (0080; ADR-0045 §7) |
 | 730264 | `exportJob` (reporting) | one export job: start, progress, completion, failure, cancel | `<exportJobId>` | worker (BE-M, BE-N) and API cancel (BE-M); exactly one job per request is also held by the unique constraint `export_job_idempotency_key` (0081; ADR-0046 §5) |
 | 730265 | — | reserved for the T-DG5-ARCH-04 block (p5-plan §4); not allocated | — | — |
+| 730266 | `kpiRestatement` (kpi) | one KPI's restatements: create, submit, decide, withdraw, apply | `<kpiDefinitionId>` | API (KBE-E) and worker (KBE-E); taken by the trigger `kpi_restatement_guard` (0085); at most one open restatement per KPI is also held by the unique index `kpi_restatement_one_open_key` (ADR-0047 §7) |
+| 730267 | `launchPlan` (launch) | one transformation's 90-day launch plan: generate, start-date shift and re-dating, task edits, predecessor links and their cycle check | `<transformationId>` | API (BE-P) and worker (BE-P, the S12-004 port); taken by the triggers `launch_plan_guard` and `launch_task_predecessor_guard` (0086); one plan per transformation is also held by `launch_plan_transformation_key` (ADR-0048 §8) |
+| 730268 | `healthAssessmentSubmit` (health) | one health assessment's submission: answers, score, band and the three actions checked together | `<assessmentId>` | API (KBE-G); taken by the trigger `health_assessment_guard` (0086) (ADR-0048 §8) |
+| 730269 | — | reserved for the T-DG5-ARCH-05 block (p5-plan §4); not allocated | — | — |
 
 Rules:
 

@@ -31,6 +31,8 @@ const P5_AUTOMATION_JOBS = [
 ];
 // Seeded by 0080 (T-DG5-ARCH-04; ADR-0045 §6, §10); unhandled until KBE-D registers the owner-update task handler.
 const P5_REPORT_JOBS = ["reports.owner_update_tasks"];
+// T-DG5-ARCH-05 (0086; ADR-0048 §4): the Day-90 test task job, handled once BE-P2 fills the launch worker stub.
+const P5_LAUNCH_JOBS = ["launch.day_ninety_tests"];
 // The rows are listed by code (ORDER BY code; ASCII codes, so the default sort is the same order).
 const unhandledOf = (...codes: string[]) => [...codes].sort();
 const GOVERNANCE_JOBS = [
@@ -114,6 +116,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...SUSTAINMENT_SCANS,
         ...P5_AUTOMATION_JOBS,
         ...P5_REPORT_JOBS,
+        ...P5_LAUNCH_JOBS,
       ),
     });
     const s = await schedules();
@@ -140,6 +143,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...SUSTAINMENT_SCANS,
         ...P5_AUTOMATION_JOBS,
         ...P5_REPORT_JOBS,
+        ...P5_LAUNCH_JOBS,
       ),
     });
     const s = await schedules();

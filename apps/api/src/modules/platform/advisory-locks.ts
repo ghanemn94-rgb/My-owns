@@ -106,6 +106,14 @@ export const ADVISORY_LOCK_CLASSES = {
   reportSnapshotIssue: 730263,
   /** One export job (reporting/worker: start, progress, completion, failure, cancel; exactly one job per request is also held by the unique constraint export_job_idempotency_key). Key: "<exportJobId>". */
   exportJob: 730264,
+  // P5 block of T-DG5-ARCH-05 (730266-730269; p5-plan §4, ADR-0047 §7, ADR-0048 §8). 730269 is RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** One KPI's restatements (kpi: create, submit, decide, withdraw, apply; at most one open restatement per KPI is also held by the unique index kpi_restatement_one_open_key; taken by the 0085 trigger kpi_restatement_guard). Key: "<kpiDefinitionId>". */
+  kpiRestatement: 730266,
+  /** One transformation's 90-day launch plan (launch: generate, start-date shift and re-dating, task edits, predecessor links and their cycle check; one plan per transformation is also held by launch_plan_transformation_key; taken by the 0086 triggers launch_plan_guard and launch_task_predecessor_guard). Key: "<transformationId>". */
+  launchPlan: 730267,
+  /** One health assessment's submission (health: score, band and the three actions checked together; taken by the 0086 trigger health_assessment_guard). Key: "<assessmentId>". */
+  healthAssessmentSubmit: 730268,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

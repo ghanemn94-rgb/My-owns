@@ -5728,6 +5728,359 @@ export type OwnerUpdateRevisionRow = Selectable<OwnerUpdateRevisionTable>;
 export type ExportJobRow = Selectable<ExportJobTable>;
 export type ExportJobProgressRow = Selectable<ExportJobProgressTable>;
 
+// ------------------------------------------------------------------------------------------------ P5 slices G and H
+// T-DG5-ARCH-05 (ADR-0047, ADR-0048; migrations 0085-0087): KPI restatements and their reconciliation, report reissue
+// offers, the optional financial-metric extension, the 90-day launch plan and Day-90 test, and the health check.
+// numeric columns are decimal strings (never a JS number: ADR-0003/ADR-0019); date columns are 'YYYY-MM-DD' strings.
+
+export interface KpiRestatementTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  kpi_version_id: string;
+  change_request_id: string | null;
+  reason: string;
+  status: Generated<string>;
+  requested_by: string;
+  submitted_at: NullableTimestamp;
+  period_count: Generated<number>;
+  reconciliation_count: Generated<number>;
+  decided_by: string | null;
+  decided_at: NullableTimestamp;
+  decision_note: string | null;
+  authority_permission: string | null;
+  authority_role_code: string | null;
+  calculation_run_id: string | null;
+  applied_at: NullableTimestamp;
+  withdrawn_at: NullableTimestamp;
+  withdrawn_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface KpiRestatementPeriodTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  restatement_id: string;
+  reporting_period_id: string;
+  period_label: string;
+  created_at: TimestampDefault;
+}
+
+export interface KpiRestatementReconciliationTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  restatement_id: string;
+  reporting_period_id: string;
+  scope_kind: string;
+  scope_id: string;
+  value_basis: string;
+  before_evaluation_id: string | null;
+  before_kpi_version_id: string | null;
+  before_value: string | null;
+  before_value_status: string;
+  before_rag: string;
+  before_target: string | null;
+  after_value: string | null;
+  after_value_status: string;
+  after_rag: string;
+  after_target: string | null;
+  difference: string | null;
+  currency: string | null;
+  created_at: TimestampDefault;
+}
+
+export interface KpiRestatementReissueOfferTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  restatement_id: string;
+  snapshot_id: string;
+  series_id: string;
+  created_at: TimestampDefault;
+}
+
+export interface FinancialMetricSettingTable {
+  id: string;
+  organization_id: string;
+  enabled: Generated<boolean>;
+  methodology: Generated<string>;
+  methodology_note: string | null;
+  timing: string | null;
+  period_basis: string | null;
+  discount_rate: string | null;
+  assumptions_set_by: string | null;
+  assumptions_set_at: NullableTimestamp;
+  enabled_changed_by: string | null;
+  enabled_changed_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface FinancialCashFlowSetTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  business_case_id: string;
+  currency: string;
+  revision: Generated<number>;
+  line_count: number;
+  basis_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface FinancialCashFlowTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  set_id: string;
+  revision: number;
+  period_index: number;
+  outflow: string;
+  inflow: string;
+  note: string | null;
+  created_at: TimestampDefault;
+}
+
+export interface LaunchWindowTable {
+  code: string;
+  ordinal: number;
+  start_day: number;
+  end_day: number;
+  label_en: string;
+  label_ar: string;
+  objective_en: string;
+  objective_ar: string;
+  actions_source_en: string;
+  outputs_source_en: string;
+  source_ref: string;
+}
+
+export interface LaunchTemplateItemTable {
+  code: string;
+  window_code: string;
+  item_kind: string;
+  ordinal: number;
+  text_en: string;
+  text_ar: string;
+  output_record_type: string | null;
+  start_day: number;
+  due_day: number;
+  source_ref: string;
+}
+
+export interface DayNinetyQuestionTable {
+  code: string;
+  ordinal: number;
+  text_en: string;
+  text_ar: string;
+  source_ref: string;
+  evidence_record_types: string[];
+}
+
+export interface LaunchPlanTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  start_date: string;
+  template_ref: Generated<string>;
+  generated_via: string;
+  idempotency_key: string;
+  last_shift_days: number | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface LaunchTaskTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  plan_id: string;
+  ordinal: number;
+  template_item_code: string | null;
+  window_code: string;
+  task_kind: string;
+  title: string;
+  notes: string | null;
+  start_date: string;
+  due_date: string;
+  owner_user_id: string | null;
+  status: Generated<string>;
+  completed_at: NullableTimestamp;
+  completed_by: string | null;
+  output_record_type: string | null;
+  output_record_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface LaunchTaskPredecessorTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  task_id: string;
+  predecessor_task_id: string;
+  removed_at: NullableTimestamp;
+  removed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DayNinetyTestTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  plan_id: string;
+  scheduled_date: string;
+  status: Generated<string>;
+  answered_count: Generated<number>;
+  completed_at: NullableTimestamp;
+  completed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface DayNinetyResponseTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  test_id: string;
+  question_code: string;
+  answer: string;
+  comment: string | null;
+  evidence_id: string | null;
+  responded_by: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface HealthAssessmentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  sequence_no: number;
+  scheme_version_id: string;
+  assessment_date: string;
+  owner_user_id: string;
+  status: Generated<string>;
+  answered_count: Generated<number>;
+  score: string | null;
+  score_max: string | null;
+  band_key: string | null;
+  previous_assessment_id: string | null;
+  submitted_at: NullableTimestamp;
+  submitted_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface HealthAssessmentAnswerTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  assessment_id: string;
+  question_code: string;
+  response: string;
+  evidence_note: string | null;
+  evidence_id: string | null;
+  owner_user_id: string | null;
+  action_note: string | null;
+  answered_by: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface HealthAssessmentActionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  assessment_id: string;
+  rank: number;
+  action_text: string;
+  owner_user_id: string | null;
+  due_date: string | null;
+  improvement_item_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface Database {
+  kpi_restatement: KpiRestatementTable;
+  kpi_restatement_period: KpiRestatementPeriodTable;
+  kpi_restatement_reconciliation: KpiRestatementReconciliationTable;
+  kpi_restatement_reissue_offer: KpiRestatementReissueOfferTable;
+  financial_metric_setting: FinancialMetricSettingTable;
+  financial_cash_flow_set: FinancialCashFlowSetTable;
+  financial_cash_flow: FinancialCashFlowTable;
+  launch_window: LaunchWindowTable;
+  launch_template_item: LaunchTemplateItemTable;
+  day_ninety_question: DayNinetyQuestionTable;
+  launch_plan: LaunchPlanTable;
+  launch_task: LaunchTaskTable;
+  launch_task_predecessor: LaunchTaskPredecessorTable;
+  day_ninety_test: DayNinetyTestTable;
+  day_ninety_response: DayNinetyResponseTable;
+  health_assessment: HealthAssessmentTable;
+  health_assessment_answer: HealthAssessmentAnswerTable;
+  health_assessment_action: HealthAssessmentActionTable;
+}
+
+export type KpiRestatementRow = Selectable<KpiRestatementTable>;
+export type KpiRestatementPeriodRow = Selectable<KpiRestatementPeriodTable>;
+export type KpiRestatementReconciliationRow = Selectable<KpiRestatementReconciliationTable>;
+export type KpiRestatementReissueOfferRow = Selectable<KpiRestatementReissueOfferTable>;
+export type FinancialMetricSettingRow = Selectable<FinancialMetricSettingTable>;
+export type FinancialCashFlowSetRow = Selectable<FinancialCashFlowSetTable>;
+export type FinancialCashFlowRow = Selectable<FinancialCashFlowTable>;
+export type LaunchWindowRow = Selectable<LaunchWindowTable>;
+export type LaunchTemplateItemRow = Selectable<LaunchTemplateItemTable>;
+export type DayNinetyQuestionRow = Selectable<DayNinetyQuestionTable>;
+export type LaunchPlanRow = Selectable<LaunchPlanTable>;
+export type LaunchTaskRow = Selectable<LaunchTaskTable>;
+export type LaunchTaskPredecessorRow = Selectable<LaunchTaskPredecessorTable>;
+export type DayNinetyTestRow = Selectable<DayNinetyTestTable>;
+export type DayNinetyResponseRow = Selectable<DayNinetyResponseTable>;
+export type HealthAssessmentRow = Selectable<HealthAssessmentTable>;
+export type HealthAssessmentAnswerRow = Selectable<HealthAssessmentAnswerTable>;
+export type HealthAssessmentActionRow = Selectable<HealthAssessmentActionTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -10606,6 +10959,289 @@ export const SCHEMA_COLUMNS = {
     "sections_total",
     "version",
     "updated_at",
+  ],
+  kpi_restatement: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "kpi_version_id",
+    "change_request_id",
+    "reason",
+    "status",
+    "requested_by",
+    "submitted_at",
+    "period_count",
+    "reconciliation_count",
+    "decided_by",
+    "decided_at",
+    "decision_note",
+    "authority_permission",
+    "authority_role_code",
+    "calculation_run_id",
+    "applied_at",
+    "withdrawn_at",
+    "withdrawn_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  kpi_restatement_period: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "restatement_id",
+    "reporting_period_id",
+    "period_label",
+    "created_at",
+  ],
+  kpi_restatement_reconciliation: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "restatement_id",
+    "reporting_period_id",
+    "scope_kind",
+    "scope_id",
+    "value_basis",
+    "before_evaluation_id",
+    "before_kpi_version_id",
+    "before_value",
+    "before_value_status",
+    "before_rag",
+    "before_target",
+    "after_value",
+    "after_value_status",
+    "after_rag",
+    "after_target",
+    "difference",
+    "currency",
+    "created_at",
+  ],
+  kpi_restatement_reissue_offer: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "restatement_id",
+    "snapshot_id",
+    "series_id",
+    "created_at",
+  ],
+  financial_metric_setting: [
+    "id",
+    "organization_id",
+    "enabled",
+    "methodology",
+    "methodology_note",
+    "timing",
+    "period_basis",
+    "discount_rate",
+    "assumptions_set_by",
+    "assumptions_set_at",
+    "enabled_changed_by",
+    "enabled_changed_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  financial_cash_flow_set: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "business_case_id",
+    "currency",
+    "revision",
+    "line_count",
+    "basis_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  financial_cash_flow: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "set_id",
+    "revision",
+    "period_index",
+    "outflow",
+    "inflow",
+    "note",
+    "created_at",
+  ],
+  launch_window: [
+    "code",
+    "ordinal",
+    "start_day",
+    "end_day",
+    "label_en",
+    "label_ar",
+    "objective_en",
+    "objective_ar",
+    "actions_source_en",
+    "outputs_source_en",
+    "source_ref",
+  ],
+  launch_template_item: [
+    "code",
+    "window_code",
+    "item_kind",
+    "ordinal",
+    "text_en",
+    "text_ar",
+    "output_record_type",
+    "start_day",
+    "due_day",
+    "source_ref",
+  ],
+  day_ninety_question: ["code", "ordinal", "text_en", "text_ar", "source_ref", "evidence_record_types"],
+  launch_plan: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "start_date",
+    "template_ref",
+    "generated_via",
+    "idempotency_key",
+    "last_shift_days",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  launch_task: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "plan_id",
+    "ordinal",
+    "template_item_code",
+    "window_code",
+    "task_kind",
+    "title",
+    "notes",
+    "start_date",
+    "due_date",
+    "owner_user_id",
+    "status",
+    "completed_at",
+    "completed_by",
+    "output_record_type",
+    "output_record_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  launch_task_predecessor: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "task_id",
+    "predecessor_task_id",
+    "removed_at",
+    "removed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  day_ninety_test: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "plan_id",
+    "scheduled_date",
+    "status",
+    "answered_count",
+    "completed_at",
+    "completed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  day_ninety_response: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "test_id",
+    "question_code",
+    "answer",
+    "comment",
+    "evidence_id",
+    "responded_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  health_assessment: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "sequence_no",
+    "scheme_version_id",
+    "assessment_date",
+    "owner_user_id",
+    "status",
+    "answered_count",
+    "score",
+    "score_max",
+    "band_key",
+    "previous_assessment_id",
+    "submitted_at",
+    "submitted_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  health_assessment_answer: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "assessment_id",
+    "question_code",
+    "response",
+    "evidence_note",
+    "evidence_id",
+    "owner_user_id",
+    "action_note",
+    "answered_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  health_assessment_action: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "assessment_id",
+    "rank",
+    "action_text",
+    "owner_user_id",
+    "due_date",
+    "improvement_item_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

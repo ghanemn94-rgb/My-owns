@@ -4,7 +4,7 @@
 //  - the kpi_update_due item is created by slice A's REAL period-open job (worker handlers/kpi.ts openDuePeriods) with
 //    the KPI period-entry link, and shows under Missing updates for the KPI owner only, with its due date and overdue
 //    flag, and in Upcoming deadlines;
-//  - each of the 39 work-item kinds of a migrated database maps to exactly one section (the completeness test fails on
+//  - each of the 42 work-item kinds of a migrated database maps to exactly one section (the completeness test fails on
 //    an unmapped kind);
 //  - drafts list only the caller's own drafts (my_work_draft); an owned action item is listed once (not again when a
 //    work item names it); an item of a transformation the caller cannot read is left out;
@@ -249,13 +249,14 @@ describe("REQ-S03-008: My Work shows the caller's own items", () => {
 });
 
 describe("MY_WORK_SECTION_BY_KIND completeness (ADR-0037 §7)", () => {
-  it("each of the 39 work-item kinds of the migrated database maps to exactly one section", async () => {
+  it("each of the 42 work-item kinds of the migrated database maps to exactly one section", async () => {
     const kinds = (await api.db.selectFrom("work_item_kind").select("code").orderBy("code").execute()).map(
       (r) => r.code,
     );
     // T-DG5-ARCH-01 (0063): + config_review, gate_reapproval. T-DG5-ARCH-03 (0075): + automation_task,
     // automation_rule_review, role_assignment, dependency_slip, gate_condition_overdue, meeting_pack_review.
-    expect(kinds.length).toBe(39);
+    // T-DG5-ARCH-05 (0085, 0086): + kpi_restatement_to_decide, report_reissue_offer, day_ninety_test_due.
+    expect(kinds.length).toBe(42);
     const unmapped = kinds.filter((c) => !Object.prototype.hasOwnProperty.call(MY_WORK_SECTION_BY_KIND, c));
     expect(unmapped, "a work_item_kind with no My Work section: add it to MY_WORK_SECTION_BY_KIND").toEqual([]);
     expect(Object.keys(MY_WORK_SECTION_BY_KIND).sort()).toEqual(kinds);
@@ -267,9 +268,9 @@ describe("MY_WORK_SECTION_BY_KIND completeness (ADR-0037 §7)", () => {
   it("the mapping of ADR-0037 §7 (section sizes)", () => {
     const size = (s: string) => Object.values(MY_WORK_SECTION_BY_KIND).filter((x) => x === s).length;
     expect(["assigned_actions", "reviews", "approvals", "missing_updates", "other"].map((s) => [s, size(s)])).toEqual([
-      ["assigned_actions", 13],
+      ["assigned_actions", 15],
       ["reviews", 8],
-      ["approvals", 9],
+      ["approvals", 10],
       ["missing_updates", 6],
       ["other", 3],
     ]);
