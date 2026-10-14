@@ -72,11 +72,11 @@ describe("content hash (ADR-0039 §1)", () => {
 describe("ConfigKindProvider registry", () => {
   afterEach(() => resetConfigKindProvidersForTest());
 
-  it("knows every kind; methodology and scoring_defaults resolve to their default keys, the others to none yet", () => {
+  it("knows every kind; methodology, scoring_defaults and form_schema resolve to their default keys, the others to none yet", () => {
     expect(CONFIG_KINDS.map((k) => configKindProvider(k).defaultKey)).toEqual([
       "playbook",
       "scoring-defaults",
-      null,
+      "forms", // T-DG5-BE-D (ADR-0041 §2; 0068 seeds forms v1)
       null,
       null,
       null,
@@ -94,7 +94,7 @@ describe("ConfigKindProvider registry", () => {
     });
     const p = configKindProvider("form_schema");
     expect(p.defaultKey).toBe("forms");
-    expect(p.elementTypes).toEqual([]);
+    expect(p.elementTypes).toEqual(["form", "form_field"]); // T-DG5-BE-D: the 0068 guard's list for form_schema
     expect(await p.preview?.({} as never, { versionId: "v", samples: null })).toEqual({ result: "pass", report: {} });
   });
 

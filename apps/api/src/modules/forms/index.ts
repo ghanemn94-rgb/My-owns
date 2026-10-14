@@ -4,6 +4,9 @@ import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerFormRoutes } from "./routes.ts";
 
+// T-DG5-BE-D (ADR-0041 §4): the forms pin of a new transformation, registered as a TransformationInitializer in server.ts.
+export { pinNewTransformationToForms } from "./pin-initializer.ts";
+
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG5-BE-A
  * created them as stubs; p5-plan §5.1). The module reports "scaffold" until a route exists, then "active".

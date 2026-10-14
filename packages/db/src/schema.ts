@@ -4945,6 +4945,10 @@ export interface FormCustomValueTable {
   record_type: string;
   record_id: string;
   form_schema_version_id: string;
+  /**
+   * Extension-field values by field key (0068 form_custom_value_guard; 0071, T-DG5-BE-D: a `choice` field with
+   * `multiple: true` stores a non-empty array of unique strings of 1-100 characters, a single choice one string).
+   */
   field_values: JsonDefault;
   version: Generated<number>;
   created_at: TimestampDefault;

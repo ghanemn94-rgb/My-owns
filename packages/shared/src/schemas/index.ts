@@ -122,3 +122,6 @@ export * from "./studio-coverage.ts";
 export * from "./studio-review.ts";
 export * from "./methodology-migrations.ts";
 export * from "./scoring-defaults.ts";
+// P5 slice B mirrors of BE-D (backend-workflow-engineer, T-DG5-BE-D; p5-work-split §B.2): native forms, form schemas,
+// custom-field values and the `form`/`form_field` element attributes (ADR-0041 §1-§4).
+export * from "./forms.ts";

@@ -49,8 +49,9 @@ describe("starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-003)", () => {
       // 24 audited P2 starter rows + 5 P3 rows (four B0079 waves, T06 weight set v1): POST /transformations runs
       // p3_instantiate_transformation since T-DG3-BE-A. T-DG4-BE-C (ADR-0026 §7): + 53 P4 rows from
       // p4_instantiate_transformation (2 governance-matrix headers, 4 T11 rows, 6 T12 deliverables, 36 cells, and the 5
-      // seeded forums of slice D, whose 0044 extends the same function).
-      expect(counts.rows[0]).toEqual({ pin: "1", t01: "6", cells: "10", gates: "6", audits: "82" });
+      // seeded forums of slice D, whose 0044 extends the same function). T-DG5-BE-D (ADR-0041 §4; D-144 (a)): + the
+      // form_schema pin of a transformation created from P5 on, with its audit event (2 pins, 83 audited rows).
+      expect(counts.rows[0]).toEqual({ pin: "2", t01: "6", cells: "10", gates: "6", audits: "83" });
       const catalogue = await call(api.app, "GET", `/api/v1/transformations/${t.body.id}/methodology`, {
         session: office,
       });

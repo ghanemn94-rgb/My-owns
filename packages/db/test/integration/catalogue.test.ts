@@ -571,6 +571,30 @@ describe("schema.ts matches the migrated database", () => {
     ]);
   });
 
+  it("0071: form_custom_value_guard() keeps every 0068 rule and accepts a multiple choice as a list (T-DG5-BE-D; D-145)", async () => {
+    const [fn] = await q<{ def: string }>(
+      `SELECT pg_get_functiondef('form_custom_value_guard()'::regprocedure) AS def`,
+    );
+    const def = fn!.def;
+    // The 0068 constraint names are all still raised by the redefined function.
+    for (const name of [
+      "form_custom_value_record_type",
+      "form_custom_value_pinned_version",
+      "form_custom_value_unknown_field",
+      "form_custom_value_type_shape",
+    ])
+      expect(def, name).toContain(`CONSTRAINT = '${name}'`);
+    // The 0071 choice clause: the field's `multiple` setting selects an array of unique strings, else one string.
+    expect(def).toContain("fmultiple");
+    expect(def).toContain("count(DISTINCT x.item)");
+    // The trigger that calls it is unchanged (0068).
+    const triggers = await q<{ tgname: string }>(
+      `SELECT t.tgname FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+        WHERE c.relname = 'form_custom_value' AND NOT t.tgisinternal AND t.tgname = 'form_custom_value_guard'`,
+    );
+    expect(triggers).toHaveLength(1);
+  });
+
   it("0074-0075: the P5 slice D/E guards are attached (deferred audit and effective-version checks, append-only history)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred

@@ -17,7 +17,7 @@
 // transformation is exactly the catalogue value (BE-C's v1 regression suite, p5-plan R2, proves it per reader).
 import type { DbOrTx } from "@mth/db";
 import type { ConfigElement, ConfigElementType, ConfigKind } from "@mth/shared/schemas";
-import { configKindProvider } from "./kinds.ts";
+import { configKindProvider, configKindProviders } from "./kinds.ts";
 
 export type ResolvedElement = ConfigElement;
 
@@ -164,8 +164,15 @@ export async function loadCatalogue(db: DbOrTx, type: ConfigElementType): Promis
         attributes: { labelEn: r.source_label_en, labelAr: r.label_ar },
       }));
     }
-    default:
+    default: {
+      // T-DG5-BE-D (ADR-0041 §2): a kind provider's own catalogue (form_schema: native forms and source columns).
+      for (const provider of configKindProviders()) {
+        if (provider.catalogue === undefined || !provider.elementTypes.includes(type)) continue;
+        const entries = await provider.catalogue(db, type);
+        if (entries !== null) return [...entries];
+      }
       return [];
+    }
   }
 }
 

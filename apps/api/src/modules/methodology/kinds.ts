@@ -18,6 +18,7 @@ import {
   type ConfigKind,
 } from "@mth/shared/schemas";
 import type { z } from "zod";
+import type { CatalogueEntry } from "./config-resolver.ts";
 
 /** One element change of a draft against another version (the diff row shape; ADR-0039 §5). */
 export interface ConfigElementChange {
@@ -53,6 +54,24 @@ export interface PreviewOutcome {
 
 /** The hooks a kind's owner registers. Each receives the database handle of the caller's transaction. */
 export interface ConfigKindProviderHooks {
+  /**
+   * T-DG5-BE-D (ADR-0041 §2): the stable-identity catalogue of an element type the kind owns (e.g. the native forms and
+   * their protected source columns), read by ConfigResolver exactly like the DG2 catalogues (config-resolver.ts).
+   */
+  readonly catalogue?: (db: DbOrTx, type: ConfigElementType) => Promise<readonly CatalogueEntry[] | null>;
+  /**
+   * T-DG5-BE-D (ADR-0041 §2, §10): extra refusals of a removal (e.g. a protected source column), thrown before the
+   * generic removal rules of invariants.ts. `origin` is the stored row's, else "source" for a catalogue identity.
+   */
+  readonly validateRemove?: (
+    db: DbOrTx,
+    input: {
+      readonly versionId: string;
+      readonly elementType: ConfigElementType;
+      readonly stableKey: string;
+      readonly origin: "source" | "admin" | null;
+    },
+  ) => Promise<void>;
   /** Validation beyond the Zod shape (e.g. a gate approver inside the DG2 allowed set); throws the §13 refusal. */
   readonly validateElement?: (
     db: DbOrTx,
@@ -111,6 +130,7 @@ export interface ConfigKindProvider extends ConfigKindProviderHooks {
 const DEFAULT_KEYS: ReadonlyMap<ConfigKind, string> = new Map<ConfigKind, string>([
   ["methodology", "playbook"],
   ["scoring_defaults", "scoring-defaults"],
+  ["form_schema", "forms"], // T-DG5-BE-D (ADR-0041 §2; the forms v1 seed of 0068)
 ]);
 const TYPES_BY_KIND = new Map(Object.entries(ELEMENT_TYPES_BY_KIND)) as ReadonlyMap<
   ConfigKind,

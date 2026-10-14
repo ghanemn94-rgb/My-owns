@@ -501,6 +501,17 @@ describe("ConfigResolver and pins (ADR-0039 §3)", () => {
         pinnedAt: null,
         version: null,
       },
+      // T-DG5-BE-D (ADR-0041 §2): form_schema has its default key `forms` (0068 seeds v1), so it resolves too.
+      {
+        kind: "form_schema",
+        versionId: "01920005-0200-7000-8000-000000000001",
+        key: "forms",
+        versionNo: 1,
+        pinned: false,
+        lastMigrationId: null,
+        pinnedAt: null,
+        version: null,
+      },
     ]);
     const resolver = createConfigResolver();
     expect(await resolver.pinnedVersion(api.db, bare, "methodology")).toEqual({

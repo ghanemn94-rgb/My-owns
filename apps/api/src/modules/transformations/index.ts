@@ -37,6 +37,12 @@ export {
 } from "./registers.ts";
 export { charterView, findCharter, findCurrentNorthStar, hasExclusions, toCharter, toNorthStar } from "./charter.ts";
 export { advancePhaseOnGateApproval } from "./phase.ts";
+// P5 (T-DG5-BE-D; ADR-0041 §4): the TransformationInitializer port (the forms pin of a new transformation).
+export {
+  registerTransformationInitializer,
+  type TransformationInitContext,
+  type TransformationInitializer,
+} from "./initializers.ts";
 export {
   activityLead,
   evaluateGoodOutcome,

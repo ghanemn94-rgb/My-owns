@@ -5,6 +5,8 @@
 // A Studio version is configuration, not a business approval: nothing here grants or records a G1-G6 decision.
 import { z } from "zod";
 import { freeText, page, timestamp, uuid, version } from "./common.ts";
+// T-DG5-BE-D (ADR-0041 §2): the attribute schemas of the two form_schema element types.
+import { formElementAttributes, formFieldElementAttributes } from "./forms.ts";
 
 const nullableUuid = uuid.nullable();
 const nullableTimestamp = timestamp.nullable();
@@ -41,6 +43,9 @@ export const CONFIG_ELEMENT_TYPES = [
   "source_element",
   "scoring_weight",
   "scoring_rubric",
+  // T-DG5-BE-D (ADR-0041 §2; 0068 widened the element-type CHECK): the form_schema kind's element types.
+  "form",
+  "form_field",
 ] as const;
 export type ConfigElementType = (typeof CONFIG_ELEMENT_TYPES)[number];
 export const configElementType = z.enum(CONFIG_ELEMENT_TYPES);
@@ -153,6 +158,9 @@ export const CONFIG_ELEMENT_ATTRIBUTES = {
     sourceRef,
     optional: z.boolean().optional(),
   }),
+  // T-DG5-BE-D (ADR-0041 §2): the forms kind provider checks field types and settings with the §10 codes.
+  form: formElementAttributes,
+  form_field: formFieldElementAttributes,
 } as const satisfies Record<ConfigElementType, z.ZodType>;
 
 /** The element types each configuration kind accepts (the database trigger `methodology_element_guard`'s list). */
@@ -174,7 +182,7 @@ export const ELEMENT_TYPES_BY_KIND: Readonly<Record<ConfigKind, readonly ConfigE
     "source_element",
   ],
   scoring_defaults: ["scoring_weight", "scoring_rubric"],
-  form_schema: [],
+  form_schema: ["form", "form_field"], // T-DG5-BE-D (ADR-0041 §2; the 0068 guard's list)
   procedure: [],
   automation_rule_set: [],
   health_check_scheme: [],
