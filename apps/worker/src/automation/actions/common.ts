@@ -11,6 +11,7 @@
 // Exactly-once key: `automation:<rule code>:<trigger key>:<ordinal>`; each effect adds `:<recipient>`.
 import { sql, type Tx } from "@mth/db";
 import type { AutomationPlannedAction } from "@mth/shared/schemas";
+import { decideActionAuthorization } from "../identity.ts";
 
 /** The permission a recipient (and an initiating user) must hold on the target transformation. */
 export const RECIPIENT_PERMISSION = "transformation.read";
@@ -120,26 +121,23 @@ export async function planRecipients(
       target: null,
       recipients: [],
     };
-  const s = ctx.scope;
-  const inScope =
-    s.level === "platform" ||
-    (s.level === "organization" && s.organizationId === target.organization_id) ||
-    (s.level === "transformation" && s.transformationId === transformationId);
-  if (!inScope)
+  // T-DG5-BE-I: the identity and scope decision is identity.ts's (the twin of the API's automation/identity.ts).
+  const decision = decideActionAuthorization({
+    scope: ctx.scope,
+    target: { organizationId: target.organization_id, transformationId },
+    identity: ctx.identity,
+    requiredPermission: null, // create_task, notify, escalate: catalogue required_permission_code is NULL (0074)
+    initiatingUserHolds:
+      ctx.identity.runAs === "initiating_user"
+        ? (await readersOf(tx, target, { userId: ctx.identity.userId })).length > 0
+        : null,
+  });
+  if (!decision.allowed)
     return {
-      planned: { ...base, outcome: "forbidden", target: { transformationId, reason: "outside_rule_scope" } },
+      planned: { ...base, outcome: "forbidden", target: { transformationId, reason: decision.reason } },
       target,
       recipients: [],
     };
-  if (ctx.identity.runAs === "initiating_user") {
-    const can = await readersOf(tx, target, { userId: ctx.identity.userId });
-    if (can.length === 0)
-      return {
-        planned: { ...base, outcome: "forbidden", target: { transformationId, reason: "identity_lacks_permission" } },
-        target,
-        recipients: [],
-      };
-  }
   const recipients = await readersOf(tx, target, { roleCode: p.role });
   return {
     planned: {

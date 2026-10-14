@@ -176,18 +176,28 @@ describe("the queue map (ADR-0043 §5, §7)", () => {
       .where("admin_selectable", "=", true)
       .orderBy("code")
       .execute();
-    expect(Object.keys(AUTOMATION_EVENT_QUEUES).sort()).toEqual(triggers.map((t) => t.code));
+    // T-DG5-BE-I: plus the two internal failure-queue events, which are not rule triggers.
+    expect(Object.keys(AUTOMATION_EVENT_QUEUES).sort()).toEqual(
+      [...triggers.map((t) => t.code), "automation_failure.retry_requested", "job.failed"].sort(),
+    );
+    expect(AUTOMATION_EVENT_QUEUES["job.failed"]).toBe("automation.job_failed");
+    expect(AUTOMATION_EVENT_QUEUES["automation_failure.retry_requested"]).toBe("automation.failure_retry");
     for (const t of triggers) expect(QUEUES_FOR_EVENT[t.code], t.code).toContain("automation.evaluate");
     expect(QUEUES_FOR_EVENT["gate.decided"]).toEqual(["gates.decided", "automation.evaluate"]);
     expect(AUTOMATION_QUEUES.map((q) => q.name)).toEqual([
       "automation.evaluate",
       "automation.tick_hourly",
       "automation.tick_daily",
+      "automation.failure_retry",
+      "automation.job_failed",
     ]);
     // Standard bounded retries (no override): 5 attempts with backoff, then ops.failed (ADR-0008 §4).
     for (const q of AUTOMATION_QUEUES) expect(q.retryLimit).toBeUndefined();
     expect(DOMAIN_QUEUES.map((q) => q.name)).toEqual(expect.arrayContaining(AUTOMATION_QUEUES.map((q) => q.name)));
-    expect(DOMAIN_HANDLERS.map((h) => h.queue)).toEqual(expect.arrayContaining(AUTOMATION_QUEUES.map((q) => q.name)));
+    // T-DG5-BE-I: the retry dispatcher needs pg-boss itself, so worker.ts registers it outside DOMAIN_HANDLERS.
+    expect(DOMAIN_HANDLERS.map((h) => h.queue)).toEqual(
+      expect.arrayContaining(AUTOMATION_QUEUES.map((q) => q.name).filter((q) => q !== "automation.failure_retry")),
+    );
     // The two ticks are job_schedule rows of 0074 whose queues now have a handler.
     const ticks = await api.db
       .selectFrom("job_schedule")

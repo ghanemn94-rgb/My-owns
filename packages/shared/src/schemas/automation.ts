@@ -351,3 +351,91 @@ export const automationRuleVersion = z.strictObject({
 });
 export type AutomationRuleVersion = z.infer<typeof automationRuleVersion>;
 export const automationRuleVersionPage = page(automationRuleVersion);
+
+// ------------------------------------------------------------------------------------------------ executions and the
+// failure queue (T-DG5-BE-I; ADR-0043 §5; OpenAPI AutomationExecution, AutomationActionResult, OperationalFailure)
+
+export const automationActionResult = z.strictObject({
+  attemptNo: z.number().int().min(1),
+  ordinal: z.number().int().min(1),
+  actionType: z.string(),
+  idempotencyKey: z.string(),
+  outcome: z.enum(["done", "existing", "skipped", "failed", "forbidden"]),
+  resultRecordType: z.string().nullable(),
+  resultRecordId: uuid.nullable(),
+  errorCode: z.string().nullable(),
+  createdAt: timestamp,
+});
+export type AutomationActionResult = z.infer<typeof automationActionResult>;
+
+export const automationExecutionStatus = z.enum(["running", "succeeded", "skipped", "failed"]);
+
+export const automationExecution = z.strictObject({
+  id: uuid,
+  ruleId: uuid,
+  ruleCode: z.string(),
+  versionId: uuid,
+  versionNo: z.number().int().min(1),
+  triggerCode: z.string(),
+  triggerKey: z.string(),
+  organizationId: uuid.nullable(),
+  transformationId: uuid.nullable(),
+  runAs: z.enum(["initiating_user", "service"]),
+  initiatingUserId: uuid.nullable(),
+  status: automationExecutionStatus,
+  conditionsMet: z.boolean().nullable(),
+  attemptNo: z.number().int().min(1),
+  errorCode: z.string().nullable(),
+  errorDetail: z.string().nullable(),
+  startedAt: timestamp,
+  finishedAt: nullableTimestamp,
+  actionResults: z.array(automationActionResult),
+});
+export type AutomationExecution = z.infer<typeof automationExecution>;
+export const automationExecutionPage = page(automationExecution);
+
+export const automationExecutionListQuery = z.strictObject({
+  ruleId: uuid.optional(),
+  status: automationExecutionStatus.optional(),
+  transformationId: uuid.optional(),
+});
+
+export const operationalFailureSource = z.enum(["rule_execution", "job"]);
+export const operationalFailureStatus = z.enum(["open", "retrying", "resolved", "dismissed"]);
+
+export const operationalFailure = z.strictObject({
+  id: uuid,
+  source: operationalFailureSource,
+  organizationId: uuid.nullable(),
+  executionId: uuid.nullable(),
+  jobScheduleCode: z.string().nullable(),
+  queueName: z.string(),
+  jobId: z.string().nullable(),
+  idempotencyKey: z.string(),
+  errorCode: z.string(),
+  errorMessage: z.string(),
+  attempts: z.number().int().min(1),
+  firstFailedAt: timestamp,
+  lastFailedAt: timestamp,
+  status: operationalFailureStatus,
+  retryCount: z.number().int().min(0).max(20),
+  lastRetryBy: uuid.nullable(),
+  lastRetryAt: nullableTimestamp,
+  resolvedAt: nullableTimestamp,
+  dismissedBy: uuid.nullable(),
+  dismissedAt: nullableTimestamp,
+  dismissReason: z.string().nullable(),
+  allowedActions: z.array(z.enum(["retry", "dismiss"])),
+  version,
+  updatedAt: timestamp,
+});
+export type OperationalFailure = z.infer<typeof operationalFailure>;
+export const operationalFailurePage = page(operationalFailure);
+
+export const operationalFailureListQuery = z.strictObject({
+  source: operationalFailureSource.optional(),
+  status: operationalFailureStatus.optional(),
+});
+
+/** OpenAPI OperationalFailureDismiss: the reason is free text (shared rule 1), 3-1000 characters. */
+export const operationalFailureDismiss = z.strictObject({ reason: freeText(3, 1000) });
