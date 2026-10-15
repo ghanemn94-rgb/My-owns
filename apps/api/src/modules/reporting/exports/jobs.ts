@@ -188,6 +188,15 @@ async function progressOf(db: DbOrTx, jobId: string): Promise<ProgressRow | unde
   return db.selectFrom("export_job_progress").selectAll().where("export_job_id", "=", jobId).executeTakeFirst();
 }
 
+/**
+ * A job row and its progress row are read in one snapshot. The worker's START commits `queued -> running` and then
+ * advances the progress row, so two separate reads could pair a job that is still `queued` with the progress of an
+ * attempt that has already started (D-155).
+ */
+function snapshotRead<T>(db: Db, fn: (tx: Tx) => Promise<T>): Promise<T> {
+  return db.transaction().setIsolationLevel("repeatable read").setAccessMode("read only").execute(fn);
+}
+
 // ------------------------------------------------------------------------------------------------ access
 
 /** The signed-in user (a service principal has no export). */
@@ -445,42 +454,47 @@ export async function listExports(
   request: FastifyRequest,
   query: z.infer<typeof exportListQuery>,
 ): Promise<{ items: ExportJob[]; nextCursor: string | null }> {
-  const principal = principalOf(request);
-  const userId = requesterOf(principal);
-  holdsAnywhere(principal, "transformation.read");
-  const hash = filterHash({ table: "export_job", requestedBy: userId, status: query.status ?? null });
-  const after = decodeCursor(query.cursor, hash, 1);
-  let q = db.selectFrom("export_job").selectAll().where("requested_by", "=", userId);
-  if (query.status !== undefined) q = q.where("status", "=", query.status);
-  if (after) q = q.where("id", "<", String(after[0]));
-  const rows = await q
-    .orderBy("id", "desc")
-    .limit(query.limit + 1)
-    .execute();
-  const page = paginate(rows, query.limit, (r) => [r.id], hash);
-  const readable = new Map<string, boolean>();
-  for (const t of new Set(page.items.map((r) => r.transformation_id))) readable.set(t, await canRead(db, principal, t));
-  const visible = page.items.filter((r) => readable.get(r.transformation_id) === true);
-  const progress =
-    visible.length === 0
-      ? []
-      : await db
-          .selectFrom("export_job_progress")
-          .selectAll()
-          .where(
-            "export_job_id",
-            "in",
-            visible.map((r) => r.id),
-          )
-          .execute();
-  const byId = new Map(progress.map((p) => [p.export_job_id, p]));
-  return { items: visible.map((r) => toExportJob(r, byId.get(r.id))), nextCursor: page.nextCursor };
+  return snapshotRead(db, async (tx) => {
+    const principal = principalOf(request);
+    const userId = requesterOf(principal);
+    holdsAnywhere(principal, "transformation.read");
+    const hash = filterHash({ table: "export_job", requestedBy: userId, status: query.status ?? null });
+    const after = decodeCursor(query.cursor, hash, 1);
+    let q = tx.selectFrom("export_job").selectAll().where("requested_by", "=", userId);
+    if (query.status !== undefined) q = q.where("status", "=", query.status);
+    if (after) q = q.where("id", "<", String(after[0]));
+    const rows = await q
+      .orderBy("id", "desc")
+      .limit(query.limit + 1)
+      .execute();
+    const page = paginate(rows, query.limit, (r) => [r.id], hash);
+    const readable = new Map<string, boolean>();
+    for (const t of new Set(page.items.map((r) => r.transformation_id)))
+      readable.set(t, await canRead(tx, principal, t));
+    const visible = page.items.filter((r) => readable.get(r.transformation_id) === true);
+    const progress =
+      visible.length === 0
+        ? []
+        : await tx
+            .selectFrom("export_job_progress")
+            .selectAll()
+            .where(
+              "export_job_id",
+              "in",
+              visible.map((r) => r.id),
+            )
+            .execute();
+    const byId = new Map(progress.map((p) => [p.export_job_id, p]));
+    return { items: visible.map((r) => toExportJob(r, byId.get(r.id))), nextCursor: page.nextCursor };
+  });
 }
 
 /** GET /exports/{id}. */
 export async function getExport(db: Db, request: FastifyRequest, jobId: string): Promise<ExportJob> {
-  const row = await ownJob(db, principalOf(request), jobId);
-  return toExportJob(row, await progressOf(db, row.id));
+  return snapshotRead(db, async (tx) => {
+    const row = await ownJob(tx, principalOf(request), jobId);
+    return toExportJob(row, await progressOf(tx, row.id));
+  });
 }
 
 /** GET /exports/{id}/download: the stored file's metadata, after the access re-check and the state checks. */
