@@ -136,6 +136,8 @@ const KPI_P5_KBE_E_OPERATIONS = [
 ];
 // P5 slice G (T-DG5-KBE-F; ADR-0047 §4): the formula preview.
 const KPI_P5_KBE_F_OPERATIONS = ["previewFormula"];
+// P5 slice G (T-DG5-KBE-E2; ADR-0047 §3): the restatement decision and its reissue offers.
+const KPI_P5_KBE_E2_OPERATIONS = ["decideKpiRestatement", "listKpiRestatementReissueOffers"];
 /**
  * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
  * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
@@ -246,6 +248,7 @@ describe("kpi module (P2)", () => {
         ...KPI_P4_ARCH_R1_OPERATIONS,
         ...KPI_P5_KBE_E_OPERATIONS,
         ...KPI_P5_KBE_F_OPERATIONS,
+        ...KPI_P5_KBE_E2_OPERATIONS,
       ].sort(),
     );
     expect(registration.module).toBe("kpi");
@@ -256,7 +259,8 @@ describe("kpi module (P2)", () => {
         KPI_P4_KBE_C_OPERATIONS.length +
         KPI_P4_ARCH_R1_OPERATIONS.length +
         KPI_P5_KBE_E_OPERATIONS.length +
-        KPI_P5_KBE_F_OPERATIONS.length,
+        KPI_P5_KBE_F_OPERATIONS.length +
+        KPI_P5_KBE_E2_OPERATIONS.length,
     );
     expect(Object.isFrozen(registration)).toBe(true);
   });
@@ -303,6 +307,8 @@ describe("kpi module (P2)", () => {
         "rag.override",
         // P5 slice G (T-DG5-KBE-E).
         "kpi_restatement.request",
+        // P5 slice G (T-DG5-KBE-E2): the decision, a business approval.
+        "kpi_restatement.approve",
         // P5 slice G (T-DG5-KBE-F): the formula preview POST writes nothing and needs a session only.
         "authenticated",
       ]),

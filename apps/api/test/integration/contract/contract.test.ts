@@ -136,6 +136,7 @@ import { exerciseP5BeMOperations, P5_MIRRORS_BE_M } from "./p5-exercises-be-m.ts
 import { exerciseP5BeNOperations, P5_MIRRORS_BE_N } from "./p5-exercises-be-n.ts";
 import { exerciseP5BeOOperations, P5_MIRRORS_BE_O } from "./p5-exercises-be-o.ts";
 import { exerciseP5KbeEOperations, P5_MIRRORS_KBE_E } from "./p5-exercises-kbe-e.ts";
+import { exerciseP5KbeE2Operations, P5_MIRRORS_KBE_E2 } from "./p5-exercises-kbe-e2.ts"; // T-DG5-KBE-E2
 import { exerciseP5KbeFOperations, P5_MIRRORS_KBE_F } from "./p5-exercises-kbe-f.ts";
 import { exerciseP5BePOperations, P5_MIRRORS_BE_P } from "./p5-exercises-be-p.ts";
 import { exerciseP5KbeGOperations, P5_MIRRORS_KBE_G } from "./p5-exercises-kbe-g.ts";
@@ -352,6 +353,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_N,
   ...P5_MIRRORS_BE_O,
   ...P5_MIRRORS_KBE_E,
+  ...P5_MIRRORS_KBE_E2,
   ...P5_MIRRORS_KBE_F,
   ...P5_MIRRORS_BE_P,
   ...P5_MIRRORS_KBE_G,
@@ -768,6 +770,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 KBE-E operations (p5-exercises-kbe-e.ts)", async () => {
     await exerciseP5KbeEOperations(p3());
   });
+  it("P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)", async () => {
+    await exerciseP5KbeE2Operations(p3());
+  });
   it("P5 KBE-F operations (p5-exercises-kbe-f.ts)", async () => {
     await exerciseP5KbeFOperations(p3());
   });
@@ -929,7 +934,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // putBusinessCaseCashFlows (4 JSON bodies; the other four KBE-F operations are GETs).
     // T-DG5-BE-P: + generateLaunchPlan, updateLaunchPlan, createLaunchTask, updateLaunchTask, putLaunchTaskPredecessors
     // (5 JSON bodies; the other four are GETs). T-DG5-BE-C2: none. Sum (D-156): 370 + 1 + 4 + 5 = 380.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([380, 379, 1]);
+    // T-DG5-KBE-E2: + decideKpiRestatement (1 JSON body; listKpiRestatementReissueOffers is a GET). 380 + 1 = 381.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([381, 380, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

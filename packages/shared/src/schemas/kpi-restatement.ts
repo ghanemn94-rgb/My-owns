@@ -9,9 +9,12 @@
 //   business refusals for an empty list (422 kpi_restatement.periods_required) and for 25 or more periods
 //   (422 kpi_restatement.too_many_periods) are the API's, so a caller gets the exact code the slice ADR names.
 // - A restatement decision is a business approval inside the product, never an engineering gate (DG0-DG7).
+// - T-DG5-KBE-E2 (ADR-0047 §3, §7): the decision body (decideKpiRestatement), the reissue offers
+//   (listKpiRestatementReissueOffers) and the outbox payload `kpi_restatement.approved` v1.
 import { z } from "zod";
 import { currency, freeText, timestamp, uuid, version } from "./common.ts";
 import { decimal, kpiUnitKind } from "./kpi.ts";
+import { reportDefinitionCode } from "./report.ts";
 
 export const KPI_RESTATEMENT_STATUSES = ["draft", "submitted", "approved", "rejected", "withdrawn", "applied"] as const;
 /** The most periods one restatement covers (ADR-0047 §2; CHECK period_count BETWEEN 0 AND 24). */
@@ -102,6 +105,45 @@ export const kpiRestatementReconciliation = z.strictObject({
   rows: z.array(kpiRestatementReconciliationRow),
 });
 
+// ------------------------------------------------------------------------------------------------ KBE-E2
+
+/**
+ * decideKpiRestatement's body (OpenAPI `KpiRestatementDecision`). A rejection needs a note: its absence is the API's
+ * 422 kpi_restatement.note_required (ADR-0047 §8), so a caller gets the exact code the slice ADR names.
+ */
+export const kpiRestatementDecision = z.strictObject({
+  decision: z.enum(["approve", "reject"]),
+  note: freeText(1, 2000).nullable().optional(),
+});
+
+/** One issued (or meanwhile superseded) report snapshot offered for reissue (OpenAPI `KpiRestatementReissueOffer`). */
+export const kpiRestatementReissueOffer = z.strictObject({
+  snapshotId: uuid,
+  seriesId: uuid,
+  definitionCode: reportDefinitionCode,
+  issueVersion: z.number().int(),
+  periodLabel: z.string().nullable(),
+  snapshotStatus: z.enum(["issued", "superseded"]),
+  createdAt: timestamp,
+});
+
+export const kpiRestatementReissueOfferList = z.strictObject({ items: z.array(kpiRestatementReissueOffer) });
+
+/**
+ * Outbox `kpi_restatement.approved` v1 (ADR-0047 §3, §7): written by the approving transaction; consumed once by the
+ * worker's kpi.recalculate queue, which writes the one restatement calculation run and the reissue offers. The event
+ * reports a business approval a person made; it never makes one.
+ */
+export const kpiRestatementApprovedV1 = z.strictObject({
+  restatementId: uuid,
+  kpiDefinitionId: uuid,
+  transformationId: uuid,
+});
+
+export type KpiRestatementDecision = z.infer<typeof kpiRestatementDecision>;
+export type KpiRestatementReissueOffer = z.infer<typeof kpiRestatementReissueOffer>;
+export type KpiRestatementReissueOfferList = z.infer<typeof kpiRestatementReissueOfferList>;
+export type KpiRestatementApprovedV1 = z.infer<typeof kpiRestatementApprovedV1>;
 export type KpiRestatementStatus = z.infer<typeof kpiRestatementStatus>;
 export type KpiRestatementCreate = z.infer<typeof kpiRestatementCreate>;
 export type KpiRestatementPeriod = z.infer<typeof kpiRestatementPeriod>;
