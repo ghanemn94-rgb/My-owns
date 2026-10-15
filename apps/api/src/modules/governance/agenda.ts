@@ -73,6 +73,7 @@ import {
   recordExecutiveOutcome,
   type T16Context,
 } from "./executive-decisions.ts";
+import { assertCutoffPackReviewed } from "./cut-off.ts"; // T-DG5-BE-L2
 import { diffFields, isActiveUserOf, unknownTarget } from "./forums.ts";
 import { businessToday, meetingRefusals } from "./meetings.ts";
 
@@ -747,6 +748,7 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       const current = await lockItem(tx, request, meetingId, agendaItemId);
       assertNotFinal(current);
       if (current.status !== "draft") throw agendaRefusals.notDraft();
+      await assertCutoffPackReviewed(tx, meetingId, agendaItemId); // T-DG5-BE-L2: 422 agenda_item.pack_not_reviewed (ADR-0044 §6; MP04)
       let decisionId = current.decision_id;
       if (current.item_kind === "executive_ask") {
         // REQ-PB-068 / REQ-S10-012: every element is checked before any write.

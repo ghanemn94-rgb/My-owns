@@ -4,5 +4,8 @@
 // outbox event, so it adds no event -> queue entry.
 import type { QueueSpec } from "./spec.ts";
 
-export const MEETINGS_QUEUES: readonly QueueSpec[] = [{ name: "governance.meeting_series_generate" }];
+export const MEETINGS_QUEUES: readonly QueueSpec[] = [
+  { name: "governance.meeting_series_generate" },
+  { name: "governance.meeting_cutoff_scan" }, // T-DG5-BE-L2 (ADR-0044 §6): the daily cut-off scan (schedule seeded by 0075)
+];
 export const MEETINGS_EVENT_QUEUES: Readonly<Record<string, string>> = {};

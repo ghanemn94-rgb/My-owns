@@ -129,6 +129,7 @@ import { exerciseP5BeI2Operations, P5_MIRRORS_BE_I2 } from "./p5-exercises-be-i2
 import { exerciseP5BeJOperations, P5_MIRRORS_BE_J } from "./p5-exercises-be-j.ts";
 import { exerciseP5BeKOperations, P5_MIRRORS_BE_K } from "./p5-exercises-be-k.ts";
 import { exerciseP5BeLOperations, P5_MIRRORS_BE_L } from "./p5-exercises-be-l.ts";
+import { exerciseP5BeL2Operations, P5_MIRRORS_BE_L2 } from "./p5-exercises-be-l2.ts"; // T-DG5-BE-L2
 import { exerciseP5KbeCOperations, P5_MIRRORS_KBE_C } from "./p5-exercises-kbe-c.ts";
 import { exerciseP5KbeDOperations, P5_MIRRORS_KBE_D } from "./p5-exercises-kbe-d.ts";
 import { exerciseP5BeMOperations, P5_MIRRORS_BE_M } from "./p5-exercises-be-m.ts";
@@ -343,6 +344,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_J,
   ...P5_MIRRORS_BE_K,
   ...P5_MIRRORS_BE_L,
+  ...P5_MIRRORS_BE_L2, // T-DG5-BE-L2
   ...P5_MIRRORS_KBE_C,
   ...P5_MIRRORS_KBE_D,
   ...P5_MIRRORS_BE_M,
@@ -740,6 +742,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 BE-L operations (p5-exercises-be-l.ts)", async () => {
     await exerciseP5BeLOperations(p3());
   });
+  it("P5 BE-L2 operations (p5-exercises-be-l2.ts)", async () => {
+    await exerciseP5BeL2Operations(p3());
+  });
   it("P5 KBE-C operations (p5-exercises-kbe-c.ts)", async () => {
     await exerciseP5KbeCOperations(p3());
   });
@@ -907,8 +912,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG5-KBE-D: + createOwnerUpdate, updateOwnerUpdate, reopenOwnerUpdate (3 JSON bodies; submitOwnerUpdate is
     // bodiless, listOwnerUpdates, getOwnerUpdate and listOwnerUpdateRevisions are GETs).
     // T-DG5-BE-K: + decideApprovalRouteStep, closeGateCondition (2 JSON bodies). T-DG5-BE-L: + putMyNotificationPreferences,
-    // putNotificationPolicy (2 JSON bodies).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([368, 367, 1]);
+    // putNotificationPolicy (2 JSON bodies). T-DG5-BE-L2: + reviewMeetingCutoffPack (1 JSON body; getMeetingCutoffPack
+    // is a GET).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([369, 368, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

@@ -30,7 +30,8 @@ import {
   type WorkingDayPredicate,
 } from "@mth/shared/calc";
 import { isWorkingDay } from "@mth/shared/time";
-import { jobActor, runOnce } from "../kit.ts";
+import { truncateText } from "@mth/shared/schemas"; // T-DG5-BE-L2
+import { createWorkItemOnce, jobActor, runOnce } from "../kit.ts"; // createWorkItemOnce: T-DG5-BE-L2
 import type { JobHandler } from "./spec.ts";
 
 /** ADR-0016 §6 / apps/api platform/advisory-locks.ts `meetingSeriesGeneration` (the worker imports no API code). */
@@ -304,6 +305,294 @@ export async function handleMeetingSeriesGenerate(
   return out;
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// T-DG5-BE-L2 (ADR-0044 §6; REQ-S12-015, M0235 "Meeting cut-off reached | Generate a draft agenda and pack from current
+// data with a review step before publication"; p5-work-split §E.4). New function only; the series job above is
+// unchanged. Starter 12 (`starter.meeting_cutoff`): automation/starters.ts wraps this handler, so each run is recorded
+// as an execution of the starter's effective rule version.
+//
+//   queue / consumer                   trigger                                   idempotency key
+//   governance.meeting_cutoff_scan     daily schedule 00:30 Asia/Riyadh (0075)   meeting_cutoff:<meetingId>
+//
+// For every meeting in status `scheduled` whose cut-off date is today or earlier and whose scheduled date is today or
+// later (business dates in the meeting's time zone) and that has no pack, one runOnce transaction (lock-free; the
+// UNIQUE meeting_cutoff_pack_once_key is the second line, MP03):
+//   1. re-reads the meeting FOR UPDATE; if it is no longer eligible the transaction rolls back WITHOUT its ledger row,
+//      so a later scan still sees it;
+//   2. reads the meeting transformation's CURRENT open asks: the predicate of the DG4 agenda's linkable-ask check
+//      (apps/api governance/agenda.ts `checkLinkable`: an executive decision of the transformation with an ask origin,
+//      status open or deferred), minus the asks already on this meeting's agenda (any item not withdrawn);
+//   3. creates one `draft` executive-ask agenda item linked to each (next free ordinals; at most the forum's agenda
+//      limit, else 200), audited; the item's created_by is the meeting's owner of record (its creator, else its series'
+//      author: agenda_item.created_by is NOT NULL, 0044) and the audit actor is this service on that person's behalf;
+//   4. inserts the `draft` pack (the open-asks snapshot, the created item ids; content never changes, MP05), audited;
+//   5. gives the chair (else the secretary) one `meeting_pack_review` work item; with neither, none, and the pack
+//      reads reviewerAssigned = false ("No reviewer assigned").
+// The twin of apps/api governance/cut-off.ts `generateCutoffPackInTx` (the worker imports no API code; parity test in
+// apps/api/test/integration/governance/cutoff-pack.test.ts). Reviewing the pack is a human action of the chair or the
+// secretary; nothing here reviews, publishes or decides anything, and nothing touches DG0-DG7.
+export const MEETING_CUTOFF_SCAN_QUEUE = "governance.meeting_cutoff_scan";
+export const MEETING_CUTOFF_SCAN_CONSUMER = "governance.meeting_cutoff_scan";
+export const MEETING_PACK_REVIEW_KIND = "meeting_pack_review";
+export const MEETING_PACK_REVIEW_MESSAGE = "governance.task.meeting_pack_review";
+/** The most asks a pack holds (meeting_cutoff_pack open_asks / agenda_item_ids CHECKs). */
+export const CUTOFF_PACK_MAX_ASKS = 200;
+const AGENDA_MAX_ORDINAL = 999;
+
+export interface CutoffPackOutcome {
+  readonly meetingId: string;
+  readonly outcome: "generated" | "duplicate" | "skipped";
+  readonly packId: string | null;
+  readonly agendaItemIds: readonly string[];
+}
+
+/** Thrown inside the runOnce transaction to roll it back (with its ledger row) when the meeting is no longer due. */
+class CutoffNotDue extends Error {}
+
+interface CutoffAsk {
+  readonly decisionId: string;
+  readonly code: string;
+  readonly title: string;
+  readonly status: "open" | "deferred";
+  readonly ownerUserId: string | null;
+  readonly dueDate: string | null;
+  readonly agendaItemId: string | null;
+}
+
+/** Generates one meeting's pack inside `tx` (the caller holds the ledger row); throws CutoffNotDue when not due. */
+export async function generateCutoffPackInTx(
+  tx: Tx,
+  jobId: string,
+  meetingId: string,
+): Promise<{ packId: string; agendaItemIds: string[] }> {
+  const m = await tx.selectFrom("meeting").selectAll().where("id", "=", meetingId).forUpdate().executeTakeFirst();
+  if (!m) throw new CutoffNotDue();
+  const today = (await sql<{ d: string }>`SELECT p4_business_date(now(), ${m.timezone})::text AS d`.execute(tx))
+    .rows[0]!.d;
+  const cutoff = m.cutoff_date === null ? null : String(m.cutoff_date).slice(0, 10);
+  const scheduled = String(m.scheduled_date).slice(0, 10);
+  const existing = await tx
+    .selectFrom("meeting_cutoff_pack")
+    .select("id")
+    .where("meeting_id", "=", m.id)
+    .executeTakeFirst();
+  if (m.status !== "scheduled" || cutoff === null || cutoff > today || scheduled < today || existing)
+    throw new CutoffNotDue();
+  const forum = await tx
+    .selectFrom("forum")
+    .select(["name_en", "name_ar", "agenda_max_items"])
+    .where("id", "=", m.forum_id)
+    .executeTakeFirstOrThrow();
+  const series =
+    m.series_id === null
+      ? null
+      : await tx.selectFrom("meeting_series").select("created_by").where("id", "=", m.series_id).executeTakeFirst();
+  const owner = m.created_by ?? series?.created_by ?? null;
+  if (owner === null) throw new Error(`meeting_cutoff_scan: meeting ${m.id} has no owner of record`);
+  const asks = await tx
+    .selectFrom("decision as d")
+    .select([
+      "d.id",
+      "d.code",
+      "d.title",
+      "d.status",
+      "d.owner_user_id",
+      sql<string | null>`d.due_date::text`.as("due"),
+    ])
+    .where("d.transformation_id", "=", m.transformation_id)
+    .where("d.kind", "=", "executive")
+    .where("d.ask_origin", "is not", null)
+    .where("d.status", "in", ["open", "deferred"])
+    .where(({ not, exists, selectFrom }) =>
+      not(
+        exists(
+          selectFrom("agenda_item as a")
+            .select("a.id")
+            .whereRef("a.decision_id", "=", "d.id")
+            .where("a.meeting_id", "=", m.id)
+            .where("a.status", "<>", "withdrawn"),
+        ),
+      ),
+    )
+    .orderBy(sql`d.due_date NULLS LAST`)
+    .orderBy("d.code")
+    .orderBy("d.id")
+    .limit(CUTOFF_PACK_MAX_ASKS)
+    .execute();
+  const counts = await tx
+    .selectFrom("agenda_item")
+    .select([
+      sql<number>`count(*) FILTER (WHERE status <> 'withdrawn')::integer`.as("n"),
+      sql<number>`coalesce(max(ordinal), 0)::integer`.as("maxOrdinal"),
+    ])
+    .where("meeting_id", "=", m.id)
+    .executeTakeFirstOrThrow();
+  const room = Math.max(
+    0,
+    Math.min(
+      forum.agenda_max_items === null ? CUTOFF_PACK_MAX_ASKS : forum.agenda_max_items - counts.n,
+      AGENDA_MAX_ORDINAL - counts.maxOrdinal,
+    ),
+  );
+  const ownerActor = jobActor(jobId, owner);
+  const late = today > cutoff;
+  const scope = { organizationId: m.organization_id, transformationId: m.transformation_id };
+  const snapshot: CutoffAsk[] = [];
+  const itemIds: string[] = [];
+  for (const a of asks) {
+    let itemId: string | null = null;
+    if (itemIds.length < room) {
+      itemId = await uuidv7(tx);
+      const ordinal = counts.maxOrdinal + itemIds.length + 1;
+      const title = truncateText(a.title, 500);
+      await tx
+        .insertInto("agenda_item")
+        .values({
+          id: itemId,
+          organization_id: m.organization_id,
+          transformation_id: m.transformation_id,
+          meeting_id: m.id,
+          ordinal,
+          item_kind: "executive_ask",
+          title,
+          decision_id: a.id,
+          late,
+          created_by: owner,
+          updated_by: owner,
+        })
+        .execute();
+      await insertAuditEvent(tx, ownerActor, {
+        action: "agenda_item.create",
+        recordType: "agenda_item",
+        recordId: itemId,
+        ...scope,
+        newVersion: 1,
+        changes: {
+          meeting_id: { from: null, to: m.id },
+          ordinal: { from: null, to: ordinal },
+          item_kind: { from: null, to: "executive_ask" },
+          title: { from: null, to: title },
+          decision_id: { from: null, to: a.id },
+          late: { from: null, to: late },
+          status: { from: null, to: "draft" },
+        },
+      });
+      itemIds.push(itemId);
+    }
+    snapshot.push({
+      decisionId: a.id,
+      code: a.code,
+      title: a.title,
+      status: a.status as CutoffAsk["status"],
+      ownerUserId: a.owner_user_id,
+      dueDate: a.due,
+      agendaItemId: itemId,
+    });
+  }
+  const packId = await uuidv7(tx);
+  const actor = jobActor(jobId);
+  await tx
+    .insertInto("meeting_cutoff_pack")
+    .values({
+      id: packId,
+      organization_id: m.organization_id,
+      transformation_id: m.transformation_id,
+      meeting_id: m.id,
+      cutoff_date: cutoff,
+      as_of: sql<Date>`now()`,
+      open_asks: JSON.stringify(snapshot),
+      agenda_item_ids: itemIds,
+      created_by: null,
+      updated_by: null,
+    })
+    .execute();
+  await insertAuditEvent(tx, actor, {
+    action: "meeting_cutoff_pack.create",
+    recordType: "meeting_cutoff_pack",
+    recordId: packId,
+    ...scope,
+    newVersion: 1,
+    changes: {
+      meeting_id: { from: null, to: m.id },
+      cutoff_date: { from: null, to: cutoff },
+      open_asks: { from: null, to: snapshot.map((a) => a.decisionId) },
+      agenda_item_ids: { from: null, to: itemIds },
+      status: { from: null, to: "draft" },
+    },
+  });
+  const reviewer = m.chair_user_id ?? m.secretary_user_id;
+  if (reviewer !== null)
+    await createWorkItemOnce(tx, actor, {
+      organizationId: m.organization_id,
+      transformationId: m.transformation_id,
+      kind: MEETING_PACK_REVIEW_KIND,
+      assigneeUserId: reviewer,
+      subjectType: "meeting_cutoff_pack",
+      subjectId: packId,
+      linkPath: `/transformations/${m.transformation_id}/meetings/${m.id}`,
+      messageKey: MEETING_PACK_REVIEW_MESSAGE,
+      messageParams: {
+        forum: forum.name_en,
+        forumAr: forum.name_ar,
+        meetingDate: scheduled,
+        askCount: snapshot.length,
+      },
+      dueDate: scheduled,
+      dedupeKey: `meeting_cutoff_pack:${packId}:${reviewer}`,
+    });
+  return { packId, agendaItemIds: itemIds };
+}
+
+/** Options of the scan: `meetingIds` restricts it to those meetings (tests share one database). */
+export interface CutoffScanOptions {
+  readonly meetingIds?: readonly string[];
+}
+
+/**
+ * The scheduled job `governance.meeting_cutoff_scan`: one runOnce transaction per due meeting, keyed
+ * `meeting_cutoff:<meetingId>` (a second scan, a retry or a redelivery creates nothing).
+ */
+export async function handleMeetingCutoffScan(
+  db: Db,
+  _data: unknown,
+  jobId: string,
+  options: CutoffScanOptions = {},
+): Promise<CutoffPackOutcome[]> {
+  let q = db
+    .selectFrom("meeting as m")
+    .select("m.id")
+    .where("m.status", "=", "scheduled")
+    .where("m.cutoff_date", "is not", null)
+    .where(sql<boolean>`m.cutoff_date <= p4_business_date(now(), m.timezone)`)
+    .where(sql<boolean>`m.scheduled_date >= p4_business_date(now(), m.timezone)`)
+    .where(({ not, exists, selectFrom }) =>
+      not(exists(selectFrom("meeting_cutoff_pack as p").select("p.id").whereRef("p.meeting_id", "=", "m.id"))),
+    );
+  if (options.meetingIds !== undefined) {
+    if (options.meetingIds.length === 0) return [];
+    q = q.where("m.id", "in", [...options.meetingIds]);
+  }
+  const due = await q.orderBy("m.id").execute();
+  const out: CutoffPackOutcome[] = [];
+  for (const { id } of due) {
+    try {
+      const r = await runOnce(db, MEETING_CUTOFF_SCAN_CONSUMER, `meeting_cutoff:${id}`, (tx) =>
+        generateCutoffPackInTx(tx, jobId, id),
+      );
+      out.push(
+        r.outcome === "duplicate"
+          ? { meetingId: id, outcome: "duplicate", packId: null, agendaItemIds: [] }
+          : { meetingId: id, outcome: "generated", packId: r.result.packId, agendaItemIds: r.result.agendaItemIds },
+      );
+    } catch (err) {
+      if (!(err instanceof CutoffNotDue)) throw err;
+      out.push({ meetingId: id, outcome: "skipped", packId: null, agendaItemIds: [] });
+    }
+  }
+  return out;
+}
+
 export const MEETINGS_HANDLERS: readonly JobHandler[] = [
   { queue: MEETING_SERIES_GENERATE_QUEUE, handle: handleMeetingSeriesGenerate },
+  { queue: MEETING_CUTOFF_SCAN_QUEUE, handle: (db, data, jobId) => handleMeetingCutoffScan(db, data, jobId) }, // T-DG5-BE-L2
 ];
