@@ -17,10 +17,8 @@
 //  - 403 on the reads (a caller who cannot read the transformation gets 404); 429 (the rate limiter's own suite).
 //
 // Version-0 reads (VERSION_ZERO_READ): getFinancialMetricSettings and getBusinessCaseCashFlows answer version 0 with
-// ETag "0" while nothing is stored (the ARCH-R1 ETagOrZero rule), but their contract 200 responses declare `ETag`
-// (>= 1). Until the orchestrator applies the proposed ETagOrZero patch (KBE-F handback §5, the BE-L / D-153
-// precedent), those two reads are made without the contract assertion; every other call, including both GETs once a
-// row exists, goes through the validating client.
+// ETag "0" while nothing is stored (the ARCH-R1 ETagOrZero rule). Their contract 200 responses declare `ETagOrZero`
+// since the orchestrator applied KBE-F's patch (D-156), so these reads are contract-validated like every other call.
 import {
   businessCaseCashFlows,
   financialMetrics,
@@ -52,7 +50,7 @@ const SETTINGS = "/api/v1/benefits/financial-metrics/settings";
 const ENABLE = `${SETTINGS}/enablement`;
 const ASSUME = `${SETTINGS}/assumptions`;
 const ZERO = { "if-match": '"0"' };
-const VERSION_ZERO_READ = { contract: false } as const;
+const VERSION_ZERO_READ = {} as const;
 
 /** ADR-0047 §5 fixture: outflow 1000 at t = 0, inflows 300, 400, 500. */
 export const FIXTURE_ROWS = [

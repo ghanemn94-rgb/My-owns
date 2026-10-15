@@ -41,10 +41,10 @@ const ENABLE = `${SETTINGS}/enablement`;
 const ASSUME = `${SETTINGS}/assumptions`;
 const ZERO = { "if-match": '"0"' };
 /**
- * Version-0 reads: the two settings/cash-flow GETs send ETag "0" while nothing is stored (the ARCH-R1 rule), which the
- * contract's `ETag` (>= 1) does not admit yet; the ETagOrZero patch is requested from the orchestrator (handback §5).
+ * Version-0 reads: the two settings/cash-flow GETs send ETag "0" while nothing is stored (the ARCH-R1 rule). The
+ * contract declares `ETagOrZero` for them since the orchestrator applied KBE-F's patch (D-156), so they are validated.
  */
-const VERSION_ZERO_READ = { contract: false } as const;
+const VERSION_ZERO_READ = {} as const;
 
 let api: TestApi;
 let w: World;
