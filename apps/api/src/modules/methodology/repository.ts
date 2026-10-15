@@ -1,4 +1,5 @@
-// methodology data access: the pinned catalogue (read-only seed, ADR-0016 §2) and its API shapes.
+// methodology data access: the pinned catalogue (read-only seed, ADR-0016 §2; resolved per version, ADR-0039 §2) and its
+// API shapes.
 import type {
   CharterScopeCheckDefinitionTable,
   DbOrTx,
@@ -13,6 +14,10 @@ import type {
 import type { GateDefinition, MethodologyCatalogueBody, TomDimension } from "@mth/shared/schemas";
 import type { Selectable } from "kysely";
 import { iso, isoOrNull } from "../platform/index.ts";
+import { createConfigResolver, type ConfigResolver, type ResolvedElement } from "./config-resolver.ts";
+
+/** The resolver of callers that pass none (the route passes the composition root's). */
+const defaultResolver: ConfigResolver = createConfigResolver();
 
 export type MethodologyCatalogue = MethodologyCatalogueBody;
 
@@ -165,10 +170,104 @@ const toGoodOutcomeCriterion = (r: Selectable<GoodOutcomeCriterionTable>) => ({
   ...stamps(r),
 });
 
-/** The catalogue a transformation is pinned to (transformation_config_pin, ADR-0014); null when it has no pin. */
+const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+const bool = (v: unknown): boolean | undefined => (typeof v === "boolean" ? v : undefined);
+const attr = (e: ResolvedElement, name: string): unknown => new Map(Object.entries(e.attributes)).get(name);
+/** A version's own rows of a type that name a catalogue identity (the overrides of ADR-0039 §2), by stable key. */
+const overridesOf = (elements: readonly ResolvedElement[]) =>
+  new Map(elements.filter((e) => e.overridden && e.origin === "source").map((e) => [e.stableKey, e] as const));
+
+/**
+ * The TOM dimensions of a version (ADR-0039 §2 "Resolution"): the registry rows, each with the version's
+ * `tom_dimension` row applied where one exists (labelEn/labelAr, helpEn/helpAr = the design question, the attribute
+ * mapping of config-resolver.ts `loadCatalogue`). Without rows (playbook v1) the catalogue rows are returned as they are.
+ */
+function resolveTomDimensions(dims: readonly TomDimension[], elements: readonly ResolvedElement[]): TomDimension[] {
+  const by = overridesOf(elements);
+  if (by.size === 0) return [...dims];
+  return dims.map((d) => {
+    const e = by.get(d.code);
+    if (e === undefined) return d;
+    return {
+      ...d,
+      labelEn: str(attr(e, "labelEn")) ?? d.labelEn,
+      labelAr: str(attr(e, "labelAr")) ?? d.labelAr,
+      sourceDesignQuestionEn: str(attr(e, "helpEn")) ?? d.sourceDesignQuestionEn,
+      designQuestionAr: str(attr(e, "helpAr")) ?? d.designQuestionAr,
+    };
+  });
+}
+
+/**
+ * The gate definitions of a version (ADR-0039 §2 "Resolution"): the registry rows, each with the version's `gate` and
+ * `gate_criterion` rows applied where they exist. This is the same mapping as the gates reader's
+ * `resolveGateDefinitions` (workflows/criteria.ts, BE-C), so the catalogue and the gate workflow agree: the default
+ * approver only inside the DG2 allowed set, removed criteria left out. Without rows (playbook v1) the catalogue rows are
+ * returned as they are.
+ */
+function resolveGates(
+  defs: readonly GateDefinition[],
+  gateElements: readonly ResolvedElement[],
+  criterionElements: readonly ResolvedElement[],
+): GateDefinition[] {
+  const gateBy = overridesOf(gateElements);
+  const critBy = overridesOf(criterionElements);
+  if (gateBy.size === 0 && critBy.size === 0) return [...defs];
+  return defs.map((d) => {
+    const g = gateBy.get(d.code);
+    const touched = d.criteria.some((c) => critBy.has(c.key));
+    if (g === undefined && !touched) return d;
+    const approver = g === undefined ? undefined : str(attr(g, "defaultApproverRoleCode"));
+    return {
+      ...d,
+      ...(g === undefined
+        ? {}
+        : {
+            sourceNameEn: str(attr(g, "labelEn")) ?? d.sourceNameEn,
+            nameAr: str(attr(g, "labelAr")) ?? d.nameAr,
+            sourceDecisionQuestionEn: str(attr(g, "helpEn")) ?? d.sourceDecisionQuestionEn,
+            decisionQuestionAr: str(attr(g, "helpAr")) ?? d.decisionQuestionAr,
+            defaultApproverRoleCode:
+              approver !== undefined && d.allowedApproverRoleCodes.includes(approver)
+                ? approver
+                : d.defaultApproverRoleCode,
+            submissionEnabled: bool(attr(g, "submissionEnabled")) ?? d.submissionEnabled,
+          }),
+      criteria: d.criteria
+        .filter((c) => critBy.get(c.key)?.removed !== true)
+        .map((c) => {
+          const e = critBy.get(c.key);
+          if (e === undefined) return c;
+          return {
+            ...c,
+            labelEn: str(attr(e, "labelEn")) ?? c.labelEn,
+            labelAr: str(attr(e, "labelAr")) ?? c.labelAr,
+            descriptionEn: str(attr(e, "helpEn")) ?? c.descriptionEn,
+            descriptionAr: str(attr(e, "helpAr")) ?? c.descriptionAr,
+            mandatory: bool(attr(e, "mandatory")) ?? c.mandatory,
+          };
+        }),
+    };
+  });
+}
+
+/**
+ * The catalogue of the methodology version a transformation is pinned to (transformation_config_pin, ADR-0014); null
+ * when it has no methodology pin.
+ *
+ * ADR-0039 §2/§3 (T-DG5-BE-C2, D-155): the DG2-DG4 catalogue rows are the stable-identity REGISTRY. Their codes and
+ * ordinals are globally unique (0011), they all belong to `playbook` v1, and no later version gets rows of its own. So
+ * the identities of every version are the registry rows (never filtered by the pinned version id: that returned empty
+ * catalogues for every transformation pinned to a version after v1), and their attributes resolve as the pinned
+ * version's `methodology_element` row when it exists, else the catalogue's values, through the ConfigResolver.
+ * Diagnostic dimensions and workstreams, charter scope checks and good-outcome criteria have no element type
+ * (ADR-0039 §2), so they are the registry values for every version. `methodologyVersionId` on each item stays the
+ * registry row's own column. For a transformation pinned to v1 (no element rows) the result is byte-identical to DG4.
+ */
 export async function loadMethodologyCatalogue(
   db: DbOrTx,
   transformationId: string,
+  resolver: ConfigResolver = defaultResolver,
 ): Promise<MethodologyCatalogue | null> {
   const pin = await db
     .selectFrom("transformation_config_pin")
@@ -179,40 +278,24 @@ export async function loadMethodologyCatalogue(
   if (!pin) return null;
   const mv = pin.methodology_version_id;
   const version = await db.selectFrom("methodology_version").selectAll().where("id", "=", mv).executeTakeFirstOrThrow();
-  const [dims, workstreams, toms, scopeChecks, goodOutcome, gates] = await Promise.all([
-    db
-      .selectFrom("diagnostic_dimension")
-      .selectAll()
-      .where("methodology_version_id", "=", mv)
-      .orderBy("ordinal")
-      .execute(),
-    db
-      .selectFrom("diagnostic_workstream")
-      .selectAll()
-      .where("methodology_version_id", "=", mv)
-      .orderBy("ordinal")
-      .execute(),
-    db.selectFrom("tom_dimension").selectAll().where("methodology_version_id", "=", mv).orderBy("ordinal").execute(),
-    db
-      .selectFrom("charter_scope_check_definition")
-      .selectAll()
-      .where("methodology_version_id", "=", mv)
-      .orderBy("ordinal")
-      .execute(),
-    db
-      .selectFrom("good_outcome_criterion")
-      .selectAll()
-      .where("methodology_version_id", "=", mv)
-      .orderBy("ordinal")
-      .execute(),
-    loadGateDefinitions(db),
-  ]);
+  const [dims, workstreams, toms, scopeChecks, goodOutcome, gates, tomElements, gateElements, criterionElements] =
+    await Promise.all([
+      db.selectFrom("diagnostic_dimension").selectAll().orderBy("ordinal").execute(),
+      db.selectFrom("diagnostic_workstream").selectAll().orderBy("ordinal").execute(),
+      db.selectFrom("tom_dimension").selectAll().orderBy("ordinal").execute(),
+      db.selectFrom("charter_scope_check_definition").selectAll().orderBy("ordinal").execute(),
+      db.selectFrom("good_outcome_criterion").selectAll().orderBy("ordinal").execute(),
+      loadGateDefinitions(db),
+      resolver.elements(db, mv, "tom_dimension", { includeRemoved: true }),
+      resolver.elements(db, mv, "gate", { includeRemoved: true }),
+      resolver.elements(db, mv, "gate_criterion", { includeRemoved: true }),
+    ]);
   return {
     methodologyVersion: toMethodologyVersion(version),
     diagnosticDimensions: dims.map(toDiagnosticDimension),
     diagnosticWorkstreams: workstreams.map(toDiagnosticWorkstream),
-    tomDimensions: toms.map(toTomDimension),
-    gateDefinitions: gates.filter((g) => g.methodologyVersionId === mv),
+    tomDimensions: resolveTomDimensions(toms.map(toTomDimension), tomElements),
+    gateDefinitions: resolveGates(gates, gateElements, criterionElements),
     charterScopeChecks: scopeChecks.map(toScopeCheck),
     goodOutcomeCriteria: goodOutcome.map(toGoodOutcomeCriterion),
   };

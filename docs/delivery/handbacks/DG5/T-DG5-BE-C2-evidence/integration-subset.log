@@ -1,0 +1,95 @@
+port-policy: PostgreSQL listening on port 24220 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-c2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv9vyox3_f6a893ec (server_encoding UTF8); applied 83 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/methodology/studio-review-publish.test.ts (14 tests) 13971ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > submit records the request, the proposal and one task per TO holder (never the requester); approve; tasks close  1257ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > the author or the requester deciding the review -> 403 config_review.self_review; ADM_METHOD, AUD, BO -> 403  1275ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > request changes needs a note, returns the draft to editing; resubmitting the same content tasks the reviewers once more  640ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > withdraw returns the draft to editing and cancels the tasks; only a pending review is withdrawn  595ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > publish without the required review -> 422 config_version.review_required; after approval it publishes, immutable  1101ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > deleting T13 in a draft: the coverage run fails and publish -> 422 config_version.source_incomplete  1323ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > the latest compatibility run failed -> 422 config_version.compatibility_failed  454ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > scoring defaults that total 95 % -> 422 config_version.weights_total (REQ-PB-093); 100 % publishes  1360ms
+   ✓ a kind whose review is switched off (REQ-S06-007 'review where configured') > TO switches review off (ADM_METHOD 403); publish from preview in one call: two version steps, two audit events  335ms
+   ✓ rollbackConfigVersion (ADR-0039 §7; REQ-S06-009) > restores an earlier version as a new version; later records stay retrievable; the audit trail shows the rollback  1524ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > the methodology admin who publishes a change gets 403 approving a funding reallocation  482ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > BO (a KPI owner) gets 403 on every Studio write of this file  307ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > re-checks authorization at commit time: a grant revoked mid-request gives 403 and writes nothing  779ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 8274ms
+   ✓ starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-003) > both End-to-End and Modular creates get the pin, six T01 rows, ten canvas boxes and six gates, each audited  767ms
+   ✓ charter (ADR-0017; REQ-PB-029/030/031/035) > 404 charter_not_found until created; create writes version 1 and its snapshot; a second create is 409  426ms
+   ✓ F-DG2-150: the exclusions pre-check fails on an empty or blank Out of scope (REQ-PB-031 A01, B0041) > a real exclusion text gives pass  388ms
+   ✓ North Star (REQ-PB-033) > one sentence, no line break; refining supersedes (never overwrites); If-Match rules  432ms
+   ✓ T01 / T03 template rules and record-level rules > an archived transformation is read-only for its registers (422)  344ms
+   ✓ decisions (T04) and workshop mode > D-nn codes per transformation; only the owner (or a delegate) decides; the decided record is final  324ms
+   ✓ decisions (T04) and workshop mode > an unresolved workshop item blocks closing until it is converted into an owned action (one transaction)  332ms
+   ✓ outcomes: the good outcome test (B0051, REQ-PB-036), computed server-side on every Outcome response > pass: confirmations, an active owner, a causal chain and a linked KPI; update and archive of the KPI re-evaluate  377ms
+ ✓ |integration| apps/api/test/integration/methodology/methodology-migrations.test.ts (9 tests) 15243ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > v2 published: the transformation still renders v1; the plan lists the G2 re-approval; execution moves only the pin  5613ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > the preview lists the new required field (forms provider) and needs an input before submit  2057ms
+   ✓ decisions, refusals and authorization > requester deciding -> 403 self_approval; decideApproval on the type -> 422 decide_through_record; request changes and resubmit  1558ms
+   ✓ decisions, refusals and authorization > a moved pin -> 409 pin_moved; not approved -> 422 not_approved; target invalid; open exists; withdraw  1116ms
+   ✓ decisions, refusals and authorization > an approved migration whose pin moved is not executed (409 pin_moved, nothing written)  1166ms
+   ✓ decisions, refusals and authorization > withdrawing a submitted migration withdraws its approval too  512ms
+   ✓ decisions, refusals and authorization > AUD and TL get 403 on every write, outsiders 404; If-Match 428/409; reads by methodology.read and transformation.read  1335ms
+   ✓ decisions, refusals and authorization > authorization is re-checked at commit time: a grant revoked while the request waits -> 403, nothing written  632ms
+   ✓ decisions, refusals and authorization > lock class 730252 serialises concurrent creates: exactly one migration, the other 409 open_exists  688ms
+ ✓ |integration| apps/api/test/integration/methodology/scoring-defaults.test.ts (14 tests) 9011ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > the admin changes the Feasibility rubric text and the weights to 30/20/20/15/15 in a draft and publishes it  799ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > publishing defaults that total 95% (or 105%) is refused 422 config_version.weights_total; the draft stays a draft  1033ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > a later version equal to the source defaults again gives the DG3 output (source_default, DG3 rationale)  654ms
+   ✓ putScoringDefaultsDraft: authorization, validation, If-Match, audit > refuses a weight that is not a two-decimal percent in (0, 100] with 400 validation.weight_percent  483ms
+   ✓ putScoringDefaultsDraft: authorization, validation, If-Match, audit > the T06 sample preview reports Incomplete for a missing score and fails a draft that does not total 100%  511ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-checks.test.ts (17 tests) 4354ms
+   ✓ putConfigElement and the REQ-S06-006 invariants (ADR-0039 §2, §13) > renaming G3's label succeeds: one element row, the hash recomputed, one audit event per row written  313ms
+   ✓ every element mutation: authorization, If-Match, editability > re-checks authorization at commit time: a grant revoked mid-request gives 403 and writes nothing  308ms
+   ✓ getConfigVersionDiff (ADR-0039 §5) > lists added, removed and changed elements with field-level from/to, against the base by default  338ms
+   ✓ getConfigAffectedRecords (ADR-0039 §5, §12) > counts the records each pinned transformation of the lineage has for the changed elements; Unknown is never 0  307ms
+   ✓ runConfigCompatibilityCheck (ADR-0039 §5) > label-only changes pass; a changed approver warns and lists the pinned transformations; an unknown role fails  424ms
+ ✓ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests) 3620ms
+   ✓ getMethodologyProvenance (REQ-PB-001, REQ-PB-077; ADR-0049 §5) > a version's provenance.note is shown beside the statement, which never changes; pinned read 404 without access  387ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > profile.phase.diagnose with a questionTag gives 422 methodology_reader.invalid_override (and the other refusals)  405ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-drafts.test.ts (18 tests) 3707ms
+   ✓ ConfigResolver and pins (ADR-0039 §3) > an unpinned kind resolves to version 1 of its default key, never the latest; a pin wins  516ms
+ ✓ |integration| apps/api/test/integration/governance/agenda.test.ts (11 tests) 4181ms
+   ✓ publishAgendaItem: the seven elements (REQ-PB-068, REQ-S10-012) > REQ-PB-068 A09: an executive ask without Impact of delay is 422 at /brief/impactOfDelay, and nothing is written  402ms
+   ✓ publishAgendaItem: the seven elements (REQ-PB-068, REQ-S10-012) > REQ-PB-061: a complete brief publishes into T16 (brief cleared), and the Outcome recorded in the meeting appears in T16  321ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 8559ms
+   ✓ starter structure and live readiness > a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are enabled (0059) but out of sequence  1077ms
+   ✓ starter structure and live readiness > G1 submission without an initial charter is refused (422 gate_criteria_incomplete) and writes nothing  801ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  1299ms
+   ✓ submission and decision (business approval by a person) > stale If-Match on submit is 409; a valid submit freezes submission 1 with its criteria and charter version  930ms
+   ✓ submission and decision (business approval by a person) > the submitter cannot decide, even when they hold the approver role (403 gate.submitter_cannot_decide)  594ms
+   ✓ submission and decision (business approval by a person) > configuring the approver: allowed roles only, refused while a submission is pending, needs gate.configure  402ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  1111ms
+   ✓ decision outcome text is cut on a code-point boundary (F-DG2-260) > a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD  643ms
+ ✓ |integration| apps/api/test/integration/methodology/playbook-blocks.test.ts (8 tests) 1862ms
+   ✓ block <-> template, procedure and requirement links (REQ-S02-004) > block B0031 lists a link that opens the T01 register; listTemplateSourceLinks(T01) returns B0031  323ms
+ ✓ |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts (6 tests) 7029ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 1: a help-text-only v2; a new transformation pinned to v2 gets the same catalogue as v1 by code/key and count  1597ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 2: a v3 label override is returned for its element, and only for it  517ms
+ ✓ |integration| apps/api/test/integration/methodology/revision-proposals.test.ts (5 tests) 3312ms
+   ✓ formula revision (REQ-S12-018 case 2; ADR-0039 §8) > proposing a formula change lists the affected benefits and creates one review task for FIN  892ms
+   ✓ formula revision (REQ-S12-018 case 2; ADR-0039 §8) > routes to FIN holders of the transformation only, never to the editor (SoD) or another transformation's FIN  404ms
+   ✓ configuration revision (REQ-S12-018 case 1; the function submitConfigReview calls) > records validation, impact and routing once; tasks TO holders except the requester and author; replay adds nothing  418ms
+ ✓ |integration| apps/api/test/integration/methodology/source-coverage.test.ts (8 tests) 2102ms
+   ✓ getSourceCoverage (REQ-S02-001; ADR-0039 §6) > deleting T13 in a draft makes the report fail (15 of 16 templates), and the run records fail for that hash  330ms
+   ✓ getSourceCoverage (REQ-S02-001; ADR-0039 §6) > a removal through a source_element row counts; an admin-added template never counts; restoring passes again  305ms
+ ✓ |integration| apps/api/test/integration/methodology/entity-group.test.ts (3 tests) 2551ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > Transformation, Charter, GateInstance and GateDecision: created and read; AUD 403 on writes; 404 outside scope  1477ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > MethodologyVersion, Phase and GateDefinition: a draft with version-scoped rows; AUD 403; outsiders 403/404  349ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > PerformanceArea: created and read by its owner; AUD 403 on create; 404 outside scope  394ms
+ ✓ |integration| apps/api/test/integration/methodology/v1-readers.test.ts (4 tests) 3687ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > a new transformation is pinned to playbook v1 and its resolved gate definitions are the catalogue, byte for byte  630ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > the gate list and gate views carry exactly the DG2 catalogue definitions (GET /methodology)  747ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > a v1 submission routes to the catalogue default approver (SP, default_role); the decision and the DG2 refusal are unchanged  1134ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > control: a version without rows reads as the catalogue; one with rows changes exactly the overridden fields  318ms
+
+ Test Files  15 passed (15)
+      Tests  167 passed (167)
+   Start at  18:42:24
+   Duration  199.01s (transform 11.02s, setup 0ms, collect 96.93s, tests 91.47s, environment 15ms, prepare 623ms)
+
