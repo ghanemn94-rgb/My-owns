@@ -261,6 +261,34 @@ const TransformationEditPage = lazyPage(() =>
 const TransformationListPage = lazyPage(() =>
   import("../pages/transformations/TransformationListPage.tsx").then((m) => m.TransformationListPage),
 );
+// P5 slice A screens (T-DG5-FE-B; p5-plan §5.1 row FE-B): the Playbook Studio, methodology migrations, source coverage.
+const StudioPage = lazyPage(() => import("../pages/studio/StudioPage.tsx").then((m) => m.StudioPage));
+const StudioVersionPage = lazyPage(() => import("../pages/studio/VersionPage.tsx").then((m) => m.VersionPage));
+const StudioReviewPage = lazyPage(() => import("../pages/studio/ReviewPage.tsx").then((m) => m.ReviewPage));
+const ScoringDefaultsPage = lazyPage(() =>
+  import("../pages/studio/ScoringDefaultsPage.tsx").then((m) => m.ScoringDefaultsPage),
+);
+const ReviewPoliciesPage = lazyPage(() =>
+  import("../pages/studio/ReviewPoliciesPage.tsx").then((m) => m.ReviewPoliciesPage),
+);
+const RevisionProposalsPage = lazyPage(() =>
+  import("../pages/studio/RevisionProposalsPage.tsx").then((m) => m.RevisionProposalsPage),
+);
+const SourceCoveragePage = lazyPage(() =>
+  import("../pages/source-coverage/SourceCoveragePage.tsx").then((m) => m.SourceCoveragePage),
+);
+const MigrationsEntryPage = lazyPage(() =>
+  import("../pages/methodology-migrations/MigrationsEntryPage.tsx").then((m) => m.MigrationsEntryPage),
+);
+const MigrationsPage = lazyPage(() =>
+  import("../pages/methodology-migrations/MigrationsPage.tsx").then((m) => m.MigrationsPage),
+);
+const MigrationPage = lazyPage(() =>
+  import("../pages/methodology-migrations/MigrationPage.tsx").then((m) => m.MigrationPage),
+);
+const ConfigPinsPage = lazyPage(() =>
+  import("../pages/methodology-migrations/ConfigPinsPage.tsx").then((m) => m.ConfigPinsPage),
+);
 
 /**
  * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
@@ -304,18 +332,12 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  * screens and work-item links need, so a link never leads to "page not found".
  */
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
-  ...P5_SUBPAGES.map((s) => ({ path: s.path.slice(1), feature: s.p5Feature, owner: s.owner })),
-  // FE-B (slice A; ADR-0039, ADR-0040): a configuration version (draft editor, diff, checks, review, publish,
-  // rollback), its review requests (the config_review work item), T06 scoring defaults, review policies, revision
-  // proposals; a transformation's methodology migrations and configuration pins.
-  { path: "admin/studio/versions/:versionId", feature: "studioVersion", owner: "FE-B" },
-  { path: "admin/studio/versions/:versionId/reviews/:reviewId", feature: "studioReview", owner: "FE-B" },
-  { path: "admin/studio/scoring-defaults", feature: "scoringDefaults", owner: "FE-B" },
-  { path: "admin/studio/review-policies", feature: "reviewPolicies", owner: "FE-B" },
-  { path: "admin/studio/revision-proposals", feature: "revisionProposals", owner: "FE-B" },
-  { path: "transformations/:id/methodology-migrations", feature: "methodologyMigrations", owner: "FE-B" },
-  { path: "transformations/:id/methodology-migrations/:migrationId", feature: "methodologyMigration", owner: "FE-B" },
-  { path: "transformations/:id/config-pins", feature: "configPins", owner: "FE-B" },
+  // FE-B (slice A): built by T-DG5-FE-B, see the Studio, migration and source-coverage routes below.
+  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B").map((s) => ({
+    path: s.path.slice(1),
+    feature: s.p5Feature,
+    owner: s.owner,
+  })),
   // FE-C (slice B; ADR-0041): the form schema of one record type in the form builder.
   { path: "admin/forms/:recordType", feature: "formSchema", owner: "FE-C" },
   // FE-D (slices C, D, E; ADR-0042 onward): a procedure definition, the methodology coverage view, a procedure
@@ -497,6 +519,21 @@ export const routes: RouteObject[] = [
       { path: "admin/users/:id", element: <UserDetailPage /> },
       { path: "admin/assignments", element: <AssignmentsPage /> },
       { path: "about", element: <AboutPage /> },
+      // P5 slice A (T-DG5-FE-B; p5-plan §5.1; ADR-0039, ADR-0040): the Playbook Studio (versions, the draft editor,
+      // checks, review, publish, rollback, T06 scoring defaults, review policies, revision proposals), the source
+      // coverage report, and each transformation's methodology migrations and configuration pins. The review path is
+      // the `config_review` work item's link; the migration path is the `gate_reapproval` and migration links.
+      { path: "admin/studio", element: <StudioPage /> },
+      { path: "admin/studio/versions/:versionId", element: <StudioVersionPage /> },
+      { path: "admin/studio/versions/:versionId/reviews/:reviewId", element: <StudioReviewPage /> },
+      { path: "admin/studio/scoring-defaults", element: <ScoringDefaultsPage /> },
+      { path: "admin/studio/review-policies", element: <ReviewPoliciesPage /> },
+      { path: "admin/studio/revision-proposals", element: <RevisionProposalsPage /> },
+      { path: "admin/source-coverage", element: <SourceCoveragePage /> },
+      { path: "admin/methodology-migrations", element: <MigrationsEntryPage /> },
+      { path: "transformations/:id/methodology-migrations", element: <MigrationsPage /> },
+      { path: "transformations/:id/methodology-migrations/:migrationId", element: <MigrationPage /> },
+      { path: "transformations/:id/config-pins", element: <ConfigPinsPage /> },
       ...p4PlannedRoutes,
       ...p5PlannedRoutes,
       ...landingRoutes,
