@@ -5,6 +5,22 @@
   "description": "Report exporters (PDF, DOCX, XLSX, PPTX, CSV), bundled fonts and export storage (ADR-0045, ADR-0046)",
   "license": "UNLICENSED",
   "type": "module",
+  "exports": {
+    ".": {
+      "@mth/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./storage": {
+      "@mth/source": "./src/storage.ts",
+      "types": "./dist/storage.d.ts",
+      "default": "./dist/storage.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
   "dependencies": {
     "@fontsource/ibm-plex-sans": "5.2.6",
     "@fontsource/ibm-plex-sans-arabic": "5.2.6",

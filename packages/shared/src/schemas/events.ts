@@ -150,6 +150,15 @@ export const automationFailureRetryRequestedV1 = z.strictObject({
 });
 export type AutomationFailureRetryRequestedV1 = z.infer<typeof automationFailureRetryRequestedV1>;
 
+/**
+ * P5 slice F (T-DG5-BE-M; ADR-0046 §5): an export job was created (queued). Written by the API in the transaction that
+ * inserts the job, so the worker renders only after that COMMIT (no remote I/O inside it); the relay sends it to
+ * `reports.export` with the outbox event id as the job id (exactly once). Key `export_job.requested:<exportJobId>`.
+ * An export approves nothing.
+ */
+export const exportJobRequestedV1 = z.strictObject({ exportJobId: uuid });
+export type ExportJobRequestedV1 = z.infer<typeof exportJobRequestedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -182,6 +191,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "automation_failure.retry_requested": { 1: automationFailureRetryRequestedV1 },
   // T-DG5-BE-I2 (ADR-0043 §6): "run now" of a scheduled job; consumer jobs.run_now (apps/worker queues/automation.ts).
   "job.run_requested": { 1: jobRunRequestedV1 },
+  // T-DG5-BE-M (ADR-0046 §5): an export job to render; consumer reports.export (apps/worker queues/reports.ts).
+  "export_job.requested": { 1: exportJobRequestedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 
