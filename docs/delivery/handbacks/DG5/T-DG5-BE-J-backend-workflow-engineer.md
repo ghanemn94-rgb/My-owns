@@ -1,10 +1,50 @@
 # Handback T-DG5-BE-J (backend-workflow-engineer): starters as rules, S12-004 instantiation, dependency slips
 
+## Continuation run (T-DG5-BE-JB)
+
+- **This run:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-JB-backend-workflow-engineer-20261014T232512Z-65407cf3","session_id":"65407cf3-e10a-4ec5-b831-88c0a36985d7"}`.
+  - Assignment `docs/delivery/assignments/DG5/T-DG5-BE-JB.md`, sha256 `a3c57037…51eea` (verified at start).
+  - Start `2026-10-14T23:25:25Z` (`date -u`); end in §9.
+- **Interrupted run:** `DG5-T-DG5-BE-J-backend-workflow-engineer-20261014T214648Z-d16a7a73` (D-151, the D-147 procedure).
+  - It was stopped by the container restart at `2026-10-14T23:24:19Z`, exit 143 with no result line.
+  - Its transcript shows it was waiting on its final full integration run (`Full integration run alone`, killed, exit 137).
+  - Its tree is the orchestrator's WIP commit `4eee6f9` on `dg5/be-j`, which this run continued from. This run's own changes are **uncommitted** on top of `4eee6f9`.
+- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` exits 0, `PASS gate DG4 (historical)` (`validate-dg4-historical-start-B.log`), at the start and again at the end (§9).
+
+### What I found (handback compared with the tree)
+
+1. **Every file in §1 exists and contains what §1 says.**
+   - I read the named-line edits in `handlers/index.ts`, `queues/index.ts`, `transformations/routes.ts`, `workflows/gates.ts`, `sustainment/handovers.ts`, `methodology/revision-impact.ts` and `portfolio/milestones.ts`, and the headers of `starters.ts` and `platform/request-executions.ts`. They match §1 and §6.
+   - `apps/api/src/modules/automation/request-executions.ts`, which the interrupted run wrote first, does not exist: it was moved to `platform/request-executions.ts` (§6.1).
+   - The tree typechecks, so no source file is truncated.
+2. **One stale comment.** `apps/worker/src/automation/starters.ts` still named `apps/api automation/request-executions.ts`. Corrected to `platform/request-executions.ts` (a comment only; no other stale reference: `grep -rn "automation/request-executions" apps packages` finds none).
+3. **The handback was incomplete.**
+   - §9 was the placeholder `FINAL_CHECKS_PLACEHOLDER`. It is now filled from this run.
+   - The interrupted run's `integration.log` ends mid-run (it was the run killed by the restart): no summary and no exit line.
+4. **The logs of the interrupted run are kept unchanged as provenance, but none of them is acceptance evidence.** This covers every log without the `-B` suffix. Some are partial or show failures that were fixed later:
+   - `integration-run1-crashed.log`: exit 1, with 2 failures and an `ERR_IPC_CHANNEL_CLOSED` worker crash;
+   - `unit-locale-unset-run1-stale.log` and `unit-locale-unset-run2-under-load.log`: exit 1.
+   §3 explains these runs. **Every acceptance check of this assignment was re-run by this run on the final tree, with `-B` logs (§9).**
+5. **`launch_procedure`: still not done.** It is the separable second half named in §7.1. This run checked whether it could be finished, and found a **contract blocker** besides the time needed for a full worker twin and its parity test (§5.7):
+   - a `service`-identity launch cannot be stored (`procedure_instance.launched_by` is `NOT NULL REFERENCES app_user`);
+   - an approval step cannot be requested without a person (`requestApprovalInTx`).
+   The architect must decide this before the action is implemented. I did **not** register a descriptor: registering one would make the action `adminSelectable` (ADR-0043 amendment item 4) with no worker executor behind it.
+
+### What I finished and re-ran
+
+- Corrected the comment above (item 2).
+- Added §5.7 (the `launch_procedure` contract blocker) and updated §7.1.
+- Filled §9 with this run's checks: typecheck, build, lint, prettier, openapi lint, `pnpm test` with the locale unset and with `C.UTF-8`, the integration suite on a disposable PostgreSQL (ports 23800–23849), and the DG4 historical validator at the start and at the end. Every result is from this run's `-B` logs.
+
+---
+
+The sections below are the interrupted run's handback. Where a statement is no longer true, it has been corrected in place.
+
 - **Stage / gate:** P5, DG5 (BUILDING). Section: `docs/architecture/p5-work-split.md` §E.1.
-- **Invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-J-backend-workflow-engineer-20261014T214648Z-d16a7a73","session_id":"d16a7a73-8c7d-4c25-af80-07c8ad0a28b3"}`
+- **Invocation reference (interrupted run):** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-J-backend-workflow-engineer-20261014T214648Z-d16a7a73","session_id":"d16a7a73-8c7d-4c25-af80-07c8ad0a28b3"}`. Continued by T-DG5-BE-JB (above).
 - **Assignment:** `docs/delivery/assignments/DG5/T-DG5-BE-J.md`, sha256 `cbcf295c…aa5a` (verified at start).
-- **Base:** branch `dg5/be-j`, `HEAD` `b8c9769f50aab36363ba4127fc63de5292240cfc` (D-150 integrated tree). Changes are left **uncommitted**.
-- **Time:** start `2026-10-14T21:47:03Z`; end in §9.
+- **Base:** branch `dg5/be-j`. The interrupted run started at `HEAD` `b8c9769f50aab36363ba4127fc63de5292240cfc` (the D-150 integrated tree). Its work is the WIP commit `4eee6f9`, made by the orchestrator, and this run's changes are left **uncommitted** on top of it.
+- **Time:** the interrupted run started at `2026-10-14T21:47:03Z` and was stopped at `2026-10-14T23:24:19Z`. The continuation run's end time is in §9.
 - **Engineering gates vs product gates:** nothing here reads or writes DG0–DG7. No starter, job, seed or test decides a G1–G6 approval. The one gate decision in the tests is a synthetic demo decision by a test person, the DG4 test pattern.
 - **Migrations:** none. `0077` is left unused, because no starter needed a seed change.
 - **API endpoints added:** `GET /api/v1/transformations/{transformationId}/dependency-slips` (`listDependencySlips`). Extended: `POST /api/v1/transformations` accepts the optional `launchPlan: {startDate}` (`createTransformation`, additive).
@@ -49,6 +89,7 @@ Each edit is limited to named lines.
 | `apps/api/test/support/p5-pending-be-j.ts` | `listDependencySlips` removed (list now empty). Adds `P5_PENDING_TESTS_BE_J`, which records the one pending acceptance test (§7). |
 | `apps/api/test/integration/contract/p5-exercises-be-j.ts` | Exercises `listDependencySlips` (200, AUD 200, 400, 401, 404) and `createTransformation` with `launchPlan` (201), through the validating client. Mirror: `dependencySlipPage`. |
 | `apps/api/test/integration/transformations.test.ts` (DG1) | The outbox assertion now expects `schema_version: 2` and `launchPlan: null`. The additive v2 event requires this. |
+| `apps/worker/src/automation/starters.ts` (continuation run) | Header comment corrected: the request recorder lives in `platform/request-executions.ts`, not `automation/request-executions.ts`. Comment only. |
 | `apps/worker/test/integration/outbox.test.ts` (DG1) | The "one audit event" assertion is narrowed to the starter's own `transformation.starter_automation_*` action. Starter 1 now also writes checklist rows, role tasks and its execution, each with its own audit event. The request event is still written exactly once. |
 
 ## 2. Behaviour delivered, per requirement row
@@ -132,7 +173,7 @@ BE-J's share is replay ×3 per starter, which creates nothing new: covered for e
 
 ## 3. Checks actually run
 
-Environment: Node 24.21.0, offline. PostgreSQL via `tests/qa/support/with-pg.sh` on ports 23800–23849 only. Logs are in `docs/delivery/handbacks/DG5/T-DG5-BE-J-evidence/`. **The final results are in §9;** this section lists the targeted runs during the work.
+Environment: Node 24.21.0, offline. PostgreSQL via `tests/qa/support/with-pg.sh` on ports 23800–23849 only. Logs are in `docs/delivery/handbacks/DG5/T-DG5-BE-J-evidence/`. **The final results are in §9;** this section lists the interrupted run's targeted runs during the work. They are provenance only: their logs have no `-B` suffix, and none of them is acceptance evidence. The continuation run re-ran every acceptance check (§9).
 
 | Command | Result |
 |---|---|
@@ -160,6 +201,16 @@ Environment: Node 24.21.0, offline. PostgreSQL via `tests/qa/support/with-pg.sh`
 5. **Zod mirror.** The `dependencySlipPage` mirror is a new shared file plus one barrel line. These are not in the §E.1 file list, but rule 14 needs a mirror. No OpenAPI change.
 6. **`dependency.slipped` is not in `OUTBOX_EVENT_SCHEMAS`.** Once it was registered, BE-H2's dry run validated samples strictly against it (`dry-run.ts`: a registered event schema is parsed with `safeParse`). That broke `automation-lifecycle.test.ts` "a numeric condition with no usable value …", whose `dependency.slipped` samples carry only condition fields (missing `slipDays`; `5.5`; decimal strings). The full run showed the failure. With the strict event shape, that test's premise (a sample with the value missing) is impossible for this trigger. I therefore kept the schema out of the registry: the producer and consumer parse `dependencySlippedV1` directly, and the dry run keeps its condition-field validation for this trigger. **For the architect:** register it, and move BE-H2's test to a trigger without a registered schema or a full-shape sample.
 
+7. **`launch_procedure` with a `service` identity cannot be stored (found by the continuation run; blocks §7.1).** ADR-0043 §2 and §3 allow `launch_procedure` under either identity. Two parts of the design rule a service launch out:
+   - **The table.** `0069` declares `procedure_instance.launched_by uuid NOT NULL REFERENCES app_user (id)`, with CHECK `procedure_instance_launcher (launched_by = created_by)`. The service identity is not an `app_user` (ADR-0043 §3: actor `service`, `onBehalfOfUserId` null), so it has no launcher to record.
+   - **Approval steps.** `procedures/steps.ts` `requestStepApproval` throws "a person's action requests a business approval" when the audit context has no user. `workflows/approvals.ts` `requestApprovalInTx` throws "a person requests an approval". A procedure whose first position is an approval step cannot be launched by the service.
+   - The worker also cannot call `requestApprovalInTx` (ADR-0002 rule 5). Its twin of the launch would therefore need a twin of the workflows approval request too, or a port the ADR does not define.
+   - **Decision needed (architect), one of:**
+     - (a) `launch_procedure` only with `runAs: initiating_user`: launcher = the initiating user, with the API refusing a service version that names it, under a new §9 code;
+     - (b) launcher = the rule's owner (`ownerUserId`) for service rules;
+     - (c) a nullable launcher for automation launches: a migration in BE-J's free number `0077`, which needs its own guard and an approval-request path without a person.
+   - Until then `launch_procedure` keeps `adminSelectable: false` (ADR-0043 amendment item 4). No descriptor is registered.
+
 No new dependency, and no migration.
 
 ## 6. Deviations from the §E.1 file list (each needed; listed for the integrator)
@@ -182,6 +233,7 @@ No new dependency, and no migration.
    - Why: the worker executor must twin BE-F2's whole `launchProcedureInTx` without importing API code: pin resolution, input validation, step instances, `advance` with step conditions, `procedure_step.activated` events and approval-step requests. A correct parity test for that did not fit with the full verification runs.
    - What remains: the `launchProcedureActionParameters` schema (`{procedureCode, targetTransformationId?, inputValues?}`, launch key = the action key, ADR-0043 §2), the API descriptor and its `server.ts` registration line, the worker executor and its `AUTOMATION_EXECUTORS` line in `engine.ts` (BE-H2's file), and the parity test.
    - Until then `launch_procedure` stays `adminSelectable: false` (ADR-0043 amendment item 4).
+   - **Blocked by a contract decision** (continuation run, §5.7): a `service` identity cannot be the launcher (`launched_by NOT NULL REFERENCES app_user`), and an approval step needs a person to request it. The architect must decide (a), (b) or (c) of §5.7 before the executor and its parity test are written.
 2. **REQ-S12-004, "with the plan flag the 90-day tasks are dated from the start date":** pending until BE-P (§2, §5.1).
 3. **Starter 12:** wrapped automatically once BE-L2 registers `governance.meeting_cutoff_scan`. Its regression test belongs with BE-L2's handler.
 4. **Not covered by a per-starter regression case:** the *event* path of starter 10 (`governance.blocker_escalation` on `blocker_status.recorded`), which needs a meeting and blocker fixture. It is wrapped like the others, and its scan path is covered.
@@ -200,7 +252,33 @@ No new dependency, and no migration.
 
 ## 9. Final checks (on the final tree)
 
-FINAL_CHECKS_PLACEHOLDER
+All rows below were run by the **continuation run (T-DG5-BE-JB)** on the final tree (`4eee6f9` plus this run's uncommitted changes).
+
+- Environment: Node 24.21.0 at `/opt/nvm/versions/node/v24.21.0/bin`, offline. 4 CPUs, shared with three other W8 tasks.
+- Logs: `docs/delivery/handbacks/DG5/T-DG5-BE-J-evidence/*-B.log`. Each log starts with its command and the start time, and ends with the end time and `exit=<code>`.
+- Before the tests, empty `.claude/.cc-writes` folders under `apps`, `packages` and `tests` were removed (none was found).
+
+| # | Command | Exit | Result | Log |
+|---|---|---|---|---|
+| 4 | `node tools/gates/validate.mjs --historical --stage DG4` (start, 23:25Z) | 0 | `PASS gate DG4 (historical)` | `validate-dg4-historical-start-B.log` |
+| 1 | `pnpm -r typecheck` | 0 | all 6 packages `Done` | `typecheck-B.log` |
+| 1 | `pnpm -r build` | 0 | all packages built | `build-B.log` |
+| 1 | `pnpm lint` (`eslint . --max-warnings=0`) | 0 | no warning | `lint-B.log` |
+| 1 | `pnpm openapi:lint` | 0 | passes | `openapi-lint-B.log` |
+| 1 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` (after the handback's last edit) | 0 | `All matched files use Prettier code style!` | `prettier-B.log` |
+| 2 | `pnpm test`, locale unset (`env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE`) | 0 | unit-node 105 files / **1885 passed**; unit-web 72 / **1400 passed**; unit-formula-nocodegen 3 / **259 passed, 2 skipped** (the existing by-design skips); 0 failed | `unit-locale-unset-B.log` |
+| 2 | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | 0 | the same counts: 1885; 1400; 259 + 2 skipped; 0 failed | `unit-c-utf8-B.log` |
+| 3 | `QA_PG_PORT=23800 MTH_PORT_POOL=23801-23849 tests/qa/support/with-pg.sh pnpm test:integration` (locale unset) | 0 | PostgreSQL 16.13 on port 23800 (attempt 1). **231 files, 2257 tests passed, 0 failed**, in 1653.8 s. BE-J's own files: `starters.test.ts` 24, `starters-be-j.test.ts` 9, `contract.test.ts` 74, and the two adjusted DG1 files `transformations.test.ts` 30 and `outbox.test.ts` 10. `automation-lifecycle.test.ts` 12 (§5.6) | `integration-B.log` |
+| 4 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | 0 | `PASS gate DG4 (historical)` (00:29Z) | `validate-dg4-historical-end-B.log` |
+
+- **Failed, flaky or timed-out tests in the `-B` logs: none.** No test was retried, and no run was repeated.
+- **Pinned counts:** no change. `contract.test.ts` passes on the existing media-type triple and rate-limit floor (74/74); the one new operation is a bodiless GET.
+- **Earlier failures (interrupted run only).** The failures in that run's logs, listed in §3, are not part of this run. They were:
+  - `integration-run1-crashed.log`: the BE-H2 lifecycle test, fixed by §5.6. Also the F-DG2-411 pool-exhaustion case and an `ERR_IPC_CHANNEL_CLOSED` crash of a Vitest worker, under the load of that time.
+  - The unit runs: the ADR-0002 boundary tests, fixed by §6.1.
+
+  On this run's final tree the same suites pass: `automation-lifecycle.test.ts` 12/12; `request-io.test.ts` 10/10, including the F-DG2-411 case "an exhausted pool answers 503 …"; `architecture.test.ts` 139/139 in both locales.
+- **End time:** `2026-10-15T00:30:24Z` (`date -u`).
 
 ## 10. Merge instructions
 

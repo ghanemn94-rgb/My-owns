@@ -32,7 +32,7 @@ export const STARTER_HANDLER_ACTION = "starter_handler";
 
 /**
  * Queue -> starter rule (0075 `p5_starter`; ADR-0044 §1 table). Starters 5, 14 (its accept path) and 15 are REQUEST
- * starters recorded in the API transaction (apps/api automation/request-executions.ts). A queue whose handler is not
+ * starters recorded in the API transaction (apps/api platform/request-executions.ts). A queue whose handler is not
  * registered yet (governance.meeting_cutoff_scan, BE-L2) is wrapped as soon as its handler is.
  */
 export const STARTER_RULE_BY_QUEUE: Readonly<Record<string, string>> = {
