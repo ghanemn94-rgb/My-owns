@@ -1,15 +1,92 @@
 # Handback T-DG5-BE-Q (backend-workflow-engineer): the 165 verbatim blocks, block reads and links in both directions (p5-work-split §I.1)
 
+## 0. Continuation run (T-DG5-BE-QB)
+
+### Run details
+
+- **Interrupted run:** `DG5-T-DG5-BE-Q-backend-workflow-engineer-20261014T214728Z-5877d370` (session `5877d370-f793-40e0-82a7-72a9d6784372`). A container restart on 2026-10-14 stopped it (exit 143, no result). D-151 and the D-147 procedure apply.
+- **Continuation run:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-QB-backend-workflow-engineer-20261014T232552Z-b97934d2","session_id":"b97934d2-150a-4d1c-8307-dc8c00bc2373"}`.
+- **Assignment:** `docs/delivery/assignments/DG5/T-DG5-BE-QB.md`, sha256 `be25d597554ca2540f482e6113d7b4893838964e361f9ca19d2824d7712ac784` (verified at the start).
+- **Time:** start `2026-10-14T23:26:06Z`, end `2026-10-15T00:32:54Z` (`date -u`).
+- **Tree:** the WIP commit `d3c0854` on `dg5/be-q`, plus the uncommitted changes listed below.
+
+### What I found (the handback compared with the tree)
+
+- **Every file in §2 exists and holds what §2 says:**
+  - `reader.ts` and `source-links.ts`;
+  - the four registration lines in `routes.ts`;
+  - `mapP5PlaybookBlockError` and its one chain line in `db-errors.ts`;
+  - the eight tests in `playbook-blocks.test.ts`;
+  - the four operations and their mirrors in `p5-exercises-be-q.ts`;
+  - `P5_PENDING_BE_Q` set to `[]`;
+  - `0092`;
+  - the generator, the parser, the docx dump and the three Arabic files.
+- **`0092` is reproducible.** `node docs/delivery/handbacks/DG5/T-DG5-BE-Q-evidence/generate-0092.mjs` regenerated it **byte for byte** (`cmp` identical). It printed "165 blocks (73 headings), 240 links { template: 32, procedure: 13, requirement: 195 }".
+  - sha256 of `0092`: `16ca6bec…ef23497`, as stated in §2.
+  - sha256 of `playbook.md`: `5468e5e0…981378`, as stated in §2.
+- **Incomplete parts of the handback:**
+  - **§4 row 10 (full integration)** was still running at the restart. `integration-full.txt` is cut off mid-run, with no summary and no exit code. Its row held the placeholders `INTEGRATION_EXIT`/`INTEGRATION_COUNTS`.
+  - **§4 row 11 (validator at the end)** never ran. `validate-dg4-end.txt` does not exist, although the old §1 cited it.
+  - **The end time** was the placeholder `END_TIME`.
+  - I corrected all of these in place (§1, §4).
+- **One inaccurate code comment.** The header of `source-links.ts` named `resolveReaderVersion`, but the function is `readerContext`. I fixed the comment. No behaviour changed.
+- **Old logs record no Node version.** The interrupted run's check logs don't show which Node ran them. This continuation run's own shell started on Node v22.22.2, so it re-ran everything with `/opt/nvm/versions/node/v24.21.0/bin` first on `PATH`. Every `-B` log records `node v24.21.0` on its first line.
+  - A first pass of typecheck, build, lint and openapi:lint ran on v22 by mistake. All four exited 0. Those results are not reported here, and their logs were overwritten by the v24 runs.
+- **Nothing in §I.1 was left undone**, so no implementation was added. The only source change in this run is the comment.
+
+### Changed in this continuation run (uncommitted, on top of `d3c0854`)
+
+| File | Purpose |
+|---|---|
+| `apps/api/src/modules/methodology/source-links.ts` | Header comment: `resolveReaderVersion` → `readerContext` (comment only). |
+| `docs/delivery/handbacks/DG5/T-DG5-BE-Q-backend-workflow-engineer.md` | This §0, plus corrections to §1 and §4 (placeholders replaced, the missing end check disclosed). |
+| `docs/delivery/handbacks/DG5/T-DG5-BE-Q-evidence/*-B.txt` (10 new logs) | The re-run evidence below. |
+
+### Checks re-run on the final tree
+
+All on Node 24.21.0, offline, ports 23910–23949, this worktree. No empty `.claude/.cc-writes` directory existed in a source folder (`find`, none). Logs are in `T-DG5-BE-Q-evidence/`. Each log ends with a `# command: … | exit=N` line that the shell wrote.
+
+| # | Command | Exit | Result | Log |
+|---|---|---|---|---|
+| B1 | `node tools/gates/validate.mjs --historical --stage DG4` (start) | 0 | `PASS gate DG4 (historical)` | `validate-dg4-start-B.txt` |
+| B2 | `pnpm -r typecheck` | 0 | | `typecheck-B.txt` |
+| B3 | `pnpm -r build` | 0 | | `build-B.txt` |
+| B4 | `pnpm lint` | 0 | | `lint-B.txt` |
+| B5 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | 0 | "All matched files use Prettier code style!" in every batch. The npm warnings about unknown project config are noise. | `prettier-B.txt` |
+| B6 | `pnpm openapi:lint` | 0 | `PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations` | `openapi-lint-B.txt` |
+| B7a | `env -u LANG -u LC_ALL -u LANGUAGE -u LC_CTYPE -u LC_MESSAGES pnpm test` (locale unset; the log prints `locale vars: none`) | **0** | unit-node 105 files, 1885/1885; unit-web 72 files, 1400/1400; unit-formula-nocodegen 3 files, 259 passed + 2 skipped (261) | `unit-locale-unset-B.txt` |
+| B7b | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | **0** | unit-node 1885/1885; unit-web 1400/1400; unit-formula-nocodegen 259 + 2 skipped (261) | `unit-c-utf8-B.txt` |
+| B8 | `QA_PG_PORT=23910 MTH_PORT_POOL=23911-23949 tests/qa/support/with-pg.sh pnpm test:integration` | **0** | 230 files, 2232/2232 passed. Includes `playbook-blocks.test.ts` 8/8 and `contract/contract.test.ts` 74/74. PostgreSQL 16.13 bound port 23910 on attempt 1. Duration 1516 s. | `integration-full-B.txt` |
+| B9 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | 0 | `PASS gate DG4 (historical)` | `validate-dg4-end-B.txt` |
+
+- **Failures and flakiness:** every Vitest invocation in B7a, B7b and B8 passed. None failed, timed out or was flaky. The two load timeouts of the interrupted run (§4 note B) did not recur.
+- **The 2 skipped tests** in unit-formula-nocodegen are the by-design skips that run 7a of the interrupted run also reported.
+- **Pinned counts:** none changed.
+  - All four operations are GETs, so the media-type triple `[361, 360, 1]` is unchanged. So is the 846 operation count.
+  - The rate-limit floor is `>=`.
+  - Pending delta: `P5_PENDING_BE_Q` went from 4 to 0 (§5.3).
+
+### Still true, and still open for the orchestrator
+
+- §5.5: the launch-check port decision.
+- §5.6: no web route exists for a requirement link, and the route patterns need FE-G's confirmation.
+- §6: the two i18n keys for FE-G.
+- §7: the interpretations.
+
+None of these changed. FE-G owns the user-facing text items. This run changed no en/ar string, and none became untrue.
+
 - **Stage / gate:** P5 "Configuration automation and outputs", DG5 (BUILDING). Wave W8.
 - **Invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-Q-backend-workflow-engineer-20261014T214728Z-5877d370","session_id":"5877d370-f793-40e0-82a7-72a9d6784372"}`.
 - **Assignment:** `docs/delivery/assignments/DG5/T-DG5-BE-Q.md` (sha256 `701ae482…737ed3d`, verified at the start).
-- **Working tree:** `/home/user/wt/dg5-be-q`, branch `dg5/be-q`, base `b8c9769` (D-150). All changes are **uncommitted**, as the assignment asks.
-- **Time:** start `2026-10-14T21:47:42Z`. The end time is in §4.
+- **Working tree:** `/home/user/wt/dg5-be-q`, branch `dg5/be-q`, base `b8c9769` (D-150).
+  - The interrupted run's work was committed by the orchestrator as WIP `d3c0854` (D-151).
+  - The continuation run's changes on top of it are **uncommitted**, as the assignment asks.
+- **Time:** the interrupted run started at `2026-10-14T21:47:42Z` and never ended (container restart). The continuation run's times are in §0.
 - **Two gate systems.** Nothing here reads or writes DG0–DG7. Reading the playbook approves nothing. No business, Finance or IT approval is granted. All test data is synthetic.
 
 ## 1. Preceding gate
 
-`node tools/gates/validate.mjs --historical --stage DG4` → **exit 0**, `PASS gate DG4 (historical)`, both at the start (`T-DG5-BE-Q-evidence/validate-dg4-start.txt`) and at the end (`validate-dg4-end.txt`).
+`node tools/gates/validate.mjs --historical --stage DG4` → **exit 0**, `PASS gate DG4 (historical)`, at the interrupted run's start (`T-DG5-BE-Q-evidence/validate-dg4-start.txt`). That run never reached its end check, so `validate-dg4-end.txt` was never written. The continuation run ran it at its start and at its end (§0: `validate-dg4-start-B.txt`, `validate-dg4-end-B.txt`).
 
 ## 2. Files changed
 
@@ -62,7 +139,9 @@ Acceptance (quoted): *"A01: searching 'value pools' returns the Diagnose blocks;
   - `text_en` cannot be changed: `playbook_block_immutable` refuses changes to `text_en` and `section_block_ref`, and any delete. A link delete is refused (append-only). mth_app gets 42501. Only the owner may correct `text_ar` (shown rolled back).
   - A pinned read without `transformation.read` gives 404 on all four operations, for a user with no grants and for another organization's TO. An unknown transformation id gives the same 404.
 
-## 4. Checks (Node 24.21.0, offline, ports 23900–23949, this worktree)
+## 4. Checks of the interrupted run (history only; §0 holds the evidence for the final tree)
+
+These logs record no Node version, so they can't show which Node ran them. Each one is superseded by its `-B` log in §0.
 
 | # | Command | Exit | Result | Log |
 |---|---|---|---|---|
@@ -78,8 +157,8 @@ Acceptance (quoted): *"A01: searching 'value pools' returns the Diagnose blocks;
 | 7d | the two tests of 7c, alone, locale unset | 0, 0 | `architecture.test.ts` 139/139; `raid.test.tsx` 18/18 | `unit-locale-unset-reruns.txt` |
 | 8 | `QA_PG_PORT=23900 … with-pg.sh npx vitest run --project integration …/playbook-blocks.test.ts` | 0 | 8/8 | `it-playbook-blocks-run1.txt` |
 | 9 | `QA_PG_PORT=23902 … with-pg.sh npx vitest run --project integration …/contract/contract.test.ts` | 0 | 74/74 | `it-contract-run1.txt` |
-| 10 | `QA_PG_PORT=23910 MTH_PORT_POOL=23911-23949 tests/qa/support/with-pg.sh pnpm test:integration` | INTEGRATION_EXIT | INTEGRATION_COUNTS | `integration-full.txt` |
-| 11 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | END_VALIDATE_EXIT | | `validate-dg4-end.txt` |
+| 10 | `QA_PG_PORT=23910 MTH_PORT_POOL=23911-23949 tests/qa/support/with-pg.sh pnpm test:integration` | **none** | Interrupted by the container restart. The log is truncated mid-run, with no summary and no exit code. **Not evidence.** Superseded by §0 row B8. | `integration-full.txt` |
+| 11 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | **not run** | Never reached. `validate-dg4-end.txt` does not exist. Superseded by §0 row B9. | none |
 
 **Note A (a real defect of mine, fixed).** Run 1 failed in `architecture.test.ts` and `methodology.test.ts`: *"modules/methodology/reader.ts: computed member with a non-literal key (line 186) bypasses the module-interface check"*. The cause was `LINK_KEY[kind]` (F-DG1-124). I replaced it with a `Map` lookup. Both suites then passed (143/143), and so did run 7a, which started after the fix.
 
@@ -89,7 +168,7 @@ Acceptance (quoted): *"A01: searching 'value pools' returns the Diagnose blocks;
 
 Both passed in 7a (`C.UTF-8`) and alone with the locale unset (7d). I report 7c as exit 1, not as a pass. The orchestrator's merged-tree run is the full check.
 
-**End time:** END_TIME.
+**End time:** none. The interrupted run ended at the container restart (exit 143, no result). The continuation run's end time is in §0.
 
 ## 5. Contract, schema, migration and wiring notes for the orchestrator
 

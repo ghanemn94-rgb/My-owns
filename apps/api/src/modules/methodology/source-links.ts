@@ -3,7 +3,7 @@
 //   GET /methodology/blocks/{blockRef}/links               listMethodologyBlockLinks (session)
 //   GET /methodology/templates/{templateCode}/source-links listTemplateSourceLinks   (session)
 // With `transformationId`, both also need transformation.read there (else 404) and resolve that transformation's pinned
-// methodology version; without it, the latest published `playbook` version (reader.ts, resolveReaderVersion).
+// methodology version; without it, the latest published `playbook` version (reader.ts, readerContext).
 //
 // Resolved links of a version = the seeded playbook_block_link rows (0092), minus the version's `linksRemoved`, plus
 // its `linksAdded` (the `block.<Bxxxx>` methodology_text element, ADR-0049 §4; the 0089 reader guard checks their
