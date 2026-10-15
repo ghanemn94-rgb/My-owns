@@ -96,8 +96,9 @@ export const CHANGE_CONTROL_REFUSALS = {
   "change_request.not_withdrawable": "A decided change request cannot be withdrawn.",
   "change_request.subject_moved":
     "The record changed after this request was submitted; withdraw it and raise a new one.",
+  // ADR-0047 §3 (T-DG5-KBE-E2; F-DG4-160): restatement exists from P5, so the DG4 text changes; code and status stay.
   "change_request.retrospective_not_supported":
-    "A retrospective restatement is not supported; changes take effect from now on.",
+    "A change request takes effect from now on; restate closed periods through a KPI restatement.",
   "change_request.not_requester": "Only the requester or the transformation lead can change this request.",
   "kpi_version.change_request_required":
     "This KPI already has an active version; changing its definition, baseline or target needs an approved change request.",

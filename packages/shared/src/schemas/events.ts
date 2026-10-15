@@ -13,6 +13,8 @@ import { checkFailedPayload } from "./corrective.ts";
 // P4 slice D (T-DG4-BE-G; ADR-0032 §8.3): a blocker RAG observed in one meeting cycle.
 import { blockerStatusRecordedV1 } from "./executive-decisions.ts";
 import { jobRunRequestedV1 } from "./job-operations.ts";
+// P5 slice G (T-DG5-KBE-E2; ADR-0047 §3, §7): an approved KPI restatement, consumed once by kpi.recalculate.
+import { kpiRestatementApprovedV1 } from "./kpi-restatement.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -193,6 +195,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "job.run_requested": { 1: jobRunRequestedV1 },
   // T-DG5-BE-M (ADR-0046 §5): an export job to render; consumer reports.export (apps/worker queues/reports.ts).
   "export_job.requested": { 1: exportJobRequestedV1 },
+  // T-DG5-KBE-E2 (ADR-0047 §3, §7): the restatement run and the reissue offers; consumer kpi.recalculate (queues/kpi.ts).
+  "kpi_restatement.approved": { 1: kpiRestatementApprovedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

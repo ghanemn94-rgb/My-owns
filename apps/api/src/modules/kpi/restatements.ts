@@ -6,7 +6,8 @@
 //                                                                     submission on: the retained rows (retained: true)
 //   POST /transformations/{t}/kpi-restatements/{r}/submit             retain the reconciliation, submit, decision tasks
 //   POST /transformations/{t}/kpi-restatements/{r}/withdraw           the requester withdraws a draft or submitted one
-// The decision (decideKpiRestatement) is KBE-E2's (restatement-decisions.ts, registered from here by KBE-E2).
+// The decision (decideKpiRestatement, restatement-decisions.ts) and the reissue offers (listKpiRestatementReissueOffers,
+// restatement-offers.ts) are KBE-E2's, registered from here (T-DG5-KBE-E2).
 //
 // - A restatement applies one APPROVED version (active or superseded) of the KPI to explicitly selected CLOSED
 //   reporting periods of the version's frequency (1-24). An open period takes the new version prospectively (§1).
@@ -67,6 +68,8 @@ import {
   toReconciliationRow,
   type ReconciliationRowData,
 } from "./restatement-reconciliation.ts";
+import { registerKpiRestatementDecisionRoutes } from "./restatement-decisions.ts";
+import { registerKpiRestatementOfferRoutes } from "./restatement-offers.ts";
 import { ruleProblem } from "./support.ts";
 
 const JSON_BODY = ["application/json"] as const;
@@ -671,5 +674,8 @@ export function registerKpiRestatementRoutes(app: FastifyInstance, deps: ModuleD
     `GET ${ITEM}/reconciliation`,
     `POST ${ITEM}/submit`,
     `POST ${ITEM}/withdraw`,
+    // T-DG5-KBE-E2: decideKpiRestatement and listKpiRestatementReissueOffers.
+    ...registerKpiRestatementDecisionRoutes(app, deps),
+    ...registerKpiRestatementOfferRoutes(app, deps),
   ];
 }

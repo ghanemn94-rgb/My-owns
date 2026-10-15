@@ -175,7 +175,7 @@ describe("change requests: create, read, edit, withdraw (S-4)", () => {
     expect([past.status, past.body.code, past.body.detail]).toEqual([
       422,
       "change_request.retrospective_not_supported",
-      "A retrospective restatement is not supported; changes take effect from now on.",
+      "A change request takes effect from now on; restate closed periods through a KPI restatement.",
     ]);
     const stale = await send("POST", CR(), { session: c.lead.session, body: scopeBody(ini, { subjectVersion: 9 }) });
     expect([stale.status, stale.body.currentVersion]).toEqual([409, 1]);

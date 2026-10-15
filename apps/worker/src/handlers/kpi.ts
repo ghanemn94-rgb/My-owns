@@ -190,19 +190,21 @@ interface Kpi {
   } | null;
 }
 
-async function loadKpi(tx: Tx, id: string): Promise<Kpi | null> {
+/**
+ * The KPI with its ACTIVE version, or with the given version of the KPI (T-DG5-KBE-E2: a restatement run evaluates the
+ * restated KPI with the restated version, which may be superseded; ADR-0047 §3 item 2). Every DG4 caller passes no
+ * version, or the id of the active version it loaded, so its result is unchanged.
+ */
+async function loadKpi(tx: Tx, id: string, versionId?: string): Promise<Kpi | null> {
   const d = await tx
     .selectFrom("kpi_definition")
     .select(["id", "unit_kind", "unit_label", "currency", "frequency"])
     .where("id", "=", id)
     .executeTakeFirst();
   if (!d) return null;
-  const v = await tx
-    .selectFrom("kpi_version")
-    .selectAll()
-    .where("kpi_definition_id", "=", id)
-    .where("status", "=", "active")
-    .executeTakeFirst();
+  let vq = tx.selectFrom("kpi_version").selectAll().where("kpi_definition_id", "=", id);
+  vq = versionId === undefined ? vq.where("status", "=", "active") : vq.where("id", "=", versionId);
+  const v = await vq.executeTakeFirst();
   const trim = (c: string | null) => (c === null ? null : c.trim());
   return {
     id: d.id,
@@ -773,6 +775,8 @@ export async function recalculate(
   attempt?: JobAttempt,
 ): Promise<RecalculateResult> {
   const envelope = outboxEnvelope.parse(data);
+  // T-DG5-KBE-E2 (ADR-0047 §3): an approved restatement's one run (and its reissue offers), on the same queue.
+  if (envelope.eventType === RESTATEMENT_APPROVED_EVENT) return applyRestatement(db, envelope, jobId);
   const trigger = triggerOf(envelope.eventType, envelope.schemaVersion, envelope.payload);
   const startedAt = new Date();
   try {
@@ -1016,6 +1020,39 @@ async function runCalculation(
     }
   }
 
+  return persistRun(ctx, evaluations, {
+    kind: trigger.kind,
+    recordType: trigger.recordType,
+    recordId: trigger.recordId,
+    slot: trigger.slot,
+    idempotencyKey,
+    startedAt,
+  });
+}
+
+/** The identity of a calculation run: its trigger (the unique key) and idempotency key. */
+interface RunIdentity {
+  readonly kind: Trigger["kind"] | "restatement_approved";
+  readonly recordType: Trigger["recordType"] | "kpi_restatement";
+  readonly recordId: string;
+  readonly slot: number;
+  readonly idempotencyKey: string;
+  readonly startedAt: Date;
+}
+
+/**
+ * Writes one completed calculation run with its evaluations, its new data-quality findings and its outbox events
+ * (ADR-0027 §8 step 2; extracted unchanged from runCalculation by T-DG5-KBE-E2 so the restatement run writes its run
+ * the same way). `already_run` when the run's unique trigger or idempotency key is taken: nothing else is written.
+ */
+async function persistRun(
+  ctx: Context,
+  evaluations: readonly EvaluationRow[],
+  id: RunIdentity,
+): Promise<RecalculateResult> {
+  const { tx, organizationId } = ctx;
+  const trigger = { ...id, transformationId: ctx.transformationId };
+  const { idempotencyKey, startedAt } = id;
   const runId = await sql<{ id: string }>`SELECT mth_uuid_v7() AS id`.execute(tx).then((r) => r.rows[0]!.id);
   const rows = [];
   for (const e of evaluations) rows.push(await toEvaluationRow(ctx, e, runId));
@@ -1168,7 +1205,8 @@ async function enqueue(
 /** One kpi_evaluation row: storage rounding once, expected-to-date, RAG, variance, trend (ADR-0028 §1-§6). */
 async function toEvaluationRow(ctx: Context, e: EvaluationRow, runId: string) {
   const { tx } = ctx;
-  const kpiVersion = (await loadKpi(tx, e.kpiDefinitionId))!;
+  // The version the slot was evaluated with (the active one in a DG4 run; the restated one in a restatement run).
+  const kpiVersion = (await loadKpi(tx, e.kpiDefinitionId, e.kpiVersionId))!;
   const v = kpiVersion.version!;
   // Storage: round once (numeric(24,6)); a milestone stores no numeric value.
   let result = e.result;
@@ -1411,6 +1449,431 @@ async function toEvaluationRow(ctx: Context, e: EvaluationRow, runId: string) {
 function roundStored(value: string): string | null {
   const r = roundForStorage(value);
   return r.ok ? r.stored : null;
+}
+
+// ------------------------------------------------------------------------------------------------ restatement (P5)
+
+/** The outbox event of an approved KPI restatement (ADR-0047 §3, §7), routed to kpi.recalculate (queues/kpi.ts). */
+export const RESTATEMENT_APPROVED_EVENT = "kpi_restatement.approved";
+/** ADR-0016 §6 lock class `kpiRestatement` (the API's ADVISORY_LOCK_CLASSES and the 0085 guard use the same one). */
+export const KPI_RESTATEMENT_LOCK = 730266;
+/** The work-item kind of a report reissue offer (0085; My Work "Assigned actions"). */
+export const REISSUE_OFFER_KIND = "report_reissue_offer";
+const REPORT_ISSUE = "report.issue";
+
+const restatementPayload = z.object({ restatementId: z.uuid(), kpiDefinitionId: z.uuid(), transformationId: z.uuid() });
+
+/**
+ * The one calculation run of an approved KPI restatement (ADR-0047 §3 items 2-4; REQ-S07-016 automation "Restatement
+ * approved -> recalc selected periods and offer report reissue"; T-DG5-KBE-E2). In ONE transaction under runOnce (key:
+ * the event's idempotency key) and the `kpiRestatement` lock on the KPI:
+ *   1. nothing when the restatement already has its run (trigger restatement_approved, slot 1) or is not `approved`
+ *      (a replay: the run key exists and the restatement is `applied`);
+ *   2. the restated KPI's slots of the selected periods, with the RESTATED version: exactly the retained
+ *      reconciliation's slots (period, scope, basis), evaluated by the DG4 rules (evaluateSlot/toEvaluationRow). A
+ *      formula KPI binds each input to its source's latest stored evaluation of the same scope and period, on the
+ *      input's own basis, as the reconciliation preview does (D-156 g), so the applied values equal the retained
+ *      "after" values (for the same business date: freshness is evaluated on the day the run executes);
+ *   3. every formula KPI that reads it, transitively, for the same periods and scopes, with its own active version
+ *      (the DG4 reader rule; an input the run does not compute is bound from its source's accepted values);
+ *   4. one calculation_run (trigger restatement_approved / kpi_restatement, slot 1, idempotency key
+ *      `kpi_restatement:<id>`; the DG4 UNIQUE keys are the exactly-once backstops), its evaluations, findings and
+ *      events, then the restatement `applied` with the run (one audit event, actor service on behalf of the decider);
+ *   5. one reissue offer per issued (or superseded) report snapshot of the transformation that recorded a version of
+ *      this KPI (report_snapshot_version `kpi_version`) or the KPI definition as a source, and whose period overlaps a
+ *      selected period or that has no period; and one `report_reissue_offer` work item per series and holder of
+ *      report.issue in the transformation (dedupe `report_reissue_offer:<restatementId>:<seriesId>:<userId>`).
+ * Issued snapshots are never changed; earlier evaluations are never updated or deleted. When the run throws, the
+ * transaction rolls back and pg-boss retries; no `failed` run is recorded for a restatement, because that run would be
+ * its one run and the restatement could then never be applied (the dead-lettered job is retried from the failure
+ * queue instead). A job never decides a business approval: the decision was a person's, through the API.
+ */
+async function applyRestatement(
+  db: Db,
+  envelope: z.infer<typeof outboxEnvelope>,
+  jobId: string,
+): Promise<RecalculateResult> {
+  const schema = outboxPayloadSchema(envelope.eventType, envelope.schemaVersion);
+  if (!schema) throw new Error(`kpi.recalculate: no schema for ${envelope.eventType} v${envelope.schemaVersion}`);
+  const p = restatementPayload.parse(schema.parse(envelope.payload));
+  const startedAt = new Date();
+  const res = await runOnce(db, RECALCULATE_CONSUMER, envelope.idempotencyKey, async (tx) => {
+    await sql`SELECT pg_advisory_xact_lock(${KPI_RESTATEMENT_LOCK}::integer, hashtext(${p.kpiDefinitionId}::text))`.execute(
+      tx,
+    );
+    const existing = await tx
+      .selectFrom("calculation_run")
+      .select("id")
+      .where("trigger_kind", "=", "restatement_approved")
+      .where("trigger_record_id", "=", p.restatementId)
+      .where("trigger_slot", "=", 1)
+      .executeTakeFirst();
+    if (existing) return { outcome: "already_run" as const, runId: existing.id, evaluationCount: 0 };
+    const r = await tx
+      .selectFrom("kpi_restatement")
+      .selectAll()
+      .where("id", "=", p.restatementId)
+      .where("transformation_id", "=", p.transformationId)
+      .forUpdate()
+      .executeTakeFirst();
+    if (!r || r.status !== "approved") return { outcome: "already_run" as const, runId: null, evaluationCount: 0 };
+    return runRestatement(tx, r, startedAt, jobId);
+  });
+  return res.outcome === "duplicate" ? { outcome: "duplicate", runId: null, evaluationCount: 0 } : res.result;
+}
+
+type RestatementRow = {
+  readonly id: string;
+  readonly organization_id: string;
+  readonly transformation_id: string;
+  readonly kpi_definition_id: string;
+  readonly kpi_version_id: string;
+  readonly decided_by: string | null;
+  readonly version: number;
+};
+
+async function runRestatement(tx: Tx, r: RestatementRow, startedAt: Date, jobId: string): Promise<RecalculateResult> {
+  const organizationId = r.organization_id;
+  const periodRows = await tx
+    .selectFrom("reporting_period")
+    .select(["id", "frequency", "period_start", "period_end", "basis", "week_count", "period_label", "status"])
+    .where("organization_id", "=", organizationId)
+    .orderBy("period_start")
+    .execute();
+  const ctx: Context = {
+    tx,
+    organizationId,
+    transformationId: r.transformation_id,
+    businessDate: await businessDate(tx, organizationId),
+    periods: periodRows.map((x) => ({ ...periodInfo(x), label: x.period_label, status: x.status })),
+    computed: new Map(),
+    lineage: new Map(),
+    findings: [],
+  };
+  const restated = (await loadKpi(tx, r.kpi_definition_id, r.kpi_version_id))!;
+  // A KPI as a formula input or reader: the restated KPI with its restated version, every other with its active one.
+  const kpiFor = async (id: string) => (id === restated.id ? restated : await loadKpi(tx, id));
+  const formulaInputs = new Map<string, { variable: string; source: string; basis: ValueBasis; type: Kpi }[]>();
+  const loadFormulaInputs = async (k: Kpi) => {
+    const rows = await tx
+      .selectFrom("kpi_formula_input")
+      .select(["variable_name", "source_kpi_definition_id", "input_basis"])
+      .where("kpi_version_id", "=", k.version!.id)
+      .orderBy("id")
+      .execute();
+    const list = [];
+    for (const x of rows) {
+      const src = await kpiFor(x.source_kpi_definition_id);
+      if (src) list.push({ variable: x.variable_name, source: src.id, basis: x.input_basis as ValueBasis, type: src });
+    }
+    formulaInputs.set(k.id, list);
+  };
+
+  // The restated slots: exactly the retained reconciliation's (period, scope, basis), in its order.
+  const slots = await tx
+    .selectFrom("kpi_restatement_reconciliation as c")
+    .innerJoin("reporting_period as rp", "rp.id", "c.reporting_period_id")
+    .select(["c.reporting_period_id", "c.scope_kind", "c.scope_id", "c.value_basis"])
+    .where("c.restatement_id", "=", r.id)
+    .orderBy("rp.period_start")
+    .orderBy("c.scope_kind")
+    .orderBy("c.scope_id")
+    .orderBy(sql`CASE c.value_basis WHEN 'period' THEN 0 ELSE 1 END`)
+    .execute();
+  const periodIds = [...new Set(slots.map((x) => x.reporting_period_id))];
+  const periodOf = (id: string) => ctx.periods.find((x) => x.id === id)!;
+
+  // A formula KPI restated: each input bound to its source's LATEST STORED evaluation of the same scope id, period and
+  // input basis (the reconciliation preview's formulaValue; D-156 g), with that evaluation's lineage.
+  if (restated.version?.calculationMethod === "formula") {
+    await loadFormulaInputs(restated);
+    for (const slot of slots)
+      for (const i of formulaInputs.get(restated.id) ?? []) {
+        const k = key(i.source, slot.scope_id, slot.reporting_period_id, i.basis);
+        if (ctx.computed.has(k)) continue;
+        const latest = await tx
+          .selectFrom("kpi_evaluation as e")
+          .innerJoin("calculation_run as cr", "cr.id", "e.calculation_run_id")
+          .select(["e.kpi_version_id", "e.value", "e.value_status", "e.value_source", "e.inputs"])
+          .where("e.kpi_definition_id", "=", i.source)
+          .where("e.scope_id", "=", slot.scope_id)
+          .where("e.reporting_period_id", "=", slot.reporting_period_id)
+          .where("e.value_basis", "=", i.basis)
+          .orderBy("cr.seq", "desc")
+          .limit(1)
+          .executeTakeFirst();
+        const result: KpiResult =
+          latest && latest.value !== null && (latest.value_status === "ok" || latest.value_status === "stale")
+            ? ({
+                status: latest.value_status,
+                value: latest.value,
+                reason: latest.value_status === "stale" ? "kpi.stale" : null,
+              } as KpiResult)
+            : unknown("kpi.formula_input_unknown");
+        ctx.computed.set(k, result);
+        ctx.lineage.set(k, {
+          kpiVersionId: latest?.kpi_version_id ?? i.type.version?.id ?? "",
+          valueSource: (latest?.value_source ?? "none") as EvaluationRow["source"],
+          valueStatus: result.status,
+          value: result.value,
+          inputs: (latest?.inputs as Record<string, unknown> | undefined) ?? {},
+        });
+      }
+  }
+
+  const valuesByKpi = new Map<string, Map<string, Map<string, Accepted>>>();
+  const valuesOf = async (kpiId: string) => {
+    if (!valuesByKpi.has(kpiId)) valuesByKpi.set(kpiId, await acceptedValues(tx, kpiId));
+    return valuesByKpi.get(kpiId)!;
+  };
+  const scopesReportedBy = (values: Map<string, Map<string, Accepted>>, period: Context["periods"][number]) =>
+    [...values.entries()]
+      .filter(([, byPeriod]) =>
+        [...byPeriod.keys()].some((pid) => {
+          const x = ctx.periods.find((y) => y.id === pid);
+          return x !== undefined && x.periodEnd <= period.periodEnd;
+        }),
+      )
+      .map(([scopeId]) => scopeId);
+  // The binding-only evaluation of an input the run does not compute (runCalculation's ensureInput, T-DG4-KBE-R1).
+  const bindingOnly = new Map<string, string[]>();
+  const ensureInput = async (
+    src: Kpi,
+    scopeKind: string,
+    scopeId: string,
+    period: Context["periods"][number],
+    basis: ValueBasis,
+    depth: number,
+  ): Promise<void> => {
+    const k = key(src.id, scopeId, period.id, basis);
+    if (ctx.computed.has(k) || !src.version || depth > 32) return;
+    if (src.version.calculationMethod === "formula") {
+      if (!formulaInputs.has(src.id)) await loadFormulaInputs(src);
+      for (const i of formulaInputs.get(src.id)!)
+        await ensureInput(i.type, scopeKind, scopeId, period, i.basis, depth + 1);
+    }
+    const values = await valuesOf(src.id);
+    bindingOnly.set(src.id, scopesReportedBy(values, period));
+    const findingsBefore = ctx.findings.length;
+    const e = evaluateSlot(ctx, src, scopeKind, scopeId, period, basis, values, formulaInputs, bindingOnly);
+    ctx.findings.length = findingsBefore;
+    bindSlot(ctx, k, e);
+  };
+
+  const evaluations: EvaluationRow[] = [];
+  const previouslyReporting = new Map<string, string[]>();
+  if (restated.version) {
+    // 2. The restated KPI: the expected scopes of a roll-up are those that reported by each period's end (the
+    //    reconciliation's rule, period by period).
+    const values = await valuesOf(restated.id);
+    for (const slot of slots) {
+      const period = periodOf(slot.reporting_period_id);
+      previouslyReporting.set(restated.id, scopesReportedBy(values, period));
+      const e = evaluateSlot(
+        ctx,
+        restated,
+        slot.scope_kind,
+        slot.scope_id,
+        period,
+        slot.value_basis as ValueBasis,
+        values,
+        formulaInputs,
+        previouslyReporting,
+      );
+      bindSlot(ctx, key(restated.id, slot.scope_id, period.id, slot.value_basis), e);
+      evaluations.push(e);
+    }
+    // 3. Its formula readers, transitively, through active versions, at the restated entry scopes of each period.
+    const readers: Kpi[] = [];
+    let frontier = [restated.id];
+    const seen = new Set([restated.id]);
+    while (frontier.length > 0) {
+      const rows = await tx
+        .selectFrom("kpi_formula_input as i")
+        .innerJoin("kpi_version as v", "v.id", "i.kpi_version_id")
+        .select("v.kpi_definition_id")
+        .distinct()
+        .where("v.status", "=", "active")
+        .where("i.source_kpi_definition_id", "in", frontier)
+        .orderBy("v.kpi_definition_id")
+        .execute();
+      frontier = [];
+      for (const x of rows)
+        if (!seen.has(x.kpi_definition_id)) {
+          seen.add(x.kpi_definition_id);
+          frontier.push(x.kpi_definition_id);
+          const reader = await loadKpi(tx, x.kpi_definition_id);
+          if (reader?.version) readers.push(reader);
+        }
+    }
+    for (const reader of readers) await loadFormulaInputs(reader);
+    const rollUpOnly = (scopeKind: string) =>
+      scopeKind === "transformation" && restated.version!.entryScopeKind !== "transformation";
+    for (const reader of readers) {
+      const readerValues = await valuesOf(reader.id);
+      const bases: ValueBasis[] = reader.version!.valueNature === "milestone" ? ["period"] : ["period", "cumulative"];
+      for (const periodId of periodIds) {
+        const period = periodOf(periodId);
+        previouslyReporting.set(reader.id, scopesReportedBy(readerValues, period));
+        const scopes = new Map<string, string>();
+        for (const slot of slots)
+          if (slot.reporting_period_id === periodId && !rollUpOnly(slot.scope_kind))
+            scopes.set(slot.scope_id, slot.scope_kind);
+        for (const [scopeId, scopeKind] of scopes) {
+          for (const i of formulaInputs.get(reader.id) ?? [])
+            await ensureInput(i.type, scopeKind, scopeId, period, i.basis, 0);
+          for (const basis of bases) {
+            const e = evaluateSlot(
+              ctx,
+              reader,
+              scopeKind,
+              scopeId,
+              period,
+              basis,
+              readerValues,
+              formulaInputs,
+              previouslyReporting,
+            );
+            bindSlot(ctx, key(reader.id, scopeId, period.id, basis), e);
+            evaluations.push(e);
+          }
+        }
+      }
+    }
+  }
+
+  // 4. The run, then the restatement applied with it.
+  const run = await persistRun(ctx, evaluations, {
+    kind: "restatement_approved",
+    recordType: "kpi_restatement",
+    recordId: r.id,
+    slot: 1,
+    idempotencyKey: `kpi_restatement:${r.id}`,
+    startedAt,
+  });
+  if (run.outcome !== "done" || run.runId === null) return run;
+  const actor = jobActor(jobId, r.decided_by);
+  const applied = await tx
+    .updateTable("kpi_restatement")
+    .set({
+      status: "applied",
+      calculation_run_id: run.runId,
+      applied_at: sql<Date>`now()`,
+      version: sql<number>`version + 1`,
+      updated_at: sql<Date>`now()`,
+      // The application carries out the decider's approval; the job is the actor (service, on behalf of the decider).
+      updated_by: r.decided_by!,
+    })
+    .where("id", "=", r.id)
+    .where("version", "=", r.version)
+    .returning(["version", "applied_at"])
+    .executeTakeFirstOrThrow();
+  await insertAuditEvent(tx, actor, {
+    action: "kpi_restatement.apply",
+    recordType: "kpi_restatement",
+    recordId: r.id,
+    organizationId,
+    transformationId: r.transformation_id,
+    priorVersion: r.version,
+    newVersion: applied.version,
+    changes: { status: { from: "approved", to: "applied" }, calculation_run_id: { from: null, to: run.runId } },
+  });
+
+  // 5. The reissue offers and their work items.
+  await offerReissues(tx, r, restated, actor);
+  return run;
+}
+
+/** Active users whose live grant gives them report.issue on the transformation (the gates.ts scope rule). */
+async function reportIssuers(tx: Tx, t: { id: string; organization_id: string; business_unit_id: string }) {
+  const res = await sql<{ user_id: string }>`
+    SELECT DISTINCT sa.user_id
+    FROM scoped_assignment sa
+    JOIN role r ON r.id = sa.role_id
+    JOIN role_permission rp ON rp.role_id = r.id AND rp.permission_code = ${REPORT_ISSUE}
+    JOIN app_user u ON u.id = sa.user_id AND u.status = 'active'
+    WHERE sa.revoked_at IS NULL AND sa.effective_from <= now() AND (sa.effective_to IS NULL OR sa.effective_to > now())
+      AND sa.organization_id = ${t.organization_id}::uuid
+      AND ((sa.scope_type = 'transformation' AND sa.scope_id = ${t.id}::uuid)
+        OR (r.inherits_downward AND sa.scope_type = 'organization' AND sa.scope_id = ${t.organization_id}::uuid)
+        OR (r.inherits_downward AND sa.scope_type = 'business_unit'
+            AND sa.scope_id IN (SELECT c.ancestor_id FROM business_unit_closure c
+                                WHERE c.descendant_id = ${t.business_unit_id}::uuid)))
+    ORDER BY sa.user_id`.execute(tx);
+  return res.rows.map((x) => x.user_id);
+}
+
+async function offerReissues(tx: Tx, r: RestatementRow, restated: Kpi, actor: ReturnType<typeof jobActor>) {
+  const snapshots = await sql<{
+    id: string;
+    series_id: string;
+    status: string;
+    issue_version: number;
+    definition_code: string;
+    period_label: string | null;
+  }>`
+    SELECT s.id, s.series_id, s.status, s.issue_version, s.definition_code, s.period_label
+    FROM report_snapshot s
+    WHERE s.transformation_id = ${r.transformation_id}::uuid
+      AND s.status IN ('issued', 'superseded')
+      AND (EXISTS (SELECT 1 FROM report_snapshot_version v JOIN kpi_version kv ON kv.id = v.reference_id
+                    WHERE v.snapshot_id = s.id AND v.version_kind = 'kpi_version'
+                      AND kv.kpi_definition_id = ${r.kpi_definition_id}::uuid)
+        OR EXISTS (SELECT 1 FROM report_snapshot_source src
+                    WHERE src.snapshot_id = s.id AND src.record_type = 'kpi_definition'
+                      AND src.record_id = ${r.kpi_definition_id}::uuid))
+      AND (s.period_start IS NULL
+        OR EXISTS (SELECT 1 FROM kpi_restatement_period p JOIN reporting_period rp ON rp.id = p.reporting_period_id
+                    WHERE p.restatement_id = ${r.id}::uuid
+                      AND rp.period_start <= s.period_end AND rp.period_end >= s.period_start))
+    ORDER BY s.series_id, s.issue_version`.execute(tx);
+  if (snapshots.rows.length === 0) return;
+  for (const s of snapshots.rows)
+    await tx
+      .insertInto("kpi_restatement_reissue_offer")
+      .values({
+        id: sql<string>`mth_uuid_v7()`,
+        organization_id: r.organization_id,
+        transformation_id: r.transformation_id,
+        restatement_id: r.id,
+        snapshot_id: s.id,
+        series_id: s.series_id,
+      })
+      .onConflict((oc) => oc.doNothing())
+      .execute();
+  const t = await tx
+    .selectFrom("transformation")
+    .select(["id", "organization_id", "business_unit_id"])
+    .where("id", "=", r.transformation_id)
+    .executeTakeFirstOrThrow();
+  const kpi = await tx
+    .selectFrom("kpi_definition")
+    .select("name")
+    .where("id", "=", restated.id)
+    .executeTakeFirstOrThrow();
+  // One work item per series and issuer, on the series' latest offered snapshot (the current issued one, if any).
+  const latestOfSeries = new Map<string, (typeof snapshots.rows)[number]>();
+  for (const s of snapshots.rows) latestOfSeries.set(s.series_id, s);
+  const issuers = await reportIssuers(tx, t);
+  for (const s of latestOfSeries.values())
+    for (const userId of issuers)
+      await createWorkItemOnce(tx, actor, {
+        organizationId: r.organization_id,
+        transformationId: r.transformation_id,
+        kind: REISSUE_OFFER_KIND,
+        assigneeUserId: userId,
+        subjectType: "report_snapshot",
+        subjectId: s.id,
+        linkPath: `/transformations/${r.transformation_id}/reports/${s.id}`,
+        messageKey: "kpi_restatement.reissue_offer",
+        messageParams: {
+          kpiName: kpi.name,
+          definitionCode: s.definition_code,
+          issueVersion: s.issue_version,
+          periodLabel: s.period_label,
+        },
+        dedupeKey: `report_reissue_offer:${r.id}:${s.series_id}:${userId}`,
+      });
 }
 
 // ------------------------------------------------------------------------------------------------ period open (S12-005)
