@@ -1,0 +1,31 @@
+// Generates the A15 sample files of T-DG5-BE-N from SYNTHETIC documents (no database): a RAID register and a gate
+// pack, in English and Arabic, as PDF, DOCX and PPTX (where the output offers the format), plus a SHA-256 list.
+import { createHash } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import type { ReportDocument } from "@mth/shared/schemas";
+import { render } from "./render.ts";
+import { options, sampleDocument } from "./test-fixtures.ts";
+const out = process.argv[2]!;
+const labels = {
+  en: { "report.registers.raid.title": "RAID register", "report.registers.raid.code": "Code", "report.registers.raid.type": "Type", "report.registers.raid.description": "Description", "report.registers.raid.amount": "Exposure", "report.registers.raid.status": "Status", "report.registers.filters": "Filters", "report.raid_type.risk": "Risk", "report.raid_status.open": "Open" },
+  ar: { "report.registers.raid.title": "سجل المخاطر والافتراضات والقضايا والتبعيات", "report.registers.raid.code": "الرمز", "report.registers.raid.type": "النوع", "report.registers.raid.description": "الوصف", "report.registers.raid.amount": "التعرض", "report.registers.raid.status": "الحالة", "report.registers.filters": "عوامل التصفية", "report.raid_type.risk": "مخاطرة", "report.raid_status.open": "مفتوح" },
+};
+const raid: ReportDocument = sampleDocument([
+  { code: "RAID-014", description: "تأخر مورد التجوال RAID-014 يؤثر على إيرادات الشركاء بقيمة 1,250.50 (مؤقت)", amount: "1250.50" },
+  { code: "RAID-015", description: "Synthetic roaming partner settlement delay (provisional exposure)", amount: "-200.25", provisional: true },
+  { code: "RAID-016", description: "خطر تقني في منصة الفوترة؛ لا تتوفر قيمة بعد", amount: null },
+  { code: "RAID-017", description: '=HYPERLINK("http://x","y") stays text', amount: "75" },
+], null);
+const results: string[] = [];
+for (const language of ["en", "ar"] as const)
+  for (const format of ["pdf", "docx", "pptx"] as const) {
+    for (const [name, doc, status] of [["raid-register", raid, "generated"], ["raid-register-issued", raid, "issued"]] as const) {
+      if (status === "issued" && format !== "pdf") continue;
+      const r = await render(doc, { ...options(format, language), labels, snapshot: { id: "0190a000-0000-7000-8000-0000000000aa", status, issueVersion: status === "issued" ? 2 : null } });
+      const file = `${name}-${language}.${format}`;
+      writeFileSync(`${out}/${file}`, r.bytes);
+      results.push(`${createHash("sha256").update(r.bytes).digest("hex")}  ${file}  (${r.bytes.length} bytes; untranslated content keys: ${r.missingLabels.length})`);
+    }
+  }
+writeFileSync(`${out}/SHA256SUMS.txt`, results.join("\n") + "\n");
+console.log(results.join("\n"));
