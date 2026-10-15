@@ -2826,6 +2826,37 @@ export function mapP5PlaybookBlockError(error: PgErrorLike): HttpProblem | null 
   }
 }
 
+/**
+ * P5 slice I (T-DG5-BE-Q2; ADR-0049 §6, §11): the 0089 trigger methodology_element_reader_guard on the Studio reader
+ * namespaces of `methodology_text` (profile.*, block.*, provenance.note). The API checks first with the same codes
+ * (methodology/element-profiles.ts); these are the database's last line:
+ *   methodology_element_reader_namespace, methodology_element_reader_profile -> 422 methodology_reader.invalid_override
+ *   methodology_element_reader_block                                         -> 422 methodology_reader.invalid_block_link
+ *   methodology_element_reader_text                                          -> 422 methodology_reader.prohibited_text
+ */
+export function mapP5MethodologyReaderError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "methodology_element_reader_namespace":
+    case "methodology_element_reader_profile":
+      return problems.businessRule(
+        "methodology_reader.invalid_override",
+        "A provenance or question-tag override must name a seeded element, use an allowed value, and tag only a template.",
+      );
+    case "methodology_element_reader_block":
+      return problems.businessRule(
+        "methodology_reader.invalid_block_link",
+        "A block link must name an existing block and a template, procedure or requirement in the allowed format.",
+      );
+    case "methodology_element_reader_text":
+      return problems.businessRule(
+        "methodology_reader.prohibited_text",
+        "Reader text must not claim official PMI status or certification, or name an engineering delivery gate.",
+      );
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2845,6 +2876,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Export !== null) return p5Export;
   const p5PlaybookBlock = mapP5PlaybookBlockError(error); // P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4)
   if (p5PlaybookBlock !== null) return p5PlaybookBlock;
+  const p5MethodologyReader = mapP5MethodologyReaderError(error); // P5 slice I (T-DG5-BE-Q2; ADR-0049 §6, §11)
+  if (p5MethodologyReader !== null) return p5MethodologyReader;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
