@@ -159,6 +159,15 @@ export type AutomationFailureRetryRequestedV1 = z.infer<typeof automationFailure
 export const exportJobRequestedV1 = z.strictObject({ exportJobId: uuid });
 export type ExportJobRequestedV1 = z.infer<typeof exportJobRequestedV1>;
 
+/**
+ * P5 slice J (T-DG5-BE-S; ADR-0050 §6): an in-app demo reset was requested. Written by the API with its audit event in
+ * one transaction; the relay sends it to `demo.reset` (singleton key = the idempotency key
+ * `demo.reset_requested:<latest run id>`). The worker acknowledges it, then drops, re-creates and re-seeds the demo
+ * database. Demo deployments only; a reset approves nothing.
+ */
+export const demoResetRequestedV1 = z.strictObject({ requestedBy: uuid, latestRunNo: z.number().int().min(0) });
+export type DemoResetRequestedV1 = z.infer<typeof demoResetRequestedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -193,6 +202,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "job.run_requested": { 1: jobRunRequestedV1 },
   // T-DG5-BE-M (ADR-0046 §5): an export job to render; consumer reports.export (apps/worker queues/reports.ts).
   "export_job.requested": { 1: exportJobRequestedV1 },
+  // T-DG5-BE-S (ADR-0050 §6): the in-app demo reset; consumer demo.reset (apps/worker queues/demo.ts).
+  "demo.reset_requested": { 1: demoResetRequestedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

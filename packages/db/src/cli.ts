@@ -5,6 +5,10 @@
 //   mth-db status       report applied/pending; exit 0 only when up to date                     exit 0 | 3 | 4
 //   mth-db bootstrap    first organization + first technical/access administrator (see bootstrap.ts)
 //   mth-db seed-dev     SYNTHETIC dev-login users (refused with NODE_ENV=production or AUTH_MODE != dev)
+//   mth-db seed-demo    SYNTHETIC demo dataset into a migrated, empty database (ADR-0050 §3, §6)          exit 0 | 3
+//   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
+//                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
+// bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
 //
 // There is no `down`: recovery is backup/restore plus a new corrective migration (ADR-0003).
 // Every command first requires a UTF8 database (encoding.ts, T-DG2-BE9): on any other encoding it prints
@@ -12,6 +16,8 @@
 import { parseArgs } from "node:util";
 import { ConfigError, loadConfig } from "@mth/config";
 import { bootstrap, BootstrapError } from "./bootstrap.ts";
+import { runDemoCommand } from "./demo/cli.ts";
+import { DemoRefused } from "./demo/guard.ts";
 import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
 import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
@@ -22,16 +28,29 @@ const USAGE = `usage:
   mth-db status
   mth-db bootstrap --org-code CODE --org-name-en NAME --org-name-ar NAME
                    --admin-name NAME [--admin-email EMAIL] --admin-issuer ISSUER --admin-subject SUB
-  mth-db seed-dev`;
+  mth-db seed-dev
+  mth-db seed-demo
+  mth-db reset-demo`;
 
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
-  if (command !== "migrate" && command !== "status" && command !== "bootstrap" && command !== "seed-dev") {
+  if (
+    command !== "migrate" &&
+    command !== "status" &&
+    command !== "bootstrap" &&
+    command !== "seed-dev" &&
+    command !== "seed-demo" &&
+    command !== "reset-demo"
+  ) {
     console.error(USAGE);
     return 64;
   }
   const config = loadConfig("db-cli");
   const ownerUrl = config.databaseOwnerUrl!;
+
+  // ADR-0050 §6: the reset re-creates the database, so it checks nothing on it first (it creates it UTF8 itself).
+  if (command === "reset-demo")
+    return runDemoCommand(command, { mthEnv: config.mthEnv, ownerUrl, demoAdminUrl: config.demoAdminDatabaseUrl });
 
   if (command === "migrate") {
     const applied = await migrate(ownerUrl, { log: (l) => console.log(`mth-db migrate: ${l}`) });
@@ -67,6 +86,13 @@ async function main(argv: string[]): Promise<number> {
         client.release();
       }
     }
+
+    if (command === "seed-demo")
+      return await runDemoCommand(command, {
+        mthEnv: config.mthEnv,
+        ownerUrl,
+        demoAdminUrl: config.demoAdminDatabaseUrl,
+      });
 
     const db = createDb(pool);
     if (command === "bootstrap") {
@@ -128,6 +154,11 @@ async function main(argv: string[]): Promise<number> {
 main(process.argv.slice(2)).then(
   (code) => process.exit(code),
   (err: unknown) => {
+    if (err instanceof DemoRefused) {
+      // ADR-0050 §9: "mth-db <command>: refused: <reason>", exit 3, nothing changed.
+      console.error(err.message);
+      process.exit(err.exitCode);
+    }
     if (
       err instanceof ConfigError ||
       err instanceof MigrationError ||

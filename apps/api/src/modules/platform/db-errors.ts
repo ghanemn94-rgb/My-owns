@@ -3050,6 +3050,32 @@ export function mapP5FinancialMetricError(error: PgErrorLike): HttpProblem | nul
   }
 }
 
+/**
+ * P5 slice J (T-DG5-BE-S; ADR-0050 §1-§6): the 0090 guards of the demo environment tables. mth_app holds SELECT only on
+ * deployment_environment, demo_seed_record and demo_dataset_run (the owner-run CLI and the demo reset write them), so
+ * the API reaching one of these is a programming error (500), never a user-facing refusal:
+ *   deployment_environment_kind_via, deployment_environment_demo_dataset, demo_seed_record_demo_only,
+ *   demo_seed_record_ref, demo_seed_record_fixture_key, demo_dataset_run_demo_only, demo_dataset_run_step,
+ *   demo_dataset_run_requester, demo_dataset_run_api_reset, demo_dataset_run_run_no_key -> 500
+ */
+export function mapP5DemoEnvironmentError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "deployment_environment_kind_via":
+    case "deployment_environment_demo_dataset":
+    case "demo_seed_record_demo_only":
+    case "demo_seed_record_ref":
+    case "demo_seed_record_fixture_key":
+    case "demo_dataset_run_demo_only":
+    case "demo_dataset_run_step":
+    case "demo_dataset_run_requester":
+    case "demo_dataset_run_api_reset":
+    case "demo_dataset_run_run_no_key":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3079,6 +3105,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5KpiRestatement !== null) return p5KpiRestatement;
   const p5FinancialMetric = mapP5FinancialMetricError(error); // P5 slice G (T-DG5-KBE-F; ADR-0047 §8)
   if (p5FinancialMetric !== null) return p5FinancialMetric;
+  const p5DemoEnvironment = mapP5DemoEnvironmentError(error); // P5 slice J (T-DG5-BE-S; ADR-0050 §1-§6)
+  if (p5DemoEnvironment !== null) return p5DemoEnvironment;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

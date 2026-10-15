@@ -9,8 +9,12 @@
 // The administrator receives NO business role: technical administrators are not business approvers and cannot read
 // business records (ADR-0006). Business roles are granted afterwards, explicitly and audited, through the API.
 // It refuses to run when any organization already exists.
+// ADR-0050 §3 (T-DG5-BE-S): it refuses (DemoRefused, exit 3) on a database with a demo marker, and otherwise writes the
+// production marker (deployment_environment) if absent, in the same transaction. It creates no demo record and no
+// demo user, and stores no demo credential.
 import { v7 as uuidv7 } from "uuid";
 import { insertAuditEvent, type AuditActor } from "./audit.ts";
+import { BOOTSTRAP_DEMO_REFUSAL, DemoRefused, readDeploymentEnvironment } from "./demo/guard.ts";
 import type { Db } from "./pool.ts";
 
 export interface BootstrapInput {
@@ -70,8 +74,15 @@ export async function bootstrap(db: Db, input: BootstrapInput): Promise<Bootstra
   return db.transaction().execute(async (tx) => {
     // Serialize concurrent bootstrap attempts, then refuse if anything exists.
     await tx.selectNoFrom((eb) => eb.fn("pg_advisory_xact_lock", [eb.lit(7_302_190_002)]).as("l")).execute();
+    const environment = await readDeploymentEnvironment(tx);
+    if (environment.kind === "demo") throw new DemoRefused("bootstrap", BOOTSTRAP_DEMO_REFUSAL);
     const existing = await tx.selectFrom("organization").select("id").limit(1).executeTakeFirst();
     if (existing) throw new BootstrapError("refusing to bootstrap: an organization already exists");
+    if (!environment.marked)
+      await tx
+        .insertInto("deployment_environment")
+        .values({ environment_kind: "production", initialized_via: "bootstrap" })
+        .execute();
 
     const organizationId = uuidv7();
     const systemUserId = uuidv7();
