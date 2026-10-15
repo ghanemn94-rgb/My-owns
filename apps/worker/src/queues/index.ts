@@ -19,6 +19,7 @@ import { LAUNCH_EVENT_QUEUES, LAUNCH_QUEUES } from "./launch.ts";
 import { DEMO_EVENT_QUEUES, DEMO_QUEUES } from "./demo.ts";
 import { PORTFOLIO_EVENT_QUEUES, PORTFOLIO_QUEUES } from "./portfolio.ts"; // T-DG5-BE-J (ADR-0044 §7, §8)
 import { DIGESTS_QUEUES } from "./digests.ts"; // T-DG5-BE-L (ADR-0044 §5, §8)
+import { JOBS_EVENT_QUEUES, JOBS_QUEUES } from "./jobs.ts"; // T-DG5-BE-I2 (ADR-0043 §6): run now
 import {
   ensurePlatformQueues,
   PLATFORM_EVENT_QUEUES,
@@ -60,6 +61,7 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...DEMO_QUEUES,
   ...PORTFOLIO_QUEUES,
   ...DIGESTS_QUEUES, // T-DG5-BE-L
+  ...JOBS_QUEUES,
 ];
 
 /**
@@ -86,6 +88,7 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   REPORTS_EVENT_QUEUES,
   LAUNCH_EVENT_QUEUES,
   DEMO_EVENT_QUEUES,
+  JOBS_EVENT_QUEUES,
 ];
 
 /** Merges the domain maps into event type -> the list of its queues, in registration order, each queue once. */

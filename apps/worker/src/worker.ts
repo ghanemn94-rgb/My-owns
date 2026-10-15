@@ -11,6 +11,8 @@ import { automationFailureRetryRequestedV1, outboxEnvelope } from "@mth/shared/s
 import { resumeExecution } from "./automation/retry.ts";
 import { captureJobFailure, FAILURE_RETRY_QUEUE, failureRetryJobId, settleRetriedJob } from "./kit.ts";
 import { handleJobScheduleUpdated, syncSchedules } from "./schedules.ts";
+// T-DG5-BE-I2 (ADR-0043 §6): the run history of scheduled jobs and the run-now dispatcher.
+import { dispatchRunNow, recordJobRun, RUN_NOW_QUEUE } from "./job-runs.ts";
 
 export interface WorkerLogger {
   info(obj: object, msg: string): void;
@@ -57,6 +59,14 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
   ): Promise<T> => {
     const attempt: JobAttempt = { retryCount: job.retryCount, retryLimit: job.retryLimit };
     const ref = { queue, jobId: job.id, data: job.data, createdOn: job.createdOn };
+    // T-DG5-BE-I2 (ADR-0043 §6; REQ-S12-022): every finished attempt of a SCHEDULED queue's job leaves one job_run row
+    // (after BE-I's capture; a recording error is logged and never hides or changes the job's own outcome).
+    const startedAt = new Date();
+    const recordRun = (failed: boolean) =>
+      recordJobRun(db, { queue, jobId: job.id, ...attempt, startedAt, finishedAt: new Date(), failed }).catch(
+        (e: unknown) =>
+          log.error({ queue, jobId: job.id, err: e instanceof Error ? e.message : String(e) }, "job run record failed"),
+      );
     let result: T;
     try {
       result = await run(attempt);
@@ -68,11 +78,13 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
             "failure capture failed",
           ),
         );
+      await recordRun(true);
       throw err;
     }
     await settleRetriedJob(db, ref).catch((e: unknown) =>
       log.error({ queue, jobId: job.id, err: e instanceof Error ? e.message : String(e) }, "failure settle failed"),
     );
+    await recordRun(false);
     return result;
   };
 
@@ -135,6 +147,19 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
   );
   const handledQueues: ReadonlySet<string> = new Set(handlers.map((h) => h.queue));
   log.info({ ...(await syncSchedules(db, boss, handledQueues)) }, "job schedules registered");
+  // T-DG5-BE-I2 (ADR-0043 §6): "run now". The API wrote job.run_requested in the transaction of its audit event; after
+  // that COMMIT the relay delivers it here, and the schedule's own job data is sent to its queue under job id = the
+  // event id (a replayed dispatch sends nothing new). The run is then recorded like a scheduled one (job_run above).
+  await boss.work(RUN_NOW_QUEUE, { batchSize: 1, pollingIntervalSeconds, includeMetadata: true }, async ([job]) =>
+    captured(RUN_NOW_QUEUE, job!, async () => {
+      const result = await dispatchRunNow(db, boss, handledQueues, job!.data);
+      log.info(
+        { queue: RUN_NOW_QUEUE, jobId: job!.id, outcome: result.outcome, code: result.code, runJobId: result.jobId },
+        "job handled",
+      );
+      return result;
+    }),
+  );
   await boss.work(QUEUES.jobScheduleUpdated, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
     const result = await handleJobScheduleUpdated(db, boss, handledQueues, job!.data);
     log.info({ queue: QUEUES.jobScheduleUpdated, jobId: job!.id, ...result }, "job schedules re-registered");
@@ -170,6 +195,7 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
       await boss.offWork(QUEUES.jobScheduleUpdated);
       for (const h of handlers) await boss.offWork(h.queue);
       await boss.offWork(FAILURE_RETRY_QUEUE);
+      await boss.offWork(RUN_NOW_QUEUE);
     },
   };
 }
