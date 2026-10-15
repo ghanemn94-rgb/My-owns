@@ -77,7 +77,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { FakeIdp } from "../../support/fake-idp.ts";
-import { exercised, openapi, operations } from "../../support/contract.ts";
+import { exercised, findOperation, openapi, operations } from "../../support/contract.ts";
 import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
 import { exerciseKpiOperations } from "./kpi-exercises.ts";
 import { exerciseP2BackendOperations } from "./p2-exercises.ts";
@@ -372,7 +372,10 @@ async function mirrored<T = { id: string; user: { version: number } }>(
   opts: Parameters<typeof call>[3] = {},
 ) {
   const res = await call<T>(api.app, method, url, opts);
-  const op = operations.find((o) => o.method === method && o.regex.test(url.split("?")[0]!))!;
+  // The most specific operation (T-DG5-KBE-F): `/transformations/{t}/benefits/financial-metrics` also matches
+  // getBenefit's `/transformations/{t}/benefits/{benefitId}`; findOperation prefers more literal segments, as Fastify
+  // prefers a static segment, and as the validating client already does.
+  const op = findOperation(method, url)!;
   if (res.status >= 400) {
     expect(problem.safeParse(res.body).success, `problem mirror for ${op.operationId} ${res.status}`).toBe(true);
   } else if (ZOD_MIRRORS[op.operationId] && res.status !== 204) {
@@ -920,7 +923,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // putNotificationPolicy (2 JSON bodies). T-DG5-BE-L2: + reviewMeetingCutoffPack (1 JSON body; getMeetingCutoffPack
     // is a GET). T-DG5-BE-M: + createExport (1 JSON body; cancelExport is bodiless, the other three are GETs).
     // T-DG5-BE-Q2: none (its four operations are bodiless GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([370, 369, 1]);
+    // T-DG5-KBE-F: + previewFormula, putFinancialMetricEnablement, putFinancialMetricAssumptions,
+    // putBusinessCaseCashFlows (4 JSON bodies; the other four KBE-F operations are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([374, 373, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

@@ -147,3 +147,6 @@ export * from "./notifications.ts";
 export * from "./cutoff.ts";
 // P5 slice F (T-DG5-KBE-D; ADR-0045 §6, §11; p5-work-split §F.3): structured owner updates and their revisions.
 export * from "./owner-updates.ts";
+// P5 slice G (T-DG5-KBE-F; ADR-0047 §4, §5; p5-work-split §G.3): the formula preview and the optional NPV/ROI/payback
+// extension (settings, cash flows, metrics).
+export * from "./financial-metrics.ts";

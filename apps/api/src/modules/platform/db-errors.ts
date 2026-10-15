@@ -2857,6 +2857,58 @@ export function mapP5MethodologyReaderError(error: PgErrorLike): HttpProblem | n
   }
 }
 
+/**
+ * P5 slice G (T-DG5-KBE-F; ADR-0047 §5, §8): the 0085 financial_metric_setting / financial_cash_flow(_set) guards a
+ * request can reach. The API refuses first (benefits/financial-metrics.ts: the If-Match check under the row lock, the
+ * discount-rate range, the period rules, the case currency), so these answer a race (two concurrent `"0"` creates)
+ * or are the database's last line with the same codes and texts:
+ *   financial_metric_setting_org_key, financial_cash_flow_set_case_key   -> 409 version_conflict
+ *   financial_metric_setting_assumptions_complete                        -> 422 financial_metrics.assumptions_incomplete
+ *   financial_metric_setting_discount_rate_check                         -> 422 financial_metrics.discount_rate_invalid
+ *   financial_cash_flow_set_currency                                     -> 422 financial_cash_flows.currency_mismatch
+ *   financial_cash_flow_set_rows, financial_cash_flow_period_key,
+ *   financial_cash_flow_set_line_count_check, financial_cash_flow_period_index_check
+ *                                                                        -> 422 financial_cash_flows.periods_invalid
+ */
+export function mapP5FinancialMetricError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "financial_metric_setting_org_key":
+    case "financial_cash_flow_set_case_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "financial_metric_setting_assumptions_complete":
+      return problems.businessRule(
+        "financial_metrics.assumptions_incomplete",
+        "Set the methodology statement, timing and period basis together.",
+      );
+    case "financial_metric_setting_discount_rate_check":
+      return problems.businessRule(
+        "financial_metrics.discount_rate_invalid",
+        "The discount rate is a decimal fraction from 0 to 1 per period (0.10 = 10%).",
+      );
+    case "financial_cash_flow_set_currency":
+      return problems.businessRule(
+        "financial_cash_flows.currency_mismatch",
+        "Cash flows are entered in the business case currency.",
+      );
+    case "financial_cash_flow_set_rows":
+    case "financial_cash_flow_period_key":
+    case "financial_cash_flow_set_line_count_check":
+    case "financial_cash_flow_period_index_check":
+      return problems.businessRule(
+        "financial_cash_flows.periods_invalid",
+        "Cash flows need one row per period index from 0, with no gap and at most 121 rows.",
+      );
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2878,6 +2930,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5PlaybookBlock !== null) return p5PlaybookBlock;
   const p5MethodologyReader = mapP5MethodologyReaderError(error); // P5 slice I (T-DG5-BE-Q2; ADR-0049 §6, §11)
   if (p5MethodologyReader !== null) return p5MethodologyReader;
+  const p5FinancialMetric = mapP5FinancialMetricError(error); // P5 slice G (T-DG5-KBE-F; ADR-0047 §8)
+  if (p5FinancialMetric !== null) return p5FinancialMetric;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
