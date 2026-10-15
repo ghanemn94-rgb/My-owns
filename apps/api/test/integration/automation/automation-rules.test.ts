@@ -591,10 +591,18 @@ describe("rule versions (ADR-0043 §1, §4)", () => {
         body: {},
       });
       expect([v.status, v.body.status]).toEqual([201, "draft"]);
+      // The draft copies the starter's effective version. Read it rather than assume the seeded value: starters are
+      // shared seeded rows, and another suite (starters-be-j.test.ts) may already have published a later version in
+      // the same database (D-153).
+      const effective = await call<Body>(api.app, "GET", `${R}/${s.id}/versions/${s.effectiveVersionNo}`, {
+        session: admin,
+      });
+      expect(effective.status).toBe(200);
+      expect(effective.body.content.parameters.minimumSlipDays).toBeGreaterThanOrEqual(1);
       expect(v.body.content).toMatchObject({
         triggerCodes: ["dependency.slipped"],
         conditions: [],
-        parameters: { minimumSlipDays: 1 },
+        parameters: effective.body.content.parameters,
       });
       const url = `${R}/${s.id}/versions/${v.body.versionNo}`;
       const withCondition = await call<Body>(api.app, "PATCH", url, {
