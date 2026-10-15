@@ -78,7 +78,10 @@ describe("workflows module (P2)", () => {
       // GET /api/v1/dependency-types and GET /api/v1/phases are the global catalogue reads: the contract declares no 403
       // on them, so they are "authenticated" (T-DG3-BE-C handback 7.1; T-DG4-BE-L2 handback; integrated by the
       // orchestrator, D-108).
-      if (r.key.startsWith("GET"))
+      // T-DG5-BE-K (ADR-0044 §9): GET /api/v1/admin/approval-routes lists a published version's routes with
+      // methodology.read (the Studio read rule), not a transformation read; it is checked by its handler.
+      if (r.key === "GET /api/v1/admin/approval-routes") expect(permission, r.key).toBe("methodology.read");
+      else if (r.key.startsWith("GET"))
         expect(permission, r.key).toBe(
           ["GET /api/v1/dependency-types", "GET /api/v1/phases"].includes(r.key)
             ? "authenticated"

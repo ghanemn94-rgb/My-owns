@@ -115,6 +115,8 @@ export const CONFIG_ELEMENT_ATTRIBUTES = {
     ...common,
     defaultApproverRoleCode: roleCodeRef.optional(),
     submissionEnabled: z.boolean().optional(),
+    // T-DG5-BE-K (ADR-0044 §3; D-142 Q2): the conditional-approval switch; absent = the catalogue default (G5 on).
+    conditionalApprovalEnabled: z.boolean().optional(),
   }),
   gate_criterion: z.strictObject({ ...common, mandatory: z.boolean().optional() }),
   mandatory_artifact: z.strictObject({ ...common, ...phaseOrGateRef, mandatory: z.boolean().optional() }),

@@ -108,8 +108,41 @@ async function resolveNext(tx: Tx, transformationId: string, party: string | und
 
 type EscalateOutcome = "escalated" | "routing_error" | "skipped";
 
+/**
+ * T-DG5-BE-K (ADR-0044 §4): the people of a ROUTED approval's current round: the holders (with approval.decide in scope)
+ * of the roles of its ACTIVE steps; a waiting step's role is not reminded before it is activated. null = not routed.
+ */
+async function activeStepHolders(tx: Tx, a: ApprovalRow): Promise<string[] | null> {
+  const steps = await tx
+    .selectFrom("approval_route_step")
+    .select(["approver_role_code", "status"])
+    .where("approval_id", "=", a.id)
+    .where("round_no", "=", a.round_no)
+    .execute();
+  if (steps.length === 0) return null;
+  const roles = steps.filter((s) => s.status === "active").map((s) => s.approver_role_code);
+  if (roles.length === 0) return [];
+  const r = await sql<{ user_id: string }>`
+    SELECT DISTINCT sa.user_id
+    FROM scoped_assignment sa
+    JOIN role r ON r.id = sa.role_id AND r.code = ANY(${roles}::text[])
+    JOIN role_permission rp ON rp.role_id = r.id AND rp.permission_code = 'approval.decide'
+    JOIN app_user u ON u.id = sa.user_id AND u.status = 'active'
+    JOIN transformation t ON t.id = ${a.transformation_id}::uuid
+    WHERE sa.revoked_at IS NULL AND sa.effective_from <= now() AND (sa.effective_to IS NULL OR sa.effective_to > now())
+      AND sa.organization_id = t.organization_id
+      AND ((sa.scope_type = 'transformation' AND sa.scope_id = t.id)
+        OR (r.inherits_downward AND sa.scope_type = 'organization' AND sa.scope_id = t.organization_id)
+        OR (r.inherits_downward AND sa.scope_type = 'business_unit'
+            AND sa.scope_id IN (SELECT c.ancestor_id FROM business_unit_closure c WHERE c.descendant_id = t.business_unit_id)))
+    ORDER BY sa.user_id`.execute(tx);
+  return r.rows.map((x) => x.user_id);
+}
+
 /** The approval's current assignee as people: the assignee user, or the assignee group's current approvers (§8). */
 async function assigneeUsers(tx: Tx, a: ApprovalRow): Promise<string[]> {
+  const routed = await activeStepHolders(tx, a);
+  if (routed !== null) return routed;
   if (a.assignee_user_id !== null) return [a.assignee_user_id];
   if (a.assignee_group_id === null) return [];
   return approversAmong(tx, await currentMembers(tx, a.assignee_group_id), a.transformation_id);

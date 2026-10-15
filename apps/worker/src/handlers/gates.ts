@@ -578,9 +578,160 @@ export async function runGateExceptionExpiryScan(
   return { steps, notified: steps.filter((s) => s.outcome === "notified").length };
 }
 
+// ------------------------------------------------------------------------------------------------ BE-K: condition escalation
+// T-DG5-BE-K (ADR-0044 §3 "Overdue conditions escalate"; REQ-S04-011 "overdue conditions escalate"; p5-work-split §E.2).
+// The daily job gate.condition_escalation_scan (0075, 01:00 Asia/Riyadh) selects every condition of a conditional
+// approval that is still OPEN (no closure row), not yet escalated, and whose due date is before today's business date
+// in its transformation's time zone (or the injected `asOf`). Per condition, in one runOnce transaction (key
+// gate.condition_escalation:<conditionId>): one gate_condition_escalation row (overdue_since = due date + 1, escalated to
+// the G5 decision's approver gate_decision.decided_by; UNIQUE per condition, the 0075 guard refuses a closed one) with
+// its audit event, and one URGENT `gate_condition_overdue` work item (with its notification) to that approver (dedupe
+// gate_condition_overdue:<conditionId>). Once: the ledger, the UNIQUE key and the dedupe key. The escalation informs;
+// it closes nothing, changes no gate or scope and decides no business approval.
+
+export const GATE_CONDITION_ESCALATION_SCAN_QUEUE = "gate.condition_escalation_scan";
+export const GATE_CONDITION_OVERDUE_KIND = "gate_condition_overdue";
+export const GATE_CONDITION_OVERDUE_MESSAGE = "gates.task.gate_condition_overdue";
+
+export interface ConditionEscalationStep {
+  readonly conditionId: string;
+  readonly outcome: "escalated" | "duplicate" | "skipped";
+  readonly escalatedToUserId: string | null;
+}
+
+export interface ConditionEscalationOptions extends ExpiryScanOptions {
+  /** Scope one run to one transformation (an operator's catch-up, or a test); the schedule sends nothing. */
+  readonly transformationId?: string;
+}
+
+export interface ConditionEscalationResult {
+  readonly steps: readonly ConditionEscalationStep[];
+  readonly escalated: number;
+}
+
+export async function runGateConditionEscalationScan(
+  db: Db,
+  jobId: string,
+  opts: ConditionEscalationOptions = {},
+): Promise<ConditionEscalationResult> {
+  const actor = jobActor(jobId);
+  const today =
+    opts.asOf !== undefined ? sql<string>`${opts.asOf}::date` : sql<string>`p4_business_date(now(), t.timezone)`;
+  const due = await db
+    .selectFrom("gate_decision_condition as c")
+    .innerJoin("transformation as t", "t.id", "c.transformation_id")
+    .select("c.id")
+    .where(sql<boolean>`c.due_date < ${today}`)
+    .$if(opts.transformationId !== undefined, (q) => q.where("c.transformation_id", "=", opts.transformationId!))
+    .where(({ not, exists, selectFrom }) =>
+      not(
+        exists(
+          selectFrom("gate_condition_closure as z")
+            .select("z.id")
+            .whereRef("z.gate_decision_condition_id", "=", "c.id"),
+        ),
+      ),
+    )
+    .where(({ not, exists, selectFrom }) =>
+      not(
+        exists(
+          selectFrom("gate_condition_escalation as e")
+            .select("e.id")
+            .whereRef("e.gate_decision_condition_id", "=", "c.id"),
+        ),
+      ),
+    )
+    .orderBy("c.due_date")
+    .orderBy("c.id")
+    .execute();
+  const steps: ConditionEscalationStep[] = [];
+  for (const { id } of due) {
+    const r = await runOnce(db, GATE_CONDITION_ESCALATION_SCAN_QUEUE, `gate.condition_escalation:${id}`, async (tx) => {
+      const c = await tx
+        .selectFrom("gate_decision_condition as c")
+        .innerJoin("gate_decision as d", "d.id", "c.gate_decision_id")
+        .select([
+          "c.id",
+          "c.organization_id",
+          "c.transformation_id",
+          "c.ordinal",
+          "c.owner_user_id",
+          "d.gate_code",
+          "d.decided_by",
+          sql<string>`c.due_date::text`.as("due_date"),
+          sql<string>`(c.due_date + 1)::text`.as("overdue_since"),
+        ])
+        .where("c.id", "=", id)
+        .executeTakeFirstOrThrow();
+      // Closed or escalated meanwhile: nothing to do (the ledger still records the key).
+      const closed = await tx
+        .selectFrom("gate_condition_closure")
+        .select("id")
+        .where("gate_decision_condition_id", "=", id)
+        .executeTakeFirst();
+      const escalated = await tx
+        .selectFrom("gate_condition_escalation")
+        .select("id")
+        .where("gate_decision_condition_id", "=", id)
+        .executeTakeFirst();
+      if (closed || escalated) return null;
+      const linkPath = `/transformations/${c.transformation_id}/gate-conditions`;
+      const w = await createWorkItemOnce(tx, actor, {
+        organizationId: c.organization_id,
+        transformationId: c.transformation_id,
+        kind: GATE_CONDITION_OVERDUE_KIND,
+        assigneeUserId: c.decided_by,
+        subjectType: "gate_decision_condition",
+        subjectId: c.id,
+        linkPath,
+        messageKey: GATE_CONDITION_OVERDUE_MESSAGE,
+        messageParams: { gateCode: c.gate_code, ordinal: c.ordinal, dueDate: c.due_date },
+        dedupeKey: `gate_condition_overdue:${c.id}`,
+      });
+      const escalationId = (await sql<{ id: string }>`SELECT mth_uuid_v7() AS id`.execute(tx)).rows[0]!.id;
+      await tx
+        .insertInto("gate_condition_escalation")
+        .values({
+          id: escalationId,
+          organization_id: c.organization_id,
+          transformation_id: c.transformation_id,
+          gate_decision_condition_id: c.id,
+          overdue_since: c.overdue_since,
+          escalated_to_user_id: c.decided_by,
+          work_item_id: w.workItemId,
+          created_by: null,
+        })
+        .execute();
+      await insertAuditEvent(tx, actor, {
+        action: "gate_condition_escalation.create",
+        recordType: "gate_condition_escalation",
+        recordId: escalationId,
+        organizationId: c.organization_id,
+        transformationId: c.transformation_id,
+        newVersion: 1,
+        changes: {
+          gate_decision_condition_id: { from: null, to: c.id },
+          overdue_since: { from: null, to: c.overdue_since },
+          escalated_to_user_id: { from: null, to: c.decided_by },
+        },
+      });
+      return c.decided_by;
+    });
+    if (r.outcome === "duplicate") steps.push({ conditionId: id, outcome: "duplicate", escalatedToUserId: null });
+    else if (r.result === null) steps.push({ conditionId: id, outcome: "skipped", escalatedToUserId: null });
+    else steps.push({ conditionId: id, outcome: "escalated", escalatedToUserId: r.result });
+  }
+  return { steps, escalated: steps.filter((s) => s.outcome === "escalated").length };
+}
+
 export const GATES_HANDLERS: readonly JobHandler[] = [
   { queue: GATES_SUBMITTED_QUEUE, handle: handleGateSubmitted },
   { queue: GATES_DECIDED_QUEUE, handle: handleGateDecided },
   // T-DG4-BE-K2: started by its job_schedule row (0054); it consumes no outbox event.
   { queue: GATE_EXCEPTION_EXPIRY_SCAN_QUEUE, handle: (db, _data, jobId) => runGateExceptionExpiryScan(db, jobId) },
+  // T-DG5-BE-K (ADR-0044 §3): started by its job_schedule row (0075); it consumes no outbox event.
+  {
+    queue: GATE_CONDITION_ESCALATION_SCAN_QUEUE,
+    handle: (db, _data, jobId) => runGateConditionEscalationScan(db, jobId),
+  },
 ];
