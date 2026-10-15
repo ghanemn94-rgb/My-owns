@@ -1,10 +1,18 @@
-// P5 route-file stub (T-DG5-BE-A; p5-plan §5.1, p5-work-split §A.1): the 90-day launch plan and the Day-90 test (slice H).
-// Owned and filled by task BE-P. Until then it registers nothing; its registration line already exists, so the
-// owning task edits only this file (and its own tests, pending list and contract exercises).
+// The 90-day launch plan routes (P5 slice H; ADR-0048 §1-§3, §7-§9; p5-work-split §H.1; T-DG5-BE-P fills BE-A's stub).
+// BE-P2 appends the Day-90 test's registration lines after these (p5-work-split §H.2).
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
+import { registerLaunchPlanRoutes } from "./plan.ts";
+import { registerLaunchPredecessorRoutes } from "./predecessors.ts";
+import { registerLaunchTaskRoutes } from "./tasks.ts";
+import { registerLaunchTemplateRoutes } from "./template.ts";
 
-/** Registers this file's routes and returns them as "METHOD /path" (none until BE-P fills it). */
-export function registerLaunchRoutes(_app: FastifyInstance, _deps: ModuleDeps): string[] {
-  return [];
+/** Registers this file's routes and returns them as "METHOD /path". */
+export function registerLaunchRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
+  return [
+    ...registerLaunchTemplateRoutes(app, deps),
+    ...registerLaunchPlanRoutes(app, deps),
+    ...registerLaunchTaskRoutes(app, deps),
+    ...registerLaunchPredecessorRoutes(app, deps),
+  ];
 }

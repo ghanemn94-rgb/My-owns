@@ -147,3 +147,5 @@ export * from "./notifications.ts";
 export * from "./cutoff.ts";
 // P5 slice F (T-DG5-KBE-D; ADR-0045 §6, §11; p5-work-split §F.3): structured owner updates and their revisions.
 export * from "./owner-updates.ts";
+// P5 slice H (T-DG5-BE-P; ADR-0048 §1-§3; p5-work-split §H.1): the 90-day launch plan, its tasks and predecessors.
+export * from "./launch.ts";
