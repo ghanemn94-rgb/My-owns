@@ -134,6 +134,8 @@ const KPI_P5_KBE_E_OPERATIONS = [
   "submitKpiRestatement",
   "withdrawKpiRestatement",
 ];
+// P5 slice G (T-DG5-KBE-F; ADR-0047 §4): the formula preview.
+const KPI_P5_KBE_F_OPERATIONS = ["previewFormula"];
 /**
  * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
  * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
@@ -145,6 +147,8 @@ const PERMISSION_EXCEPTIONS: ReadonlyMap<string, string> = new Map([
   // P4 reporting periods (T-DG4-KBE-C): organization-level records, read with organization.read (contract summary).
   ["listReportingPeriods", "organization.read"],
   ["getReportingPeriod", "organization.read"],
+  // P5 slice G (T-DG5-KBE-F; ADR-0047 §6): the formula preview writes nothing and needs a session only.
+  ["previewFormula", "authenticated"],
 ]);
 
 const openapi = parseYaml(
@@ -241,6 +245,7 @@ describe("kpi module (P2)", () => {
         ...KPI_P4_KBE_C_OPERATIONS,
         ...KPI_P4_ARCH_R1_OPERATIONS,
         ...KPI_P5_KBE_E_OPERATIONS,
+        ...KPI_P5_KBE_F_OPERATIONS,
       ].sort(),
     );
     expect(registration.module).toBe("kpi");
@@ -250,7 +255,8 @@ describe("kpi module (P2)", () => {
         KPI_P4_KBE_B_OPERATIONS.length +
         KPI_P4_KBE_C_OPERATIONS.length +
         KPI_P4_ARCH_R1_OPERATIONS.length +
-        KPI_P5_KBE_E_OPERATIONS.length,
+        KPI_P5_KBE_E_OPERATIONS.length +
+        KPI_P5_KBE_F_OPERATIONS.length,
     );
     expect(Object.isFrozen(registration)).toBe(true);
   });
@@ -297,6 +303,8 @@ describe("kpi module (P2)", () => {
         "rag.override",
         // P5 slice G (T-DG5-KBE-E).
         "kpi_restatement.request",
+        // P5 slice G (T-DG5-KBE-F): the formula preview POST writes nothing and needs a session only.
+        "authenticated",
       ]),
     );
   });

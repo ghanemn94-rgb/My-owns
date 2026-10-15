@@ -1,0 +1,23 @@
+port-policy: PostgreSQL listening on port 24362 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-f
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv9ti4eg_6e391da1 (server_encoding UTF8); applied 83 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/benefits/financial-metrics.test.ts (12 tests) 4812ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > walks every status of ADR-0047 §5 on one case, and every response names its assumptions and extension: true  1016ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > enabled without assumptions is assumptions_missing; with assumptions and no cash flows, cash_flows_missing  483ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > 422 financial_metrics.discount_rate_invalid for a rate outside [0, 1] (400 beyond 6 decimals); nothing written  350ms
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > 422 financial_cash_flows.periods_invalid for a gap or a duplicate index; 400 for a negative or over-scale amount  362ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > ADM_METHOD switches the extension but gets 403 on the assumptions; FIN gets 403 on the switch; AUD 403 on every write  410ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > If-Match: 428 when missing; "0" creates version 1 and is 409 once a row exists; a stale version is 409  324ms
+ ✓ |integration| apps/api/test/integration/kpi/formula-preview.test.ts (8 tests) 614ms
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  17:33:32
+   Duration  27.40s (transform 6.67s, setup 0ms, collect 17.43s, tests 5.43s, environment 0ms, prepare 219ms)
+

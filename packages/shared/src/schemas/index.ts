@@ -151,3 +151,6 @@ export * from "./owner-updates.ts";
 export * from "./launch.ts";
 // P5 slice G (T-DG5-KBE-E; ADR-0047 §2, §8, §9; p5-work-split §G.1): KPI restatements and their reconciliation.
 export * from "./kpi-restatement.ts";
+// P5 slice G (T-DG5-KBE-F; ADR-0047 §4, §5; p5-work-split §G.3): the formula preview and the optional NPV/ROI/payback
+// extension (settings, cash flows, metrics).
+export * from "./financial-metrics.ts";

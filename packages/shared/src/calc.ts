@@ -17,3 +17,6 @@ export * from "./adoption/measures.ts";
 // P5 slice B Studio field types (T-DG5-KBE-B; p5-work-split §B.1; ADR-0041 §3, §7, §10): the eleven field types'
 // settings, value validators and normalizers, and calculated fields over the DG3 formula engine (unchanged).
 export * from "./forms/index.ts";
+// P5 slice G optional financial metrics (T-DG5-KBE-F; p5-work-split §G.3; ADR-0047 §5): pure NPV, ROI and payback over
+// Finance-entered cash flows (an extension, not a playbook requirement).
+export * from "./finance/index.ts";

@@ -1,0 +1,133 @@
+port-policy: PostgreSQL listening on port 24362 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-f
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv9tew8f_feb8e30a (server_encoding UTF8); applied 83 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/benefits/financial-metrics.test.ts (12 tests | 2 failed) 4555ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > walks every status of ADR-0047 §5 on one case, and every response names its assumptions and extension: true  817ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > enabled without assumptions is assumptions_missing; with assumptions and no cash flows, cash_flows_missing 271ms
+   × REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > 422 financial_metrics.discount_rate_invalid for a rate outside [0, 1] or beyond 6 decimals; nothing written 276ms
+     → expected [ 400, 'validation', …(1) ] to deeply equal [ 422, …(2) ]
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > a replacement steps the revision; the earlier rows stay as history; one audit event per PUT 281ms
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > 422 financial_cash_flows.periods_invalid for a gap or a duplicate index; 400 for a negative or over-scale amount  339ms
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > cash flows in USD for a SAR case: 422 financial_cash_flows.currency_mismatch (the database guard, mapped) 186ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > ADM_METHOD switches the extension but gets 403 on the assumptions; FIN gets 403 on the switch; AUD 403 on every write 268ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > If-Match: 428 when missing; "0" creates version 1 and is 409 once a row exists; a stale version is 409  420ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > commit-time: a grant revoked while the PUT waited is 403; nothing written (settings and cash flows)  301ms
+   ✓ db-error mapping of the 0085 financial guards (ADR-0047 §8) > maps each reachable constraint to its code and text 1ms
+   × db-error mapping of the 0085 financial guards (ADR-0047 §8) > the deferred row-count guard refuses a set without its rows at COMMIT (database's last line) 440ms
+     → expected 'internal' to be 'financial_cash_flows.periods_invalid' // Object.is equality
+   ✓ a user of another organization reads that organization's own settings (version 0), never another's  365ms
+ ❯ |integration| apps/api/test/integration/kpi/formula-preview.test.ts (8 tests | 2 failed) 687ms
+   × REQ-S08-005: the revenue uplift example shows SAR as the unit and 'Not computable' for a missing ARPU > unit currency SAR (year); the source example is 100000; arpu missing is not_computable formula.missing_input 34ms
+     → expected { kind: 'currency', …(3) } to deeply equal { kind: 'currency', …(3) }
+   ✓ REQ-S08-005: the revenue uplift example shows SAR as the unit and 'Not computable' for a missing ARPU > every edge case, worked: zero, missing, and negative only for the signed kind (arpu, currency) 10ms
+   ✓ REQ-S08-005: the revenue uplift example shows SAR as the unit and 'Not computable' for a missing ARPU > named examples: a missing input is not_computable (never 0); given inputs override the seeded values 11ms
+   × the playbook's second example and an expression with typed variables > cost_reduction: volume × Δ unit cost = 200000 × (12.50 - 10.00) = 500000 SAR; negatives for both unit costs 20ms
+     → expected { kind: 'currency', …(3) } to deeply equal { kind: 'currency', …(3) }
+   ✓ the playbook's second example and an expression with typed variables > division by zero is not_computable formula.division_by_zero; a missing declared value warns and uses -1 for negative 6ms
+   ✓ refusals and side effects > an expression the engine refuses is 422 with the engine's own first code and text (unchanged) 28ms
+   ✓ refusals and side effects > an example input naming no variable is 422 formula.undefined_variable; both or neither source is 400 31ms
+   ✓ refusals and side effects > session only: AUD may preview (writes nothing); no session is 401; no audit event is written 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/financial-metrics.test.ts > REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > 422 financial_metrics.discount_rate_invalid for a rate outside [0, 1] or beyond 6 decimals; nothing written
+AssertionError: expected [ 400, 'validation', …(1) ] to deeply equal [ 422, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   422,[39m
+[32m-   "financial_metrics.discount_rate_invalid",[39m
+[32m-   "The discount rate is a decimal fraction from 0 to 1 per period (0.10 = 10%).",[39m
+[31m+   400,[39m
+[31m+   "validation",[39m
+[31m+   "The request is not valid.",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/benefits/financial-metrics.test.ts:256:60
+    254|         body: { ...ASSUMPTIONS, discountRate: rate },
+    255|       });
+    256|       expect([res.status, res.body.code, res.body.detail]).toEqual([
+       |                                                            ^
+    257|         422,
+    258|         "financial_metrics.discount_rate_invalid",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/financial-metrics.test.ts > db-error mapping of the 0085 financial guards (ADR-0047 §8) > the deferred row-count guard refuses a set without its rows at COMMIT (database's last line)
+AssertionError: expected 'internal' to be 'financial_cash_flows.periods_invalid' // Object.is equality
+
+Expected: [32m"financial_cash_flows.periods_invalid"[39m
+Received: [31m"internal"[39m
+
+ ❯ apps/api/test/integration/benefits/financial-metrics.test.ts:553:100
+    551|         (e: unknown) => e,
+    552|       );
+    553|     expect(mapDatabaseGuardError(err as { code?: string; constraint?: …
+       |                                                                                                    ^
+    554|       "financial_cash_flows.periods_invalid",
+    555|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi/formula-preview.test.ts > REQ-S08-005: the revenue uplift example shows SAR as the unit and 'Not computable' for a missing ARPU > unit currency SAR (year); the source example is 100000; arpu missing is not_computable formula.missing_input
+AssertionError: expected { kind: 'currency', …(3) } to deeply equal { kind: 'currency', …(3) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "currency": "SAR",[22m
+[2m    "kind": "currency",[22m
+[2m    "period": "year",[22m
+[32m-   "unitLabel": null,[39m
+[31m+   "unitLabel": "per customer",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/kpi/formula-preview.test.ts:51:27
+     49|     expect(res.body.valid).toBe(true);
+     50|     expect(res.body.errors).toEqual([]);
+     51|     expect(res.body.unit).toEqual({ kind: "currency", currency: "SAR",…
+       |                           ^
+     52|     expect(res.body.engineVersion).toBe("mth-formula/1.0.0");
+     53|     expect(res.body.examples).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi/formula-preview.test.ts > the playbook's second example and an expression with typed variables > cost_reduction: volume × Δ unit cost = 200000 × (12.50 - 10.00) = 500000 SAR; negatives for both unit costs
+AssertionError: expected { kind: 'currency', …(3) } to deeply equal { kind: 'currency', …(3) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "currency": "SAR",[22m
+[2m    "kind": "currency",[22m
+[2m    "period": "year",[22m
+[32m-   "unitLabel": null,[39m
+[31m+   "unitLabel": "per transaction",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/kpi/formula-preview.test.ts:117:27
+    115|     const res = await preview({ exampleCode: "cost_reduction" });
+    116|     expect(res.status).toBe(200);
+    117|     expect(res.body.unit).toEqual({ kind: "currency", currency: "SAR",…
+       |                           ^
+    118|     expect(res.body.examples[0]).toMatchObject({ label: "Source exampl…
+    119|     // 200000 × (-12.5 - 10) = -4500000; 200000 × (12.5 - (-10)) = 450…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 16 passed (20)
+   Start at  17:31:01
+   Duration  27.15s (transform 6.79s, setup 0ms, collect 17.66s, tests 5.24s, environment 0ms, prepare 102ms)
+
