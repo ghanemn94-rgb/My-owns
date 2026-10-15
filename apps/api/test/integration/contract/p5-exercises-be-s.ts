@@ -38,9 +38,8 @@ export async function exerciseP5BeSOperations(ctx: P5ExerciseContext): Promise<v
 
   // getDemoEnvironmentStatus: 200 (ADM_TECH); 400; 401; 403 (AUD, TL).
   const S = "/api/v1/admin/environment";
-  // Version 0 (no run): until the proposed ETagOrZero patch lands (BE-S handback), this read skips only the contract
-  // assertion (the zod mirror still runs); the contract-validated 200 is the demo database's below (ETag "1").
-  const status = await mirrored("GET", S, { session: tech, contract: false });
+  // Version 0 (no run): ETag "0", which the contract admits as `ETagOrZero` (BE-S's patch, D-157).
+  const status = await mirrored("GET", S, { session: tech });
   expect([status.status, (status.body as Body).kind, (status.body as Body).version]).toEqual([200, "production", 0]);
   expect((await mirrored("GET", `${S}?x=1`, { session: tech })).status).toBe(400);
   expect((await mirrored("GET", S)).status).toBe(401);

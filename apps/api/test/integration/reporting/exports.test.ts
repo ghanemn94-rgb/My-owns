@@ -13,6 +13,7 @@
 // All data is SYNTHETIC; an export approves nothing, and nothing here touches the engineering gates DG0-DG7.
 import { sql } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { RenderError } from "../../../../../packages/reporting/src/model.ts";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
 import { readXlsx, type ReadCell } from "../../../../../packages/reporting/src/xlsx/read.ts";
 import { runExport, type ExportRunnerDeps } from "../../../../worker/src/reports/export-runner.ts";
@@ -392,13 +393,18 @@ describe("exactly once: idempotency, a killed worker, retries", () => {
     ).toEqual([422, "export.not_cancellable"]);
   });
 
-  it("a format without a renderer in this release fails at once with export.render_failed (never retried)", async () => {
+  it("a renderer's own validation error fails the job at once with export.render_failed (never retried)", async () => {
+    // Every format has a renderer since T-DG5-BE-N; the renderer's own error (RenderError) is raised through the
+    // runner's per-section seam, exactly where a renderer raises it.
     const job = ok(
       await exportOf({ snapshotId: riskSnapshot.id, format: "pdf", language: "en" }, p.lead.session),
       202,
       "pdf",
     );
-    expect(await work(job.id, 0)).toEqual({
+    const invalid = () => {
+      throw new RenderError("synthetic renderer validation error");
+    };
+    expect(await work(job.id, 0, { afterSection: invalid })).toEqual({
       exportJobId: job.id,
       outcome: "failed",
       errorCode: "export.render_failed",

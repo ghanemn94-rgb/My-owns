@@ -35,11 +35,10 @@ const STATUS = "/api/v1/admin/environment";
 const RESETS = "/api/v1/admin/environment/demo-resets";
 const NOT_DEMO = "This is available only in the demo environment.";
 /**
- * A status read with no run answers ETag "0" (ETag = latest run number, "0" when none: the operation's own summary),
- * but its 200 response declares `ETag` (pattern >= 1). Until the orchestrator applies the proposed ETagOrZero patch
- * (BE-S handback; the D-153/D-156 precedent) such a read skips only the contract assertion. Remove this then.
+ * A status read with no run answers ETag "0" (ETag = latest run number, "0" when none: the operation's own summary).
+ * Its 200 response declares `ETagOrZero` since the orchestrator applied BE-S's patch (D-157), so it is validated.
  */
-const VERSION_ZERO_READ = { contract: false } as const;
+const VERSION_ZERO_READ = {} as const;
 
 interface Site {
   api: TestApi;

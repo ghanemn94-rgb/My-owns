@@ -9,7 +9,8 @@
 import { expect } from "vitest";
 import type { z } from "zod";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
-import { runExport } from "../../../../worker/src/reports/export-runner.ts";
+import { RenderError } from "../../../../../packages/reporting/src/model.ts";
+import { runExport, type ExportRunnerDeps } from "../../../../worker/src/reports/export-runner.ts";
 import { exportJob, exportJobPage } from "../../../src/modules/reporting/exports/jobs.ts";
 import { testEvidenceDir, signIn, type P5ExerciseContext } from "../../support/harness.ts";
 import { ifm, setupP2World } from "../../support/p2-fixtures.ts";
@@ -56,7 +57,7 @@ export async function exerciseP5BeMOperations(ctx: P5ExerciseContext): Promise<v
     ).status,
   ).toBe(200);
 
-  const work = async (exportJobId: string, retryCount = 0) => {
+  const work = async (exportJobId: string, retryCount = 0, deps: Partial<ExportRunnerDeps> = {}) => {
     const row = await api.db
       .selectFrom("outbox_event")
       .selectAll()
@@ -77,6 +78,7 @@ export async function exerciseP5BeMOperations(ctx: P5ExerciseContext): Promise<v
       { retryCount, retryLimit: 5 },
       {
         store: new FilesystemExportStore(testEvidenceDir()),
+        ...deps,
       },
     );
   };
@@ -126,10 +128,13 @@ export async function exerciseP5BeMOperations(ctx: P5ExerciseContext): Promise<v
   const file = await mirrored("GET", `${E}/${id}/download`, { session: lead });
   expect([file.status, file.headers["content-type"]]).toEqual([200, "text/csv; charset=utf-8"]);
 
-  // A failed job's download: 422 export.failed (pdf has no renderer before BE-N, so the job fails render_failed).
+  // A failed job's download: 422 export.failed (a renderer's own validation error fails the job render_failed).
   const pdf = await mirrored("POST", E, { session: lead, body: { ...body, format: "pdf" } });
   expect(pdf.status).toBe(202);
-  expect((await work(pdf.body.id)).outcome).toBe("failed");
+  const invalid = () => {
+    throw new RenderError("synthetic renderer validation error");
+  };
+  expect((await work(pdf.body.id, 0, { afterSection: invalid })).outcome).toBe("failed");
   expect(code(await mirrored("GET", `${E}/${pdf.body.id}/download`, { session: lead }))).toEqual([
     422,
     "export.failed",
