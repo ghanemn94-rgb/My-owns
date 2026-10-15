@@ -2857,6 +2857,34 @@ export function mapP5MethodologyReaderError(error: PgErrorLike): HttpProblem | n
   }
 }
 
+/**
+ * P5 slice E (T-DG5-BE-L2's proposal, added by D-155 (c) to T-DG5-BE-C2; ADR-0044 §6, §10): the 0075 cut-off pack guards.
+ * The API refuses first with the same codes and English texts (governance/cut-off.ts `cutoffRefusals`, under the pack's
+ * row lock); these answer only a race the API check cannot see (a concurrent review, a chair or secretary changed in
+ * between, an item published while its pack was still a draft):
+ *   agenda_item_cutoff_pack_unreviewed -> 422 agenda_item.pack_not_reviewed
+ *   meeting_cutoff_pack_reviewer       -> 403 meeting_cutoff_pack.not_reviewer
+ *   meeting_cutoff_pack_transition     -> 422 meeting_cutoff_pack.already_reviewed
+ */
+export function mapP5CutoffPackError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "agenda_item_cutoff_pack_unreviewed":
+      return problems.businessRule(
+        "agenda_item.pack_not_reviewed",
+        "Review the meeting's cut-off pack before publishing its items.",
+      );
+    case "meeting_cutoff_pack_reviewer":
+      return forbidden403(
+        "meeting_cutoff_pack.not_reviewer",
+        "Only the meeting's chair or secretary can review its pack.",
+      );
+    case "meeting_cutoff_pack_transition":
+      return problems.businessRule("meeting_cutoff_pack.already_reviewed", "This pack is already reviewed.");
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2878,6 +2906,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5PlaybookBlock !== null) return p5PlaybookBlock;
   const p5MethodologyReader = mapP5MethodologyReaderError(error); // P5 slice I (T-DG5-BE-Q2; ADR-0049 §6, §11)
   if (p5MethodologyReader !== null) return p5MethodologyReader;
+  const p5CutoffPack = mapP5CutoffPackError(error); // P5 slice E (T-DG5-BE-C2, D-155 (c); ADR-0044 §6, §10)
+  if (p5CutoffPack !== null) return p5CutoffPack;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

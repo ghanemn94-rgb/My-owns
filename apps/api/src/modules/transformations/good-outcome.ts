@@ -149,14 +149,26 @@ export interface GoodOutcomeSubject {
   readonly owner_user_id: string | null;
 }
 
-/** The catalogue of the transformation's pinned methodology version (empty when none is pinned: fail closed). */
+/**
+ * The catalogue of the transformation's pinned methodology version (empty when none is pinned: fail closed).
+ * T-DG5-BE-C2 (D-155; ADR-0039 §2): the criteria are the stable-identity registry rows (globally unique codes, 0011),
+ * shared by every methodology version, so they are not matched to the pinned version id (that left a transformation
+ * pinned to any version after v1 with no criteria). The pin is still required. The criterion has no element type, so it
+ * has no version-scoped attributes. For a v1-pinned transformation the rows are exactly the DG2 rows.
+ */
 async function criteriaOf(db: DbOrTx, transformationId: string): Promise<GoodOutcomeCriterionDef[]> {
   return db
     .selectFrom("good_outcome_criterion as c")
-    .innerJoin("transformation_config_pin as p", "p.methodology_version_id", "c.methodology_version_id")
     .select(["c.code", "c.ordinal", "c.evaluation"])
-    .where("p.transformation_id", "=", transformationId)
-    .where("p.kind", "=", "methodology")
+    .where((eb) =>
+      eb.exists(
+        eb
+          .selectFrom("transformation_config_pin as p")
+          .select("p.id")
+          .where("p.transformation_id", "=", transformationId)
+          .where("p.kind", "=", "methodology"),
+      ),
+    )
     .orderBy("c.ordinal")
     .execute();
 }

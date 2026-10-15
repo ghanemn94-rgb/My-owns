@@ -1,5 +1,5 @@
 // methodology routes (p2-work-split §2; ADR-0014, ADR-0016 §2; REQ-PB-002, REQ-PB-038, REQ-S02-001/004):
-//   GET   /transformations/{id}/methodology              the pinned catalogue (transformation.read)
+//   GET   /transformations/{id}/methodology              the pinned catalogue, resolved per version (transformation.read)
 //   PATCH /methodology/tom-dimensions/{dimensionCode}    label and Arabic-translation edits (methodology.configure)
 // Source text, codes and order are immutable (trigger tom_dimension_source_immutable); edits are versioned (If-Match,
 // version + 1) and audited (the deferred audit guard of 0011 refuses a commit without the event).
@@ -67,8 +67,8 @@ export function registerMethodologyModule(
   deps: ModuleDeps,
   options: { readonly configResolver?: ConfigResolver } = {},
 ): ModuleRegistration {
-  const p2 = registerMethodologyP2Routes(app, deps);
   const resolver = options.configResolver ?? createConfigResolver();
+  const p2 = registerMethodologyP2Routes(app, deps, resolver);
   const p5 = [
     ...registerConfigDraftRoutes(app, deps),
     ...registerConfigElementReadRoutes(app, deps, resolver),
@@ -97,11 +97,16 @@ export function registerMethodologyModule(
   });
 }
 
-function registerMethodologyP2Routes(app: FastifyInstance, { db }: ModuleDeps): ModuleRegistration {
+function registerMethodologyP2Routes(
+  app: FastifyInstance,
+  { db }: ModuleDeps,
+  resolver: ConfigResolver,
+): ModuleRegistration {
   app.get(CATALOGUE, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(z.strictObject({ transformationId: z.uuid() }), request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
-    const catalogue = await loadMethodologyCatalogue(db, transformationId);
+    // T-DG5-BE-C2 (D-155): the catalogue resolved for the pinned version (ADR-0039 §2) through the root's resolver.
+    const catalogue = await loadMethodologyCatalogue(db, transformationId, resolver);
     if (!catalogue) throw problems.notFound();
     return catalogue;
   });

@@ -1,0 +1,352 @@
+port-policy: PostgreSQL listening on port 24200 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-c2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv9suayz_498e4bf8 (server_encoding UTF8); applied 83 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts (6 tests | 4 failed) 4796ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > v1 is the registry: every catalogue row belongs to playbook v1 and the v1 response holds all of them 15ms
+   × the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 1: a help-text-only v2; a new transformation pinned to v2 gets the same catalogue as v1 by code/key and count 563ms
+     → expected { diagnosticDimensions: [], …(5) } to deeply equal { Object (diagnosticDimensions, diagnosticWorkstreams, ...) }
+   × the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 2: a v3 label override is returned for its element, and only for it 461ms
+     → expected { diagnosticDimensions: [], …(5) } to deeply equal { Object (diagnosticDimensions, diagnosticWorkstreams, ...) }
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 3: the v1-pinned transformation is unchanged, byte for byte, after v2 and v3 are published 22ms
+   × the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 4: the instantiation path of a v2-pinned transformation: the Diagnose region and the 6 gates are complete 17ms
+     → expected [] to have a length of 6 but got +0
+   × the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 4 (second reader): the good-outcome test of a v2-pinned outcome evaluates all five criteria, as on v1 56ms
+     → expected [] to deeply equal [ [ 1, 'specific', 'fail' ], …(4) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts > the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 1: a help-text-only v2; a new transformation pinned to v2 gets the same catalogue as v1 by code/key and count
+AssertionError: expected { diagnosticDimensions: [], …(5) } to deeply equal { Object (diagnosticDimensions, diagnosticWorkstreams, ...) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "charterScopeChecks": [[39m
+[32m-     "outcome_linkage",[39m
+[32m-     "problem_traceability",[39m
+[32m-     "exclusions_documented",[39m
+[32m-     "baseline_measurable",[39m
+[32m-     "executive_decisions_visible",[39m
+[32m-   ],[39m
+[32m-   "diagnosticDimensions": [[39m
+[32m-     "financial",[39m
+[32m-     "customer",[39m
+[32m-     "process",[39m
+[32m-     "people_org",[39m
+[32m-     "technology",[39m
+[32m-     "data",[39m
+[32m-   ],[39m
+[32m-   "diagnosticWorkstreams": [[39m
+[32m-     "business_financial",[39m
+[32m-     "customer",[39m
+[32m-     "process_operations",[39m
+[32m-     "organization_governance",[39m
+[32m-     "technology_data",[39m
+[32m-     "capability",[39m
+[32m-   ],[39m
+[32m-   "gateDefinitions": [[39m
+[32m-     [[39m
+[32m-       "G1",[39m
+[32m-       [[39m
+[32m-         "g1.diagnostic",[39m
+[32m-         "g1.baseline",[39m
+[32m-         "g1.root_causes",[39m
+[32m-         "g1.value_pools",[39m
+[32m-         "g1.case_for_change",[39m
+[32m-         "g1.initial_charter",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G2",[39m
+[32m-       [[39m
+[32m-         "g2.north_star",[39m
+[32m-         "g2.outcome_tree",[39m
+[32m-         "g2.kpi_definitions",[39m
+[32m-         "g2.target_trajectory",[39m
+[32m-         "g2.guardrails",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G3",[39m
+[32m-       [[39m
+[32m-         "g3.target_operating_model",[39m
+[32m-         "g3.gap_matrix",[39m
+[32m-         "g3.capability_gaps",[39m
+[32m-         "g3.future_journeys",[39m
+[32m-         "g3.design_decisions",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G4",[39m
+[32m-       [[39m
+[32m-         "g4.initiative_cards",[39m
+[32m-         "g4.business_cases",[39m
+[32m-         "g4.finance_validation",[39m
+[32m-         "g4.prioritization",[39m
+[32m-         "g4.roadmap",[39m
+[32m-         "g4.owners",[39m
+[32m-         "g4.funding",[39m
+[32m-         "g4.capacity",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G5",[39m
+[32m-       [[39m
+[32m-         "g5.performance_evidence",[39m
+[32m-         "g5.adoption",[39m
+[32m-         "g5.risk_closure",[39m
+[32m-         "g5.decision_log",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G6",[39m
+[32m-       [[39m
+[32m-         "g6.benefits_evidence",[39m
+[32m-         "g6.ownership_transfer",[39m
+[32m-         "g6.controls",[39m
+[32m-         "g6.improvement_backlog",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-   ],[39m
+[32m-   "goodOutcomeCriteria": [[39m
+[32m-     "specific",[39m
+[32m-     "measurable",[39m
+[32m-     "strategically_relevant",[39m
+[32m-     "owned_by_business_leader",[39m
+[32m-     "causal_chain",[39m
+[32m-   ],[39m
+[32m-   "tomDimensions": [[39m
+[32m-     "customer_value_proposition",[39m
+[32m-     "products_services",[39m
+[32m-     "journeys_processes",[39m
+[32m-     "organization",[39m
+[32m-     "governance_decision_rights",[39m
+[32m-     "people_capabilities",[39m
+[32m-     "technology",[39m
+[32m-     "data_analytics",[39m
+[32m-     "partners_sourcing",[39m
+[32m-     "performance_management",[39m
+[32m-   ],[39m
+[31m+   "charterScopeChecks": [],[39m
+[31m+   "diagnosticDimensions": [],[39m
+[31m+   "diagnosticWorkstreams": [],[39m
+[31m+   "gateDefinitions": [],[39m
+[31m+   "goodOutcomeCriteria": [],[39m
+[31m+   "tomDimensions": [],[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/methodology/catalogue-versions.test.ts:242:30
+    240|     const body = await catalogueOf(v2Transformation);
+    241|     expect(body.methodologyVersion).toMatchObject({ id: v2, versionNo:…
+    242|     expect(identities(body)).toEqual(identities(v1Body));
+       |                              ^
+    243|     for (const k of [
+    244|       "diagnosticDimensions",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts > the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 2: a v3 label override is returned for its element, and only for it
+AssertionError: expected { diagnosticDimensions: [], …(5) } to deeply equal { Object (diagnosticDimensions, diagnosticWorkstreams, ...) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "charterScopeChecks": [[39m
+[32m-     "outcome_linkage",[39m
+[32m-     "problem_traceability",[39m
+[32m-     "exclusions_documented",[39m
+[32m-     "baseline_measurable",[39m
+[32m-     "executive_decisions_visible",[39m
+[32m-   ],[39m
+[32m-   "diagnosticDimensions": [[39m
+[32m-     "financial",[39m
+[32m-     "customer",[39m
+[32m-     "process",[39m
+[32m-     "people_org",[39m
+[32m-     "technology",[39m
+[32m-     "data",[39m
+[32m-   ],[39m
+[32m-   "diagnosticWorkstreams": [[39m
+[32m-     "business_financial",[39m
+[32m-     "customer",[39m
+[32m-     "process_operations",[39m
+[32m-     "organization_governance",[39m
+[32m-     "technology_data",[39m
+[32m-     "capability",[39m
+[32m-   ],[39m
+[32m-   "gateDefinitions": [[39m
+[32m-     [[39m
+[32m-       "G1",[39m
+[32m-       [[39m
+[32m-         "g1.diagnostic",[39m
+[32m-         "g1.baseline",[39m
+[32m-         "g1.root_causes",[39m
+[32m-         "g1.value_pools",[39m
+[32m-         "g1.case_for_change",[39m
+[32m-         "g1.initial_charter",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G2",[39m
+[32m-       [[39m
+[32m-         "g2.north_star",[39m
+[32m-         "g2.outcome_tree",[39m
+[32m-         "g2.kpi_definitions",[39m
+[32m-         "g2.target_trajectory",[39m
+[32m-         "g2.guardrails",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G3",[39m
+[32m-       [[39m
+[32m-         "g3.target_operating_model",[39m
+[32m-         "g3.gap_matrix",[39m
+[32m-         "g3.capability_gaps",[39m
+[32m-         "g3.future_journeys",[39m
+[32m-         "g3.design_decisions",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G4",[39m
+[32m-       [[39m
+[32m-         "g4.initiative_cards",[39m
+[32m-         "g4.business_cases",[39m
+[32m-         "g4.finance_validation",[39m
+[32m-         "g4.prioritization",[39m
+[32m-         "g4.roadmap",[39m
+[32m-         "g4.owners",[39m
+[32m-         "g4.funding",[39m
+[32m-         "g4.capacity",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G5",[39m
+[32m-       [[39m
+[32m-         "g5.performance_evidence",[39m
+[32m-         "g5.adoption",[39m
+[32m-         "g5.risk_closure",[39m
+[32m-         "g5.decision_log",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-     [[39m
+[32m-       "G6",[39m
+[32m-       [[39m
+[32m-         "g6.benefits_evidence",[39m
+[32m-         "g6.ownership_transfer",[39m
+[32m-         "g6.controls",[39m
+[32m-         "g6.improvement_backlog",[39m
+[32m-       ],[39m
+[32m-     ],[39m
+[32m-   ],[39m
+[32m-   "goodOutcomeCriteria": [[39m
+[32m-     "specific",[39m
+[32m-     "measurable",[39m
+[32m-     "strategically_relevant",[39m
+[32m-     "owned_by_business_leader",[39m
+[32m-     "causal_chain",[39m
+[32m-   ],[39m
+[32m-   "tomDimensions": [[39m
+[32m-     "customer_value_proposition",[39m
+[32m-     "products_services",[39m
+[32m-     "journeys_processes",[39m
+[32m-     "organization",[39m
+[32m-     "governance_decision_rights",[39m
+[32m-     "people_capabilities",[39m
+[32m-     "technology",[39m
+[32m-     "data_analytics",[39m
+[32m-     "partners_sourcing",[39m
+[32m-     "performance_management",[39m
+[32m-   ],[39m
+[31m+   "charterScopeChecks": [],[39m
+[31m+   "diagnosticDimensions": [],[39m
+[31m+   "diagnosticWorkstreams": [],[39m
+[31m+   "gateDefinitions": [],[39m
+[31m+   "goodOutcomeCriteria": [],[39m
+[31m+   "tomDimensions": [],[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/methodology/catalogue-versions.test.ts:272:30
+    270|     const body = await catalogueOf(t3);
+    271|     expect(body.methodologyVersion).toMatchObject({ id: v3, versionNo:…
+    272|     expect(identities(body)).toEqual(identities(v1Body));
+       |                              ^
+    273|     expect(body.tomDimensions[0]).toMatchObject({ code: firstTom, labe…
+    274|     const g3 = body.gateDefinitions.find((g: Body) => g.code === "G3");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts > the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 4: the instantiation path of a v2-pinned transformation: the Diagnose region and the 6 gates are complete
+AssertionError: expected [] to have a length of 6 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 6[39m
+[31m+ 0[39m
+
+ ❯ apps/api/test/integration/methodology/catalogue-versions.test.ts:316:40
+    314|     // The catalogue of the Diagnose region (DiagnosePage reads its di…
+    315|     const body = await catalogueOf(v2Transformation);
+    316|     expect(body.diagnosticWorkstreams).toHaveLength(6);
+       |                                        ^
+    317|     expect(body.diagnosticWorkstreams.map((s: Body) => s.code)).toEqua…
+    318|       v1Body.diagnosticWorkstreams.map((s: Body) => s.code),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts > the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 4 (second reader): the good-outcome test of a v2-pinned outcome evaluates all five criteria, as on v1
+AssertionError: expected [] to deeply equal [ [ 1, 'specific', 'fail' ], …(4) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     1,[39m
+[32m-     "specific",[39m
+[32m-     "fail",[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     2,[39m
+[32m-     "measurable",[39m
+[32m-     "fail",[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     3,[39m
+[32m-     "strategically_relevant",[39m
+[32m-     "unknown",[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     4,[39m
+[32m-     "owned_by_business_leader",[39m
+[32m-     "fail",[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     5,[39m
+[32m-     "causal_chain",[39m
+[32m-     "unknown",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/methodology/catalogue-versions.test.ts:351:45
+    349|     const onV1 = await results(v1Transformation);
+    350|     expect(onV1).toHaveLength(5);
+    351|     expect(await results(v2Transformation)).toEqual(onV1);
+       |                                             ^
+    352|   });
+    353| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  17:15:01
+   Duration  20.60s (transform 5.75s, setup 0ms, collect 11.43s, tests 4.80s, environment 0ms, prepare 189ms)
+
